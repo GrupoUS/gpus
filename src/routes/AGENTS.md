@@ -165,4 +165,3 @@ rg -n "useNavigate|Link to=" src/routes
 # Ensure routes compile
 bun run build
 ```
-

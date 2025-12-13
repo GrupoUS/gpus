@@ -208,4 +208,3 @@ bunx convex dev --once
 # Type check
 bun run build
 ```
-

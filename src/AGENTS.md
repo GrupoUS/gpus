@@ -202,4 +202,3 @@ rg -n "className=" src/
 # Run all checks
 bun run lint && bun run build && bun run test
 ```
-

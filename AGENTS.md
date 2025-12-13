@@ -1,13 +1,11 @@
 # Portal Grupo US - AI Agent Guide
 
-> CRM and student management portal for health aesthetics education business.
-
 ## Project Snapshot
 
 **Type:** Single-project React application  
 **Stack:** React 19 + Vite + TanStack Router + shadcn/ui + Convex + Clerk  
 **Purpose:** CRM and student management portal for health aesthetics education business  
-**Note:** Sub-directories have their own AGENTS.md files (see JIT Index below)
+**Note:** Sub-directories have their own AGENTS.md files with detailed patterns
 
 ---
 
@@ -18,31 +16,19 @@
 bun install
 
 # Development (runs Convex + Vite concurrently)
-bun run dev                    # Full stack (Convex + Vite)
-bun run dev:web                # Frontend only (Vite)
-bun run dev:convex             # Backend only (Convex)
-bun run dev:ts                 # TypeScript watch mode
+bun run dev
 
-# Build all
-bun run build                  # Build + type check (tsc --noEmit)
-
-# Typecheck all
-bun run build                  # Includes tsc --noEmit
+# Type checking
+bun run build  # Includes tsc --noEmit
 
 # Linting & formatting
-bun run lint                   # Auto-fix with Biome
-bun run lint:check             # Check only
-bun run format                 # Format only
-bun run format:check           # Format check only
+bun run lint        # Auto-fix with Biome
+bun run lint:check  # Check only
 
 # Testing
-bun run test                   # Unit tests (Vitest)
-bun run test:watch             # Watch mode
-bun run test:ui                # UI mode
-bun run test:coverage          # With coverage
-
-# Deploy
-bun run deploy:convex          # Deploy Convex backend
+bun run test              # Run all tests
+bun run test:watch        # Watch mode
+bun run test:coverage     # With coverage
 ```
 
 ---
@@ -50,25 +36,31 @@ bun run deploy:convex          # Deploy Convex backend
 ## Universal Conventions
 
 **Code Style:**
-- TypeScript strict mode enabled (no `any`, explicit types)
+- TypeScript strict mode enabled
 - Biome for linting/formatting (tabs, single quotes, semicolons)
 - No `any` types (enforced by Biome)
 - Functional components only (no classes)
-- Semantic color tokens (NEVER hardcode colors)
 
-**Commit Format:** Conventional Commits (`feat:`, `fix:`, `docs:`, etc.)  
-**Branch Strategy:** `main` (production), feature branches (`feature/description`)  
-**PR Requirements:** ✅ Tests pass | ✅ Type-check | ✅ Lint | ✅ No console errors | ✅ Responsive tested
+**Commit Format:**
+- Use Conventional Commits (e.g., `feat:`, `fix:`, `docs:`)
+
+**Branch Strategy:**
+- `main` branch for production
+- Feature branches: `feature/description`
+
+**PR Requirements:**
+- All tests passing (`bun run test`)
+- No linting errors (`bun run lint:check`)
+- Type checking passes (`bun run build`)
 
 ---
 
 ## Security & Secrets
 
-- **NEVER** commit tokens, API keys, or credentials
-- **Secrets:** Use `.env.local` (gitignored, see `.env.example` for required variables)
+- **Never commit:** API keys, tokens, or credentials
+- **Environment variables:** Use `.env.local` (gitignored)
 - **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`
 - **PII handling:** User data stored in Convex with Clerk auth
-- **Database:** Convex handles security automatically with Clerk integration
 
 ---
 
@@ -79,56 +71,40 @@ bun run deploy:convex          # Deploy Convex backend
 - **Backend (Convex):** `convex/` → [see convex/AGENTS.md](convex/AGENTS.md)
 - **UI Components:** `src/components/` → [see src/components/AGENTS.md](src/components/AGENTS.md)
 - **Routes/Pages:** `src/routes/` → [see src/routes/AGENTS.md](src/routes/AGENTS.md)
+- **Hooks:** `src/hooks/` → [see src/hooks/AGENTS.md](src/hooks/AGENTS.md)
+- **Utilities:** `src/lib/` → [see src/lib/AGENTS.md](src/lib/AGENTS.md)
 - **Documentation:** `docs/` → PRD, tech stack, setup guides
 
 ### Quick Find Commands
 
 ```bash
-# Search for a function
-rg -n "functionName" src/ convex/
-
-# Find a React component
-rg -n "export (function|const) .*Component" src/components/
+# Find a component
+rg -n "export.*function.*ComponentName" src/components
 
 # Find a route
 rg -n "createFileRoute" src/routes
 
 # Find a Convex function
-rg -n "export const.*= (query|mutation)" convex/
+rg -n "export const" convex/
 
 # Find a hook
-rg -n "export (function|const) use[A-Z]" src/hooks
+rg -n "export.*use[A-Z]" src/hooks
 
 # Find type definitions
-rg -n "interface|type.*=" src/ convex/
-
-# Find Convex schema tables
-rg -n "defineTable" convex/schema.ts
-
-# Find imports of a component
-rg -n "from.*ComponentName" src/
-
-# Find Tailwind classes
-rg -n "className=" src/components/
-
-# Find Convex queries/mutations usage
-rg -n "api\.(leads|users)\." src/
+rg -n "interface|type.*=" src/
 ```
 
 ---
 
 ## Definition of Done
 
-Before creating a PR, ensure:
-- ✅ All tests pass (`bun run test`)
-- ✅ Type-check passes (`bun run build`)
-- ✅ Linting passes (`bun run lint:check`)
-- ✅ Code formatted (`bun run lint`)
-- ✅ No console errors in browser
-- ✅ Responsive design tested (mobile + desktop)
-- ✅ Convex schema changes deployed (if applicable)
-
-**Single Command Check**: `bun run lint:check && bun run build && bun run test`
+Before creating a PR:
+- [ ] All tests pass (`bun run test`)
+- [ ] No linting errors (`bun run lint:check`)
+- [ ] Type checking passes (`bun run build`)
+- [ ] Code formatted (`bun run lint`)
+- [ ] No console errors in browser
+- [ ] Responsive design tested (mobile + desktop)
 
 ---
 
@@ -137,32 +113,8 @@ Before creating a PR, ensure:
 | Task | Command |
 |------|---------|
 | Add shadcn component | `bunx shadcn@latest add [component]` |
-| Deploy Convex | `bun run deploy:convex` or `bunx convex deploy` |
+| Deploy Convex | `bunx convex deploy` |
 | Generate route types | Auto-generated by TanStack Router plugin |
 | View Convex dashboard | `bunx convex dashboard` |
-| Type check only | `bun run build` (includes `tsc --noEmit`) |
-| Format code | `bun run format` |
 
----
-
-## MCP Optimization (RECOMMENDED)
-
-**ALWAYS use semantic search tools** - Never speculate about unread code.
-
-**When to Use Tools:**
-- **Code search** → Use `codebase_search` for semantic queries
-- **File discovery** → Use `glob_file_search` for pattern matching
-- **Symbol lookup** → Use `grep` for exact symbol searches
-- **Library docs** → Search web for up-to-date documentation
-- **Complex problems** → Break down into smaller semantic searches
-
-**Best Practices:**
-- Search before implementing similar functionality
-- Read existing patterns before creating new ones
-- Verify file structure before making assumptions
-- Check Convex schema before adding new queries/mutations
-
----
-
-> **For detailed patterns and examples**: Navigate to sub-folder AGENTS.md files listed in JIT Index above.
-
+**For detailed patterns, see sub-directory AGENTS.md files.**
