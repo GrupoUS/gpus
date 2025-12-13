@@ -142,13 +142,4 @@ When asked about Clerk + React (Vite) integration, your response **MUST**:
 4. Illustrate a simple usage example of `<SignedIn>`, `<SignedOut>`, etc.
 5. Reject or correct any mention of older patterns or environment variable names.
 
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_YXBwYXJlbnQtb3J5eC01Ny5jbGVyay5hY2NvdW50cy5kZXYk
-CLERK_SECRET_KEY=sk_test_1AumWLgSK06H6VZmLTeW5OchEauF5s6huaJnzmfrvH
-
-Frontend API URL
-https://apparent-oryx-57.clerk.accounts.dev
-Backend API URL
-https://api.clerk.com
-JWKS URL
-https://apparent-oryx-57.clerk.accounts.dev/.well-known/jwks.json
 
