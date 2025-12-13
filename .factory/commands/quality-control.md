@@ -1,7 +1,7 @@
 ---
 title: "Quality Control - Bun + Vite + Convex + TanStack Router"
-last_updated: 2025-12-13
-version: "3.0.0"
+last_updated: 2025-01-02
+version: "4.0.0"
 form: reference
 tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing]
 related:
@@ -43,6 +43,49 @@ related:
 - **Backend**: Convex (database + real-time functions)
 - **Auth**: Clerk (authentication)
 - **Deploy**: Railway (frontend) + Convex (backend)
+
+---
+
+## 🤖 MCP INTEGRATION OVERVIEW
+
+**Model Context Protocol (MCP) tools enable intelligent error detection, research, and automated correction workflows.**
+
+### Available MCP Servers
+
+| MCP Server | Purpose | Primary Tools | Use Cases |
+|------------|---------|--------------|-----------|
+| **serena** | Codebase intelligence | `find_symbol`, `search_for_pattern`, `find_referencing_symbols`, `get_symbols_overview` | Semantic code search, pattern analysis, symbol resolution |
+| **context7** | Documentation intelligence | `get-library-docs`, `resolve-library-id` | Official library documentation, API references, best practices |
+| **tavily** | Web research | `tavily-search`, `tavily-extract`, `tavily-crawl` | Current solutions, community patterns, troubleshooting guides |
+| **sequential-thinking** | Structured reasoning | `sequentialthinking` | Multi-step problem analysis, solution synthesis, decision trees |
+
+### MCP Workflow Integration
+
+```yaml
+ERROR_RESOLUTION_WITH_MCP:
+  detection:
+    - bun run lint:check
+    - bun run build
+    - serena search_for_pattern (error patterns)
+  
+  research:
+    - context7 get-library-docs (official solutions)
+    - tavily-search (current community solutions)
+    - sequential-thinking (analyze and synthesize)
+  
+  correction:
+    - serena find_symbol (locate code to fix)
+    - serena replace_symbol_body (apply fix)
+    - bun run lint:check (validate)
+```
+
+### MCP Tool Chains
+
+**Research Chain**: `tavily-search` → `context7 get-library-docs` → `sequential-thinking` → Solution
+
+**Code Analysis Chain**: `serena search_for_pattern` → `serena find_symbol` → `serena find_referencing_symbols` → Fix
+
+**Validation Chain**: `bun run build` → `serena search_for_pattern` (error patterns) → Research → Fix → Validate
 
 ---
 
@@ -115,18 +158,230 @@ bun run dev
 # No runtime errors in browser console
 ```
 
+### 1.5 MCP-Powered Error Detection & Analysis
+
+When errors are detected, use MCP tools for intelligent analysis and research:
+
+#### Error Detection Workflow
+
+```yaml
+MCP_ERROR_DETECTION_WORKFLOW:
+  step_1_detect:
+    command: "bun run lint:check"
+    command: "bun run build"
+    on_failure: "Proceed to MCP analysis"
+  
+  step_2_analyze:
+    tool: "serena search_for_pattern"
+    pattern: "Error pattern from build output"
+    context_lines: 5
+    output: "All occurrences of error pattern in codebase"
+  
+  step_3_research:
+    tool: "context7 get-library-docs"
+    library: "typescript | vite | react"
+    topic: "Error type or pattern"
+    output: "Official documentation solutions"
+  
+  step_4_validate:
+    tool: "tavily-search"
+    query: "Error message + stack + solution 2024"
+    output: "Current community solutions and patterns"
+  
+  step_5_synthesize:
+    tool: "sequential-thinking"
+    input: "Research results from step 3 and 4"
+    output: "Analyzed solution with confidence score"
+```
+
+#### Example: TypeScript Build Error
+
+```bash
+# 1. Detect error
+bun run build
+# Output: "Type error in src/components/LeadCard.tsx:42"
+
+# 2. Analyze with serena
+# MCP call: serena search_for_pattern("Type error|TypeError")
+# Returns: All similar type errors in codebase
+
+# 3. Research official solution
+# MCP call: context7 get-library-docs("typescript", "type errors")
+# Returns: TypeScript official type error resolution guide
+
+# 4. Research current solutions
+# MCP call: tavily-search("TypeScript type error React component props 2024")
+# Returns: Current community solutions and patterns
+
+# 5. Synthesize solution
+# MCP call: sequential-thinking (analyze all research)
+# Returns: Recommended fix with confidence ≥95%
+
+# 6. Apply fix using serena
+# MCP call: serena find_symbol("LeadCard")
+# MCP call: serena replace_symbol_body (apply fix)
+
+# 7. Validate
+bun run build  # Should pass now
+```
+
+#### Example: Lint Error Pattern Analysis
+
+```bash
+# 1. Detect lint errors
+bun run lint:check
+# Output: Multiple lint errors across files
+
+# 2. Analyze pattern with serena
+# MCP call: serena search_for_pattern("unused import|unused variable")
+# Returns: All files with similar issues
+
+# 3. Research best practices
+# MCP call: context7 get-library-docs("biome", "linting rules")
+# Returns: Official Biome linting documentation
+
+# 4. Batch fix using serena
+# For each error pattern:
+#   - serena find_symbol (locate code)
+#   - serena replace_symbol_body (apply fix)
+
+# 5. Validate
+bun run lint:check  # Should pass
+```
+
+---
+
+## 📍 PHASE 1.5: MCP RESEARCH WORKFLOW
+
+> **🔬 INTELLIGENT RESEARCH**: When errors are detected, use MCPs to research authoritative solutions before manual fixes
+
+### Research-Driven Error Resolution
+
+This phase activates automatically when Phase 1 detects errors. MCP tools research solutions from multiple authoritative sources before applying fixes.
+
+#### Research Workflow
+
+```yaml
+MCP_RESEARCH_WORKFLOW:
+  trigger: "Any error detected in Phase 1"
+  
+  parallel_research:
+    official_docs:
+      tool: "context7 get-library-docs"
+      libraries: ["typescript", "vite", "react", "convex", "railway"]
+      topics: "Error type or component"
+      confidence: "≥95% (official documentation)"
+    
+    current_solutions:
+      tool: "tavily-search"
+      query: "Error message + stack + solution 2024 2025"
+      depth: "advanced"
+      max_results: 10
+      confidence: "≥90% (cross-validated)"
+    
+    codebase_analysis:
+      tool: "serena search_for_pattern"
+      pattern: "Error pattern or similar code"
+      context_lines: 10
+      output: "Existing patterns in codebase"
+  
+  synthesis:
+    tool: "sequential-thinking"
+    input: "All research results"
+    process: ["Analyze solutions", "Compare approaches", "Select best fix", "Validate confidence"]
+    output: "Recommended solution with ≥95% confidence"
+  
+  validation:
+    apply_fix: "serena replace_symbol_body or manual fix"
+    verify: "bun run lint:check && bun run build"
+    gate: "All checks must pass"
+```
+
+#### Example: Build Error Research
+
+```bash
+# Scenario: Vite build fails with module resolution error
+
+# Step 1: Research official Vite documentation
+# MCP: context7 get-library-docs("vite", "module resolution")
+# Result: Official Vite module resolution guide
+
+# Step 2: Research current solutions
+# MCP: tavily-search("Vite module resolution error React TypeScript 2024")
+# Result: 10 current solutions from community
+
+# Step 3: Analyze codebase patterns
+# MCP: serena search_for_pattern("import.*from|resolve.*alias")
+# Result: How imports are structured in this codebase
+
+# Step 4: Synthesize solution
+# MCP: sequential-thinking
+# Input: All research results
+# Output: "Update vite.config.ts with resolve.alias configuration (confidence: 97%)"
+
+# Step 5: Apply fix
+# Manual or serena: Update vite.config.ts
+
+# Step 6: Validate
+bun run build  # Should pass
+```
+
+#### Example: Deployment Error Research
+
+```bash
+# Scenario: Railway deployment fails during build
+
+# Step 1: Research Railway deployment docs
+# MCP: context7 get-library-docs("railway", "deployment dockerfile")
+# Result: Official Railway Docker deployment guide
+
+# Step 2: Research current deployment patterns
+# MCP: tavily-search("Railway Vite bun deployment Dockerfile error 2024")
+# Result: Current deployment solutions
+
+# Step 3: Analyze Dockerfile patterns
+# MCP: serena search_for_pattern("FROM|RUN|COPY|CMD")
+# Result: Current Dockerfile structure
+
+# Step 4: Research Vite + Bun deployment
+# MCP: tavily-search("Vite bun Dockerfile multi-stage build 2024")
+# Result: Best practices for Vite + Bun deployments
+
+# Step 5: Synthesize solution
+# MCP: sequential-thinking
+# Output: "Update Dockerfile to use oven/bun:1-alpine and bun install (confidence: 98%)"
+
+# Step 6: Apply fix
+# Update Dockerfile
+
+# Step 7: Validate
+# Push to trigger Railway deployment
+```
+
+### Research Quality Gates
+
+- ✅ **Official docs consulted**: context7 provides authoritative solutions
+- ✅ **Current patterns validated**: tavily provides ≥3 cross-validated sources
+- ✅ **Codebase consistency**: serena ensures fixes align with existing patterns
+- ✅ **Confidence threshold**: sequential-thinking provides ≥95% confidence
+- ✅ **Solution validated**: All Phase 1 checks pass after fix
+
 ---
 
 ## 📍 PHASE 2: DEPLOYMENT VALIDATION
 
-> **✅ PREREQUISITE**: Phase 1 must pass completely
+> **✅ PREREQUISITE**: Phase 1 must pass completely (or Phase 1.5 completed if errors were fixed)
 
 ### 2.1 Frontend Deployment (Railway)
 
 #### Prerequisites
 ```bash
 # Install Railway CLI (if not installed)
-npm install -g @railway/cli
+# Option 1: Using bunx (recommended - no global install needed)
+bunx @railway/cli --help
+
+# Option 2: Global install with bun (if preferred)
+bun install -g @railway/cli
 
 # Login to Railway
 railway login
@@ -179,12 +434,106 @@ railway logs --lines 50
 # - Convex connection issues
 ```
 
+#### MCP-Assisted Deployment Validation
+
+When deployment issues are detected, use MCPs for intelligent analysis:
+
+```yaml
+MCP_DEPLOYMENT_VALIDATION:
+  step_1_detect_issue:
+    command: "railway logs --lines 100"
+    analyze: "Extract error patterns from logs"
+  
+  step_2_research_solution:
+    parallel:
+      railway_docs:
+        tool: "context7 get-library-docs"
+        library: "railway"
+        topic: "Error type from logs"
+      
+      current_solutions:
+        tool: "tavily-search"
+        query: "Railway deployment error + stack trace 2024"
+        depth: "advanced"
+      
+      codebase_config:
+        tool: "serena find_symbol"
+        pattern: "Dockerfile|Caddyfile|railway.json"
+        output: "Current deployment configuration"
+  
+  step_3_analyze_root_cause:
+    tool: "sequential-thinking"
+    input: "Logs + research results + config"
+    output: "Root cause with confidence ≥95%"
+  
+  step_4_apply_fix:
+    method: "Update configuration files"
+    validate: "railway status"
+```
+
+#### Example: Railway Build Failure
+
+```bash
+# 1. Check logs
+railway logs --lines 100
+# Output: "Error: Cannot find module 'vite'"
+
+# 2. Research with MCPs
+# MCP: context7 get-library-docs("railway", "dockerfile build")
+# Result: Railway Dockerfile build requirements
+
+# MCP: tavily-search("Railway Dockerfile bun vite build error 2024")
+# Result: Current solutions for Vite + Bun on Railway
+
+# MCP: serena find_symbol("Dockerfile")
+# Result: Current Dockerfile content
+
+# 3. Analyze
+# MCP: sequential-thinking
+# Output: "Dockerfile missing bun install step (confidence: 98%)"
+
+# 4. Fix
+# Update Dockerfile to include: RUN bun install
+
+# 5. Validate
+railway status  # Should show healthy deployment
+```
+
+#### Example: Environment Variable Issues
+
+```bash
+# 1. Detect from logs
+railway logs --lines 50
+# Output: "Missing VITE_CONVEX_URL"
+
+# 2. Research
+# MCP: context7 get-library-docs("railway", "environment variables")
+# Result: Railway environment variable configuration
+
+# MCP: tavily-search("Railway Vite environment variables build time 2024")
+# Result: Current patterns for Vite env vars on Railway
+
+# MCP: serena search_for_pattern("VITE_|ARG|ENV")
+# Result: How env vars are used in Dockerfile
+
+# 3. Analyze
+# MCP: sequential-thinking
+# Output: "VITE_* vars must be ARG in Dockerfile for build-time (confidence: 99%)"
+
+# 4. Fix
+# Update Dockerfile: ARG VITE_CONVEX_URL
+
+# 5. Validate
+railway variables list  # Verify vars are set
+railway status  # Verify deployment
+```
+
 ### 2.2 Backend Deployment (Convex)
 
 #### Schema & Function Deployment
 ```bash
 # Deploy Convex schema and functions to production
-npm run deploy:convex
+bun run deploy:convex
 
 # Expected: Successful deployment confirmation
 # Note the deployment URL/ID
@@ -193,7 +542,7 @@ npm run deploy:convex
 #### Active Deployment Verification
 ```bash
 # List all Convex deployments
-npx convex deployments list
+bunx convex deployments list
 
 # Expected: Your deployment appears as 'Active'
 # Verify CONVEX_DEPLOYMENT in .env.local matches active deployment
@@ -211,8 +560,8 @@ echo "Local DEPLOYMENT: $CONVEX_DEPLOYMENT"
 #### Backend Function Validation
 ```bash
 # Test key Convex functions are accessible
-npx convex run --prod api.leads.listLeads
-npx convex run --prod api.users.current
+bunx convex run --prod api.leads.listLeads
+bunx convex run --prod api.users.current
 
 # Expected: Functions execute without errors
 # May need authentication for some functions
@@ -240,7 +589,7 @@ cat .env.local
 # Expected: All 3 variables present and non-empty
 
 # Step 2: Verify Convex deployment alignment
-npx convex deployments list
+bunx convex deployments list
 # Look for your deployment marked as "Active"
 # Compare with CONVEX_DEPLOYMENT in .env.local
 
@@ -271,14 +620,14 @@ railway variables list
 #### Issue: Deployment ID Drift
 ```bash
 # Symptom: Local deployment ID differs from production
-# Solution: Run `npm run deploy:convex` and update .env.local
+# Solution: Run `bun run deploy:convex` and update .env.local
 ```
 
 ### 3.4 Environment Update Protocol
 
 ```bash
 # 1. Update Convex deployment
-npm run deploy:convex
+bun run deploy:convex
 
 # 2. Note new deployment URL/ID
 # 3. Update .env.local
@@ -348,6 +697,226 @@ open https://your-app.railway.app
 
 ---
 
+## 🔗 MCP TOOL CHAINS
+
+**Pre-configured MCP tool chains for common quality control scenarios.**
+
+### Chain 1: Build Error Resolution
+
+```yaml
+BUILD_ERROR_CHAIN:
+  trigger: "bun run build fails"
+  
+  steps:
+    1_analyze:
+      tool: "serena search_for_pattern"
+      pattern: "Error message pattern"
+      output: "All error occurrences"
+    
+    2_research_official:
+      tool: "context7 get-library-docs"
+      library: "typescript | vite"
+      topic: "Error type"
+      output: "Official solution"
+    
+    3_research_community:
+      tool: "tavily-search"
+      query: "Error + stack + solution 2024"
+      output: "Community solutions"
+    
+    4_synthesize:
+      tool: "sequential-thinking"
+      input: "All research"
+      output: "Best fix (≥95% confidence)"
+    
+    5_apply:
+      tool: "serena replace_symbol_body"
+      validate: "bun run build"
+```
+
+### Chain 2: Deployment Failure Resolution
+
+```yaml
+DEPLOYMENT_ERROR_CHAIN:
+  trigger: "railway status shows failure"
+  
+  steps:
+    1_get_logs:
+      command: "railway logs --lines 100"
+      extract: "Error pattern"
+    
+    2_analyze_config:
+      tool: "serena find_symbol"
+      pattern: "Dockerfile|Caddyfile|railway.json"
+      output: "Current configuration"
+    
+    3_research_railway:
+      tool: "context7 get-library-docs"
+      library: "railway"
+      topic: "Deployment error type"
+      output: "Railway official guide"
+    
+    4_research_solutions:
+      tool: "tavily-search"
+      query: "Railway deployment error + technology 2024"
+      output: "Current solutions"
+    
+    5_synthesize:
+      tool: "sequential-thinking"
+      output: "Configuration fix (≥95% confidence)"
+    
+    6_apply:
+      method: "Update configuration files"
+      validate: "railway status"
+```
+
+### Chain 3: Type Error Resolution
+
+```yaml
+TYPE_ERROR_CHAIN:
+  trigger: "TypeScript type error detected"
+  
+  steps:
+    1_find_symbol:
+      tool: "serena find_symbol"
+      name: "Component or function with error"
+      output: "Full code with types"
+    
+    2_find_references:
+      tool: "serena find_referencing_symbols"
+      output: "Where symbol is used"
+    
+    3_research_types:
+      tool: "context7 get-library-docs"
+      library: "typescript"
+      topic: "Type system and compatibility"
+      output: "TypeScript type documentation"
+    
+    4_research_patterns:
+      tool: "tavily-search"
+      query: "TypeScript type error React component 2024"
+      output: "Current type patterns"
+    
+    5_synthesize:
+      tool: "sequential-thinking"
+      output: "Type fix (≥95% confidence)"
+    
+    6_apply:
+      tool: "serena replace_symbol_body"
+      validate: "bun run build"
+```
+
+### Chain 4: Lint Error Batch Fix
+
+```yaml
+LINT_ERROR_CHAIN:
+  trigger: "bun run lint:check fails"
+  
+  steps:
+    1_analyze_patterns:
+      tool: "serena search_for_pattern"
+      pattern: "Lint error patterns"
+      output: "All lint errors grouped by type"
+    
+    2_research_rules:
+      tool: "context7 get-library-docs"
+      library: "biome"
+      topic: "Linting rules"
+      output: "Official linting rules"
+    
+    3_batch_fix:
+      for_each_pattern:
+        tool: "serena find_symbol"
+        tool: "serena replace_symbol_body"
+      output: "All fixes applied"
+    
+    4_validate:
+      command: "bun run lint:check"
+      gate: "Must pass"
+```
+
+### Chain 5: Environment Variable Validation
+
+```yaml
+ENV_VAR_CHAIN:
+  trigger: "Missing or incorrect environment variables"
+  
+  steps:
+    1_check_local:
+      command: "cat .env.local"
+      extract: "Variable names and values"
+    
+    2_check_railway:
+      command: "railway variables list"
+      extract: "Railway variables"
+    
+    3_check_convex:
+      command: "bunx convex deployments list"
+      extract: "Active deployment URL"
+    
+    4_analyze_mismatch:
+      tool: "sequential-thinking"
+      input: "All environment data"
+      output: "Mismatches and required fixes"
+    
+    5_research_patterns:
+      tool: "tavily-search"
+      query: "Railway Vite environment variables build time 2024"
+      output: "Current patterns"
+    
+    6_apply_fixes:
+      method: "Update .env.local and Railway variables"
+      validate: "railway status"
+```
+
+### Chain 6: Performance Issue Analysis
+
+```yaml
+PERFORMANCE_CHAIN:
+  trigger: "Performance benchmarks not met"
+  
+  steps:
+    1_analyze_bundle:
+      command: "bun run build"
+      extract: "Bundle size and composition"
+    
+    2_find_large_imports:
+      tool: "serena search_for_pattern"
+      pattern: "import.*from"
+      output: "All imports in codebase"
+    
+    3_research_optimization:
+      tool: "context7 get-library-docs"
+      library: "vite"
+      topic: "bundle optimization code splitting"
+      output: "Vite optimization guide"
+    
+    4_research_patterns:
+      tool: "tavily-search"
+      query: "Vite React bundle size optimization 2024"
+      output: "Current optimization patterns"
+    
+    5_synthesize:
+      tool: "sequential-thinking"
+      output: "Optimization strategy (≥95% confidence)"
+    
+    6_apply:
+      method: "Implement code splitting, lazy loading"
+      validate: "bun run build (check bundle size)"
+```
+
+### Using MCP Chains
+
+**When to use**: Any time you encounter an error or need to research a solution
+
+**How to use**: Follow the chain steps sequentially, using MCP tools as specified
+
+**Quality gate**: All chains end with validation - the fix must pass all checks
+
+**Confidence threshold**: All synthesized solutions must have ≥95% confidence
+
+---
+
 ## 🚀 QUICK REFERENCE COMMANDS
 
 ### Local Quality Checks
@@ -370,9 +939,9 @@ railway logs --lines 50    # Check recent logs
 git push origin main         # Trigger new deployment
 
 # Backend (Convex)
-npm run deploy:convex       # Deploy schema and functions
-npx convex deployments list # List active deployments
-npx convex run --prod api.leads.listLeads  # Test functions
+bun run deploy:convex       # Deploy schema and functions
+bunx convex deployments list # List active deployments
+bunx convex run --prod api.leads.listLeads  # Test functions
 ```
 
 ### Environment Management
@@ -380,7 +949,7 @@ npx convex run --prod api.leads.listLeads  # Test functions
 # Verify environment alignment
 cat .env.local
 railway variables list
-npx convex deployments list
+bunx convex deployments list
 
 # Update environment after Convex deploy
 echo "VITE_CONVEX_URL=new-url" >> .env.local
@@ -499,7 +1068,7 @@ railway logs --lines 100
 ```bash
 # Environment variable mismatch:
 # 1. Get current Convex deployment
-npx convex deployments list
+bunx convex deployments list
 
 # 2. Update .env.local
 # 3. Update Railway variables
@@ -528,7 +1097,152 @@ npx convex deployments list
 # 3. Optimize images and assets
 ```
 
+### MCP-Powered Troubleshooting Workflows
+
+#### Complete Error Resolution Chain
+
+```yaml
+MCP_TROUBLESHOOTING_WORKFLOW:
+  scenario: "Any error in any phase"
+  
+  step_1_detect:
+    command: "Run phase-specific check"
+    extract: "Error message, stack trace, file location"
+  
+  step_2_analyze_codebase:
+    tool: "serena search_for_pattern"
+    pattern: "Error pattern or similar code"
+    context: "5-10 lines before/after"
+    output: "All occurrences in codebase"
+  
+  step_3_research_official:
+    tool: "context7 get-library-docs"
+    libraries: ["typescript", "vite", "react", "convex", "railway"]
+    topics: "Error type or component"
+    output: "Official documentation solutions"
+  
+  step_4_research_community:
+    tool: "tavily-search"
+    query: "Error message + technology stack + solution 2024"
+    depth: "advanced"
+    max_results: 10
+    output: "Current community solutions"
+  
+  step_5_synthesize:
+    tool: "sequential-thinking"
+    input: "All research + codebase analysis"
+    process: ["Compare solutions", "Assess compatibility", "Select best approach"]
+    output: "Recommended fix with confidence ≥95%"
+  
+  step_6_apply:
+    method: "serena replace_symbol_body or manual fix"
+    validate: "Re-run phase check"
+    gate: "Must pass all checks"
+```
+
+#### Example: TypeScript Type Error Resolution
+
+```bash
+# Error: Type 'X' is not assignable to type 'Y' in Component.tsx:42
+
+# Step 1: Analyze with serena
+# MCP: serena search_for_pattern("type.*assignable|Type.*not")
+# Result: Find all similar type errors
+
+# MCP: serena find_symbol("Component")
+# Result: Get full component code
+
+# Step 2: Research official solution
+# MCP: context7 get-library-docs("typescript", "type compatibility")
+# Result: TypeScript type system documentation
+
+# Step 3: Research current solutions
+# MCP: tavily-search("TypeScript type not assignable React component props 2024")
+# Result: Current patterns and solutions
+
+# Step 4: Synthesize
+# MCP: sequential-thinking
+# Input: Error + research + codebase patterns
+# Output: "Use type assertion or update prop types (confidence: 96%)"
+
+# Step 5: Apply fix
+# MCP: serena replace_symbol_body (apply fix)
+
+# Step 6: Validate
+bun run build  # Should pass
+```
+
+#### Example: Railway Deployment Failure Resolution
+
+```bash
+# Error: Railway deployment fails with "Build failed"
+
+# Step 1: Get logs
+railway logs --lines 100
+# Extract: Build error message
+
+# Step 2: Analyze configuration
+# MCP: serena find_symbol("Dockerfile")
+# Result: Current Dockerfile content
+
+# MCP: serena search_for_pattern("FROM|RUN|COPY|CMD")
+# Result: Dockerfile structure patterns
+
+# Step 3: Research Railway deployment
+# MCP: context7 get-library-docs("railway", "dockerfile deployment")
+# Result: Official Railway Docker deployment guide
+
+# MCP: tavily-search("Railway Vite bun Dockerfile deployment error 2024")
+# Result: Current deployment solutions
+
+# Step 4: Research Vite + Bun deployment
+# MCP: tavily-search("Vite bun Dockerfile multi-stage build best practices 2024")
+# Result: Best practices for Vite + Bun
+
+# Step 5: Synthesize
+# MCP: sequential-thinking
+# Output: "Update Dockerfile to use oven/bun:1-alpine and bun install (confidence: 98%)"
+
+# Step 6: Apply fix
+# Update Dockerfile
+
+# Step 7: Validate
+git push origin main  # Trigger deployment
+railway status  # Verify success
+```
+
+#### Example: Convex Function Error Resolution
+
+```bash
+# Error: Convex function fails with "Invalid argument"
+
+# Step 1: Analyze function
+# MCP: serena find_symbol("functionName")
+# Result: Get function code
+
+# MCP: serena find_referencing_symbols("functionName")
+# Result: Where function is called
+
+# Step 2: Research Convex
+# MCP: context7 get-library-docs("convex", "function arguments validation")
+# Result: Convex function argument validation
+
+# MCP: tavily-search("Convex invalid argument error validation 2024")
+# Result: Current Convex validation patterns
+
+# Step 3: Synthesize
+# MCP: sequential-thinking
+# Output: "Add v.optional() or update argument schema (confidence: 97%)"
+
+# Step 4: Apply fix
+# Update convex function schema
+
+# Step 5: Validate
+bun run deploy:convex  # Deploy updated function
+bunx convex run functionName  # Test function
+```
+
 ---
 
-*Quality Control v3.0 - Bun + Vite + Convex + TanStack Router Stack*
-*Last Updated: 2025-12-13*
+*Quality Control v4.0 - Bun + Vite + Convex + TanStack Router Stack with MCP Integration*
+*Last Updated: 2025-01-02*

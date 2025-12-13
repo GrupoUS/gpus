@@ -2,11 +2,11 @@
 
 ## Universal Description
 
-**DOCKER MCP GATEWAY RESEARCH ORCHESTRATION** - Multi-droid parallel execution with Docker MCP Gateway integration, delivering comprehensive research intelligence through coordinated droid ecosystem. ≥95% cross-validation accuracy with Brazilian compliance auto-activation via Docker MCP stack.
+**DOCKER MCP GATEWAY RESEARCH ORCHESTRATION** - Multi-droid parallel execution with Docker MCP Gateway integration, delivering comprehensive research intelligence through coordinated droid ecosystem. ≥95% cross-validation accuracy with Brazilian LGPD compliance auto-activation via Docker MCP stack.
 
 ## Purpose
 
-Execute comprehensive research operations through Docker MCP Gateway orchestration with atomic task generation, parallel execution capabilities, and integrated MCP stack (serena, context7, tavily, sequential-thinking, neon, playwright, fetch) for authoritative multi-source validation and actionable intelligence with Brazilian compliance.
+Execute comprehensive research operations through Docker MCP Gateway orchestration with atomic task generation, parallel execution capabilities, and integrated MCP stack (serena, context7, tavily, sequential-thinking, neon, playwright, fetch) for authoritative multi-source validation and actionable intelligence with Brazilian LGPD compliance for education/health sectors.
 
 ## Enhanced Research Orchestration System
 
@@ -61,7 +61,9 @@ droid_expertise_matrix:
 
 ```yaml
 skill_mapping:
-  brazilian-fintech-compliance: "Auto-activated for financial/PIX/LGPD research"
+  education-lgpd-compliance: "Auto-activated for LGPD/student data protection research"
+  health-aesthetics-research: "Auto-activated for health aesthetics education research"
+  crm-student-management: "Auto-activated for CRM and student lifecycle research"
   product-management: "Invoked for market analysis, competitive research"
   frontend-design: "UI/UX research, accessibility standards"
   ai-data-analyst: "Statistical analysis, data interpretation"
@@ -88,8 +90,10 @@ input_parsing:
   goal: "Extract from research objective description"
   scope: "Technology, domain, or regulatory area"
   complexity: "L1-L10 research depth assessment"
-  brazilian_focus: "LGPD/BCB/PIX requirements auto-detection"
+  brazilian_focus: "LGPD/education/health requirements auto-detection"
   parallel_potential: "Automatic identification of parallelizable tasks"
+  education_triggers: "aluno, matrícula, curso, turma, saúde estética"
+  compliance_triggers: "LGPD, consentimento, proteção de dados, cpf"
 
 quality_assurance:
   accuracy_threshold: "≥95% cross-validation required"
@@ -334,11 +338,21 @@ atomic_tasks:
 
 ### Automatic Skill Activation by Research Type
 ```yaml
-brazilian_fintech_compliance:
-  triggers: ["PIX", "LGPD", "BCB", "fintech", "financial"]
+education_lgpd_compliance:
+  triggers: ["LGPD", "aluno", "matrícula", "cpf", "consentimento", "proteção de dados"]
   agents: ["apex-researcher", "code-reviewer", "database-specialist"]
   validation_level: "Expert (≥95% accuracy)"
-  
+
+health_aesthetics_research:
+  triggers: ["saúde estética", "estética", "ANVISA", "certificação profissional", "empreendedor estética"]
+  agents: ["apex-researcher", "apex-ui-ux-designer"]
+  validation_level: "Expert (≥95% accuracy)"
+
+crm_student_management:
+  triggers: ["CRM", "pipeline", "lead", "aluno", "gestão", "SDR", "chat integrado"]
+  agents: ["apex-researcher", "database-specialist", "apex-dev"]
+  validation_level: "Expert (≥95% accuracy)"
+
 webapp_testing:
   triggers: ["testing", "validation", "accessibility", "performance"]
   agents: ["apex-ui-ux-designer", "code-reviewer", "apex-dev"]
@@ -382,7 +396,7 @@ phase_3_validation (parallel):
 - **MCP Performance**: Docker Gateway latency (<3ms target), efficiency metrics
 - **Validation Results**: ≥95% cross-source validation via multiple MCPs
 - **Implementation Roadmap**: Technical feasibility with Docker-optimized patterns
-- **Brazilian Compliance**: LGPD/PIX/BCB validation through official docs (context7) + current patterns (tavily)
+- **Brazilian Compliance**: LGPD/education/health validation through official docs (context7) + current patterns (tavily)
 
 ### Quality Assurance via Docker MCP
 - **Source Validation**: Context7 (official docs) + Tavily (community validation)

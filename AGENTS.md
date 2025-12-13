@@ -9,10 +9,17 @@
 
 ---
 
+## Package Manager
+
+**⚠️ IMPORTANTE**: Este projeto **sempre usa `bun`** como package manager. Nunca use `npm`, `yarn` ou `pnpm`.
+
+- ✅ **Sempre use**: `bun install`, `bun run`, `bunx`
+- ❌ **Nunca use**: `npm install`, `npm run`, `npx`
+
 ## Root Setup Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (sempre use bun)
 bun install
 
 # Development (runs Convex + Vite concurrently)
@@ -29,6 +36,23 @@ bun run lint:check  # Check only
 bun run test              # Run all tests
 bun run test:watch        # Watch mode
 bun run test:coverage     # With coverage
+```
+
+### Advanced Dev Commands
+
+```bash
+# Web development only
+bun run dev:web          # Vite dev server (without Convex)
+
+# TypeScript watch mode
+bun run dev:ts           # Type checking in watch mode
+
+# Convex development only
+bun run dev:convex       # Convex dev server (without Vite)
+
+# Code formatting
+bun run format           # Format code with Biome
+bun run format:check      # Check code formatting only
 ```
 
 ---

@@ -9,7 +9,6 @@
 		"dev:ts": "tsc -b -w",
 		"dev:convex": "npx convex dev",
 		"build": "vite build && tsc --noEmit",
-		"start": "node .output/server/index.mjs",
 		"lint": "biome check --write",
 		"lint:check": "biome check",
 		"format": "biome format --write",

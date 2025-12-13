@@ -1,38 +1,42 @@
-# Base stage for building
-FROM node:20-alpine AS builder
+# Stage 1: Build the Vite application
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json ./
+# Copy package files and lockfile
+COPY package.json bun.lock ./
 
-# Install dependencies (ignoring scripts to speed up)
-RUN npm install --ignore-scripts
+# Install dependencies using bun (faster than npm)
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build arguments for Vite (must be passed from Railway at build time)
+ARG VITE_CONVEX_URL
+ARG VITE_CLERK_PUBLISHABLE_KEY
 
-# Production stage
-FROM node:20-alpine AS runner
+# Set as environment variables for Vite build
+ENV VITE_CONVEX_URL=$VITE_CONVEX_URL
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+
+# Build the application (outputs to dist/ folder)
+RUN bun run build
+
+# Stage 2: Serve static files with Caddy
+FROM caddy:alpine AS runner
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=3000
-# CRITICAL: Bind to 0.0.0.0 to be accessible outside the container
-ENV HOST=0.0.0.0
-ENV NITRO_HOST=0.0.0.0
-ENV VINXI_HOST=0.0.0.0
+# Copy Caddyfile configuration
+COPY Caddyfile ./
 
-# Copy necessary files from builder
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/package.json ./package.json
+# Format and validate Caddyfile
+RUN caddy fmt Caddyfile --overwrite
 
-# Expose the port
-EXPOSE 3000
+# Copy built static files from builder stage
+COPY --from=builder /app/dist ./dist
 
-# Start the server
-CMD ["npm", "run", "start"]
+# Caddy will serve files from dist/ directory
+# Railway automatically provides PORT environment variable
+CMD ["caddy", "run", "--config", "Caddyfile", "--adapter", "caddyfile"]
