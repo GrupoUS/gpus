@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import { useId } from 'react';
 import {
 	Area,
 	AreaChart,
@@ -28,6 +29,9 @@ const chartData = [
 ];
 
 function DashboardPage() {
+	const gradientLeadsId = useId();
+	const gradientConversoesId = useId();
+
 	return (
 		<div className="space-y-6">
 			<div className="animate-fade-in-up">
@@ -60,10 +64,10 @@ function DashboardPage() {
 					trend={{ value: 18, isPositive: true }}
 					className="animate-fade-in-up delay-300"
 				/>
-				<StatsCard 
-					title="Mensagens" 
-					value="1.234" 
-					description="últimas 24h" 
+				<StatsCard
+					title="Mensagens"
+					value="1.234"
+					description="últimas 24h"
 					icon={MessageSquare}
 					className="animate-fade-in-up delay-400"
 				/>
@@ -72,26 +76,35 @@ function DashboardPage() {
 			<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
 				<Card>
 					<CardHeader>
-						<CardTitle className="font-display text-2xl font-semibold">Leads vs Conversões</CardTitle>
+						<CardTitle className="font-display text-2xl font-semibold">
+							Leads vs Conversões
+						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="h-[300px] min-h-[250px] md:h-[300px]">
 							<ResponsiveContainer width="100%" height="100%">
 								<AreaChart data={chartData}>
 									<defs>
-										<linearGradient id="gradientLeads" x1="0" y1="0" x2="0" y2="1">
+										<linearGradient id={gradientLeadsId} x1="0" y1="0" x2="0" y2="1">
 											<stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
 											<stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
 										</linearGradient>
-										<linearGradient id="gradientConversoes" x1="0" y1="0" x2="0" y2="1">
+										<linearGradient id={gradientConversoesId} x1="0" y1="0" x2="0" y2="1">
 											<stop offset="0%" stopColor="hsl(142 76% 36%)" stopOpacity={0.3} />
 											<stop offset="100%" stopColor="hsl(142 76% 36%)" stopOpacity={0} />
 										</linearGradient>
 									</defs>
-									<CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
-									<XAxis dataKey="name" className="text-xs" stroke="hsl(var(--muted-foreground) / 0.5)" />
+									<CartesianGrid
+										strokeDasharray="3 3"
+										stroke="hsl(var(--muted-foreground) / 0.2)"
+									/>
+									<XAxis
+										dataKey="name"
+										className="text-xs"
+										stroke="hsl(var(--muted-foreground) / 0.5)"
+									/>
 									<YAxis className="text-xs" stroke="hsl(var(--muted-foreground) / 0.5)" />
-									<Tooltip 
+									<Tooltip
 										contentStyle={{
 											background: 'hsl(var(--card) / 0.6)',
 											backdropFilter: 'blur(24px) saturate(180%)',
@@ -106,7 +119,7 @@ function DashboardPage() {
 										stackId="1"
 										stroke="hsl(var(--primary))"
 										strokeWidth={2}
-										fill="url(#gradientLeads)"
+										fill={`url(#${gradientLeadsId})`}
 										animationDuration={1000}
 										animationEasing="ease-out"
 									/>
@@ -116,7 +129,7 @@ function DashboardPage() {
 										stackId="2"
 										stroke="hsl(142 76% 36%)"
 										strokeWidth={2}
-										fill="url(#gradientConversoes)"
+										fill={`url(#${gradientConversoesId})`}
 										animationDuration={1000}
 										animationEasing="ease-out"
 									/>
@@ -147,7 +160,7 @@ function DashboardPage() {
 									<div className="h-2 rounded-full bg-muted overflow-hidden">
 										<div
 											className={`h-full rounded-full progress-bar ${item.color}`}
-											style={{ 
+											style={{
 												width: `${(item.value / 50) * 100}%`,
 												background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--us-purple-light)))`,
 											}}

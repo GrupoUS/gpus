@@ -436,6 +436,39 @@
 			}
 		},
 		{
+			"includes": ["src/components/ui/breadcrumb.tsx"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"useSemanticElements": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/components/ui/sidebar.tsx"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noDocumentCookie": "warn"
+					},
+					"correctness": {
+						"useExhaustiveDependencies": "warn"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/routes/**/$*.tsx"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
 			"includes": ["scripts/**"],
 			"linter": {
 				"rules": {

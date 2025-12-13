@@ -13,6 +13,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CrmIndexRouteImport } from './routes/crm/index'
+import { Route as CrmLeadIdRouteImport } from './routes/crm/$leadId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -34,17 +35,24 @@ const CrmIndexRoute = CrmIndexRouteImport.update({
   path: '/crm/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CrmLeadIdRoute = CrmLeadIdRouteImport.update({
+  id: '/crm/$leadId',
+  path: '/crm/$leadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/crm/$leadId': typeof CrmLeadIdRoute
   '/crm': typeof CrmIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/crm/$leadId': typeof CrmLeadIdRoute
   '/crm': typeof CrmIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/crm/$leadId': typeof CrmLeadIdRoute
   '/crm/': typeof CrmIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up' | '/crm'
+  fullPaths: '/' | '/sign-in' | '/sign-up' | '/crm/$leadId' | '/crm'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up' | '/crm'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/crm/'
+  to: '/' | '/sign-in' | '/sign-up' | '/crm/$leadId' | '/crm'
+  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/crm/$leadId' | '/crm/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  CrmLeadIdRoute: typeof CrmLeadIdRoute
   CrmIndexRoute: typeof CrmIndexRoute
 }
 
@@ -99,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/crm/$leadId': {
+      id: '/crm/$leadId'
+      path: '/crm/$leadId'
+      fullPath: '/crm/$leadId'
+      preLoaderRoute: typeof CrmLeadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  CrmLeadIdRoute: CrmLeadIdRoute,
   CrmIndexRoute: CrmIndexRoute,
 }
 export const routeTree = rootRouteImport

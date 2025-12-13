@@ -15,7 +15,7 @@ const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 const router = createRouter({
 	routeTree,
 	context: {
-		auth: undefined!, // We'll inject this in the provider
+		auth: undefined as ReturnType<typeof useAuth> | undefined, // We'll inject this in the provider
 	},
 	defaultPreload: 'intent',
 });
@@ -34,7 +34,7 @@ if (!clerkPubKey) {
 	throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 }
 
-function App() {
+export function App() {
 	return (
 		<ClerkProvider publishableKey={clerkPubKey}>
 			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
@@ -44,7 +44,10 @@ function App() {
 	);
 }
 
-const rootElement = document.getElementById('root')!;
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+	throw new Error('Root element not found');
+}
 if (!rootElement.innerHTML) {
 	const root = ReactDOM.createRoot(rootElement);
 	root.render(

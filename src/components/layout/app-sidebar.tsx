@@ -56,14 +56,13 @@ export function AppSidebar() {
 						<SidebarMenu>
 							{menuItems.map((item) => {
 								const isActive =
-									location.pathname === item.href ||
-									location.pathname.startsWith(item.href + '/');
+									location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
 								return (
-									<SidebarMenuItem key={item.href} className={isActive ? 'sidebar-menu-item active' : 'sidebar-menu-item'}>
-										<SidebarMenuButton
-											asChild
-											isActive={isActive}
-										>
+									<SidebarMenuItem
+										key={item.href}
+										className={isActive ? 'sidebar-menu-item active' : 'sidebar-menu-item'}
+									>
+										<SidebarMenuButton asChild isActive={isActive}>
 											<Link to={item.href}>
 												<item.icon className="h-4 w-4" />
 												<span>{item.title}</span>

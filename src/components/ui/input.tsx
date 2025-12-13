@@ -11,8 +11,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 		const [isFocused, setIsFocused] = React.useState(false);
 		const [hasValue, setHasValue] = React.useState(false);
 		const inputRef = React.useRef<HTMLInputElement>(null);
+		const inputId = React.useId();
 
-		React.useImperativeHandle(ref, () => inputRef.current!);
+		React.useImperativeHandle(ref, () => {
+			if (!inputRef.current) {
+				throw new Error('Input ref is not available');
+			}
+			return inputRef.current;
+		});
 
 		const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
 			setIsFocused(true);
@@ -36,6 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 			<div className="input-wrapper relative">
 				{label && (
 					<label
+						htmlFor={inputId}
 						className={cn(
 							'input-label absolute left-3 pointer-events-none transition-all duration-200 ease-out text-muted-foreground',
 							shouldFloat
@@ -47,6 +54,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 					</label>
 				)}
 				<input
+					id={inputId}
 					type={type}
 					className={cn(
 						'input-field flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',

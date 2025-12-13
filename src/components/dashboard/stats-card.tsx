@@ -24,9 +24,12 @@ export function StatsCard({
 	className,
 }: StatsCardProps) {
 	return (
-		<Card 
+		<Card
 			variant="glass"
-			className={cn('stats-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.3)]', className)}
+			className={cn(
+				'stats-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.3)]',
+				className,
+			)}
 		>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
@@ -35,7 +38,13 @@ export function StatsCard({
 			<CardContent>
 				<div className="font-display text-3xl font-bold tabular-nums">{value}</div>
 				{/* Sparkline placeholder - can be enhanced with actual data */}
-				<svg className="w-full h-8 mt-2 opacity-30" viewBox="0 0 100 20" preserveAspectRatio="none">
+				<svg
+					className="w-full h-8 mt-2 opacity-30"
+					viewBox="0 0 100 20"
+					preserveAspectRatio="none"
+					aria-label="Sparkline chart"
+				>
+					<title>Sparkline chart</title>
 					<polyline
 						points="0,15 20,12 40,8 60,10 80,5 100,8"
 						fill="none"

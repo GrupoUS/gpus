@@ -418,13 +418,13 @@ brazilian_compliance: "Mandatory"
 
 ### Example Usage
 ```
-/research "PIX transaction validation patterns"
+/research "LGPD compliance para gestão de alunos"
 
 → Docker MCP execution:
-- Context7: BCB official specs
-- Tavily: Current fintech implementations
-- Serena: Existing codebase patterns
-- Sequential-thinking: Multi-perspective analysis
-- Neon: PostgreSQL transaction patterns
-- Output: .factory/docs/2025-12-02-pix-transaction-validation.md
+- Context7: LGPD official documentation for education
+- Tavily: Current student data protection implementations
+- Serena: Existing Convex schema patterns for students
+- Sequential-thinking: Multi-perspective compliance analysis
+- Neon: PostgreSQL student data validation patterns
+- Output: .factory/docs/2025-12-13-lgpd-aluno-compliance.md
 ```

@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Flame, MessageSquare, Phone, Snowflake, Thermometer } from 'lucide-react';
+import { Flame, type LucideIcon, MessageSquare, Phone, Snowflake, Thermometer } from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ interface LeadCardProps {
 	};
 }
 
-const temperatureIcons: Record<string, { icon: any; color: string }> = {
+const temperatureIcons: Record<string, { icon: LucideIcon; color: string }> = {
 	frio: { icon: Snowflake, color: 'text-blue-500' },
 	morno: { icon: Thermometer, color: 'text-yellow-500' },
 	quente: { icon: Flame, color: 'text-red-500' },
@@ -86,10 +86,18 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="flex items-center gap-3 mt-2 text-muted-foreground">
-						<button className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Ligar">
+						<button
+							type="button"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+							aria-label="Ligar"
+						>
 							<Phone className="h-4 w-4" />
 						</button>
-						<button className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Mensagem">
+						<button
+							type="button"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+							aria-label="Mensagem"
+						>
 							<MessageSquare className="h-4 w-4" />
 						</button>
 						{lead.lastContactAt && (

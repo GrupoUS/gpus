@@ -38,14 +38,19 @@ function KanbanColumn({ stage, leads }: { stage: (typeof stages)[0]; leads: Lead
 
 	return (
 		<div ref={setNodeRef} className="flex-shrink-0 w-[300px] snap-start">
-			<Card variant="glass" className="h-[calc(100vh-200px)] min-h-[400px] flex flex-col kanban-column">
+			<Card
+				variant="glass"
+				className="h-[calc(100vh-200px)] min-h-[400px] flex flex-col kanban-column"
+			>
 				<CardHeader className="pb-3 flex-shrink-0 kanban-column-header">
 					<div className="flex items-center justify-between">
 						<CardTitle className="text-sm font-medium flex items-center gap-2 font-display">
 							<div className={`h-2 w-2 rounded-full ${stage.color}`} />
 							{stage.label}
 						</CardTitle>
-						<Badge variant="secondary" className="font-display tabular-nums animate-scale-in">{leads.length}</Badge>
+						<Badge variant="secondary" className="font-display tabular-nums animate-scale-in">
+							{leads.length}
+						</Badge>
 					</div>
 				</CardHeader>
 				<CardContent className="flex-1 min-h-0">
