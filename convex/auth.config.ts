@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: 'https://adapted-marten-34.clerk.accounts.dev',
+      domain: 'https://apparent-oryx-57.clerk.accounts.dev',
       applicationID: 'convex',
     },
   ],
