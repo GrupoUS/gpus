@@ -54,7 +54,8 @@ function SignUpPage() {
 						routing="path"
 						path="/sign-up"
 						signInUrl="/sign-in"
-						forceRedirectUrl="/dashboard"
+						afterSignInUrl="/dashboard"
+						afterSignUpUrl="/dashboard"
 						appearance={{
 							elements: {
 								rootBox: 'mx-auto',
