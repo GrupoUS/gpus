@@ -12,6 +12,7 @@ import {
 
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MotionWrapper } from '@/components/ui/motion-wrapper';
 
 export const Route = createFileRoute('/')({
 	component: DashboardPage,
@@ -68,8 +69,8 @@ function DashboardPage() {
 				/>
 			</div>
 
-			<div className="grid gap-4 md:grid-cols-2">
-				<Card className="animate-scale-in delay-200">
+			<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
+				<Card>
 					<CardHeader>
 						<CardTitle className="font-display text-2xl font-semibold">Leads vs Conversões</CardTitle>
 					</CardHeader>
@@ -125,7 +126,7 @@ function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card className="animate-scale-in delay-300">
+				<Card>
 					<CardHeader>
 						<CardTitle className="font-display text-2xl font-semibold">Leads por Produto</CardTitle>
 					</CardHeader>
@@ -157,7 +158,7 @@ function DashboardPage() {
 						</div>
 					</CardContent>
 				</Card>
-			</div>
+			</MotionWrapper>
 		</div>
 	);
 }
