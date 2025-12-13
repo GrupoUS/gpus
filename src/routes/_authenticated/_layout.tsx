@@ -75,7 +75,7 @@ export default function AuthenticatedLayout() {
 	return (
 		<div className="flex min-h-screen bg-background">
 			{/* Sidebar */}
-			<aside className="w-64 bg-card border-r border-border flex flex-col fixed left-0 top-0 h-full z-40">
+			<aside className="hidden md:flex w-64 bg-card border-r border-border flex-col fixed left-0 top-0 h-full z-40">
 				{/* Logo */}
 				<motion.div 
 					className="p-6 border-b border-border"
@@ -139,15 +139,26 @@ export default function AuthenticatedLayout() {
 				</motion.div>
 			</aside>
 
+			{/* Mobile Menu Button */}
+			<div className="md:hidden fixed top-4 left-4 z-50">
+				<Link to="/dashboard" className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg p-2">
+					<div className="w-6 h-6 bg-gradient-to-br from-primary to-us-gold rounded-lg flex items-center justify-center">
+						<span className="text-primary-foreground font-bold text-xs font-display">GU</span>
+					</div>
+				</Link>
+			</div>
+
 			{/* Main Content */}
-			<main className="flex-1 ml-64 min-h-screen">
+			<main className="flex-1 ml-0 md:ml-64 min-h-screen">
 				<motion.div
 					className="h-full"
 					initial={{ opacity: 0, x: 20 }}
 					animate={{ opacity: 1, x: 0 }}
 					transition={{ duration: 0.6 }}
 				>
-					<Outlet />
+					<div className="p-4 md:p-6 lg:p-8">
+						<Outlet />
+					</div>
 				</motion.div>
 			</main>
 		</div>
