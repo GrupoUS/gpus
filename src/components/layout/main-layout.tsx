@@ -1,3 +1,4 @@
+import { UserButton } from '@clerk/clerk-react';
 import { useLocation } from '@tanstack/react-router';
 
 import { AppSidebar } from './app-sidebar';
@@ -44,8 +45,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 							</BreadcrumbList>
 						</Breadcrumb>
 					</div>
+					<div className="ml-auto px-4">
+						<UserButton afterSignOutUrl="/" />
+					</div>
 				</header>
-				<main id="main-content" className="flex-1 p-6 bg-mesh bg-noise">{children}</main>
+				<main id="main-content" className="flex-1 p-6 bg-mesh bg-noise">
+					{children}
+				</main>
 			</SidebarInset>
 		</SidebarProvider>
 	);

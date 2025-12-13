@@ -1,1166 +1,537 @@
 ---
-title: "AegisWallet Quality Control v2.0 - Enhanced Multi-Domain Testing Infrastructure"
-last_updated: 2025-12-01
-version: "2.0.0"
+title: "Quality Control - Bun + Vite + Convex + TanStack Router"
+last_updated: 2025-12-13
+version: "3.0.0"
 form: reference
-tags: [quality, brazilian-fintech, bun, biome, vitest, drizzle, tanstack-router, react-19, lgpd, compliance, atomic-tasks, droid-orchestration]
+tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing]
 related:
-  - ../architecture/tech-stack.md
-  - ../architecture/frontend-architecture.md
+  - ../../docs/tech-stack-guide.md
   - frontend-testing.md
   - research.md
-  - ../agents/apex-researcher.md
 ---
 
-# 🔍 AegisWallet Quality Control v2.0
+# 🔍 Quality Control - Modern Web Stack
 
-**Production-ready multi-domain testing infrastructure with atomic task decomposition, parallel droid orchestration, and comprehensive coverage for Brazilian fintech compliance.**
-
----
-
-## 📋 CHANGELOG v2.0
-
-```yaml
-ENHANCEMENTS:
-  atomic_tasks: "150+ granular tasks organized by domain and severity"
-  route_testing: "TanStack Router v1.139+ type-safe validation suite"
-  hook_testing: "React 19 hooks with exhaustive-deps enforcement"
-  lint_coverage: "Biome 2.3.7 with all domains (react, a11y, security, performance)"
-  database_validation: "Drizzle ORM + Neon type sync and RLS audit"
-  parallel_execution: "Optimized droid orchestration with dependency graphs"
-  brazilian_compliance: "LGPD, PIX, BCB auto-activated validation"
-  mcp_integration: "Context7 + Tavily + Serena for research-driven fixes"
-```
+**Complete quality control pipeline for Bun + Vite + Convex + TanStack Router applications with Railway deployment verification.**
 
 ---
 
-## 🎯 Core Philosophy
+## 🏗️ ARCHITECTURAL OVERVIEW
 
-**Mantra**: _"Detect → Research → Decompose → Implement → Validate"_
-
-**Mission**: Research-first quality control with atomic task granularity, ensuring all improvements are based on official documentation and ≥95% cross-validation accuracy.
-
-**Quality Standard**: Zero tolerance for lint errors, type errors, and security vulnerabilities.
-
----
-
-## 🏗️ DOMAIN ARCHITECTURE
-
+### System Components
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      QUALITY CONTROL DOMAINS                                │
+│                        DEPLOYMENT ARCHITECTURE                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │   ROUTES    │  │    HOOKS    │  │    LINT     │  │  FRONTEND   │        │
-│  │             │  │             │  │             │  │             │        │
-│  │ TanStack    │  │ React 19    │  │ Biome 2.3   │  │ Components  │        │
-│  │ Router      │  │ Rules       │  │ All Domains │  │ A11y        │        │
-│  │ Type Safety │  │ Exhaustive  │  │ Security    │  │ Performance │        │
-│  │ Lazy Load   │  │ Deps        │  │ Style       │  │ UI/UX       │        │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘        │
-│         │                │                │                │               │
-│         └────────────────┴────────────────┴────────────────┘               │
-│                                   │                                        │
-│                        ┌──────────┴──────────┐                             │
-│                        │                     │                             │
-│                 ┌──────┴──────┐       ┌──────┴──────┐                      │
-│                 │  DATABASE   │       │  BRAZILIAN  │                      │
-│                 │             │       │  COMPLIANCE │                      │
-│                 │ Drizzle ORM │       │             │                      │
-│                 │ Neon/RLS    │       │ LGPD/PIX    │                      │
-│                 │ Type Sync   │       │ BCB         │                      │
-│                 └─────────────┘       └─────────────┘                      │
+│  ┌─────────────────┐          ┌─────────────────┐                        │
+│  │   FRONTEND      │          │    BACKEND      │                        │
+│  │                 │          │                 │                        │
+│  │ Railway (Docker)│◄────────►│    Convex       │                        │
+│  │ Vite Build      │  Auth    │ Real-time DB    │                        │
+│  │ Static Hosting  │◄────────►│ + Functions     │                        │
+│  │                 │  Clerk   │                 │                        │
+│  └─────────────────┘          └─────────────────┘                        │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Tech Stack Integration
+- **Runtime**: Bun (package manager + execution)
+- **Frontend**: React 19 + Vite + TanStack Router
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Backend**: Convex (database + real-time functions)
+- **Auth**: Clerk (authentication)
+- **Deploy**: Railway (frontend) + Convex (backend)
+
 ---
 
-## 🤖 DROID ORCHESTRATION MATRIX
+## 🎯 Quality Control Philosophy
 
-### Agent Expertise & Responsibilities
+**Execution Order**: Local Checks → Deployment Validation → End-to-End Testing
 
-```yaml
-DROID_ECOSYSTEM:
-  apex-researcher:
-    role: "Research Coordination & Solution Discovery"
-    expertise:
-      - Official documentation research (Context7)
-      - Web intelligence gathering (Tavily)
-      - Codebase pattern analysis (Serena)
-      - Cross-validation synthesis
-    triggers:
-      - New error categories discovered
-      - Complex architectural decisions
-      - Brazilian compliance requirements
-      - Performance optimization research
-    mcps: [context7, tavily, serena, sequential-thinking]
+**Gate Principle**: Deployments MUST NOT proceed if any local check fails
 
-  code-reviewer:
-    role: "Quality Analysis & Validation"
-    expertise:
-      - Biome lint analysis (all domains)
-      - TypeScript type checking
-      - Security vulnerability scanning
-      - Code quality metrics
-    triggers:
-      - Pre-implementation detection
-      - Post-implementation validation
-      - Security audit requirements
-      - Compliance verification
-    tools: [biome, tsc, oxlint, knip]
+**Validation Standard**: Zero tolerance for lint errors, type errors, and configuration mismatches
 
-  apex-dev:
-    role: "Implementation & Fixing"
-    expertise:
-      - TypeScript/React implementation
-      - Hook refactoring
-      - Route type safety fixes
-      - Performance optimization
-    triggers:
-      - Atomic task implementation
-      - TDD workflow execution
-      - Refactoring complex code
-      - Integration fixes
-    tools: [bun, vitest, biome]
+---
 
-  database-specialist:
-    role: "Database Quality & Compliance"
-    expertise:
-      - Drizzle ORM schema validation
-      - Neon PostgreSQL type sync
-      - RLS policy implementation
-      - Migration health checks
-    triggers:
-      - Schema/type mismatches
-      - RLS coverage gaps
-      - Migration issues
-      - LGPD data compliance
-    tools: [drizzle-kit, neon-cli]
+## 📋 EXECUTION PHASES
 
-  apex-ui-ux-designer:
-    role: "Frontend Quality & Accessibility"
-    expertise:
-      - Component accessibility audit
-      - UI/UX pattern validation
-      - Responsive design testing
-      - Brazilian localization
-    triggers:
-      - A11y lint violations
-      - WCAG compliance gaps
-      - UI component issues
-      - Mobile responsiveness
-    tools: [axe-core, playwright]
-```
+### 🔄 High-Level Sequence
 
-### Parallel Execution Strategy
-
-```yaml
-PARALLEL_EXECUTION_MATRIX:
-  phase_0_discovery:
-    parallel: false
-    agents: [apex-researcher]
-    purpose: "Map codebase state and patterns"
-    estimated_time: "15-30min"
-
-  phase_1_detection:
-    parallel: true
-    tracks:
-      track_1:
-        agents: [code-reviewer]
-        focus: [routes, hooks, lint, frontend]
-      track_2:
-        agents: [database-specialist]
-        focus: [schema, rls, migrations]
-    purpose: "Comprehensive error detection"
-    estimated_time: "30-45min"
-
-  phase_2_research:
-    parallel: true
-    tracks:
-      track_1:
-        agents: [apex-researcher]
-        focus: [typescript, biome, react-hooks]
-        mcps: [context7, tavily]
-      track_2:
-        agents: [apex-researcher]
-        focus: [tanstack-router, drizzle]
-        mcps: [context7, serena]
-    purpose: "Official solution research"
-    estimated_time: "20-40min"
-
-  phase_3_decomposition:
-    parallel: false
-    agents: [apex-researcher, code-reviewer]
-    purpose: "Atomic task generation"
-    estimated_time: "15-25min"
-
-  phase_4_implementation:
-    parallel: true
-    dependency_aware: true
-    tracks:
-      track_1:
-        agents: [apex-dev]
-        focus: [routes, hooks, lint-core]
-      track_2:
-        agents: [database-specialist]
-        focus: [database, compliance]
-      track_3:
-        agents: [apex-ui-ux-designer]
-        focus: [frontend, a11y]
-    purpose: "Fix implementation"
-    estimated_time: "2-4 hours"
-
-  phase_5_validation:
-    parallel: true
-    agents: [code-reviewer, database-specialist]
-    purpose: "Quality gate verification"
-    estimated_time: "20-30min"
+```mermaid
+graph LR
+    A[Local Quality Checks] -->|All Pass| B[Deployment Validation]
+    B --> C[End-to-End Testing]
+    C --> D[Production Ready]
+    
+    A -->|Any Fail| E[Fix Issues]
+    E --> A
+    
+    B -->|Issues| F[Debug Deployment]
+    F --> B
 ```
 
 ---
 
-## 📍 PHASE 0: DISCOVERY & CONTEXT MAPPING
+## 📍 PHASE 1: LOCAL QUALITY CHECKS
 
-### 🔬 Agent: apex-researcher
+> **⚠️ CRITICAL GATE**: Do NOT proceed to deployment if ANY check fails
 
-**Goal**: Map current codebase state, identify patterns, and establish baseline.
+### 1.1 Code Quality & Linting
+```bash
+# Check code formatting and lint rules
+bun run lint:check
 
-**Complexity**: L5 (Multi-source analysis)
+# Expected: 0 errors, 0 warnings
+# If issues found: bun run lint to auto-fix
+```
 
-```yaml
-DISCOVERY_TASKS:
-  D-001:
-    name: "Configuration Audit"
-    files:
-      - biome.json
-      - tsconfig.json
-      - vitest.config.ts
-      - drizzle.config.ts
-      - tsr.config.json
-      - package.json
-    output: "Configuration baseline report"
+### 1.2 Type Safety & Build Verification
+```bash
+# Type checking (included in build)
+bun run build
 
-  D-002:
-    name: "Route Structure Mapping"
-    scope: "src/routes/**"
-    analyze:
-      - File-based route patterns
-      - Lazy loading configurations
-      - Type exports
-      - Search/params validation
-    output: "Route architecture map"
+# Expected: Clean build with no TypeScript errors
+# This command runs both Vite build and tsc --noEmit
+```
 
-  D-003:
-    name: "Hook Inventory"
-    scope: "src/hooks/**"
-    analyze:
-      - Custom hook patterns
-      - Dependency arrays
-      - State management patterns
-      - Side effect patterns
-    output: "Hook catalog with risk assessment"
+### 1.3 Test Coverage
+```bash
+# Run tests with coverage
+bun run test:coverage
 
-  D-004:
-    name: "Database Schema Analysis"
-    scope: "src/db/schema/**"
-    analyze:
-      - Table definitions
-      - Type exports
-      - Relation patterns
-      - RLS policies
-    output: "Database architecture map"
+# Expected: All tests pass, coverage metrics maintained
+# Coverage report generated in coverage/ directory
+```
 
-  D-005:
-    name: "Test Coverage Baseline"
-    command: "bun test:coverage --reporter=json"
-    analyze:
-      - Current coverage percentages
-      - Uncovered critical paths
-      - Test patterns used
-    output: "Coverage baseline report"
+### 1.4 Local Development Validation
+```bash
+# Verify local development setup
+bun run dev
+
+# Expected: Application starts successfully on http://localhost:5173
+# No runtime errors in browser console
 ```
 
 ---
 
-## 📍 PHASE 1: MULTI-DOMAIN ERROR DETECTION
+## 📍 PHASE 2: DEPLOYMENT VALIDATION
 
-### 🔍 Track 1: Code-Reviewer (Routes, Hooks, Lint, Frontend)
+> **✅ PREREQUISITE**: Phase 1 must pass completely
 
-#### 1.1 ROUTE DETECTION TASKS
+### 2.1 Frontend Deployment (Railway)
 
-```yaml
-ROUTE_DETECTION:
-  RT-D01:
-    name: "Route Type Safety Scan"
-    command: "bun type-check src/routes"
-    detect:
-      - Missing route type exports
-      - Invalid createFileRoute usage
-      - Search param type mismatches
-      - Path param validation errors
-    severity: critical
+#### Prerequisites
+```bash
+# Install Railway CLI (if not installed)
+npm install -g @railway/cli
 
-  RT-D02:
-    name: "Lazy Loading Validation"
-    pattern: "*.lazy.tsx"
-    detect:
-      - Missing lazy counterpart files
-      - Invalid lazy export patterns
-      - Suspense boundary gaps
-    severity: high
+# Login to Railway
+railway login
 
-  RT-D03:
-    name: "Route Tree Consistency"
-    file: "src/routeTree.gen.ts"
-    detect:
-      - Stale generated routes
-      - Missing route registrations
-      - Type mismatches
-    severity: critical
-
-  RT-D04:
-    name: "Navigation Type Safety"
-    pattern: "useNavigate|Link|redirect"
-    detect:
-      - Untyped navigation calls
-      - Missing 'from' prop narrowing
-      - Invalid route references
-    severity: high
+# Target correct project
+railway use <your-project-id>
+# OR set RAILWAY_TOKEN environment variable
 ```
 
-#### 1.2 HOOK DETECTION TASKS
+#### Deployment Status Verification
+```bash
+# Check current deployment status
+railway status
 
-```yaml
-HOOK_DETECTION:
-  HK-D01:
-    name: "Exhaustive Dependencies Scan"
-    rule: "correctness/useExhaustiveDependencies"
-    command: "bun check --only=correctness/useExhaustiveDependencies src/hooks"
-    detect:
-      - Missing dependencies in useEffect
-      - Missing dependencies in useMemo
-      - Missing dependencies in useCallback
-    severity: critical
-
-  HK-D02:
-    name: "Rules of Hooks Violations"
-    patterns:
-      - "Conditional hook calls"
-      - "Hooks after early returns"
-      - "Hooks in loops"
-    severity: critical
-
-  HK-D03:
-    name: "Custom Hook Patterns"
-    scope: "src/hooks/use*.ts"
-    detect:
-      - Non-standard return types
-      - Missing cleanup functions
-      - Memory leak patterns
-    severity: high
+# Expected: Service running, healthy status
+# Note the public URL for validation
 ```
 
-#### 1.3 LINT DETECTION TASKS
+#### Trigger Deployment (if needed)
+```bash
+# Push changes to trigger deployment
+git add .
+git commit -m "chore: update deployment"
+git push origin main
 
-```yaml
-LINT_DETECTION:
-  LT-D01:
-    name: "TypeScript Strict Mode Violations"
-    command: "bun type-check --strict"
-    detect:
-      - any types (noExplicitAny)
-      - Unused variables (noUnusedLocals)
-      - Missing return types
-    severity: critical
-
-  LT-D02:
-    name: "Security Domain Scan"
-    command: "bun check --only=security src"
-    rules:
-      - noDangerouslySetInnerHtml
-      - noGlobalEval
-    severity: critical
-
-  LT-D03:
-    name: "Suspicious Code Patterns"
-    command: "bun check --only=suspicious src"
-    rules:
-      - noExplicitAny
-      - noDoubleEquals
-      - noFloatingPromises
-    severity: high
+# Railway will automatically deploy on push
 ```
 
-#### 1.4 FRONTEND DETECTION TASKS
+#### Frontend Health Checks
+```bash
+# Retrieve public URL from Railway dashboard or status command
+PUBLIC_URL=$(railway status | grep -o 'https://[^[:space:]]*\.railway\.app')
 
-```yaml
-FRONTEND_DETECTION:
-  FE-D01:
-    name: "Accessibility Audit"
-    command: "bun check --only=a11y src/components src/routes"
-    rules:
-      - useAltText
-      - useButtonType
-      - useKeyWithClickEvents
-      - useValidAnchor
-    severity: high
+# Verify root path loads without errors
+curl -f "$PUBLIC_URL" || echo "❌ Frontend health check failed"
+
+# Open in browser for visual verification
+open "$PUBLIC_URL"
 ```
 
-### 🗄️ Track 2: Database-Specialist (Schema, RLS, Migrations)
+#### Log Analysis
+```bash
+# Check recent deployment logs
+railway logs --lines 50
 
-```yaml
-DATABASE_DETECTION:
-  DB-D01:
-    name: "Schema Type Sync"
-    command: "bun db:generate && diff src/db/schema"
-    detect:
-      - TypeScript types out of sync
-      - Missing $inferInsert/$inferSelect
-    severity: critical
+# Look for:
+# - Build errors
+# - Runtime errors
+# - Missing environment variables
+# - Convex connection issues
+```
 
-  DB-D02:
-    name: "RLS Policy Audit"
-    scope: "src/db/rls.ts"
-    detect:
-      - Tables missing RLS policies
-      - Overly permissive policies
-      - Missing user_id checks
-    severity: critical
+### 2.2 Backend Deployment (Convex)
 
-  DB-D03:
-    name: "LGPD Compliance Audit"
-    detect:
-      - Unencrypted PII fields
-      - Missing consent flags
-      - Audit trail gaps
-    severity: critical
-    brazilian_compliance: true
+#### Schema & Function Deployment
+```bash
+# Deploy Convex schema and functions to production
+npm run deploy:convex
+
+# Expected: Successful deployment confirmation
+# Note the deployment URL/ID
+```
+
+#### Active Deployment Verification
+```bash
+# List all Convex deployments
+npx convex deployments list
+
+# Expected: Your deployment appears as 'Active'
+# Verify CONVEX_DEPLOYMENT in .env.local matches active deployment
+```
+
+#### Environment Variable Alignment
+```bash
+# Verify local Convex URL matches deployment
+echo "Local CONVEX_URL: $VITE_CONVEX_URL"
+echo "Local DEPLOYMENT: $CONVEX_DEPLOYMENT"
+
+# These should match the active Convex deployment
+```
+
+#### Backend Function Validation
+```bash
+# Test key Convex functions are accessible
+npx convex run --prod api.leads.listLeads
+npx convex run --prod api.users.current
+
+# Expected: Functions execute without errors
+# May need authentication for some functions
 ```
 
 ---
 
-## 📍 PHASE 2: RESEARCH-DRIVEN SOLUTIONS
+## 📍 PHASE 3: ENVIRONMENT VARIABLE CONSISTENCY
 
-### 🔬 Agent: apex-researcher
+> **🔧 CRITICAL**: Environment variables must align between local, Railway, and Convex
 
-**MCP Integration Strategy**:
+### 3.1 Critical Variables Mapping
 
-```yaml
-MCP_RESEARCH_MATRIX:
-  context7_queries:
-    tanstack_router:
-      library_id: "/tanstack/router"
-      topics:
-        - "file-based routing type safety"
-        - "createFileRoute validation"
-        - "search params zod"
-        - "lazy loading patterns"
+| Variable | Purpose | Location | Verification |
+|----------|---------|-----------|--------------|
+| `VITE_CONVEX_URL` | Convex backend URL | `.env.local` + Railway | Must match active Convex deployment |
+| `CONVEX_DEPLOYMENT` | Convex deployment ID | `.env.local` | Must match active deployment from list |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk auth key | `.env.local` + Railway | Required for app initialization |
 
-    biome:
-      library_id: "/websites/biomejs_dev_guides"
-      topics:
-        - "useExhaustiveDependencies fix"
-        - "noExplicitAny solutions"
-        - "import organization"
+### 3.2 Environment Verification Steps
 
-    drizzle:
-      library_id: "/drizzle-team/drizzle-orm-docs"
-      topics:
-        - "neon postgres type safety"
-        - "schema validation"
-        - "RLS patterns"
+```bash
+# Step 1: Check local environment
+cat .env.local
+# Expected: All 3 variables present and non-empty
 
-  tavily_queries:
-    - "Biome 2.3 migration guide 2025"
-    - "TanStack Router v1.139 type safety"
-    - "Drizzle ORM Neon best practices"
-    - "React 19 hook patterns"
-    - "Brazilian LGPD database compliance"
+# Step 2: Verify Convex deployment alignment
+npx convex deployments list
+# Look for your deployment marked as "Active"
+# Compare with CONVEX_DEPLOYMENT in .env.local
+
+# Step 3: Get Convex URL from dashboard
+# Convex Dashboard → Settings → Deployment URL
+# Verify this matches VITE_CONVEX_URL in .env.local
+
+# Step 4: Check Railway environment variables
+railway variables list
+# Verify VITE_CONVEX_URL and VITE_CLERK_PUBLISHABLE_KEY are set
+```
+
+### 3.3 Common Configuration Issues
+
+#### Issue: Missing VITE_CLERK_PUBLISHABLE_KEY
+```bash
+# Error: Missing VITE_CLERK_PUBLISHABLE_KEY (from src/main.tsx)
+# Solution: Add to .env.local AND Railway environment variables
+```
+
+#### Issue: Convex URL Mismatch
+```bash
+# Symptom: Frontend can't connect to backend
+# Solution: Update VITE_CONVEX_URL to match active Convex deployment
+# Remember: Railway needs redeploy after env var changes
+```
+
+#### Issue: Deployment ID Drift
+```bash
+# Symptom: Local deployment ID differs from production
+# Solution: Run `npm run deploy:convex` and update .env.local
+```
+
+### 3.4 Environment Update Protocol
+
+```bash
+# 1. Update Convex deployment
+npm run deploy:convex
+
+# 2. Note new deployment URL/ID
+# 3. Update .env.local
+echo "VITE_CONVEX_URL=https://new-deployment.convex.cloud" >> .env.local
+echo "CONVEX_DEPLOYMENT=dev:new-deployment-id" >> .env.local
+
+# 4. Update Railway environment variables
+railway variables set VITE_CONVEX_URL=https://new-deployment.convex.cloud
+railway variables set VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key
+
+# 5. Trigger Railway redeploy
+git add .env.local
+git commit -m "chore: update convex deployment"
+git push origin main
 ```
 
 ---
 
-## 📍 PHASE 3: ATOMIC TASK DECOMPOSITION
+## 📍 PHASE 4: END-TO-END VALIDATION
 
-### Complete Atomic Task Catalog
+> **✅ PREREQUISITE**: Phases 1-3 must pass completely
 
-#### 3.1 ROUTE TASKS (RT-XXX)
+### 4.1 Frontend-Backend Integration Test
 
-```yaml
-ATOMIC_TASKS_ROUTES:
-  RT-101:
-    id: "RT-101"
-    name: "Fix routeTree.gen.ts type errors"
-    category: "routes"
-    severity: "critical"
-    files: ["src/routeTree.gen.ts"]
-    action: |
-      1. Run: bunx @tanstack/router-cli generate
-      2. Verify all routes registered
-      3. Check for type mismatches
-    validation: "bun type-check src/routeTree.gen.ts"
-    estimated_time: "10min"
-    assigned_to: "apex-dev"
-    dependencies: []
+```bash
+# Open deployed Railway URL
+open https://your-app.railway.app
 
-  RT-102:
-    id: "RT-102"
-    name: "Add type-safe search params to dashboard"
-    category: "routes"
-    severity: "critical"
-    files: ["src/routes/dashboard.tsx"]
-    action: |
-      1. Define Zod schema for search params
-      2. Add validateSearch to route config
-      3. Type searchParams in component
-    validation: "bun type-check src/routes/dashboard.tsx"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
+# Test authentication flow
+# 1. Click sign-in/sign-up
+# 2. Complete authentication with Clerk
+# 3. Verify user is logged in
 
-  RT-103:
-    id: "RT-103"
-    name: "Fix lazy loading in billing routes"
-    category: "routes"
-    severity: "high"
-    files: ["src/routes/billing.lazy.tsx", "src/routes/billing.tsx"]
-    action: |
-      1. Verify lazy/non-lazy file pairs
-      2. Ensure proper code splitting
-      3. Add Suspense boundaries
-    validation: "bun build:client"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
-
-  RT-104:
-    id: "RT-104"
-    name: "Add 'from' prop narrowing to Links"
-    category: "routes"
-    severity: "high"
-    files: ["src/components/navigation/**/*.tsx"]
-    action: |
-      1. Identify all Link components
-      2. Add from={Route.fullPath}
-      3. Improve TypeScript inference
-    validation: "bun type-check src/components/navigation"
-    estimated_time: "30min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
-
-  RT-105:
-    id: "RT-105"
-    name: "Validate path params in dynamic routes"
-    category: "routes"
-    severity: "high"
-    files: ["src/routes/**/$*.tsx"]
-    action: |
-      1. Add Zod validation for path params
-      2. Handle invalid params with redirects
-    validation: "bun test src/routes/**/*.test.tsx"
-    estimated_time: "35min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-102"]
-
-  RT-106:
-    id: "RT-106"
-    name: "Fix beforeLoad error handling"
-    category: "routes"
-    severity: "high"
-    files: ["src/routes/*.tsx"]
-    action: |
-      1. Add try/catch to beforeLoad
-      2. Type context returns
-      3. Handle async errors
-    validation: "bun type-check src/routes"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
-
-  RT-107:
-    id: "RT-107"
-    name: "Fix configuracoes route type safety"
-    category: "routes"
-    severity: "high"
-    files: ["src/routes/configuracoes.tsx", "src/routes/configuracoes.lazy.tsx"]
-    action: |
-      1. Add proper route types
-      2. Fix search param validation
-      3. Verify lazy loading
-    validation: "bun type-check src/routes/configuracoes*.tsx"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
-
-  RT-108:
-    id: "RT-108"
-    name: "Fix ai-chat route integration"
-    category: "routes"
-    severity: "medium"
-    files: ["src/routes/ai-chat.tsx", "src/routes/ai-chat.lazy.tsx"]
-    action: |
-      1. Verify route configuration
-      2. Fix any type issues
-      3. Ensure proper loading states
-    validation: "bun type-check src/routes/ai-chat*.tsx"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: ["RT-101"]
+# Test Convex integration
+# 1. Navigate to CRM: /crm
+# 2. Verify leads load without errors
+# 3. Check browser console for connection issues
 ```
 
-#### 3.2 HOOK TASKS (HK-XXX)
+### 4.2 Functional Workflow Validation
 
-```yaml
-ATOMIC_TASKS_HOOKS:
-  HK-101:
-    id: "HK-101"
-    name: "Fix useFinancialEvents exhaustive deps"
-    category: "hooks"
-    severity: "critical"
-    files: ["src/hooks/useFinancialEvents.ts"]
-    action: |
-      1. Identify all useEffect/useMemo/useCallback
-      2. Add missing dependencies
-      3. Use useCallback for function deps
-      4. Verify no stale closures
-    validation: "bun check src/hooks/useFinancialEvents.ts"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-102:
-    id: "HK-102"
-    name: "Fix useDashboard hook dependencies"
-    category: "hooks"
-    severity: "critical"
-    files: ["src/hooks/useDashboard.ts"]
-    action: |
-      1. Audit all effect dependencies
-      2. Stabilize callbacks with useCallback
-      3. Memoize computed values
-    validation: "bun check src/hooks/useDashboard.ts"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-103:
-    id: "HK-103"
-    name: "Fix useVoiceRecognition cleanup"
-    category: "hooks"
-    severity: "high"
-    files: ["src/hooks/useVoiceRecognition.ts"]
-    action: |
-      1. Add proper cleanup in useEffect
-      2. Handle browser API permissions
-      3. Abort pending ops on unmount
-    validation: "bun test src/hooks/useVoiceRecognition.test.ts"
-    estimated_time: "30min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-104:
-    id: "HK-104"
-    name: "Fix useTransactions query patterns"
-    category: "hooks"
-    severity: "high"
-    files: ["src/hooks/use-transactions.ts"]
-    action: |
-      1. Stabilize query keys
-      2. Add proper error handling
-      3. Implement cache invalidation
-    validation: "bun check src/hooks/use-transactions.ts"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-105:
-    id: "HK-105"
-    name: "Fix useCompliance LGPD hooks"
-    category: "hooks"
-    severity: "critical"
-    files: ["src/hooks/use-compliance.ts"]
-    action: |
-      1. Verify consent state management
-      2. Add audit logging
-      3. Handle data retention
-    validation: "bun test:healthcare"
-    estimated_time: "35min"
-    assigned_to: "apex-dev"
-    dependencies: []
-    brazilian_compliance: true
-
-  HK-106:
-    id: "HK-106"
-    name: "Fix useAIChat dependencies"
-    category: "hooks"
-    severity: "high"
-    files: ["src/hooks/useAIChat.ts"]
-    action: |
-      1. Fix useEffect dependencies
-      2. Stabilize message callbacks
-      3. Handle streaming cleanup
-    validation: "bun check src/hooks/useAIChat.ts"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-107:
-    id: "HK-107"
-    name: "Fix useBankAccounts query hooks"
-    category: "hooks"
-    severity: "high"
-    files: ["src/hooks/useBankAccounts.ts"]
-    action: |
-      1. Fix query key dependencies
-      2. Add mutation invalidation
-      3. Handle loading states
-    validation: "bun check src/hooks/useBankAccounts.ts"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-108:
-    id: "HK-108"
-    name: "Fix useProfile dependencies"
-    category: "hooks"
-    severity: "medium"
-    files: ["src/hooks/useProfile.ts"]
-    action: |
-      1. Fix effect dependencies
-      2. Memoize derived state
-    validation: "bun check src/hooks/useProfile.ts"
-    estimated_time: "15min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-109:
-    id: "HK-109"
-    name: "Fix useGoogleCalendarSync dependencies"
-    category: "hooks"
-    severity: "medium"
-    files: ["src/hooks/use-google-calendar-sync.ts"]
-    action: |
-      1. Fix OAuth callback deps
-      2. Add proper cleanup
-      3. Handle sync errors
-    validation: "bun check src/hooks/use-google-calendar-sync.ts"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  HK-110:
-    id: "HK-110"
-    name: "Fix useVoiceCommand dependencies"
-    category: "hooks"
-    severity: "medium"
-    files: ["src/hooks/useVoiceCommand.ts"]
-    action: |
-      1. Fix command handler deps
-      2. Stabilize recognition callbacks
-    validation: "bun check src/hooks/useVoiceCommand.ts"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: ["HK-103"]
+```bash
+# Test key user workflows:
+# ✅ Authentication (Clerk)
+# ✅ Data fetching (Convex functions)
+# ✅ Navigation (TanStack Router)
+# ✅ Component rendering (React 19 + shadcn/ui)
 ```
 
-#### 3.3 LINT TASKS (LT-XXX)
+### 4.3 Error Boundary Testing
 
-```yaml
-ATOMIC_TASKS_LINT:
-  LT-101:
-    id: "LT-101"
-    name: "Remove explicit any in core utils"
-    category: "lint"
-    severity: "critical"
-    scope: "src/lib/**/*.ts"
-    action: |
-      1. Run: bun check --only=suspicious/noExplicitAny src/lib
-      2. Replace any with proper types
-      3. Use generics where appropriate
-    validation: "bun check src/lib"
-    estimated_time: "45min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-102:
-    id: "LT-102"
-    name: "Fix noExplicitAny in services"
-    category: "lint"
-    severity: "critical"
-    scope: "src/services/**/*.ts"
-    action: |
-      1. Define proper interfaces
-      2. Type API responses
-      3. Use Zod for validation
-    validation: "bun check src/services"
-    estimated_time: "40min"
-    assigned_to: "apex-dev"
-    dependencies: ["LT-101"]
-
-  LT-103:
-    id: "LT-103"
-    name: "Fix security violations"
-    category: "lint"
-    severity: "critical"
-    scope: "src/**/*.tsx"
-    action: |
-      1. Remove dangerouslySetInnerHTML
-      2. Use sanitized alternatives
-      3. Use react-markdown for safe rendering
-    validation: "bun lint:security"
-    estimated_time: "30min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-104:
-    id: "LT-104"
-    name: "Remove unused imports"
-    category: "lint"
-    severity: "high"
-    command: "bun lint:fix"
-    action: |
-      1. Run Biome auto-fix
-      2. Review removed imports
-      3. Verify no broken refs
-    validation: "bun check ."
-    estimated_time: "15min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-105:
-    id: "LT-105"
-    name: "Fix unused variables"
-    category: "lint"
-    severity: "high"
-    scope: "src/**/*.{ts,tsx}"
-    action: |
-      1. Remove or prefix with underscore
-      2. Verify intentional usage
-    validation: "bun check --only=correctness/noUnusedVariables src"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: ["LT-104"]
-
-  LT-106:
-    id: "LT-106"
-    name: "Fix floating promises"
-    category: "lint"
-    severity: "high"
-    rule: "nursery/noFloatingPromises"
-    action: |
-      1. Add await to async calls
-      2. Use void for fire-and-forget
-      3. Add error handling
-    validation: "bun check --only=nursery/noFloatingPromises src"
-    estimated_time: "35min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-107:
-    id: "LT-107"
-    name: "Organize imports consistently"
-    category: "lint"
-    severity: "low"
-    command: "bun lint:fix"
-    action: |
-      1. Apply Biome import organization
-      2. Verify blank line separation
-    validation: "bun check --only=source.organizeImports src"
-    estimated_time: "10min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-108:
-    id: "LT-108"
-    name: "Fix noDoubleEquals violations"
-    category: "lint"
-    severity: "high"
-    action: |
-      1. Replace == with ===
-      2. Replace != with !==
-    validation: "bun check --only=suspicious/noDoubleEquals src"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  LT-109:
-    id: "LT-109"
-    name: "Fix complexity violations"
-    category: "lint"
-    severity: "medium"
-    action: |
-      1. Refactor functions > 25 complexity
-      2. Extract helper functions
-      3. Simplify conditionals
-    validation: "bun check --only=complexity/noExcessiveCognitiveComplexity src"
-    estimated_time: "45min"
-    assigned_to: "apex-dev"
-    dependencies: []
+```bash
+# Test error handling:
+# 1. Navigate to non-existent route (should show 404)
+# 2. Disconnect from network (should handle gracefully)
+# 3. Clear browser storage (should re-authenticate properly)
 ```
 
-#### 3.4 FRONTEND TASKS (FE-XXX)
+### 4.4 Performance Verification
 
-```yaml
-ATOMIC_TASKS_FRONTEND:
-  FE-101:
-    id: "FE-101"
-    name: "Fix button type accessibility"
-    category: "frontend"
-    severity: "high"
-    rule: "a11y/useButtonType"
-    action: |
-      1. Add type="button" to non-submit
-      2. Add type="submit" to form submit
-    validation: "bun check --only=a11y/useButtonType src/components"
-    estimated_time: "20min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-102:
-    id: "FE-102"
-    name: "Add alt text to images"
-    category: "frontend"
-    severity: "high"
-    rule: "a11y/useAltText"
-    action: |
-      1. Add descriptive alt text
-      2. Use empty alt for decorative
-    validation: "bun check --only=a11y/useAltText src"
-    estimated_time: "25min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-103:
-    id: "FE-103"
-    name: "Fix keyboard event handlers"
-    category: "frontend"
-    severity: "high"
-    rule: "a11y/useKeyWithClickEvents"
-    action: |
-      1. Add onKeyDown with onClick
-      2. Handle Enter and Space
-      3. Ensure focusability
-    validation: "bun check --only=a11y/useKeyWithClickEvents src"
-    estimated_time: "30min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-104:
-    id: "FE-104"
-    name: "Fix anchor validation"
-    category: "frontend"
-    severity: "medium"
-    rule: "a11y/useValidAnchor"
-    action: |
-      1. Replace # with proper hrefs
-      2. Use button for non-navigation
-    validation: "bun check --only=a11y/useValidAnchor src"
-    estimated_time: "20min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-105:
-    id: "FE-105"
-    name: "Add SVG titles"
-    category: "frontend"
-    severity: "medium"
-    rule: "a11y/noSvgWithoutTitle"
-    action: |
-      1. Add <title> to meaningful SVGs
-      2. Add aria-hidden to decorative
-    validation: "bun check --only=a11y/noSvgWithoutTitle src"
-    estimated_time: "25min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-106:
-    id: "FE-106"
-    name: "Fix form accessibility"
-    category: "frontend"
-    severity: "high"
-    action: |
-      1. Add proper labels
-      2. Associate labels with inputs
-      3. Add error announcements
-    validation: "bun test:e2e:a11y"
-    estimated_time: "35min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
-
-  FE-107:
-    id: "FE-107"
-    name: "Fix focus management"
-    category: "frontend"
-    severity: "medium"
-    action: |
-      1. Remove positive tabindex
-      2. Ensure logical focus order
-      3. Add skip links
-    validation: "bun check --only=a11y/noPositiveTabindex src"
-    estimated_time: "25min"
-    assigned_to: "apex-ui-ux-designer"
-    dependencies: []
+```bash
+# Check load times with browser dev tools:
+# 1. Initial page load: < 3 seconds
+# 2. Route transitions: < 500ms
+# 3. API responses: < 1 second
 ```
 
-#### 3.5 DATABASE TASKS (DB-XXX)
+---
 
-```yaml
-ATOMIC_TASKS_DATABASE:
-  DB-101:
-    id: "DB-101"
-    name: "Sync Drizzle types with schema"
-    category: "database"
-    severity: "critical"
-    action: |
-      1. Run: bun db:generate
-      2. Compare generated types
-      3. Update imports
-    validation: "bun type-check src/db"
-    estimated_time: "20min"
-    assigned_to: "database-specialist"
-    dependencies: []
+## 🚀 QUICK REFERENCE COMMANDS
 
-  DB-102:
-    id: "DB-102"
-    name: "Implement missing RLS policies"
-    category: "database"
-    severity: "critical"
-    files: ["src/db/rls.ts"]
-    action: |
-      1. Audit user-facing tables
-      2. Add RLS for SELECT/INSERT/UPDATE/DELETE
-      3. Ensure user_id checks
-    validation: "bun db:compliance"
-    estimated_time: "45min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-101"]
-    brazilian_compliance: true
+### Local Quality Checks
+```bash
+# Full local quality check
+bun run lint:check && bun run build && bun run test:coverage
 
-  DB-103:
-    id: "DB-103"
-    name: "Add $inferInsert/$inferSelect types"
-    category: "database"
-    severity: "high"
-    scope: "src/db/schema/**/*.ts"
-    action: |
-      1. Export InsertType and SelectType
-      2. Use typeof table.$inferInsert
-      3. Update usages
-    validation: "bun type-check src/db/schema"
-    estimated_time: "30min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-101"]
-
-  DB-104:
-    id: "DB-104"
-    name: "Fix LGPD compliance gaps"
-    category: "database"
-    severity: "critical"
-    action: |
-      1. Audit PII fields
-      2. Add encryption for sensitive data
-      3. Implement consent tracking
-      4. Add audit trails
-    validation: "bun db:compliance"
-    estimated_time: "60min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-102"]
-    brazilian_compliance: true
-
-  DB-105:
-    id: "DB-105"
-    name: "Validate PIX schema compliance"
-    category: "database"
-    severity: "critical"
-    files: ["src/db/schema/pix*.ts"]
-    action: |
-      1. Verify BCB format compliance
-      2. Add transaction audit
-      3. Validate key formats
-    validation: "bun test:healthcare"
-    estimated_time: "40min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-101"]
-    brazilian_compliance: true
-
-  DB-106:
-    id: "DB-106"
-    name: "Optimize N+1 query patterns"
-    category: "database"
-    severity: "high"
-    scope: "src/db/**/*.ts"
-    action: |
-      1. Identify N+1 patterns
-      2. Add eager loading
-      3. Use batch queries
-    validation: "bun db:optimize"
-    estimated_time: "45min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-103"]
-
-  DB-107:
-    id: "DB-107"
-    name: "Add missing indexes"
-    category: "database"
-    severity: "medium"
-    action: |
-      1. Analyze query patterns
-      2. Add indexes for frequent queries
-      3. Verify performance improvement
-    validation: "bun db:health"
-    estimated_time: "30min"
-    assigned_to: "database-specialist"
-    dependencies: ["DB-106"]
+# Individual checks
+bun run lint:check          # Code quality and formatting
+bun run build               # TypeScript + build verification
+bun run test:coverage       # Test execution with coverage
+bun run dev                 # Local development validation
 ```
 
-#### 3.6 DEAD CODE TASKS (DC-XXX)
+### Deployment Commands
+```bash
+# Frontend (Railway)
+railway status              # Check deployment status
+railway logs --lines 50    # Check recent logs
+git push origin main         # Trigger new deployment
 
-```yaml
-ATOMIC_TASKS_DEADCODE:
-  DC-101:
-    id: "DC-101"
-    name: "Remove orphan files"
-    category: "deadcode"
-    severity: "medium"
-    command: "bunx knip"
-    action: |
-      1. Run knip for unused files
-      2. Verify files are truly unused
-      3. Remove or document
-    validation: "bunx knip --no-exit-code"
-    estimated_time: "30min"
-    assigned_to: "apex-dev"
-    dependencies: []
-
-  DC-102:
-    id: "DC-102"
-    name: "Remove unused exports"
-    category: "deadcode"
-    severity: "medium"
-    action: |
-      1. Identify exports without imports
-      2. Remove or mark as internal
-    validation: "bunx knip --include exports"
-    estimated_time: "25min"
-    assigned_to: "apex-dev"
-    dependencies: ["DC-101"]
-
-  DC-103:
-    id: "DC-103"
-    name: "Remove commented code"
-    category: "deadcode"
-    severity: "low"
-    action: |
-      1. Search for large comment blocks
-      2. Verify in git history
-      3. Remove
-    validation: "git diff --stat"
-    estimated_time: "20min"
-    assigned_to: "apex-dev"
-    dependencies: []
+# Backend (Convex)
+npm run deploy:convex       # Deploy schema and functions
+npx convex deployments list # List active deployments
+npx convex run --prod api.leads.listLeads  # Test functions
 ```
+
+### Environment Management
+```bash
+# Verify environment alignment
+cat .env.local
+railway variables list
+npx convex deployments list
+
+# Update environment after Convex deploy
+echo "VITE_CONVEX_URL=new-url" >> .env.local
+railway variables set VITE_CONVEX_URL=new-url
+git push origin main  # Trigger Railway redeploy
+```
+
+---
+
+## ⚠️ COMMON ISSUES & SOLUTIONS
+
+### Build Issues
+```bash
+# Problem: TypeScript errors
+# Solution: Check types in components and routes
+bun run build  # Will show specific errors
+
+# Problem: Vite build fails
+# Solution: Check for missing imports or syntax errors
+# Look at error output for file/line details
+```
+
+### Deployment Issues
+```bash
+# Problem: Railway deployment fails
+# Check: railway logs --lines 100
+# Common causes:
+# - Missing environment variables
+# - Build script failures
+# - Invalid Dockerfile
+
+# Problem: Convex deployment fails
+# Check: convex schema validity
+# Common causes:
+# - Invalid schema definitions
+# - Missing function exports
+# - Type mismatches
+```
+
+### Runtime Issues
+```bash
+# Problem: Frontend can't connect to Convex
+# Check 1: VITE_CONVEX_URL in .env.local
+# Check 2: VITE_CONVEX_URL in Railway variables
+# Check 3: Convex deployment is active
+
+# Problem: Authentication not working
+# Check 1: VITE_CLERK_PUBLISHABLE_KEY is set
+# Check 2: Clerk configuration is correct
+# Check 3: Auth component is properly integrated
+```
+
+---
+
+## 📊 SUCCESS METRICS
+
+### Quality Gates
+- ✅ **0 lint errors** (`bun run lint:check`)
+- ✅ **0 type errors** (`bun run build`)
+- ✅ **100% tests pass** (`bun run test:coverage`)
+- ✅ **Clean deployment** (Railway status: healthy)
+- ✅ **Backend functions accessible** (Convex CLI tests)
+
+### Performance Benchmarks
+- 🚀 **Page load**: < 3 seconds
+- 🚀 **Route transitions**: < 500ms
+- 🚀 **API responses**: < 1 second
+- 🚀 **Build time**: < 2 minutes
+
+### Reliability Indicators
+- 🟢 **All phases pass without intervention**
+- 🟢 **No manual environment fixes needed**
+- 🟢 **End-to-end workflows functional**
+- 🟢 **No console errors in production**
+
+---
+
+## 🔧 TROUBLESHOOTING GUIDE
+
+### Phase 1 Failures
+```bash
+# If lint fails:
+bun run lint  # Auto-fix common issues
+# Manual fixes needed for:
+# - TypeScript types
+# - Import organization
+# - Code style violations
+
+# If build fails:
+# Check TypeScript errors in output
+# Common issues:
+# - Missing type definitions
+# - Import path problems
+# - Component prop type mismatches
+
+# If tests fail:
+bun run test:watch  # Run in watch mode
+# Look for failing assertions
+# Check test setup and mocks
+```
+
+### Phase 2 Failures
+```bash
+# If Railway deployment fails:
+railway logs --lines 100
+# Look for build errors or runtime issues
+# Check Dockerfile and package.json scripts
+
+# If Convex deployment fails:
+# Validate schema syntax
+# Check function exports
+# Verify authentication configuration
+```
+
+### Phase 3 Environment Issues
+```bash
+# Environment variable mismatch:
+# 1. Get current Convex deployment
+npx convex deployments list
+
+# 2. Update .env.local
+# 3. Update Railway variables
+# 4. Trigger redeploy
+
+# URL format issues:
+# Convex URLs: https://<deployment>.convex.cloud
+# Railway URLs: https://<project>.railway.app
+```
+
+### Phase 4 Integration Issues
+```bash
+# Authentication flow broken:
+# 1. Check Clerk keys
+# 2. Verify auth provider setup
+# 3. Test with different users
+
+# Data loading fails:
+# 1. Check Convex function availability
+# 2. Verify network connectivity
+# 3. Check browser console for errors
+
+# Performance issues:
+# 1. Check bundle size
+# 2. Verify lazy loading
+# 3. Optimize images and assets
+```
+
+---
+
+*Quality Control v3.0 - Bun + Vite + Convex + TanStack Router Stack*
+*Last Updated: 2025-12-13*
 
 ---
 

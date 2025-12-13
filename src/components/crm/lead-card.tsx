@@ -44,9 +44,10 @@ export function LeadCard({ lead }: LeadCardProps) {
 	const isHot = lead.temperature === 'quente';
 	const isDragging = transform !== null;
 
-	const style = transform
-		? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-		: undefined;
+	const style = {
+		'--drag-x': transform?.x ?? 0,
+		'--drag-y': transform?.y ?? 0,
+	} as React.CSSProperties;
 
 	return (
 		<Card
@@ -55,7 +56,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 			style={style}
 			{...listeners}
 			{...attributes}
-			className={`p-3 cursor-grab active:cursor-grabbing lead-card transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_hsl(var(--primary)/0.2)] ${isDragging ? 'dragging' : ''}`}
+			className={`p-3 cursor-grab active:cursor-grabbing lead-card transition-all duration-200 ease-out hover:shadow-[0_12px_24px_-8px_hsl(var(--primary)/0.2)] ${isDragging ? 'dragging' : ''}`}
 		>
 			<div className="flex items-start gap-3">
 				<Avatar className="h-9 w-9 lead-avatar">

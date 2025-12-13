@@ -304,8 +304,12 @@
     background: hsl(var(--card) / 0.8);
   }
 
+  .lead-card {
+    transform: translate3d(var(--drag-x, 0px), var(--drag-y, 0px), 0);
+  }
+
   .lead-card.dragging {
-    transform: scale(1.05) rotate(2deg);
+    transform: translate3d(var(--drag-x, 0px), var(--drag-y, 0px), 0) scale(1.05) rotate(2deg);
     box-shadow: 0 24px 48px -12px hsl(var(--primary) / 0.4);
     cursor: grabbing;
     z-index: 50;
@@ -396,9 +400,12 @@
   }
 
   /* GPU-accelerated transforms */
-  .stats-card:hover,
-  .lead-card:hover {
+  .stats-card:hover {
     transform: translateY(-4px) translateZ(0);
+  }
+
+  .lead-card:hover:not(.dragging) {
+    transform: translate3d(var(--drag-x, 0px), var(--drag-y, 0px), 0) translateY(-2px);
   }
 
   /* Accessibility: Reduced Motion */
