@@ -8,106 +8,106 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as CrmIndexRouteImport } from './routes/crm/index'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as CrmIndexRouteImport } from './routes/crm/index';
+import { Route as IndexRouteImport } from './routes/index';
+import { Route as SignInRouteImport } from './routes/sign-in';
+import { Route as SignUpRouteImport } from './routes/sign-up';
 
 const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/sign-up',
+	path: '/sign-up',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/sign-in',
+	path: '/sign-in',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/',
+	path: '/',
+	getParentRoute: () => rootRouteImport,
+} as any);
 const CrmIndexRoute = CrmIndexRouteImport.update({
-  id: '/crm/',
-  path: '/crm/',
-  getParentRoute: () => rootRouteImport,
-} as any)
+	id: '/crm/',
+	path: '/crm/',
+	getParentRoute: () => rootRouteImport,
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/crm': typeof CrmIndexRoute
+	'/': typeof IndexRoute;
+	'/sign-in': typeof SignInRoute;
+	'/sign-up': typeof SignUpRoute;
+	'/crm': typeof CrmIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/crm': typeof CrmIndexRoute
+	'/': typeof IndexRoute;
+	'/sign-in': typeof SignInRoute;
+	'/sign-up': typeof SignUpRoute;
+	'/crm': typeof CrmIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
-  '/crm/': typeof CrmIndexRoute
+	__root__: typeof rootRouteImport;
+	'/': typeof IndexRoute;
+	'/sign-in': typeof SignInRoute;
+	'/sign-up': typeof SignUpRoute;
+	'/crm/': typeof CrmIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up' | '/crm'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up' | '/crm'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/crm/'
-  fileRoutesById: FileRoutesById
+	fileRoutesByFullPath: FileRoutesByFullPath;
+	fullPaths: '/' | '/sign-in' | '/sign-up' | '/crm';
+	fileRoutesByTo: FileRoutesByTo;
+	to: '/' | '/sign-in' | '/sign-up' | '/crm';
+	id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/crm/';
+	fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  SignInRoute: typeof SignInRoute
-  SignUpRoute: typeof SignUpRoute
-  CrmIndexRoute: typeof CrmIndexRoute
+	IndexRoute: typeof IndexRoute;
+	SignInRoute: typeof SignInRoute;
+	SignUpRoute: typeof SignUpRoute;
+	CrmIndexRoute: typeof CrmIndexRoute;
 }
 
 declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crm/': {
-      id: '/crm/'
-      path: '/crm'
-      fullPath: '/crm'
-      preLoaderRoute: typeof CrmIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-  }
+	interface FileRoutesByPath {
+		'/sign-up': {
+			id: '/sign-up';
+			path: '/sign-up';
+			fullPath: '/sign-up';
+			preLoaderRoute: typeof SignUpRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/sign-in': {
+			id: '/sign-in';
+			path: '/sign-in';
+			fullPath: '/sign-in';
+			preLoaderRoute: typeof SignInRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/': {
+			id: '/';
+			path: '/';
+			fullPath: '/';
+			preLoaderRoute: typeof IndexRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		'/crm/': {
+			id: '/crm/';
+			path: '/crm';
+			fullPath: '/crm';
+			preLoaderRoute: typeof CrmIndexRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+	}
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  SignInRoute: SignInRoute,
-  SignUpRoute: SignUpRoute,
-  CrmIndexRoute: CrmIndexRoute,
-}
+	IndexRoute: IndexRoute,
+	SignInRoute: SignInRoute,
+	SignUpRoute: SignUpRoute,
+	CrmIndexRoute: CrmIndexRoute,
+};
 export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+	._addFileChildren(rootRouteChildren)
+	._addFileTypes<FileRouteTypes>();

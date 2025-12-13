@@ -7,7 +7,7 @@
 		"defaultBranch": "main"
 	},
 	"files": {
-		"includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+		"includes": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
 		"ignoreUnknown": true,
 		"maxSize": 10485760
 	},
@@ -664,6 +664,25 @@
 					},
 					"style": {
 						"useNamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useNamingConvention": "off"
+					},
+					"nursery": {
+						"noShadow": "off"
+					},
+					"correctness": {
+						"noNestedComponentDefinitions": "off"
+					},
+					"suspicious": {
+						"noExplicitAny": "warn"
 					}
 				}
 			}
