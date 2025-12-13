@@ -53,6 +53,12 @@ export function Navbar() {
 							{item}
 						</button>
 					))}
+					<Link
+						to="/sign-in"
+						className="text-sm font-medium text-primary hover:text-primary/80 transition-colors tracking-wide"
+					>
+						Entrar
+					</Link>
 				</div>
 
 				{/* Desktop CTA */}
@@ -94,6 +100,13 @@ export function Navbar() {
 								{item}
 							</button>
 						))}
+						<Link
+							to="/sign-in"
+							onClick={() => setMobileMenuOpen(false)}
+							className="block text-sm font-medium text-primary hover:text-primary/80 transition-colors py-2"
+						>
+							Entrar
+						</Link>
 						<div className="flex flex-col space-y-2 pt-4 border-t border-border/50">
 							<Button asChild variant="ghost" size="sm" className="justify-start">
 								<Link to="/sign-in" onClick={() => setMobileMenuOpen(false)}>
