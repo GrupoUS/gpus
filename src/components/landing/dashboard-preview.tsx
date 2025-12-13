@@ -22,7 +22,7 @@ function PreviewCard({ title, value, icon: Icon, delay = 0 }: PreviewCardProps) 
 			transition={{
 				delay,
 				duration: 3,
-				repeat: Infinity,
+				repeat: Number.POSITIVE_INFINITY,
 				ease: 'easeInOut',
 			}}
 		>
@@ -70,10 +70,7 @@ export function DashboardPreview() {
 				</motion.div>
 
 				{/* Glass container */}
-				<motion.div
-					variants={fadeInUp}
-					className="relative max-w-5xl mx-auto"
-				>
+				<motion.div variants={fadeInUp} className="relative max-w-5xl mx-auto">
 					<div className="glass-card rounded-2xl p-8 md:p-12">
 						{/* Grid of floating cards */}
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

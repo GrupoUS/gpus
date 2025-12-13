@@ -14,10 +14,10 @@ import {
 	YAxis,
 } from 'recharts';
 
+import { api } from '../../../convex/_generated/api';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
-import { api } from '../../../convex/_generated/api';
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
 	component: DashboardPage,
@@ -210,9 +210,7 @@ function DashboardPage() {
 										<div key={item.name} className="space-y-1">
 											<div className="flex justify-between text-sm font-sans">
 												<span>{item.name}</span>
-												<span className="font-medium font-display tabular-nums">
-													{item.value}
-												</span>
+												<span className="font-medium font-display tabular-nums">{item.value}</span>
 											</div>
 											<div className="h-2 rounded-full bg-muted overflow-hidden">
 												<div
@@ -271,9 +269,7 @@ function DashboardPage() {
 										<div key={item.name} className="space-y-1">
 											<div className="flex justify-between text-sm font-sans">
 												<span>{item.name}</span>
-												<span className="font-medium font-display tabular-nums">
-													{item.value}
-												</span>
+												<span className="font-medium font-display tabular-nums">{item.value}</span>
 											</div>
 											<div className="h-2 rounded-full bg-muted overflow-hidden">
 												<div

@@ -9,28 +9,33 @@ export function Hero() {
 	return (
 		<section className="relative min-h-screen flex items-center justify-center overflow-hidden">
 			{/* Grid Pattern Background */}
-			<div 
+			<div
 				className="absolute inset-0 opacity-20"
 				style={{
 					backgroundImage: `linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)`,
-					backgroundSize: '50px 50px'
+					backgroundSize: '50px 50px',
 				}}
 			/>
-			
+
 			{/* Gradient Overlay */}
 			<div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/80" />
 
 			{/* Background Effects */}
 			<div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10 pointer-events-none">
-				<motion.div 
+				<motion.div
 					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
 					animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-					transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+					transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
 				/>
-				<motion.div 
+				<motion.div
 					className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-us-gold/10 rounded-full blur-3xl"
 					animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-					transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+					transition={{
+						duration: 5,
+						repeat: Number.POSITIVE_INFINITY,
+						ease: 'easeInOut',
+						delay: 1,
+					}}
 				/>
 			</div>
 
@@ -47,10 +52,7 @@ export function Hero() {
 				>
 					<div className="flex items-center gap-1">
 						{[...Array(3)].map((_, i) => (
-							<Star
-								key={i}
-								className="h-3 w-3 fill-us-gold text-us-gold"
-							/>
+							<Star key={i} className="h-3 w-3 fill-us-gold text-us-gold" />
 						))}
 					</div>
 					<span className="font-display">Nova Era de Gestão</span>
@@ -79,10 +81,7 @@ export function Hero() {
 				</motion.p>
 
 				{/* CTAs */}
-				<motion.div
-					variants={fadeInUp}
-					className="flex flex-col sm:flex-row gap-4"
-				>
+				<motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
 					<Button
 						asChild
 						size="lg"

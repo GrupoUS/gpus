@@ -97,9 +97,7 @@ export function Footer() {
 
 					{/* Empresa */}
 					<motion.div variants={fadeInUp} className="space-y-4">
-						<h3 className="font-display font-semibold text-sm uppercase tracking-wider">
-							Empresa
-						</h3>
+						<h3 className="font-display font-semibold text-sm uppercase tracking-wider">Empresa</h3>
 						<ul className="space-y-2">
 							{footerLinks.empresa.map((link) => (
 								<li key={link.label}>
@@ -116,9 +114,7 @@ export function Footer() {
 
 					{/* Suporte & Contato */}
 					<motion.div variants={fadeInUp} className="space-y-4">
-						<h3 className="font-display font-semibold text-sm uppercase tracking-wider">
-							Suporte
-						</h3>
+						<h3 className="font-display font-semibold text-sm uppercase tracking-wider">Suporte</h3>
 						<ul className="space-y-2">
 							{footerLinks.suporte.map((link) => (
 								<li key={link.label}>

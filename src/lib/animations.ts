@@ -5,9 +5,10 @@ import type { Variants } from 'framer-motion';
  * All animations respect prefers-reduced-motion
  */
 
-const prefersReducedMotion = typeof window !== 'undefined' 
-	? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
-	: false;
+const prefersReducedMotion =
+	typeof window !== 'undefined'
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
 
 const baseTransition = {
 	duration: prefersReducedMotion ? 0.01 : 0.6,
@@ -114,9 +115,8 @@ export const float: Variants = {
 		y: [-4, 4, -4],
 		transition: {
 			duration: prefersReducedMotion ? 0.01 : 3,
-			repeat: Infinity,
+			repeat: Number.POSITIVE_INFINITY,
 			ease: 'easeInOut',
 		},
 	},
 };
-

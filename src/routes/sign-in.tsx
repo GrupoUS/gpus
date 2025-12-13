@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -20,10 +20,13 @@ function SignInPage() {
 	const [formData, setFormData] = useState({
 		name: '',
 		email: '',
-		password: ''
-	})
+		password: '',
+	});
 	const navigate = useNavigate();
 	const { toast } = useToast();
+	const nameId = useId();
+	const emailId = useId();
+	const passwordId = useId();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -31,32 +34,32 @@ function SignInPage() {
 
 		try {
 			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 1500));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+
 			// Redirect to dashboard on success
-			navigate({ to: '/dashboard' });
-			
+			void navigate({ to: '/dashboard' });
+
 			toast({
-				title: isLogin ? "Login realizado" : "Cadastro realizado",
-				description: isLogin ? "Bem-vindo de volta!" : "Conta criada com sucesso!",
-			})
-		} catch (error) {
+				title: isLogin ? 'Login realizado' : 'Cadastro realizado',
+				description: isLogin ? 'Bem-vindo de volta!' : 'Conta criada com sucesso!',
+			});
+		} catch (_error) {
 			toast({
-				variant: "destructive",
-				title: "Erro",
-				description: "Ocorreu um erro. Tente novamente.",
-			})
+				variant: 'destructive',
+				title: 'Erro',
+				description: 'Ocorreu um erro. Tente novamente.',
+			});
 		} finally {
 			setIsPending(false);
 		}
-	}
+	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
-			[e.target.name]: e.target.value
-		}))
-	}
+			[e.target.name]: e.target.value,
+		}));
+	};
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-mesh bg-noise p-4 relative overflow-hidden">
@@ -70,7 +73,7 @@ function SignInPage() {
 					}}
 					transition={{
 						duration: 8,
-						repeat: Infinity,
+						repeat: Number.POSITIVE_INFINITY,
 						ease: 'easeInOut',
 					}}
 				/>
@@ -82,7 +85,7 @@ function SignInPage() {
 					}}
 					transition={{
 						duration: 10,
-						repeat: Infinity,
+						repeat: Number.POSITIVE_INFINITY,
 						ease: 'easeInOut',
 						delay: 1,
 					}}
@@ -103,19 +106,16 @@ function SignInPage() {
 								<span className="text-primary-foreground font-bold text-2xl font-display">GU</span>
 							</div>
 						</div>
-						
+
 						{/* Title */}
 						<h1 className="font-display text-2xl font-bold text-us-gold mb-2">
 							{isLogin ? 'Bem-vindo de volta' : 'Crie sua conta'}
 						</h1>
 						<p className="text-sm text-muted-foreground">
-							{isLogin 
-								? 'Entre para acessar seu painel' 
-								: 'Cadastre-se para começar sua jornada'
-							}
+							{isLogin ? 'Entre para acessar seu painel' : 'Cadastre-se para começar sua jornada'}
 						</p>
 					</CardHeader>
-					
+
 					<CardContent>
 						<form onSubmit={handleSubmit} className="space-y-4">
 							{/* Name field - only for signup */}
@@ -124,21 +124,21 @@ function SignInPage() {
 									initial={{ opacity: 0, height: 0 }}
 									animate={{ opacity: 1, height: 'auto' }}
 									exit={{ opacity: 0, height: 0 }}
-									className='space-y-2'
+									className="space-y-2"
 								>
-									<Label htmlFor="name" className="text-sm font-medium text-foreground">
+									<Label htmlFor={nameId} className="text-sm font-medium text-foreground">
 										Nome Completo
 									</Label>
 									<Input
-										id='name'
-										name='name'
-										type='text'
+										id={nameId}
+										name="name"
+										type="text"
 										value={formData.name}
 										onChange={handleInputChange}
 										placeholder="Seu nome completo"
 										required={!isLogin}
 										className="bg-muted border-border focus:border-primary focus:ring-primary/20"
-										data-testid='input-name'
+										data-testid="input-name"
 										disabled={isPending}
 									/>
 								</motion.div>
@@ -146,45 +146,45 @@ function SignInPage() {
 
 							{/* Email field */}
 							<div className="space-y-2">
-								<Label htmlFor="email" className="text-sm font-medium text-foreground">
+								<Label htmlFor={emailId} className="text-sm font-medium text-foreground">
 									E-mail
 								</Label>
 								<Input
-									id='email'
-									name='email'
-									type='email'
+									id={emailId}
+									name="email"
+									type="email"
 									value={formData.email}
 									onChange={handleInputChange}
-									placeholder='seu@email.com'
+									placeholder="seu@email.com"
 									required
 									className="bg-muted border-border focus:border-primary focus:ring-primary/20"
-									data-testid='input-email'
+									data-testid="input-email"
 									disabled={isPending}
 								/>
 							</div>
 
 							{/* Password field */}
 							<div className="space-y-2">
-								<Label htmlFor="password" className="text-sm font-medium text-foreground">
+								<Label htmlFor={passwordId} className="text-sm font-medium text-foreground">
 									Senha
 								</Label>
 								<div className="relative">
 									<Input
-										id='password'
-										name='password'
-										type={showPassword ? "text" : "password"}
+										id={passwordId}
+										name="password"
+										type={showPassword ? 'text' : 'password'}
 										value={formData.password}
 										onChange={handleInputChange}
-										placeholder='•••••••••'
+										placeholder="•••••••••"
 										required
 										className="bg-muted border-border focus:border-primary focus:ring-primary/20 pr-10"
-										data-testid='input-password'
+										data-testid="input-password"
 										disabled={isPending}
 									/>
 									<Button
-										type='button'
-										variant='ghost'
-										size='sm'
+										type="button"
+										variant="ghost"
+										size="sm"
 										className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
 										onClick={() => setShowPassword(!showPassword)}
 										disabled={isPending}
@@ -196,16 +196,34 @@ function SignInPage() {
 
 							{/* Submit button */}
 							<Button
-								type='submit'
-								size='lg'
+								type="submit"
+								size="lg"
 								className="w-full h-12 bg-us-gold hover:bg-us-gold/90 text-black font-medium shadow-lg shadow-us-gold/20"
 								disabled={isPending}
 							>
 								{isPending ? (
 									<span className="flex items-center">
-										<svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+										<svg
+											className="animate-spin h-4 w-4 mr-2"
+											viewBox="0 0 24 24"
+											role="img"
+											aria-label="Loading"
+										>
+											<title>Loading</title>
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+												fill="none"
+											/>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											/>
 										</svg>
 										{isLogin ? 'Entrando...' : 'Cadastrando...'}
 									</span>
@@ -223,7 +241,7 @@ function SignInPage() {
 							<p className="text-sm text-muted-foreground">
 								{isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}{' '}
 								<Button
-									variant='link'
+									variant="link"
 									className="p-0 h-auto font-medium text-us-gold hover:text-us-gold/80"
 									onClick={() => setIsLogin(!isLogin)}
 								>
@@ -235,5 +253,5 @@ function SignInPage() {
 				</Card>
 			</motion.div>
 		</div>
-	)
+	);
 }

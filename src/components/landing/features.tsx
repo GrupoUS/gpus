@@ -1,14 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-	BrainCircuit, 
-	MessageSquareText, 
-	BarChart3, 
-	Users, 
-	Zap, 
-	ShieldCheck 
-} from 'lucide-react';
+import { BarChart3, BrainCircuit, MessageSquareText, ShieldCheck, Users, Zap } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
@@ -16,7 +9,8 @@ import { fadeInUp, staggerContainer } from '@/lib/animations';
 const features = [
 	{
 		title: 'AI Lead Scoring',
-		description: 'Inteligência artificial para classificar e priorizar seus leads mais qualificados.',
+		description:
+			'Inteligência artificial para classificar e priorizar seus leads mais qualificados.',
 		icon: BrainCircuit,
 		color: 'text-primary',
 		bgColor: 'bg-primary/10',

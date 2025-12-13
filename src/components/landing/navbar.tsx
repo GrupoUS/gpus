@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,13 +15,10 @@ export function Navbar() {
 
 	const backgroundColor = useTransform(
 		backgroundOpacity,
-		(opacity) => `hsl(var(--background) / ${opacity})`
+		(opacity) => `hsl(var(--background) / ${opacity})`,
 	);
 	const backdropBlur = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(24px)']);
-	const borderColor = useTransform(
-		borderOpacity,
-		(opacity) => `hsl(var(--border) / ${opacity})`
-	);
+	const borderColor = useTransform(borderOpacity, (opacity) => `hsl(var(--border) / ${opacity})`);
 
 	return (
 		<motion.nav
@@ -32,9 +29,7 @@ export function Navbar() {
 				paddingBottom: paddingY,
 				borderBottomColor: borderColor,
 			}}
-			className={cn(
-				'fixed top-0 left-0 right-0 z-50 px-6 border-b border-transparent'
-			)}
+			className={cn('fixed top-0 left-0 right-0 z-50 px-6 border-b border-transparent')}
 		>
 			<div className="container mx-auto flex items-center justify-between">
 				{/* Logo */}
@@ -50,13 +45,13 @@ export function Navbar() {
 				{/* Desktop Navigation */}
 				<div className="hidden md:flex items-center space-x-8">
 					{['O UNIVERSO', 'SOLUÇÕES', 'DEPOIMENTOS'].map((item) => (
-						<a
+						<button
 							key={item}
-							href="#"
+							type="button"
 							className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide"
 						>
 							{item}
-						</a>
+						</button>
 					))}
 				</div>
 
@@ -65,7 +60,11 @@ export function Navbar() {
 					<Button asChild variant="ghost" size="sm">
 						<Link to="/sign-in">LOGIN</Link>
 					</Button>
-					<Button asChild size="sm" className="bg-us-gold hover:bg-us-gold/90 text-black font-medium">
+					<Button
+						asChild
+						size="sm"
+						className="bg-us-gold hover:bg-us-gold/90 text-black font-medium"
+					>
 						<Link to="/sign-in">Começar Agora</Link>
 					</Button>
 				</div>
@@ -86,14 +85,14 @@ export function Navbar() {
 				<div className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border md:hidden">
 					<div className="container mx-auto px-6 py-4 space-y-4">
 						{['O UNIVERSO', 'SOLUÇÕES', 'DEPOIMENTOS'].map((item) => (
-							<a
+							<button
 								key={item}
-								href="#"
-								className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+								type="button"
+								className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 w-full text-left"
 								onClick={() => setMobileMenuOpen(false)}
 							>
 								{item}
-							</a>
+							</button>
 						))}
 						<div className="flex flex-col space-y-2 pt-4 border-t border-border/50">
 							<Button asChild variant="ghost" size="sm" className="justify-start">

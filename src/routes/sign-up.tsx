@@ -23,7 +23,7 @@ function SignUpPage() {
 					}}
 					transition={{
 						duration: 8,
-						repeat: Infinity,
+						repeat: Number.POSITIVE_INFINITY,
 						ease: 'easeInOut',
 					}}
 				/>
@@ -35,7 +35,7 @@ function SignUpPage() {
 					}}
 					transition={{
 						duration: 10,
-						repeat: Infinity,
+						repeat: Number.POSITIVE_INFINITY,
 						ease: 'easeInOut',
 						delay: 1,
 					}}
@@ -61,8 +61,7 @@ function SignUpPage() {
 								card: 'bg-transparent shadow-none',
 								headerTitle: 'font-display text-2xl font-bold',
 								headerSubtitle: 'font-sans text-muted-foreground',
-								socialButtonsBlockButton:
-									'bg-background/50 border-border hover:bg-background/70',
+								socialButtonsBlockButton: 'bg-background/50 border-border hover:bg-background/70',
 								formButtonPrimary:
 									'bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg',
 								formFieldInput:
