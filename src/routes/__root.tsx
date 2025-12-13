@@ -1,20 +1,24 @@
-import { createRootRoute, Link, Outlet, useNavigate } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/router-devtools'
-import { useAuth, UserButton } from '@clerk/clerk-react'
+import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { useAuth } from '@clerk/clerk-react'
 import { MainLayout } from '@/components/layout/main-layout'
 import { Toaster } from "@/components/ui/sonner"
+import React, { Suspense } from 'react'
+
+const TanStackRouterDevtools =
+  process.env.NODE_ENV === 'production'
+    ? () => null
+    : React.lazy(() =>
+        import('@tanstack/router-devtools').then((res) => ({
+          default: res.TanStackRouterDevtools,
+        })),
+      )
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
 function RootLayout() {
-  const { isSignedIn, isLoaded } = useAuth()
-  const navigate = useNavigate()
-
-  // Simple effective auth guard logic could live here or in specific routes.
-  // For now we just render the structure.
-
+  const { isSignedIn } = useAuth()
   return (
     <>
       {isSignedIn ? (
@@ -28,8 +32,9 @@ function RootLayout() {
         </main>
       )}
       <Toaster />
-      {/* Devtools only in dev */}
-      <TanStackRouterDevtools />
+      <Suspense>
+        <TanStackRouterDevtools />
+      </Suspense>
     </>
   )
 }

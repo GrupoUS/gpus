@@ -13,13 +13,11 @@ import {
 import { Link, useLocation } from "@tanstack/react-router"
 import {
   LayoutDashboard,
-  Users,
   MessageSquare,
   GraduationCap,
   Settings,
   Kanban,
   BarChart3,
-  User
 } from "lucide-react"
 import { UserButton, useUser } from "@clerk/clerk-react"
 

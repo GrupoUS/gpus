@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, closestCenter, useDroppable } from "@dnd-kit/core"
+import { DndContext, type DragEndEvent, closestCenter, useDroppable } from "@dnd-kit/core"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LeadCard } from "./lead-card"

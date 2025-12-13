@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: process.env.CLERK_ISSUER_URL || 'https://your-issuer.clerk.accounts.dev',
+      domain: 'https://adapted-marten-34.clerk.accounts.dev',
       applicationID: 'convex',
     },
   ],

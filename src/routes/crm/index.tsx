@@ -35,10 +35,10 @@ function CRMPage() {
 
   // Cast leads to match interface (Convex types vs Frontend Interface)
   // In a real app we'd use shared types. For now we map.
-  const formattedLeads = leads.map(l => ({
+  const formattedLeads = leads.map((l: any) => ({
       ...l,
-      stage: l.stage as any, // ensuring string matches union
-      temperature: l.temperature as any
+      stage: l.stage,
+      temperature: l.temperature
   }))
 
   return (
