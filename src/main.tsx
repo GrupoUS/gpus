@@ -34,11 +34,16 @@ if (!clerkPubKey) {
 	throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 }
 
+function InnerApp() {
+	const auth = useAuth();
+	return <RouterProvider router={router} context={{ auth }} />;
+}
+
 export function App() {
 	return (
 		<ClerkProvider publishableKey={clerkPubKey}>
 			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-				<RouterProvider router={router} context={{ auth: useAuth() }} />
+				<InnerApp />
 			</ConvexProviderWithClerk>
 		</ClerkProvider>
 	);

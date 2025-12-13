@@ -39,26 +39,50 @@ VITE_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 # 4. Wrap with <ClerkProvider> in main.tsx or main.jsx
 
 ```typescript
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider, useAuth } from '@clerk/clerk-react';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { routeTree } from './routeTree.gen';
+import './index.css';
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key");
-  }
+// 1. Initialize Clients
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  // Ensure your index.html contains a <div id="root"></div> element for React to mount the app.
+if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-        <App />
-      </ClerkProvider>
-    </StrictMode>
+const router = createRouter({
+  routeTree,
+  context: { auth: undefined }, // Type safety
+});
+
+// 2. Create Inner Wrapper to access Auth Context
+// CRITICAL: Must be a child of ClerkProvider to use useAuth()
+function InnerApp() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
+
+// 3. Main App Structure
+export function App() {
+  return (
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <InnerApp />
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   );
+}
+
+// 4. Render
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
 ```
 
 # 5. Example usage of Clerk's prebuilt components in App.tsx

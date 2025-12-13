@@ -428,3 +428,16 @@ brazilian_compliance: "Mandatory"
 - Neon: PostgreSQL student data validation patterns
 - Output: .factory/docs/2025-12-13-lgpd-aluno-compliance.md
 ```
+
+### Education CRM Example
+```
+/research "CRM pipeline para cursos de estética"
+
+→ Docker MCP execution:
+- education-lgpd-compliance: Activated for student CRM patterns
+- context7: Research educational CRM best practices
+- tavily: Analyze current market implementations
+- serena: Review existing Convex lead/student schemas
+- sequential-thinking: Multi-perspective pipeline optimization
+- Output: .factory/docs/2025-12-13-crm-estetica-pipeline.md
+```
