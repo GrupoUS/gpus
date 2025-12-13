@@ -1,8 +1,6 @@
-import { useAuth } from '@clerk/clerk-react';
-import { createRootRoute, Outlet } from '@tanstack/react-router';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import React, { Suspense } from 'react';
 
-import { MainLayout } from '@/components/layout/main-layout';
 import { Toaster } from '@/components/ui/sonner';
 
 const TanStackRouterDevtools =
@@ -14,28 +12,24 @@ const TanStackRouterDevtools =
 				})),
 			);
 
-export const Route = createRootRoute({
+interface RouterContext {
+	auth: { userId: string | null | undefined } | undefined;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
 	component: RootLayout,
 });
 
 function RootLayout() {
-	const { isSignedIn } = useAuth();
+	// Root layout just renders the Outlet.
+	// The _authenticated layout handles the sidebar for protected routes.
+	// The index route (Landing) will have its own layout/structure.
 	return (
 		<>
 			<a href="#main-content" className="skip-link">
 				Pular para conteúdo principal
 			</a>
-			{isSignedIn ? (
-				<MainLayout>
-					<Outlet />
-				</MainLayout>
-			) : (
-				// Public / Auth layout (no sidebar)
-				// biome-ignore lint/correctness/useUniqueElementIds: Static ID needed for A11y skip link
-				<main id="main-content" className="min-h-screen bg-background bg-mesh bg-noise">
-					<Outlet />
-				</main>
-			)}
+			<Outlet />
 			<Toaster />
 			<Suspense>
 				<TanStackRouterDevtools />
