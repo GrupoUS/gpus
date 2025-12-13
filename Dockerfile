@@ -25,12 +25,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy necessary files from builder
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/package.json ./package.json
+# Install serve globally to serve static files
+RUN npm install -g serve
+
+# Copy built assets from builder
+COPY --from=builder /app/dist ./dist
 
 # Expose the port
 EXPOSE 3000
 
 # Start the server
-CMD ["npm", "run", "start"]
+CMD ["serve", "-s", "dist", "-l", "3000"]
