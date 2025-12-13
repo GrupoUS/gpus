@@ -29,9 +29,9 @@ const chartData = [
 function DashboardPage() {
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-				<p className="text-muted-foreground">Visão geral do seu negócio</p>
+			<div className="animate-fade-in-up">
+				<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">Dashboard</h1>
+				<p className="font-sans text-base text-muted-foreground">Visão geral do seu negócio</p>
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -41,6 +41,7 @@ function DashboardPage() {
 					description="vs. mês anterior"
 					icon={Users}
 					trend={{ value: 12, isPositive: true }}
+					className="animate-fade-in-up delay-100"
 				/>
 				<StatsCard
 					title="Taxa de Conversão"
@@ -48,6 +49,7 @@ function DashboardPage() {
 					description="vs. mês anterior"
 					icon={TrendingUp}
 					trend={{ value: 4.5, isPositive: true }}
+					className="animate-fade-in-up delay-200"
 				/>
 				<StatsCard
 					title="Faturamento"
@@ -55,14 +57,21 @@ function DashboardPage() {
 					description="vs. mês anterior"
 					icon={DollarSign}
 					trend={{ value: 18, isPositive: true }}
+					className="animate-fade-in-up delay-300"
 				/>
-				<StatsCard title="Mensagens" value="1.234" description="últimas 24h" icon={MessageSquare} />
+				<StatsCard 
+					title="Mensagens" 
+					value="1.234" 
+					description="últimas 24h" 
+					icon={MessageSquare}
+					className="animate-fade-in-up delay-400"
+				/>
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2">
-				<Card>
+				<Card className="animate-scale-in delay-200">
 					<CardHeader>
-						<CardTitle>Leads vs Conversões</CardTitle>
+						<CardTitle className="font-display text-2xl font-semibold">Leads vs Conversões</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="h-[300px]">
@@ -92,9 +101,9 @@ function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="animate-scale-in delay-300">
 					<CardHeader>
-						<CardTitle>Leads por Produto</CardTitle>
+						<CardTitle className="font-display text-2xl font-semibold">Leads por Produto</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">

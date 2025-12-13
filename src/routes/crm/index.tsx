@@ -43,10 +43,10 @@ function CRMPage() {
 
 	return (
 		<div className="h-[calc(100vh-4rem)] flex flex-col space-y-4">
-			<div className="flex items-center justify-between">
+			<div className="flex items-center justify-between animate-fade-in-up">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Pipeline de Vendas</h1>
-					<p className="text-muted-foreground">Gerencie seus leads e oportunidades</p>
+					<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">Pipeline de Vendas</h1>
+					<p className="font-sans text-base text-muted-foreground">Gerencie seus leads e oportunidades</p>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button>

@@ -24,13 +24,13 @@ export function StatsCard({
 	className,
 }: StatsCardProps) {
 	return (
-		<Card className={cn('', className)}>
+		<Card className={cn('stats-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.3)]', className)}>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-				<Icon className="h-4 w-4 text-muted-foreground" />
+				<Icon className="h-4 w-4 text-muted-foreground stats-card-icon transition-transform duration-300 ease-out hover:scale-110 hover:rotate-6" />
 			</CardHeader>
 			<CardContent>
-				<div className="text-2xl font-bold">{value}</div>
+				<div className="font-display text-3xl font-bold tabular-nums">{value}</div>
 				<div className="flex items-center gap-2 mt-1">
 					{trend && (
 						<span
