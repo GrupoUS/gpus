@@ -49,6 +49,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 						<UserButton afterSignOutUrl="/" />
 					</div>
 				</header>
+				{/* biome-ignore lint/correctness/useUniqueElementIds: Static ID needed for A11y skip link */}
 				<main id="main-content" className="flex-1 p-6 bg-mesh bg-noise">
 					{children}
 				</main>

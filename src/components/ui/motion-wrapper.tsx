@@ -8,7 +8,13 @@ interface MotionWrapperProps extends React.HTMLAttributes<HTMLDivElement> {
 	delay?: number;
 }
 
-export function MotionWrapper({ children, className, stagger = 0, delay = 0, ...props }: MotionWrapperProps) {
+export function MotionWrapper({
+	children,
+	className,
+	stagger = 0,
+	delay = 0,
+	...props
+}: MotionWrapperProps) {
 	const [isVisible, setIsVisible] = React.useState(false);
 	const ref = React.useRef<HTMLDivElement>(null);
 
@@ -52,23 +58,26 @@ export function MotionWrapper({ children, className, stagger = 0, delay = 0, ...
 		>
 			{React.Children.map(children, (child, index) => {
 				if (React.isValidElement(child)) {
-					return React.cloneElement(child, {
+					const childElement = child as React.ReactElement<{
+						className?: string;
+						style?: React.CSSProperties;
+					}>;
+					return React.cloneElement(childElement, {
 						className: cn(
-							child.props.className,
+							childElement.props.className,
 							'transition-opacity duration-700 ease-out',
 							isVisible ? 'opacity-100' : 'opacity-0',
 						),
 						style: {
-							...child.props.style,
+							...childElement.props.style,
 							transitionDelay: isVisible ? `${delay + index * stagger}ms` : '0ms',
 							transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
 							transition: `opacity 700ms ease-out ${delay + index * stagger}ms, transform 700ms ease-out ${delay + index * stagger}ms`,
 						},
-					} as any);
+					});
 				}
 				return child;
 			})}
 		</div>
 	);
 }
-

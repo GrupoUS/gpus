@@ -31,6 +31,7 @@ function RootLayout() {
 				</MainLayout>
 			) : (
 				// Public / Auth layout (no sidebar)
+				// biome-ignore lint/correctness/useUniqueElementIds: Static ID needed for A11y skip link
 				<main id="main-content" className="min-h-screen bg-background bg-mesh bg-noise">
 					<Outlet />
 				</main>

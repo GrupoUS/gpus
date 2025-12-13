@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { PipelineKanban } from '@/components/crm/pipeline-kanban';
 import { Button } from '@/components/ui/button';
 
@@ -20,11 +21,11 @@ function CRMPage() {
 		// We need to cast newStage to the union type, but backend validates it.
 		try {
 			await updateStage({
-				leadId: leadId as any, // ID types mismatch between generic string and convex ID
-				newStage: newStage as any,
+				leadId: leadId as Id<'leads'>,
+				newStage: newStage as Doc<'leads'>['stage'],
 			});
 			toast.success('Lead atualizado');
-		} catch (error) {
+		} catch {
 			toast.error('Erro ao atualizar lead');
 		}
 	};
@@ -35,7 +36,7 @@ function CRMPage() {
 
 	// Cast leads to match interface (Convex types vs Frontend Interface)
 	// In a real app we'd use shared types. For now we map.
-	const formattedLeads = leads.map((l: any) => ({
+	const formattedLeads = leads.map((l: Doc<'leads'>) => ({
 		...l,
 		stage: l.stage,
 		temperature: l.temperature,
@@ -45,8 +46,12 @@ function CRMPage() {
 		<div className="h-[calc(100vh-4rem)] flex flex-col space-y-4">
 			<div className="flex items-center justify-between animate-fade-in-up">
 				<div>
-					<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">Pipeline de Vendas</h1>
-					<p className="font-sans text-base text-muted-foreground">Gerencie seus leads e oportunidades</p>
+					<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+						Pipeline de Vendas
+					</h1>
+					<p className="font-sans text-base text-muted-foreground">
+						Gerencie seus leads e oportunidades
+					</p>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button>
