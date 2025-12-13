@@ -35,7 +35,7 @@ parallel_execution_matrix:
   phase_3_synthesis:
     - apex-researcher (consolidation)
     - code-reviewer (security validation)
-    - brazilian_compliance_skills (LGPD/PIX validation)
+    - brazilian_compliance_skills (LGPD/education validation)
 ```
 
 ### Dynamic Droid Coordination
@@ -119,7 +119,7 @@ quality_assurance:
 - **Knowledge Management**: Knowledge base creation, organization → Serena + Sequential Thinking (via Docker)
 - **Database Research**: Schema analysis, performance optimization → Serena + Neon (via Docker)
 - **Web Intelligence**: Real-time data, regulatory updates → Tavily + Fetch (via Docker)
-- **Brazilian Compliance**: LGPD/BCB/PIX research → Context7 + Tavily + Sequential Thinking (via Docker)
+- **Brazilian Compliance**: LGPD/education/health research → Context7 + Tavily + Sequential Thinking (via Docker)
 - **Testing & Validation**: Accessibility, performance → Playwright + Serena (via Docker)
 
 ## MCP Serena: Codebase Intelligence
@@ -208,7 +208,7 @@ atomic_tasks:
   task_1_comprehensive_research:
     primary_agent: "apex-researcher"
     support_agents: ["apex-dev"]
-    skills: ["brazilian-fintech-compliance"]
+    skills: ["education-lgpd-compliance"]
     mcps: ["context7", "tavily", "serena", "fetch"]
     brazilian_compliance: "full_validation"
     deliverable: "Research analysis (≤5 pages)"
@@ -236,7 +236,7 @@ atomic_tasks:
   task_1_regulatory_deep_dive:
     primary_agent: "apex-researcher"
     support_agents: ["code-reviewer", "database-specialist"]
-    skills: ["brazilian-fintech-compliance", "webapp-testing"]
+    skills: ["education-lgpd-compliance", "webapp-testing"]
     mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
     brazilian_compliance: "expert_validation"
     deliverable: "Regulatory compliance document (≤8 pages)"
@@ -252,7 +252,7 @@ atomic_tasks:
   task_3_database_compliance:
     primary_agent: "database-specialist"
     support_agents: ["code-reviewer"]
-    skills: ["brazilian-fintech-compliance"]
+    skills: ["education-lgpd-compliance"]
     mcps: ["serena", "neon", "context7"]
     brazilian_compliance: "lgpd_expert_validation"
     deliverable: "Database compliance matrix"
@@ -280,7 +280,7 @@ atomic_tasks:
   task_1_strategic_research:
     primary_agent: "apex-researcher"
     support_agents: ["product-architect", "code-reviewer"]
-    skills: ["brazilian-fintech-compliance", "product-management"]
+    skills: ["education-lgpd-compliance", "product-management"]
     mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
     brazilian_compliance: "mission_critical_validation"
     deliverable: "Strategic research intelligence (≤12 pages)"
@@ -296,7 +296,7 @@ atomic_tasks:
   task_3_security_compliance:
     primary_agent: "code-reviewer"
     support_agents: ["database-specialist", "apex-researcher"]
-    skills: ["webapp-testing", "brazilian-fintech-compliance"]
+    skills: ["webapp-testing", "education-lgpd-compliance"]
     mcps: ["context7", "tavily", "serena", "fetch"]
     brazilian_compliance: "penetration_testing_validation"
     deliverable: "Security compliance certification"
@@ -304,7 +304,7 @@ atomic_tasks:
   task_4_database_operations:
     primary_agent: "database-specialist"
     support_agents: ["apex-dev", "code-reviewer"]
-    skills: ["brazilian-fintech-compliance"]
+    skills: ["education-lgpd-compliance"]
     mcps: ["serena", "neon", "context7", "fetch"]
     brazilian_compliance: "data_governance_validation"
     deliverable: "Database operations manual"
@@ -312,7 +312,7 @@ atomic_tasks:
   task_5_user_experience:
     primary_agent: "apex-ui-ux-designer"
     support_agents: ["apex-researcher"]
-    skills: ["webapp-testing", "brazilian-fintech-compliance"]
+    skills: ["webapp-testing", "education-lgpd-compliance"]
     mcps: ["serena", "context7", "playwright", "fetch"]
     brazilian_compliance: "user_testing_validation"
     deliverable: "UX research & testing report"
@@ -320,7 +320,7 @@ atomic_tasks:
   task_6_product_strategy:
     primary_agent: "product-architect"
     support_agents: ["apex-researcher"]
-    skills: ["product-management", "brazilian-fintech-compliance"]
+    skills: ["product-management", "education-lgpd-compliance"]
     mcps: ["serena", "sequential-thinking", "tavily"]
     brazilian_compliance: "market_validation"
     deliverable: "Product strategy & roadmap"
