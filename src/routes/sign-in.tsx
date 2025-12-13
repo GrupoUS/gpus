@@ -1,14 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { SignIn } from '@clerk/clerk-react'
+import { SignIn } from '@clerk/clerk-react';
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/sign-in')({
-  component: SignInPage,
-})
+	component: SignInPage,
+});
 
 function SignInPage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/50">
-      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
-    </div>
-  )
+	return (
+		<div className="flex items-center justify-center min-h-screen bg-muted/50">
+			<SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+		</div>
+	);
 }

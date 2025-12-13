@@ -10,8 +10,14 @@
 		"dev:convex": "npx convex dev",
 		"build": "vite build && tsc --noEmit",
 		"start": "node .output/server/index.mjs",
-		"format": "prettier --write .",
-		"lint": "tsc && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+		"lint": "biome check --write",
+		"lint:check": "biome check",
+		"format": "biome format --write",
+		"format:check": "biome format",
+		"test": "vitest",
+		"test:watch": "vitest --watch",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest --coverage",
 		"deploy:convex": "npx convex deploy"
 	},
 	"dependencies": {
@@ -57,20 +63,20 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.7",
-		"@convex-dev/eslint-plugin": "^1.1.1",
 		"@tailwindcss/vite": "^4.1.13",
-		"@tanstack/eslint-config": "^0.3.2",
 		"@tanstack/router-devtools": "^1.141.2",
 		"@tanstack/router-plugin": "^1.141.2",
 		"@types/node": "^25.0.1",
 		"@types/react": "^19.1.13",
 		"@types/react-dom": "^19.1.9",
 		"@vitejs/plugin-react": "^5.0.3",
+		"@vitest/ui": "^4.0.15",
 		"concurrently": "~9.2.1",
-		"prettier": "^3.6.2",
+		"jsdom": "^27.3.0",
 		"tailwindcss": "^4.1.13",
 		"typescript": "^5.9.2",
 		"vite": "^7.1.5",
-		"vite-tsconfig-paths": "^5.1.4"
+		"vite-tsconfig-paths": "^5.1.4",
+		"vitest": "^4.0.15"
 	}
 }
