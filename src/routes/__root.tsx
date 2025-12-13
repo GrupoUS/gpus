@@ -1,74 +1,35 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-} from '@tanstack/react-router'
-import * as React from 'react'
-import type { QueryClient } from '@tanstack/react-query'
-import appCss from '~/styles/app.css?url'
+import { createRootRoute, Link, Outlet, useNavigate } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import { useAuth, UserButton } from '@clerk/clerk-react'
+import { MainLayout } from '@/components/layout/main-layout'
+import { Toaster } from "@/components/ui/sonner"
 
-export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient
-}>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
-    ],
-    links: [
-      { rel: 'stylesheet', href: appCss },
-      {
-        rel: 'apple-touch-icon',
-        sizes: '180x180',
-        href: '/apple-touch-icon.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        href: '/favicon-32x32.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        href: '/favicon-16x16.png',
-      },
-      { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
-      { rel: 'icon', href: '/favicon.ico' },
-    ],
-  }),
-  notFoundComponent: () => <div>Route not found</div>,
-  component: RootComponent,
+export const Route = createRootRoute({
+  component: RootLayout,
 })
 
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  )
-}
+function RootLayout() {
+  const { isSignedIn, isLoaded } = useAuth()
+  const navigate = useNavigate()
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+  // Simple effective auth guard logic could live here or in specific routes.
+  // For now we just render the structure.
+
   return (
-    <html>
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
+    <>
+      {isSignedIn ? (
+        <MainLayout>
+           <Outlet />
+        </MainLayout>
+      ) : (
+        // Public / Auth layout (no sidebar)
+        <main className="min-h-screen bg-background">
+           <Outlet />
+        </main>
+      )}
+      <Toaster />
+      {/* Devtools only in dev */}
+      <TanStackRouterDevtools />
+    </>
   )
 }

@@ -1,0 +1,54 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { ClerkProvider, useAuth } from '@clerk/clerk-react'
+import { ConvexProviderWithClerk } from 'convex/react-clerk'
+import { ConvexReactClient } from 'convex/react'
+import { routeTree } from './routeTree.gen'
+import './index.css'
+
+// Convex client
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
+
+// Router
+const router = createRouter({ 
+  routeTree,
+  context: {
+    auth: undefined!, // We'll inject this in the provider
+  },
+  defaultPreload: 'intent',
+})
+
+// Register things for typesafety
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
+// Clerk publishable key
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!clerkPubKey) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY')
+}
+
+function App() {
+  return (
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <RouterProvider router={router} context={{ auth: useAuth() }} />
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
+  )
+}
+
+const rootElement = document.getElementById('root')!
+if (!rootElement.innerHTML) {
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  )
+}
