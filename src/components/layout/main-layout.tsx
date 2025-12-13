@@ -45,7 +45,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 						</Breadcrumb>
 					</div>
 				</header>
-				<main className="flex-1 p-6">{children}</main>
+				<main id="main-content" className="flex-1 p-6 bg-mesh bg-noise">{children}</main>
 			</SidebarInset>
 		</SidebarProvider>
 	);

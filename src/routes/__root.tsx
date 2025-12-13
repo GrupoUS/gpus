@@ -22,13 +22,16 @@ function RootLayout() {
 	const { isSignedIn } = useAuth();
 	return (
 		<>
+			<a href="#main-content" className="skip-link">
+				Pular para conteúdo principal
+			</a>
 			{isSignedIn ? (
 				<MainLayout>
 					<Outlet />
 				</MainLayout>
 			) : (
 				// Public / Auth layout (no sidebar)
-				<main className="min-h-screen bg-background">
+				<main id="main-content" className="min-h-screen bg-background bg-mesh bg-noise">
 					<Outlet />
 				</main>
 			)}

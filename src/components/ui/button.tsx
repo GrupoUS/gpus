@@ -16,6 +16,7 @@ const buttonVariants = cva(
 				secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
 				ghost: 'hover:bg-accent hover:text-accent-foreground',
 				link: 'text-primary underline-offset-4 hover:underline',
+				glow: 'bg-primary text-primary-foreground shadow-lg glow-primary relative overflow-hidden hover:glow-hover',
 			},
 			size: {
 				default: 'h-9 px-4 py-2',
@@ -40,8 +41,16 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 	({ className, variant, size, asChild = false, ...props }, ref) => {
 		const Comp = asChild ? Slot : 'button';
+		const isGlow = variant === 'glow';
 		return (
-			<Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+			<Comp 
+				className={cn(
+					buttonVariants({ variant, size, className }),
+					isGlow && 'btn-glow'
+				)} 
+				ref={ref} 
+				{...props} 
+			/>
 		);
 	},
 );

@@ -74,26 +74,50 @@ function DashboardPage() {
 						<CardTitle className="font-display text-2xl font-semibold">Leads vs Conversões</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="h-[300px]">
+						<div className="h-[300px] min-h-[250px] md:h-[300px]">
 							<ResponsiveContainer width="100%" height="100%">
 								<AreaChart data={chartData}>
-									<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-									<XAxis dataKey="name" className="text-xs" />
-									<YAxis className="text-xs" />
-									<Tooltip />
+									<defs>
+										<linearGradient id="gradientLeads" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+											<stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+										</linearGradient>
+										<linearGradient id="gradientConversoes" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="0%" stopColor="hsl(142 76% 36%)" stopOpacity={0.3} />
+											<stop offset="100%" stopColor="hsl(142 76% 36%)" stopOpacity={0} />
+										</linearGradient>
+									</defs>
+									<CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
+									<XAxis dataKey="name" className="text-xs" stroke="hsl(var(--muted-foreground) / 0.5)" />
+									<YAxis className="text-xs" stroke="hsl(var(--muted-foreground) / 0.5)" />
+									<Tooltip 
+										contentStyle={{
+											background: 'hsl(var(--card) / 0.6)',
+											backdropFilter: 'blur(24px) saturate(180%)',
+											border: '1px solid hsl(var(--border) / 0.5)',
+											borderRadius: '0.5rem',
+											boxShadow: '0 8px 32px -8px hsl(var(--primary) / 0.1)',
+										}}
+									/>
 									<Area
 										type="monotone"
 										dataKey="leads"
 										stackId="1"
 										stroke="hsl(var(--primary))"
-										fill="hsl(var(--primary) / 0.2)"
+										strokeWidth={2}
+										fill="url(#gradientLeads)"
+										animationDuration={1000}
+										animationEasing="ease-out"
 									/>
 									<Area
 										type="monotone"
 										dataKey="conversoes"
 										stackId="2"
 										stroke="hsl(142 76% 36%)"
-										fill="hsl(142 76% 36% / 0.2)"
+										strokeWidth={2}
+										fill="url(#gradientConversoes)"
+										animationDuration={1000}
+										animationEasing="ease-out"
 									/>
 								</AreaChart>
 							</ResponsiveContainer>
@@ -115,14 +139,17 @@ function DashboardPage() {
 								{ name: 'Aurículo', value: 10, color: 'bg-green-500' },
 							].map((item) => (
 								<div key={item.name} className="space-y-1">
-									<div className="flex justify-between text-sm">
+									<div className="flex justify-between text-sm font-sans">
 										<span>{item.name}</span>
-										<span className="font-medium">{item.value}</span>
+										<span className="font-medium font-display tabular-nums">{item.value}</span>
 									</div>
 									<div className="h-2 rounded-full bg-muted overflow-hidden">
 										<div
-											className={`h-full rounded-full ${item.color}`}
-											style={{ width: `${(item.value / 50) * 100}%` }}
+											className={`h-full rounded-full progress-bar ${item.color}`}
+											style={{ 
+												width: `${(item.value / 50) * 100}%`,
+												background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--us-purple-light)))`,
+											}}
 										/>
 									</div>
 								</div>

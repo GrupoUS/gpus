@@ -203,4 +203,250 @@
   .delay-200 { animation-delay: 0.2s; }
   .delay-300 { animation-delay: 0.3s; }
   .delay-400 { animation-delay: 0.4s; }
+
+  /* Glassmorphism & Visual Depth */
+  .bg-mesh {
+    background: 
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsl(var(--us-purple-light) / 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(var(--primary) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsl(var(--us-gold) / 0.05) 0px, transparent 50%),
+      hsl(var(--background));
+  }
+
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  .card-glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 
+      0 8px 32px -8px hsl(var(--primary) / 0.1),
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.05);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  .glow-hover:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
+    transition: box-shadow 0.3s ease;
+  }
+
+  /* Sidebar Premium Styles */
+  .sidebar-menu-item {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar-menu-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--us-purple-light)));
+    border-radius: 0 2px 2px 0;
+    transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar-menu-item.active::before {
+    height: 60%;
+  }
+
+  .sidebar-menu-item:hover {
+    background: hsl(var(--sidebar-accent) / 0.5);
+    transform: translateX(4px);
+  }
+
+  .sidebar-logo {
+    animation: logo-float 3s ease-in-out infinite;
+  }
+
+  @keyframes logo-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Progress Bar Animation */
+  .progress-bar {
+    animation: progress-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: left;
+  }
+
+  @keyframes progress-fill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  /* Sparkline Animation */
+  @keyframes sparkline-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Kanban Premium Styles */
+  .kanban-column {
+    border-top: 2px solid transparent;
+    background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+                linear-gradient(90deg, hsl(var(--primary)), hsl(var(--us-purple-light))) border-box;
+    border-radius: var(--radius-lg);
+  }
+
+  .kanban-column-header {
+    backdrop-filter: blur(8px);
+    background: hsl(var(--card) / 0.8);
+  }
+
+  .lead-card.dragging {
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 24px 48px -12px hsl(var(--primary) / 0.4);
+    cursor: grabbing;
+    z-index: 50;
+  }
+
+  .lead-avatar {
+    border: 2px solid transparent;
+    background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--us-gold))) border-box;
+  }
+
+  .temperature-icon.hot {
+    animation: pulse-hot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-hot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+  }
+
+  .action-button {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+  }
+
+  .lead-card:hover .action-button {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  /* Button Ripple Effect */
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: hsl(var(--primary-foreground) / 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-glow:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Input Focus Glow */
+  .input-wrapper {
+    position: relative;
+  }
+
+  .input-field:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+
+  /* Dialog Enhancements */
+  .dialog-overlay {
+    backdrop-filter: blur(12px);
+    background: hsl(var(--background) / 0.8);
+    animation: fade-in 0.2s ease-out;
+  }
+
+  .dialog-content {
+    animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 24px 48px -12px hsl(var(--foreground) / 0.3);
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Performance Optimizations */
+  .stats-card,
+  .lead-card,
+  .kanban-column {
+    will-change: transform;
+    contain: layout style paint;
+  }
+
+  .animate-fade-in-up,
+  .animate-scale-in {
+    will-change: transform, opacity;
+  }
+
+  /* GPU-accelerated transforms */
+  .stats-card:hover,
+  .lead-card:hover {
+    transform: translateY(-4px) translateZ(0);
+  }
+
+  /* Accessibility: Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .sidebar-logo {
+      animation: none !important;
+    }
+
+    .temperature-icon.hot {
+      animation: none !important;
+    }
+  }
+
+  /* Skip Link */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100;
+    border-radius: 0 0 4px 0;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* Enhanced Focus States */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
 }

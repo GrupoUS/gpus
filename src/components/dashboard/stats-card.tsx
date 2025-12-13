@@ -24,13 +24,32 @@ export function StatsCard({
 	className,
 }: StatsCardProps) {
 	return (
-		<Card className={cn('stats-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.3)]', className)}>
+		<Card 
+			variant="glass"
+			className={cn('stats-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.3)]', className)}
+		>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
 				<Icon className="h-4 w-4 text-muted-foreground stats-card-icon transition-transform duration-300 ease-out hover:scale-110 hover:rotate-6" />
 			</CardHeader>
 			<CardContent>
 				<div className="font-display text-3xl font-bold tabular-nums">{value}</div>
+				{/* Sparkline placeholder - can be enhanced with actual data */}
+				<svg className="w-full h-8 mt-2 opacity-30" viewBox="0 0 100 20" preserveAspectRatio="none">
+					<polyline
+						points="0,15 20,12 40,8 60,10 80,5 100,8"
+						fill="none"
+						stroke="hsl(var(--primary))"
+						strokeWidth="1.5"
+						vectorEffect="non-scaling-stroke"
+						className="sparkline-path"
+						style={{
+							strokeDasharray: 120,
+							strokeDashoffset: 120,
+							animation: 'sparkline-draw 1s ease-out forwards',
+						}}
+					/>
+				</svg>
 				<div className="flex items-center gap-2 mt-1">
 					{trend && (
 						<span
