@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone } from 'lucide-react';
 
 import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -203,7 +203,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 									</div>
 								) : (
 									<div className="relative border-l border-border/50 ml-3 space-y-6">
-										{activities.map((activity) => (
+										{activities.map((activity: Doc<'activities'>) => (
 											<div key={activity._id} className="relative pl-6">
 												<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
 												<div className="flex flex-col gap-1">
