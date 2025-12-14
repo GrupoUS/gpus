@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import { api } from '../../../../convex/_generated/api';
+import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -82,7 +82,8 @@ export function LeadForm() {
 	const createLead = useMutation(api.leads.createLead);
 
 	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			name: '',
 			phone: '',
@@ -108,7 +109,7 @@ export function LeadForm() {
 			toast.success('Lead criado com sucesso!');
 			setOpen(false);
 			form.reset();
-		} catch (error) {
+		} catch {
 			toast.error('Erro ao criar lead.');
 		}
 	};
@@ -116,7 +117,7 @@ export function LeadForm() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20">
+				<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20">
 					<Plus className="h-4 w-4" />
 					Novo Lead
 				</Button>

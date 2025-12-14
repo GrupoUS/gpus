@@ -1,21 +1,14 @@
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import {
-	Activity,
-	Briefcase,
-	Clock,
-	Mail,
-	MessageSquare,
-	Phone,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone } from 'lucide-react';
 
-import { api } from '../../../../convex/_generated/api';
-import type { Id } froents/ui/badge';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface LeadDetailProps {
@@ -81,7 +74,9 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 							size="sm"
 							variant="outline"
 							className="flex-1 gap-2"
-							onClick={() => (window.location.href = `tel:${lead.phone}`)}
+							onClick={() => {
+								window.location.href = `tel:${lead.phone}`;
+							}}
 						>
 							<Phone className="h-4 w-4" />
 							Ligar
@@ -90,7 +85,9 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 							size="sm"
 							variant="outline"
 							className="flex-1 gap-2"
-							onClick={() => (window.location.href = `mailto:${lead.email}`)}
+							onClick={() => {
+								window.location.href = `mailto:${lead.email}`;
+							}}
 						>
 							<Mail className="h-4 w-4" />
 							Email
@@ -176,7 +173,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 												lead.temperature === 'quente'
 													? 'destructive'
 													: lead.temperature === 'morno'
-														? 'warning'
+														? 'secondary'
 														: 'secondary'
 											}
 										>

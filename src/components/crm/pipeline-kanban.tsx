@@ -46,12 +46,12 @@ function KanbanColumn({
 	});
 
 	return (
-		<div ref={setNodeRef} className="flex-shrink-0 w-[300px] snap-start">
+		<div ref={setNodeRef} className="shrink-0 w-[300px] snap-start">
 			<Card
 				variant="glass"
 				className="h-[calc(100vh-200px)] min-h-[400px] flex flex-col kanban-column"
 			>
-				<CardHeader className="pb-3 flex-shrink-0 kanban-column-header">
+				<CardHeader className="pb-3 shrink-0 kanban-column-header">
 					<div className="flex items-center justify-between">
 						<CardTitle className="text-sm font-medium flex items-center gap-2 font-display">
 							<div className={`h-2 w-2 rounded-full ${stage.color}`} />
@@ -68,8 +68,15 @@ function KanbanColumn({
 							{leads.map((lead) => (
 								<div
 									key={lead._id}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											onLeadClick?.(lead._id);
+										}
+									}}
 									onClick={() => onLeadClick?.(lead._id)}
-									className="cursor-pointer"
+									className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
 								>
 									<LeadCard lead={lead} />
 								</div>

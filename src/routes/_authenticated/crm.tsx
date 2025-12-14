@@ -1,11 +1,4 @@
-
-import { Plus } from 'lucide-react';
-onvex/_generated/api';
-import type { Doc, Id } from '.
-
-
-	component: CRMPage,
--router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
