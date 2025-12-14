@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -64,17 +64,15 @@ const formSchema = z.object({
 		.optional(),
 	temperature: z.enum(['frio', 'morno', 'quente']),
 	// Stage is implicitly 'novo' for creation, but could be selectable if needed
-	stage: z
-		.enum([
-			'novo',
-			'primeiro_contato',
-			'qualificado',
-			'proposta',
-			'negociacao',
-			'fechado_ganho',
-			'fechado_perdido',
-		])
-		.default('novo'),
+	stage: z.enum([
+		'novo',
+		'primeiro_contato',
+		'qualificado',
+		'proposta',
+		'negociacao',
+		'fechado_ganho',
+		'fechado_perdido',
+	]),
 });
 
 export function LeadForm() {

@@ -1,14 +1,22 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
-import { LeadDetail } from '@/components/crm/lead-detail';
 import { LeadFilters } from '@/components/crm/lead-filters';
-import { LeadForm } from '@/components/crm/lead-form';
-import { PipelineKanban } from '@/components/crm/pipeline-kanban';
+
+// Lazy load heavy CRM components
+const LeadDetail = lazy(() =>
+	import('@/components/crm/lead-detail').then((module) => ({ default: module.LeadDetail })),
+);
+const LeadForm = lazy(() =>
+	import('@/components/crm/lead-form').then((module) => ({ default: module.LeadForm })),
+);
+const PipelineKanban = lazy(() =>
+	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
+);
 
 export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
@@ -66,13 +74,17 @@ function CRMPage() {
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
-						<LeadForm />
+						<Suspense fallback={<div>Carregando formulário...</div>}>
+							<LeadForm />
+						</Suspense>
 					</div>
 				</div>
 
-				<LeadFilters
-					onFiltersChange={(newFilters) => setFilters((prev) => ({ ...prev, ...newFilters }))}
-				/>
+				<Suspense fallback={<div>Carregando filtros...</div>}>
+					<LeadFilters
+						onFiltersChange={(newFilters) => setFilters((prev) => ({ ...prev, ...newFilters }))}
+					/>
+				</Suspense>
 			</div>
 
 			<div className="flex-1 overflow-hidden">
@@ -81,15 +93,19 @@ function CRMPage() {
 						Carregando pipeline...
 					</div>
 				) : (
-					<PipelineKanban
-						leads={formattedLeads}
-						onDragEnd={handleDragEnd}
-						onLeadClick={(id) => setSelectedLeadId(id as Id<'leads'>)}
-					/>
+					<Suspense fallback={<div>Carregando pipeline...</div>}>
+						<PipelineKanban
+							leads={formattedLeads}
+							onDragEnd={handleDragEnd}
+							onLeadClick={(id: string) => setSelectedLeadId(id as Id<'leads'>)}
+						/>
+					</Suspense>
 				)}
 			</div>
 
-			<LeadDetail leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+			<Suspense fallback={<div>Carregando detalhes...</div>}>
+				<LeadDetail leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+			</Suspense>
 		</div>
 	);
 }
