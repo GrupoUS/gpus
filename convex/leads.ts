@@ -52,37 +52,40 @@ const leadArgs = {
 
 export const listLeads = query({
   args: {
-    stage: v.optional(v.string()), // Filter by stage
-    search: v.optional(v.string()), // Search via text
+    stage: v.optional(v.string()), // Deprecated, kept for backward compatibility if needed, though we prefer array now
+    stages: v.optional(v.array(v.string())),
+    search: v.optional(v.string()),
+    temperature: v.optional(v.array(v.string())),
+    products: v.optional(v.array(v.string())),
+    source: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    // Basic implementation: fetch all then filter? Or use indexes.
-    // If stage is provided, use index.
-    let leads
-    if (args.stage) {
-      if (args.stage === 'all') { // Optional: 'all' keyword
-          leads = await ctx.db.query('leads').order('desc').collect()
-      } else {
-         // This assumes the passed string is a valid stage literal.
-         // In a real app we might want to validate or cast, but schema ensures types on write.
-         // On read, we need to match the union type or just use string for the query args if relaxed.
-         // However, schema definition for stage is strict. Let's assume frontend passes valid stage.
-         // We can't query by string if schema expects literal union, unless we cast or match.
-         // But queries are flexible on args.
-         // Let's use filter if we can't guarantee type, or iterate.
-         // Using 'by_stage' index:
-         // Note: args.stage is string, schema is union. Typescript might complain if we don't cast.
-         // But at runtime it works if value matches.
-         leads = await ctx.db
-          .query('leads')
-          // @ts-ignore
-          .withIndex('by_stage', (q) => q.eq('stage', args.stage))
-          .collect()
-      }
-    } else {
-        leads = await ctx.db.query('leads').order('desc').collect()
+    let leads = await ctx.db.query('leads').order('desc').collect()
+
+    // Filter by stage(s)
+    if (args.stages && args.stages.length > 0) {
+        leads = leads.filter(l => args.stages!.includes(l.stage))
+    } else if (args.stage && args.stage !== 'all') {
+         // Fallback to legacy single stage param
+         leads = leads.filter(l => l.stage === args.stage)
     }
 
+    // Filter by temperature
+    if (args.temperature && args.temperature.length > 0) {
+        leads = leads.filter(l => args.temperature!.includes(l.temperature))
+    }
+
+    // Filter by product
+    if (args.products && args.products.length > 0) {
+        leads = leads.filter(l => l.interestedProduct ? args.products!.includes(l.interestedProduct) : false)
+    }
+
+    // Filter by source
+    if (args.source && args.source.length > 0) {
+         leads = leads.filter(l => args.source!.includes(l.source))
+    }
+
+    // Filter by search text
     if (args.search) {
         const search = args.search.toLowerCase()
         leads = leads.filter(l => 
@@ -179,4 +182,11 @@ export const updateLead = mutation({
              updatedAt: Date.now()
          })
     }
+})
+
+export const getLead = query({
+  args: { leadId: v.id('leads') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.leadId)
+  }
 })

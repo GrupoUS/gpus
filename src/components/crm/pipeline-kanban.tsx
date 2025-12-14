@@ -28,10 +28,19 @@ interface Lead {
 interface PipelineKanbanProps {
 	leads: Lead[];
 	onDragEnd: (leadId: string, newStage: string) => void;
+	onLeadClick?: (leadId: string) => void;
 }
 
 // Droppable Column Component
-function KanbanColumn({ stage, leads }: { stage: (typeof stages)[0]; leads: Lead[] }) {
+function KanbanColumn({
+	stage,
+	leads,
+	onLeadClick,
+}: {
+	stage: (typeof stages)[0];
+	leads: Lead[];
+	onLeadClick?: (id: string) => void;
+}) {
 	const { setNodeRef } = useDroppable({
 		id: stage.id,
 	});
@@ -57,7 +66,13 @@ function KanbanColumn({ stage, leads }: { stage: (typeof stages)[0]; leads: Lead
 					<ScrollArea className="h-full">
 						<div className="space-y-3 pr-4 pb-4">
 							{leads.map((lead) => (
-								<LeadCard key={lead._id} lead={lead} />
+								<div
+									key={lead._id}
+									onClick={() => onLeadClick?.(lead._id)}
+									className="cursor-pointer"
+								>
+									<LeadCard lead={lead} />
+								</div>
 							))}
 							{leads.length === 0 && (
 								<div className="h-20 border-2 border-dashed border-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs">
@@ -72,7 +87,7 @@ function KanbanColumn({ stage, leads }: { stage: (typeof stages)[0]; leads: Lead
 	);
 }
 
-export function PipelineKanban({ leads, onDragEnd }: PipelineKanbanProps) {
+export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanbanProps) {
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (over && active.id !== over.id) {
@@ -88,7 +103,14 @@ export function PipelineKanban({ leads, onDragEnd }: PipelineKanbanProps) {
 			<div className="flex gap-4 overflow-x-auto pb-4 h-full snap-x snap-mandatory scroll-smooth">
 				{stages.map((stage) => {
 					const stageLeads = leads.filter((l) => l.stage === stage.id);
-					return <KanbanColumn key={stage.id} stage={stage} leads={stageLeads} />;
+					return (
+						<KanbanColumn
+							key={stage.id}
+							stage={stage}
+							leads={stageLeads}
+							onLeadClick={onLeadClick}
+						/>
+					);
 				})}
 			</div>
 		</DndContext>

@@ -1,24 +1,47 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+
 import { Plus } from 'lucide-react';
+onvex/_generated/api';
+import type { Doc, Id } from '.
+
+
+	component: CRMPage,
+-router';
+import { useMutation, useQuery } from 'convex/react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { LeadDetail } from '@/components/crm/lead-detail';
+import { LeadFilters } from '@/components/crm/lead-filters';
+import { LeadForm } from '@/components/crm/lead-form';
 import { PipelineKanban } from '@/components/crm/pipeline-kanban';
-import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
 
 function CRMPage() {
-	const leads = useQuery(api.leads.listLeads, {});
+	const [filters, setFilters] = useState({
+		search: '',
+		stages: [] as string[],
+		temperature: [] as string[],
+		products: [] as string[],
+		source: [] as string[],
+	});
+	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
+
+	const leads = useQuery(api.leads.listLeads, {
+		search: filters.search || undefined,
+		stages: filters.stages.length ? filters.stages : undefined,
+		temperature: filters.temperature.length ? filters.temperature : undefined,
+		products: filters.products.length ? filters.products : undefined,
+		source: filters.source.length ? filters.source : undefined,
+	});
+
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
 	const handleDragEnd = async (leadId: string, newStage: string) => {
-		// Optimistic update could go here, but for now just mutate
-		// We need to cast newStage to the union type, but backend validates it.
 		try {
 			await updateStage({
 				leadId: leadId as Id<'leads'>,
@@ -30,39 +53,50 @@ function CRMPage() {
 		}
 	};
 
-	if (leads === undefined) {
-		return <div className="p-8">Carregando leads...</div>;
-	}
-
-	// Cast leads to match interface (Convex types vs Frontend Interface)
-	// In a real app we'd use shared types. For now we map.
-	const formattedLeads = leads.map((l: Doc<'leads'>) => ({
-		...l,
-		stage: l.stage,
-		temperature: l.temperature,
-	}));
+	const formattedLeads =
+		leads?.map((l: Doc<'leads'>) => ({
+			...l,
+			stage: l.stage,
+			temperature: l.temperature,
+		})) ?? [];
 
 	return (
 		<div className="h-[calc(100vh-4rem)] flex flex-col space-y-4">
-			<div className="flex items-center justify-between animate-fade-in-up">
-				<div>
-					<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
-						Pipeline de Vendas
-					</h1>
-					<p className="font-sans text-base text-muted-foreground">
-						Gerencie seus leads e oportunidades
-					</p>
+			<div className="flex flex-col gap-4 animate-fade-in-up">
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+							Pipeline de Vendas
+						</h1>
+						<p className="font-sans text-base text-muted-foreground">
+							Gerencie seus leads e oportunidades
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<LeadForm />
+					</div>
 				</div>
-				<div className="flex items-center gap-2">
-					<Button>
-						<Plus className="mr-2 h-4 w-4" /> Novo Lead
-					</Button>
-				</div>
+
+				<LeadFilters
+					onFiltersChange={(newFilters) => setFilters((prev) => ({ ...prev, ...newFilters }))}
+				/>
 			</div>
 
 			<div className="flex-1 overflow-hidden">
-				<PipelineKanban leads={formattedLeads} onDragEnd={handleDragEnd} />
+				{leads === undefined ? (
+					<div className="h-full flex items-center justify-center text-muted-foreground">
+						Carregando pipeline...
+					</div>
+				) : (
+					<PipelineKanban
+						leads={formattedLeads}
+						onDragEnd={handleDragEnd}
+						onLeadClick={(id) => setSelectedLeadId(id as Id<'leads'>)}
+					/>
+				)}
 			</div>
+
+			<LeadDetail leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
 		</div>
 	);
 }
