@@ -20,6 +20,16 @@ export const current = query({
 })
 
 /**
+ * List all users (for dropdowns, assignments, etc.)
+ */
+export const listUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('users').collect()
+  },
+})
+
+/**
  * Create or update a user (sync from Clerk)
  */
 export const syncUser = mutation({

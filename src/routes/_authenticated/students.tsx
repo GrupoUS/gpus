@@ -7,6 +7,7 @@ import { useState } from 'react';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
+import { StudentForm } from '@/components/students/student-form';
 import { StudentTimeline } from '@/components/students/student-timeline';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,10 +52,7 @@ function StudentsPage() {
 					</h1>
 					<p className="text-muted-foreground">Gerencie seus alunos e matrículas</p>
 				</div>
-				<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-					<Plus className="h-4 w-4" />
-					Novo Aluno
-				</Button>
+				<StudentForm />
 			</div>
 
 			{/* Stats Cards */}

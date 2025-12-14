@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 import { fadeInUp } from '@/lib/animations';
 
-export const Route = createFileRoute('/sign-up/$')({
+export const Route = createFileRoute('/sign-up/$' as any)({
 	component: SignUpPage,
 });
 

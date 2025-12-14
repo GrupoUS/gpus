@@ -162,6 +162,35 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 
 						<Separator />
 
+						{/* Estágio */}
+						<div className="space-y-2">
+							<h5 className="text-sm font-medium text-muted-foreground">Estágio</h5>
+							<div className="grid grid-cols-2 gap-2">
+								{[
+									{ id: 'novo', label: 'Novo' },
+									{ id: 'primeiro_contato', label: 'Primeiro Contato' },
+									{ id: 'qualificado', label: 'Qualificado' },
+									{ id: 'proposta', label: 'Proposta' },
+									{ id: 'negociacao', label: 'Negociação' },
+									{ id: 'fechado_ganho', label: 'Fechado Ganho' },
+									{ id: 'fechado_perdido', label: 'Fechado Perdido' },
+								].map((item) => (
+									<div key={item.id} className="flex items-center space-x-2">
+										<Checkbox
+											id={`stage-${item.id}`}
+											checked={filters.stages.includes(item.id)}
+											onCheckedChange={() => toggleFilter('stages', item.id)}
+										/>
+										<Label htmlFor={`stage-${item.id}`} className="text-sm font-normal">
+											{item.label}
+										</Label>
+									</div>
+								))}
+							</div>
+						</div>
+
+						<Separator />
+
 						{/* Origem */}
 						<div className="space-y-2">
 							<h5 className="text-sm font-medium text-muted-foreground">Origem</h5>

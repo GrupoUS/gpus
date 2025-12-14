@@ -32,9 +32,16 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	// Scroll to bottom on new messages
 	useEffect(() => {
 		if (scrollRef.current) {
-			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+			const scrollElement = scrollRef.current;
+			const isNearBottom =
+				scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
+			
+			// Only auto-scroll if user is near bottom or on first render
+			if (isNearBottom || !messages || messages.length === 0) {
+				scrollElement.scrollTop = scrollElement.scrollHeight;
+			}
 		}
-	}, []);
+	}, [messages]);
 
 	const handleSendMessage = async (content: string) => {
 		await sendMessage({

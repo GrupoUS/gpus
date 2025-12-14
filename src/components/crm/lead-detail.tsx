@@ -85,9 +85,12 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 							size="sm"
 							variant="outline"
 							className="flex-1 gap-2"
+							disabled={!lead.email}
 							onClick={() => {
+								if (!lead.email) return;
 								window.location.href = `mailto:${lead.email}`;
 							}}
+							title={!lead.email ? 'Sem email cadastrado' : undefined}
 						>
 							<Mail className="h-4 w-4" />
 							Email

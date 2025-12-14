@@ -1,9 +1,18 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import { useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 
 export const Route = createFileRoute('/_authenticated/reports')({
 	component: ReportsPage,
@@ -53,12 +62,12 @@ function ReportsPage() {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Conversas</CardTitle>
+						<CardTitle className="text-sm font-medium">Mensagens</CardTitle>
 						<MessageSquare className="h-4 w-4 text-blue-500" />
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-blue-600">{stats?.messagesCount ?? 0}</div>
-						<p className="text-xs text-muted-foreground">Total de conversas</p>
+						<p className="text-xs text-muted-foreground">Total de mensagens</p>
 					</CardContent>
 				</Card>
 
