@@ -18,7 +18,7 @@ export function Hero() {
 			/>
 
 			{/* Gradient Overlay */}
-			<div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/80" />
+			<div className="absolute top-0 left-0 w-full h-[500px] bg-linear-to-b from-primary/5 to-transparent -z-10" />
 
 			{/* Background Effects */}
 			<div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10 pointer-events-none">
@@ -63,10 +63,10 @@ export function Hero() {
 					variants={fadeInUp}
 					className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl"
 				>
-					<span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground">
+					<span className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-primary to-foreground">
 						Potencialize sua Gestão com
 					</span>
-					<span className="block bg-clip-text text-transparent bg-gradient-to-r from-primary via-us-purple-light to-primary">
+					<span className="block bg-clip-text text-transparent bg-linear-to-r from-primary via-us-purple-light to-primary">
 						Inteligência Artificial
 					</span>
 				</motion.h1>

@@ -1,37 +1,67 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
+import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { api } from '../../../convex/_generated/api';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { PipelineKanban } from '@/components/crm/pipeline-kanban';
+import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
 
 function CRMPage() {
+	const leads = useQuery(api.leads.listLeads, {});
+	const updateStage = useMutation(api.leads.updateLeadStage);
+
+	const handleDragEnd = async (leadId: string, newStage: string) => {
+		// Optimistic update could go here, but for now just mutate
+		// We need to cast newStage to the union type, but backend validates it.
+		try {
+			await updateStage({
+				leadId: leadId as Id<'leads'>,
+				newStage: newStage as Doc<'leads'>['stage'],
+			});
+			toast.success('Lead atualizado');
+		} catch {
+			toast.error('Erro ao atualizar lead');
+		}
+	};
+
+	if (leads === undefined) {
+		return <div className="p-8">Carregando leads...</div>;
+	}
+
+	// Cast leads to match interface (Convex types vs Frontend Interface)
+	// In a real app we'd use shared types. For now we map.
+	const formattedLeads = leads.map((l: Doc<'leads'>) => ({
+		...l,
+		stage: l.stage,
+		temperature: l.temperature,
+	}));
+
 	return (
-		<div className="space-y-6">
-			<div className="animate-fade-in-up">
-				<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">CRM</h1>
-				<p className="font-sans text-base text-muted-foreground">
-					Gerencie seus relacionamentos com clientes
-				</p>
+		<div className="h-[calc(100vh-4rem)] flex flex-col space-y-4">
+			<div className="flex items-center justify-between animate-fade-in-up">
+				<div>
+					<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+						Pipeline de Vendas
+					</h1>
+					<p className="font-sans text-base text-muted-foreground">
+						Gerencie seus leads e oportunidades
+					</p>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button>
+						<Plus className="mr-2 h-4 w-4" /> Novo Lead
+					</Button>
+				</div>
 			</div>
-			
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{[
-					{ title: "Leads Recentes", count: 47, color: "text-blue-500" },
-					{ title: "Clientes Ativos", count: 23, color: "text-green-500" },
-					{ title: "Oportunidades", count: 12, color: "text-purple-500" },
-					{ title: "Tarefas", count: 8, color: "text-orange-500" },
-					{ title: "Reuniões", count: 5, color: "text-pink-500" },
-					{ title: "Documentos", count: 19, color: "text-indigo-500" }
-				].map((item, index) => (
-					<div key={item.title} className={`glass-card p-6 animate-fade-in-up delay-${(index + 1) * 100}`}>
-						<h3 className={`font-display text-lg font-semibold ${item.color} mb-2`}>
-							{item.title}
-						</h3>
-						<p className="font-display text-3xl font-bold text-foreground">
-							{item.count}
-						</p>
-					</div>
-				))}
+
+			<div className="flex-1 overflow-hidden">
+				<PipelineKanban leads={formattedLeads} onDragEnd={handleDragEnd} />
 			</div>
 		</div>
 	);

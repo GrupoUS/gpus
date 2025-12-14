@@ -13,10 +13,9 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CrmIndexRouteImport } from './routes/crm/index'
 import { Route as SignInSsoCallbackRouteImport } from './routes/sign-in/sso-callback'
-import { Route as CrmLeadIdRouteImport } from './routes/crm/$leadId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -37,24 +36,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CrmIndexRoute = CrmIndexRouteImport.update({
-  id: '/crm/',
-  path: '/crm/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignInSsoCallbackRoute = SignInSsoCallbackRouteImport.update({
   id: '/sso-callback',
   path: '/sso-callback',
   getParentRoute: () => SignInRoute,
 } as any)
-const CrmLeadIdRoute = CrmLeadIdRouteImport.update({
-  id: '/crm/$leadId',
-  path: '/crm/$leadId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -62,19 +56,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRouteWithChildren
   '/sign-up': typeof SignUpRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/crm/$leadId': typeof CrmLeadIdRoute
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
-  '/crm': typeof CrmIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRouteWithChildren
   '/sign-up': typeof SignUpRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/crm/$leadId': typeof CrmLeadIdRoute
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
-  '/crm': typeof CrmIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,10 +74,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
   '/sign-up': typeof SignUpRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/crm/$leadId': typeof CrmLeadIdRoute
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
-  '/crm/': typeof CrmIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,29 +84,26 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/dashboard'
-    | '/crm/$leadId'
-    | '/sign-in/sso-callback'
     | '/crm'
+    | '/dashboard'
+    | '/sign-in/sso-callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sign-in'
     | '/sign-up'
-    | '/dashboard'
-    | '/crm/$leadId'
-    | '/sign-in/sso-callback'
     | '/crm'
+    | '/dashboard'
+    | '/sign-in/sso-callback'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/sign-in'
     | '/sign-up'
+    | '/_authenticated/crm'
     | '/_authenticated/dashboard'
-    | '/crm/$leadId'
     | '/sign-in/sso-callback'
-    | '/crm/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -123,8 +111,6 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   SignInRoute: typeof SignInRouteWithChildren
   SignUpRoute: typeof SignUpRoute
-  CrmLeadIdRoute: typeof CrmLeadIdRoute
-  CrmIndexRoute: typeof CrmIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -157,26 +143,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/crm/': {
-      id: '/crm/'
-      path: '/crm'
-      fullPath: '/crm'
-      preLoaderRoute: typeof CrmIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sign-in/sso-callback': {
       id: '/sign-in/sso-callback'
       path: '/sso-callback'
       fullPath: '/sign-in/sso-callback'
       preLoaderRoute: typeof SignInSsoCallbackRouteImport
       parentRoute: typeof SignInRoute
-    }
-    '/crm/$leadId': {
-      id: '/crm/$leadId'
-      path: '/crm/$leadId'
-      fullPath: '/crm/$leadId'
-      preLoaderRoute: typeof CrmLeadIdRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -185,14 +157,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
 }
 
@@ -216,8 +197,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRouteWithChildren,
   SignUpRoute: SignUpRoute,
-  CrmLeadIdRoute: CrmLeadIdRoute,
-  CrmIndexRoute: CrmIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
