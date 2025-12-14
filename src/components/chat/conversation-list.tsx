@@ -1,12 +1,12 @@
 'use client';
 
+import { api } from '@convex/_generated/api';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageSquare, User } from 'lucide-react';
 
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -52,7 +52,7 @@ export function ConversationList({ selectedId, onSelect, statusFilter }: Convers
 	return (
 		<ScrollArea className="h-[calc(100vh-200px)]">
 			<div className="space-y-1 p-2">
-				{conversations.map((conversation) => (
+				{conversations.map((conversation: Doc<'conversations'>) => (
 					<button
 						key={conversation._id}
 						type="button"

@@ -1,12 +1,12 @@
+import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -81,9 +81,8 @@ export function LeadForm() {
 	const [open, setOpen] = useState(false);
 	const createLead = useMutation(api.leads.createLead);
 
-	const form = useForm<z.infer<typeof formSchema>>({
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		resolver: zodResolver(formSchema) as any,
+	const form = useForm({
+		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
 			phone: '',

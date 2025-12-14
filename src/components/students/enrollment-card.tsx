@@ -1,6 +1,7 @@
 'use client';
 
-import type { Doc } from '../../../convex/_generated/dataModel';
+import type { Doc } from '@convex/_generated/dataModel';
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';

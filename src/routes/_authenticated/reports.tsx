@@ -1,8 +1,8 @@
+import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
 
-import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const Route = createFileRoute('/_authenticated/reports')({

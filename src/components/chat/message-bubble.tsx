@@ -1,10 +1,10 @@
 'use client';
 
+import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Check, CheckCheck, Clock, XCircle } from 'lucide-react';
 
-import type { Doc } from '../../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
 
 interface MessageBubbleProps {

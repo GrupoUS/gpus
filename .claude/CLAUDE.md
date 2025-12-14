@@ -4,8 +4,6 @@
 
 Dynamic subagent routing and parallel execution coordination for AegisWallet subagents and skills.
 
-**Business Context**: Brazilian financial market with PIX, LGPD, and accessibility requirements demanding extra security scrutiny and Portuguese-first interfaces.
-
 ## Available Subagents & Capabilities
 
 | Subagent | Primary Focus | MCPs Assigned | When to Use |
@@ -56,7 +54,6 @@ The Task tool is the **primary mechanism** for invoking specialized subagents. E
 - ✅ Security-sensitive operations (financial data, auth, PII)
 - ✅ Database operations (ANY database change)
 - ✅ UI/UX components (ANY interface work)
-- ✅ Brazilian compliance requirements (LGPD, PIX, accessibility)
 - ✅ Research required (external docs, patterns)
 
 **Mandatory Triggers** (ALWAYS use Task tool):
@@ -85,10 +82,6 @@ Task:
     ## Expected Output
     [Deliverable format]
 
-    ## Brazilian Compliance (if applicable)
-    - LGPD: [data protection requirements]
-    - PIX: [financial transaction requirements]
-    - Accessibility: [WCAG 2.1 AA+ requirements]
 ```
 
 #### Parallel Subagent Invocation
@@ -211,7 +204,7 @@ brazilian_compliance: true/false
 
 ### Communication Contracts
 
-**apex-dev** expects: goal, scope, complexity (1-10), requirements (functional/non-functional), constraints, Brazilian requirements (LGPD/PIX/accessibility). Delivers: implementation plan, technical approach, risk assessment, resource requirements, integration strategy, quality gates.
+**apex-dev** expects: goal, scope, complexity (1-10), requirements (functional/non-functional), constraints. Delivers: implementation plan, technical approach, risk assessment, resource requirements, integration strategy, quality gates.
 
 **code-reviewer** expects: file paths, review type (security/architecture/compliance/full), security focus (OWASP Top 10), Brazilian compliance (LGPD/PIX/accessibility), risk tolerance. Delivers: security findings with severity, compliance status, architecture assessment, performance impact, recommendations, confidence score.
 
@@ -269,15 +262,13 @@ Process: Automatic MCP routing based on keyword detection → Brazilian complian
 ### Skill Integration
 
 **Available Skills** (`.claude/skills/`):
-- **Brazilian Fintech**: brazilian-fintech-compliance, aegis-architect, webapp-testing
 - **Development**: ai-data-analyst, product-management, frontend-design, vibe-coding
 - **Creative**: canvas-design, algorithmic-art, theme-factory, web-artifacts-builder
 - **Document**: docx, pdf, pptx, xlsx
 
-**Invocation Triggers** (Automatic): Brazilian compliance → brazilian-fintech-compliance, market research → product-management, UI/UX design → frontend-design, data analysis → ai-data-analyst, testing → webapp-testing
+**Invocation Triggers** (Automatic): market research → product-management, UI/UX design → frontend-design, data analysis → ai-data-analyst, testing → webapp-testing
 
 **Skill ↔ Subagent Patterns**:
-- **brazilian-fintech-compliance**: apex-researcher, database-specialist, code-reviewer (LGPD validation, PIX patterns, BCB regulatory)
 - **aegis-architect**: apex-dev, apex-ui-ux-designer, database-specialist (voice-first architecture, Brazilian fintech patterns, performance)
 - **webapp-testing**: apex-dev, code-reviewer (LGPD testing, Portuguese voice validation, tRPC/Supabase RLS)
 

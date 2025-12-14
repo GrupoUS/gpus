@@ -1,5 +1,6 @@
 'use client';
 
+import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
@@ -14,7 +15,6 @@ import {
 	YAxis,
 } from 'recharts';
 
-import { api } from '../../../convex/_generated/api';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';

@@ -1,11 +1,11 @@
 'use client';
 
+import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { FileText, Hash, Search, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
-import { api } from '../../../convex/_generated/api';
-import type { Doc } from '../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +46,7 @@ export function TemplatePicker({ onSelect, trigger }: TemplatePickerProps) {
 	const [search, setSearch] = useState('');
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-	const templates = useQuery(api.messageTemplates?.listTemplates, {});
+	const templates = useQuery(api.messageTemplates.listTemplates, {});
 
 	const filteredTemplates = templates?.filter((t: Doc<'messageTemplates'>) => {
 		const matchesSearch =
@@ -56,8 +56,8 @@ export function TemplatePicker({ onSelect, trigger }: TemplatePickerProps) {
 		return matchesSearch && matchesCategory;
 	});
 
-	const categories = templates
-		? [...new Set(templates.map((t: Doc<'messageTemplates'>) => t.category))]
+	const categories: string[] = templates
+		? Array.from(new Set(templates.map((t: Doc<'messageTemplates'>) => t.category)))
 		: [];
 
 	const handleSelect = (template: Doc<'messageTemplates'>) => {
@@ -67,24 +67,12 @@ export function TemplatePicker({ onSelect, trigger }: TemplatePickerProps) {
 		setSelectedCategory(null);
 	};
 
-	// Assuming CategoryIcon is a component type (e.g., from lucide-react)
-	// and needs to be dynamically determined or passed.
-	// For the purpose of this specific change, we'll define a placeholder
-	// if it's not meant to be dynamic for the trigger button.
-	// If the intent is to use a specific icon like FileText, it should be directly used.
-	// If it's meant to be dynamic, more context is needed for its definition.
-	// Based on the instruction, we'll assume CategoryIcon is a component type variable.
-	// For this specific button, the original icon was FileText.
-	// If CategoryIcon is meant to replace FileText, it needs to be defined.
-	// Let's assume for now that CategoryIcon is meant to be FileText if not dynamic.
-	const CategoryIcon = FileText; // Placeholder based on original icon
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				{trigger || (
 					<Button variant="outline" size="sm" className="gap-2">
-						{CategoryIcon && <CategoryIcon className="h-4 w-4" />}
+						<FileText className="h-4 w-4" />
 						Templates
 					</Button>
 				)}
@@ -144,7 +132,7 @@ export function TemplatePicker({ onSelect, trigger }: TemplatePickerProps) {
 							</div>
 						) : (
 							<div className="space-y-2">
-								{filteredTemplates?.map((template) => (
+								{filteredTemplates?.map((template: Doc<'messageTemplates'>) => (
 									<button
 										key={template._id}
 										type="button"

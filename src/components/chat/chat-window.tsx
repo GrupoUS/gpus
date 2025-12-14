@@ -1,11 +1,11 @@
 'use client';
 
+import { api } from '@convex/_generated/api';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, MoreVertical, Phone, User, Video } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
 import { ChatInput } from './chat-input';
 import { MessageBubble } from './message-bubble';
 import { Button } from '@/components/ui/button';
@@ -117,7 +117,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 					</div>
 				) : (
 					<div className="space-y-1">
-						{messages.map((message) => (
+						{messages.map((message: Doc<'messages'>) => (
 							<MessageBubble
 								key={message._id}
 								message={message}

@@ -1,8 +1,8 @@
 'use client';
 
+import { useAuth } from '@clerk/clerk-react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 
 export const Route = createFileRoute('/sign-in/sso-callback')({
 	component: SSOCallbackPage,
@@ -24,10 +24,10 @@ function SSOCallbackPage() {
 
 		if (isSignedIn && !hasRedirected) {
 			setHasRedirected(true);
-			
+
 			// Decode the redirect URL if it's URL encoded
 			let redirectUrl = sign_in_force_redirect_url || '/dashboard';
-			
+
 			try {
 				redirectUrl = decodeURIComponent(redirectUrl);
 			} catch {
@@ -65,4 +65,3 @@ function SSOCallbackPage() {
 		</div>
 	);
 }
-

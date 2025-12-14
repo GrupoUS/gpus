@@ -1,10 +1,10 @@
 'use client';
 
+import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Building2, GraduationCap, Mail, Phone, User } from 'lucide-react';
 
-import type { Doc } from '../../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
