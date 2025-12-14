@@ -1,16 +1,16 @@
 'use client';
 
-import { SignUp } from '@clerk/clerk-react';
+import { SignIn } from '@clerk/clerk-react';
 import { createFileRoute } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 
 import { fadeInUp } from '@/lib/animations';
 
-export const Route = createFileRoute('/sign-up')({
-	component: SignUpPage,
+export const Route = createFileRoute('/sign-in/$')({
+	component: SignInPage,
 });
 
-function SignUpPage() {
+function SignInPage() {
 	return (
 		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise relative overflow-hidden">
 			{/* Background effects */}
@@ -50,10 +50,9 @@ function SignUpPage() {
 				className="relative z-10 w-full max-w-md px-4"
 			>
 				<div className="glass-card rounded-2xl p-8 shadow-2xl">
-					<SignUp
-						routing="path"
-						path="/sign-up"
-						signInUrl="/sign-in"
+					<SignIn
+						routing="hash"
+						signUpUrl="/sign-up"
 						forceRedirectUrl="/dashboard"
 						appearance={{
 							elements: {
