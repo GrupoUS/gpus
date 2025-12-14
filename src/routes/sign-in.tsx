@@ -70,8 +70,8 @@ function SignInPage() {
 								footerActionLink: 'text-primary hover:text-primary/80',
 							},
 						}}
-					/>
-				</div>
+								/>
+							</div>
 			</motion.div>
 		</div>
 	);
