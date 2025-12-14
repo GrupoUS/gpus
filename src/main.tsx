@@ -41,11 +41,7 @@ function InnerApp() {
 
 export function App() {
 	return (
-		<ClerkProvider
-			publishableKey={clerkPubKey}
-			afterSignInUrl="/dashboard"
-			afterSignUpUrl="/dashboard"
-		>
+		<ClerkProvider publishableKey={clerkPubKey}>
 			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
 				<InnerApp />
 			</ConvexProviderWithClerk>

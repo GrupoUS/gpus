@@ -16,8 +16,11 @@ interface RouterContext {
 	auth: { userId: string | null | undefined } | undefined;
 }
 
+import { NotFound } from '@/components/not-found';
+
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: RootLayout,
+	notFoundComponent: NotFound,
 });
 
 function RootLayout() {
