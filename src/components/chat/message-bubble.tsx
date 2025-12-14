@@ -40,7 +40,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 				className={cn(
 					'max-w-[75%] rounded-2xl px-4 py-2 shadow-sm',
 					isOwn
-						? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-br-md'
+						? 'bg-linear-to-r from-purple-600 to-indigo-600 text-white rounded-br-md'
 						: isBot
 							? 'bg-amber-100 text-amber-900 rounded-bl-md border border-amber-200'
 							: 'bg-muted rounded-bl-md',
@@ -59,7 +59,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 					</audio>
 				)}
 
-				<p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+				<p className="text-sm wrap-break-word">{message.content}</p>
 
 				<div
 					className={cn('flex items-center gap-1 mt-1', isOwn ? 'justify-end' : 'justify-start')}

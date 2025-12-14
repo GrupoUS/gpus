@@ -36,8 +36,9 @@ function StudentsPage() {
 
 	// Stats
 	const totalStudents = students?.length ?? 0;
-	const activeStudents = students?.filter((s) => s.status === 'ativo').length ?? 0;
-	const highRiskStudents = students?.filter((s) => s.churnRisk === 'alto').length ?? 0;
+	const activeStudents = students?.filter((s: Doc<'students'>) => s.status === 'ativo').length ?? 0;
+	const highRiskStudents =
+		students?.filter((s: Doc<'students'>) => s.churnRisk === 'alto').length ?? 0;
 
 	return (
 		<div className="space-y-6 p-6">
@@ -50,7 +51,7 @@ function StudentsPage() {
 					</h1>
 					<p className="text-muted-foreground">Gerencie seus alunos e matrículas</p>
 				</div>
-				<Button className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+				<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
 					<Plus className="h-4 w-4" />
 					Novo Aluno
 				</Button>

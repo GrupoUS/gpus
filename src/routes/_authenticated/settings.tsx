@@ -28,14 +28,16 @@ interface SettingItemProps {
 
 function SettingItem({ icon, title, description, href, onClick }: SettingItemProps) {
 	const content = (
-		<div
+		<button
+			type="button"
 			className={cn(
-				'flex items-center gap-4 p-4 rounded-lg border transition-colors',
-				'hover:bg-muted/50 hover:border-primary/30 cursor-pointer',
+				'flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer text-left',
+				'hover:shadow-md hover:border-purple-500/20 active:scale-[0.99]',
+				'bg-background/50 backdrop-blur-sm',
 			)}
 			onClick={onClick}
 		>
-			<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/10 to-indigo-500/10 flex items-center justify-center">
+			<div className="h-20 bg-linear-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center">
 				{icon}
 			</div>
 			<div className="flex-1">
@@ -43,7 +45,7 @@ function SettingItem({ icon, title, description, href, onClick }: SettingItemPro
 				<p className="text-xs text-muted-foreground">{description}</p>
 			</div>
 			<ChevronRight className="h-4 w-4 text-muted-foreground" />
-		</div>
+		</button>
 	);
 
 	if (href) {

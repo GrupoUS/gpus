@@ -38,14 +38,14 @@ export function ChatInput({
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			handleSubmit();
+			void handleSubmit();
 		}
 	};
 
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+			className="border-t p-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
 		>
 			<div className="flex items-end gap-2">
 				<Button type="button" variant="ghost" size="icon" className="shrink-0" disabled={disabled}>
@@ -80,7 +80,7 @@ export function ChatInput({
 					type="submit"
 					size="icon"
 					disabled={!message.trim() || isSending || disabled}
-					className="shrink-0 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+					className="shrink-0 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
 				>
 					{isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
 				</Button>

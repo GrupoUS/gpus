@@ -36,7 +36,7 @@ export function StudentTimeline({ studentId }: StudentTimelineProps) {
 		<div className="space-y-6">
 			{/* Student Header */}
 			<div className="flex items-start gap-4 p-4 border rounded-lg bg-muted/10">
-				<div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
+				<div className="w-14 h-14 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
 					<User className="h-7 w-7 text-white" />
 				</div>
 				<div className="flex-1 min-w-0">

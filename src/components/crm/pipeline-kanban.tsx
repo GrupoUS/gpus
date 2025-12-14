@@ -1,4 +1,5 @@
 import { closestCenter, DndContext, type DragEndEvent, useDroppable } from '@dnd-kit/core';
+import { MessageSquare } from 'lucide-react';
 
 import { LeadCard } from './lead-card';
 import { Badge } from '@/components/ui/badge';
@@ -66,19 +67,33 @@ function KanbanColumn({
 					<ScrollArea className="h-full">
 						<div className="space-y-3 pr-4 pb-4">
 							{leads.map((lead) => (
-								<div
-									key={lead._id}
-									role="button"
-									tabIndex={0}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' || e.key === ' ') {
-											onLeadClick?.(lead._id);
-										}
-									}}
-									onClick={() => onLeadClick?.(lead._id)}
-									className="cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
-								>
-									<LeadCard lead={lead} />
+								<div key={lead._id} className="rounded-lg">
+									<button
+										type="button"
+										onKeyDown={(e) => {
+											if (e.key === 'Enter' || e.key === ' ') {
+												onLeadClick?.(lead._id);
+											}
+										}}
+										onClick={() => onLeadClick?.(lead._id)}
+										className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+									>
+										<LeadCard lead={lead} />
+									</button>
+									{lead.phone && (
+										<button
+											type="button"
+											onClick={() => {
+												if (lead.phone) {
+													window.open(`https://wa.me/${lead.phone}`, '_blank');
+												}
+											}}
+											className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium"
+										>
+											<MessageSquare className="h-3.5 w-3.5" />
+											WhatsApp
+										</button>
+									)}
 								</div>
 							))}
 							{leads.length === 0 && (

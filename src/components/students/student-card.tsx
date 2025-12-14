@@ -46,7 +46,7 @@ export function StudentCard({ student, onClick }: StudentCardProps) {
 			<CardHeader className="pb-2">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
 							<User className="h-5 w-5 text-white" />
 						</div>
 						<div>

@@ -120,7 +120,7 @@ function ReportsPage() {
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
 													<div
-														className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
+														className="p-2 bg-linear-to-r from-blue-500/10 to-indigo-500/10 rounded-lg"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>

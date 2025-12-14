@@ -55,7 +55,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	return (
 		<div className="flex flex-col h-full">
 			{/* Header */}
-			<div className="border-b px-4 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+			<div className="border-b px-4 py-3 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						{onBack && (
@@ -63,7 +63,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 								<ArrowLeft className="h-5 w-5" />
 							</Button>
 						)}
-						<div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
 							<User className="h-5 w-5 text-white" />
 						</div>
 						<div>

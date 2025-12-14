@@ -125,110 +125,14 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 							value="overview"
 							className="mt-0 space-y-6 animate-in slide-in-from-left-2 duration-300"
 						>
-							{/* Qualificação */}
-							<section className="space-y-3">
-								<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-									<Briefcase className="h-4 w-4" /> Dados Profissionais
-								</h3>
-								<div className="grid grid-cols-2 gap-4 text-sm">
-									<div className="p-3 rounded-lg bg-card border border-border/50">
-										<span className="text-muted-foreground block text-xs mb-1">Profissão</span>
-										<span className="font-medium">{lead.profession || 'Não informado'}</span>
-									</div>
-									<div className="p-3 rounded-lg bg-card border border-border/50">
-										<span className="text-muted-foreground block text-xs mb-1">Clínica</span>
-										<span className="font-medium">
-											{lead.hasClinic ? lead.clinicName || 'Sim' : 'Não'}
-										</span>
-									</div>
-									<div className="p-3 rounded-lg bg-card border border-border/50">
-										<span className="text-muted-foreground block text-xs mb-1">Experiência</span>
-										<span className="font-medium">
-											{lead.yearsInAesthetics ? `${lead.yearsInAesthetics} anos` : 'N/A'}
-										</span>
-									</div>
-									<div className="p-3 rounded-lg bg-card border border-border/50">
-										<span className="text-muted-foreground block text-xs mb-1">Faturamento</span>
-										<span className="font-medium">{lead.currentRevenue || 'N/A'}</span>
-									</div>
-								</div>
-							</section>
-
-							{/* Interesse */}
-							<section className="space-y-3">
-								<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-									<Activity className="h-4 w-4" /> Interesse
-								</h3>
-								<div className="p-4 rounded-lg bg-card border border-border/50 space-y-3">
-									<div className="flex justify-between border-b border-border/30 pb-2">
-										<span className="text-muted-foreground">Produto</span>
-										<span className="font-medium text-primary">
-											{lead.interestedProduct || 'Indefinido'}
-										</span>
-									</div>
-									<div className="flex justify-between border-b border-border/30 pb-2">
-										<span className="text-muted-foreground">Temperatura</span>
-										<Badge
-											variant={
-												lead.temperature === 'quente'
-													? 'destructive'
-													: lead.temperature === 'morno'
-														? 'secondary'
-														: 'secondary'
-											}
-										>
-											{lead.temperature === 'quente'
-												? '🔥 Quente'
-												: lead.temperature === 'morno'
-													? '🌤️ Morno'
-													: '❄️ Frio'}
-										</Badge>
-									</div>
-									<div className="space-y-1">
-										<span className="text-muted-foreground text-xs">Dor Principal</span>
-										<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
-									</div>
-								</div>
-							</section>
+							<LeadOverview lead={lead} />
 						</TabsContent>
 
 						<TabsContent
 							value="timeline"
 							className="mt-0 space-y-4 animate-in slide-in-from-right-2 duration-300"
 						>
-							{activities ? (
-								activities.length === 0 ? (
-									<div className="text-center py-10 text-muted-foreground">
-										Nenhuma atividade registrada.
-									</div>
-								) : (
-									<div className="relative border-l border-border/50 ml-3 space-y-6">
-										{activities.map((activity: Doc<'activities'>) => (
-											<div key={activity._id} className="relative pl-6">
-												<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
-												<div className="flex flex-col gap-1">
-													<span className="text-xs text-muted-foreground">
-														{formatDistanceToNow(activity.createdAt, {
-															addSuffix: true,
-															locale: ptBR,
-														})}
-													</span>
-													<p className="text-sm font-medium">{activity.description}</p>
-													<span className="text-xs px-2 py-0.5 rounded-full bg-muted w-fit text-muted-foreground capitalize">
-														{activity.type.replace('_', ' ')}
-													</span>
-												</div>
-											</div>
-										))}
-									</div>
-								)
-							) : (
-								<div className="space-y-4">
-									{[1, 2, 3].map((i) => (
-										<div key={i} className="h-16 bg-muted/20 animate-pulse rounded-lg" />
-									))}
-								</div>
-							)}
+							<LeadTimeline activities={activities} />
 						</TabsContent>
 
 						<TabsContent value="notes" className="mt-0">
@@ -240,5 +144,113 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 				</Tabs>
 			</SheetContent>
 		</Sheet>
+	);
+}
+
+function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
+	return (
+		<>
+			<section className="space-y-3">
+				<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+					<Briefcase className="h-4 w-4" /> Dados Profissionais
+				</h3>
+				<div className="grid grid-cols-2 gap-4 text-sm">
+					<div className="p-3 rounded-lg bg-card border border-border/50">
+						<span className="text-muted-foreground block text-xs mb-1">Profissão</span>
+						<span className="font-medium">{lead.profession || 'Não informado'}</span>
+					</div>
+					<div className="p-3 rounded-lg bg-card border border-border/50">
+						<span className="text-muted-foreground block text-xs mb-1">Clínica</span>
+						<span className="font-medium">{lead.hasClinic ? lead.clinicName || 'Sim' : 'Não'}</span>
+					</div>
+					<div className="p-3 rounded-lg bg-card border border-border/50">
+						<span className="text-muted-foreground block text-xs mb-1">Experiência</span>
+						<span className="font-medium">
+							{lead.yearsInAesthetics ? `${lead.yearsInAesthetics} anos` : 'N/A'}
+						</span>
+					</div>
+					<div className="p-3 rounded-lg bg-card border border-border/50">
+						<span className="text-muted-foreground block text-xs mb-1">Faturamento</span>
+						<span className="font-medium">{lead.currentRevenue || 'N/A'}</span>
+					</div>
+				</div>
+			</section>
+
+			<section className="space-y-3">
+				<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+					<Activity className="h-4 w-4" /> Interesse
+				</h3>
+				<div className="p-4 rounded-lg bg-card border border-border/50 space-y-3">
+					<div className="flex justify-between border-b border-border/30 pb-2">
+						<span className="text-muted-foreground">Produto</span>
+						<span className="font-medium text-primary">
+							{lead.interestedProduct || 'Indefinido'}
+						</span>
+					</div>
+					<div className="flex justify-between border-b border-border/30 pb-2">
+						<span className="text-muted-foreground">Temperatura</span>
+						<Badge
+							variant={
+								lead.temperature === 'quente'
+									? 'destructive'
+									: lead.temperature === 'morno'
+										? 'secondary'
+										: 'secondary'
+							}
+						>
+							{lead.temperature === 'quente'
+								? '🔥 Quente'
+								: lead.temperature === 'morno'
+									? '🌤️ Morno'
+									: '❄️ Frio'}
+						</Badge>
+					</div>
+					<div className="space-y-1">
+						<span className="text-muted-foreground text-xs">Dor Principal</span>
+						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
+					</div>
+				</div>
+			</section>
+		</>
+	);
+}
+
+function LeadTimeline({ activities }: { activities?: Doc<'activities'>[] }) {
+	if (!activities) {
+		return (
+			<div className="space-y-4">
+				{[1, 2, 3].map((i) => (
+					<div key={i} className="h-16 bg-muted/20 animate-pulse rounded-lg" />
+				))}
+			</div>
+		);
+	}
+
+	if (activities.length === 0) {
+		return (
+			<div className="text-center py-10 text-muted-foreground">Nenhuma atividade registrada.</div>
+		);
+	}
+
+	return (
+		<div className="relative border-l border-border/50 ml-3 space-y-6">
+			{activities.map((activity) => (
+				<div key={activity._id} className="relative pl-6">
+					<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
+					<div className="flex flex-col gap-1">
+						<span className="text-xs text-muted-foreground">
+							{formatDistanceToNow(activity.createdAt, {
+								addSuffix: true,
+								locale: ptBR,
+							})}
+						</span>
+						<p className="text-sm font-medium">{activity.description}</p>
+						<span className="text-xs px-2 py-0.5 rounded-full bg-muted w-fit text-muted-foreground capitalize">
+							{activity.type.replace('_', ' ')}
+						</span>
+					</div>
+				</div>
+			))}
+		</div>
 	);
 }
