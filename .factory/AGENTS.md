@@ -609,16 +609,6 @@ brazilian_compliance: "Mandatory (LGPD + student data)"
 output: "Complete CRM system with LGPD compliance"
 ```
 
-**PIX Integration:**
-```yaml
-trigger: "PIX payment integration"
-complexity: 9
-routing: "IMMEDIATE apex-researcher → apex-dev analysis → [parallel] database-specialist + code-reviewer"
-skills: ["brazilian-fintech-compliance"]
-brazilian_compliance: "Mission-critical (BCB standards + LGPD)"
-output: "PIX payment system with full regulatory compliance"
-```
-
 **Research Command:**
 ```yaml
 trigger: "/research LGPD compliance para gestão de alunos"
