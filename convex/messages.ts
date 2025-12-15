@@ -33,21 +33,26 @@ export const send = mutation({
     // Find the user to link as sender logic
     // If authenticated, it's an agent or admin usually.
     // Plan says: "Determinar sender baseado no usuário autenticado (agent/bot/system)"
-    // Usually via UI it's 'agent'.
     
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first()
       
-    // Default to 'agent' if user found, else 'system' or fail?
-    // Plan assumes 'agent' logic.
+    // Comment 5: Adjust sender resolution logic.
+    // Attempt to load the corresponding user, but if no user is found, throw error.
+    if (!user) {
+        throw new Error("User not found for authenticated identity")
+    }
+
+    // Replace hard-coded 'agent' with logic (though currently only 'agent' if user exists)
+    // If logic expanded later for 'system', we'd handle it here.
     const sender = 'agent'
     
     const messageId = await ctx.db.insert('messages', {
       ...args,
       sender: sender,
-      senderId: user?._id,
+      senderId: user._id,
       status: 'enviando',
       createdAt: Date.now(),
     })

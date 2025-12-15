@@ -20,20 +20,24 @@ export const list = query({
     )),
   },
   handler: async (ctx, args) => {
-    let conversationsQuery = ctx.db.query('conversations')
+    let conversations
 
     if (args.department) {
-      conversationsQuery = conversationsQuery
+      conversations = await ctx.db
+        .query('conversations')
         .withIndex('by_department', (q) => q.eq('department', args.department!))
+        .order('desc')
+        .take(50)
+    } else {
+      conversations = await ctx.db
+        .query('conversations')
+        .order('desc')
+        .take(50)
     }
 
-    // Comment 3: Limit the total number of conversations returned to a reasonable cap
-    // to avoid scalability issues with N+1 enrichment.
-    let conversations = await conversationsQuery.order('desc').take(50)
-
-    // Filter by status if provided (in memory if not using index, or we could use compound index if available)
-    // Schema has 'by_status', but we might have used 'by_department'.
-    // If department is set, we filtered by index. If status is also set, we filter in memory.
+    // Comment 3: Limit results (done above with .take(50)) and batch lookups
+    
+    // Filter by status if provided
     if (args.status) {
       conversations = conversations.filter(c => c.status === args.status)
     }
@@ -47,16 +51,14 @@ export const list = query({
     })
 
     // Batch fetch leads and students
-    // Optimization: De-duplicate lookups.
-    // We use Promise.all with db.get which is efficient for batched IDs.
-    const leadsMap = new Map<string, any>()
-    const studentsMap = new Map<string, any>()
-
     const uniqueLeadIds = Array.from(leadIds)
     const uniqueStudentIds = Array.from(studentIds)
 
     const leads = await Promise.all(uniqueLeadIds.map(id => ctx.db.get(id as any)))
     const students = await Promise.all(uniqueStudentIds.map(id => ctx.db.get(id as any)))
+
+    const leadsMap = new Map<string, any>()
+    const studentsMap = new Map<string, any>()
 
     leads.forEach((l, i) => {
         if (l) leadsMap.set(uniqueLeadIds[i], l)
@@ -78,8 +80,7 @@ export const list = query({
         }
 
         // Fetch last message content
-        // Still N+1 per conversation, but strictly limited to 50 max.
-        // Optimizing this further would require 'lastMessage' in conversation schema.
+        // This is still N queries but limited to 50 max (take(50)).
         const lastMsg = await ctx.db
           .query('messages')
           .withIndex('by_conversation', (q) => q.eq('conversationId', c._id))
@@ -103,7 +104,7 @@ export const list = query({
       )
     }
 
-    // Sort by lastMessageAt desc (already sorted by query mostly, but fine to re-sort if memory filter changed order)
+    // Sort by lastMessageAt desc
     return filtered.sort((a, b) => b.lastMessageAt - a.lastMessageAt)
   },
 })

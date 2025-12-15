@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { MessageSquare, Search, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 import type { Id } from '../../../convex/_generated/dataModel';
 import { AIChatWidget } from '@/components/chat/ai-chat-widget';
@@ -15,6 +15,24 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+
+// Chat context for shared state between parent and child routes
+interface ChatContextValue {
+	search: string;
+	statusFilter: string;
+	setSearch: (value: string) => void;
+	setStatusFilter: (value: string) => void;
+}
+
+const ChatContext = createContext<ChatContextValue | null>(null);
+
+export function useChatContext() {
+	const context = useContext(ChatContext);
+	if (!context) {
+		throw new Error('useChatContext must be used within ChatPage');
+	}
+	return context;
+}
 
 export const Route = createFileRoute('/_authenticated/chat')({
 	component: ChatPage,

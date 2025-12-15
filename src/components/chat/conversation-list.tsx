@@ -16,6 +16,8 @@ interface ConversationListProps {
 	department?: string;
 	statusFilter?: string;
 	search?: string;
+	selectedId?: Id<'conversations'> | null;
+	onSelect?: (id: Id<'conversations'> | null) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -26,10 +28,16 @@ const statusColors: Record<string, string> = {
 	bot_ativo: 'bg-purple-500',
 };
 
-export function ConversationList({ department, statusFilter, search }: ConversationListProps) {
+export function ConversationList({
+	department,
+	statusFilter,
+	search,
+	selectedId,
+	onSelect,
+}: ConversationListProps) {
 	const conversations = useQuery(api.conversations.list, {
-		status: statusFilter,
-		department: department === 'all' ? undefined : department,
+		status: statusFilter as any,
+		department: (department === 'all' ? undefined : department) as any,
 		search,
 	});
 

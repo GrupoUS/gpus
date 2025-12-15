@@ -1,4 +1,3 @@
-import { useDraggable } from '@dnd-kit/core';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -45,28 +44,14 @@ const productLabels: Record<string, string> = {
 };
 
 export function LeadCard({ lead }: LeadCardProps) {
-	const { attributes, listeners, setNodeRef, transform } = useDraggable({
-		id: lead._id,
-	});
-
 	// Safe fallback if temp is invalid
 	const TempIcon = temperatureIcons[lead.temperature]?.icon || Thermometer;
 	const isHot = lead.temperature === 'quente';
-	const isDragging = transform !== null;
-
-	const style = {
-		'--drag-x': transform?.x ?? 0,
-		'--drag-y': transform?.y ?? 0,
-	} as React.CSSProperties;
 
 	return (
 		<Card
 			variant="glass"
-			ref={setNodeRef}
-			style={style}
-			{...listeners}
-			{...attributes}
-			className={`p-3 cursor-grab active:cursor-grabbing lead-card transition-all duration-200 ease-out hover:shadow-[0_12px_24px_-8px_hsl(var(--primary)/0.2)] ${isDragging ? 'dragging' : ''}`}
+			className="p-3 cursor-grab active:cursor-grabbing lead-card transition-all duration-200 ease-out hover:shadow-[0_12px_24px_-8px_hsl(var(--primary)/0.2)]"
 		>
 			<div className="flex items-start gap-3">
 				<Avatar className="h-9 w-9 lead-avatar">

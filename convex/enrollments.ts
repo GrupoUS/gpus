@@ -13,9 +13,27 @@ export const getByStudent = query({
 })
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query('enrollments').order('desc').collect()
+  args: {
+    // Comment 6: Add basic optional filter arguments to avoid returning unbounded list
+    // and valid consumers.
+    studentId: v.optional(v.id('students')),
+    product: v.optional(v.string()),
+    status: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Use filters if provided
+    let q: any = ctx.db.query('enrollments')
+    
+    if (args.studentId) {
+        q = q.withIndex('by_student', (q: any) => q.eq('studentId', args.studentId!))
+    } else if (args.product) {
+        q = q.withIndex('by_product', (q: any) => q.eq('product', args.product as any))
+    } else if (args.status) {
+        q = q.withIndex('by_status', (q: any) => q.eq('status', args.status as any))
+    }
+
+    return await q.order('desc').take(args.limit || 100)
   },
 })
 
