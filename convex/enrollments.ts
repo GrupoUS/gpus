@@ -12,6 +12,13 @@ export const getByStudent = query({
   },
 })
 
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('enrollments').order('desc').collect()
+  },
+})
+
 export const create = mutation({
   args: {
     studentId: v.id('students'),
