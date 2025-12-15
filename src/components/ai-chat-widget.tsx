@@ -38,7 +38,7 @@ export function AIChatWidget() {
 		scrollToBottom();
 	}, [, scrollToBottom]);
 
-	const handleSendMessage = async () => {
+	const handleSendMessage = () => {
 		if (!inputValue.trim() || isLoading) return;
 
 		const userMessage: Message = {
@@ -69,7 +69,7 @@ export function AIChatWidget() {
 	const handleKeyPress = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			handleSendMessage();
+			void handleSendMessage();
 		}
 	};
 

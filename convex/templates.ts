@@ -24,7 +24,7 @@ export const list = query({
     if (args.category) {
       templates = await ctx.db
         .query('messageTemplates')
-        .withIndex('by_category', (q) => q.eq('category', args.category))
+        .withIndex('by_category', (q) => q.eq('category', args.category as any))
         .collect()
     } else {
       templates = await ctx.db.query('messageTemplates').collect()

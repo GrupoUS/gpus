@@ -55,7 +55,7 @@ export const getDashboard = query({
     // 4. Messages & Response Time
     const allMessages = await ctx.db.query('messages').collect()
     const currentMessages = allMessages.filter(m => m.createdAt >= startDate)
-    const previousMessages = allMessages.filter(m => m.createdAt >= previousStartDate && m.createdAt < startDate) // Logic fix
+
     
     const totalMessages = currentMessages.length
     

@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { Doc } from './_generated/dataModel'
 
 export const list = query({
   args: {
@@ -21,7 +22,7 @@ export const list = query({
       conversations = await ctx.db.query('conversations').collect()
     }
 
-    const enrichConversation = async (conv: any) => {
+    const enrichConversation = async (conv: Doc<'conversations'>) => {
       let contactName = 'Unknown'
       if (conv.leadId) {
         const lead = await ctx.db.get(conv.leadId)
