@@ -3,8 +3,9 @@
 import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
+import { lazy, Suspense } from 'react';
 import { useQuery } from 'convex/react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
 	Activity,
@@ -21,22 +22,14 @@ import {
 	User,
 } from 'lucide-react';
 
-import { EnrollmentCard } from './enrollment-card';
 import { StudentForm } from './student-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
 	conversationStatusLabels,
 	formatCurrency,
@@ -45,6 +38,11 @@ import {
 	studentStatusVariants,
 } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+
+// Lazy loaded tab components for better performance
+const StudentEnrollmentsTab = lazy(() => import('./tabs/student-enrollments-tab'));
+const StudentPaymentsTab = lazy(() => import('./tabs/student-payments-tab'));
+const StudentConversationsTab = lazy(() => import('./tabs/student-conversations-tab'));
 
 interface StudentDetailProps {
 	studentId: Id<'students'>;

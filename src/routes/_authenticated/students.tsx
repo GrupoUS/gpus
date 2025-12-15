@@ -11,27 +11,19 @@ import {
 	User,
 	Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentForm } from '@/components/students/student-form';
 import { StudentTimeline } from '@/components/students/student-timeline';
-import { Badge } from '@/components/ui/badge';
+import { StudentsTable } from '@/components/students/student-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
-import {
-	churnRiskColors,
 	productLabels,
 	studentStatusLabels,
 	studentStatusVariants,
@@ -40,19 +32,36 @@ import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/_authenticated/students')({
 	component: StudentsPage,
+	validateSearch: (search: Record<string, unknown>) => {
+		return {
+			search: (search.search as string) || '',
+			status: (search.status as string) || 'all',
+			churnRisk: (search.churnRisk as string) || 'all',
+			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
+			page: Math.max(1, Number(search.page) || 1),
+		};
+	},
 });
 
 const PAGE_SIZE = 12;
 
 function StudentsPage() {
-	const [search, setSearch] = useState('');
-	const [status, setStatus] = useState('all');
-	const [churnRisk, setChurnRisk] = useState('all');
-	const [selectedStudent, setSelectedStudent] = useState<Id<'students'> | null>(null);
-	const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-	const [page, setPage] = useState(1);
-
 	const navigate = useNavigate();
+	const { search, status, churnRisk, view, page } = Route.useSearch();
+	const [selectedStudent, setSelectedStudent] = useState<Id<'students'> | null>(null);
+
+	// Set default search params
+	useEffect(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const hasAnyParam = searchParams.toString().length > 0;
+		
+		if (!hasAnyParam) {
+			void navigate({
+				to: '/students',
+				search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' }
+			});
+		}
+	}, [navigate]);
 
 	const students = useQuery(api.students.list, {
 		search: search || undefined,
@@ -63,23 +72,13 @@ function StudentsPage() {
 	// Get enrollments for table view product display
 	const enrollments = useQuery(api.enrollments.list, {});
 
-	// Create a map of studentId to their first enrollment product
-	const studentProducts =
-		enrollments?.reduce(
-			(acc: Record<string, string>, e: Doc<'enrollments'>) => {
-				if (e.studentId && !acc[e.studentId]) {
-					acc[e.studentId] = e.product;
-				}
-				return acc;
-			},
-			{} as Record<string, string>,
-		) ?? {};
+
 
 	const clearFilters = () => {
-		setSearch('');
-		setStatus('all');
-		setChurnRisk('all');
-		setPage(1);
+		void navigate({
+			to: '/students',
+			search: { view, page: 1, search: '', status: 'all', churnRisk: 'all' }
+		});
 	};
 
 	// Stats
@@ -93,12 +92,11 @@ function StudentsPage() {
 	const paginatedStudents = students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? [];
 
 	// Reset page when filters change
-	const handleFilterChange = (
-		setter: React.Dispatch<React.SetStateAction<string>>,
-		value: string,
-	) => {
-		setter(value);
-		setPage(1);
+	const handleFilterChange = (key: string, value: string) => {
+		void navigate({
+			to: '/students',
+			search: { ...{ search, status, churnRisk, view, page }, [key]: value, page: 1 }
+		});
 	};
 
 	const navigateToStudent = (studentId: Id<'students'>) => {
@@ -120,18 +118,28 @@ function StudentsPage() {
 					{/* View Toggle */}
 					<div className="flex gap-1 border rounded-md p-1">
 						<Button
-							variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+							variant={view === 'grid' ? 'secondary' : 'ghost'}
 							size="sm"
 							className="h-8 w-8 p-0"
-							onClick={() => setViewMode('grid')}
+							onClick={() => {
+								void navigate({
+									to: '/students',
+									search: { ...{ search, status, churnRisk, page }, view: 'grid' }
+								});
+							}}
 						>
 							<LayoutGrid className="h-4 w-4" />
 						</Button>
 						<Button
-							variant={viewMode === 'table' ? 'secondary' : 'ghost'}
+							variant={view === 'table' ? 'secondary' : 'ghost'}
 							size="sm"
 							className="h-8 w-8 p-0"
-							onClick={() => setViewMode('table')}
+							onClick={() => {
+								void navigate({
+									to: '/students',
+									search: { ...{ search, status, churnRisk, page }, view: 'table' }
+								});
+							}}
 						>
 							<TableIcon className="h-4 w-4" />
 						</Button>
@@ -173,12 +181,12 @@ function StudentsPage() {
 
 			{/* Filters */}
 			<StudentFilters
-				search={search}
-				onSearchChange={(v) => handleFilterChange(setSearch, v)}
-				status={status}
-				onStatusChange={(v) => handleFilterChange(setStatus, v)}
-				churnRisk={churnRisk}
-				onChurnRiskChange={(v) => handleFilterChange(setChurnRisk, v)}
+				search={search || ''}
+				onSearchChange={(v) => handleFilterChange('search', v)}
+				status={status || 'all'}
+				onStatusChange={(v) => handleFilterChange('status', v)}
+				churnRisk={churnRisk || 'all'}
+				onChurnRiskChange={(v) => handleFilterChange('churnRisk', v)}
 				onClear={clearFilters}
 			/>
 
@@ -195,79 +203,12 @@ function StudentsPage() {
 					<h2 className="text-lg font-medium">Nenhum aluno encontrado</h2>
 					<p className="text-sm">Tente ajustar os filtros ou adicione um novo aluno</p>
 				</div>
-			) : viewMode === 'table' ? (
+			) : view === 'table' ? (
 				/* Table View */
-				<Card>
-					<CardContent className="p-0">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Aluno</TableHead>
-									<TableHead>Produto</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead>Risco</TableHead>
-									<TableHead className="w-10" />
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{paginatedStudents.map((student: Doc<'students'>) => {
-									const product = studentProducts[student._id];
-									return (
-										<TableRow
-											key={student._id}
-											className="cursor-pointer hover:bg-muted/50"
-											onClick={() => navigateToStudent(student._id)}
-										>
-											<TableCell>
-												<div className="flex items-center gap-3">
-													<div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
-														<User className="h-4 w-4 text-white" />
-													</div>
-													<div>
-														<p className="font-medium text-sm">{student.name}</p>
-														<p className="text-xs text-muted-foreground">{student.profession}</p>
-													</div>
-												</div>
-											</TableCell>
-											<TableCell>
-												{product ? (
-													<Badge variant="outline">{productLabels[product] || product}</Badge>
-												) : (
-													<span className="text-muted-foreground text-sm">-</span>
-												)}
-											</TableCell>
-											<TableCell>
-												<Badge variant={studentStatusVariants[student.status]}>
-													{studentStatusLabels[student.status]}
-												</Badge>
-											</TableCell>
-											<TableCell>
-												{student.churnRisk !== 'baixo' ? (
-													<div
-														className={cn(
-															'flex items-center gap-1',
-															churnRiskColors[student.churnRisk],
-														)}
-													>
-														<AlertTriangle className="h-3 w-3" />
-														<span className="text-xs font-medium capitalize">
-															{student.churnRisk}
-														</span>
-													</div>
-												) : (
-													<span className="text-green-500 text-xs font-medium">Baixo</span>
-												)}
-											</TableCell>
-											<TableCell>
-												<ChevronRight className="h-4 w-4 text-muted-foreground" />
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</CardContent>
-				</Card>
+				<StudentsTable
+					students={paginatedStudents}
+					onStudentClick={navigateToStudent}
+				/>
 			) : (
 				/* Grid View */
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -293,7 +234,12 @@ function StudentsPage() {
 							variant="outline"
 							size="sm"
 							disabled={page === 1}
-							onClick={() => setPage((p) => p - 1)}
+							onClick={() => {
+								void navigate({
+									to: '/students',
+									search: { ...{ search, status, churnRisk, view }, page: page - 1 }
+								});
+							}}
 						>
 							<ChevronLeft className="h-4 w-4 mr-1" />
 							Anterior
@@ -305,7 +251,12 @@ function StudentsPage() {
 							variant="outline"
 							size="sm"
 							disabled={page === totalPages}
-							onClick={() => setPage((p) => p + 1)}
+							onClick={() => {
+								void navigate({
+									to: '/students',
+									search: { ...{ search, status, churnRisk, view }, page: page + 1 }
+								});
+							}}
 						>
 							Próximo
 							<ChevronRight className="h-4 w-4 ml-1" />

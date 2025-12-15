@@ -1,9 +1,9 @@
 ---
 title: "Quality Control - Bun + Vite + Convex + TanStack Router"
-last_updated: 2025-01-02
-version: "4.0.0"
+last_updated: 2025-12-14
+version: "5.0.0"
 form: reference
-tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing]
+tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing, cli, logs, debugging]
 related:
   - ../../docs/tech-stack-guide.md
   - frontend-testing.md
@@ -422,16 +422,82 @@ curl -f "$PUBLIC_URL" || echo "❌ Frontend health check failed"
 open "$PUBLIC_URL"
 ```
 
-#### Log Analysis
+#### 📋 Railway Log Analysis
 ```bash
-# Check recent deployment logs
+# Check recent deployment logs (last 50 lines)
 railway logs --lines 50
 
-# Look for:
-# - Build errors
-# - Runtime errors
-# - Missing environment variables
-# - Convex connection issues
+# Check extended logs for more context
+railway logs --lines 200
+
+# Stream logs in real-time (for monitoring)
+railway logs --follow
+
+# Get logs from a specific service (if multiple)
+railway logs --service <service-name>
+
+# Look for common error patterns:
+# - Build errors ("Error:", "BUILD FAILED")
+# - Runtime errors ("Uncaught", "Exception")
+# - Missing environment variables ("undefined", "VITE_")
+# - Convex connection issues ("convex", "WebSocket")
+# - Docker/container issues ("OOMKilled", "Crashloop")
+```
+
+#### 🔴 Railway Error Detection & Debugging
+```bash
+# Check deployment status with details
+railway status
+
+# Get deployment history
+railway deployments
+
+# Check environment variables are set correctly
+railway variables list
+
+# Filter logs for errors specifically
+railway logs --lines 100 2>&1 | grep -iE "error|failed|exception|warning|undefined"
+
+# Check for build failures
+railway logs --lines 100 2>&1 | grep -iE "build failed|npm err|bun err|exit code"
+
+# Check for container health issues
+railway logs --lines 100 2>&1 | grep -iE "oom|killed|crash|restart"
+```
+
+#### Railway Health Check Script
+```bash
+# Create a comprehensive Railway health check
+echo "🔍 Checking Railway deployment health..."
+
+# 1. Check deployment status
+STATUS=$(railway status 2>&1)
+echo "$STATUS" | grep -qi "healthy\|running" && echo "✅ Deployment is healthy" || echo "❌ Deployment may have issues"
+
+# 2. Get public URL
+PUBLIC_URL=$(railway status 2>&1 | grep -o 'https://[^[:space:]]*\.railway\.app' | head -1)
+if [ -n "$PUBLIC_URL" ]; then
+  echo "📍 Public URL: $PUBLIC_URL"
+  
+  # 3. Health check the URL
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PUBLIC_URL" 2>/dev/null)
+  [ "$HTTP_STATUS" = "200" ] && echo "✅ Frontend responds with 200 OK" || echo "⚠️ Frontend responds with HTTP $HTTP_STATUS"
+else
+  echo "⚠️ Could not detect public URL"
+fi
+
+# 4. Check for recent errors in logs
+ERROR_COUNT=$(railway logs --lines 50 2>&1 | grep -ci "error\|failed" || echo "0")
+if [ "$ERROR_COUNT" -gt 0 ]; then
+  echo "⚠️ Found $ERROR_COUNT potential errors in recent logs"
+  railway logs --lines 50 2>&1 | grep -i "error\|failed" | head -10
+else
+  echo "✅ No errors in recent logs"
+fi
+
+# 5. Verify environment variables
+echo "\n📋 Environment Variables:"
+railway variables list 2>&1 | grep -E "VITE_|CONVEX_|CLERK_"
 ```
 
 #### MCP-Assisted Deployment Validation
@@ -530,10 +596,27 @@ railway status  # Verify deployment
 
 ### 2.2 Backend Deployment (Convex)
 
+> **🔧 CONVEX CLI INTEGRATION**: Use the Convex CLI for comprehensive deployment verification, log analysis, and error detection.
+
+#### Convex CLI Prerequisites
+```bash
+# Verify Convex CLI is available
+bunx convex --version
+
+# Login to Convex (if not already logged in)
+bunx convex login
+
+# Set the deployment target
+bunx convex dev --once  # Syncs local with deployment
+```
+
 #### Schema & Function Deployment
 ```bash
 # Deploy Convex schema and functions to production
 bun run deploy:convex
+
+# Alternative: Direct Convex CLI deployment
+bunx convex deploy --prod
 
 # Expected: Successful deployment confirmation
 # Note the deployment URL/ID
@@ -541,11 +624,82 @@ bun run deploy:convex
 
 #### Active Deployment Verification
 ```bash
-# List all Convex deployments
+# List all Convex deployments with status
 bunx convex deployments list
+
+# Get detailed deployment information
+bunx convex deployment info
+
+# Verify current deployment URL
+bunx convex env get CONVEX_URL
 
 # Expected: Your deployment appears as 'Active'
 # Verify CONVEX_DEPLOYMENT in .env.local matches active deployment
+```
+
+#### 📋 Convex Log Analysis
+```bash
+# View real-time Convex logs
+bunx convex logs
+
+# View logs from production deployment
+bunx convex logs --prod
+
+# View logs with more detail (last 100 entries)
+bunx convex logs --prod --limit 100
+
+# Stream logs in real-time (for monitoring)
+bunx convex logs --prod --follow
+
+# Filter logs by function name
+bunx convex logs --prod --function "api.leads.list"
+
+# Look for error patterns:
+# - "Error:" prefixed lines
+# - "Uncaught" exceptions
+# - "Schema validation failed"
+# - "Function execution failed"
+```
+
+#### 🔴 Convex Error Detection
+```bash
+# Check for deployment errors
+bunx convex deploy --prod --dry-run 2>&1 | grep -i "error\|failed\|warning"
+
+# Validate schema before deployment
+bunx convex dev --typecheck-only
+
+# Check function exports are valid
+bunx convex codegen
+
+# Common error patterns to look for:
+# - "Invalid schema definition"
+# - "Type mismatch in function"
+# - "Missing required field"
+# - "Function not exported"
+# - "Validator error"
+```
+
+#### Convex Health Check Script
+```bash
+# Create a comprehensive Convex health check
+echo "🔍 Checking Convex deployment health..."
+
+# 1. Verify deployment is active
+bunx convex deployments list | grep -q "Active" && echo "✅ Deployment is active" || echo "❌ Deployment not active"
+
+# 2. Check for recent errors in logs
+ERROR_COUNT=$(bunx convex logs --prod --limit 50 2>&1 | grep -ci "error\|failed" || echo "0")
+if [ "$ERROR_COUNT" -gt 0 ]; then
+  echo "⚠️ Found $ERROR_COUNT potential errors in recent logs"
+  bunx convex logs --prod --limit 50 2>&1 | grep -i "error\|failed"
+else
+  echo "✅ No errors in recent logs"
+fi
+
+# 3. Test key functions
+bunx convex run --prod api.leads.list --args '{}' && echo "✅ leads.list works" || echo "❌ leads.list failed"
+bunx convex run --prod api.users.list --args '{}' && echo "✅ users.list works" || echo "❌ users.list failed"
 ```
 
 #### Environment Variable Alignment
@@ -554,17 +708,257 @@ bunx convex deployments list
 echo "Local CONVEX_URL: $VITE_CONVEX_URL"
 echo "Local DEPLOYMENT: $CONVEX_DEPLOYMENT"
 
-# These should match the active Convex deployment
+# Get the actual deployment URL from Convex
+ACTUAL_URL=$(bunx convex deployment info 2>/dev/null | grep -o 'https://[^[:space:]]*\.convex\.cloud')
+echo "Actual CONVEX_URL: $ACTUAL_URL"
+
+# Compare and verify alignment
+[ "$VITE_CONVEX_URL" = "$ACTUAL_URL" ] && echo "✅ URLs match" || echo "❌ URL mismatch detected"
 ```
 
 #### Backend Function Validation
 ```bash
 # Test key Convex functions are accessible
-bunx convex run --prod api.leads.listLeads
-bunx convex run --prod api.users.current
+bunx convex run --prod api.leads.list
+bunx convex run --prod api.users.list
+
+# Test with specific arguments
+bunx convex run --prod api.leads.get --args '{"id": "test-id"}'
 
 # Expected: Functions execute without errors
 # May need authentication for some functions
+```
+
+---
+
+## 📍 PHASE 2.5: FULL-STACK DEPLOYMENT VERIFICATION
+
+> **🔄 AUTOMATED VERIFICATION**: Comprehensive verification of both Railway (frontend) and Convex (backend) deployments using CLI tools
+
+### 2.5.1 Complete Deployment Health Check Script
+
+```bash
+#!/bin/bash
+# Full-Stack Deployment Verification Script
+# Run this after any deployment to verify both frontend and backend are working
+
+echo "🚀 FULL-STACK DEPLOYMENT VERIFICATION"
+echo "======================================"
+echo ""
+
+# --- RAILWAY (FRONTEND) VERIFICATION ---
+echo "📦 RAILWAY FRONTEND VERIFICATION"
+echo "─────────────────────────────────"
+
+# 1. Check Railway status
+echo "Checking Railway deployment status..."
+RAILWAY_STATUS=$(railway status 2>&1)
+if echo "$RAILWAY_STATUS" | grep -qi "healthy\|running\|active"; then
+  echo "✅ Railway deployment is active"
+else
+  echo "❌ Railway deployment may have issues"
+  echo "$RAILWAY_STATUS"
+fi
+
+# 2. Get and test public URL
+PUBLIC_URL=$(echo "$RAILWAY_STATUS" | grep -o 'https://[^[:space:]]*\.railway\.app' | head -1)
+if [ -n "$PUBLIC_URL" ]; then
+  echo "📍 Public URL: $PUBLIC_URL"
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PUBLIC_URL" 2>/dev/null)
+  if [ "$HTTP_STATUS" = "200" ]; then
+    echo "✅ Frontend responds with 200 OK"
+  else
+    echo "⚠️ Frontend responds with HTTP $HTTP_STATUS"
+  fi
+else
+  echo "⚠️ Could not detect public URL from Railway status"
+fi
+
+# 3. Check Railway logs for errors
+echo "Checking Railway logs for errors..."
+RAILWAY_ERRORS=$(railway logs --lines 50 2>&1 | grep -ci "error\|failed" || echo "0")
+if [ "$RAILWAY_ERRORS" -gt 0 ]; then
+  echo "⚠️ Found $RAILWAY_ERRORS potential errors in Railway logs"
+  echo "Recent errors:"
+  railway logs --lines 50 2>&1 | grep -i "error\|failed" | head -5
+else
+  echo "✅ No errors in Railway logs"
+fi
+
+echo ""
+
+# --- CONVEX (BACKEND) VERIFICATION ---
+echo "🔧 CONVEX BACKEND VERIFICATION"
+echo "───────────────────────────────"
+
+# 1. Check Convex deployment status
+echo "Checking Convex deployment status..."
+CONVEX_DEPLOYMENTS=$(bunx convex deployments list 2>&1)
+if echo "$CONVEX_DEPLOYMENTS" | grep -qi "Active\|Production"; then
+  echo "✅ Convex deployment is active"
+else
+  echo "❌ Convex deployment may have issues"
+  echo "$CONVEX_DEPLOYMENTS"
+fi
+
+# 2. Check Convex logs for errors
+echo "Checking Convex logs for errors..."
+CONVEX_ERRORS=$(bunx convex logs --prod --limit 50 2>&1 | grep -ci "error\|failed" || echo "0")
+if [ "$CONVEX_ERRORS" -gt 0 ]; then
+  echo "⚠️ Found $CONVEX_ERRORS potential errors in Convex logs"
+  echo "Recent errors:"
+  bunx convex logs --prod --limit 50 2>&1 | grep -i "error\|failed" | head -5
+else
+  echo "✅ No errors in Convex logs"
+fi
+
+# 3. Test key Convex functions
+echo "Testing key Convex functions..."
+if bunx convex run --prod api.leads.list --args '{}' >/dev/null 2>&1; then
+  echo "✅ api.leads.list works"
+else
+  echo "❌ api.leads.list failed"
+fi
+
+echo ""
+
+# --- ENVIRONMENT ALIGNMENT CHECK ---
+echo "🌍 ENVIRONMENT ALIGNMENT CHECK"
+echo "───────────────────────────────"
+
+# Check local env vars
+LOCAL_CONVEX_URL=$(grep VITE_CONVEX_URL .env.local 2>/dev/null | cut -d'=' -f2)
+RAILWAY_CONVEX_URL=$(railway variables list 2>&1 | grep VITE_CONVEX_URL | awk '{print $2}')
+
+if [ "$LOCAL_CONVEX_URL" = "$RAILWAY_CONVEX_URL" ]; then
+  echo "✅ VITE_CONVEX_URL matches between local and Railway"
+else
+  echo "⚠️ VITE_CONVEX_URL mismatch detected"
+  echo "   Local: $LOCAL_CONVEX_URL"
+  echo "   Railway: $RAILWAY_CONVEX_URL"
+fi
+
+echo ""
+echo "======================================"
+echo "🏁 VERIFICATION COMPLETE"
+echo "======================================"
+```
+
+### 2.5.2 Quick Verification Commands
+
+```bash
+# Quick Railway check (one-liner)
+railway status && railway logs --lines 20 | grep -iE "error|warn" || echo "✅ No issues"
+
+# Quick Convex check (one-liner)
+bunx convex deployments list && bunx convex logs --prod --limit 20 2>&1 | grep -iE "error|failed" || echo "✅ No issues"
+
+# Combined quick check
+echo "Railway:" && railway status | head -3 && echo "Convex:" && bunx convex deployments list | head -3
+```
+
+### 2.5.3 MCP-Assisted Deployment Verification Chain
+
+```yaml
+FULL_STACK_DEPLOYMENT_CHAIN:
+  trigger: "Deploy verification needed"
+  
+  steps:
+    1_railway_status:
+      command: "railway status && railway logs --lines 100"
+      extract: ["Deployment status", "Error patterns", "Public URL"]
+    
+    2_convex_status:
+      command: "bunx convex deployments list && bunx convex logs --prod --limit 100"
+      extract: ["Active deployment", "Error patterns", "Function status"]
+    
+    3_health_check:
+      commands:
+        - "curl -f $PUBLIC_URL || echo 'Frontend unreachable'"
+        - "bunx convex run --prod api.leads.list || echo 'Backend function failed'"
+      validate: "Both must succeed"
+    
+    4_error_analysis:
+      if_errors_detected:
+        tool: "sequential-thinking"
+        input: "Railway logs + Convex logs + error patterns"
+        output: "Root cause analysis and fix recommendation"
+    
+    5_research_fixes:
+      if_confidence_below_95:
+        parallel:
+          railway_docs:
+            tool: "context7 get-library-docs"
+            library: "railway"
+            topic: "Detected error type"
+          convex_docs:
+            tool: "context7 get-library-docs"
+            library: "convex"
+            topic: "Detected error type"
+          community:
+            tool: "tavily-search"
+            query: "Error + Railway OR Convex + solution 2024"
+    
+    6_synthesize_fix:
+      tool: "sequential-thinking"
+      output: "Complete fix with ≥95% confidence"
+    
+    7_validate:
+      run: "Full verification script"
+      gate: "All checks must pass"
+```
+
+### 2.5.4 Troubleshooting Common Deployment Issues
+
+#### Railway Deployment Fails to Start
+```bash
+# 1. Check build logs
+railway logs --lines 200 | grep -A5 -B5 "error\|failed"
+
+# 2. Verify Dockerfile is correct
+cat Dockerfile | head -30
+
+# 3. Check environment variables
+railway variables list
+
+# 4. Research with MCP if needed
+# MCP: tavily-search("Railway Docker deployment error $ERROR_MESSAGE 2024")
+```
+
+#### Convex Functions Not Responding
+```bash
+# 1. Check deployment status
+bunx convex deployments list
+
+# 2. View function logs
+bunx convex logs --prod --limit 100 --function "api.functionName"
+
+# 3. Test function directly
+bunx convex run --prod api.functionName --args '{}'
+
+# 4. Validate schema
+bunx convex dev --typecheck-only
+
+# 5. Research with MCP if needed
+# MCP: context7 get-library-docs("convex", "function errors debugging")
+```
+
+#### Frontend-Backend Connection Issues
+```bash
+# 1. Verify VITE_CONVEX_URL in Railway
+railway variables list | grep CONVEX
+
+# 2. Verify local env matches
+cat .env.local | grep CONVEX
+
+# 3. Check Convex deployment URL
+bunx convex deployment info
+
+# 4. Test from Railway container logs
+railway logs --lines 100 | grep -i "convex\|websocket"
+
+# 5. Fix: Update Railway variable if mismatched
+railway variables set VITE_CONVEX_URL=$(bunx convex deployment info | grep -o 'https://[^[:space:]]*\.convex\.cloud')
 ```
 
 ---
@@ -933,15 +1327,64 @@ bun run dev                 # Local development validation
 
 ### Deployment Commands
 ```bash
-# Frontend (Railway)
-railway status              # Check deployment status
-railway logs --lines 50    # Check recent logs
-git push origin main         # Trigger new deployment
+# ─────────────────────────────────────
+# RAILWAY (FRONTEND) CLI COMMANDS
+# ─────────────────────────────────────
 
-# Backend (Convex)
-bun run deploy:convex       # Deploy schema and functions
-bunx convex deployments list # List active deployments
-bunx convex run --prod api.leads.listLeads  # Test functions
+# Status & Health
+railway status                          # Check deployment status
+railway deployments                     # View deployment history
+
+# Logs & Debugging
+railway logs --lines 50                 # Check recent logs
+railway logs --lines 200                # Extended log view
+railway logs --follow                   # Stream logs in real-time
+railway logs | grep -i "error\|failed"  # Filter for errors
+
+# Environment Variables
+railway variables list                  # List all env vars
+railway variables set KEY=value         # Set environment variable
+
+# Deployment
+git push origin main                    # Trigger new deployment
+
+# ─────────────────────────────────────
+# CONVEX (BACKEND) CLI COMMANDS
+# ─────────────────────────────────────
+
+# Deployment & Status
+bun run deploy:convex                   # Deploy schema and functions
+bunx convex deploy --prod               # Direct production deploy
+bunx convex deployments list            # List active deployments
+bunx convex deployment info             # Get deployment details
+
+# Logs & Debugging
+bunx convex logs                        # View real-time logs
+bunx convex logs --prod                 # Production logs
+bunx convex logs --prod --limit 100     # Extended log view
+bunx convex logs --prod --follow        # Stream logs
+bunx convex logs --prod --function "api.leads.list"  # Filter by function
+
+# Function Testing
+bunx convex run --prod api.leads.list   # Test a function
+bunx convex run --prod api.leads.list --args '{}'  # Test with args
+
+# Schema & Type Validation
+bunx convex dev --typecheck-only        # Validate types
+bunx convex codegen                     # Regenerate types
+
+# ─────────────────────────────────────
+# QUICK VERIFICATION ONE-LINERS
+# ─────────────────────────────────────
+
+# Quick Railway check
+railway status && railway logs --lines 20 | grep -iE "error|warn" || echo "✅ OK"
+
+# Quick Convex check
+bunx convex deployments list && bunx convex logs --prod --limit 20 2>&1 | grep -iE "error|failed" || echo "✅ OK"
+
+# Full-stack quick check
+echo "Railway:" && railway status | head -3 && echo "Convex:" && bunx convex deployments list | head -3
 ```
 
 ### Environment Management
@@ -950,11 +1393,15 @@ bunx convex run --prod api.leads.listLeads  # Test functions
 cat .env.local
 railway variables list
 bunx convex deployments list
+bunx convex deployment info
 
 # Update environment after Convex deploy
 echo "VITE_CONVEX_URL=new-url" >> .env.local
 railway variables set VITE_CONVEX_URL=new-url
 git push origin main  # Trigger Railway redeploy
+
+# Sync Convex URL automatically
+railway variables set VITE_CONVEX_URL=$(bunx convex deployment info | grep -o 'https://[^[:space:]]*\.convex\.cloud')
 ```
 
 ---
