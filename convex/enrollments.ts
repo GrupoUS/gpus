@@ -31,7 +31,7 @@ export const create = mutation({
       v.literal('pausado'),
       v.literal('aguardando_inicio')
     ),
-    startDate: v.optional(v.number()), 
+    startDate: v.optional(v.number()),
     expectedEndDate: v.optional(v.number()),
     totalValue: v.number(),
     installments: v.number(),
@@ -54,9 +54,8 @@ export const create = mutation({
       paidInstallments: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      practicesCompleted: 0, // Assuming schema requires this or good default
     })
-
+    
     return enrollmentId
   },
 })
@@ -65,23 +64,32 @@ export const update = mutation({
   args: {
     enrollmentId: v.id('enrollments'),
     patch: v.object({
-      status: v.optional(v.union(
-        v.literal('ativo'),
-        v.literal('concluido'),
-        v.literal('cancelado'),
-        v.literal('pausado'),
-        v.literal('aguardando_inicio')
-      )),
+      status: v.optional(
+        v.union(
+          v.literal('ativo'),
+          v.literal('concluido'),
+          v.literal('cancelado'),
+          v.literal('pausado'),
+          v.literal('aguardando_inicio')
+        )
+      ),
       progress: v.optional(v.number()),
       modulesCompleted: v.optional(v.number()),
+      totalModules: v.optional(v.number()),
       practicesCompleted: v.optional(v.number()),
       paidInstallments: v.optional(v.number()),
-      paymentStatus: v.optional(v.union(
-        v.literal('em_dia'),
-        v.literal('atrasado'),
-        v.literal('quitado'),
-        v.literal('cancelado')
-      )),
+      paymentStatus: v.optional(
+        v.union(
+          v.literal('em_dia'),
+          v.literal('atrasado'),
+          v.literal('quitado'),
+          v.literal('cancelado')
+        )
+      ),
+      startDate: v.optional(v.number()),
+      expectedEndDate: v.optional(v.number()),
+      actualEndDate: v.optional(v.number()),
+      cohort: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args) => {

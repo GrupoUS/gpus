@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import type { Doc } from './_generated/dataModel'
 
 export const list = query({
   args: {
@@ -11,46 +10,60 @@ export const list = query({
   handler: async (ctx, args) => {
     let conversations
     
-    // Manual cast or loose check since we simplified args to string for flexibility
-    // but schema requires union. We'll use a type assertion for the filter.
     if (args.department) {
       conversations = await ctx.db
         .query('conversations')
-        .withIndex('by_department', (q) => q.eq('department', args.department as any)) 
+        // @ts-ignore - Schema defines department literals, but args.department is string. 
+        // We trust the filter logic or could validate strictly if needed.
+        .withIndex('by_department', (q) => q.eq('department', args.department as any))
         .collect()
     } else {
       conversations = await ctx.db.query('conversations').collect()
     }
-
-    const enrichConversation = async (conv: Doc<'conversations'>) => {
-      let contactName = 'Unknown'
-      if (conv.leadId) {
-        const lead = await ctx.db.get(conv.leadId)
-        if (lead) contactName = lead.name
-      } else if (conv.studentId) {
-        const student = await ctx.db.get(conv.studentId)
-        if (student) contactName = student.name
-      }
-      return { ...conv, contactName }
-    }
-
-    const enriched = await Promise.all(conversations.map(enrichConversation))
-
-    let filtered = enriched
-
+    
+    // Filter by status if provided
     if (args.status) {
-      filtered = filtered.filter((c) => c.status === args.status)
+      conversations = conversations.filter(c => c.status === args.status)
     }
 
+    // Enrich with contactName and lastMessage
+    const enrichedConversations = await Promise.all(
+      conversations.map(async (c) => {
+        let contactName = 'Desconhecido'
+        if (c.leadId) {
+          const lead = await ctx.db.get(c.leadId)
+          if (lead) contactName = lead.name
+        } else if (c.studentId) {
+          const student = await ctx.db.get(c.studentId)
+          if (student) contactName = student.name
+        }
+
+        // Fetch last message content
+        const lastMsg = await ctx.db
+          .query('messages')
+          .withIndex('by_conversation', (q) => q.eq('conversationId', c._id))
+          .order('desc')
+          .first()
+
+        return {
+          ...c,
+          contactName,
+          lastMessage: lastMsg?.content,
+        }
+      })
+    )
+
+    // Apply search filter (on contactName)
+    let filtered = enrichedConversations
     if (args.search) {
       const searchLower = args.search.toLowerCase()
       filtered = filtered.filter((c) => 
         c.contactName.toLowerCase().includes(searchLower)
       )
     }
-    
-    // Sort desc by lastMessageAt
-    return filtered.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0))
+
+    // Sort by lastMessageAt desc
+    return filtered.sort((a, b) => b.lastMessageAt - a.lastMessageAt)
   },
 })
 
@@ -60,23 +73,24 @@ export const getById = query({
     const conversation = await ctx.db.get(args.id)
     if (!conversation) return null
 
-    let contactName = 'Unknown'
-    let contactPhone = ''
+    let contactName = 'Desconhecido'
+    let lead = null
+    let student = null
+
     if (conversation.leadId) {
-      const lead = await ctx.db.get(conversation.leadId)
-      if (lead) {
-        contactName = lead.name
-        contactPhone = lead.phone || ''
-      }
+      lead = await ctx.db.get(conversation.leadId)
+      if (lead) contactName = lead.name
     } else if (conversation.studentId) {
-      const student = await ctx.db.get(conversation.studentId)
-      if (student) {
-        contactName = student.name
-        contactPhone = student.phone || ''
-      }
+      student = await ctx.db.get(conversation.studentId)
+      if (student) contactName = student.name
     }
 
-    return { ...conversation, contactName, contactPhone }
+    return {
+      ...conversation,
+      contactName,
+      lead,
+      student,
+    }
   },
 })
 
@@ -133,9 +147,8 @@ export const create = mutation({
       lastMessageAt: Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      assignedTo: undefined, 
     })
-
+    
     return conversationId
   },
 })
@@ -144,16 +157,26 @@ export const update = mutation({
   args: {
     conversationId: v.id('conversations'),
     patch: v.object({
-      status: v.optional(v.union(
-        v.literal('aguardando_atendente'),
-        v.literal('em_atendimento'),
-        v.literal('aguardando_cliente'),
-        v.literal('resolvido'),
-        v.literal('bot_ativo')
-      )),
+      status: v.optional(
+        v.union(
+          v.literal('aguardando_atendente'),
+          v.literal('em_atendimento'),
+          v.literal('aguardando_cliente'),
+          v.literal('resolvido'),
+          v.literal('bot_ativo')
+        )
+      ),
       assignedTo: v.optional(v.id('users')),
-      // lastMessage removed as it does not exist in schema
+      // Note: lastMessage is not in schema, so we don't update it here.
+      // logic handles lastMessage retrieval dynamically.
       lastMessageAt: v.optional(v.number()),
+      department: v.optional(
+        v.union(
+          v.literal('vendas'),
+          v.literal('cs'),
+          v.literal('suporte')
+        )
+      ),
     }),
   },
   handler: async (ctx, args) => {

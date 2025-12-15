@@ -3,18 +3,7 @@ import { mutation, query } from './_generated/server'
 
 export const list = query({
   args: {
-    category: v.optional(v.union(
-      v.literal('abertura'),
-      v.literal('qualificacao'),
-      v.literal('apresentacao'),
-      v.literal('objecao_preco'),
-      v.literal('objecao_tempo'),
-      v.literal('objecao_outros_cursos'),
-      v.literal('follow_up'),
-      v.literal('fechamento'),
-      v.literal('pos_venda'),
-      v.literal('suporte')
-    )),
+    category: v.optional(v.string()),
     product: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
   },
@@ -24,29 +13,27 @@ export const list = query({
     if (args.category) {
       templates = await ctx.db
         .query('messageTemplates')
+        // @ts-ignore - Schema category is union, args is string.
         .withIndex('by_category', (q) => q.eq('category', args.category as any))
         .collect()
     } else {
       templates = await ctx.db.query('messageTemplates').collect()
     }
-
-    let filtered = templates
-
+    
+    // Apply filters
     if (args.product) {
-      filtered = filtered.filter((t) => t.product === args.product)
+      templates = templates.filter(t => t.product === args.product)
     }
-
     if (args.isActive !== undefined) {
-      filtered = filtered.filter((t) => t.isActive === args.isActive)
+      templates = templates.filter(t => t.isActive === args.isActive)
     }
     
-    // Sort by usageCount desc
-    return filtered.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+    return templates.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
   },
 })
 
 export const getByCategory = query({
-  args: { 
+  args: {
     category: v.union(
       v.literal('abertura'),
       v.literal('qualificacao'),
@@ -58,7 +45,7 @@ export const getByCategory = query({
       v.literal('fechamento'),
       v.literal('pos_venda'),
       v.literal('suporte')
-    )
+    ),
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -84,15 +71,17 @@ export const create = mutation({
       v.literal('pos_venda'),
       v.literal('suporte')
     ),
-    product: v.optional(v.union(
-      v.literal('trintae3'),
-      v.literal('otb'),
-      v.literal('black_neon'),
-      v.literal('comunidade'),
-      v.literal('auriculo'),
-      v.literal('na_mesa_certa'),
-      v.literal('geral')
-    )),
+    product: v.optional(
+      v.union(
+        v.literal('trintae3'),
+        v.literal('otb'),
+        v.literal('black_neon'),
+        v.literal('comunidade'),
+        v.literal('auriculo'),
+        v.literal('na_mesa_certa'),
+        v.literal('geral')
+      )
+    ),
     content: v.string(),
     variables: v.optional(v.array(v.string())),
   },
@@ -107,7 +96,7 @@ export const create = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
-
+    
     return templateId
   },
 })
@@ -119,7 +108,32 @@ export const update = mutation({
       name: v.optional(v.string()),
       content: v.optional(v.string()),
       isActive: v.optional(v.boolean()),
-      // Plan explicitly lists these. I'll stick to them.
+      category: v.optional(
+        v.union(
+          v.literal('abertura'),
+          v.literal('qualificacao'),
+          v.literal('apresentacao'),
+          v.literal('objecao_preco'),
+          v.literal('objecao_tempo'),
+          v.literal('objecao_outros_cursos'),
+          v.literal('follow_up'),
+          v.literal('fechamento'),
+          v.literal('pos_venda'),
+          v.literal('suporte')
+        )
+      ),
+      product: v.optional(
+        v.union(
+          v.literal('trintae3'),
+          v.literal('otb'),
+          v.literal('black_neon'),
+          v.literal('comunidade'),
+          v.literal('auriculo'),
+          v.literal('na_mesa_certa'),
+          v.literal('geral')
+        )
+      ),
+      variables: v.optional(v.array(v.string())),
     }),
   },
   handler: async (ctx, args) => {

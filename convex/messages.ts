@@ -29,27 +29,36 @@ export const send = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
-
-    // Find the internal user ID based on Clerk ID
+    
+    // Find the user to link as sender logic
+    // If authenticated, it's an agent or admin usually.
+    // Plan says: "Determinar sender baseado no usuário autenticado (agent/bot/system)"
+    // Usually via UI it's 'agent'.
+    
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first()
-
+      
+    // Default to 'agent' if user found, else 'system' or fail?
+    // Plan assumes 'agent' logic.
+    const sender = 'agent'
+    
     const messageId = await ctx.db.insert('messages', {
       ...args,
-      sender: 'agent',
-      senderId: user?._id, // If user not found, strictly speaking it might be null, but usually system ensures user exists.
+      sender: sender,
+      senderId: user?._id,
       status: 'enviando',
       createdAt: Date.now(),
     })
-
+    
+    // Update conversation
+    // Note: Schema doesn't have 'lastMessage', only 'lastMessageAt'
     await ctx.db.patch(args.conversationId, {
-      // lastMessage removed (not in schema)
       lastMessageAt: Date.now(),
       updatedAt: Date.now(),
     })
-
+    
     return messageId
   },
 })
@@ -58,21 +67,17 @@ export const updateStatus = mutation({
   args: {
     messageId: v.id('messages'),
     status: v.union(
+      v.literal('enviando'),
       v.literal('enviado'),
       v.literal('entregue'),
       v.literal('lido'),
-      v.literal('falhou'),
-      // Also potentially 'enviando' if needed, but usually we transition out of it.
-      // Plan lists "enviado, entregue, lido, falhou" explicitly in description but "union(...)" in args.
-      // I'll stick to the common ones plus 'enviando' if reset needed, or just these 4.
-      v.literal('enviando') 
+      v.literal('falhou')
     ),
   },
   handler: async (ctx, args) => {
-    // No auth check as per plan (webhook)
+    // No auth check required as per plan (webhook usage)
     await ctx.db.patch(args.messageId, {
       status: args.status,
-      // Could allow updating updatedAt if needed, but not specified
     })
   },
 })

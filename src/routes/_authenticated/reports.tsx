@@ -149,7 +149,7 @@ function ReportsPage() {
 						<div className="space-y-3">
 							{stats?.leadsByStage &&
 								(Object.entries(stats.leadsByStage) as [string, number][]).map(([stage, count]) => {
-									const total = stats.totalLeads || 1;
+									const total = (stats.totalLeads as number) || 1;
 									const percentage = Math.round((count / total) * 100);
 									return (
 										<div key={stage} className="flex items-center gap-3">
@@ -159,7 +159,7 @@ function ReportsPage() {
 														{stage.replace(/_/g, ' ')}
 													</span>
 													<span className="text-xs text-muted-foreground">
-														{count} ({percentage}%)
+														{count as number} ({percentage}%)
 													</span>
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -257,7 +257,7 @@ function ReportsPage() {
 								([product, count]) => (
 									<div key={product} className="p-4 border rounded-lg">
 										<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
-										<p className="text-2xl font-bold text-purple-600">{count}</p>
+										<p className="text-2xl font-bold text-purple-600">{count as number}</p>
 										<p className="text-xs text-muted-foreground">leads interessados</p>
 									</div>
 								),

@@ -14,8 +14,9 @@ import type * as enrollments from "../enrollments.js";
 import type * as leads from "../leads.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
-import type * as stats from "../stats.js";
+import type * as metrics from "../metrics.js";
 import type * as students from "../students.js";
+import type * as templates from "../templates.js";
 import type * as users from "../users.js";
 
 import type {
@@ -31,8 +32,9 @@ declare const fullApi: ApiFromModules<{
   leads: typeof leads;
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
-  stats: typeof stats;
+  metrics: typeof metrics;
   students: typeof students;
+  templates: typeof templates;
   users: typeof users;
 }>;
 
