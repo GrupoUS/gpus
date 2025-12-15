@@ -23,12 +23,16 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedSettingsTemplatesRouteImport } from './routes/_authenticated/settings/templates'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings/team'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings/integrations'
 import { Route as AuthenticatedReportsTeamRouteImport } from './routes/_authenticated/reports/team'
 import { Route as AuthenticatedReportsSalesRouteImport } from './routes/_authenticated/reports/sales'
+import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
+import { Route as AuthenticatedChatDepartmentIndexRouteImport } from './routes/_authenticated/chat/$department/index'
+import { Route as AuthenticatedChatDepartmentIdRouteImport } from './routes/_authenticated/chat/$department/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -99,6 +103,11 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedChatRoute,
+} as any)
 const AuthenticatedStudentsStudentIdRoute =
   AuthenticatedStudentsStudentIdRouteImport.update({
     id: '/$studentId',
@@ -135,10 +144,28 @@ const AuthenticatedReportsSalesRoute =
     path: '/sales',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedChatDepartmentRoute =
+  AuthenticatedChatDepartmentRouteImport.update({
+    id: '/$department',
+    path: '/$department',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedChatDepartmentIndexRoute =
+  AuthenticatedChatDepartmentIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedChatDepartmentRoute,
+  } as any)
+const AuthenticatedChatDepartmentIdRoute =
+  AuthenticatedChatDepartmentIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedChatDepartmentRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof AuthenticatedChatRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
@@ -150,16 +177,19 @@ export interface FileRoutesByFullPath {
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/chat/': typeof AuthenticatedChatIndexRoute
+  '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/chat': typeof AuthenticatedChatRoute
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRouteWithChildren
@@ -177,12 +207,15 @@ export interface FileRoutesByTo {
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/chat': typeof AuthenticatedChatIndexRoute
+  '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
@@ -194,12 +227,16 @@ export interface FileRoutesById {
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/_authenticated/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/_authenticated/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/_authenticated/reports/team': typeof AuthenticatedReportsTeamRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,16 +254,19 @@ export interface FileRouteTypes {
     | '/sign-up/sso-callback'
     | '/sign-in'
     | '/sign-up'
+    | '/chat/$department'
     | '/reports/sales'
     | '/reports/team'
     | '/settings/integrations'
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
+    | '/chat/'
+    | '/chat/$department/$id'
+    | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/chat'
     | '/crm'
     | '/dashboard'
     | '/reports'
@@ -244,6 +284,9 @@ export interface FileRouteTypes {
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
+    | '/chat'
+    | '/chat/$department/$id'
+    | '/chat/$department'
   id:
     | '__root__'
     | '/'
@@ -260,12 +303,16 @@ export interface FileRouteTypes {
     | '/sign-up/sso-callback'
     | '/sign-in/'
     | '/sign-up/'
+    | '/_authenticated/chat/$department'
     | '/_authenticated/reports/sales'
     | '/_authenticated/reports/team'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/templates'
     | '/_authenticated/students/$studentId'
+    | '/_authenticated/chat/'
+    | '/_authenticated/chat/$department/$id'
+    | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/chat/': {
+      id: '/_authenticated/chat/'
+      path: '/'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
     '/_authenticated/students/$studentId': {
       id: '/_authenticated/students/$studentId'
       path: '/$studentId'
@@ -421,8 +475,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsSalesRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/chat/$department': {
+      id: '/_authenticated/chat/$department'
+      path: '/$department'
+      fullPath: '/chat/$department'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/chat/$department/': {
+      id: '/_authenticated/chat/$department/'
+      path: '/'
+      fullPath: '/chat/$department/'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentIndexRouteImport
+      parentRoute: typeof AuthenticatedChatDepartmentRoute
+    }
+    '/_authenticated/chat/$department/$id': {
+      id: '/_authenticated/chat/$department/$id'
+      path: '/$id'
+      fullPath: '/chat/$department/$id'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentIdRouteImport
+      parentRoute: typeof AuthenticatedChatDepartmentRoute
+    }
   }
 }
+
+interface AuthenticatedChatDepartmentRouteChildren {
+  AuthenticatedChatDepartmentIdRoute: typeof AuthenticatedChatDepartmentIdRoute
+  AuthenticatedChatDepartmentIndexRoute: typeof AuthenticatedChatDepartmentIndexRoute
+}
+
+const AuthenticatedChatDepartmentRouteChildren: AuthenticatedChatDepartmentRouteChildren =
+  {
+    AuthenticatedChatDepartmentIdRoute: AuthenticatedChatDepartmentIdRoute,
+    AuthenticatedChatDepartmentIndexRoute:
+      AuthenticatedChatDepartmentIndexRoute,
+  }
+
+const AuthenticatedChatDepartmentRouteWithChildren =
+  AuthenticatedChatDepartmentRoute._addFileChildren(
+    AuthenticatedChatDepartmentRouteChildren,
+  )
+
+interface AuthenticatedChatRouteChildren {
+  AuthenticatedChatDepartmentRoute: typeof AuthenticatedChatDepartmentRouteWithChildren
+  AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
+}
+
+const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
+  AuthenticatedChatDepartmentRoute:
+    AuthenticatedChatDepartmentRouteWithChildren,
+  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+}
+
+const AuthenticatedChatRouteWithChildren =
+  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
 
 interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsSalesRoute: typeof AuthenticatedReportsSalesRoute
@@ -469,7 +575,7 @@ const AuthenticatedStudentsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
@@ -478,7 +584,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,

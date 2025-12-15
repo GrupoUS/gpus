@@ -1,44 +1,85 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
+// Queries
 export const list = query({
   args: {
-    department: v.optional(v.string()),
+    // Comment 7: Type safety - Explicit unions
+    department: v.optional(v.union(
+      v.literal('vendas'),
+      v.literal('cs'),
+      v.literal('suporte')
+    )),
     search: v.optional(v.string()),
-    status: v.optional(v.string()),
+    status: v.optional(v.union(
+      v.literal('aguardando_atendente'),
+      v.literal('em_atendimento'),
+      v.literal('aguardando_cliente'),
+      v.literal('resolvido'),
+      v.literal('bot_ativo')
+    )),
   },
   handler: async (ctx, args) => {
-    let conversations
-    
+    let conversationsQuery = ctx.db.query('conversations')
+
     if (args.department) {
-      conversations = await ctx.db
-        .query('conversations')
-        // @ts-ignore - Schema defines department literals, but args.department is string. 
-        // We trust the filter logic or could validate strictly if needed.
-        .withIndex('by_department', (q) => q.eq('department', args.department as any))
-        .collect()
-    } else {
-      conversations = await ctx.db.query('conversations').collect()
+      conversationsQuery = conversationsQuery
+        .withIndex('by_department', (q) => q.eq('department', args.department!))
     }
-    
-    // Filter by status if provided
+
+    // Comment 3: Limit the total number of conversations returned to a reasonable cap
+    // to avoid scalability issues with N+1 enrichment.
+    let conversations = await conversationsQuery.order('desc').take(50)
+
+    // Filter by status if provided (in memory if not using index, or we could use compound index if available)
+    // Schema has 'by_status', but we might have used 'by_department'.
+    // If department is set, we filtered by index. If status is also set, we filter in memory.
     if (args.status) {
       conversations = conversations.filter(c => c.status === args.status)
     }
+
+    // Collect unique IDs for batch lookup
+    const leadIds = new Set<string>()
+    const studentIds = new Set<string>()
+    conversations.forEach(c => {
+        if (c.leadId) leadIds.add(c.leadId)
+        if (c.studentId) studentIds.add(c.studentId)
+    })
+
+    // Batch fetch leads and students
+    // Optimization: De-duplicate lookups.
+    // We use Promise.all with db.get which is efficient for batched IDs.
+    const leadsMap = new Map<string, any>()
+    const studentsMap = new Map<string, any>()
+
+    const uniqueLeadIds = Array.from(leadIds)
+    const uniqueStudentIds = Array.from(studentIds)
+
+    const leads = await Promise.all(uniqueLeadIds.map(id => ctx.db.get(id as any)))
+    const students = await Promise.all(uniqueStudentIds.map(id => ctx.db.get(id as any)))
+
+    leads.forEach((l, i) => {
+        if (l) leadsMap.set(uniqueLeadIds[i], l)
+    })
+    students.forEach((s, i) => {
+        if (s) studentsMap.set(uniqueStudentIds[i], s)
+    })
 
     // Enrich with contactName and lastMessage
     const enrichedConversations = await Promise.all(
       conversations.map(async (c) => {
         let contactName = 'Desconhecido'
         if (c.leadId) {
-          const lead = await ctx.db.get(c.leadId)
-          if (lead) contactName = lead.name
+            const lead = leadsMap.get(c.leadId)
+            if (lead) contactName = lead.name
         } else if (c.studentId) {
-          const student = await ctx.db.get(c.studentId)
-          if (student) contactName = student.name
+            const student = studentsMap.get(c.studentId)
+            if (student) contactName = student.name
         }
 
         // Fetch last message content
+        // Still N+1 per conversation, but strictly limited to 50 max.
+        // Optimizing this further would require 'lastMessage' in conversation schema.
         const lastMsg = await ctx.db
           .query('messages')
           .withIndex('by_conversation', (q) => q.eq('conversationId', c._id))
@@ -62,7 +103,7 @@ export const list = query({
       )
     }
 
-    // Sort by lastMessageAt desc
+    // Sort by lastMessageAt desc (already sorted by query mostly, but fine to re-sort if memory filter changed order)
     return filtered.sort((a, b) => b.lastMessageAt - a.lastMessageAt)
   },
 })

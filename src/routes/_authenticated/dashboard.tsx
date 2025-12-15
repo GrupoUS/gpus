@@ -125,7 +125,7 @@ function DashboardPage() {
 			</MotionWrapper>
 
 			<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
-				<LeadsVsConversions />
+				<LeadsVsConversions data={metrics?.dailyMetrics} />
 				<LeadsByProduct data={metrics?.leadsByProduct} />
 			</MotionWrapper>
 
