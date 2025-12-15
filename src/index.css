@@ -72,7 +72,7 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 262 83% 58%; /* Conserving Brand Primary but using channel syntax */
+    --primary: 217 91% 60%; /* Blue - previously purple */
     --primary-foreground: 0 0% 100%;
     
     --secondary: 0 0% 15%; /* #262626 */
@@ -89,14 +89,14 @@
     
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 262 83% 58%;
+    --ring: 217 91% 60%;
     
     --radius: 0.5rem;
 
     /* Grupo US Brand Colors (Channels) */
-    --us-purple: 262 83% 58%;
-    --us-purple-light: 262 83% 68%;
-    --us-purple-dark: 262 83% 48%;
+    --us-purple: 217 91% 60%; /* Mapped to Blue to keep var references working */
+    --us-purple-light: 217 91% 70%;
+    --us-purple-dark: 217 91% 50%;
     --us-gold: 45 93% 47%;
     --us-success: 142 76% 36%;
     --us-warning: 38 92% 50%;
@@ -104,12 +104,12 @@
 
     --sidebar: 0 0% 6%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
@@ -120,7 +120,7 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
-    --primary: 262 83% 58%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
@@ -132,16 +132,48 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 262 83% 58%;
+    --ring: 217 91% 60%;
     
     --sidebar: 0 0% 6%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  /* Light Theme */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   * {
