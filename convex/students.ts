@@ -101,7 +101,12 @@ export const create = mutation({
     hasClinic: v.optional(v.boolean()),
     clinicName: v.optional(v.string()),
     clinicCity: v.optional(v.string()),
-    status: v.string(),
+      status: v.union(
+        v.literal('ativo'),
+        v.literal('inativo'),
+        v.literal('pausado'),
+        v.literal('formado')
+      ),
     assignedCS: v.optional(v.id('users')),
     leadId: v.optional(v.id('leads')),
   },

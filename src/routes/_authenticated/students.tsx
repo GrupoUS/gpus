@@ -116,10 +116,6 @@ function StudentsPage() {
 							key={student._id}
 							student={student}
 							onClick={() => setSelectedStudent(student._id)}
-							onEdit={(id) => {
-								// Open edit dialog - could use state to track edit mode
-								setSelectedStudent(id);
-							}}
 						/>
 					))}
 				</div>

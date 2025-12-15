@@ -115,19 +115,19 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 				});
 				toast.success('Aluno atualizado com sucesso!');
 			} else {
-			await createStudent({
-				name: values.name,
-				email: values.email,
-				phone: values.phone,
-				cpf: values.cpf || undefined,
-				profession: values.profession,
-				professionalId: values.professionalId || undefined,
-				hasClinic: values.hasClinic,
-				clinicName: values.clinicName || undefined,
-				clinicCity: values.clinicCity || undefined,
-				status: 'ativo',
-				assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
-			});
+				await createStudent({
+					name: values.name,
+					email: values.email,
+					phone: values.phone,
+					cpf: values.cpf || undefined,
+					profession: values.profession,
+					professionalId: values.professionalId || undefined,
+					hasClinic: values.hasClinic,
+					clinicName: values.clinicName || undefined,
+					clinicCity: values.clinicCity || undefined,
+					status: 'ativo',
+					assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+				});
 				toast.success('Aluno criado com sucesso!');
 			}
 			setOpen(false);

@@ -1,12 +1,12 @@
 'use client';
 
-import { Bot, MessageSquare, Send, X } from 'lucide-react';
+import { Bot, Send, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
 
 interface Message {
@@ -36,7 +36,7 @@ export function AIChatWidget() {
 
 	useEffect(() => {
 		scrollToBottom();
-	}, [messages]);
+	}, [, scrollToBottom]);
 
 	const handleSendMessage = async () => {
 		if (!inputValue.trim() || isLoading) return;
@@ -48,7 +48,7 @@ export function AIChatWidget() {
 			timestamp: new Date(),
 		};
 
-		setMessages(prev => [...prev, userMessage]);
+		setMessages((prev) => [...prev, userMessage]);
 		setInputValue('');
 		setIsLoading(true);
 
@@ -56,11 +56,12 @@ export function AIChatWidget() {
 		setTimeout(() => {
 			const aiMessage: Message = {
 				id: (Date.now() + 1).toString(),
-				content: 'Estou processando sua pergunta. Em um ambiente real, eu estaria conectado à API Dify para fornecer respostas baseadas na narrativa do Grupo US.',
+				content:
+					'Estou processando sua pergunta. Em um ambiente real, eu estaria conectado à API Dify para fornecer respostas baseadas na narrativa do Grupo US.',
 				sender: 'ai',
 				timestamp: new Date(),
 			};
-			setMessages(prev => [...prev, aiMessage]);
+			setMessages((prev) => [...prev, aiMessage]);
 			setIsLoading(false);
 		}, 1000);
 	};
@@ -81,11 +82,7 @@ export function AIChatWidget() {
 						className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background"
 						aria-label={isOpen ? 'Fechar chat IA' : 'Abrir chat IA'}
 					>
-						{isOpen ? (
-							<X className="h-6 w-6" />
-						) : (
-							<Bot className="h-6 w-6" />
-						)}
+						{isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
 					</Button>
 				</CollapsibleTrigger>
 
@@ -106,7 +103,7 @@ export function AIChatWidget() {
 								<div className="h-96 flex flex-col">
 									{/* Messages Area */}
 									<div className="flex-1 overflow-y-auto p-4 space-y-3">
-										{messages.map(message => (
+										{messages.map((message) => (
 											<div
 												key={message.id}
 												className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -128,7 +125,7 @@ export function AIChatWidget() {
 												</div>
 											</div>
 										))}
-										
+
 										{isLoading && (
 											<div className="flex justify-start">
 												<div className="bg-muted rounded-lg px-3 py-2">
@@ -162,7 +159,7 @@ export function AIChatWidget() {
 												<Send className="h-4 w-4" />
 											</Button>
 										</div>
-										
+
 										<div className="mt-2 text-xs text-muted-foreground text-center">
 											<p>IA treinada na narrativa do Grupo US</p>
 											<p>Em caso de dúvidas complexas, fale com um humano</p>

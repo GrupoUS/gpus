@@ -25,9 +25,9 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
-	const conversation = useQuery(api.conversations.getConversation, { conversationId });
-	const messages = useQuery(api.messages.listMessages, { conversationId });
-	const sendMessage = useMutation(api.messages.sendMessage);
+	const conversation = useQuery(api.conversations.getById, { id: conversationId });
+	const messages = useQuery(api.messages.getByConversation, { conversationId });
+	const sendMessage = useMutation(api.messages.send);
 
 	// Scroll to bottom on new messages
 	useEffect(() => {

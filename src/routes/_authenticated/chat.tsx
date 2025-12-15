@@ -62,7 +62,7 @@ function ChatPage() {
 							<SelectItem value="all">Todos</SelectItem>
 							<SelectItem value="aguardando_atendente">Abertos</SelectItem>
 							<SelectItem value="em_atendimento">Em Atendimento</SelectItem>
-							<SelectItem value="aguardando_cliente">Aguardando</SelectItem>
+							<SelectItem value="aguardando_cliente">Aguardando Cliente</SelectItem>
 							<SelectItem value="resolvido">Resolvidos</SelectItem>
 							<SelectItem value="bot_ativo">Bot Ativo</SelectItem>
 						</SelectContent>

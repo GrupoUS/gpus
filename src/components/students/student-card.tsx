@@ -1,6 +1,6 @@
 'use client';
 
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Building2, GraduationCap, Mail, Phone, User } from 'lucide-react';
@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 interface StudentCardProps {
 	student: Doc<'students'>;
 	onClick?: () => void;
-	onEdit?: (studentId: Id<'students'>) => void;
 }
 
 const statusLabels: Record<string, string> = {
@@ -35,7 +34,7 @@ const churnRiskColors: Record<string, string> = {
 	alto: 'text-red-500',
 };
 
-export function StudentCard({ student, onClick, onEdit }: StudentCardProps) {
+export function StudentCard({ student, onClick }: StudentCardProps) {
 	return (
 		<Card
 			className={cn(

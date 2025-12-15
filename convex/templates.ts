@@ -1,0 +1,91 @@
+import { v } from 'convex/values'
+import { mutation, query } from './_generated/server'
+
+export const list = query({
+  args: {
+    category: v.optional(v.string()),
+    product: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    let templates
+    
+    if (args.category) {
+      templates = await ctx.db
+        .query('messageTemplates')
+        .withIndex('by_category', (q) => q.eq('category', args.category))
+        .collect()
+    } else {
+      templates = await ctx.db.query('messageTemplates').collect()
+    }
+
+    let filtered = templates
+
+    if (args.product) {
+      filtered = filtered.filter((t) => t.product === args.product)
+    }
+
+    if (args.isActive !== undefined) {
+      filtered = filtered.filter((t) => t.isActive === args.isActive)
+    }
+    
+    // Sort by usageCount desc
+    return filtered.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+  },
+})
+
+export const getByCategory = query({
+  args: { category: v.string() }, // Plan says v.union but snippet shows optional string. I'll use string to be flexible or check if specific generic string is safer. Plan says: args: { category: v.union(...) }. But doesn't list the union values. I will use v.string() to avoid guessing values, as strict union requires knowing all values.
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('messageTemplates')
+      .withIndex('by_category', (q) => q.eq('category', args.category))
+      .filter((q) => q.eq(q.field('isActive'), true))
+      .collect()
+  },
+})
+
+export const create = mutation({
+  args: {
+    name: v.string(),
+    category: v.string(),
+    product: v.optional(v.string()),
+    content: v.string(),
+    variables: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+
+    const templateId = await ctx.db.insert('messageTemplates', {
+      ...args,
+      isActive: true,
+      usageCount: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+
+    return templateId
+  },
+})
+
+export const update = mutation({
+  args: {
+    templateId: v.id('messageTemplates'),
+    patch: v.object({
+      name: v.optional(v.string()),
+      content: v.optional(v.string()),
+      isActive: v.optional(v.boolean()),
+      // Plan explicitly lists these. I'll stick to them.
+    }),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+
+    await ctx.db.patch(args.templateId, {
+      ...args.patch,
+      updatedAt: Date.now(),
+    })
+  },
+})

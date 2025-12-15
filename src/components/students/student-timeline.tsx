@@ -29,7 +29,7 @@ interface StudentTimelineProps {
 
 export function StudentTimeline({ studentId }: StudentTimelineProps) {
 	const student = useQuery(api.students.getById, { id: studentId });
-	const enrollments = useQuery(api.enrollments.listByStudent, { studentId });
+	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
 	const activities = useQuery(api.activities.listByStudent, { studentId });
 
 	if (!student) {
@@ -93,7 +93,7 @@ export function StudentTimeline({ studentId }: StudentTimelineProps) {
 
 				{/* Enrollments Tab */}
 				<TabsContent value="enrollments" className="mt-4">
-					{enrollments.length === 0 ? (
+					{!enrollments || enrollments.length === 0 ? (
 						<div className="text-center py-8 text-muted-foreground">
 							<BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
 							<p>Nenhuma matrícula encontrada</p>
@@ -110,13 +110,14 @@ export function StudentTimeline({ studentId }: StudentTimelineProps) {
 				{/* Progress Tab */}
 				<TabsContent value="progress" className="mt-4">
 					<div className="space-y-4">
-						{enrollments.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length === 0 ? (
+						{!enrollments ||
+						enrollments.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length === 0 ? (
 							<div className="text-center py-8 text-muted-foreground">
 								<TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
 								<p>Nenhum curso ativo</p>
 							</div>
 						) : (
-							enrollments
+							(enrollments || [])
 								.filter((e: Doc<'enrollments'>) => e.status === 'ativo')
 								.map((enrollment: Doc<'enrollments'>) => (
 									<EnrollmentCard key={enrollment._id} enrollment={enrollment} />
