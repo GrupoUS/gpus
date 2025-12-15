@@ -2,36 +2,26 @@ import { api } from '@convex/_generated/api';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import {
-	AlertTriangle,
 	ChevronLeft,
 	ChevronRight,
 	GraduationCap,
 	LayoutGrid,
 	TableIcon,
-	User,
 	Users,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentForm } from '@/components/students/student-form';
-import { StudentTimeline } from '@/components/students/student-timeline';
 import { StudentsTable } from '@/components/students/student-table';
+import { StudentTimeline } from '@/components/students/student-timeline';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 
-import {
-	productLabels,
-	studentStatusLabels,
-	studentStatusVariants,
-} from '@/lib/constants';
-import { cn } from '@/lib/utils';
-
 export const Route = createFileRoute('/_authenticated/students')({
-	component: StudentsPage,
 	validateSearch: (search: Record<string, unknown>) => {
 		return {
 			search: (search.search as string) || '',
@@ -54,11 +44,11 @@ function StudentsPage() {
 	useEffect(() => {
 		const searchParams = new URLSearchParams(window.location.search);
 		const hasAnyParam = searchParams.toString().length > 0;
-		
+
 		if (!hasAnyParam) {
 			void navigate({
 				to: '/students',
-				search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' }
+				search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' },
 			});
 		}
 	}, [navigate]);
@@ -69,15 +59,12 @@ function StudentsPage() {
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
 	});
 
-	// Get enrollments for table view product display
-	const enrollments = useQuery(api.enrollments.list, {});
-
 
 
 	const clearFilters = () => {
 		void navigate({
 			to: '/students',
-			search: { view, page: 1, search: '', status: 'all', churnRisk: 'all' }
+			search: { view, page: 1, search: '', status: 'all', churnRisk: 'all' },
 		});
 	};
 
@@ -95,7 +82,7 @@ function StudentsPage() {
 	const handleFilterChange = (key: string, value: string) => {
 		void navigate({
 			to: '/students',
-			search: { ...{ search, status, churnRisk, view, page }, [key]: value, page: 1 }
+			search: { ...{ search, status, churnRisk, view, page }, [key]: value, page: 1 },
 		});
 	};
 
@@ -124,7 +111,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, page }, view: 'grid' }
+									search: { ...{ search, status, churnRisk, page }, view: 'grid' },
 								});
 							}}
 						>
@@ -137,7 +124,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, page }, view: 'table' }
+									search: { ...{ search, status, churnRisk, page }, view: 'table' },
 								});
 							}}
 						>
@@ -205,10 +192,7 @@ function StudentsPage() {
 				</div>
 			) : view === 'table' ? (
 				/* Table View */
-				<StudentsTable
-					students={paginatedStudents}
-					onStudentClick={navigateToStudent}
-				/>
+				<StudentsTable students={paginatedStudents} onStudentClick={navigateToStudent} />
 			) : (
 				/* Grid View */
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -237,7 +221,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, view }, page: page - 1 }
+									search: { ...{ search, status, churnRisk, view }, page: page - 1 },
 								});
 							}}
 						>
@@ -254,7 +238,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, view }, page: page + 1 }
+									search: { ...{ search, status, churnRisk, view }, page: page + 1 },
 								});
 							}}
 						>

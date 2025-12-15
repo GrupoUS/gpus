@@ -2,16 +2,16 @@
 
 import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
+import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from '@tanstack/react-router';
 import { MessageSquare } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { conversationStatusLabels } from '@/lib/constants';
 import { Skeleton } from '@/components/ui/skeleton';
+import { conversationStatusLabels } from '@/lib/constants';
 
 interface StudentConversationsTabProps {
 	studentId: Id<'students'>;
@@ -69,9 +69,7 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 										{conv.channel === 'whatsapp' && <MessageSquare className="h-4 w-4" />}
 										{conv.department.toUpperCase()}
 									</p>
-									<p className="text-xs text-muted-foreground mt-1">
-										Canal: {conv.channel}
-									</p>
+									<p className="text-xs text-muted-foreground mt-1">Canal: {conv.channel}</p>
 								</div>
 								<div className="text-right">
 									<Badge variant={conv.status === 'resolvido' ? 'default' : 'secondary'}>

@@ -8,6 +8,7 @@ import { CreditCard } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
 	Table,
 	TableBody,
@@ -16,7 +17,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, productLabels } from '@/lib/constants';
 
 interface StudentPaymentsTabProps {

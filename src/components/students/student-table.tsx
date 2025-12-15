@@ -72,7 +72,7 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 
 	const sortedStudents = [...students].sort((a, b) => {
 		const { field, direction } = sort;
-		
+
 		let aValue: string | number;
 		let bValue: string | number;
 
@@ -85,11 +85,12 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 				aValue = a.status;
 				bValue = b.status;
 				break;
-			case 'churnRisk':
+			case 'churnRisk': {
 				const riskOrder = { baixo: 1, medio: 2, alto: 3 };
 				aValue = riskOrder[a.churnRisk] || 0;
 				bValue = riskOrder[b.churnRisk] || 0;
 				break;
+			}
 			case 'createdAt':
 				aValue = a.createdAt || 0;
 				bValue = b.createdAt || 0;
@@ -121,7 +122,8 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 							<button
 								type="button"
 								onClick={() => handleSort('name')}
-								className="flex items-center hover:text-foreground transition-colors font-medium"
+								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+								aria-label="Ordenar por nome"
 							>
 								Aluno
 								{getSortIcon('name')}
@@ -132,7 +134,8 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 							<button
 								type="button"
 								onClick={() => handleSort('status')}
-								className="flex items-center hover:text-foreground transition-colors font-medium"
+								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+								aria-label="Ordenar por status"
 							>
 								Status
 								{getSortIcon('status')}
@@ -142,7 +145,8 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 							<button
 								type="button"
 								onClick={() => handleSort('churnRisk')}
-								className="flex items-center hover:text-foreground transition-colors font-medium"
+								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+								aria-label="Ordenar por risco de churn"
 							>
 								Risco
 								{getSortIcon('churnRisk')}
@@ -195,15 +199,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 								<TableCell>
 									{student.churnRisk !== 'baixo' ? (
 										<div
-											className={cn(
-												'flex items-center gap-1',
-												churnRiskColors[student.churnRisk],
-											)}
+											className={cn('flex items-center gap-1', churnRiskColors[student.churnRisk])}
 										>
 											<AlertTriangle className="h-3 w-3" />
-											<span className="text-xs font-medium capitalize">
-												{student.churnRisk}
-											</span>
+											<span className="text-xs font-medium capitalize">{student.churnRisk}</span>
 										</div>
 									) : (
 										<span className="text-green-500 text-xs font-medium">Baixo</span>

@@ -3,7 +3,6 @@
 import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,6 +20,7 @@ import {
 	Phone,
 	User,
 } from 'lucide-react';
+import { lazy, Suspense } from 'react';
 
 import { StudentForm } from './student-form';
 import { Badge } from '@/components/ui/badge';
@@ -28,8 +28,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
 	conversationStatusLabels,
 	formatCurrency,
@@ -47,13 +47,6 @@ const StudentConversationsTab = lazy(() => import('./tabs/student-conversations-
 interface StudentDetailProps {
 	studentId: Id<'students'>;
 	mode?: 'full' | 'sheet';
-}
-
-// Calculate due date based on start date and installment number
-function calculateDueDate(startDate: number, installmentNumber: number): Date {
-	const date = new Date(startDate);
-	date.setMonth(date.getMonth() + installmentNumber - 1);
-	return date;
 }
 
 export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) {
@@ -82,32 +75,6 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 		enrollments?.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length ?? 0;
 	const totalRevenue =
 		enrollments?.reduce((sum: number, e: Doc<'enrollments'>) => sum + e.totalValue, 0) ?? 0;
-
-	// Build payment history from enrollments
-	const paymentHistory =
-		enrollments?.flatMap((enrollment: Doc<'enrollments'>) => {
-			const payments = [];
-			const paidInstallments = enrollment.paidInstallments ?? 0;
-
-			for (let i = 1; i <= enrollment.installments; i++) {
-				const isPaid = i <= paidInstallments;
-				const isOverdue = !isPaid && enrollment.paymentStatus === 'atrasado';
-
-				payments.push({
-					enrollmentId: enrollment._id,
-					product: enrollment.product,
-					installmentNumber: i,
-					totalInstallments: enrollment.installments,
-					value: enrollment.installmentValue ?? 0,
-					dueDate: calculateDueDate(enrollment.startDate ?? Date.now(), i),
-					status: isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending',
-				});
-			}
-			return payments;
-		}) ?? [];
-
-	// Sort payments by due date
-	paymentHistory.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 
 	return (
 		<div className={cn('space-y-6', mode === 'sheet' ? 'p-4' : 'p-6')}>
@@ -250,75 +217,24 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 
 				{/* Enrollments Tab */}
 				<TabsContent value="enrollments" className="mt-4">
-					{!enrollments || enrollments.length === 0 ? (
-						<div className="text-center py-12 text-muted-foreground">
-							<BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-							<p>Nenhuma matrícula encontrada</p>
-						</div>
-					) : (
-						<div className="grid gap-4 md:grid-cols-2">
-							{enrollments.map((enrollment: Doc<'enrollments'>) => (
-								<EnrollmentCard key={enrollment._id} enrollment={enrollment} />
-							))}
-						</div>
-					)}
+					<Suspense
+						fallback={
+							<div className="grid gap-4 md:grid-cols-2">
+								{[1, 2, 3, 4].map((i) => (
+									<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+								))}
+							</div>
+						}
+					>
+						<StudentEnrollmentsTab studentId={studentId} />
+					</Suspense>
 				</TabsContent>
 
 				{/* Payments Tab */}
 				<TabsContent value="payments" className="mt-4">
-					{paymentHistory.length === 0 ? (
-						<div className="text-center py-12 text-muted-foreground">
-							<CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-							<p>Nenhum pagamento registrado</p>
-						</div>
-					) : (
-						<Card>
-							<CardContent className="p-0">
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead>Produto</TableHead>
-											<TableHead>Parcela</TableHead>
-											<TableHead>Valor</TableHead>
-											<TableHead>Vencimento</TableHead>
-											<TableHead>Status</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{paymentHistory.map((payment) => (
-											<TableRow key={`${payment.enrollmentId}-${payment.installmentNumber}`}>
-												<TableCell className="font-medium">
-													{productLabels[payment.product] || payment.product}
-												</TableCell>
-												<TableCell>
-													{payment.installmentNumber}/{payment.totalInstallments}
-												</TableCell>
-												<TableCell>{formatCurrency(payment.value)}</TableCell>
-												<TableCell>{format(payment.dueDate, 'dd/MM/yyyy')}</TableCell>
-												<TableCell>
-													<Badge
-														variant={
-															payment.status === 'paid'
-																? 'default'
-																: payment.status === 'overdue'
-																	? 'destructive'
-																	: 'secondary'
-														}
-													>
-														{payment.status === 'paid'
-															? 'Pago'
-															: payment.status === 'overdue'
-																? 'Atrasado'
-																: 'Pendente'}
-													</Badge>
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							</CardContent>
-						</Card>
-					)}
+					<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+						<StudentPaymentsTab studentId={studentId} />
+					</Suspense>
 				</TabsContent>
 
 				{/* Timeline Tab */}
@@ -355,45 +271,17 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 
 				{/* Conversations Tab */}
 				<TabsContent value="conversations" className="mt-4">
-					{!conversations || conversations.length === 0 ? (
-						<div className="text-center py-12 text-muted-foreground">
-							<MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-							<p>Nenhuma conversa registrada</p>
-						</div>
-					) : (
-						<div className="space-y-3">
-							{conversations.map((conv: Doc<'conversations'>) => (
-								<div key={conv._id}>
-									<Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-										<CardContent className="p-4">
-											<div className="flex justify-between items-start">
-												<div>
-													<p className="font-medium text-sm flex items-center gap-2">
-														{conv.channel === 'whatsapp' && <MessageSquare className="h-4 w-4" />}
-														{conv.department.toUpperCase()}
-													</p>
-													<p className="text-xs text-muted-foreground mt-1">
-														Canal: {conv.channel}
-													</p>
-												</div>
-												<div className="text-right">
-													<Badge variant={conv.status === 'resolvido' ? 'default' : 'secondary'}>
-														{conversationStatusLabels[conv.status] || conv.status}
-													</Badge>
-													<p className="text-xs text-muted-foreground mt-1">
-														{formatDistanceToNow(conv.lastMessageAt, {
-															addSuffix: true,
-															locale: ptBR,
-														})}
-													</p>
-												</div>
-											</div>
-										</CardContent>
-									</Card>
-								</div>
-							))}
-						</div>
-					)}
+					<Suspense
+						fallback={
+							<div className="space-y-3">
+								{[1, 2, 3, 4].map((i) => (
+									<div key={i} className="h-20 bg-muted/20 animate-pulse rounded-lg" />
+								))}
+							</div>
+						}
+					>
+						<StudentConversationsTab studentId={studentId} />
+					</Suspense>
 				</TabsContent>
 			</Tabs>
 		</div>
