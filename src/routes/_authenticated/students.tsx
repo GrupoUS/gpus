@@ -31,6 +31,7 @@ export const Route = createFileRoute('/_authenticated/students')({
 			page: Math.max(1, Number(search.page) || 1),
 		};
 	},
+	component: StudentsPage,
 });
 
 const PAGE_SIZE = 12;
@@ -58,8 +59,6 @@ function StudentsPage() {
 		status: status === 'all' ? undefined : status,
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
 	});
-
-
 
 	const clearFilters = () => {
 		void navigate({

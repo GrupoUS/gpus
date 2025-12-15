@@ -4,14 +4,7 @@ import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import {
-	AlertTriangle,
-	ChevronDown,
-	ChevronUp,
-	GraduationCap,
-	TableIcon,
-	User,
-} from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -45,9 +38,8 @@ interface SortState {
 }
 
 export function StudentsTable({ students, onStudentClick }: StudentsTableProps) {
-	const navigate = useNavigate();
+	const _navigate = useNavigate();
 	const [sort, setSort] = useState<SortState>({ field: 'name', direction: 'asc' });
-
 	// Get enrollments for product display
 	const enrollments = useQuery(api.enrollments.list, {});
 
@@ -175,7 +167,7 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 							>
 								<TableCell>
 									<div className="flex items-center gap-3">
-										<div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
+										<div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
 											<User className="h-4 w-4 text-white" />
 										</div>
 										<div>
@@ -209,7 +201,7 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 									)}
 								</TableCell>
 								<TableCell>
-									<TableIcon className="h-4 w-4 text-muted-foreground" />
+									<ChevronRight className="h-4 w-4 text-muted-foreground" />
 								</TableCell>
 							</TableRow>
 						);

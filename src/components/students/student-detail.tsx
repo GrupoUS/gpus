@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Doc } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,7 +20,7 @@ import {
 	Phone,
 	User,
 } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 
 import { StudentForm } from './student-form';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-	conversationStatusLabels,
-	formatCurrency,
-	productLabels,
-	studentStatusLabels,
-	studentStatusVariants,
-} from '@/lib/constants';
+import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 // Lazy loaded tab components for better performance
@@ -50,10 +44,13 @@ interface StudentDetailProps {
 }
 
 export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) {
+	const [activeTab, _setActiveTab] = useState('enrollments');
 	const student = useQuery(api.students.getById, { id: studentId });
 	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
-	const activities = useQuery(api.activities.listByStudent, { studentId });
-	const conversations = useQuery(api.conversations.getByStudent, { studentId });
+	const activities = useQuery(
+		api.activities.listByStudent,
+		activeTab === 'timeline' ? { studentId } : 'skip',
+	);
 
 	if (!student) {
 		return (
@@ -68,8 +65,6 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 			</div>
 		);
 	}
-
-	// Calculate stats
 	const totalEnrollments = enrollments?.length ?? 0;
 	const activeEnrollments =
 		enrollments?.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length ?? 0;
