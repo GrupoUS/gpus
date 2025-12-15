@@ -1,5 +1,5 @@
 import type { Id } from '@convex/_generated/dataModel';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { ChatWindow } from '@/components/chat/chat-window';
 
@@ -8,20 +8,24 @@ export const Route = createFileRoute('/_authenticated/chat/$department/$id')({
 });
 
 function ConversationPage() {
-	// biome-ignore lint/suspicious/noExplicitAny: Params type from Tanstack Router can be vague
-	const params = Route.useParams() as any;
-	// Cast id to Id<'conversations'> and ensure it's treated as string from URL
-	const conversationId = params.id as Id<'conversations'>;
+	// Use properly typed params from the Route definition
+	const { department, id } = Route.useParams();
+	const navigate = useNavigate();
+
+	// Cast id to Id<'conversations'> as it comes as string from URL
+	const conversationId = id as Id<'conversations'>;
+
+	const handleBack = () => {
+		// Use router navigation instead of window.history.back for consistency
+		void navigate({
+			to: '/chat/$department',
+			params: { department },
+		});
+	};
 
 	return (
 		<div className="h-full w-full">
-			<ChatWindow
-				conversationId={conversationId}
-				onBack={() => {
-					// For mobile, we might want to go up one level
-					window.history.back();
-				}}
-			/>
+			<ChatWindow conversationId={conversationId} onBack={handleBack} />
 		</div>
 	);
 }

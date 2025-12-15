@@ -47,6 +47,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	}, [messages]);
 
 	const handleSendMessage = async (content: string) => {
+		// Short-circuit if conversation is not loaded or doesn't exist
+		if (conversation === undefined || conversation === null) {
+			return;
+		}
 		await sendMessage({
 			conversationId,
 			content,
@@ -154,7 +158,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 			</ScrollArea>
 
 			{/* Input */}
-			<ChatInput onSend={handleSendMessage} />
+			<ChatInput
+				onSend={handleSendMessage}
+				disabled={conversation === undefined || conversation === null}
+			/>
 		</div>
 	);
 }

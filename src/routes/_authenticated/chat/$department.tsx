@@ -10,10 +10,8 @@ export const Route = createFileRoute('/_authenticated/chat/$department')({
 });
 
 function DepartmentRoute() {
-	// biome-ignore lint/suspicious/noExplicitAny: Params type from Tanstack Router can be vague
-	const params = Route.useParams() as any;
-	// biome-ignore lint/suspicious/noExplicitAny: Params type
-	const { department } = params as any;
+	// Use properly typed params from the Route definition
+	const { department } = Route.useParams();
 	const { search, statusFilter } = useChatContext();
 	const [portalContainer, setPortalContainer] = useState<Element | null>(null);
 
@@ -29,9 +27,6 @@ function DepartmentRoute() {
 					<ConversationList
 						department={department}
 						statusFilter={statusFilter === 'all' ? undefined : statusFilter}
-						// Pass search if ConversationList accepts it, step 2 says 'Update ConversationList... Add search filter support'
-						// I will assume prop name is 'searchQuery' or similar, but plan says 'pass search param to query'.
-						// I'll call the prop 'search' for now and fix ConversationList to match.
 						search={search}
 					/>,
 					portalContainer,

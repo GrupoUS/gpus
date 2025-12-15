@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Doc } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,8 +16,6 @@ interface ConversationListProps {
 	department?: string;
 	statusFilter?: string;
 	search?: string;
-	selectedId?: Id<'conversations'> | null;
-	onSelect?: (id: Id<'conversations'> | null) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -28,13 +26,7 @@ const statusColors: Record<string, string> = {
 	bot_ativo: 'bg-purple-500',
 };
 
-export function ConversationList({
-	department,
-	statusFilter,
-	search,
-	selectedId,
-	onSelect,
-}: ConversationListProps) {
+export function ConversationList({ department, statusFilter, search }: ConversationListProps) {
 	const conversations = useQuery(api.conversations.list, {
 		// biome-ignore lint/suspicious/noExplicitAny: Casting string to strict union
 		status: statusFilter as any,
@@ -43,9 +35,8 @@ export function ConversationList({
 		search,
 	});
 
-	// We can use the params to help with styling or logic if needed, but Link handle active state well.
-	// However, if we want to ensure exact highlighting, we can check the ID.
-	// Fixed: Using props for controlled selection state.
+	// Navigation is now URL-driven via TanStack Router's Link component.
+	// Active state styling is handled via activeProps on the Link.
 
 	if (!conversations) {
 		return (
@@ -71,26 +62,24 @@ export function ConversationList({
 			<div className="space-y-1 p-2">
 				{conversations.map((conversation) => {
 					// Type assertion for enriched data that comes from the backend but isn't in the generated Doc type yet
+					// Note: lastMessage is returned as a string from the backend, not an object
 					const item = conversation as Doc<'conversations'> & {
 						contactName?: string;
-						lastMessage?: { text: string };
+						lastMessage?: string;
 						unreadCount?: number;
 					};
 					const contactName = item.contactName || 'Desconhecido';
 					const initials = contactName.substring(0, 2).toUpperCase();
-					const lastMessageText = item.lastMessage?.text || `${item.channel} - ${item.department}`;
+					const lastMessageText = item.lastMessage || `${item.channel} - ${item.department}`;
 
 					return (
 						<Link
 							key={item._id}
 							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
 							to={`/chat/${item.department}/${item._id}` as any}
-							onClick={() => onSelect?.(item._id)}
 							preload="intent"
-							className={cn(
-								'w-full text-left p-3 rounded-lg transition-colors hover:bg-muted/50 block group',
-								selectedId === item._id && 'bg-muted',
-							)}
+							className="w-full text-left p-3 rounded-lg transition-colors hover:bg-muted/50 block group"
+							activeProps={{ className: 'bg-muted' }}
 						>
 							<div className="flex items-start gap-3">
 								<div className="shrink-0 relative">

@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import {
 	ChevronLeft,
@@ -9,17 +9,15 @@ import {
 	TableIcon,
 	Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import type { Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentForm } from '@/components/students/student-form';
 import { StudentsTable } from '@/components/students/student-table';
-import { StudentTimeline } from '@/components/students/student-timeline';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 export const Route = createFileRoute('/_authenticated/students')({
 	validateSearch: (search: Record<string, unknown>) => {
@@ -40,7 +38,6 @@ const PAGE_SIZE = 12;
 function StudentsPage() {
 	const navigate = useNavigate();
 	const { search, status, churnRisk, product, view, page } = Route.useSearch();
-	const [selectedStudent, setSelectedStudent] = useState<Id<'students'> | null>(null);
 
 	// Set default search params
 	useEffect(() => {
@@ -277,32 +274,6 @@ function StudentsPage() {
 					</div>
 				</div>
 			)}
-
-			{/* Student Detail Sheet (Quick Preview) */}
-			<Sheet open={!!selectedStudent} onOpenChange={(open) => !open && setSelectedStudent(null)}>
-				<SheetContent className="sm:max-w-xl w-full overflow-y-auto">
-					{selectedStudent && (
-						<div className="space-y-4">
-							<StudentTimeline studentId={selectedStudent} />
-							<div className="pt-4 border-t">
-								<Link
-									to="/students/$studentId"
-									params={{ studentId: selectedStudent }}
-									search={{
-										page: 1,
-										search: '',
-										status: 'all',
-										churnRisk: 'all',
-										view: 'grid',
-									}}
-								>
-									<Button className="w-full">Ver Perfil Completo</Button>
-								</Link>
-							</div>
-						</div>
-					)}
-				</SheetContent>
-			</Sheet>
 		</div>
 	);
 }

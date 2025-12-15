@@ -51,12 +51,22 @@ const StudentConversationsTab = lazy(() =>
 	})),
 );
 
+interface ListSearchParams {
+	page: number;
+	search: string;
+	status: string;
+	churnRisk: string;
+	product: string;
+	view: string;
+}
+
 interface StudentDetailProps {
 	studentId: Id<'students'>;
 	mode?: 'full' | 'sheet';
+	listSearch?: ListSearchParams;
 }
 
-export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) {
+export function StudentDetail({ studentId, mode = 'full', listSearch }: StudentDetailProps) {
 	const [activeTab, _setActiveTab] = useState('enrollments');
 	const student = useQuery(api.students.getById, { id: studentId });
 	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
@@ -90,13 +100,16 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 			{mode === 'full' && (
 				<Link
 					to="/students"
-					search={{
-						page: 1,
-						search: '',
-						status: 'all',
-						churnRisk: 'all',
-						view: 'grid',
-					}}
+					search={
+						listSearch ?? {
+							page: 1,
+							search: '',
+							status: 'all',
+							churnRisk: 'all',
+							product: 'all',
+							view: 'grid',
+						}
+					}
 				>
 					<Button variant="ghost" size="sm" className="gap-2">
 						<ArrowLeft className="h-4 w-4" />

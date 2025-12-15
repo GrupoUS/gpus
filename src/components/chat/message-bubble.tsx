@@ -65,12 +65,12 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 					className={cn('flex items-center gap-1 mt-1', isOwn ? 'justify-end' : 'justify-start')}
 				>
 					<span className={cn('text-xs', isOwn ? 'text-white/70' : 'text-muted-foreground')}>
-						{formatDistanceToNow(message.createdAt, {
+						{formatDistanceToNow(message.createdAt ?? message._creationTime, {
 							addSuffix: true,
 							locale: ptBR,
 						})}
 					</span>
-					{isOwn && statusIcons[message.status]}
+					{isOwn && message.status && statusIcons[message.status]}
 				</div>
 			</div>
 		</div>
