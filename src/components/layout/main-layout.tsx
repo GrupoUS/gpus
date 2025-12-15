@@ -2,7 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { useLocation } from '@tanstack/react-router';
 
 import { AppSidebar } from './app-sidebar';
-import { AIChatWidget } from '@/components/ai-chat-widget';
+import { AIChatWidget } from '@/components/ai-chat-widget-new';
 import {
 	Breadcrumb,
 	BreadcrumbItem,

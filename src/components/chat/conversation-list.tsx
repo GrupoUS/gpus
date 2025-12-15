@@ -26,7 +26,7 @@ const statusColors: Record<string, string> = {
 };
 
 export function ConversationList({ selectedId, onSelect, statusFilter }: ConversationListProps) {
-	const conversations = useQuery(api.conversations.listConversations, {
+	const conversations = useQuery(api.conversations.list, {
 		status: statusFilter,
 	});
 

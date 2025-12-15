@@ -15,15 +15,33 @@ export const getByStudent = query({
 export const create = mutation({
   args: {
     studentId: v.id('students'),
-    product: v.string(),
+    product: v.union(
+      v.literal('trintae3'),
+      v.literal('otb'),
+      v.literal('black_neon'),
+      v.literal('comunidade'),
+      v.literal('auriculo'),
+      v.literal('na_mesa_certa')
+    ),
     cohort: v.optional(v.string()),
-    status: v.string(),
-    startDate: v.optional(v.number()), // Plan says optionals, using number for timestamp
+    status: v.union(
+      v.literal('ativo'),
+      v.literal('concluido'),
+      v.literal('cancelado'),
+      v.literal('pausado'),
+      v.literal('aguardando_inicio')
+    ),
+    startDate: v.optional(v.number()), 
     expectedEndDate: v.optional(v.number()),
     totalValue: v.number(),
     installments: v.number(),
     installmentValue: v.number(),
-    paymentStatus: v.string(),
+    paymentStatus: v.union(
+      v.literal('em_dia'),
+      v.literal('atrasado'),
+      v.literal('quitado'),
+      v.literal('cancelado')
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -47,12 +65,23 @@ export const update = mutation({
   args: {
     enrollmentId: v.id('enrollments'),
     patch: v.object({
-      status: v.optional(v.string()),
+      status: v.optional(v.union(
+        v.literal('ativo'),
+        v.literal('concluido'),
+        v.literal('cancelado'),
+        v.literal('pausado'),
+        v.literal('aguardando_inicio')
+      )),
       progress: v.optional(v.number()),
       modulesCompleted: v.optional(v.number()),
       practicesCompleted: v.optional(v.number()),
       paidInstallments: v.optional(v.number()),
-      paymentStatus: v.optional(v.string()),
+      paymentStatus: v.optional(v.union(
+        v.literal('em_dia'),
+        v.literal('atrasado'),
+        v.literal('quitado'),
+        v.literal('cancelado')
+      )),
     }),
   },
   handler: async (ctx, args) => {

@@ -44,9 +44,8 @@ export const send = mutation({
       createdAt: Date.now(),
     })
 
-    // Update conversation
     await ctx.db.patch(args.conversationId, {
-      lastMessage: args.content,
+      // lastMessage removed (not in schema)
       lastMessageAt: Date.now(),
       updatedAt: Date.now(),
     })

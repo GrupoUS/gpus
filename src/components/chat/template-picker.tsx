@@ -41,6 +41,13 @@ const categoryIcons: Record<string, React.ReactNode> = {
 	abertura: <Sparkles className="h-4 w-4" />,
 	qualificacao: <Hash className="h-4 w-4" />,
 	apresentacao: <FileText className="h-4 w-4" />,
+	objecao_preco: <FileText className="h-4 w-4" />,
+	objecao_tempo: <Hash className="h-4 w-4" />,
+	objecao_outros_cursos: <FileText className="h-4 w-4" />,
+	fechamento: <Sparkles className="h-4 w-4" />,
+	follow_up: <FileText className="h-4 w-4" />,
+	pos_venda: <Sparkles className="h-4 w-4" />,
+	suporte: <Hash className="h-4 w-4" />,
 };
 
 export function TemplatePicker({ onSelect, trigger }: TemplatePickerProps) {

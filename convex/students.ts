@@ -114,9 +114,13 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
+    // Schema requires profession (string) but args has optional. Default to 'outro' if not provided.
+    // Schema requires churnRisk as union.
     const studentId = await ctx.db.insert('students', {
       ...args,
-      phone: args.phone || '', // Ensure phone is always a string, not undefined
+      phone: args.phone || '', 
+      profession: args.profession || 'outro',
+      hasClinic: args.hasClinic ?? false,
       churnRisk: 'baixo',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -140,7 +144,11 @@ export const update = mutation({
         v.literal('pausado'),
         v.literal('formado')
       )),
-      churnRisk: v.optional(v.string()),
+      churnRisk: v.optional(v.union(
+        v.literal('baixo'),
+        v.literal('medio'),
+        v.literal('alto')
+      )),
       // Allow other fields as per schema if needed, but plan implies partial update.
       // Using v.any() for patch is dangerous, but plan says "patch: v.object({ ... })".
       // I should duplicate the optional fields allowed.

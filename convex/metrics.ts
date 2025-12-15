@@ -34,9 +34,7 @@ export const getDashboard = query({
     const leadsTrend = calculateTrend(totalLeads, previousLeads.length)
 
     // 2. Conversion (Closed Won)
-    // Assuming status 'fechado_ganho' or 'won' based on common patterns. 
-    // Plan uses 'fechado_ganho' in funnel description.
-    const getWon = (list: any[]) => list.filter(l => l.status === 'fechado_ganho' || l.status === 'won').length
+    const getWon = (list: any[]) => list.filter(l => l.stage === 'fechado_ganho').length
     const currentWon = getWon(currentLeads)
     const previousWon = getWon(previousLeads)
     
@@ -68,19 +66,18 @@ export const getDashboard = query({
 
     // 5. Funnel
     const funnel = {
-      novo: currentLeads.filter(l => l.status === 'novo' || l.status === 'new').length,
-      primeiro_contato: currentLeads.filter(l => l.status === 'primeiro_contato').length,
-      qualificado: currentLeads.filter(l => l.status === 'qualificado').length,
-      proposta: currentLeads.filter(l => l.status === 'proposta').length,
-      negociacao: currentLeads.filter(l => l.status === 'negociacao').length,
+      novo: currentLeads.filter(l => l.stage === 'novo').length,
+      primeiro_contato: currentLeads.filter(l => l.stage === 'primeiro_contato').length,
+      qualificado: currentLeads.filter(l => l.stage === 'qualificado').length,
+      proposta: currentLeads.filter(l => l.stage === 'proposta').length,
+      negociacao: currentLeads.filter(l => l.stage === 'negociacao').length,
       fechado_ganho: currentWon,
     }
 
-    // 6. Leads by Product (using 'product' field on leads if exists, or enrollments?)
-    // Plan says "Leads by Product". Leads usually have 'product' interest.
+    // 6. Leads by Product (using 'interestedProduct' field on leads)
     const leadsByProduct: Record<string, number> = {}
     currentLeads.forEach(l => {
-      const p = l.product || 'Outros'
+      const p = l.interestedProduct || 'Outros'
       leadsByProduct[p] = (leadsByProduct[p] || 0) + 1
     })
 

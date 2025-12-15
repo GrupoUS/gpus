@@ -10,10 +10,12 @@ export const list = query({
   handler: async (ctx, args) => {
     let conversations
     
+    // Manual cast or loose check since we simplified args to string for flexibility
+    // but schema requires union. We'll use a type assertion for the filter.
     if (args.department) {
       conversations = await ctx.db
         .query('conversations')
-        .withIndex('by_department', (q) => q.eq('department', args.department))
+        .withIndex('by_department', (q) => q.eq('department', args.department as any)) 
         .collect()
     } else {
       conversations = await ctx.db.query('conversations').collect()
@@ -101,9 +103,24 @@ export const create = mutation({
   args: {
     leadId: v.optional(v.id('leads')),
     studentId: v.optional(v.id('students')),
-    channel: v.string(),
-    department: v.string(),
-    status: v.string(),
+    channel: v.union(
+      v.literal('whatsapp'),
+      v.literal('instagram'),
+      v.literal('portal'),
+      v.literal('email')
+    ),
+    department: v.union(
+      v.literal('vendas'),
+      v.literal('cs'),
+      v.literal('suporte')
+    ),
+    status: v.union(
+      v.literal('aguardando_atendente'),
+      v.literal('em_atendimento'),
+      v.literal('aguardando_cliente'),
+      v.literal('resolvido'),
+      v.literal('bot_ativo')
+    ),
     externalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -115,7 +132,7 @@ export const create = mutation({
       lastMessageAt: Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      assignedTo: undefined, // Plan doesn't specify default, assumes undefined or optional
+      assignedTo: undefined, 
     })
 
     return conversationId
@@ -126,9 +143,15 @@ export const update = mutation({
   args: {
     conversationId: v.id('conversations'),
     patch: v.object({
-      status: v.optional(v.string()),
+      status: v.optional(v.union(
+        v.literal('aguardando_atendente'),
+        v.literal('em_atendimento'),
+        v.literal('aguardando_cliente'),
+        v.literal('resolvido'),
+        v.literal('bot_ativo')
+      )),
       assignedTo: v.optional(v.id('users')),
-      lastMessage: v.optional(v.string()),
+      // lastMessage removed as it does not exist in schema
       lastMessageAt: v.optional(v.number()),
     }),
   },
@@ -139,7 +162,6 @@ export const update = mutation({
     await ctx.db.patch(args.conversationId, {
       ...args.patch,
       updatedAt: Date.now(),
-      // lastMessageAt is in patch if provided, otherwise preserve
     })
   },
 })

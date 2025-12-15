@@ -3,7 +3,18 @@ import { mutation, query } from './_generated/server'
 
 export const list = query({
   args: {
-    category: v.optional(v.string()),
+    category: v.optional(v.union(
+      v.literal('abertura'),
+      v.literal('qualificacao'),
+      v.literal('apresentacao'),
+      v.literal('objecao_preco'),
+      v.literal('objecao_tempo'),
+      v.literal('objecao_outros_cursos'),
+      v.literal('follow_up'),
+      v.literal('fechamento'),
+      v.literal('pos_venda'),
+      v.literal('suporte')
+    )),
     product: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
   },
@@ -35,7 +46,20 @@ export const list = query({
 })
 
 export const getByCategory = query({
-  args: { category: v.string() }, // Plan says v.union but snippet shows optional string. I'll use string to be flexible or check if specific generic string is safer. Plan says: args: { category: v.union(...) }. But doesn't list the union values. I will use v.string() to avoid guessing values, as strict union requires knowing all values.
+  args: { 
+    category: v.union(
+      v.literal('abertura'),
+      v.literal('qualificacao'),
+      v.literal('apresentacao'),
+      v.literal('objecao_preco'),
+      v.literal('objecao_tempo'),
+      v.literal('objecao_outros_cursos'),
+      v.literal('follow_up'),
+      v.literal('fechamento'),
+      v.literal('pos_venda'),
+      v.literal('suporte')
+    )
+  },
   handler: async (ctx, args) => {
     return await ctx.db
       .query('messageTemplates')
@@ -48,8 +72,27 @@ export const getByCategory = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    category: v.string(),
-    product: v.optional(v.string()),
+    category: v.union(
+      v.literal('abertura'),
+      v.literal('qualificacao'),
+      v.literal('apresentacao'),
+      v.literal('objecao_preco'),
+      v.literal('objecao_tempo'),
+      v.literal('objecao_outros_cursos'),
+      v.literal('follow_up'),
+      v.literal('fechamento'),
+      v.literal('pos_venda'),
+      v.literal('suporte')
+    ),
+    product: v.optional(v.union(
+      v.literal('trintae3'),
+      v.literal('otb'),
+      v.literal('black_neon'),
+      v.literal('comunidade'),
+      v.literal('auriculo'),
+      v.literal('na_mesa_certa'),
+      v.literal('geral')
+    )),
     content: v.string(),
     variables: v.optional(v.array(v.string())),
   },
