@@ -143,7 +143,7 @@ function SalesReportPage() {
 									/>
 									<YAxis />
 									<Tooltip
-										formatter={(value: number) => formatCurrency(value)}
+										formatter={(value) => formatCurrency(Number(value ?? 0))}
 										labelFormatter={(label) => `Data: ${label}`}
 									/>
 									<Line

@@ -3,16 +3,25 @@ import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import {
 	BarChart3,
+	FileText,
 	GraduationCap,
 	Kanban,
 	LayoutDashboard,
 	MessageSquare,
+	Plug,
 	Settings,
+	TrendingUp,
+	Users,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
+import {
+	Sidebar,
+	SidebarBody,
+	SidebarLink,
+	SidebarLinkWithSubmenu,
+} from '@/components/ui/aceternity-sidebar';
 
 const menuItems = [
 	{
@@ -26,24 +35,53 @@ const menuItems = [
 		icon: <Kanban className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
 	{
-		label: 'Chat',
-		href: '/chat',
-		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
-	},
-	{
 		label: 'Alunos',
 		href: '/students',
 		icon: <GraduationCap className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
 	{
+		label: 'Chat',
+		href: '/chat',
+		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
 		label: 'Relatórios',
 		href: '/reports',
 		icon: <BarChart3 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		children: [
+			{
+				label: 'Vendas',
+				href: '/reports/sales',
+				icon: <TrendingUp className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+			},
+			{
+				label: 'Equipe',
+				href: '/reports/team',
+				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+			},
+		],
 	},
 	{
 		label: 'Configurações',
 		href: '/settings',
 		icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		children: [
+			{
+				label: 'Equipe',
+				href: '/settings/team',
+				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+			},
+			{
+				label: 'Templates',
+				href: '/settings/templates',
+				icon: <FileText className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+			},
+			{
+				label: 'Integrações',
+				href: '/settings/integrations',
+				icon: <Plug className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+			},
+		],
 	},
 ];
 
@@ -56,10 +94,39 @@ export function AppSidebar() {
 			<SidebarBody className="justify-between gap-10">
 				<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
 					{open ? <Logo /> : <LogoIcon />}
-					<div className="mt-8 flex flex-col gap-2">
-						{menuItems.map((item, idx) => (
-							<SidebarLink key={idx} link={item} />
-						))}
+					<div className="mt-8">
+						{/* Desktop View */}
+						<div className="hidden md:flex flex-col gap-2">
+							{menuItems.map((item, idx) =>
+								item.children ? (
+									<SidebarLinkWithSubmenu key={idx} link={item} />
+								) : (
+									<SidebarLink key={idx} link={item} />
+								),
+							)}
+						</div>
+
+						{/* Mobile View */}
+						<div className="md:hidden flex flex-col gap-2">
+							{menuItems.map((item, idx) => (
+								<div key={idx}>
+									{item.children ? (
+										<>
+											<div className="font-medium py-2 px-2 text-neutral-700 dark:text-neutral-200">
+												{item.label}
+											</div>
+											<div className="ml-4 space-y-1">
+												{item.children.map((child, cIdx) => (
+													<SidebarLink key={cIdx} link={child} />
+												))}
+											</div>
+										</>
+									) : (
+										<SidebarLink link={item} />
+									)}
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 				<div>

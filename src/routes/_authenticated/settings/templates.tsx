@@ -226,7 +226,7 @@ function TemplateForm({
 	onSuccess,
 }: {
 	templateId?: Id<'messageTemplates'>;
-	initialData?: any;
+	initialData?: TemplateFormData;
 	onSuccess?: () => void;
 }) {
 	const createTemplate = useMutation(api.templates.create);

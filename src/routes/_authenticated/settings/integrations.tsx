@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Bot, ExternalLink, MessageSquare, Settings } from 'lucide-react';
+import { useId } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,13 @@ export const Route = createFileRoute('/_authenticated/settings/integrations')({
 });
 
 function IntegrationsSettingsPage() {
+	const evolutionUrlId = useId();
+	const evolutionKeyId = useId();
+	const instanceNameId = useId();
+	const difyUrlId = useId();
+	const difyKeyId = useId();
+	const difyAppId = useId();
+
 	return (
 		<div className="space-y-6 p-6 max-w-4xl">
 			{/* Header */}
@@ -44,21 +52,21 @@ function IntegrationsSettingsPage() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="evolution-url">Evolution API URL</Label>
-						<Input id="evolution-url" placeholder="https://api.evolution.com.br" defaultValue="" />
+						<Label htmlFor={evolutionUrlId}>Evolution API URL</Label>
+						<Input id={evolutionUrlId} placeholder="https://api.evolution.com.br" defaultValue="" />
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="evolution-key">API Key</Label>
+						<Label htmlFor={evolutionKeyId}>API Key</Label>
 						<Input
-							id="evolution-key"
+							id={evolutionKeyId}
 							type="password"
 							placeholder="••••••••••••••••"
 							defaultValue=""
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="instance-name">Nome da Instância</Label>
-						<Input id="instance-name" placeholder="grupo-us-prod" defaultValue="" />
+						<Label htmlFor={instanceNameId}>Nome da Instância</Label>
+						<Input id={instanceNameId} placeholder="grupo-us-prod" defaultValue="" />
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between">
@@ -98,21 +106,21 @@ function IntegrationsSettingsPage() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="dify-url">Dify API URL</Label>
-						<Input id="dify-url" placeholder="https://api.dify.ai/v1" defaultValue="" />
+						<Label htmlFor={difyUrlId}>Dify API URL</Label>
+						<Input id={difyUrlId} placeholder="https://api.dify.ai/v1" defaultValue="" />
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="dify-key">API Key</Label>
+						<Label htmlFor={difyKeyId}>API Key</Label>
 						<Input
-							id="dify-key"
+							id={difyKeyId}
 							type="password"
 							placeholder="app-••••••••••••••••"
 							defaultValue=""
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="dify-app-id">App ID</Label>
-						<Input id="dify-app-id" placeholder="app-id-here" defaultValue="" />
+						<Label htmlFor={difyAppId}>App ID</Label>
+						<Input id={difyAppId} placeholder="app-id-here" defaultValue="" />
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between">

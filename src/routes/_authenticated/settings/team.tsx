@@ -163,7 +163,10 @@ function TeamSettingsPage() {
 												<DialogHeader>
 													<DialogTitle>Editar Membro</DialogTitle>
 												</DialogHeader>
-												<UserForm userId={user._id} initialData={user} />
+												<UserForm
+													userId={user._id}
+													initialData={{ name: user.name, email: user.email, role: user.role }}
+												/>
 											</DialogContent>
 										</Dialog>
 										<DropdownMenuItem
@@ -194,7 +197,7 @@ function UserForm({
 	onSuccess,
 }: {
 	userId?: Id<'users'>;
-	initialData?: { name: string; email: string; role: string };
+	initialData?: UserFormData;
 	onSuccess?: () => void;
 }) {
 	const updateUser = useMutation(api.users.updateUser);
@@ -202,7 +205,7 @@ function UserForm({
 
 	const form = useForm<UserFormData>({
 		resolver: zodResolver(userSchema),
-		defaultValues: initialData || {
+		defaultValues: initialData ?? {
 			name: '',
 			email: '',
 			role: 'sdr',

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import type { Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentForm } from '@/components/students/student-form';
@@ -69,13 +69,14 @@ function StudentsPage() {
 
 	// Stats
 	const totalStudents = students?.length ?? 0;
-	const activeStudents = students?.filter((s: Doc<'students'>) => s.status === 'ativo').length ?? 0;
-	const highRiskStudents =
-		students?.filter((s: Doc<'students'>) => s.churnRisk === 'alto').length ?? 0;
+	const activeStudents = students?.filter((s) => s && s.status === 'ativo').length ?? 0;
+	const highRiskStudents = students?.filter((s) => s && s.churnRisk === 'alto').length ?? 0;
 
 	// Pagination
 	const totalPages = Math.ceil(totalStudents / PAGE_SIZE);
-	const paginatedStudents = students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? [];
+	const paginatedStudents = (
+		students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? []
+	).filter((s): s is NonNullable<typeof s> => s !== null);
 
 	// Reset page when filters change
 	const handleFilterChange = (key: string, value: string) => {
@@ -205,7 +206,7 @@ function StudentsPage() {
 			) : (
 				/* Grid View */
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{paginatedStudents.map((student: Doc<'students'>) => (
+					{paginatedStudents.map((student) => (
 						<StudentCard
 							key={student._id}
 							student={student}
