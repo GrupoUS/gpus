@@ -1,8 +1,8 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { Link, useParams } from '@tanstack/react-router';
+import type { Doc, Id } from '@convex/_generated/dataModel';
+import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,9 +43,7 @@ export function ConversationList({
 
 	// We can use the params to help with styling or logic if needed, but Link handle active state well.
 	// However, if we want to ensure exact highlighting, we can check the ID.
-	const params = useParams({ strict: false });
-	// biome-ignore lint/suspicious/noExplicitAny: Params type from useParams is dynamic
-	const selectedId = (params as any).id;
+	// Fixed: Using props for controlled selection state.
 
 	if (!conversations) {
 		return (
@@ -85,6 +83,7 @@ export function ConversationList({
 							key={item._id}
 							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
 							to={`/chat/${item.department}/${item._id}` as any}
+							onClick={() => onSelect?.(item._id)}
 							preload="intent"
 							className={cn(
 								'w-full text-left p-3 rounded-lg transition-colors hover:bg-muted/50 block group',

@@ -88,7 +88,7 @@ const formSchema = z
 		clinicName: z.string().optional(),
 		clinicCity: z.string().optional(),
 		// Professional background
-		yearsInAesthetics: z.coerce.number().min(0).max(50).optional(),
+		yearsInAesthetics: z.string().optional(),
 		currentRevenue: z.enum(['0-5k', '5k-10k', '10k-20k', '20k-50k', '50k+']).optional(),
 		// Diagnosis
 		mainPain: z
@@ -122,7 +122,7 @@ export function LeadForm() {
 			hasClinic: false,
 			clinicName: '',
 			clinicCity: '',
-			yearsInAesthetics: undefined,
+			yearsInAesthetics: '',
 			currentRevenue: undefined,
 			mainPain: undefined,
 			mainDesire: '',
@@ -145,8 +145,10 @@ export function LeadForm() {
 				...(values.hasClinic !== undefined && { hasClinic: values.hasClinic }),
 				...(values.clinicName && { clinicName: values.clinicName }),
 				...(values.clinicCity && { clinicCity: values.clinicCity }),
-				...(values.yearsInAesthetics !== undefined &&
-					values.yearsInAesthetics !== null && { yearsInAesthetics: values.yearsInAesthetics }),
+				...(values.yearsInAesthetics &&
+					!Number.isNaN(Number(values.yearsInAesthetics)) && {
+						yearsInAesthetics: Number(values.yearsInAesthetics),
+					}),
 				...(values.currentRevenue && { currentRevenue: values.currentRevenue }),
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
@@ -371,15 +373,7 @@ export function LeadForm() {
 									<FormItem>
 										<FormLabel>Anos na Estética</FormLabel>
 										<FormControl>
-											<Input
-												type="number"
-												placeholder="Ex: 3"
-												onChange={field.onChange}
-												onBlur={field.onBlur}
-												name={field.name}
-												ref={field.ref}
-												value={field.value?.toString() || ''}
-											/>
+											<Input type="number" placeholder="Ex: 3" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>

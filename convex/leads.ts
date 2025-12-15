@@ -86,14 +86,29 @@ export const listLeads = query({
     source: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    let leads = await ctx.db.query('leads').order('desc').collect()
+    let leads;
+    
+    // Optimization: Use index if filtering by a single stage
+    const singleStage = 
+        (args.stages?.length === 1 ? args.stages[0] : null) ?? 
+        (args.stage && args.stage !== 'all' ? args.stage : null);
 
-    // Filter by stage(s)
-    if (args.stages && args.stages.length > 0) {
-        leads = leads.filter(l => args.stages!.includes(l.stage))
-    } else if (args.stage && args.stage !== 'all') {
-         // Fallback to legacy single stage param
-         leads = leads.filter(l => l.stage === args.stage)
+    if (singleStage) {
+        leads = await ctx.db
+            .query('leads')
+            .withIndex('by_stage', q => q.eq('stage', singleStage as any))
+            .order('desc')
+            .collect();
+    } else {
+        leads = await ctx.db.query('leads').order('desc').collect();
+
+        // Filter by multiple stages if applicable
+        if (args.stages && args.stages.length > 0) {
+            leads = leads.filter(l => args.stages!.includes(l.stage));
+        } else if (args.stage && args.stage !== 'all') {
+             // Fallback to legacy single stage param (only reached if logic above failed somehow, strictly redundant but safe)
+             leads = leads.filter(l => l.stage === args.stage);
+        }
     }
 
     // Filter by temperature
