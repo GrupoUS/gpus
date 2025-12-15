@@ -27,6 +27,7 @@ export const Route = createFileRoute('/_authenticated/students')({
 			search: (search.search as string) || '',
 			status: (search.status as string) || 'all',
 			churnRisk: (search.churnRisk as string) || 'all',
+			product: (search.product as string) || 'all',
 			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
 			page: Math.max(1, Number(search.page) || 1),
 		};
@@ -38,7 +39,7 @@ const PAGE_SIZE = 12;
 
 function StudentsPage() {
 	const navigate = useNavigate();
-	const { search, status, churnRisk, view, page } = Route.useSearch();
+	const { search, status, churnRisk, product, view, page } = Route.useSearch();
 	const [selectedStudent, setSelectedStudent] = useState<Id<'students'> | null>(null);
 
 	// Set default search params
@@ -49,7 +50,14 @@ function StudentsPage() {
 		if (!hasAnyParam) {
 			void navigate({
 				to: '/students',
-				search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' },
+				search: {
+					view: 'grid',
+					page: 1,
+					search: '',
+					status: 'all',
+					churnRisk: 'all',
+					product: 'all',
+				},
 			});
 		}
 	}, [navigate]);
@@ -58,12 +66,20 @@ function StudentsPage() {
 		search: search || undefined,
 		status: status === 'all' ? undefined : status,
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
+		product: product === 'all' ? undefined : product,
 	});
 
 	const clearFilters = () => {
 		void navigate({
 			to: '/students',
-			search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' },
+			search: {
+				view: 'grid',
+				page: 1,
+				search: '',
+				status: 'all',
+				churnRisk: 'all',
+				product: 'all',
+			},
 		});
 	};
 
@@ -82,7 +98,7 @@ function StudentsPage() {
 	const handleFilterChange = (key: string, value: string) => {
 		void navigate({
 			to: '/students',
-			search: { ...{ search, status, churnRisk, view, page }, [key]: value, page: 1 },
+			search: { ...{ search, status, churnRisk, product, view, page }, [key]: value, page: 1 },
 		});
 	};
 
@@ -95,6 +111,7 @@ function StudentsPage() {
 				search,
 				status,
 				churnRisk,
+				product,
 				view,
 			},
 		});
@@ -121,7 +138,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, page }, view: 'grid' },
+									search: { ...{ search, status, churnRisk, product, page }, view: 'grid' },
 								});
 							}}
 						>
@@ -134,7 +151,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, page }, view: 'table' },
+									search: { ...{ search, status, churnRisk, product, page }, view: 'table' },
 								});
 							}}
 						>
@@ -184,6 +201,8 @@ function StudentsPage() {
 				onStatusChange={(v) => handleFilterChange('status', v)}
 				churnRisk={churnRisk || 'all'}
 				onChurnRiskChange={(v) => handleFilterChange('churnRisk', v)}
+				product={product || 'all'}
+				onProductChange={(v) => handleFilterChange('product', v)}
 				onClear={clearFilters}
 			/>
 
@@ -231,7 +250,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, view }, page: page - 1 },
+									search: { ...{ search, status, churnRisk, product, view }, page: page - 1 },
 								});
 							}}
 						>
@@ -248,7 +267,7 @@ function StudentsPage() {
 							onClick={() => {
 								void navigate({
 									to: '/students',
-									search: { ...{ search, status, churnRisk, view }, page: page + 1 },
+									search: { ...{ search, status, churnRisk, product, view }, page: page + 1 },
 								});
 							}}
 						>

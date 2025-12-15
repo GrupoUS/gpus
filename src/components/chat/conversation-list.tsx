@@ -36,7 +36,9 @@ export function ConversationList({
 	onSelect,
 }: ConversationListProps) {
 	const conversations = useQuery(api.conversations.list, {
+		// biome-ignore lint/suspicious/noExplicitAny: Casting string to strict union
 		status: statusFilter as any,
+		// biome-ignore lint/suspicious/noExplicitAny: Casting string to strict union
 		department: (department === 'all' ? undefined : department) as any,
 		search,
 	});

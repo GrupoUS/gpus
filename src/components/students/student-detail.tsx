@@ -212,7 +212,7 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 			</div>
 
 			{/* Tabs */}
-			<Tabs defaultValue="enrollments" className="w-full">
+			<Tabs value={activeTab} onValueChange={(v) => _setActiveTab(v)} className="w-full">
 				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger value="enrollments" className="gap-1">
 						<GraduationCap className="h-4 w-4" />
