@@ -1,7 +1,11 @@
-import { createFileRoute, Outlet, useNavigate, useParams } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { MessageSquare, Search, Settings } from 'lucide-react';
-import { createContext, useContext, useState } from 'react';
+import { useState } from 'react';
 
+import type { Id } from '../../../convex/_generated/dataModel';
+import { AIChatWidget } from '@/components/chat/ai-chat-widget';
+import { ChatWindow } from '@/components/chat/chat-window';
+import { ConversationList } from '@/components/chat/conversation-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,46 +15,23 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/_authenticated/chat')({
-	component: ChatLayout,
+	component: ChatPage,
 });
 
-// Context to pass filters to children
-interface ChatContextType {
-	search: string;
-	statusFilter: string;
-}
-
-const ChatContext = createContext<ChatContextType>({ search: '', statusFilter: 'all' });
-
-export const useChatContext = () => useContext(ChatContext);
-
-function ChatLayout() {
-	const navigate = useNavigate();
-	// biome-ignore lint/suspicious/noExplicitAny: Params type from Tanstack Router can be vague
-	const params = Route.useParams() as any;
-	const currentDepartment = params.department || 'vendas';
-
-	// biome-ignore lint/suspicious/noExplicitAny: Check if id exists
-	const routeMatch = useParams({ strict: false }) as any;
-	const isConversationOpen = !!routeMatch.id;
-
+function ChatPage() {
+	const [selectedConversation, setSelectedConversation] = useState<Id<'conversations'> | null>(
+		null,
+	);
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [search, setSearch] = useState('');
 
 	return (
-		<ChatContext.Provider value={{ search, statusFilter }}>
-			<div className="flex h-[calc(100vh-64px)] overflow-hidden">
-				{/* Sidebar */}
-				<div
-					className={cn(
-						'w-80 border-r flex flex-col bg-background/50 shrink-0',
-						isConversationOpen ? 'hidden md:flex' : 'flex w-full md:w-80',
-					)}
-				>
+		<div className="h-[calc(100vh-64px)] flex flex-col">
+			<div className="flex-1 flex min-h-0">
+				{/* Sidebar - Conversation List */}
+				<div className="w-80 border-r flex flex-col bg-background/50">
 					{/* Header */}
 					<div className="p-4 border-b space-y-3">
 						<div className="flex items-center justify-between">
@@ -62,19 +43,6 @@ function ChatLayout() {
 								<Settings className="h-4 w-4" />
 							</Button>
 						</div>
-
-						<Tabs
-							value={currentDepartment}
-							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
-							onValueChange={(val) => navigate({ to: `/chat/${val}` as any })}
-							className="w-full"
-						>
-							<TabsList className="grid w-full grid-cols-3">
-								<TabsTrigger value="vendas">Vendas</TabsTrigger>
-								<TabsTrigger value="cs">CS</TabsTrigger>
-								<TabsTrigger value="suporte">Suporte</TabsTrigger>
-							</TabsList>
-						</Tabs>
 
 						{/* Search */}
 						<div className="relative">
@@ -103,26 +71,40 @@ function ChatLayout() {
 						</Select>
 					</div>
 
-					{/* Conversation List Slot */}
-					{/* biome-ignore lint/a11y/useValidAnchor: This is a portal target */}
-					<div
-						id="conversation-list-portal"
-						className="flex-1 overflow-hidden relative flex flex-col"
-					>
-						{/* The list will be portaled here from $department.tsx */}
-					</div>
+					{/* Conversations */}
+					<ConversationList
+						selectedId={selectedConversation}
+						onSelect={setSelectedConversation}
+						statusFilter={statusFilter === 'all' ? undefined : statusFilter}
+					/>
 				</div>
 
-				{/* Main Content */}
-				<div
-					className={cn(
-						'flex-1 flex flex-col min-w-0 bg-background',
-						!isConversationOpen ? 'hidden md:flex' : 'flex',
+				{/* Main Chat Area */}
+				<div className="flex-1">
+					{selectedConversation ? (
+						<ChatWindow
+							conversationId={selectedConversation}
+							onBack={() => setSelectedConversation(null)}
+						/>
+					) : (
+						<div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+							<MessageSquare className="h-16 w-16 mb-4 opacity-30" />
+							<h2 className="text-lg font-medium">Selecione uma conversa</h2>
+							<p className="text-sm">Escolha uma conversa da lista para começar</p>
+						</div>
 					)}
-				>
-					<Outlet />
 				</div>
 			</div>
-		</ChatContext.Provider>
+
+			{/* AI Assistant Widget */}
+			<AIChatWidget
+				conversationId={selectedConversation}
+				onInsertResponse={(text) => {
+					// TODO: Implement insert into chat input - should set the chat input value
+					// biome-ignore lint/suspicious/noConsole: TODO - Remove when chat input integration is implemented
+					console.log('Insert response:', text);
+				}}
+			/>
+		</div>
 	);
 }

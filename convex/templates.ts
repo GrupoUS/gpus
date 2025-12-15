@@ -146,3 +146,15 @@ export const update = mutation({
     })
   },
 })
+
+export const deleteTemplate = mutation({
+  args: {
+    templateId: v.id('messageTemplates'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+    
+    await ctx.db.delete(args.templateId)
+  },
+})

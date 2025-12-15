@@ -1,8 +1,8 @@
 'use client';
 
-import { Link } from '@tanstack/react-router';
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import type React from 'react';
 import { createContext, useContext, useState } from 'react';
 
@@ -12,6 +12,7 @@ interface Links {
 	label: string;
 	href: string;
 	icon: React.JSX.Element | React.ReactNode;
+	children?: Links[];
 }
 
 interface SidebarContextProps {
@@ -157,11 +158,15 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
 
 export const SidebarLink = ({ link, className, ...props }: { link: Links; className?: string }) => {
 	const { open, animate } = useSidebar();
+	const matchRoute = useMatchRoute();
+	const isActive = matchRoute({ to: link.href, fuzzy: true });
+
 	return (
 		<Link
 			to={link.href}
 			className={cn(
-				'flex items-center justify-start gap-2 group/sidebar py-2.5', // Added slight internal padding
+				'flex items-center justify-start gap-2 group/sidebar py-2.5',
+				isActive && 'bg-neutral-200/50 dark:bg-neutral-700/50 rounded-md px-2',
 				className,
 			)}
 			{...props}
@@ -178,5 +183,81 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 				{link.label}
 			</motion.span>
 		</Link>
+	);
+};
+
+export const SidebarLinkWithSubmenu = ({
+	link,
+	className,
+	...props
+}: {
+	link: Links;
+	className?: string;
+}) => {
+	const { open, animate } = useSidebar();
+	const [isExpanded, setIsExpanded] = useState(false);
+	const matchRoute = useMatchRoute();
+
+	// Check if any child route is active
+	const isChildActive = link.children?.some((child) => matchRoute({ to: child.href, fuzzy: true }));
+
+	// Check if parent route is active (if applicable, though usually parent with children is abstract)
+	const isParentActive = matchRoute({ to: link.href, fuzzy: true });
+	const isActive = isParentActive || isChildActive;
+
+	return (
+		<div className="flex flex-col">
+			{/* Parent Link */}
+			<button
+				onClick={() => setIsExpanded(!isExpanded)}
+				className={cn(
+					'flex items-center justify-between gap-2 group/sidebar py-2.5 w-full',
+					isActive && 'bg-neutral-200/50 dark:bg-neutral-700/50 rounded-md',
+					className,
+				)}
+				{...props}
+			>
+				<div className="flex items-center gap-2">
+					{link.icon}
+					<motion.span
+						animate={{
+							display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
+							opacity: animate ? (open ? 1 : 0) : 1,
+						}}
+						className="text-neutral-700 dark:text-neutral-200 text-sm whitespace-pre"
+					>
+						{link.label}
+					</motion.span>
+				</div>
+				{link.children && (
+					<motion.div
+						animate={{
+							display: animate ? (open ? 'block' : 'none') : 'block',
+							opacity: animate ? (open ? 1 : 0) : 1,
+							rotate: isExpanded ? 180 : 0,
+						}}
+					>
+						<ChevronDown className="h-4 w-4 text-neutral-500" />
+					</motion.div>
+				)}
+			</button>
+
+			{/* Submenu */}
+			{link.children && isExpanded && (
+				<motion.div
+					initial={{ height: 0, opacity: 0 }}
+					animate={{
+						height: open ? 'auto' : 0,
+						opacity: open ? 1 : 0,
+					}}
+					exit={{ height: 0, opacity: 0 }}
+					className="ml-6 mt-1 space-y-1 overflow-hidden"
+				>
+					{link.children.map((child, idx) => (
+						<SidebarLink key={idx} link={child} className="py-1.5" />
+					))}
+				</motion.div>
+			)}
+		</div>
 	);
 };

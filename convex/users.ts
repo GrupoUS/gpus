@@ -80,3 +80,45 @@ export const syncUser = mutation({
     return newUserId
   },
 })
+
+export const updateUser = mutation({
+  args: {
+    userId: v.id('users'),
+    patch: v.object({
+      name: v.optional(v.string()),
+      email: v.optional(v.string()),
+      role: v.optional(v.union(
+        v.literal('admin'),
+        v.literal('sdr'),
+        v.literal('cs'),
+        v.literal('support')
+      )),
+      isActive: v.optional(v.boolean()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+    
+    await ctx.db.patch(args.userId, {
+      ...args.patch,
+      updatedAt: Date.now(),
+    })
+  },
+})
+
+export const deleteUser = mutation({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+    
+    // Soft delete by setting isActive to false
+    await ctx.db.patch(args.userId, {
+      isActive: false,
+      updatedAt: Date.now(),
+    })
+  },
+})
