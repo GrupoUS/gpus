@@ -3,7 +3,8 @@
 import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/sign-in/sso-callback')({
+// biome-ignore lint/suspicious/noExplicitAny: TanStack Router SSO callback route
+export const Route = createFileRoute('/sign-up/sso-callback' as any)({
 	component: SSOCallbackPage,
 });
 

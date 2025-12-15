@@ -63,7 +63,7 @@ function StudentsPage() {
 	const clearFilters = () => {
 		void navigate({
 			to: '/students',
-			search: { view, page: 1, search: '', status: 'all', churnRisk: 'all' },
+			search: { view: 'grid', page: 1, search: '', status: 'all', churnRisk: 'all' },
 		});
 	};
 
