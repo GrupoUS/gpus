@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
 import { cn } from '@/lib/utils';
 
@@ -87,6 +88,9 @@ export function AppSidebar() {
 								),
 							}}
 						/>
+						<div className="mt-2 pl-2">
+							<ThemeToggle />
+						</div>
 					</div>
 				</SidebarBody>
 			</Sidebar>

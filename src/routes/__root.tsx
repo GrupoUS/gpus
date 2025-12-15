@@ -7,6 +7,7 @@ interface RouterContext {
 }
 
 import { NotFound } from '@/components/not-found';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: RootLayout,
@@ -18,12 +19,12 @@ function RootLayout() {
 	// The _authenticated layout handles the sidebar for protected routes.
 	// The index route (Landing) will have its own layout/structure.
 	return (
-		<>
+		<ThemeProvider defaultTheme="dark" storageKey="gpus-ui-theme">
 			<a href="#main-content" className="skip-link">
 				Pular para conteúdo principal
 			</a>
 			<Outlet />
 			<Toaster />
-		</>
+		</ThemeProvider>
 	);
 }

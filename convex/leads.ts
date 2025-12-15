@@ -134,6 +134,7 @@ export const createLead = mutation({
       // Check for auth if needed
       const identity = await ctx.auth.getUserIdentity()
       if (!identity) {
+          console.error("Unauthenticated call to createLead - Check Clerk/Convex integration")
           throw new Error("Unauthenticated")
       }
 
