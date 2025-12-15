@@ -131,19 +131,38 @@ export function LeadForm() {
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		try {
-			// Clean up optional empty strings to undefined if needed, or Zod handles it
-			// For email, if empty string, passing undefined might be cleaner if backend expects optional string
+			// Clean up optional empty strings to undefined for Convex compatibility
 			const payload = {
-				...values,
-				email: values.email || undefined,
+				name: values.name,
+				phone: values.phone,
+				source: values.source,
+				temperature: values.temperature,
+				stage: values.stage,
+				// Optional fields - only include if they have values
+				...(values.email && { email: values.email }),
+				...(values.profession && { profession: values.profession }),
+				...(values.interestedProduct && { interestedProduct: values.interestedProduct }),
+				...(values.hasClinic !== undefined && { hasClinic: values.hasClinic }),
+				...(values.clinicName && { clinicName: values.clinicName }),
+				...(values.clinicCity && { clinicCity: values.clinicCity }),
+				...(values.yearsInAesthetics !== undefined &&
+					values.yearsInAesthetics !== null && { yearsInAesthetics: values.yearsInAesthetics }),
+				...(values.currentRevenue && { currentRevenue: values.currentRevenue }),
+				...(values.mainPain && { mainPain: values.mainPain }),
+				...(values.mainDesire && { mainDesire: values.mainDesire }),
 			};
 
 			await createLead(payload);
 			toast.success('Lead criado com sucesso!');
 			setOpen(false);
 			form.reset();
-		} catch {
-			toast.error('Erro ao criar lead.');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Erro desconhecido';
+			if (message.includes('Unauthenticated')) {
+				toast.error('Sessão expirada. Por favor, faça login novamente.');
+			} else {
+				toast.error(`Erro ao criar lead: ${message}`);
+			}
 		}
 	};
 
