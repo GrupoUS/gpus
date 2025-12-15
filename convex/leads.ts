@@ -191,7 +191,7 @@ export const getLead = query({
   }
 })
 
-export const getRecent = query({
+export const recent = query({
   args: {
     limit: v.optional(v.number())
   },

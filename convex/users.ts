@@ -22,7 +22,7 @@ export const current = query({
 /**
  * List all users (for dropdowns, assignments, etc.)
  */
-export const listUsers = query({
+export const list = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query('users').collect()

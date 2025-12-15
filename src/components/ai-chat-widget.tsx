@@ -1,7 +1,7 @@
 'use client';
 
 import { Bot, Send, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -30,13 +30,13 @@ export function AIChatWidget() {
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const scrollToBottom = () => {
+	const scrollToBottom = useCallback(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	};
+	}, []);
 
 	useEffect(() => {
 		scrollToBottom();
-	}, [, scrollToBottom]);
+	}, [scrollToBottom]);
 
 	const handleSendMessage = () => {
 		if (!inputValue.trim() || isLoading) return;
@@ -79,7 +79,7 @@ export function AIChatWidget() {
 				<CollapsibleTrigger asChild>
 					<Button
 						size="lg"
-						className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background"
+						className="h-14 w-14 rounded-full shadow-lg bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background"
 						aria-label={isOpen ? 'Fechar chat IA' : 'Abrir chat IA'}
 					>
 						{isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
@@ -89,7 +89,7 @@ export function AIChatWidget() {
 				<CollapsibleContent className="absolute bottom-16 right-0 w-96 mb-2">
 					<MotionWrapper>
 						<Card className="glass-card shadow-2xl border-0">
-							<CardHeader className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-b">
+							<CardHeader className="bg-linear-to-r from-purple-600/10 to-pink-600/10 border-b">
 								<div className="flex items-center gap-2">
 									<Bot className="h-5 w-5 text-purple-600" />
 									<div>

@@ -59,7 +59,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	const createStudent = useMutation(api.students.create);
 	const updateStudent = useMutation(api.students.update);
 	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const users = useQuery(api.users.listUsers, {});
+	const users = useQuery(api.users.list, {});
 
 	const isEditMode = !!studentId;
 
@@ -95,40 +95,48 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 		});
 	}
 
+	const handleCreate = async (values: z.infer<typeof formSchema>) => {
+		await createStudent({
+			name: values.name,
+			email: values.email,
+			phone: values.phone,
+			cpf: values.cpf || undefined,
+			profession: values.profession,
+			professionalId: values.professionalId || undefined,
+			hasClinic: values.hasClinic,
+			clinicName: values.clinicName || undefined,
+			clinicCity: values.clinicCity || undefined,
+			status: 'ativo',
+			assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+		});
+		toast.success('Aluno criado com sucesso!');
+	};
+
+	const handleUpdate = async (values: z.infer<typeof formSchema>, id: Id<'students'>) => {
+		await updateStudent({
+			studentId: id,
+			patch: {
+				name: values.name,
+				email: values.email,
+				phone: values.phone,
+				profession: values.profession,
+				professionalId: values.professionalId || undefined,
+				hasClinic: values.hasClinic,
+				clinicName: values.clinicName || undefined,
+				clinicCity: values.clinicCity || undefined,
+				cpf: values.cpf || undefined,
+				assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+			},
+		});
+		toast.success('Aluno atualizado com sucesso!');
+	};
+
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		try {
 			if (isEditMode && studentId) {
-				await updateStudent({
-					studentId,
-					patch: {
-						name: values.name,
-						email: values.email,
-						phone: values.phone,
-						profession: values.profession,
-						professionalId: values.professionalId || undefined,
-						hasClinic: values.hasClinic,
-						clinicName: values.clinicName || undefined,
-						clinicCity: values.clinicCity || undefined,
-						cpf: values.cpf || undefined,
-						assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
-					},
-				});
-				toast.success('Aluno atualizado com sucesso!');
+				await handleUpdate(values, studentId);
 			} else {
-				await createStudent({
-					name: values.name,
-					email: values.email,
-					phone: values.phone,
-					cpf: values.cpf || undefined,
-					profession: values.profession,
-					professionalId: values.professionalId || undefined,
-					hasClinic: values.hasClinic,
-					clinicName: values.clinicName || undefined,
-					clinicCity: values.clinicCity || undefined,
-					status: 'ativo',
-					assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
-				});
-				toast.success('Aluno criado com sucesso!');
+				await handleCreate(values);
 			}
 			setOpen(false);
 			form.reset();

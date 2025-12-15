@@ -41,6 +41,31 @@ export function AIChatWidget() {
 		scrollToBottom();
 	}, [scrollToBottom]);
 
+	const getAIResponse = (input: string): string => {
+		const lowerInput = input.toLowerCase();
+
+		if (lowerInput.includes('trintae3') || lowerInput.includes('curso')) {
+			return 'A TRINTAE3 é nosso programa completo que transforma profissionais da saúde em empresários da estética. Você aprenderá técnica avançada + business. Quer saber mais sobre as turmas ou o investimento?';
+		}
+		if (
+			lowerInput.includes('preço') ||
+			lowerInput.includes('valor') ||
+			lowerInput.includes('investimento')
+		) {
+			return 'Nós acreditamos que a TRINTAE3 é um investimento, não um custo. A maioria dos nossos alunos recupera o investimento em 3-6 meses após formar o negócio. Posso te apresentar as opções de parcelamento?';
+		}
+		if (lowerInput.includes('tempo') || lowerInput.includes('duração')) {
+			return 'O programa tem duração de 6 meses com encontros ao vivo + aulas gravadas. Desenvolvemos tudo pensando no profissional que trabalha - você estuda no seu ritmo. Faz sentido para você agora?';
+		}
+		if (lowerInput.includes('virada') || lowerInput.includes('transformação')) {
+			return 'A Virada Estética é o nosso conceito principal: sair da exaustão dos plantões para se tornar um empresário da saúde estética. É exatamente o que realizamos com nossos alunos. Em que etapa da sua jornada você está?';
+		}
+		if (lowerInput.includes('agência') || lowerInput.includes('marketing')) {
+			return 'Sim! Além da formação técnica e de negócio, temos programas avançados de marketing e agência para alunos que querem escala. Você já tem sua clínica ou está planejando abrir?';
+		}
+		return 'Entendo sua dúvida. No Grupo US, não ensinamos apenas técnica - formamos empresários da saúde estética. Nossa abordagem completa inclui: técnica avançada, business, marketing e posicionamento. O que mais te desafia hoje na sua jornada?';
+	};
+
 	const handleSendMessage = async () => {
 		if (!inputValue.trim() || isLoading) return;
 
@@ -57,36 +82,9 @@ export function AIChatWidget() {
 
 		try {
 			// Simulate AI response with Grupo US narrative
-			// In production, this would call Dify API
 			await new Promise((resolve) => setTimeout(resolve, 1500));
 
-			const lowerInput = inputValue.toLowerCase();
-			let response = '';
-
-			// Basic intent recognition based on Grupo US context
-			if (lowerInput.includes('trintae3') || lowerInput.includes('curso')) {
-				response =
-					'A TRINTAE3 é nosso programa completo que transforma profissionais da saúde em empresários da estética. Você aprenderá técnica avançada + business. Quer saber mais sobre as turmas ou o investimento?';
-			} else if (
-				lowerInput.includes('preço') ||
-				lowerInput.includes('valor') ||
-				lowerInput.includes('investimento')
-			) {
-				response =
-					'Nós acreditamos que a TRINTAE3 é um investimento, não um custo. A maioria dos nossos alunos recupera o investimento em 3-6 meses após formar o negócio. Posso te apresentar as opções de parcelamento?';
-			} else if (lowerInput.includes('tempo') || lowerInput.includes('duração')) {
-				response =
-					'O programa tem duração de 6 meses com encontros ao vivo + aulas gravadas. Desenvolvemos tudo pensando no profissional que trabalha - você estuda no seu ritmo. Faz sentido para você agora?';
-			} else if (lowerInput.includes('virada') || lowerInput.includes('transformação')) {
-				response =
-					'A Virada Estética é o nosso conceito principal: sair da exaustão dos plantões para se tornar um empresário da saúde estética. É exatamente o que realizamos com nossos alunos. Em que etapa da sua jornada você está?';
-			} else if (lowerInput.includes('agência') || lowerInput.includes('marketing')) {
-				response =
-					'Sim! Além da formação técnica e de negócio, temos programas avançados de marketing e agência para alunos que querem escala. Você já tem sua clínica ou está planejando abrir?';
-			} else {
-				response =
-					'Entendo sua dúvida. No Grupo US, não ensinamos apenas técnica - formamos empresários da saúde estética. Nossa abordagem completa inclui: técnica avançada, business, marketing e posicionamento. O que mais te desafia hoje na sua jornada?';
-			}
+			const response = getAIResponse(inputValue);
 
 			const aiMessage = {
 				id: (Date.now() + 1).toString(),
@@ -132,7 +130,7 @@ export function AIChatWidget() {
 				<CollapsibleTrigger asChild>
 					<Button
 						size="lg"
-						className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background animate-pulse-subtle"
+						className="h-14 w-14 rounded-full shadow-lg bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background animate-pulse-subtle"
 						aria-label={isOpen ? 'Fechar assistente IA' : 'Abrir assistente IA'}
 					>
 						{isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
@@ -142,7 +140,7 @@ export function AIChatWidget() {
 				<CollapsibleContent className="absolute bottom-16 right-0 w-96 mb-2">
 					<MotionWrapper>
 						<Card className="glass-card shadow-2xl border-0">
-							<CardHeader className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-b">
+							<CardHeader className="bg-linear-to-r from-purple-600/10 to-pink-600/10 border-b">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2">
 										<Bot className="h-5 w-5 text-purple-600" />
@@ -163,7 +161,7 @@ export function AIChatWidget() {
 							</CardHeader>
 
 							<CardContent className="p-0">
-								<div className="h-[28rem] flex flex-col">
+								<div className="h-112 flex flex-col">
 									{/* Messages Area */}
 									<div className="flex-1 overflow-y-auto p-4 space-y-3">
 										{messages.map((message) => (

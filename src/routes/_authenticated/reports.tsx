@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_authenticated/reports')({
 });
 
 function ReportsPage() {
-	const [period, setPeriod] = useState<'7d' | '30d' | 'all'>('30d');
+	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 	const stats = useQuery(api.metrics.getDashboard, { period });
 
 	return (
@@ -42,7 +42,7 @@ function ReportsPage() {
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
 				</div>
-				<Select value={period} onValueChange={(value: '7d' | '30d' | 'all') => setPeriod(value)}>
+				<Select value={period} onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
@@ -63,9 +63,7 @@ function ReportsPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">{stats?.totalLeads ?? 0}</div>
-						<p className="text-xs text-muted-foreground">
-							{stats?.leadsThisMonth ?? 0} novos este mês
-						</p>
+						<p className="text-xs text-muted-foreground">no período selecionado</p>
 					</CardContent>
 				</Card>
 
@@ -76,7 +74,7 @@ function ReportsPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-green-600">
-							{stats?.leadsByStage?.fechado_ganho ?? 0}
+							{stats?.funnel?.fechado_ganho ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Leads convertidos</p>
 					</CardContent>
@@ -88,7 +86,7 @@ function ReportsPage() {
 						<MessageSquare className="h-4 w-4 text-blue-500" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">{stats?.messagesCount ?? 0}</div>
+						<div className="text-2xl font-bold text-blue-600">{stats?.totalMessages ?? 0}</div>
 						<p className="text-xs text-muted-foreground">Total de mensagens</p>
 					</CardContent>
 				</Card>
@@ -100,7 +98,7 @@ function ReportsPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-indigo-600">
-							{stats?.conversationsCount ?? 0}
+							{Math.round(((stats?.conversionRate ?? 0) * (stats?.totalLeads ?? 1)) / 100)}
 						</div>
 						<p className="text-xs text-muted-foreground">Total de conversas</p>
 					</CardContent>
@@ -147,8 +145,8 @@ function ReportsPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-3">
-							{stats?.leadsByStage &&
-								(Object.entries(stats.leadsByStage) as [string, number][]).map(([stage, count]) => {
+							{stats?.funnel &&
+								(Object.entries(stats.funnel) as [string, number][]).map(([stage, count]) => {
 									const total = (stats.totalLeads as number) || 1;
 									const percentage = Math.round((count / total) * 100);
 									return (

@@ -70,6 +70,7 @@ export const setSecureCookie = (
 		}
 
 		// Set the cookie
+		// biome-ignore lint/suspicious/noDocumentCookie: fallback mechanism
 		document.cookie = cookieString;
 	} catch (_error) {
 		// Silently handle cookie setting errors
@@ -118,6 +119,7 @@ export const deleteCookie = (
 		const cookiePath = options.path || '/';
 		const cookieDomain = options.domain ? `; domain=${options.domain}` : '';
 
+		// biome-ignore lint/suspicious/noDocumentCookie: fallback mechanism
 		document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${cookiePath}${cookieDomain}`;
 	} catch (_error) {
 		// Silently handle cookie deletion errors

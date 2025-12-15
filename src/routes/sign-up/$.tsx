@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 
 import { fadeInUp } from '@/lib/animations';
 
+// biome-ignore lint/suspicious/noExplicitAny: TanStack Router wildcard route
 export const Route = createFileRoute('/sign-up/$' as any)({
 	component: SignUpPage,
 });
