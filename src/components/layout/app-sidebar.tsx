@@ -1,5 +1,6 @@
 import { UserButton, useUser } from '@clerk/clerk-react';
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+import { motion } from 'framer-motion';
 import {
 	BarChart3,
 	GraduationCap,
@@ -8,86 +9,116 @@ import {
 	MessageSquare,
 	Settings,
 } from 'lucide-react';
+import { useState } from 'react';
 
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
+import { cn } from '@/lib/utils';
 
 const menuItems = [
-	{ title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-	{ title: 'CRM', icon: Kanban, href: '/crm' },
-	{ title: 'Chat', icon: MessageSquare, href: '/chat' },
-	{ title: 'Alunos', icon: GraduationCap, href: '/students' },
-	{ title: 'Relatórios', icon: BarChart3, href: '/reports' },
-	{ title: 'Configurações', icon: Settings, href: '/settings' },
+	{
+		label: 'Dashboard',
+		href: '/dashboard',
+		icon: <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'CRM',
+		href: '/crm',
+		icon: <Kanban className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Chat',
+		href: '/chat',
+		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Alunos',
+		href: '/students',
+		icon: <GraduationCap className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Relatórios',
+		href: '/reports',
+		icon: <BarChart3 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Configurações',
+		href: '/settings',
+		icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
 ];
 
 export function AppSidebar() {
-	const location = useLocation();
 	const { user } = useUser();
+	const [open, setOpen] = useState(false);
 
 	return (
-		<Sidebar className="card-glass">
-			<SidebarHeader className="border-b p-4 border-sidebar-border/50">
-				<div className="flex items-center gap-2">
-					<div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center sidebar-logo">
-						<span className="text-primary-foreground font-bold text-sm font-display">US</span>
+		<div
+			className={cn(
+				'rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden',
+				'h-screen', // Full height
+			)}
+		>
+			<Sidebar open={open} setOpen={setOpen}>
+				<SidebarBody className="justify-between gap-10">
+					<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+						{open ? <Logo /> : <LogoIcon />}
+						<div className="mt-8 flex flex-col gap-2">
+							{menuItems.map((item, idx) => (
+								<SidebarLink key={idx} link={item} />
+							))}
+						</div>
 					</div>
 					<div>
-						<p className="font-semibold text-sm font-display">Grupo US</p>
-						<p className="text-xs text-muted-foreground font-sans">Portal de Gestão</p>
+						<SidebarLink
+							link={{
+								label: user?.fullName || 'Usuário',
+								href: '#',
+								icon: (
+									<div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden">
+										<UserButton
+											afterSignOutUrl="/sign-in"
+											appearance={{
+												elements: {
+													avatarBox: 'h-7 w-7',
+												},
+											}}
+										/>
+									</div>
+								),
+							}}
+						/>
 					</div>
-				</div>
-			</SidebarHeader>
-
-			<SidebarContent>
-				<SidebarGroup>
-					<SidebarGroupLabel>Menu</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<SidebarMenu>
-							{menuItems.map((item) => {
-								const isActive =
-									location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
-								return (
-									<SidebarMenuItem
-										key={item.href}
-										className={isActive ? 'sidebar-menu-item active' : 'sidebar-menu-item'}
-									>
-										<SidebarMenuButton asChild isActive={isActive}>
-											<Link to={item.href}>
-												<item.icon className="h-4 w-4" />
-												<span>{item.title}</span>
-											</Link>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								);
-							})}
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
-			</SidebarContent>
-
-			<SidebarFooter className="border-t p-4 border-sidebar-border/50">
-				<div className="flex items-center gap-3">
-					<UserButton afterSignOutUrl="/sign-in" />
-					<div className="flex-1 min-w-0">
-						{/* Show fallback if user not loaded yet */}
-						<p className="text-sm font-medium truncate font-sans">{user?.fullName || 'Usuário'}</p>
-						<p className="text-xs text-muted-foreground truncate font-sans">
-							{user?.primaryEmailAddress?.emailAddress}
-						</p>
-					</div>
-				</div>
-			</SidebarFooter>
-		</Sidebar>
+				</SidebarBody>
+			</Sidebar>
+		</div>
 	);
 }
+
+export const Logo = () => {
+	return (
+		<Link
+			to="/dashboard"
+			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+		>
+			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<motion.span
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				className="font-medium text-black dark:text-white whitespace-pre"
+			>
+				Grupo US
+			</motion.span>
+		</Link>
+	);
+};
+
+export const LogoIcon = () => {
+	return (
+		<Link
+			to="/dashboard"
+			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+		>
+			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+		</Link>
+	);
+};
