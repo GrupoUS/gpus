@@ -13,7 +13,6 @@ import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
-import { cn } from '@/lib/utils';
 
 const menuItems = [
 	{
@@ -53,48 +52,41 @@ export function AppSidebar() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div
-			className={cn(
-				'rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden',
-				'h-screen', // Full height
-			)}
-		>
-			<Sidebar open={open} setOpen={setOpen}>
-				<SidebarBody className="justify-between gap-10">
-					<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-						{open ? <Logo /> : <LogoIcon />}
-						<div className="mt-8 flex flex-col gap-2">
-							{menuItems.map((item, idx) => (
-								<SidebarLink key={idx} link={item} />
-							))}
-						</div>
+		<Sidebar open={open} setOpen={setOpen}>
+			<SidebarBody className="justify-between gap-10">
+				<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+					{open ? <Logo /> : <LogoIcon />}
+					<div className="mt-8 flex flex-col gap-2">
+						{menuItems.map((item, idx) => (
+							<SidebarLink key={idx} link={item} />
+						))}
 					</div>
-					<div>
-						<SidebarLink
-							link={{
-								label: user?.fullName || 'Usuário',
-								href: '#',
-								icon: (
-									<div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden">
-										<UserButton
-											afterSignOutUrl="/sign-in"
-											appearance={{
-												elements: {
-													avatarBox: 'h-7 w-7',
-												},
-											}}
-										/>
-									</div>
-								),
-							}}
-						/>
-						<div className="mt-2 pl-2">
-							<ThemeToggle />
-						</div>
+				</div>
+				<div>
+					<SidebarLink
+						link={{
+							label: user?.fullName || 'Usuário',
+							href: '#',
+							icon: (
+								<div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden">
+									<UserButton
+										afterSignOutUrl="/sign-in"
+										appearance={{
+											elements: {
+												avatarBox: 'h-7 w-7',
+											},
+										}}
+									/>
+								</div>
+							),
+						}}
+					/>
+					<div className="mt-2 pl-2">
+						<ThemeToggle />
 					</div>
-				</SidebarBody>
-			</Sidebar>
-		</div>
+				</div>
+			</SidebarBody>
+		</Sidebar>
 	);
 }
 

@@ -80,6 +80,9 @@ export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
 	);
 };
 
+const SIDEBAR_WIDTH_COLLAPSED = '60px';
+const SIDEBAR_WIDTH_EXPANDED = '250px';
+
 export const DesktopSidebar = ({
 	className,
 	children,
@@ -89,11 +92,15 @@ export const DesktopSidebar = ({
 	return (
 		<motion.div
 			className={cn(
-				'h-full px-4 py-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[250px] shrink-0',
+				'h-full px-4 py-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 shrink-0',
 				className,
 			)}
 			animate={{
-				width: animate ? (open ? '250px' : '60px') : '250px',
+				width: animate
+					? open
+						? SIDEBAR_WIDTH_EXPANDED
+						: SIDEBAR_WIDTH_COLLAPSED
+					: SIDEBAR_WIDTH_EXPANDED,
 			}}
 			onMouseEnter={() => setOpen(true)}
 			onMouseLeave={() => setOpen(false)}

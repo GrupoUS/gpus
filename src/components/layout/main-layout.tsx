@@ -12,21 +12,17 @@ import {
 	BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
 	const location = useLocation();
-	// Basic breadcrumb logic or static for now
 
 	return (
-		<SidebarProvider>
+		<div className="flex h-screen w-full flex-col md:flex-row">
 			<AppSidebar />
-			<SidebarInset>
-				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-data-[collapsible=icon]:h-12">
+			<main id="main-content" className="flex-1 flex flex-col overflow-hidden bg-mesh bg-noise">
+				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background z-10">
 					<div className="flex items-center gap-2 px-4">
-						<SidebarTrigger className="-ml-1" />
-						<Separator orientation="vertical" className="mr-2 h-4" />
-						{/* Basic Breadcrumb */}
+						<Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
 						<Breadcrumb>
 							<BreadcrumbList>
 								<BreadcrumbItem className="hidden md:block">
@@ -50,12 +46,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 						<UserButton afterSignOutUrl="/" />
 					</div>
 				</header>
-				{/* biome-ignore lint/correctness/useUniqueElementIds: Static ID needed for A11y skip link */}
-				<main id="main-content" className="flex-1 p-6 bg-mesh bg-noise">
-					{children}
-				</main>
-			</SidebarInset>
+				<div className="flex-1 overflow-auto p-6">{children}</div>
+			</main>
 			<AIChatWidget />
-		</SidebarProvider>
+		</div>
 	);
 }
