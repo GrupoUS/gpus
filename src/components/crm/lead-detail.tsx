@@ -165,6 +165,9 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					<div className="p-3 rounded-lg bg-card border border-border/50">
 						<span className="text-muted-foreground block text-xs mb-1">Clínica</span>
 						<span className="font-medium">{lead.hasClinic ? lead.clinicName || 'Sim' : 'Não'}</span>
+						{lead.clinicCity && (
+							<span className="text-xs text-muted-foreground block">{lead.clinicCity}</span>
+						)}
 					</div>
 					<div className="p-3 rounded-lg bg-card border border-border/50">
 						<span className="text-muted-foreground block text-xs mb-1">Experiência</span>
@@ -212,6 +215,12 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 						<span className="text-muted-foreground text-xs">Dor Principal</span>
 						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
 					</div>
+					{lead.mainDesire && (
+						<div className="space-y-1 pt-2 border-t border-border/30">
+							<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
+							<p className="text-sm">{lead.mainDesire}</p>
+						</div>
+					)}
 				</div>
 			</section>
 		</>

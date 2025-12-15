@@ -1,7 +1,15 @@
 import { useDraggable } from '@dnd-kit/core';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Flame, type LucideIcon, MessageSquare, Phone, Snowflake, Thermometer } from 'lucide-react';
+import {
+	Building,
+	Flame,
+	type LucideIcon,
+	MessageSquare,
+	Phone,
+	Snowflake,
+	Thermometer,
+} from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +24,8 @@ interface LeadCardProps {
 		interestedProduct?: string;
 		temperature: 'frio' | 'morno' | 'quente';
 		lastContactAt?: number;
+		clinicName?: string;
+		hasClinic?: boolean;
 	};
 }
 
@@ -72,11 +82,17 @@ export function LeadCard({ lead }: LeadCardProps) {
 					<div className="flex items-center gap-2">
 						<p className="font-medium text-sm truncate font-sans">{lead.name}</p>
 						<TempIcon
-							className={`h-3.5 w-3.5 flex-shrink-0 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-gray-500'}`}
+							className={`h-3.5 w-3.5 shrink-0 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-gray-500'}`}
 						/>
 					</div>
 					{lead.profession && (
 						<p className="text-xs text-muted-foreground truncate">{lead.profession}</p>
+					)}
+					{lead.clinicName && (
+						<p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+							<Building className="h-3 w-3" />
+							{lead.clinicName}
+						</p>
 					)}
 					<div className="flex items-center gap-2 mt-2">
 						{lead.interestedProduct && (

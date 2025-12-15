@@ -352,7 +352,15 @@ export function LeadForm() {
 									<FormItem>
 										<FormLabel>Anos na Estética</FormLabel>
 										<FormControl>
-											<Input type="number" placeholder="Ex: 3" {...field} />
+											<Input
+												type="number"
+												placeholder="Ex: 3"
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												name={field.name}
+												ref={field.ref}
+												value={field.value?.toString() || ''}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
