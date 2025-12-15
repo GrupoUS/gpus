@@ -1,109 +1,145 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
-export const listConversations = query({
+export const list = query({
   args: {
-    status: v.optional(v.string()),
-    assignedTo: v.optional(v.id('users')),
+    department: v.optional(v.string()),
     search: v.optional(v.string()),
+    status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let conversations = await ctx.db
+    let conversations
+    
+    if (args.department) {
+      conversations = await ctx.db
+        .query('conversations')
+        .withIndex('by_department', (q) => q.eq('department', args.department))
+        .collect()
+    } else {
+      conversations = await ctx.db.query('conversations').collect()
+    }
+
+    const enrichConversation = async (conv: any) => {
+      let contactName = 'Unknown'
+      if (conv.leadId) {
+        const lead = await ctx.db.get(conv.leadId)
+        if (lead) contactName = lead.name
+      } else if (conv.studentId) {
+        const student = await ctx.db.get(conv.studentId)
+        if (student) contactName = student.name
+      }
+      return { ...conv, contactName }
+    }
+
+    const enriched = await Promise.all(conversations.map(enrichConversation))
+
+    let filtered = enriched
+
+    if (args.status) {
+      filtered = filtered.filter((c) => c.status === args.status)
+    }
+
+    if (args.search) {
+      const searchLower = args.search.toLowerCase()
+      filtered = filtered.filter((c) => 
+        c.contactName.toLowerCase().includes(searchLower)
+      )
+    }
+    
+    // Sort desc by lastMessageAt
+    return filtered.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0))
+  },
+})
+
+export const getById = query({
+  args: { id: v.id('conversations') },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.id)
+    if (!conversation) return null
+
+    let contactName = 'Unknown'
+    let contactPhone = ''
+    if (conversation.leadId) {
+      const lead = await ctx.db.get(conversation.leadId)
+      if (lead) {
+        contactName = lead.name
+        contactPhone = lead.phone || ''
+      }
+    } else if (conversation.studentId) {
+      const student = await ctx.db.get(conversation.studentId)
+      if (student) {
+        contactName = student.name
+        contactPhone = student.phone || ''
+      }
+    }
+
+    return { ...conversation, contactName, contactPhone }
+  },
+})
+
+export const getByStudent = query({
+  args: { studentId: v.id('students') },
+  handler: async (ctx, args) => {
+    return await ctx.db
       .query('conversations')
-      .order('desc')
+      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
       .collect()
-
-    if (args.status && args.status !== 'all') {
-      conversations = conversations.filter(c => c.status === args.status)
-    }
-
-    if (args.assignedTo) {
-      conversations = conversations.filter(c => c.assignedTo === args.assignedTo)
-    }
-
-    return conversations
   },
 })
 
-export const getConversation = query({
-  args: { conversationId: v.id('conversations') },
+export const getByLead = query({
+  args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.conversationId)
+    return await ctx.db
+      .query('conversations')
+      .withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+      .collect()
   },
 })
 
-export const createConversation = mutation({
+export const create = mutation({
   args: {
     leadId: v.optional(v.id('leads')),
     studentId: v.optional(v.id('students')),
-    channel: v.union(
-      v.literal('whatsapp'),
-      v.literal('instagram'),
-      v.literal('portal'),
-      v.literal('email')
-    ),
-    department: v.union(
-      v.literal('vendas'),
-      v.literal('cs'),
-      v.literal('suporte')
-    ),
+    channel: v.string(),
+    department: v.string(),
+    status: v.string(),
+    externalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first()
-
-    const now = Date.now()
-
-    return await ctx.db.insert('conversations', {
+    const conversationId = await ctx.db.insert('conversations', {
       ...args,
-      status: 'em_atendimento',
-      assignedTo: user?._id,
-      lastMessageAt: now,
-      createdAt: now,
-      updatedAt: now,
+      lastMessageAt: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      assignedTo: undefined, // Plan doesn't specify default, assumes undefined or optional
     })
+
+    return conversationId
   },
 })
 
-export const updateConversationStatus = mutation({
+export const update = mutation({
   args: {
     conversationId: v.id('conversations'),
-    status: v.union(
-      v.literal('aguardando_atendente'),
-      v.literal('em_atendimento'),
-      v.literal('aguardando_cliente'),
-      v.literal('resolvido'),
-      v.literal('bot_ativo')
-    ),
+    patch: v.object({
+      status: v.optional(v.string()),
+      assignedTo: v.optional(v.id('users')),
+      lastMessage: v.optional(v.string()),
+      lastMessageAt: v.optional(v.number()),
+    }),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
     await ctx.db.patch(args.conversationId, {
-      status: args.status,
+      ...args.patch,
       updatedAt: Date.now(),
-    })
-  },
-})
-
-export const assignConversation = mutation({
-  args: {
-    conversationId: v.id('conversations'),
-    userId: v.id('users'),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthenticated')
-
-    await ctx.db.patch(args.conversationId, {
-      assignedTo: args.userId,
-      updatedAt: Date.now(),
+      // lastMessageAt is in patch if provided, otherwise preserve
     })
   },
 })

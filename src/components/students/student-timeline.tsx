@@ -5,10 +5,21 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Activity, BookOpen, GraduationCap, Mail, Phone, TrendingUp, User } from 'lucide-react';
+import {
+	Activity,
+	BookOpen,
+	Edit,
+	GraduationCap,
+	Mail,
+	Phone,
+	TrendingUp,
+	User,
+} from 'lucide-react';
 
 import { EnrollmentCard } from './enrollment-card';
+import { StudentForm } from './student-form';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -17,10 +28,11 @@ interface StudentTimelineProps {
 }
 
 export function StudentTimeline({ studentId }: StudentTimelineProps) {
-	const data = useQuery(api.students.getStudentWithEnrollments, { studentId });
+	const student = useQuery(api.students.getById, { id: studentId });
+	const enrollments = useQuery(api.enrollments.listByStudent, { studentId });
 	const activities = useQuery(api.activities.listByStudent, { studentId });
 
-	if (!data) {
+	if (!student) {
 		return (
 			<div className="space-y-4 p-4">
 				{[1, 2, 3].map((i) => (
@@ -29,8 +41,6 @@ export function StudentTimeline({ studentId }: StudentTimelineProps) {
 			</div>
 		);
 	}
-
-	const { student, enrollments } = data;
 
 	return (
 		<div className="space-y-6">
@@ -53,6 +63,15 @@ export function StudentTimeline({ studentId }: StudentTimelineProps) {
 						</span>
 					</div>
 				</div>
+				<StudentForm
+					studentId={studentId}
+					trigger={
+						<Button variant="outline" size="sm" className="gap-2">
+							<Edit className="h-4 w-4" />
+							Editar
+						</Button>
+					}
+				/>
 			</div>
 
 			{/* Tabs */}

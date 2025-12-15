@@ -1,9 +1,18 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
+import {
+	Area,
+	AreaChart,
+	CartesianGrid,
+	Line,
+	LineChart,
+	ResponsiveContainer,
+	XAxis,
+	YAxis,
+} from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -19,21 +28,34 @@ export const Route = createFileRoute('/_authenticated/reports')({
 });
 
 function ReportsPage() {
-	const stats = useQuery(api.stats.getDashboardStats, {});
+	const [period, setPeriod] = useState<'7d' | '30d' | 'all'>('30d');
+	const stats = useQuery(api.stats.getDashboardStats, { period });
 
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
-			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
-					<BarChart3 className="h-6 w-6 text-purple-500" />
-					Relatórios
-				</h1>
-				<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-bold flex items-center gap-2">
+						<BarChart3 className="h-6 w-6 text-purple-500" />
+						Relatórios
+					</h1>
+					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
+				</div>
+				<Select value={period} onValueChange={(value: '7d' | '30d' | 'all') => setPeriod(value)}>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Período" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="7d">Últimos 7 dias</SelectItem>
+						<SelectItem value="30d">Últimos 30 dias</SelectItem>
+						<SelectItem value="all">Todo o período</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			{/* Overview Stats */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
@@ -68,6 +90,19 @@ function ReportsPage() {
 					<CardContent>
 						<div className="text-2xl font-bold text-blue-600">{stats?.messagesCount ?? 0}</div>
 						<p className="text-xs text-muted-foreground">Total de mensagens</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium">Conversas</CardTitle>
+						<MessageSquare className="h-4 w-4 text-indigo-500" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-indigo-600">
+							{stats?.conversationsCount ?? 0}
+						</div>
+						<p className="text-xs text-muted-foreground">Total de conversas</p>
 					</CardContent>
 				</Card>
 
@@ -141,6 +176,74 @@ function ReportsPage() {
 					</CardContent>
 				</Card>
 			</div>
+
+			{/* Charts Section */}
+			{stats?.dailyMetrics && stats.dailyMetrics.length > 0 && (
+				<div className="grid gap-4 md:grid-cols-2">
+					<Card>
+						<CardHeader>
+							<CardTitle>Leads ao Longo do Tempo</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<ResponsiveContainer width="100%" height={300}>
+								<AreaChart data={stats.dailyMetrics}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										dataKey="date"
+										tickFormatter={(value) => {
+											const [, month, day] = value.split('-');
+											return `${day}/${month}`;
+										}}
+									/>
+									<YAxis />
+									<Area
+										type="monotone"
+										dataKey="newLeads"
+										stroke="#8b5cf6"
+										fill="#8b5cf6"
+										fillOpacity={0.2}
+									/>
+								</AreaChart>
+							</ResponsiveContainer>
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<CardTitle>Mensagens ao Longo do Tempo</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<ResponsiveContainer width="100%" height={300}>
+								<LineChart data={stats.dailyMetrics}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis
+										dataKey="date"
+										tickFormatter={(value) => {
+											const [, month, day] = value.split('-');
+											return `${day}/${month}`;
+										}}
+									/>
+									<YAxis />
+									<Line
+										type="monotone"
+										dataKey="messagesReceived"
+										stroke="#3b82f6"
+										strokeWidth={2}
+										name="Recebidas"
+									/>
+									<Line
+										type="monotone"
+										dataKey="messagesSent"
+										stroke="#10b981"
+										strokeWidth={2}
+										name="Enviadas"
+									/>
+								</LineChart>
+							</ResponsiveContainer>
+						</CardContent>
+					</Card>
+				</div>
+			)}
 
 			{/* Products Section */}
 			<Card>

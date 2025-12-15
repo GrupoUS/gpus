@@ -1,7 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { GraduationCap, Plus, Users } from 'lucide-react';
+import { GraduationCap, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
@@ -9,7 +9,6 @@ import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentForm } from '@/components/students/student-form';
 import { StudentTimeline } from '@/components/students/student-timeline';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 
@@ -23,7 +22,7 @@ function StudentsPage() {
 	const [churnRisk, setChurnRisk] = useState('all');
 	const [selectedStudent, setSelectedStudent] = useState<Id<'students'> | null>(null);
 
-	const students = useQuery(api.students.listStudents, {
+	const students = useQuery(api.students.list, {
 		search: search || undefined,
 		status: status === 'all' ? undefined : status,
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
@@ -117,6 +116,10 @@ function StudentsPage() {
 							key={student._id}
 							student={student}
 							onClick={() => setSelectedStudent(student._id)}
+							onEdit={(id) => {
+								// Open edit dialog - could use state to track edit mode
+								setSelectedStudent(id);
+							}}
 						/>
 					))}
 				</div>

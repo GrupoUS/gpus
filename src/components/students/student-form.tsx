@@ -1,6 +1,6 @@
 import { api } from '@convex/_generated/api';
-import { zodResolver } from '@hookform/resolvers/zod';
 import type { Id } from '@convex/_generated/dataModel';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
@@ -32,7 +33,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 // Schema definition matching Convex schema
 const formSchema = z.object({
@@ -56,12 +56,9 @@ interface StudentFormProps {
 
 export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps) {
 	const [open, setOpen] = useState(false);
-	const createStudent = useMutation(api.students.createStudent);
-	const updateStudent = useMutation(api.students.updateStudent);
-	const existingStudent = useQuery(
-		api.students.getStudent,
-		studentId ? { studentId } : 'skip',
-	);
+	const createStudent = useMutation(api.students.create);
+	const updateStudent = useMutation(api.students.update);
+	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
 	const users = useQuery(api.users.listUsers, {});
 
 	const isEditMode = !!studentId;
@@ -107,33 +104,36 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 						name: values.name,
 						email: values.email,
 						phone: values.phone,
-						status: existingStudent?.status,
-						churnRisk: existingStudent?.churnRisk,
-						assignedCS: values.assignedCS
-							? (values.assignedCS as Id<'users'>)
-							: undefined,
+						profession: values.profession,
+						professionalId: values.professionalId || undefined,
+						hasClinic: values.hasClinic,
+						clinicName: values.clinicName || undefined,
+						clinicCity: values.clinicCity || undefined,
+						cpf: values.cpf || undefined,
+						assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
 					},
 				});
 				toast.success('Aluno atualizado com sucesso!');
 			} else {
-				await createStudent({
-					name: values.name,
-					email: values.email,
-					phone: values.phone,
-					cpf: values.cpf || undefined,
-					profession: values.profession,
-					professionalId: values.professionalId || undefined,
-					hasClinic: values.hasClinic,
-					clinicName: values.clinicName || undefined,
-					clinicCity: values.clinicCity || undefined,
-					assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
-				});
+			await createStudent({
+				name: values.name,
+				email: values.email,
+				phone: values.phone,
+				cpf: values.cpf || undefined,
+				profession: values.profession,
+				professionalId: values.professionalId || undefined,
+				hasClinic: values.hasClinic,
+				clinicName: values.clinicName || undefined,
+				clinicCity: values.clinicCity || undefined,
+				status: 'ativo',
+				assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+			});
 				toast.success('Aluno criado com sucesso!');
 			}
 			setOpen(false);
 			form.reset();
 			onSuccess?.();
-		} catch (error) {
+		} catch {
 			toast.error(isEditMode ? 'Erro ao atualizar aluno.' : 'Erro ao criar aluno.');
 		}
 	};
@@ -337,8 +337,10 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 										{isEditMode ? 'Atualizando...' : 'Criando...'}
 									</>
+								) : isEditMode ? (
+									'Atualizar Aluno'
 								) : (
-									isEditMode ? 'Atualizar Aluno' : 'Criar Aluno'
+									'Criar Aluno'
 								)}
 							</Button>
 						</div>

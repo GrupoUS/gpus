@@ -35,7 +35,7 @@ const chartData = [
 function DashboardPage() {
 	const gradientLeadsId = useId();
 	const gradientConversoesId = useId();
-	const stats = useQuery(api.stats.getDashboardStats);
+	const stats = useQuery(api.stats.getDashboardStats, {});
 
 	// Format currency
 	const formatCurrency = (value: number) => {

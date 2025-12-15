@@ -35,7 +35,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 			const scrollElement = scrollRef.current;
 			const isNearBottom =
 				scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
-			
+
 			// Only auto-scroll if user is near bottom or on first render
 			if (isNearBottom || !messages || messages.length === 0) {
 				scrollElement.scrollTop = scrollElement.scrollHeight;

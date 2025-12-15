@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/clerk-react';
 import { useLocation } from '@tanstack/react-router';
 
 import { AppSidebar } from './app-sidebar';
+import { AIChatWidget } from '@/components/ai-chat-widget';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -54,6 +55,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 					{children}
 				</main>
 			</SidebarInset>
+			<AIChatWidget />
 		</SidebarProvider>
 	);
 }
