@@ -13,7 +13,7 @@ const TanStackRouterDevtools =
 			);
 
 interface RouterContext {
-	auth: { userId: string | null | undefined } | undefined;
+	auth: { userId: string | null | undefined; isLoaded: boolean } | undefined;
 }
 
 import { NotFound } from '@/components/not-found';
