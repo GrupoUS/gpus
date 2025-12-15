@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/sidebar';
 
 const menuItems = [
-	{ title: 'Dashboard', icon: LayoutDashboard, href: '/' },
+	{ title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
 	{ title: 'CRM', icon: Kanban, href: '/crm' },
 	{ title: 'Chat', icon: MessageSquare, href: '/chat' },
 	{ title: 'Alunos', icon: GraduationCap, href: '/students' },
