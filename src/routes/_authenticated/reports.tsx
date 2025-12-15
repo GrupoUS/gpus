@@ -42,14 +42,18 @@ function ReportsPage() {
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
 				</div>
-				<Select value={period} onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}>
+				<Select
+					value={period}
+					onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
+				>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="7d">Últimos 7 dias</SelectItem>
 						<SelectItem value="30d">Últimos 30 dias</SelectItem>
-						<SelectItem value="all">Todo o período</SelectItem>
+						<SelectItem value="90d">Últimos 90 dias</SelectItem>
+						<SelectItem value="year">Este ano</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>

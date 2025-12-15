@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
@@ -32,48 +33,76 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 // Schema definition matching Convex schema
-const formSchema = z.object({
-	name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
-	phone: z.string().min(10, { message: 'Telefone inválido' }), // Simple check, could be improved with regex
-	email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
-	source: z.enum([
-		'whatsapp',
-		'instagram',
-		'landing_page',
-		'indicacao',
-		'evento',
-		'organico',
-		'trafego_pago',
-		'outro',
-	]),
-	profession: z
-		.enum(['enfermeiro', 'dentista', 'biomedico', 'farmaceutico', 'medico', 'esteticista', 'outro'])
-		.optional(),
-	interestedProduct: z
-		.enum([
-			'trintae3',
-			'otb',
-			'black_neon',
-			'comunidade',
-			'auriculo',
-			'na_mesa_certa',
-			'indefinido',
-		])
-		.optional(),
-	temperature: z.enum(['frio', 'morno', 'quente']),
-	// Stage is implicitly 'novo' for creation, but could be selectable if needed
-	stage: z.enum([
-		'novo',
-		'primeiro_contato',
-		'qualificado',
-		'proposta',
-		'negociacao',
-		'fechado_ganho',
-		'fechado_perdido',
-	]),
-});
+const formSchema = z
+	.object({
+		name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
+		phone: z.string().min(10, { message: 'Telefone inválido' }),
+		email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
+		source: z.enum([
+			'whatsapp',
+			'instagram',
+			'landing_page',
+			'indicacao',
+			'evento',
+			'organico',
+			'trafego_pago',
+			'outro',
+		]),
+		profession: z
+			.enum([
+				'enfermeiro',
+				'dentista',
+				'biomedico',
+				'farmaceutico',
+				'medico',
+				'esteticista',
+				'outro',
+			])
+			.optional(),
+		interestedProduct: z
+			.enum([
+				'trintae3',
+				'otb',
+				'black_neon',
+				'comunidade',
+				'auriculo',
+				'na_mesa_certa',
+				'indefinido',
+			])
+			.optional(),
+		temperature: z.enum(['frio', 'morno', 'quente']),
+		stage: z.enum([
+			'novo',
+			'primeiro_contato',
+			'qualificado',
+			'proposta',
+			'negociacao',
+			'fechado_ganho',
+			'fechado_perdido',
+		]),
+		// Clinic qualification
+		hasClinic: z.boolean().optional(),
+		clinicName: z.string().optional(),
+		clinicCity: z.string().optional(),
+		// Professional background
+		yearsInAesthetics: z.coerce.number().min(0).max(50).optional(),
+		currentRevenue: z.enum(['0-5k', '5k-10k', '10k-20k', '20k-50k', '50k+']).optional(),
+		// Diagnosis
+		mainPain: z
+			.enum(['tecnica', 'vendas', 'gestao', 'posicionamento', 'escala', 'certificacao', 'outro'])
+			.optional(),
+		mainDesire: z.string().max(500).optional(),
+	})
+	.refine(
+		(data) => {
+			if (data.hasClinic && !data.clinicName) return false;
+			return true;
+		},
+		{ message: 'Nome da clínica é obrigatório', path: ['clinicName'] },
+	);
 
 export function LeadForm() {
 	const [open, setOpen] = useState(false);
@@ -85,11 +114,18 @@ export function LeadForm() {
 			name: '',
 			phone: '',
 			email: '',
-			source: 'instagram', // Default
+			source: 'instagram' as const,
 			profession: undefined,
 			interestedProduct: undefined,
-			temperature: 'frio',
-			stage: 'novo',
+			temperature: 'frio' as const,
+			stage: 'novo' as const,
+			hasClinic: false,
+			clinicName: '',
+			clinicCity: '',
+			yearsInAesthetics: undefined,
+			currentRevenue: undefined,
+			mainPain: undefined,
+			mainDesire: '',
 		},
 	});
 
@@ -252,6 +288,143 @@ export function LeadForm() {
 												<SelectItem value="indefinido">Ainda não sabe</SelectItem>
 											</SelectContent>
 										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						{/* Clínica */}
+						<div className="space-y-4 p-4 rounded-lg border border-border/50 bg-muted/30">
+							<FormField
+								control={form.control}
+								name="hasClinic"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+										<FormControl>
+											<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+										</FormControl>
+										<div className="space-y-1 leading-none">
+											<FormLabel>Possui clínica ou consultório próprio?</FormLabel>
+										</div>
+									</FormItem>
+								)}
+							/>
+
+							{form.watch('hasClinic') && (
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+									<FormField
+										control={form.control}
+										name="clinicName"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Nome da Clínica</FormLabel>
+												<FormControl>
+													<Input placeholder="Ex: Clínica Estética Bella" {...field} />
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="clinicCity"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Cidade</FormLabel>
+												<FormControl>
+													<Input placeholder="Ex: São Paulo" {...field} />
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+							)}
+						</div>
+
+						{/* Background Profissional */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="yearsInAesthetics"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Anos na Estética</FormLabel>
+										<FormControl>
+											<Input type="number" placeholder="Ex: 3" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="currentRevenue"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Faturamento Mensal</FormLabel>
+										<Select onValueChange={field.onChange} defaultValue={field.value}>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione..." />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem value="0-5k">Até R$ 5.000</SelectItem>
+												<SelectItem value="5k-10k">R$ 5.000 - R$ 10.000</SelectItem>
+												<SelectItem value="10k-20k">R$ 10.000 - R$ 20.000</SelectItem>
+												<SelectItem value="20k-50k">R$ 20.000 - R$ 50.000</SelectItem>
+												<SelectItem value="50k+">Acima de R$ 50.000</SelectItem>
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						{/* Diagnóstico */}
+						<div className="space-y-4">
+							<FormField
+								control={form.control}
+								name="mainPain"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Dor Principal</FormLabel>
+										<Select onValueChange={field.onChange} defaultValue={field.value}>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue placeholder="Qual a maior dificuldade?" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem value="tecnica">Técnica / Conhecimento</SelectItem>
+												<SelectItem value="vendas">Vendas / Captação</SelectItem>
+												<SelectItem value="gestao">Gestão / Processos</SelectItem>
+												<SelectItem value="posicionamento">Posicionamento / Marketing</SelectItem>
+												<SelectItem value="escala">Escala / Crescimento</SelectItem>
+												<SelectItem value="certificacao">Certificação / Regularização</SelectItem>
+												<SelectItem value="outro">Outro</SelectItem>
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="mainDesire"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Principal Desejo / Objetivo</FormLabel>
+										<FormControl>
+											<Textarea
+												placeholder="Ex: Quero faturar R$ 30k/mês com procedimentos estéticos..."
+												className="resize-none"
+												{...field}
+											/>
+										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}

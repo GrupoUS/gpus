@@ -48,6 +48,32 @@ const leadArgs = {
     v.literal('fechado_ganho'),
     v.literal('fechado_perdido')
   ),
+
+  // Clinic qualification
+  hasClinic: v.optional(v.boolean()),
+  clinicName: v.optional(v.string()),
+  clinicCity: v.optional(v.string()),
+
+  // Professional background
+  yearsInAesthetics: v.optional(v.number()),
+  currentRevenue: v.optional(v.string()), // '0-5k' | '5k-10k' | '10k-20k' | '20k-50k' | '50k+'
+
+  // Pain point diagnosis
+  mainPain: v.optional(v.union(
+    v.literal('tecnica'),
+    v.literal('vendas'),
+    v.literal('gestao'),
+    v.literal('posicionamento'),
+    v.literal('escala'),
+    v.literal('certificacao'),
+    v.literal('outro')
+  )),
+  mainDesire: v.optional(v.string()),
+
+  // Additional
+  sourceDetail: v.optional(v.string()),
+  score: v.optional(v.number()),
+  nextFollowUpAt: v.optional(v.number()),
 }
 
 export const listLeads = query({
@@ -152,6 +178,7 @@ export const updateLead = mutation({
              // Allow partial updates of fields
              name: v.optional(v.string()),
              phone: v.optional(v.string()),
+             email: v.optional(v.string()),
              stage: v.optional(v.union(
                 v.literal('novo'),
                 v.literal('primeiro_contato'),
@@ -161,7 +188,37 @@ export const updateLead = mutation({
                 v.literal('fechado_ganho'),
                 v.literal('fechado_perdido')
               )),
-             // Add others as needed
+             // Clinic qualification
+             hasClinic: v.optional(v.boolean()),
+             clinicName: v.optional(v.string()),
+             clinicCity: v.optional(v.string()),
+             
+             // Professional background
+             yearsInAesthetics: v.optional(v.number()),
+             currentRevenue: v.optional(v.string()),
+             profession: v.optional(v.union(
+               v.literal('enfermeiro'),
+               v.literal('dentista'),
+               v.literal('biomedico'),
+               v.literal('farmaceutico'),
+               v.literal('medico'),
+               v.literal('esteticista'),
+               v.literal('outro')
+             )),
+
+             // Pain point diagnosis
+             mainPain: v.optional(v.union(
+               v.literal('tecnica'),
+               v.literal('vendas'),
+               v.literal('gestao'),
+               v.literal('posicionamento'),
+               v.literal('escala'),
+               v.literal('certificacao'),
+               v.literal('outro')
+             )),
+             mainDesire: v.optional(v.string()),
+
+             // Product
              interestedProduct: v.optional(v.union(
                 v.literal('trintae3'),
                 v.literal('otb'),
@@ -171,6 +228,16 @@ export const updateLead = mutation({
                 v.literal('na_mesa_certa'),
                 v.literal('indefinido')
               )),
+
+            // Additional
+            sourceDetail: v.optional(v.string()),
+            score: v.optional(v.number()),
+            nextFollowUpAt: v.optional(v.number()),
+            temperature: v.optional(v.union(
+                v.literal('frio'),
+                v.literal('morno'),
+                v.literal('quente')
+            )),
         })
     },
     handler: async (ctx, args) => {

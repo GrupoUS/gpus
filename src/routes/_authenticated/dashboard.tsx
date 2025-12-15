@@ -1,7 +1,6 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
@@ -35,7 +34,7 @@ function DashboardPage() {
 	const metrics = useQuery(api.metrics.getDashboard, { period });
 	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
 	const churnAlerts = useQuery(api.students.getChurnAlerts);
-	const recentLeads = useQuery(api.leads.getRecent, { limit: 5 });
+	const recentLeads = useQuery(api.leads.recent, { limit: 5 });
 
 	// Format currency
 	const formatCurrency = (value: number) => {
