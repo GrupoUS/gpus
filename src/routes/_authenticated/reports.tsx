@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_authenticated/reports')({
 
 function ReportsPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | 'all'>('30d');
-	const stats = useQuery(api.stats.getDashboardStats, { period });
+	const stats = useQuery(api.metrics.getDashboard, { period });
 
 	return (
 		<div className="space-y-6 p-6">
@@ -148,7 +148,7 @@ function ReportsPage() {
 					<CardContent>
 						<div className="space-y-3">
 							{stats?.leadsByStage &&
-								Object.entries(stats.leadsByStage).map(([stage, count]) => {
+								(Object.entries(stats.leadsByStage) as [string, number][]).map(([stage, count]) => {
 									const total = stats.totalLeads || 1;
 									const percentage = Math.round((count / total) * 100);
 									return (
@@ -253,13 +253,15 @@ function ReportsPage() {
 				<CardContent>
 					{stats?.leadsByProduct && Object.keys(stats.leadsByProduct).length > 0 ? (
 						<div className="grid gap-4 md:grid-cols-3">
-							{Object.entries(stats.leadsByProduct).map(([product, count]) => (
-								<div key={product} className="p-4 border rounded-lg">
-									<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
-									<p className="text-2xl font-bold text-purple-600">{count}</p>
-									<p className="text-xs text-muted-foreground">leads interessados</p>
-								</div>
-							))}
+							{(Object.entries(stats.leadsByProduct) as [string, number][]).map(
+								([product, count]) => (
+									<div key={product} className="p-4 border rounded-lg">
+										<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
+										<p className="text-2xl font-bold text-purple-600">{count}</p>
+										<p className="text-xs text-muted-foreground">leads interessados</p>
+									</div>
+								),
+							)}
 						</div>
 					) : (
 						<div className="text-center py-8 text-muted-foreground">

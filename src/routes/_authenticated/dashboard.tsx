@@ -181,7 +181,8 @@ function DashboardPage() {
 								? Object.entries(stats.leadsByProduct)
 										.sort(([, a], [, b]) => (b as number) - (a as number))
 										.map(([product, value]) => {
-											const maxValue = Math.max(...Object.values(stats.leadsByProduct || {}));
+											const allValues = Object.values(stats.leadsByProduct || {});
+											const maxValue = Math.max(...allValues);
 											return (
 												<div key={product} className="space-y-1">
 													<div className="flex justify-between text-sm font-sans">
@@ -240,7 +241,8 @@ function DashboardPage() {
 								? Object.entries(stats.leadsByStage)
 										.sort(([, a], [, b]) => (b as number) - (a as number))
 										.map(([stage, value]) => {
-											const maxValue = Math.max(...Object.values(stats.leadsByStage || {}));
+											const allStageValues = Object.values(stats.leadsByStage || {});
+											const maxValue = Math.max(...allStageValues);
 											return (
 												<div key={stage} className="space-y-1">
 													<div className="flex justify-between text-sm font-sans">

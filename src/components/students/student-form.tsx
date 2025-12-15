@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
@@ -262,8 +262,8 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											<SelectContent>
 												<SelectItem value="">Nenhum</SelectItem>
 												{users
-													?.filter((u) => u.role === 'cs')
-													.map((user) => (
+													?.filter((u: Doc<'users'>) => u.role === 'cs')
+													.map((user: Doc<'users'>) => (
 														<SelectItem key={user._id} value={user._id}>
 															{user.name}
 														</SelectItem>
