@@ -7,8 +7,6 @@ import { BookOpen } from 'lucide-react';
 
 import { EnrollmentCard } from '../enrollment-card';
 
-import { Skeleton } from '@/components/ui/skeleton';
-
 interface StudentEnrollmentsTabProps {
 	studentId: Id<'students'>;
 }
@@ -17,7 +15,13 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
 	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
 
 	if (!enrollments) {
-
+		return (
+			<div className="grid gap-4 md:grid-cols-2">
+				{[1, 2, 3, 4].map((i) => (
+					<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+				))}
+			</div>
+		);
 	}
 
 	if (enrollments.length === 0) {

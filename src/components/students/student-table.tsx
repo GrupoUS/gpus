@@ -2,7 +2,6 @@
 
 import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp, User } from 'lucide-react';
 import { useState } from 'react';
@@ -38,7 +37,6 @@ interface SortState {
 }
 
 export function StudentsTable({ students, onStudentClick }: StudentsTableProps) {
-	const _navigate = useNavigate();
 	const [sort, setSort] = useState<SortState>({ field: 'name', direction: 'asc' });
 	// Get enrollments for product display
 	const enrollments = useQuery(api.enrollments.list, {});

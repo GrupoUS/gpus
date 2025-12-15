@@ -55,12 +55,7 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 	return (
 		<div className="space-y-3">
 			{conversations.map((conv: Doc<'conversations'>) => (
-				<Link
-					key={conv._id}
-					to="/chat/$conversationId"
-					params={{ conversationId: conv._id }}
-					className="block"
-				>
+				<Link key={conv._id} to="/chat" search={{ conversationId: conv._id }} className="block">
 					<Card className="hover:bg-muted/50 transition-colors cursor-pointer">
 						<CardContent className="p-4">
 							<div className="flex justify-between items-start">

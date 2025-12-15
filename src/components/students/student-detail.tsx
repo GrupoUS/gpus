@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -34,9 +34,22 @@ import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/li
 import { cn } from '@/lib/utils';
 
 // Lazy loaded tab components for better performance
-const StudentEnrollmentsTab = lazy(() => import('./tabs/student-enrollments-tab'));
-const StudentPaymentsTab = lazy(() => import('./tabs/student-payments-tab'));
-const StudentConversationsTab = lazy(() => import('./tabs/student-conversations-tab'));
+// Lazy loaded tab components for better performance
+const StudentEnrollmentsTab = lazy(() =>
+	import('./tabs/student-enrollments-tab').then((module) => ({
+		default: module.StudentEnrollmentsTab,
+	})),
+);
+const StudentPaymentsTab = lazy(() =>
+	import('./tabs/student-payments-tab').then((module) => ({
+		default: module.StudentPaymentsTab,
+	})),
+);
+const StudentConversationsTab = lazy(() =>
+	import('./tabs/student-conversations-tab').then((module) => ({
+		default: module.StudentConversationsTab,
+	})),
+);
 
 interface StudentDetailProps {
 	studentId: Id<'students'>;
@@ -75,7 +88,16 @@ export function StudentDetail({ studentId, mode = 'full' }: StudentDetailProps) 
 		<div className={cn('space-y-6', mode === 'sheet' ? 'p-4' : 'p-6')}>
 			{/* Back Button (full mode only) */}
 			{mode === 'full' && (
-				<Link to="/students">
+				<Link
+					to="/students"
+					search={{
+						page: 1,
+						search: '',
+						status: 'all',
+						churnRisk: 'all',
+						view: 'grid',
+					}}
+				>
 					<Button variant="ghost" size="sm" className="gap-2">
 						<ArrowLeft className="h-4 w-4" />
 						Voltar para lista

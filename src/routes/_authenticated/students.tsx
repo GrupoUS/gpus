@@ -86,7 +86,17 @@ function StudentsPage() {
 	};
 
 	const navigateToStudent = (studentId: Id<'students'>) => {
-		void navigate({ to: '/students/$studentId', params: { studentId } });
+		void navigate({
+			to: '/students/$studentId',
+			params: { studentId },
+			search: {
+				page,
+				search,
+				status,
+				churnRisk,
+				view,
+			},
+		});
 	};
 
 	return (
@@ -255,7 +265,17 @@ function StudentsPage() {
 						<div className="space-y-4">
 							<StudentTimeline studentId={selectedStudent} />
 							<div className="pt-4 border-t">
-								<Link to="/students/$studentId" params={{ studentId: selectedStudent }}>
+								<Link
+									to="/students/$studentId"
+									params={{ studentId: selectedStudent }}
+									search={{
+										page: 1,
+										search: '',
+										status: 'all',
+										churnRisk: 'all',
+										view: 'grid',
+									}}
+								>
 									<Button className="w-full">Ver Perfil Completo</Button>
 								</Link>
 							</div>
