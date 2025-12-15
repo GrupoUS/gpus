@@ -2,11 +2,11 @@
 
 ## Universal Description
 
-**ENHANCED RESEARCH ORCHESTRATION SYSTEM** - Multi-droid parallel execution with atomic task generation, delivering comprehensive research intelligence through coordinated droid ecosystem and skill integration. ≥95% cross-validation accuracy with Brazilian compliance auto-activation.
+**DOCKER MCP GATEWAY RESEARCH ORCHESTRATION** - Multi-droid parallel execution with Docker MCP Gateway integration, delivering comprehensive research intelligence through coordinated droid ecosystem. ≥95% cross-validation accuracy with Brazilian LGPD compliance auto-activation via Docker MCP stack.
 
 ## Purpose
 
-Execute comprehensive research operations through intelligent droid orchestration with atomic task generation, parallel execution capabilities, and skill integration for authoritative multi-source validation and actionable intelligence with Brazilian compliance.
+Execute comprehensive research operations through Docker MCP Gateway orchestration with atomic task generation, parallel execution capabilities, and integrated MCP stack (serena, context7, tavily, sequential-thinking, neon, playwright, fetch) for authoritative multi-source validation and actionable intelligence with Brazilian LGPD compliance for education/health sectors.
 
 ## Enhanced Research Orchestration System
 
@@ -35,7 +35,7 @@ parallel_execution_matrix:
   phase_3_synthesis:
     - apex-researcher (consolidation)
     - code-reviewer (security validation)
-    - brazilian_compliance_skills (LGPD/PIX validation)
+    - brazilian_compliance_skills (LGPD/education validation)
 ```
 
 ### Dynamic Droid Coordination
@@ -61,7 +61,9 @@ droid_expertise_matrix:
 
 ```yaml
 skill_mapping:
-  brazilian-fintech-compliance: "Auto-activated for financial/PIX/LGPD research"
+  education-lgpd-compliance: "Auto-activated for LGPD/student data protection research"
+  health-aesthetics-research: "Auto-activated for health aesthetics education research"
+  crm-student-management: "Auto-activated for CRM and student lifecycle research"
   product-management: "Invoked for market analysis, competitive research"
   frontend-design: "UI/UX research, accessibility standards"
   ai-data-analyst: "Statistical analysis, data interpretation"
@@ -88,8 +90,10 @@ input_parsing:
   goal: "Extract from research objective description"
   scope: "Technology, domain, or regulatory area"
   complexity: "L1-L10 research depth assessment"
-  brazilian_focus: "LGPD/BCB/PIX requirements auto-detection"
+  brazilian_focus: "LGPD/education/health requirements auto-detection"
   parallel_potential: "Automatic identification of parallelizable tasks"
+  education_triggers: "aluno, matrícula, curso, turma, saúde estética"
+  compliance_triggers: "LGPD, consentimento, proteção de dados, cpf"
 
 quality_assurance:
   accuracy_threshold: "≥95% cross-validation required"
@@ -99,13 +103,24 @@ quality_assurance:
   documentation_standards: "Consistent markdown templates"
 ```
 
-## Context Detection & MCP Routing
+## Docker MCP Gateway Integration
 
-- **Research Operations**: Topic investigation, technology evaluation → Context7 + Tavily
-- **Knowledge Management**: Knowledge base creation, organization → Serena + Sequential Thinking
-- **Intelligence Synthesis**: Multi-source validation → All MCPs parallel
-- **Brazilian Compliance**: LGPD/BCB/PIX research → Tavily + Context7 + Sequential Thinking
-- **Technology Research**: Framework comparison, patterns → Context7 + Tavily
+### Available MCP Stack
+- **serena** (direct) - Codebase intelligence & project management
+- **context7** (via MCP_DOCKER) - Documentation intelligence & official docs
+- **tavily** (via MCP_DOCKER) - Web research & community validation
+- **sequential-thinking** (via MCP_DOCKER) - Multi-perspective synthesis & analysis
+- **neon** (via MCP_DOCKER) - PostgreSQL database operations
+- **playwright** (via MCP_DOCKER) - Browser automation & testing
+- **fetch** (via MCP_DOCKER) - URL content retrieval & web scraping
+
+### MCP Routing via Docker Gateway
+- **Research Operations**: Topic investigation, technology evaluation → Context7 + Tavily (via Docker)
+- **Knowledge Management**: Knowledge base creation, organization → Serena + Sequential Thinking (via Docker)
+- **Database Research**: Schema analysis, performance optimization → Serena + Neon (via Docker)
+- **Web Intelligence**: Real-time data, regulatory updates → Tavily + Fetch (via Docker)
+- **Brazilian Compliance**: LGPD/education/health research → Context7 + Tavily + Sequential Thinking (via Docker)
+- **Testing & Validation**: Accessibility, performance → Playwright + Serena (via Docker)
 
 ## MCP Serena: Codebase Intelligence
 
@@ -137,256 +152,292 @@ implementation_feasibility:
 
 ## MCP Orchestration Workflow
 
-### Multi-MCP Execution Strategy
+### Docker MCP Multi-Execution Strategy
 ```yaml
 parallel_execution:
   phase_1_discovery:
-    context7: "Official documentation + API references"
-    tavily: "Web research + community validation"
+    context7: "Official documentation + API references (via Docker)"
+    tavily: "Web research + community validation (via Docker)"
     serena: "Codebase analysis + symbol resolution"
+    fetch: "Real-time regulatory data (via Docker)"
 
   phase_2_analysis:
-    sequential_thinking: "Multi-perspective synthesis + logical reasoning"
-    context7: "Deep dive into technical specifics"
-    tavily: "Cross-source verification + credibility assessment"
+    sequential_thinking: "Multi-perspective synthesis + logical reasoning (via Docker)"
+    context7: "Deep dive into technical specifics (via Docker)"
+    tavily: "Cross-source verification + credibility assessment (via Docker)"
+    neon: "Database compliance validation (via Docker)"
 
   phase_3_validation:
     serena: "Implementation feasibility analysis"
-    sequential_thinking: "Pattern recognition + gap identification"
-    all_mcps: "Cross-validation for ≥95% accuracy"
+    sequential_thinking: "Pattern recognition + gap identification (via Docker)"
+    playwright: "Accessibility & testing validation (via Docker)"
+    all_mcps: "Cross-validation for ≥95% accuracy through Docker Gateway"
 ```
 
-### Context7 (Documentation Intelligence)
-- Framework docs and best practices
-- Brazilian LGPD/BCB compliance documentation
-- Security guidelines and requirements
-- Installation and configuration patterns
+### Docker MCP Performance Optimization
+- **Target Latency**: <3ms via Docker Gateway
+- **Context Management**: Automatic deduplication via Docker
+- **Parallel Execution**: Optimized concurrent MCP calls
+- **Resource Isolation**: Built-in Docker container security
 
-### Tavily (Web Intelligence)
-- Multi-source information gathering
-- Community best practices validation
-- Real-world implementation experiences
-- Expert insights and tutorials
+## Docker MCP Atomic Task Assignment Matrix
 
-### Sequential Thinking (Cognitive Analysis)
-- Multi-perspective analysis synthesis
-- Pattern recognition and relationship mapping
-- Brazilian compliance requirements assessment
-- Logical reasoning and conclusion formation
-
-## Atomic Task Templates
-
-### Research Complexity Classification
-
+### L1-L3 (Simple Research) - 15-30 min
 ```yaml
-L1-L3 (Simple Research):
-  estimated_time: "15-30 minutes"
-  parallel_execution: "Limited - mostly sequential"
-  droid_assignment: "apex-researcher + 1 specialist"
-  skill_integration: "Basic domain skills"
-  deliverables: "Quick summary with key findings"
+atomic_tasks:
+  task_1_basic_research:
+    primary_agent: "apex-researcher"
+    support_agents: []
+    skills: []
+    mcps: ["context7", "serena"]
+    brazilian_compliance: "basic_check"
+    deliverable: "Quick research summary (≤2 pages)"
 
-L4-L6 (Moderate Research):
-  estimated_time: "45-90 minutes"
-  parallel_execution: "50% parallelizable"
-  droid_assignment: "apex-researcher + 2-3 specialists"
-  skill_integration: "Domain-specific skills activated"
-  deliverables: "Comprehensive analysis with recommendations"
-
-L7-L8 (Complex Research):
-  estimated_time: "2-4 hours"
-  parallel_execution: "70% parallelizable"
-  droid_assignment: "apex-researcher + 3-4 specialists"
-  skill_integration: "Multiple specialized skills"
-  deliverables: "Detailed report with implementation roadmap"
-
-L9-L10 (Mission-Critical Research):
-  estimated_time: "4-8 hours"
-  parallel_execution: "80% parallelizable"
-  droid_assignment: "All relevant droids + coordination"
-  skill_integration: "Full skill ecosystem activation"
-  deliverables: "Strategic intelligence document with execution plan"
+  task_2_codebase_validation:
+    primary_agent: "apex-dev"
+    support_agents: []
+    skills: []
+    mcps: ["serena"]
+    brazilian_compliance: "basic_check"
+    deliverable: "Implementation feasibility note"
 ```
 
-### Atomic Task Structure Template
-
+### L4-L6 (Moderate Research) - 45-90 min
 ```yaml
-task_id: "research_[date]_[sequence]"
-title: "Specific research task description"
-complexity: "L1-L10"
-estimated_duration: "X hours/minutes"
-assigned_droids: ["primary", "secondary"]
-required_skills: ["skill1", "skill2"]
-parallel_execution: true/false
-dependencies: ["task_id_dependencies"]
-deliverables: ["specific_output_formats"]
-quality_gates: ["validation_criteria"]
-brazilian_compliance: true/false
-confidence_target: "≥95%"
+atomic_tasks:
+  task_1_comprehensive_research:
+    primary_agent: "apex-researcher"
+    support_agents: ["apex-dev"]
+    skills: ["education-lgpd-compliance"]
+    mcps: ["context7", "tavily", "serena", "fetch"]
+    brazilian_compliance: "full_validation"
+    deliverable: "Research analysis (≤5 pages)"
 
-execution_phases:
-  phase_1:
-    description: "Research discovery"
-    droids: ["parallel_execution_list"]
-    duration: "X minutes"
-    outputs: ["specific_deliverables"]
+  task_2_feasibility_analysis:
+    primary_agent: "apex-dev"
+    support_agents: ["database-specialist"]
+    skills: []
+    mcps: ["serena", "neon"]
+    brazilian_compliance: "compliance_check"
+    deliverable: "Implementation roadmap"
 
-  phase_2:
-    description: "Analysis and validation"
-    droids: ["parallel_execution_list"]
-    duration: "X minutes"
-    outputs: ["specific_deliverables"]
+  task_3_security_validation:
+    primary_agent: "code-reviewer"
+    support_agents: []
+    skills: ["webapp-testing"]
+    mcps: ["context7", "tavily"]
+    brazilian_compliance: "full_validation"
+    deliverable: "Security assessment report"
 ```
 
-## Enhanced Deliverables: Comprehensive Research Intelligence
-
-### Executive Summary
-- Research scope and complexity assessment
-- Parallel execution efficiency report
-- Multi-droid validation summary
-- Brazilian compliance status
-- Key recommendations with confidence scores
-- Resource utilization metrics
-
-### Atomic Task Execution Report
-- **Task Decomposition**: Complete breakdown of research into atomic units
-- **Parallel Execution Matrix**: Actual vs planned parallelization efficiency
-- **Droid Performance**: Individual droid contributions and quality metrics
-- **Skill Integration**: Activated skills and their impact on research quality
-- **Time Analysis**: Planned vs actual execution times per task
-
-### Multi-Droid Research Analysis
-**apex-researcher**: Research coordination, synthesis, validation orchestration
-**specialist droids**: Domain-specific expertise and deep analysis
-**code-reviewer**: Security validation and compliance checking
-**skill contributions**: Specialized domain knowledge and frameworks
-
-### Implementation Intelligence Framework
-- **Implementation Feasibility**: Technical viability assessment by apex-dev
-- **Risk Matrix**: Comprehensive risk analysis with mitigation strategies
-- **Resource Planning**: Detailed resource requirements and timelines
-- **Brazilian Compliance**: Full LGPD/PIX/BCB compliance validation
-- **Quality Assurance**: Multi-stage validation with specific test requirements
-
-### Enhanced Execution Workflow
-- **Atomic Task Roadmap**: Prioritized task list with dependencies
-- **Multi-Droid Coordination Plan**: Optimal droid assignment and scheduling
-- **Skill Integration Strategy**: When and how to invoke specialized skills
-- **Quality Validation Gates**: Multi-stage quality assurance checkpoints
-- **Documentation Standards**: Version-controlled, cross-referenced outputs
-
-## Quality Gates
-
-### Research Validation
-- ≥95% cross-source validation required
-- Minimum 3 authoritative sources
-- Explicit confidence scoring
-- Clear identification of research gaps
-
-### Implementation Readiness
-- Serena validated integration complexity
-- Risk assessment with mitigation strategies
-- Timeline and resource requirements
-- Quality validation specifications
-
-## Enhanced Command Usage Examples
-
-### Technology Research (L7 Complexity)
-```
-/research "React Server Components best practices for Brazilian fintech applications"
-
-→ Enhanced orchestration with atomic tasks:
-- **Atomic Task Generation**: 8 parallelizable tasks identified
-- **Droid Assignment**:
-  - apex-researcher (coordination)
-  - apex-dev (implementation feasibility)
-  - code-reviewer (security validation)
-- **Skill Integration**: frontend-design, webapp-testing
-- **Parallel Execution**: 70% tasks run simultaneously
-- **Output**:
-  - Comprehensive implementation guide (.factory/docs/2025-XX-XX-react-server-components-research.md)
-  - Atomic task execution roadmap
-  - Security validation report
-  - Brazilian compliance checklist
-```
-
-## Enhanced Research Activation Protocol
-
+### L7-L8 (Complex Research) - 2-4 hours
 ```yaml
-trigger_detection:
-  command_keywords: ["/research", "/pesquisar", "spec - research"]
-  automatic_routing: "Enhanced orchestration with multi-droid coordination"
-  priority_override: "HIGHEST - bypass all other routing"
-  atomic_task_generation: "Immediate task decomposition and assignment"
-  skill_integration: "Context-aware skill activation"
+atomic_tasks:
+  task_1_regulatory_deep_dive:
+    primary_agent: "apex-researcher"
+    support_agents: ["code-reviewer", "database-specialist"]
+    skills: ["education-lgpd-compliance", "webapp-testing"]
+    mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
+    brazilian_compliance: "expert_validation"
+    deliverable: "Regulatory compliance document (≤8 pages)"
 
-enhanced_quality_assurance:
-  confidence_threshold: "≥95% before completion approval"
-  multi_droid_validation: "Minimum 3 droids validate critical findings"
-  source_validation: "Cross-source verification across droids and skills"
-  brazilian_compliance: "Mandatory validation for all financial/regulatory topics"
-  implementation_readiness: "Technical feasibility assessment by apex-dev"
-  security_validation: "Comprehensive security review by code-reviewer"
+  task_2_architecture_analysis:
+    primary_agent: "apex-dev"
+    support_agents: ["database-specialist"]
+    skills: ["aegis-architect"]
+    mcps: ["serena", "neon", "context7"]
+    brazilian_compliance: "compliance_check"
+    deliverable: "System architecture blueprint"
 
-enhanced_output_standards:
-  format: "Comprehensive Research Intelligence Document with Atomic Task Execution Report"
-  location: "Auto-generated in .factory/docs/ with timestamp and unique identifier"
-  structure: "Executive summary + detailed analysis + implementation roadmap + validation reports"
-  confidence_levels: "Explicit scoring with source attribution and validation chain"
-  execution_workflow: "Detailed atomic task breakdown with parallel execution optimization"
-  resource_utilization: "Droid and skill performance metrics and efficiency analysis"
-  gap_identification: "Clear research limitations + follow-up task recommendations"
-  version_control: "Git-friendly format with change tracking and cross-references"
+  task_3_database_compliance:
+    primary_agent: "database-specialist"
+    support_agents: ["code-reviewer"]
+    skills: ["education-lgpd-compliance"]
+    mcps: ["serena", "neon", "context7"]
+    brazilian_compliance: "lgpd_expert_validation"
+    deliverable: "Database compliance matrix"
+
+  task_4_ui_ux_validation:
+    primary_agent: "apex-ui-ux-designer"
+    support_agents: ["code-reviewer"]
+    skills: ["webapp-testing"]
+    mcps: ["serena", "context7", "playwright"]
+    brazilian_compliance: "wcag_aa_plus_validation"
+    deliverable: "Accessibility audit report"
+
+  task_5_integration_testing:
+    primary_agent: "apex-dev"
+    support_agents: ["apex-ui-ux-designer"]
+    skills: ["webapp-testing"]
+    mcps: ["serena", "playwright", "neon"]
+    brazilian_compliance: "end_to_end_validation"
+    deliverable: "Integration test plan"
 ```
 
-## Documentation Template System
+### L9-L10 (Mission-Critical) - 4-8 hours
+```yaml
+atomic_tasks:
+  task_1_strategic_research:
+    primary_agent: "apex-researcher"
+    support_agents: ["product-architect", "code-reviewer"]
+    skills: ["education-lgpd-compliance", "product-management"]
+    mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
+    brazilian_compliance: "mission_critical_validation"
+    deliverable: "Strategic research intelligence (≤12 pages)"
 
-### Standard Research Output Structure
+  task_2_system_architecture:
+    primary_agent: "apex-dev"
+    support_agents: ["database-specialist", "apex-ui-ux-designer"]
+    skills: ["aegis-architect", "ai-data-analyst"]
+    mcps: ["serena", "neon", "context7", "playwright"]
+    brazilian_compliance: "comprehensive_validation"
+    deliverable: "Production-ready architecture spec"
 
-```markdown
-# Research Intelligence: [Topic] - [Date]
+  task_3_security_compliance:
+    primary_agent: "code-reviewer"
+    support_agents: ["database-specialist", "apex-researcher"]
+    skills: ["webapp-testing", "education-lgpd-compliance"]
+    mcps: ["context7", "tavily", "serena", "fetch"]
+    brazilian_compliance: "penetration_testing_validation"
+    deliverable: "Security compliance certification"
 
-## Executive Summary
-- Research scope and complexity assessment
-- Key findings with confidence scores
-- Primary recommendations
-- Brazilian compliance status
-- Resource utilization summary
+  task_4_database_operations:
+    primary_agent: "database-specialist"
+    support_agents: ["apex-dev", "code-reviewer"]
+    skills: ["education-lgpd-compliance"]
+    mcps: ["serena", "neon", "context7", "fetch"]
+    brazilian_compliance: "data_governance_validation"
+    deliverable: "Database operations manual"
 
-## Atomic Task Execution Report
-### Task Decomposition
-- Complete list of atomic tasks generated
-- Parallel execution efficiency metrics
-- Droid assignment and performance analysis
+  task_5_user_experience:
+    primary_agent: "apex-ui-ux-designer"
+    support_agents: ["apex-researcher"]
+    skills: ["webapp-testing", "education-lgpd-compliance"]
+    mcps: ["serena", "context7", "playwright", "fetch"]
+    brazilian_compliance: "user_testing_validation"
+    deliverable: "UX research & testing report"
 
-### Multi-Droid Coordination
-- Droid collaboration matrix
-- Cross-validation results
-- Skill integration impact
+  task_6_product_strategy:
+    primary_agent: "product-architect"
+    support_agents: ["apex-researcher"]
+    skills: ["product-management", "education-lgpd-compliance"]
+    mcps: ["serena", "sequential-thinking", "tavily"]
+    brazilian_compliance: "market_validation"
+    deliverable: "Product strategy & roadmap"
 
-## Detailed Research Analysis
-### [Domain 1] Analysis
-- Comprehensive domain-specific findings
-- Source validation and attribution
-- Confidence scoring methodology
+  task_7_implementation_roadmap:
+    primary_agent: "apex-dev"
+    support_agents: ["database-specialist", "apex-ui-ux-designer"]
+    skills: ["ai-data-analyst"]
+    mcps: ["serena", "neon", "context7", "playwright"]
+    brazilian_compliance: "milestone_validation"
+    deliverable: "Detailed implementation roadmap"
+```
 
-### [Domain 2] Analysis
-- [Continue for all relevant domains]
+## Brazilian Compliance Skill Matrix
 
-## Implementation Intelligence
-### Technical Feasibility Assessment
-- Implementation complexity analysis
-- Resource requirements and timelines
-- Risk matrix with mitigation strategies
+### Automatic Skill Activation by Research Type
+```yaml
+education_lgpd_compliance:
+  triggers: ["LGPD", "aluno", "matrícula", "cpf", "consentimento", "proteção de dados"]
+  agents: ["apex-researcher", "code-reviewer", "database-specialist"]
+  validation_level: "Expert (≥95% accuracy)"
 
-### Brazilian Compliance Validation
-- LGPD compliance checklist
-- PIX/BCB regulatory requirements
-- Accessibility standards validation
+health_aesthetics_research:
+  triggers: ["saúde estética", "estética", "ANVISA", "certificação profissional", "empreendedor estética"]
+  agents: ["apex-researcher", "apex-ui-ux-designer"]
+  validation_level: "Expert (≥95% accuracy)"
 
-## Appendices
-- Source references and validation chains
-- Droid performance metrics
-- Skill integration details
-- Follow-up research recommendations
+crm_student_management:
+  triggers: ["CRM", "pipeline", "lead", "aluno", "gestão", "SDR", "chat integrado"]
+  agents: ["apex-researcher", "database-specialist", "apex-dev"]
+  validation_level: "Expert (≥95% accuracy)"
+
+webapp_testing:
+  triggers: ["testing", "validation", "accessibility", "performance"]
+  agents: ["apex-ui-ux-designer", "code-reviewer", "apex-dev"]
+  validation_level: "WCAG 2.1 AA+ + Brazilian standards"
+
+product_management:
+  triggers: ["market", "competitive", "roadmap", "strategy"]
+  agents: ["apex-researcher", "product-architect"]
+  validation_level: "Market research (≥90% accuracy)"
+
+ai_data_analyst:
+  triggers: ["statistics", "metrics", "performance", "analytics"]
+  agents: ["apex-dev", "database-specialist"]
+  validation_level: "Data analysis (≥85% accuracy)"
+```
+
+## Parallel Execution Coordination
+
+### Phase-Based Task Scheduling
+```yaml
+phase_1_discovery (parallel):
+  - apex-researcher: [context7, tavily, fetch]
+  - database-specialist: [serena, neon] (if database scope)
+  - code-reviewer: [context7] (if security scope)
+
+phase_2_analysis (parallel):
+  - apex-dev: [serena, context7, neon, playwright]
+  - apex-ui-ux-designer: [serena, context7, playwright] (if UI scope)
+  - product-architect: [sequential-thinking, serena] (if strategy scope)
+
+phase_3_validation (parallel):
+  - code-reviewer: [context7, tavily, fetch]
+  - database-specialist: [serena, neon] (if database validation)
+  - apex-ui-ux-designer: [playwright, serena] (if UI validation)
+```
+
+## Docker MCP Research Deliverables
+
+### Research Intelligence Report (via Docker MCP)
+- **Executive Summary**: Research scope, complexity, Brazilian compliance status
+- **MCP Performance**: Docker Gateway latency (<3ms target), efficiency metrics
+- **Validation Results**: ≥95% cross-source validation via multiple MCPs
+- **Implementation Roadmap**: Technical feasibility with Docker-optimized patterns
+- **Brazilian Compliance**: LGPD/education/health validation through official docs (context7) + current patterns (tavily)
+
+### Quality Assurance via Docker MCP
+- **Source Validation**: Context7 (official docs) + Tavily (community validation)
+- **Code Analysis**: Serena symbol resolution + pattern analysis
+- **Database Compliance**: Neon PostgreSQL validation + security checks
+- **Testing Validation**: Playwright accessibility + performance testing
+
+## Quick Reference Templates
+
+### Auto-Activation Protocol
+```yaml
+triggers: ["/research", "/pesquisar", "spec - research"]
+routing: "Docker MCP Gateway orchestration"
+mcp_stack: ["context7", "tavily", "sequential-thinking", "neon", "playwright", "fetch"]
+quality_gate: "≥95% cross-validation"
+target_latency: "<3ms"
+brazilian_compliance: "Mandatory"
+```
+
+### Example Usage
+```
+/research "LGPD compliance para gestão de alunos"
+
+→ Docker MCP execution:
+- Context7: LGPD official documentation for education
+- Tavily: Current student data protection implementations
+- Serena: Existing Convex schema patterns for students
+- Sequential-thinking: Multi-perspective compliance analysis
+- Neon: PostgreSQL student data validation patterns
+- Output: .factory/docs/2025-12-13-lgpd-aluno-compliance.md
+```
+
+### Education CRM Example
+```
+/research "CRM pipeline para cursos de estética"
+
+→ Docker MCP execution:
+- education-lgpd-compliance: Activated for student CRM patterns
+- context7: Research educational CRM best practices
+- tavily: Analyze current market implementations
+- serena: Review existing Convex lead/student schemas
+- sequential-thinking: Multi-perspective pipeline optimization
+- Output: .factory/docs/2025-12-13-crm-estetica-pipeline.md
 ```

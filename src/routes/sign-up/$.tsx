@@ -52,7 +52,8 @@ function SignUpPage() {
 			>
 				<div className="glass-card rounded-2xl p-8 shadow-2xl">
 					<SignUp
-						routing="hash"
+						routing="path"
+						path="/sign-up"
 						signInUrl="/sign-in"
 						forceRedirectUrl="/dashboard"
 						appearance={{
