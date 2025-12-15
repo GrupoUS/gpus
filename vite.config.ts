@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import viteReact from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import tsConfigPaths from 'vite-tsconfig-paths'
@@ -10,6 +10,7 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  // @ts-expect-error - Plugin types mismatch between vite and vitest bundled vite versions
   plugins: [
     tailwindcss(),
     tsConfigPaths({

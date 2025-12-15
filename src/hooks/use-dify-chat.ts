@@ -63,8 +63,9 @@ export function useDifyChat(): UseDifyChatReturn {
 
 			setMessages((prev) => [...prev, assistantMessage]);
 		} catch (error) {
-			console.error('Erro ao enviar mensagem para o Dify:', error);
-			toast.error('Erro ao conectar com o assistente IA. Tente novamente.');
+			toast.error(
+				`Erro ao conectar com o assistente IA: ${error instanceof Error ? error.message : 'Tente novamente.'}`,
+			);
 		} finally {
 			setIsLoading(false);
 		}

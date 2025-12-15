@@ -22,7 +22,7 @@ interface AIChatWidgetProps {
 	onInsertResponse?: (text: string) => void;
 }
 
-export function AIChatWidget({ conversationId, onInsertResponse }: AIChatWidgetProps) {
+export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 	const [isOpen, setIsOpen] = useState(true);
 	const [inputText, setInputText] = useState('');
 	const { messages, sendMessage, isLoading } = useDifyChat();
@@ -54,7 +54,7 @@ export function AIChatWidget({ conversationId, onInsertResponse }: AIChatWidgetP
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			handleSend();
+			void handleSend();
 		}
 	};
 
@@ -66,15 +66,15 @@ export function AIChatWidget({ conversationId, onInsertResponse }: AIChatWidgetP
 	if (!conversationId) return null;
 
 	return (
-		<div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+		<div className="border-t border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
 			<Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
 				<CollapsibleTrigger asChild>
-					<div className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-b border-border/50">
+					<div className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 bg-linear-to-r from-purple-600/10 to-pink-600/10 border-b border-border/50">
 						<div className="flex items-center gap-2">
-							<div className="p-1 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-sm">
+							<div className="p-1 rounded-full bg-linear-to-br from-purple-500 to-pink-500 shadow-sm">
 								<Sparkles className="h-3 w-3 text-white" />
 							</div>
-							<span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+							<span className="text-sm font-medium bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
 								Assistente IA (Dify)
 							</span>
 						</div>
@@ -109,7 +109,7 @@ export function AIChatWidget({ conversationId, onInsertResponse }: AIChatWidgetP
 												className={cn(
 													'px-3 py-2 rounded-lg',
 													msg.role === 'user'
-														? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
+														? 'bg-linear-to-br from-purple-500 to-pink-500 text-white'
 														: 'bg-muted text-foreground',
 												)}
 											>
@@ -179,7 +179,7 @@ export function AIChatWidget({ conversationId, onInsertResponse }: AIChatWidgetP
 							<Button
 								size="sm"
 								className={cn(
-									'h-9 w-9 p-0 bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all',
+									'h-9 w-9 p-0 bg-linear-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all',
 									isLoading && 'opacity-50 cursor-not-allowed',
 								)}
 								onClick={handleSend}
