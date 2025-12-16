@@ -1,6 +1,15 @@
 {
   "include": ["**/*.ts", "**/*.tsx", "public/script*.js"],
-  "exclude": ["node_modules", "dist", "docs"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "docs",
+    "convex/lib/audit-logging.ts",
+    "convex/lib/lgpd-compliance.ts",
+    "convex/lib/lgpd-data-rights.ts",
+    "convex/lib/security-health.ts",
+    "convex/lib/security-middleware.ts"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

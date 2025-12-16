@@ -1,6 +1,6 @@
 /**
  * Comprehensive Input Validation System
- * 
+ *
  * Provides validation and sanitization for all Convex inputs
  * to prevent injection attacks and ensure data integrity.
  */
@@ -105,15 +105,15 @@ export function validateInput<T>(
 		return { success: true, data }
 	} catch (error) {
 		if (error instanceof z.ZodError) {
-			const errorMessages = error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
-			return { 
-				success: false, 
-				error: `Validation failed: ${errorMessages.join(', ')}` 
+			const errorMessages = error.issues.map((issue: z.ZodIssue) => `${issue.path.join('.')}: ${issue.message}`)
+			return {
+				success: false,
+				error: `Validation failed: ${errorMessages.join(', ')}`
 			}
 		}
-		return { 
-			success: false, 
-			error: 'Validation failed: Unknown error' 
+		return {
+			success: false,
+			error: 'Validation failed: Unknown error'
 		}
 	}
 }
@@ -124,13 +124,13 @@ export function validateInput<T>(
 export function isValidCPF(cpf: string): boolean {
 	// Remove non-digits
 	cpf = cpf.replace(/[^\d]/g, '')
-	
+
 	// Check length
 	if (cpf.length !== 11) return false
-	
+
 	// Check if all digits are the same (invalid CPFs)
 	if (/^(\d)\1{10}$/.test(cpf)) return false
-	
+
 	// Validate first check digit
 	let sum = 0
 	for (let i = 0; i < 9; i++) {
@@ -139,7 +139,7 @@ export function isValidCPF(cpf: string): boolean {
 	let checkDigit = 11 - (sum % 11)
 	if (checkDigit > 9) checkDigit = 0
 	if (checkDigit !== parseInt(cpf[9])) return false
-	
+
 	// Validate second check digit
 	sum = 0
 	for (let i = 0; i < 10; i++) {
@@ -148,7 +148,7 @@ export function isValidCPF(cpf: string): boolean {
 	checkDigit = 11 - (sum % 11)
 	if (checkDigit > 9) checkDigit = 0
 	if (checkDigit !== parseInt(cpf[10])) return false
-	
+
 	return true
 }
 
@@ -166,22 +166,22 @@ export function isValidEmail(email: string): boolean {
 export function isValidPhone(phone: string): boolean {
 	// Remove all non-digits
 	const cleanPhone = phone.replace(/[^\d]/g, '')
-	
+
 	// Check length: 10 or 11 digits (landline or mobile)
 	if (cleanPhone.length !== 10 && cleanPhone.length !== 11) {
 		return false
 	}
-	
+
 	// Check if starts with valid area code (mobile starts with 9)
 	if (cleanPhone.length === 11 && !cleanPhone.startsWith('9')) {
 		// Could be landline, allow it
 	}
-	
+
 	// Check if starts with valid Brazil country code (if international)
 	if (cleanPhone.length > 11 && !cleanPhone.startsWith('55')) {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -192,25 +192,25 @@ export function isValidDateRange(startDate: number, endDate: number): boolean {
 	const start = new Date(startDate)
 	const end = new Date(endDate)
 	const now = new Date()
-	
+
 	// Start date should be in the past or present
 	if (start > now) {
 		return false
 	}
-	
+
 	// End date should be after start date
 	if (end <= start) {
 		return false
 	}
-	
+
 	// End date should be reasonable (not more than 10 years in future)
 	const maxFutureDate = new Date()
 	maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 10)
-	
+
 	if (end > maxFutureDate) {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -225,23 +225,23 @@ export function validateFileUpload(file: {
 	// Check file size (max 10MB)
 	const maxSize = 10 * 1024 * 1024
 	if (file.size > maxSize) {
-		return { 
-			valid: false, 
-			error: 'File size exceeds maximum limit of 10MB' 
+		return {
+			valid: false,
+			error: 'File size exceeds maximum limit of 10MB'
 		}
 	}
-	
+
 	// Check file extension
 	const allowedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif']
 	const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
-	
+
 	if (!allowedExtensions.includes(fileExtension)) {
-		return { 
-			valid: false, 
-			error: 'File type not allowed' 
+		return {
+			valid: false,
+			error: 'File type not allowed'
 		}
 	}
-	
+
 	// Check MIME type
 	const allowedMimeTypes = [
 		'application/pdf',
@@ -251,28 +251,28 @@ export function validateFileUpload(file: {
 		'image/png',
 		'image/gif'
 	]
-	
+
 	if (!allowedMimeTypes.includes(file.type)) {
-		return { 
-			valid: false, 
-			error: 'MIME type not allowed' 
+		return {
+			valid: false,
+			error: 'MIME type not allowed'
 		}
 	}
-	
+
 	// Check for dangerous file names
 	const dangerousPatterns = [
 		/\.(exe|bat|cmd|scr|pif|com)$/i,
 		/(con|prn|aux|nul)\./i,
 		/[<>"|:*?]/,
 	]
-	
+
 	if (dangerousPatterns.some(pattern => pattern.test(file.name))) {
-		return { 
-			valid: false, 
-			error: 'File name contains dangerous characters' 
+		return {
+			valid: false,
+			error: 'File name contains dangerous characters'
 		}
 	}
-	
+
 	return { valid: true }
 }
 
@@ -281,65 +281,65 @@ export function validateFileUpload(file: {
  */
 export class RateLimiter {
 	private attempts: Map<string, number[]> = new Map()
-	
+
 	constructor(
 		private maxAttempts: number = 10,
 		private windowMs: number = 60000 // 1 minute
 	) {}
-	
+
 	/**
 	 * Checks if request is allowed
 	 */
 	public isAllowed(key: string): boolean {
 		const now = Date.now()
 		const attempts = this.attempts.get(key) || []
-		
+
 		// Clean old attempts
-		const recentAttempts = attempts.filter(timestamp => 
+		const recentAttempts = attempts.filter(timestamp =>
 			timestamp > now - this.windowMs
 		)
-		
+
 		// Check if under limit
 		if (recentAttempts.length >= this.maxAttempts) {
 			return false
 		}
-		
+
 		// Add current attempt
 		recentAttempts.push(now)
 		this.attempts.set(key, recentAttempts)
-		
+
 		return true
 	}
-	
+
 	/**
 	 * Gets remaining attempts
 	 */
 	public getRemainingAttempts(key: string): number {
 		const now = Date.now()
 		const attempts = this.attempts.get(key) || []
-		
-		const recentAttempts = attempts.filter(timestamp => 
+
+		const recentAttempts = attempts.filter(timestamp =>
 			timestamp > now - this.windowMs
 		)
-		
+
 		return Math.max(0, this.maxAttempts - recentAttempts.length)
 	}
-	
+
 	/**
 	 * Gets time until next allowed request
 	 */
 	public getResetTime(key: string): number {
 		const now = Date.now()
 		const attempts = this.attempts.get(key) || []
-		
+
 		if (attempts.length === 0) {
 			return 0
 		}
-		
+
 		const oldestRecentAttempt = attempts
 			.filter(timestamp => timestamp > now - this.windowMs)
 			.sort((a, b) => a - b)[0]
-		
+
 		return Math.max(0, oldestRecentAttempt + this.windowMs - now)
 	}
 }
@@ -363,25 +363,26 @@ export function withValidation<T>(
 ) {
 	return async (ctx: any, data: unknown) => {
 		const validation = validateInput(schema, data)
-		
+
 		if (!validation.success) {
 			throw new Error(`Validation failed: ${validation.error}`)
 		}
-		
+
 		return await handler(ctx, validation.data)
 	}
 }
 
 /**
  * Convex-compatible validation schemas
+ * Note: Convex `v` uses simple validators without chained methods
  */
 export const convexValidationSchemas = {
-	name: v.string().min(1).max(100),
-	email: v.string().email().optional(),
-	phone: v.string().min(10).max(15),
+	name: v.string(),
+	email: v.optional(v.string()),
+	phone: v.string(),
 	cpf: v.optional(v.string()),
 	organizationId: v.string(),
-	stage: v.union([
+	stage: v.union(
 		v.literal('novo'),
 		v.literal('primeiro_contato'),
 		v.literal('qualificado'),
@@ -389,11 +390,11 @@ export const convexValidationSchemas = {
 		v.literal('negociacao'),
 		v.literal('fechado_ganho'),
 		v.literal('fechado_perdido')
-	]),
-	status: v.union([
+	),
+	status: v.union(
 		v.literal('ativo'),
 		v.literal('inativo'),
 		v.literal('pausado'),
 		v.literal('formado')
-	]),
+	),
 } as const

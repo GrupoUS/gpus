@@ -85,14 +85,8 @@ export const getById = query({
     if (student.encryptedEmail) student.email = decrypt(student.encryptedEmail)
     if (student.encryptedPhone) student.phone = decrypt(student.encryptedPhone)
 
-    // Log access
-    await logAudit(ctx, {
-      studentId: student._id,
-      actionType: 'data_access',
-      dataCategory: 'personal_data',
-      description: 'Profile viewed via getById',
-      legalBasis: 'contract_execution' // Assumed
-    })
+    // Note: Audit logging for data access should be done in a mutation
+    // or action that wraps this query, as logAudit requires MutationCtx
 
     return student
   },
