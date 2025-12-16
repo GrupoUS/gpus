@@ -171,6 +171,9 @@ atomic_tasks_proposal:
   - id: "AT-001"
     title: "[Clear action title - verb + noun]"
     description: "[What apex-dev should implement - be specific]"
+    type: "[setup|test|core|integration|polish]"  # NEW: Task type for phased execution
+    phase: [1-5]  # NEW: Execution phase (1=setup, 2=test, 3=core, 4=integration, 5=polish)
+    parallel_group: "[A|B|C|null]"  # NEW: Tasks with same group can run in parallel
     priority: "[high|medium|low]"
     estimated_effort: "[small: <1h | medium: 1-4h | large: 4h+]"
     files_affected:
@@ -178,11 +181,16 @@ atomic_tasks_proposal:
     dependencies: []  # Other task IDs this depends on
     acceptance_criteria:
       - "[Specific testable criterion]"
+    test_strategy: "[unit|integration|e2e|none]"  # NEW: How to test this task
+    rollback_strategy: "[How to undo if task fails]"  # NEW: Rollback instructions
     subtasks: []  # Empty for L1-L4
     
   - id: "AT-002"
     title: "[Clear action title]"
     description: "[What apex-dev should implement]"
+    type: "[setup|test|core|integration|polish]"
+    phase: [1-5]
+    parallel_group: "[A|B|C|null]"
     priority: "[high|medium|low]"
     estimated_effort: "[small|medium|large]"
     files_affected:
@@ -190,6 +198,8 @@ atomic_tasks_proposal:
     dependencies: ["AT-001"]
     acceptance_criteria:
       - "[Specific testable criterion]"
+    test_strategy: "[unit|integration|e2e|none]"
+    rollback_strategy: "[How to undo if task fails]"
     subtasks:  # For L5+ complexity
       - id: "AT-002-A"
         title: "[Subtask title]"

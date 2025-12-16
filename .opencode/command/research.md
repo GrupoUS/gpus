@@ -94,6 +94,252 @@ validation_tasks:
 
 ---
 
+## Step 2.5: Generate Executable Specification
+
+Após processar o research report, o Plan Agent DEVE gerar uma especificação executável validando contra a constituição do projeto e enriquecendo as tasks com campos de execução.
+
+### 2.5.1 Constitution Validation
+
+Carregar e validar contra `.opencode/memory/constitution.md`:
+
+```yaml
+constitution_validation:
+  load: ".opencode/memory/constitution.md"
+  
+  validate_each_task:
+    - principle_1_bun_first: "Task não usa npm/yarn/pnpm"
+    - principle_2_typescript_strict: "Task não introduz 'any' types"
+    - principle_3_lgpd_compliance: "Se envolve dados pessoais, inclui encryption/audit"
+    - principle_4_biome_standards: "Task passa lint:check"
+    - principle_5_convex_patterns: "Usa withIndex, auth checks, validators"
+    - principle_6_test_coverage: "Task inclui ou referencia testes"
+    - principle_7_accessibility: "UI tasks incluem WCAG 2.1 AA"
+    - principle_8_portuguese_ui: "User-facing text em português"
+    - principle_9_performance: "Considera bundle size e lazy loading"
+    - principle_10_functional: "Sem class components"
+  
+  on_violation:
+    - flag_task: "Marcar task com ⚠️ constitution violation"
+    - add_remediation: "Adicionar subtask de correção"
+    - notify_user: "Alertar no plano apresentado"
+```
+
+### 2.5.2 Enhance Task Fields
+
+Garantir que cada atomic_task inclui os campos de execução para `/implement`:
+
+```yaml
+required_fields:
+  - id: "AT-XXX"
+  - title: "Verb + Noun action title"
+  - description: "What apex-dev should implement"
+  - type: "setup | test | core | integration | polish"
+  - phase: "1-5 (matches type: setup=1, test=2, core=3, integration=4, polish=5)"
+  - parallel_group: "A | B | C | null (tasks with same group can run together)"
+  - priority: "high | medium | low"
+  - estimated_effort: "small (<1h) | medium (1-4h) | large (4h+)"
+  - files_affected: ["path/to/file.ts"]
+  - dependencies: ["AT-XXX"] # Other task IDs this depends on
+  - acceptance_criteria: ["Testable criterion"]
+  - test_strategy: "unit | integration | e2e | none"
+  - rollback_strategy: "git checkout [file] | rm [file] | bun remove [pkg]"
+  - subtasks: [] # For L5+ complexity
+```
+
+### 2.5.3 Phase Assignment Rules
+
+```yaml
+phase_mapping:
+  phase_1_setup:
+    type: "setup"
+    activities: ["directories", "dependencies", "config", "schema migrations"]
+    example_tasks:
+      - "Create new directory structure"
+      - "Add npm dependencies"
+      - "Configure environment variables"
+      - "Add table to Convex schema"
+  
+  phase_2_tests:
+    type: "test"
+    activities: ["unit tests", "integration tests", "e2e tests", "fixtures"]
+    example_tasks:
+      - "Write unit tests for new component"
+      - "Create test fixtures"
+      - "Add E2E test for user flow"
+  
+  phase_3_core:
+    type: "core"
+    activities: ["queries", "mutations", "components", "hooks", "utilities"]
+    example_tasks:
+      - "Implement Convex mutation"
+      - "Create React component"
+      - "Add custom hook"
+  
+  phase_4_integration:
+    type: "integration"
+    activities: ["routes", "auth guards", "middleware", "connections"]
+    example_tasks:
+      - "Wire component to route"
+      - "Add authentication guard"
+      - "Connect frontend to backend"
+  
+  phase_5_polish:
+    type: "polish"
+    activities: ["optimization", "cleanup", "documentation", "accessibility"]
+    example_tasks:
+      - "Add code splitting"
+      - "Optimize bundle size"
+      - "Add JSDoc comments"
+```
+
+### 2.5.4 Parallel Group Assignment
+
+```yaml
+parallel_grouping:
+  rules:
+    - "Tasks with NO dependencies can be in parallel groups"
+    - "Tasks in same parallel group MUST NOT modify same files"
+    - "Assign sequential (null) to tasks with dependencies"
+  
+  example:
+    # These can run in parallel (Group A)
+    - id: "AT-002"
+      title: "Write notification mutation tests"
+      parallel_group: "A"
+      files_affected: ["convex/__tests__/notifications.test.ts"]
+    
+    - id: "AT-003"
+      title: "Write notification UI tests"
+      parallel_group: "A"
+      files_affected: ["src/components/__tests__/NotificationBell.test.tsx"]
+    
+    # This must be sequential (depends on AT-001)
+    - id: "AT-004"
+      title: "Implement sendNotification mutation"
+      parallel_group: null
+      dependencies: ["AT-001"]
+```
+
+### 2.5.5 Rollback Strategy Templates
+
+```yaml
+rollback_templates:
+  file_created:
+    strategy: "rm [path/to/file]"
+    example: "rm src/components/notifications/NotificationBell.tsx"
+  
+  file_modified:
+    strategy: "git checkout [path/to/file]"
+    example: "git checkout convex/schema.ts"
+  
+  dependency_added:
+    strategy: "bun remove [package]"
+    example: "bun remove @tanstack/react-query"
+  
+  schema_migration:
+    strategy: "Revert schema + redeploy: git checkout convex/schema.ts && bunx convex deploy"
+    example: "git checkout convex/schema.ts && bunx convex deploy"
+  
+  multiple_files:
+    strategy: "git checkout [file1] [file2] && rm [new_file]"
+    example: "git checkout src/lib/utils.ts convex/leads.ts && rm src/hooks/useNotifications.ts"
+```
+
+### 2.5.6 Spec Artifacts (L7+ Complexity Only)
+
+Para features de alta complexidade (L7+), opcionalmente gerar artefatos de especificação:
+
+```yaml
+spec_artifacts:
+  when: "complexity >= L7"
+  location: ".opencode/specs/[feature-id]/"
+  
+  files:
+    data_model_md:
+      purpose: "Entity definitions and relationships"
+      content: |
+        # Data Model: [Feature Name]
+        
+        ## Entities
+        - Entity1: description
+        - Entity2: description
+        
+        ## Relationships
+        - Entity1 → Entity2: relationship type
+        
+        ## Convex Schema
+        ```typescript
+        // Proposed schema changes
+        ```
+    
+    contracts_md:
+      purpose: "API contracts and interfaces"
+      content: |
+        # API Contracts: [Feature Name]
+        
+        ## Queries
+        - `api.feature.list`: Returns all items
+        - `api.feature.get`: Returns single item
+        
+        ## Mutations
+        - `api.feature.create`: Creates new item
+        - `api.feature.update`: Updates existing item
+        
+        ## TypeScript Interfaces
+        ```typescript
+        // Proposed interfaces
+        ```
+    
+    quickstart_md:
+      purpose: "Integration guide for developers"
+      content: |
+        # Quickstart: [Feature Name]
+        
+        ## Prerequisites
+        - [x] Requirement 1
+        - [x] Requirement 2
+        
+        ## Usage
+        ```typescript
+        // Example usage code
+        ```
+        
+        ## Testing
+        ```bash
+        bun test src/features/[feature]
+        ```
+```
+
+### 2.5.7 Validation Checklist
+
+Antes de prosseguir para Step 3 (Create TodoWrite):
+
+```yaml
+step_2_5_checklist:
+  constitution:
+    - [ ] Constitution loaded from .opencode/memory/constitution.md
+    - [ ] Each task validated against 10 principles
+    - [ ] Violations flagged with remediation subtasks
+  
+  task_fields:
+    - [ ] All tasks have `type` field (setup/test/core/integration/polish)
+    - [ ] All tasks have `phase` field (1-5)
+    - [ ] Parallel groups assigned where applicable
+    - [ ] All tasks have `test_strategy` field
+    - [ ] All tasks have `rollback_strategy` field
+  
+  spec_artifacts:
+    - [ ] L7+ features have optional spec artifacts generated
+    - [ ] Artifacts stored in .opencode/specs/[feature-id]/
+  
+  quality:
+    - [ ] Tasks are actionable and specific
+    - [ ] Dependencies are correctly identified
+    - [ ] Acceptance criteria are testable
+```
+
+---
+
 ## Step 3: Create TodoWrite
 
 O Plan Agent DEVE criar as tasks usando TodoWrite baseado no atomic_tasks_proposal.
@@ -357,24 +603,6 @@ Antes de apresentar o plano ao usuário, verificar:
 
 ---
 
-## Brazilian Compliance Triggers
-
-Se a pesquisa envolver estes termos, `@apex-researcher` ativará validação LGPD automaticamente:
-
-| Categoria | Keywords |
-|-----------|----------|
-| Dados Pessoais | `aluno`, `estudante`, `matrícula`, `CPF`, `dados pessoais` |
-| Consentimento | `consentimento`, `proteção de dados`, `LGPD` |
-| Saúde | `saúde estética`, `ANVISA`, `procedimento` |
-| Financeiro | `PIX`, `BCB`, `pagamento`, `fatura` |
-
-Quando compliance é ativado:
-- `@code-reviewer` é delegado para análise de segurança
-- Atomic tasks incluem requisitos de compliance
-- Validation tasks incluem security review
-
----
-
 ## Stack Reference
 
 O projeto usa:
@@ -420,4 +648,5 @@ O projeto usa:
 [VT-001] Build validation: bun run build
 [VT-002] Lint check: bun run lint:check
 [VT-003] Test suite: bun run test
+[VT-004] Security review: @code-reviewer
 ```
