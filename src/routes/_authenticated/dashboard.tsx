@@ -14,7 +14,6 @@ import { RecentLeads } from '@/components/dashboard/recent-leads';
 import { ResponseTime } from '@/components/dashboard/response-time';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { TeamPerformance } from '@/components/dashboard/team-performance';
-import { DebugAuth } from '@/components/debug-auth';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
 import {
 	Select,
@@ -58,74 +57,73 @@ function DashboardPage() {
 							Visão geral do Grupo US em tempo real
 						</p>
 					</div>
-					<div className="flex items-center gap-4">
-						<DebugAuth />
-						<Select
-							value={period}
-							onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
-						>
-							<SelectTrigger className="w-[180px]">
-								<SelectValue placeholder="Período" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="7d">Últimos 7 dias</SelectItem>
-								<SelectItem value="30d">Últimos 30 dias</SelectItem>
-								<SelectItem value="90d">Últimos 90 dias</SelectItem>
-								<SelectItem value="year">Este ano</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
+					<Select
+						value={period}
+						onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
+					>
+						<SelectTrigger className="w-[180px]">
+							<SelectValue placeholder="Período" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="7d">Últimos 7 dias</SelectItem>
+							<SelectItem value="30d">Últimos 30 dias</SelectItem>
+							<SelectItem value="90d">Últimos 90 dias</SelectItem>
+							<SelectItem value="year">Este ano</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
 			</MotionWrapper>
 
-			<MotionWrapper className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" stagger={100}>
-				{!metrics ? (
-					<>
-						<Skeleton className="h-32 w-full" />
-						<Skeleton className="h-32 w-full" />
-						<Skeleton className="h-32 w-full" />
-						<Skeleton className="h-32 w-full" />
-					</>
-				) : (
-					<>
-						<StatsCard
-							title="Leads este mês"
-							value={metrics.totalLeads || 0}
-							icon={Users}
-							trend={{
-								value: metrics.leadsTrend || 0,
-								isPositive: (metrics.leadsTrend || 0) > 0,
-							}}
-							description="vs. período anterior"
-						/>
-						<StatsCard
-							title="Taxa de Conversão"
-							value={metrics ? `${metrics.conversionRate}%` : '0%'}
-							description="vs. período anterior"
-							icon={TrendingUp}
-							trend={{
-								value: metrics.conversionTrend || 0,
-								isPositive: (metrics.conversionTrend || 0) > 0,
-							}}
-						/>
-						<StatsCard
-							title="Faturamento"
-							value={metrics ? formatCurrency(metrics.revenue) : 'R$ 0'}
-							description="vs. período anterior"
-							icon={DollarSign}
-							trend={{
-								value: metrics.revenueTrend || 0,
-								isPositive: (metrics.revenueTrend || 0) > 0,
-							}}
-						/>
-						<StatsCard
-							title="Mensagens"
-							value={metrics?.totalMessages?.toString() || '0'}
-							description="últimas 24h"
-							icon={MessageSquare}
-						/>
-					</>
-				)}
+			<MotionWrapper>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+					{!metrics ? (
+						<>
+							<Skeleton className="h-32 w-full" />
+							<Skeleton className="h-32 w-full" />
+							<Skeleton className="h-32 w-full" />
+							<Skeleton className="h-32 w-full" />
+						</>
+					) : (
+						<>
+							<StatsCard
+								title="Leads este mês"
+								value={metrics.totalLeads || 0}
+								icon={Users}
+								trend={{
+									value: metrics.leadsTrend || 0,
+									isPositive: (metrics.leadsTrend || 0) > 0,
+								}}
+								description="vs. período anterior"
+							/>
+							<StatsCard
+								title="Taxa de Conversão"
+								value={metrics ? `${metrics.conversionRate}%` : '0%'}
+								description="vs. período anterior"
+								icon={TrendingUp}
+								trend={{
+									value: metrics.conversionTrend || 0,
+									isPositive: (metrics.conversionTrend || 0) > 0,
+								}}
+							/>
+							<StatsCard
+								title="Faturamento"
+								value={metrics ? formatCurrency(metrics.revenue) : 'R$ 0'}
+								description="vs. período anterior"
+								icon={DollarSign}
+								trend={{
+									value: metrics.revenueTrend || 0,
+									isPositive: (metrics.revenueTrend || 0) > 0,
+								}}
+							/>
+							<StatsCard
+								title="Mensagens"
+								value={metrics?.totalMessages?.toString() || '0'}
+								description="últimas 24h"
+								icon={MessageSquare}
+							/>
+						</>
+					)}
+				</div>
 			</MotionWrapper>
 
 			<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
