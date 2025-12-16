@@ -6,8 +6,9 @@
  */
 
 import type { MutationCtx, QueryCtx } from '../_generated/server'
-import { requireAuth, getClerkId } from './auth'
-import { validateInput, validationSchemas, rateLimiters, validateFileUpload } from './validation'
+import { requireAuth, getClerkId as _getClerkId } from './auth'
+// validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
+import { validateInput, rateLimiters, validateFileUpload, validationSchemas as _validationSchemas } from './validation'
 import { logSecurityEvent } from './audit-logging'
 // hashSensitiveData available for security hashing if needed
 import { hashSensitiveData as _hashSensitiveData } from './encryption'
@@ -35,7 +36,7 @@ const SECURITY_CONFIG = {
 /**
  * Request context interface
  */
-interface SecurityContext {
+export interface SecurityContext {
 	actorId: string
 	actorRole: string
 	ipAddress: string

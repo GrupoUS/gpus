@@ -11,14 +11,12 @@
  */
 
 import type { MutationCtx, QueryCtx } from '../_generated/server'
-import { getClerkId } from './auth'
-// getIdentity available for future identity checks
-import { getIdentity as _getIdentity } from './auth'
+// getIdentity available for identity checks, getClerkId used
+import { getClerkId, getIdentity as _getIdentity } from './auth'
 import { createAuditLog } from './audit-logging'
-// decrypt and hashSensitiveData available for data processing
-import { encrypt } from './encryption'
-import { decrypt as _decrypt, hashSensitiveData as _hashSensitiveData } from './encryption'
-import { generateDataExport, hasConsentForDataCategory } from './lgpd-compliance'
+// encrypt, decrypt, hashSensitiveData available for data processing
+import { encrypt as _encrypt, decrypt as _decrypt, hashSensitiveData as _hashSensitiveData } from './encryption'
+import { generateDataExport, hasConsentForDataCategory as _hasConsentForDataCategory } from './lgpd-compliance'
 import { validateInput } from './validation'
 import { z } from 'zod'
 
@@ -517,7 +515,7 @@ export async function processPortabilityRequest(
 	await ctx.db.patch(normalizedPortabilityRequestId, {
 		status: 'completed',
 		responseFiles: [fileName],
-		response: JSON.stringify({ fileUrl, fileName }),
+		response: exportData, // Store the actual export data
 		completedAt: Date.now(),
 		processedBy: requesterId,
 		processingNotes: `Data export generated in ${exportFormat} format`,
@@ -544,14 +542,8 @@ export async function getStudentLgpdRequests(
 /**
  * Helper functions
  */
-/**
- * NOTE: Convex mutation/query contexts don't have access to HTTP headers.
- * Client IP and UserAgent must be passed from HTTP actions if needed.
- */
-function getClientIP(): string {
-	return 'unknown' // Convex functions don't have access to HTTP headers
-}
-
+// NOTE: Convex mutation/query contexts don't have access to HTTP headers.
+// Client IP and UserAgent must be passed from HTTP actions if needed.
 function isValidCorrection(fieldName: string, newValue: string, _student: unknown): boolean {
 	// Basic validation - extend as needed (student available for context-based validation)
 	switch (fieldName) {
