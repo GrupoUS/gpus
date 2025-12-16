@@ -1,5 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
+import { logAudit } from './lgpd'
 
 // Queries
 // Queries
@@ -32,20 +34,20 @@ export const list = query({
 
     // Comment 3: Batch enrollment lookups.
     // Fetch all enrollments once. Note: This assumes enrollments table fits in memory/query limit.
-    // For scalability, we should ideally filter enrollments by the student IDs we have, 
+    // For scalability, we should ideally filter enrollments by the student IDs we have,
     // but Convex doesn't support 'in' queries efficiently for ad-hoc lists yet without iterating.
     // Given the instruction "issue one or a few enrollments queries... to build a map", we collect all.
     const allEnrollments = await ctx.db.query('enrollments').collect()
-    
+
     // Build map: studentId -> latest enrollment (by createdAt)
     const enrollmentsByStudent = new Map<string, typeof allEnrollments[0]>()
-    
+
     // Sort enrollments by created desc so we process newest first??
     // Actually simpler: iterate and keep latest.
     // We want the latest enrollment per student.
     // Let's sort allEnrollments desc first or handle in reducer.
     allEnrollments.sort((a,b) => b.createdAt - a.createdAt)
-    
+
     for (const enrollment of allEnrollments) {
         if (!enrollmentsByStudent.has(enrollment.studentId)) {
             enrollmentsByStudent.set(enrollment.studentId, enrollment)
@@ -74,7 +76,25 @@ export const list = query({
 export const getById = query({
   args: { id: v.id('students') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id)
+    const student = await ctx.db.get(args.id)
+    if (!student) return null
+
+    // Decrypt sensitive fields for authorized view
+    // Note: In a real scenario, checks access policy here
+    if (student.encryptedCPF) student.cpf = decryptCPF(student.encryptedCPF)
+    if (student.encryptedEmail) student.email = decrypt(student.encryptedEmail)
+    if (student.encryptedPhone) student.phone = decrypt(student.encryptedPhone)
+
+    // Log access
+    await logAudit(ctx, {
+      studentId: student._id,
+      actionType: 'data_access',
+      dataCategory: 'personal_data',
+      description: 'Profile viewed via getById',
+      legalBasis: 'contract_execution' // Assumed
+    })
+
+    return student
   },
 })
 
@@ -91,7 +111,7 @@ export const getChurnAlerts = query({
       .query('students')
       .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
       .collect()
-      
+
     const mediumRiskStudents = await ctx.db
       .query('students')
       .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
@@ -104,13 +124,13 @@ export const getChurnAlerts = query({
     students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
 
     const alerts: Array<{ _id: any, studentName: string, reason: string, risk: 'alto' | 'medio' }> = []
-    
-    // Pre-fetch enrollments for late payment check? 
+
+    // Pre-fetch enrollments for late payment check?
     // To do this strictly per comment "update the query to leverage a churn-specific index... Also sort... before applying limit",
     // we should process the sorted list.
-    // Limitation: To check payment status efficiently, we ideally batch too, 
+    // Limitation: To check payment status efficiently, we ideally batch too,
     // but the loop below limits to 5 alerts returned, so we might process more candidates.
-    
+
     for (const student of students) {
         if (alerts.length >= 5) break // Limit reached
 
@@ -121,9 +141,9 @@ export const getChurnAlerts = query({
         .query('enrollments')
         .withIndex('by_student', q => q.eq('studentId', student._id))
         .collect()
-      
+
       const hasLatePayment = enrollments.some(e => e.paymentStatus === 'atrasado')
-      
+
       // Check logic: High risk if late payment
       if (hasLatePayment) {
         alerts.push({
@@ -179,12 +199,29 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
+    // Prepare encrypted fields
+    const encryptedCPF = args.cpf ? encryptCPF(args.cpf) : undefined
+    const encryptedEmail = encrypt(args.email)
+    const encryptedPhone = encrypt(args.phone)
+
     const studentId = await ctx.db.insert('students', {
       ...args,
+      encryptedCPF,
+      encryptedEmail,
+      encryptedPhone,
       churnRisk: 'baixo',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
+
+    await logAudit(ctx, {
+      studentId,
+      actionType: 'data_creation',
+      dataCategory: 'personal_data',
+      description: 'Student profile created',
+      legalBasis: 'contract_execution'
+    })
+
     return studentId
   },
 })
@@ -222,9 +259,25 @@ export const update = mutation({
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
+    // Intercept sensitive updates to encrypt them
+    const updates: any = { ...args.patch }
+
+    if (args.patch.cpf) updates.encryptedCPF = encryptCPF(args.patch.cpf)
+    if (args.patch.email) updates.encryptedEmail = encrypt(args.patch.email)
+    if (args.patch.phone) updates.encryptedPhone = encrypt(args.patch.phone)
+
     await ctx.db.patch(args.studentId, {
-      ...args.patch,
+      ...updates,
       updatedAt: Date.now(),
+    })
+
+    await logAudit(ctx, {
+      studentId: args.studentId,
+      actionType: 'data_modification',
+      dataCategory: 'personal_data',
+      description: 'Student profile updated',
+      legalBasis: 'contract_execution',
+      metadata: { fields: Object.keys(args.patch) }
     })
   },
 })
