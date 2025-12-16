@@ -366,10 +366,8 @@ export function StudentImportDialog() {
 
 	const previewValidation = validatePreview();
 	const requiredFields = ['name', 'email', 'phone', 'profession', 'hasClinic'];
-	const mappedRequiredFields = requiredFields.filter((f) =>
-		Object.values(columnMapping).includes(f),
-	);
-	const canProceed = mappedRequiredFields.length >= 4; // At least name, email, phone, profession
+	const missingFields = requiredFields.filter((f) => !Object.values(columnMapping).includes(f));
+	const canProceed = missingFields.length === 0; // All required fields must be mapped
 
 	return (
 		<Dialog
@@ -508,9 +506,18 @@ export function StudentImportDialog() {
 						</div>
 
 						{!canProceed && (
-							<div className="flex items-center gap-2 text-amber-500 text-sm">
-								<AlertCircle className="h-4 w-4" />
-								<span>Mapeie pelo menos: Nome, Email, Telefone e Profissão</span>
+							<div className="flex items-start gap-2 text-amber-500 text-sm">
+								<AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+								<div>
+									<span className="font-medium">Campos obrigatórios faltando:</span>
+									<ul className="list-disc list-inside mt-1">
+										{missingFields.map((field) => {
+											const fieldLabel =
+												schemaFields.find((f) => f.value === field)?.label || field;
+											return <li key={field}>{fieldLabel}</li>;
+										})}
+									</ul>
+								</div>
 							</div>
 						)}
 

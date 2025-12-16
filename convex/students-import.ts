@@ -9,6 +9,43 @@ import { mutation } from './_generated/server';
 import { encrypt, encryptCPF } from './lib/encryption';
 import { logAudit } from './lgpd';
 
+/**
+ * Validate Brazilian CPF using the official algorithm
+ * CPF must have 11 digits and pass the check digit verification
+ */
+function validateCPF(cpf: string): boolean {
+	if (!cpf) return false;
+
+	// Remove formatting
+	const cleaned = cpf.replace(/\D/g, '');
+
+	// Must be 11 digits
+	if (cleaned.length !== 11) return false;
+
+	// Check for known invalid patterns (all same digits)
+	if (/^(\d)\1{10}$/.test(cleaned)) return false;
+
+	// Validate first check digit
+	let sum = 0;
+	for (let i = 0; i < 9; i++) {
+		sum += Number.parseInt(cleaned.charAt(i), 10) * (10 - i);
+	}
+	let remainder = (sum * 10) % 11;
+	if (remainder === 10 || remainder === 11) remainder = 0;
+	if (remainder !== Number.parseInt(cleaned.charAt(9), 10)) return false;
+
+	// Validate second check digit
+	sum = 0;
+	for (let i = 0; i < 10; i++) {
+		sum += Number.parseInt(cleaned.charAt(i), 10) * (11 - i);
+	}
+	remainder = (sum * 10) % 11;
+	if (remainder === 10 || remainder === 11) remainder = 0;
+	if (remainder !== Number.parseInt(cleaned.charAt(10), 10)) return false;
+
+	return true;
+}
+
 // Product options for enrollments
 const productValidator = v.union(
 	v.literal('trintae3'),
@@ -194,9 +231,22 @@ export const bulkImport = mutation({
 				}
 				processedEmails.add(normalizedEmail);
 
-				// Check for duplicate CPF within same batch
+					// Check for duplicate CPF within same batch
 				if (student.cpf) {
 					const normalizedCPF = student.cpf.replace(/\D/g, '');
+
+					// Validate CPF format before proceeding
+					if (!validateCPF(normalizedCPF)) {
+						results.push({
+							rowNumber,
+							success: false,
+							error: `CPF inválido: ${student.cpf}. Verifique os dígitos verificadores.`,
+							warnings,
+						});
+						failureCount++;
+						continue;
+					}
+
 					if (processedCPFs.has(normalizedCPF)) {
 						warnings.push('CPF duplicado dentro do mesmo arquivo');
 						results.push({
