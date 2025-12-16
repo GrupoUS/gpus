@@ -35,7 +35,7 @@ const menuItems = [
 		icon: <Kanban className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
 	{
-		label: 'Alunos',
+		label: 'Students',
 		href: '/students',
 		icon: <GraduationCap className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
@@ -45,29 +45,29 @@ const menuItems = [
 		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
 	{
-		label: 'Relatórios',
+		label: 'Reports',
 		href: '/reports',
 		icon: <BarChart3 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 		children: [
 			{
-				label: 'Vendas',
+				label: 'Sales',
 				href: '/reports/sales',
 				icon: <TrendingUp className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
 			},
 			{
-				label: 'Equipe',
+				label: 'Team',
 				href: '/reports/team',
 				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
 			},
 		],
 	},
 	{
-		label: 'Configurações',
+		label: 'Settings',
 		href: '/settings',
 		icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 		children: [
 			{
-				label: 'Equipe',
+				label: 'Team',
 				href: '/settings/team',
 				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
 			},
@@ -77,7 +77,7 @@ const menuItems = [
 				icon: <FileText className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
 			},
 			{
-				label: 'Integrações',
+				label: 'Integrations',
 				href: '/settings/integrations',
 				icon: <Plug className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
 			},
@@ -112,9 +112,8 @@ export function AppSidebar() {
 								<div key={idx}>
 									{item.children ? (
 										<>
-											<div className="font-medium py-2 px-2 text-neutral-700 dark:text-neutral-200">
-												{item.label}
-											</div>
+											{/* Render parent as navigable link */}
+											<SidebarLink link={item} />
 											<div className="ml-4 space-y-1">
 												{item.children.map((child, cIdx) => (
 													<SidebarLink key={cIdx} link={child} />
