@@ -2,22 +2,30 @@
 
 ## Package Identity
 
-**Purpose:** Serverless backend with real-time database, queries, and mutations  
+**Purpose:** Serverless backend with real-time database, queries, mutations, and actions.
 **Tech:** Convex (TypeScript-based serverless platform)
+**Docs:** [Convex Docs](https://docs.convex.dev/home)
 
 ---
 
 ## Setup & Run
 
 ```bash
-# Development (from root)
+# Development (from root) with live updates
 bun run dev:convex
 
-# Deploy to production
+# Deploy to production (auto-triggers on push to main usually)
 bun run deploy:convex
 
-# Open Convex dashboard
+# Open Convex dashboard (Production/Dev controls)
 bunx convex dashboard
+
+# Data Management
+bunx convex import --table tableName data.jsonl  # Import data
+bunx convex export                             # Export all data
+
+# Logs
+bunx convex logs                               # Tail logs
 ```
 
 ---
@@ -28,16 +36,22 @@ bunx convex dashboard
 
 ```
 convex/
-├── schema.ts           # Database schema definition
-├── leads.ts            # Lead queries/mutations
-├── users.ts            # User queries/mutations
-├── auth.config.ts      # Clerk integration config
-└── _generated/         # Auto-generated (don't edit)
+├── schema.ts           # Database schema definition (Tables + Indexes)
+├── auth.config.ts      # Clerk/Auth provider config
+├── http.ts             # HTTP API endpoints
+├── crons.ts            # Cron job definitions
+├── _generated/         # Auto-generated SD K (DO NOT EDIT)
+├── [feature].ts        # Feature-specific queries/mutations
+└── [folder]/           # Nested features supported
+    └── index.ts        # Grouped logic
 ```
 
 ### Schema Definition
 
-✅ **DO:** Define tables in `schema.ts`
+✅ **DO:** Define tables in `schema.ts` using `defineSchema` and `defineTable`.
+✅ **DO:** explicit define indexes for every query filter/ordering.
+✅ **DO:** Follow index naming convention `by_field1_and_field2`.
+
 ```typescript
 // convex/schema.ts
 import { defineSchema, defineTable } from 'convex/server'
@@ -46,292 +60,221 @@ import { v } from 'convex/values'
 export default defineSchema({
   leads: defineTable({
     name: v.string(),
-    email: v.optional(v.string()),
-    phone: v.string(),
-    stage: v.string(),
-    createdAt: v.number(),
+    status: v.union(v.literal('active'), v.literal('archive')),
+    ownerId: v.id('users'), // Reference to other table
   })
-    .index('by_phone', ['phone'])
-    .index('by_stage', ['stage']),
+    .index('by_status', ['status'])
+    .index('by_owner_status', ['ownerId', 'status']), // Composite index
 })
 ```
 
-✅ **DO:** Add indexes for frequently queried fields
+### Validators & Types
 
-### Queries
+| Type | Validator | TS Type | Note |
+|------|-----------|---------|------|
+| ID | `v.id("tableName")` | `Id<"tableName">` | Foreign keys |
+| String | `v.string()` | `string` | UTF-8, max 1MB |
+| Int64 | `v.int64()` | `bigint` | Use for large integers |
+| Number | `v.number()` | `number` | Float64 |
+| Boolean | `v.boolean()` | `boolean` | |
+| Null | `v.null()` | `null` | No `undefined` |
+| Object | `v.object({...})` | `object` | Plain JS objects |
+| Array | `v.array(v.string())` | `string[]` | Max 8192 items |
+| Union | `v.union(v.string(), v.number())` | `string \| number` | |
 
-✅ **DO:** Export queries for reading data
+**TypeScript Tip:** Use `Id<'tableName'>` for strict ID typing.
+
+### Functions (Query / Mutation / Action)
+
+✅ **DO:** Use the object syntax with `args`, `returns`, and `handler`.
+✅ **DO:** Use `internalQuery`/`internalMutation` for private logic calling only by other functions.
+
+#### Query (Read-only)
 ```typescript
-// convex/leads.ts
 import { query } from './_generated/server'
 import { v } from 'convex/values'
 
-export const listLeads = query({
-  args: {
-    stage: v.optional(v.string()), // Filter by stage
-    search: v.optional(v.string()), // Search via text
-  },
+export const list = query({
+  args: { status: v.string() },
+  returns: v.array(v.object({ _id: v.id('leads'), name: v.string() })),
   handler: async (ctx, args) => {
-    let leads
-    if (args.stage) {
-      if (args.stage === 'all') {
-        leads = await ctx.db.query('leads').order('desc').collect()
-      } else {
-        leads = await ctx.db
-          .query('leads')
-          .withIndex('by_stage', (q) => q.eq('stage', args.stage))
-          .collect()
-      }
-    } else {
-      leads = await ctx.db.query('leads').order('desc').collect()
-    }
-    
-    if (args.search) {
-      const search = args.search.toLowerCase()
-      leads = leads.filter(l => 
-        l.name.toLowerCase().includes(search) || 
-        l.phone.includes(search) ||
-        (l.email && l.email.toLowerCase().includes(search))
-      )
-    }
-    
-    return leads
-  },
-})
-```
-
-### Mutations
-
-✅ **DO:** Export mutations for writing data
-```typescript
-// convex/leads.ts
-import { mutation } from './_generated/server'
-import { v } from 'convex/values'
-
-export const createLead = mutation({
-  args: {
-    name: v.string(),
-    phone: v.string(),
-    email: v.optional(v.string()),
-    source: v.union(
-      v.literal('whatsapp'),
-      v.literal('instagram'),
-      v.literal('landing_page'),
-      v.literal('indicacao'),
-      v.literal('evento'),
-      v.literal('organico'),
-      v.literal('trafego_pago'),
-      v.literal('outro')
-    ),
-    profession: v.optional(v.union(
-      v.literal('enfermeiro'),
-      v.literal('dentista'),
-      v.literal('biomedico'),
-      v.literal('farmaceutico'),
-      v.literal('medico'),
-      v.literal('esteticista'),
-      v.literal('outro')
-    )),
-    interestedProduct: v.optional(v.union(
-      v.literal('trintae3'),
-      v.literal('otb'),
-      v.literal('black_neon'),
-      v.literal('comunidade'),
-      v.literal('auriculo'),
-      v.literal('na_mesa_certa'),
-      v.literal('indefinido')
-    )),
-    temperature: v.union(
-      v.literal('frio'),
-      v.literal('morno'),
-      v.literal('quente')
-    ),
-    stage: v.union(
-      v.literal('novo'),
-      v.literal('primeiro_contato'),
-      v.literal('qualificado'),
-      v.literal('proposta'),
-      v.literal('negociacao'),
-      v.literal('fechado_ganho'),
-      v.literal('fechado_perdido')
-    ),
-    assignedTo: v.optional(v.id('users')),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error("Unauthenticated")
-    }
-
-    const leadId = await ctx.db.insert('leads', {
-      ...args,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    return leadId
-  }
-})
-
-export const updateLeadStage = mutation({
-  args: {
-    leadId: v.id('leads'),
-    newStage: v.union(
-      v.literal('novo'),
-      v.literal('primeiro_contato'),
-      v.literal('qualificado'),
-      v.literal('proposta'),
-      v.literal('negociacao'),
-      v.literal('fechado_ganho'),
-      v.literal('fechado_perdido')
-    )
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error("Unauthenticated")
-    
-    await ctx.db.patch(args.leadId, {
-      stage: args.newStage,
-      updatedAt: Date.now()
-    })
-  }
-})
-
-export const updateLead = mutation({
-  args: {
-    leadId: v.id('leads'),
-    patch: v.object({
-      name: v.optional(v.string()),
-      phone: v.optional(v.string()),
-      stage: v.optional(v.union(
-        v.literal('novo'),
-        v.literal('primeiro_contato'),
-        v.literal('qualificado'),
-        v.literal('proposta'),
-        v.literal('negociacao'),
-        v.literal('fechado_ganho'),
-        v.literal('fechado_perdido')
-      )),
-      interestedProduct: v.optional(v.union(
-        v.literal('trintae3'),
-        v.literal('otb'),
-        v.literal('black_neon'),
-        v.literal('comunidade'),
-        v.literal('auriculo'),
-        v.literal('na_mesa_certa'),
-        v.literal('indefinido')
-      )),
-    })
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error("Unauthenticated")
-
-    await ctx.db.patch(args.leadId, {
-      ...args.patch,
-      updatedAt: Date.now()
-    })
-  }
-})
-```
-
-**Note**: These are the actual functions implemented in `convex/leads.ts`. The examples above show the real patterns used in this codebase, including Brazilian Portuguese field names and validation rules.
-    leadId: v.id('leads'),
-    stage: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.leadId, {
-      stage: args.stage,
-      updatedAt: Date.now(),
-    })
-  },
-})
-```
-
-### Authentication
-
-✅ **DO:** Use Clerk for auth (configured in `auth.config.ts`)
-```typescript
-// convex/auth.config.ts
-export default {
-  providers: [
-    {
-      domain: process.env.CLERK_JWT_ISSUER_DOMAIN,
-      applicationID: 'convex',
-    },
-  ],
-}
-```
-
-✅ **DO:** Access authenticated user in functions
-```typescript
-export const getMyLeads = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Not authenticated')
-    
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first()
-    
+    // ❌ NO: .filter (slow)
+    // ✅ YES: .withIndex (fast)
     return await ctx.db
       .query('leads')
-      .withIndex('by_assigned', (q) => q.eq('assignedTo', user._id))
+      .withIndex('by_status', q => q.eq('status', args.status))
       .collect()
   },
 })
 ```
 
+#### Mutation (Write)
+```typescript
+import { mutation } from './_generated/server'
+import { v } from 'convex/values'
+
+export const create = mutation({
+  args: { name: v.string() },
+  returns: v.id('leads'),
+  handler: async (ctx, args) => {
+    // ❌ NO: ctx.db.delete() on query result directly.
+    // ✅ YES: ctx.db.insert, ctx.db.patch, ctx.db.replace, ctx.db.delete(id)
+    return await ctx.db.insert('leads', {
+        name: args.name,
+        status: 'active'
+    })
+  }
+})
+```
+
+#### Action (Third-party / Long-running)
+**Note:** Actions cannot access `ctx.db` directly. Use `ctx.runQuery` or `ctx.runMutation`.
+
+```typescript
+import { action } from './_generated/server'
+import { internal } from './_generated/api'
+
+export const generateAI = action({
+  args: { prompt: v.string() },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    // 1. Call external API
+    const result = await fetch('https://api.openai.com/...')
+    // 2. Write back to DB via mutation
+    await ctx.runMutation(internal.leads.updateAnalysis, { result })
+    return "Done"
+  }
+})
+```
+
+### HTTP Endpoints
+Defined in `convex/http.ts`.
+```typescript
+import { httpRouter } from "convex/server";
+import { httpAction } from "./_generated/server";
+
+const http = httpRouter();
+
+http.route({
+  path: "/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    return new Response("OK", { status: 200 });
+  }),
+});
+
+export default http;
+```
+
+### Pagination
+```typescript
+import { paginationOptsValidator } from "convex/server";
+
+export const listConfig = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    return await ctx.db.query("leads").paginate(args.paginationOpts);
+  },
+});
+```
+
 ---
 
-## Touch Points / Key Files
+## Client Integration
 
-| File | Purpose |
-|------|---------|
-| `convex/schema.ts` | Database schema (tables, indexes) |
-| `convex/leads.ts` | Lead-related queries/mutations |
-| `convex/users.ts` | User-related queries/mutations |
-| `convex/auth.config.ts` | Clerk authentication config |
-| `convex/_generated/api.ts` | Auto-generated API types |
+### React (Standard)
+```tsx
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../convex/_generated/api";
+
+function App() {
+  const tasks = useQuery(api.tasks.list);
+  const createTask = useMutation(api.tasks.create);
+
+  // Optimistic updates are handled automatically by Convex for simple cases,
+  // or manually via mutation options.
+}
+```
+
+### TanStack Query
+If using `convex-helpers` or similar integration:
+```tsx
+import { useConvexQuery } from "@convex-dev/react-query";
+// Follow specific setup guide for QueryClient provider
+```
+
+### TanStack Start
+For SSR and Loaders in TanStack Start:
+- Use `fetchQuery` or `preloadQuery` in loaders.
+- Hydrate data on the client.
+- Ensure `ConvexProvider` wraps the app.
+
+---
+
+## Technical Rules (The Factory Standard)
+
+1.  **Function Registration**:
+    *   `query`/`mutation`/`action` = **Public API** (Exposed to client).
+    *   `internalQuery`/`internalMutation` = **Private** (Only callable by other functions/crons).
+    *   Never use `api` object to call functions within the same file (circular dependency risk).
+
+2.  **Database operations**:
+    *   `.unique()`: Get single doc or throw.
+    *   `ctx.db.patch(id, partial)`: Shallow merge.
+    *   `ctx.db.replace(id, fullDoc)`: Full replacement.
+    *   **NO** `.delete()` queries. Iterate and `ctx.db.delete(id)`.
+
+3.  **Scheduling & Crons**:
+    *   Use `ctx.scheduler.runAfter(0, ...)` for async background work.
+    *   Define crons in `convex/crons.ts` using `crons.interval`.
+
+4.  **File Storage**:
+    *   Use `ctx.storage.getUrl(storageId)` to get signed URLs.
+    *   Metadata is in `system` table `_storage`.
+
+5.  **Authentication**:
+    *   Always use `ctx.auth.getUserIdentity()` in mutations/queries to verify user.
+    *   Throw explicit errors: `throw new Error("Unauthenticated")`.
 
 ---
 
 ## JIT Index Hints
 
 ```bash
-# Find a query
-rg -n "export const.*= query" convex/
+# Find public queries
+rg "export const .* = query" convex/
 
-# Find a mutation
-rg -n "export const.*= mutation" convex/
+# Find internal mutations
+rg "export const .* = internalMutation" convex/
 
-# Find table usage
-rg -n "ctx.db.query\('tableName'\)" convex/
+# Find schema definitions
+rg "defineTable" convex/schema.ts
 
-# Find indexes
-rg -n "withIndex" convex/
+# Find usages of a specific table
+rg 'ctx.db.query\("leads"\)'
 ```
 
 ---
 
 ## Common Gotchas
 
-- **Schema changes:** Run `bunx convex dev` to apply schema changes
-- **Indexes:** Always add indexes for fields used in `withIndex()` queries
-- **Timestamps:** Use `Date.now()` (milliseconds) for timestamps
-- **IDs:** Use `v.id('tableName')` for foreign keys
-- **Auth:** Clerk JWT issuer must match in `auth.config.ts`
-- **Real-time:** Queries automatically re-run when data changes (no polling needed)
+*   **Filter vs Index**: `filter()` scans all docs (slow/expensive). `withIndex()` uses db index (fast). ALWAYS prefer `withIndex`.
+*   **Undefined Returns**: Convex functions returning `undefined` become `null` on client. Explicitly return `null`.
+*   **System Fields**: `_id` and `_creationTime` are auto-generated. Do not define them in schema.
+*   **Circular logic**: Do not call a public query from another public query if avoidable; better to extract shared logic to a helper TS function.
+*   **Env Vars**: Use `process.env.NAME`. Set in Dashboard or Project Settings.
 
 ---
 
 ## Pre-PR Checks
 
 ```bash
-# Ensure schema is valid
+# 1. Type Check
+bun run build
+
+# 2. Schema Validation (Dry run)
 bunx convex dev --once
 
-# Type check
-bun run build
+# 3. Linting (if standard lint exists)
+bun lint
 ```
