@@ -9,7 +9,7 @@ Dynamic agent routing and parallel execution coordination for AegisWallet droids
 | Droid | Primary Focus | MCPs (via Docker Gateway) | When to Use |
 |-------|---------------|---------------------------|-------------|
 | **apex-dev** | Advanced implementation (complexity ≥7) | serena, context7, neon, playwright | Performance-critical, database, testing |
-| **database-specialist** | Supabase/PostgreSQL + LGPD | serena, neon | ANY database operation, RLS, migrations |
+| **database-specialist** | Convex + LGPD | serena | ANY database operation, schema, indexes |
 | **code-reviewer** | Security + Brazilian compliance | context7, tavily, fetch | Post-implementation, security validation |
 | **apex-ui-ux-designer** | UI/UX + WCAG 2.1 AA+ | context7, serena, playwright | ANY new UI component, accessibility testing |
 | **apex-researcher** | Brazilian regulations (≥95% accuracy) | context7, tavily, serena, fetch, sequential-thinking | Compliance questions, research |

@@ -27,16 +27,56 @@ bunx shadcn@latest add dialog
 
 ```
 components/
-├── ui/              # shadcn/ui base components (Button, Card, etc.)
-├── crm/             # CRM-specific components
-│   ├── lead-card.tsx
-│   ├── pipeline-kanban.tsx
-│   └── lead-form.tsx
-├── dashboard/       # Dashboard widgets
-│   └── stats-card.tsx
-└── layout/          # Layout components
-    ├── app-sidebar.tsx
-    └── main-layout.tsx
+├── ui/                # shadcn/ui base components (Button, Card, Dialog, etc.)
+├── crm/               # CRM pipeline and lead management
+│   ├── lead-card.tsx           # Lead card with temperature indicators
+│   ├── lead-detail.tsx         # Full lead details view
+│   ├── lead-filters.tsx        # Filter controls
+│   ├── lead-form.tsx           # Lead creation/edit form
+│   └── pipeline-kanban.tsx     # Kanban board for pipeline
+├── dashboard/         # Dashboard widgets and charts
+│   ├── stats-card.tsx          # Metric card component
+│   ├── churn-alerts.tsx        # Churn risk alerts
+│   ├── funnel-chart.tsx        # Sales funnel visualization
+│   ├── leads-by-product.tsx    # Product distribution chart
+│   ├── leads-vs-conversions.tsx # Conversion comparison
+│   ├── recent-leads.tsx        # Recent leads list
+│   ├── response-time.tsx       # Response time metrics
+│   └── team-performance.tsx    # Team performance metrics
+├── students/          # Student management components
+│   ├── student-card.tsx        # Student summary card
+│   ├── student-detail.tsx      # Full student profile
+│   ├── student-filters.tsx     # Filter controls
+│   ├── student-form.tsx        # Student creation/edit
+│   ├── student-header.tsx      # Detail page header
+│   ├── student-stats.tsx       # Student statistics
+│   ├── student-table.tsx       # Tabular student list
+│   ├── student-timeline.tsx    # Activity timeline
+│   ├── enrollment-card.tsx     # Enrollment details
+│   └── tabs/                   # Tab components
+│       ├── student-conversations-tab.tsx
+│       ├── student-enrollments-tab.tsx
+│       └── student-payments-tab.tsx
+├── chat/              # Chat and messaging components
+│   ├── ai-chat-widget.tsx      # Dify AI chat integration
+│   ├── chat-input.tsx          # Message input
+│   ├── chat-window.tsx         # Chat conversation view
+│   ├── conversation-list.tsx   # Conversation sidebar
+│   ├── message-bubble.tsx      # Message display
+│   └── template-picker.tsx     # Message template selector
+├── landing/           # Public landing page components
+│   ├── hero.tsx                # Hero section
+│   ├── features.tsx            # Features section
+│   ├── dashboard-preview.tsx   # Preview section
+│   ├── navbar.tsx              # Landing navbar
+│   └── footer.tsx              # Footer
+├── layout/            # Layout components
+│   ├── app-sidebar.tsx         # Main navigation sidebar
+│   └── main-layout.tsx         # Authenticated layout wrapper
+├── theme-provider.tsx  # Dark/light theme context
+├── theme-toggle.tsx    # Theme toggle button
+├── debug-auth.tsx      # Auth debugging (dev only)
+└── not-found.tsx       # 404 component
 ```
 
 ### Component Patterns

@@ -1,5 +1,9 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    ".cursor/rules/*.mdc"
+  ],
   "mcp": {
     "gh_grep": {
       "type": "remote",
@@ -15,6 +19,61 @@
       "type": "local",
       "command": ["uvx", "mcp-server-docker"],
       "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "sequentialthinking": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm", "mcp/sequentialthinking"],
+      "enabled": true
+    },
+    "fetch": {
+      "type": "local",
+      "command": ["docker", "run", "-i", "--rm", "mcp/fetch"],
+      "enabled": true
+    }
+  },
+  "agent": {
+    "apex-dev": {
+      "tools": {
+        "serena_*": true,
+        "gh_grep_*": true,
+        "context7_*": true,
+        "fetch_*": true
+      }
+    },
+    "apex-researcher": {
+      "tools": {
+        "context7_*": true,
+        "sequentialthinking_*": true,
+        "serena_*": true,
+        "gh_grep_*": true,
+        "fetch_*": true
+      }
+    },
+    "code-reviewer": {
+      "tools": {
+        "serena_*": true,
+        "gh_grep_*": true,
+        "context7_*": true
+      }
+    },
+    "database-specialist": {
+      "tools": {
+        "serena_*": true,
+        "gh_grep_*": true,
+        "context7_*": true
+      }
+    },
+    "apex-ui-ux-designer": {
+      "tools": {
+        "serena_*": true,
+        "gh_grep_*": true,
+        "context7_*": true
+      }
     }
   }
 }

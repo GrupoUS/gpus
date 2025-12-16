@@ -238,6 +238,59 @@ For SSR and Loaders in TanStack Start:
 
 ---
 
+## Library Utilities (`convex/lib/`)
+
+The project includes a set of reusable utilities in `convex/lib/`:
+
+| File | Purpose |
+|------|---------|
+| `auth.ts` | Clerk auth helpers (`requireAuth`, `getIdentity`, `hasOrgRole`) |
+| `validation.ts` | Input validation utilities |
+| `encryption.ts` | Data encryption helpers |
+| `audit-logging.ts` | Activity logging for compliance |
+| `lgpd-compliance.ts` | LGPD compliance utilities |
+| `lgpd-data-rights.ts` | Data subject rights (access, deletion) |
+| `security-middleware.ts` | Security wrappers |
+| `security-health.ts` | Security health checks |
+| `index.ts` | Barrel export |
+
+### Auth Utilities Pattern
+
+✅ **DO:** Use auth helpers from `convex/lib/auth.ts`
+```typescript
+import { requireAuth, hasOrgRole } from './lib/auth'
+
+export const protectedMutation = mutation({
+  args: { ... },
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx) // Throws if not authenticated
+    
+    if (!hasOrgRole(identity, 'admin')) {
+      throw new Error('Admin access required')
+    }
+    // ...
+  },
+})
+```
+
+### ClerkIdentity Interface
+```typescript
+interface ClerkIdentity {
+  subject: string          // Clerk user ID
+  email?: string
+  name?: string
+  org_id?: string          // Organization ID
+  org_role?: string        // Role in organization
+  org_slug?: string
+  org_permissions?: string[]
+  pictureUrl?: string
+  tokenIdentifier: string
+  issuer: string
+}
+```
+
+---
+
 ## JIT Index Hints
 
 ```bash
@@ -252,6 +305,9 @@ rg "defineTable" convex/schema.ts
 
 # Find usages of a specific table
 rg 'ctx.db.query\("leads"\)'
+
+# Find auth utility usage
+rg "requireAuth|getIdentity|hasOrgRole" convex/
 ```
 
 ---

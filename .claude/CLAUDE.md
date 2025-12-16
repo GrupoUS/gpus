@@ -2,18 +2,18 @@
 
 > **Note**: This is the condensed orchestration reference. For detailed Spec Mode research patterns, see `research.md`. For complete subagent definitions and development standards, see root `AGENTS.md`.
 
-Dynamic subagent routing and parallel execution coordination for AegisWallet subagents and skills.
+Dynamic subagent routing and parallel execution coordination for Portal Grupo US subagents and skills.
 
 ## Available Subagents & Capabilities
 
 | Subagent | Primary Focus | MCPs Assigned | When to Use |
 |----------|---------------|---------------|-------------|
-| **apex-dev** | Advanced implementation (complexity ≥7) | serena, context7 | Performance-critical, security-sensitive |
-| **database-specialist** | Supabase/PostgreSQL + LGPD | serena | ANY database operation, RLS, migrations |
-| **code-reviewer** | Security + Brazilian compliance | context7, tavily | Post-implementation, security validation |
-| **apex-ui-ux-designer** | UI/UX + WCAG 2.1 AA+ | context7, serena | ANY new UI component, accessibility |
-| **apex-researcher** | Brazilian regulations (≥95% accuracy) | context7, tavily, serena | Compliance questions, research |
-| **product-architect** | PRD + Diátaxis framework | sequential-thinking | Strategy, documentation |
+| **apex-dev** | Advanced implementation (complexity ≥7) | serena, gh_grep | Performance-critical, security-sensitive |
+| **database-specialist** | Convex + LGPD | serena | ANY database operation, schema, indexes |
+| **code-reviewer** | Security + Brazilian compliance | serena, gh_grep | Post-implementation, security validation |
+| **apex-ui-ux-designer** | UI/UX + WCAG 2.1 AA+ | serena, gh_grep | ANY new UI component, accessibility |
+| **apex-researcher** | Brazilian regulations (≥95% accuracy) | serena, gh_grep | Compliance questions, research |
+| **product-architect** | PRD + Diátaxis framework | serena | Strategy, documentation |
 
 ## Core Orchestration Rules
 

@@ -142,3 +142,49 @@ Before creating a PR:
 | View Convex dashboard | `bunx convex dashboard` |
 
 **For detailed patterns, see sub-directory AGENTS.md files.**
+
+---
+
+## OpenCode Agents & Commands
+
+### Available Agents
+
+| Agent | Mode | Description |
+|-------|------|-------------|
+| `apex-dev` | Primary | Full-stack developer with TDD methodology. Orchestrates subagents. |
+| `apex-researcher` | Primary | Research & planning specialist. NEVER implements. |
+| `code-reviewer` | Subagent | Security architect with OWASP + LGPD compliance. Read-only. |
+| `database-specialist` | Subagent | Convex expert for schema, queries, mutations. |
+| `apex-ui-ux-designer` | Subagent | UI/UX with accessibility-first approach + shadcn/ui. |
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `/research [topic]` | Multi-source research with cross-validation |
+| `/qc [scope]` | Quality control pipeline (lint, build, test, deploy) |
+| `/clean [scope]` | Dead code detection and cleanup with Knip |
+
+### MCP Tools Available
+
+| MCP | Purpose |
+|-----|---------|
+| `serena` | Semantic code analysis, symbol discovery |
+| `gh_grep` | Search real-world GitHub code patterns |
+| `context7` | Official documentation lookup |
+| `tavily` | Web search for current patterns (research only) |
+| `sequential_thinking` | Step-by-step reasoning (research only) |
+| `docker` | Container management |
+
+### Agent Invocation
+
+```bash
+# Invoke primary agents
+@apex-dev      # For implementation tasks
+@apex-researcher  # For research/planning tasks
+
+# Invoke subagents (from apex-dev)
+@code-reviewer        # Security/compliance review
+@database-specialist  # Convex database tasks
+@apex-ui-ux-designer  # UI/UX components
+```

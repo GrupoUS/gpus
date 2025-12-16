@@ -10,7 +10,7 @@ Advanced AI orchestration for **Grupo US** with intelligent agent routing, MCP c
 
 | Directive | Rule |
 |-----------|------|
-| **Master Rulebook** | Read `/Users/sacha/projetos/gpus/AGENTS.md` at session start. Recursively read local `AGENTS.md` in subdirectories. |
+| **Master Rulebook** | Read `D:\\Coders\\gpus/AGENTS.md` at session start. Recursively read local `AGENTS.md` in subdirectories. |
 | **Package Manager** | **ALWAYS use `bun`**. Never `npm`, `yarn`, or `pnpm`. |
 | **Framework** | React 19 + Vite + TanStack Router + Convex + Clerk |
 | **MCP First** | Use `serena` before `grep`/`cat`. Use `sequential-thinking` for complexity ≥5. |
@@ -48,7 +48,7 @@ graph TD
 
 ## 🤖 Droid Factory
 
-### Location: `/Users/sacha/projetos/gpus/.factory/droids/`
+### Location: `D:\\Coders\\gpus/.factory/droids/`
 
 | Task Type | Droid | Trigger Keywords |
 |-----------|-------|------------------|
@@ -229,10 +229,10 @@ brazilian_compliance: MANDATORY (LGPD + student data)
 
 | Item | Path |
 |------|------|
-| Project Root | `/Users/sacha/projetos/gpus` |
-| Agents Config | `/Users/sacha/projetos/gpus/AGENTS.md` |
-| Factory Droids | `/Users/sacha/projetos/gpus/.factory/droids/` |
-| Skills | `/Users/sacha/projetos/gpus/.factory/skills/` |
+| Project Root | `D:\\Coders\\gpus` |
+| Agents Config | `D:\\Coders\\gpus/AGENTS.md` |
+| Factory Droids | `D:\\Coders\\gpus/.factory/droids/` |
+| Skills | `D:\\Coders\\gpus/.factory/skills/` |
 | Research Output | `.factory/docs/YYYY-MM-DD-topic.md` |
 
 ---

@@ -55,13 +55,25 @@ export function useAuthWithRouting() {
 
 ---
 
+## Available Hooks
+
+| Hook | Purpose | Convex Integration |
+|------|---------|-------------------|
+| `use-mobile.tsx` | Mobile detection with responsive breakpoints | No |
+| `use-toast.ts` | Toast notification management (from sonner) | No |
+| `use-dify-chat.ts` | Dify AI chat integration with streaming | Yes (via actions) |
+| `use-students-view-model.ts` | Student list state, filters, pagination | Yes (queries) |
+
+---
+
 ## Touch Points / Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/hooks/use-mobile.tsx` | Mobile detection hook with breakpoint logic |
-| `src/hooks/use-leads.ts` | Lead data fetching and mutations (if exists) |
-| `src/hooks/` | Feature-specific hooks for state management |
+| `src/hooks/use-students-view-model.ts` | Student list ViewModel with filtering, pagination, navigation |
+| `src/hooks/use-dify-chat.ts` | Dify AI chat integration for WhatsApp/chat |
+| `src/hooks/use-toast.ts` | Toast notification hook (shadcn pattern) |
 
 ---
 
