@@ -137,17 +137,22 @@ export default defineSchema({
     .index('by_created', ['createdAt']),
 
   // ═══════════════════════════════════════════════════════
-  // ALUNOS (Clientes convertidos)
+  // ALUNOS (Clientes convertidos) - LGPD COMPLIANT
   // ═══════════════════════════════════════════════════════
   students: defineTable({
     // Referência ao lead original
     leadId: v.optional(v.id('leads')),
     
-    // Dados pessoais
+    // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
     email: v.string(),
     phone: v.string(),
-    cpf: v.optional(v.string()),
+    cpf: v.optional(v.string()), // Original format (migration only)
+    
+    // LGPD - Campos criptografados (AES-256-GCM)
+    encryptedCPF: v.optional(v.string()), // CPF criptografado
+    encryptedEmail: v.optional(v.string()), // Email criptografado (backup)
+    encryptedPhone: v.optional(v.string()), // Telefone criptografado (backup)
     
     // Dados profissionais
     profession: v.string(),
@@ -174,6 +179,13 @@ export default defineSchema({
       v.literal('alto')
     ),
     lastEngagementAt: v.optional(v.number()),
+    
+    // LGPD - Controle de retenção e consentimento
+    dataRetentionUntil: v.optional(v.number()), // Data para exclusão automática
+    consentGrantedAt: v.optional(v.number()), // Quando consentimento foi concedido
+    consentVersion: v.optional(v.string()), // Versão da política de privacidade
+    minorConsentRequired: v.optional(v.boolean()), // Se consentimento de responsável foi necessário
+    minorConsentGranted: v.optional(v.boolean()), // Se consentimento foi obtido
     
     // Timestamps
     createdAt: v.number(),
@@ -470,4 +482,209 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index('by_date', ['date']),
+
+  // ═══════════════════════════════════════════════════════
+  // LGPD COMPLIANCE (Lei Geral de Proteção de Dados)
+  // ═══════════════════════════════════════════════════════
+  lgpdConsent: defineTable({
+    studentId: v.id('students'),
+    consentType: v.string(), // 'academic_processing', 'marketing_communications', etc.
+    consentVersion: v.string(),
+    granted: v.boolean(),
+    grantedAt: v.number(),
+    expiresAt: v.optional(v.number()), // Para consentos temporários
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    justification: v.optional(v.string()), // Justificativa para tratamento
+    dataCategories: v.array(v.string()), // Categorias de dados tratadas
+    rightsWithdrawal: v.boolean(), // Se direitos foram retirados
+    withdrawalAt: v.optional(v.number()), // Quando retirou consentimento
+    withdrawalReason: v.optional(v.string()), // Motivo da retirada
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_student', ['studentId'])
+    .index('by_consent_type', ['consentType'])
+    .index('by_granted', ['granted'])
+    .index('by_expires', ['expiresAt']),
+
+  // ═══════════════════════════════════════════════════════
+  // LGPD AUDIT LOG (Rastreabilidade de Operações)
+  // ═══════════════════════════════════════════════════════
+  lgpdAudit: defineTable({
+    studentId: v.optional(v.id('students')),
+    
+    // Tipo de operação com dados
+    actionType: v.union(
+      v.literal('data_access'),
+      v.literal('data_creation'),
+      v.literal('data_modification'),
+      v.literal('data_deletion'),
+      v.literal('consent_granted'),
+      v.literal('consent_withdrawn'),
+      v.literal('data_export'),
+      v.literal('data_portability'),
+      v.literal('security_event'),
+      v.literal('data_breach')
+    ),
+    
+    // Quem realizou a operação
+    actorId: v.string(), // clerkId do responsável
+    actorRole: v.optional(v.string()), // admin, sdr, cs, support
+    
+    // Dados operacionais
+    dataCategory: v.string(), // identificação, contato, acadêmico, etc.
+    description: v.string(), // Descrição da operação
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    
+    // Propósito e base legal
+    processingPurpose: v.optional(v.string()), // gestão acadêmica, suporte, etc.
+    legalBasis: v.string(), // consentimento, obrigação legal, etc.
+    
+    // Controle de retenção
+    retentionDays: v.optional(v.number()), // Dias de retenção previstos
+    dataDeletedAt: v.optional(v.number()), // Quando dados foram excluídos
+    
+    // Metadados adicionais
+    metadata: v.optional(v.any()), // Dados extras em JSON
+    
+    // Timestamp
+    createdAt: v.number(),
+  })
+    .index('by_student', ['studentId'])
+    .index('by_action_type', ['actionType'])
+    .index('by_actor', ['actorId'])
+    .index('by_data_category', ['dataCategory'])
+    .index('by_created', ['createdAt'])
+    .index('by_legal_basis', ['legalBasis']),
+
+  // ═══════════════════════════════════════════════════════
+  // LGPD DATA RETENTION POLICIES
+  // ═══════════════════════════════════════════════════════
+  lgpdRetention: defineTable({
+    dataCategory: v.string(), // identificação, acadêmico, financeiro, etc.
+    retentionDays: v.number(), // Dias de retenção obrigatórios
+    legalBasis: v.string(), // Base legal para retenção
+    automaticDeletion: v.boolean(), // Se deleção é automática
+    notificationBeforeDeletion: v.number(), // Dias antes de notificar
+    requiresExplicitConsent: v.boolean(), // Se exige consentimento explícito
+    minorAgeRestriction: v.optional(v.number()), // Restrição para menores (18)
+    exceptionalCircumstances: v.optional(v.string()), // Casos excepcionais
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_data_category', ['dataCategory'])
+    .index('by_legal_basis', ['legalBasis']),
+
+  // ═══════════════════════════════════════════════════════
+  // LGPD DATA SUBJECT REQUESTS (Solicitações dos Titulares)
+  // ═══════════════════════════════════════════════════════
+  lgpdRequests: defineTable({
+    studentId: v.id('students'),
+    
+    // Tipo de solicitação
+    requestType: v.union(
+      v.literal('access'),
+      v.literal('correction'),
+      v.literal('deletion'),
+      v.literal('portability'),
+      v.literal('information'),
+      v.literal('objection'),
+      v.literal('restriction')
+    ),
+    
+    // Status da solicitação
+    status: v.union(
+      v.literal('pending'),
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('rejected'),
+      v.literal('cancelled')
+    ),
+    
+    // Detalhes da solicitação
+    description: v.optional(v.string()), // Descrição detalhada
+    identityProof: v.optional(v.string()), // Prova de identidade
+    ipAddress: v.string(),
+    userAgent: v.string(),
+    
+    // Resolução
+    response: v.optional(v.string()), // Resposta ao titular
+    responseFiles: v.optional(v.array(v.string())), // Arquivos gerados
+    completedAt: v.optional(v.number()), // Data de conclusão
+    rejectionReason: v.optional(v.string()), // Motivo da rejeição
+    
+    // Processamento
+    processedBy: v.string(), // clerkId de quem processou
+    processingNotes: v.optional(v.string()), // Notas do processamento
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_student', ['studentId'])
+    .index('by_request_type', ['requestType'])
+    .index('by_status', ['status'])
+    .index('by_created', ['createdAt'])
+    .index('by_processed_by', ['processedBy']),
+
+  // ═══════════════════════════════════════════════════════
+  // LGPD DATA BREACH LOG (Registro de Vazamentos)
+  // ═══════════════════════════════════════════════════════
+  lgpdDataBreach: defineTable({
+    incidentId: v.string(), // Identificador único do incidente
+    
+    // Detalhes do vazamento
+    breachType: v.union(
+      v.literal('hacker_attack'),
+      v.literal('internal_threat'),
+      v.literal('lost_device'),
+      v.literal('misconfigured_system'),
+      v.literal('third_party_breach'),
+      v.literal('physical_theft'),
+      v.literal('social_engineering')
+    ),
+    
+    // Impacto
+    affectedStudents: v.array(v.id('students')), // Alunos afetados
+    dataCategories: v.array(v.string()), // Categorias de dados vazadas
+    severity: v.union(v.literal('low'), v.literal('medium'), v.literal('high'), v.literal('critical')),
+    
+    // Cronologia
+    detectedAt: v.number(), // Quando detectou
+    startedAt: v.number(), // Quando começou
+    containedAt: v.optional(v.number()), // Quando conteve
+    
+    // Notificação
+    reportedToANPD: v.boolean(), // Se notificou à ANPD
+    notifiedAffected: v.boolean(), // Se notificou os afetados
+    notificationMethod: v.optional(v.string()), // Método de notificação
+    notificationDeadline: v.number(), // Prazo legal (72h)
+    
+    // Ações corretivas
+    correctiveActions: v.array(v.string()), // Ações tomadas
+    preventiveMeasures: v.array(v.string()), // Medidas preventivas
+    
+    // Detalhes adicionais
+    description: v.string(), // Descrição detalhada
+    externalReporting: v.boolean(), // Se reportou externamente
+    lawEnforcementNotified: v.boolean(), // Se notificou polícia
+    
+    // Responsáveis
+    detectedBy: v.string(), // clerkId de quem detectou
+    resolvedBy: v.optional(v.string()), // clerkId de quem resolveu
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_incident_id', ['incidentId'])
+    .index('by_severity', ['severity'])
+    .index('by_detected_at', ['detectedAt'])
+    .index('by_detected_by', ['detectedBy']),
 })
