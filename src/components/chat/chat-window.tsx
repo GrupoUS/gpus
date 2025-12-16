@@ -75,7 +75,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	}
 
 	// Safety check for contactName if existing, else use channel
-	const contactName = (conversation as any).contactName;
+	const contactName = conversation.contactName;
 	const displayName = contactName || conversation.channel;
 
 	return (
