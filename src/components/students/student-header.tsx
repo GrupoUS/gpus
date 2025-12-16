@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { GraduationCap, LayoutGrid, TableIcon } from 'lucide-react';
 
 import { StudentForm } from '@/components/students/student-form';
+import { StudentImportDialog } from '@/components/students/student-import-dialog';
 import { Button } from '@/components/ui/button';
 
 interface StudentHeaderProps {
@@ -59,6 +60,7 @@ export function StudentHeader({
 						<TableIcon className="h-4 w-4" />
 					</Button>
 				</div>
+				<StudentImportDialog />
 				<StudentForm />
 			</div>
 		</div>

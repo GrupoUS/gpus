@@ -20,7 +20,7 @@ export default defineSchema({
     // Multi-tenant: organização atual
     organizationId: v.optional(v.string()),
     organizationRole: v.optional(v.string()), // 'admin' | 'member' basically, but Clerk uses specific strings
-    
+
     // Métricas de performance
     leadsAtribuidos: v.optional(v.number()),
     conversoes: v.optional(v.number()),
@@ -51,7 +51,7 @@ export default defineSchema({
       v.literal('outro')
     ),
     sourceDetail: v.optional(v.string()), // Campanha específica / UTM
-    
+
     // Qualificação (baseada no script de vendas)
     profession: v.optional(v.union(
       v.literal('enfermeiro'),
@@ -67,7 +67,7 @@ export default defineSchema({
     clinicCity: v.optional(v.string()),
     yearsInAesthetics: v.optional(v.number()),
     currentRevenue: v.optional(v.string()), // Faixa de faturamento
-    
+
     // Interesse e dores (diagnóstico do script)
     interestedProduct: v.optional(v.union(
       v.literal('trintae3'),
@@ -88,7 +88,7 @@ export default defineSchema({
       v.literal('outro')
     )),
     mainDesire: v.optional(v.string()),
-    
+
     // Pipeline
     stage: v.union(
       v.literal('novo'),
@@ -107,10 +107,10 @@ export default defineSchema({
       v.literal('nao_qualificado'),
       v.literal('outro')
     )),
-    
+
     // Atribuição
     assignedTo: v.optional(v.id('users')), // SDR responsável
-    
+
     // Scoring e prioridade
     temperature: v.union(
       v.literal('frio'),
@@ -118,10 +118,10 @@ export default defineSchema({
       v.literal('quente')
     ),
     score: v.optional(v.number()), // 0-100 calculado
-    
+
     // Multi-tenant
     organizationId: v.string(), // Obrigatório para leads
-    
+
     // Timestamps
     lastContactAt: v.optional(v.number()),
     nextFollowUpAt: v.optional(v.number()),
@@ -142,25 +142,25 @@ export default defineSchema({
   students: defineTable({
     // Referência ao lead original
     leadId: v.optional(v.id('leads')),
-    
+
     // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
     email: v.string(),
     phone: v.string(),
     cpf: v.optional(v.string()), // Original format (migration only)
-    
+
     // LGPD - Campos criptografados (AES-256-GCM)
     encryptedCPF: v.optional(v.string()), // CPF criptografado
     encryptedEmail: v.optional(v.string()), // Email criptografado (backup)
     encryptedPhone: v.optional(v.string()), // Telefone criptografado (backup)
-    
+
     // Dados profissionais
     profession: v.string(),
     professionalId: v.optional(v.string()), // COREN, CRO, etc
     hasClinic: v.boolean(),
     clinicName: v.optional(v.string()),
     clinicCity: v.optional(v.string()),
-    
+
     // Status
     status: v.union(
       v.literal('ativo'),
@@ -168,10 +168,10 @@ export default defineSchema({
       v.literal('pausado'),
       v.literal('formado')
     ),
-    
+
     // Atribuição CS
     assignedCS: v.optional(v.id('users')),
-    
+
     // Indicadores de risco
     churnRisk: v.union(
       v.literal('baixo'),
@@ -179,14 +179,32 @@ export default defineSchema({
       v.literal('alto')
     ),
     lastEngagementAt: v.optional(v.number()),
-    
+
+    // Dados demográficos e endereço (importação XLSX)
+    birthDate: v.optional(v.number()), // Data de nascimento
+    address: v.optional(v.string()), // Endereço
+    addressNumber: v.optional(v.string()), // Número
+    complement: v.optional(v.string()), // Complemento
+    neighborhood: v.optional(v.string()), // Bairro
+    city: v.optional(v.string()), // Cidade
+    state: v.optional(v.string()), // Estado (UF)
+    zipCode: v.optional(v.string()), // CEP
+    country: v.optional(v.string()), // País
+
+    // Dados de venda/origem
+    saleDate: v.optional(v.number()), // Data da venda
+    salesperson: v.optional(v.string()), // Vendedor
+    contractStatus: v.optional(v.string()), // Status do contrato
+    leadSource: v.optional(v.string()), // Origem do lead
+    cohort: v.optional(v.string()), // Turma (ex: "TURMA 5", "TURMA 6")
+
     // LGPD - Controle de retenção e consentimento
     dataRetentionUntil: v.optional(v.number()), // Data para exclusão automática
     consentGrantedAt: v.optional(v.number()), // Quando consentimento foi concedido
     consentVersion: v.optional(v.string()), // Versão da política de privacidade
     minorConsentRequired: v.optional(v.boolean()), // Se consentimento de responsável foi necessário
     minorConsentGranted: v.optional(v.boolean()), // Se consentimento foi obtido
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -210,10 +228,10 @@ export default defineSchema({
       v.literal('auriculo'),
       v.literal('na_mesa_certa')
     ),
-    
+
     // Turma/Edição
     cohort: v.optional(v.string()), // Ex: "2025-T1", "Março-2025"
-    
+
     // Status
     status: v.union(
       v.literal('ativo'),
@@ -222,18 +240,18 @@ export default defineSchema({
       v.literal('pausado'),
       v.literal('aguardando_inicio')
     ),
-    
+
     // Datas
     startDate: v.optional(v.number()),
     expectedEndDate: v.optional(v.number()),
     actualEndDate: v.optional(v.number()),
-    
+
     // Progresso
     progress: v.optional(v.number()), // 0-100
     modulesCompleted: v.optional(v.number()),
     totalModules: v.optional(v.number()),
     practicesCompleted: v.optional(v.number()), // Para TRINTAE3
-    
+
     // Financeiro
     totalValue: v.number(),
     installments: v.number(),
@@ -245,7 +263,7 @@ export default defineSchema({
       v.literal('quitado'),
       v.literal('cancelado')
     ),
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -262,7 +280,7 @@ export default defineSchema({
     // Referências
     leadId: v.optional(v.id('leads')),
     studentId: v.optional(v.id('students')),
-    
+
     // Canal
     channel: v.union(
       v.literal('whatsapp'),
@@ -271,14 +289,14 @@ export default defineSchema({
       v.literal('email')
     ),
     externalId: v.optional(v.string()), // ID no Evolution API
-    
+
     // Departamento/Fila
     department: v.union(
       v.literal('vendas'),
       v.literal('cs'),
       v.literal('suporte')
     ),
-    
+
     // Status
     status: v.union(
       v.literal('aguardando_atendente'),
@@ -287,17 +305,17 @@ export default defineSchema({
       v.literal('resolvido'),
       v.literal('bot_ativo')
     ),
-    
+
     // Atribuição
     assignedTo: v.optional(v.id('users')),
     lastBotMessage: v.optional(v.string()),
     handoffReason: v.optional(v.string()),
-    
+
     // Métricas
     firstResponseAt: v.optional(v.number()),
     resolvedAt: v.optional(v.number()),
     satisfactionScore: v.optional(v.number()), // NPS da conversa
-    
+
     // Timestamps
     lastMessageAt: v.number(),
     createdAt: v.number(),
@@ -315,7 +333,7 @@ export default defineSchema({
   // ═══════════════════════════════════════════════════════
   messages: defineTable({
     conversationId: v.id('conversations'),
-    
+
     // Remetente
     sender: v.union(
       v.literal('client'),
@@ -324,7 +342,7 @@ export default defineSchema({
       v.literal('system')
     ),
     senderId: v.optional(v.id('users')), // Se agent
-    
+
     // Conteúdo
     content: v.string(),
     contentType: v.union(
@@ -336,7 +354,7 @@ export default defineSchema({
     ),
     mediaUrl: v.optional(v.string()),
     templateId: v.optional(v.id('messageTemplates')),
-    
+
     // Status de entrega
     status: v.union(
       v.literal('enviando'),
@@ -346,12 +364,12 @@ export default defineSchema({
       v.literal('falhou')
     ),
     externalId: v.optional(v.string()), // ID no WhatsApp
-    
+
     // Metadata IA
     aiGenerated: v.optional(v.boolean()),
     aiConfidence: v.optional(v.number()),
     detectedIntent: v.optional(v.string()),
-    
+
     // Timestamp
     createdAt: v.number(),
   })
@@ -405,7 +423,7 @@ export default defineSchema({
     studentId: v.optional(v.id('students')),
     enrollmentId: v.optional(v.id('enrollments')),
     conversationId: v.optional(v.id('conversations')),
-    
+
     // Tipo
     type: v.union(
       v.literal('lead_criado'),
@@ -429,11 +447,11 @@ export default defineSchema({
       v.literal('nota_adicionada'),
       v.literal('atribuicao_alterada')
     ),
-    
+
     // Detalhes
     description: v.string(),
     metadata: v.optional(v.any()), // Dados extras JSON
-    
+
     // Multi-tenant
     organizationId: v.string(),
     performedBy: v.string(), // clerkId (subject)
@@ -459,26 +477,26 @@ export default defineSchema({
 
   dailyMetrics: defineTable({
     date: v.string(), // YYYY-MM-DD
-    
+
     // Leads
     newLeads: v.number(),
     leadsBySource: v.optional(v.any()),
     leadsByProduct: v.optional(v.any()),
-    
+
     // Conversões
     conversions: v.number(),
     conversionValue: v.number(),
     conversionsByProduct: v.optional(v.any()),
-    
+
     // Atendimento
     messagesReceived: v.number(),
     messagesSent: v.number(),
     avgResponseTime: v.optional(v.number()),
     botResolutionRate: v.optional(v.number()),
-    
+
     // Por usuário
     userMetrics: v.optional(v.any()),
-    
+
     createdAt: v.number(),
   })
     .index('by_date', ['date']),
@@ -500,7 +518,7 @@ export default defineSchema({
     rightsWithdrawal: v.boolean(), // Se direitos foram retirados
     withdrawalAt: v.optional(v.number()), // Quando retirou consentimento
     withdrawalReason: v.optional(v.string()), // Motivo da retirada
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -515,7 +533,7 @@ export default defineSchema({
   // ═══════════════════════════════════════════════════════
   lgpdAudit: defineTable({
     studentId: v.optional(v.id('students')),
-    
+
     // Tipo de operação com dados
     actionType: v.union(
       v.literal('data_access'),
@@ -529,28 +547,28 @@ export default defineSchema({
       v.literal('security_event'),
       v.literal('data_breach')
     ),
-    
+
     // Quem realizou a operação
     actorId: v.string(), // clerkId do responsável
     actorRole: v.optional(v.string()), // admin, sdr, cs, support
-    
+
     // Dados operacionais
     dataCategory: v.string(), // identificação, contato, acadêmico, etc.
     description: v.string(), // Descrição da operação
     ipAddress: v.optional(v.string()),
     userAgent: v.optional(v.string()),
-    
+
     // Propósito e base legal
     processingPurpose: v.optional(v.string()), // gestão acadêmica, suporte, etc.
     legalBasis: v.string(), // consentimento, obrigação legal, etc.
-    
+
     // Controle de retenção
     retentionDays: v.optional(v.number()), // Dias de retenção previstos
     dataDeletedAt: v.optional(v.number()), // Quando dados foram excluídos
-    
+
     // Metadados adicionais
     metadata: v.optional(v.any()), // Dados extras em JSON
-    
+
     // Timestamp
     createdAt: v.number(),
   })
@@ -573,7 +591,7 @@ export default defineSchema({
     requiresExplicitConsent: v.boolean(), // Se exige consentimento explícito
     minorAgeRestriction: v.optional(v.number()), // Restrição para menores (18)
     exceptionalCircumstances: v.optional(v.string()), // Casos excepcionais
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -586,7 +604,7 @@ export default defineSchema({
   // ═══════════════════════════════════════════════════════
   lgpdRequests: defineTable({
     studentId: v.id('students'),
-    
+
     // Tipo de solicitação
     requestType: v.union(
       v.literal('access'),
@@ -597,7 +615,7 @@ export default defineSchema({
       v.literal('objection'),
       v.literal('restriction')
     ),
-    
+
     // Status da solicitação
     status: v.union(
       v.literal('pending'),
@@ -606,23 +624,23 @@ export default defineSchema({
       v.literal('rejected'),
       v.literal('cancelled')
     ),
-    
+
     // Detalhes da solicitação
     description: v.optional(v.string()), // Descrição detalhada
     identityProof: v.optional(v.string()), // Prova de identidade
     ipAddress: v.string(),
     userAgent: v.string(),
-    
+
     // Resolução
     response: v.optional(v.string()), // Resposta ao titular
     responseFiles: v.optional(v.array(v.string())), // Arquivos gerados
     completedAt: v.optional(v.number()), // Data de conclusão
     rejectionReason: v.optional(v.string()), // Motivo da rejeição
-    
+
     // Processamento
     processedBy: v.string(), // clerkId de quem processou
     processingNotes: v.optional(v.string()), // Notas do processamento
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -638,7 +656,7 @@ export default defineSchema({
   // ═══════════════════════════════════════════════════════
   lgpdDataBreach: defineTable({
     incidentId: v.string(), // Identificador único do incidente
-    
+
     // Detalhes do vazamento
     breachType: v.union(
       v.literal('hacker_attack'),
@@ -649,36 +667,36 @@ export default defineSchema({
       v.literal('physical_theft'),
       v.literal('social_engineering')
     ),
-    
+
     // Impacto
     affectedStudents: v.array(v.id('students')), // Alunos afetados
     dataCategories: v.array(v.string()), // Categorias de dados vazadas
     severity: v.union(v.literal('low'), v.literal('medium'), v.literal('high'), v.literal('critical')),
-    
+
     // Cronologia
     detectedAt: v.number(), // Quando detectou
     startedAt: v.number(), // Quando começou
     containedAt: v.optional(v.number()), // Quando conteve
-    
+
     // Notificação
     reportedToANPD: v.boolean(), // Se notificou à ANPD
     notifiedAffected: v.boolean(), // Se notificou os afetados
     notificationMethod: v.optional(v.string()), // Método de notificação
     notificationDeadline: v.number(), // Prazo legal (72h)
-    
+
     // Ações corretivas
     correctiveActions: v.array(v.string()), // Ações tomadas
     preventiveMeasures: v.array(v.string()), // Medidas preventivas
-    
+
     // Detalhes adicionais
     description: v.string(), // Descrição detalhada
     externalReporting: v.boolean(), // Se reportou externamente
     lawEnforcementNotified: v.boolean(), // Se notificou polícia
-    
+
     // Responsáveis
     detectedBy: v.string(), // clerkId de quem detectou
     resolvedBy: v.optional(v.string()), // clerkId de quem resolveu
-    
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
