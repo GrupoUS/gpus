@@ -20,9 +20,6 @@ function RootLayout() {
 	// The index route (Landing) will have its own layout/structure.
 	return (
 		<ThemeProvider defaultTheme="dark" storageKey="gpus-ui-theme">
-			<a href="#main-content" className="skip-link">
-				Pular para conteúdo principal
-			</a>
 			<Outlet />
 			<Toaster />
 		</ThemeProvider>
