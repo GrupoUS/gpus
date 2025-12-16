@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 
 /**
  * Get current user from Clerk auth
@@ -30,9 +30,16 @@ export const list = query({
 })
 
 /**
- * Create or update a user (sync from Clerk)
+ * Create or update a user (sync from Clerk webhooks)
+ * 
+ * SECURITY: This is an internalMutation - only callable from:
+ * - Clerk webhooks (via internal action)
+ * - Other internal Convex functions
+ * - HTTP actions with proper authentication
+ * 
+ * NOT callable from the frontend client.
  */
-export const syncUser = mutation({
+export const syncUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.string(),
@@ -44,6 +51,8 @@ export const syncUser = mutation({
       v.literal('cs'),
       v.literal('support')
     )),
+    organizationId: v.optional(v.string()),
+    organizationRole: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -52,31 +61,31 @@ export const syncUser = mutation({
       .unique()
 
     if (existingUser) {
-      const patches: any = {
+      const patches: Record<string, unknown> = {
         email: args.email,
         name: args.name,
         updatedAt: Date.now(),
       }
       if (args.avatar) patches.avatar = args.avatar
-      // Only update role if provided and different? Or assume Clerk/Admin manages roles?
-      // For now, let's allow role updates if passed explicitly.
+      // Role and org updates from trusted source (webhook)
       if (args.role) patches.role = args.role
+      if (args.organizationId !== undefined) patches.organizationId = args.organizationId
+      if (args.organizationRole !== undefined) patches.organizationRole = args.organizationRole
 
       await ctx.db.patch(existingUser._id, patches)
       return existingUser._id
     }
 
-    // New User Default Role: SDR (or restrict signup? for now default to sdr)
+    // New User - Default Role: SDR
     const newUserId = await ctx.db.insert('users', {
       clerkId: args.clerkId,
       email: args.email,
       name: args.name,
       avatar: args.avatar,
-      role: args.role ?? 'sdr', // Default role
+      role: args.role ?? 'sdr',
       isActive: true,
-      // Multi-tenant defaults
-      organizationId: undefined, // Will be set via webhook usually, or manually
-      organizationRole: undefined, 
+      organizationId: args.organizationId,
+      organizationRole: args.organizationRole,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })

@@ -310,7 +310,17 @@ export const updateLead = mutation({
 export const getLead = query({
   args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.leadId)
+    // Require authentication and get organization scope
+    const organizationId = await getOrganizationId(ctx)
+    
+    const lead = await ctx.db.get(args.leadId)
+    
+    // Only return lead if it belongs to the caller's organization
+    if (!lead || lead.organizationId !== organizationId) {
+      return null
+    }
+    
+    return lead
   }
 })
 

@@ -10,8 +10,10 @@
 
 import type * as activities from "../activities.js";
 import type * as conversations from "../conversations.js";
+import type * as debug_tool from "../debug_tool.js";
 import type * as enrollments from "../enrollments.js";
 import type * as leads from "../leads.js";
+import type * as lib_auth from "../lib/auth.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
@@ -28,8 +30,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   conversations: typeof conversations;
+  debug_tool: typeof debug_tool;
   enrollments: typeof enrollments;
   leads: typeof leads;
+  "lib/auth": typeof lib_auth;
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
   metrics: typeof metrics;

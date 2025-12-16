@@ -14,6 +14,7 @@ import { RecentLeads } from '@/components/dashboard/recent-leads';
 import { ResponseTime } from '@/components/dashboard/response-time';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { TeamPerformance } from '@/components/dashboard/team-performance';
+import { DebugAuth } from '@/components/debug-auth';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
 import {
 	Select,
@@ -57,20 +58,23 @@ function DashboardPage() {
 							Visão geral do Grupo US em tempo real
 						</p>
 					</div>
-					<Select
-						value={period}
-						onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
-					>
-						<SelectTrigger className="w-[180px]">
-							<SelectValue placeholder="Período" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="7d">Últimos 7 dias</SelectItem>
-							<SelectItem value="30d">Últimos 30 dias</SelectItem>
-							<SelectItem value="90d">Últimos 90 dias</SelectItem>
-							<SelectItem value="year">Este ano</SelectItem>
-						</SelectContent>
-					</Select>
+					<div className="flex items-center gap-4">
+						<DebugAuth />
+						<Select
+							value={period}
+							onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
+						>
+							<SelectTrigger className="w-[180px]">
+								<SelectValue placeholder="Período" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="7d">Últimos 7 dias</SelectItem>
+								<SelectItem value="30d">Últimos 30 dias</SelectItem>
+								<SelectItem value="90d">Últimos 90 dias</SelectItem>
+								<SelectItem value="year">Este ano</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 				</div>
 			</MotionWrapper>
 
