@@ -1,447 +1,423 @@
 ---
-description: Pesquisa multi-fonte com validação cruzada (>=95% accuracy)
-agent: apex-researcher
+description: Pesquisa multi-fonte com validação cruzada e geração de atomic tasks (>=95% accuracy)
 subtask: true
 ---
 
-## Universal Description
+# Research Command: $ARGUMENTS
 
-**DOCKER MCP GATEWAY RESEARCH ORCHESTRATION** - Multi-droid parallel execution with Docker MCP Gateway integration, delivering comprehensive research intelligence through coordinated droid ecosystem. ≥95% cross-validation accuracy with Brazilian LGPD compliance auto-activation via Docker MCP stack.
+Este comando é executado pelo **Plan Agent** em Plan Mode. O fluxo completo é:
 
-## Purpose
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PLAN MODE                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Step 1: Plan Agent invoca @apex-researcher                      │
+│      ↓                                                           │
+│  Step 2: apex-researcher retorna Research Report + Atomic Tasks  │
+│      ↓                                                           │
+│  Step 3: Plan Agent cria TodoWrite com atomic tasks              │
+│      ↓                                                           │
+│  Step 4: Plan Agent apresenta plano para aprovação               │
+│      ↓                                                           │
+│  Step 5: Usuário aprova → Handoff para Act Mode                  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-Execute comprehensive research operations through Docker MCP Gateway orchestration with atomic task generation, parallel execution capabilities, and integrated MCP stack (serena, context7, tavily, sequential-thinking, neon, playwright, fetch) for authoritative multi-source validation and actionable intelligence with Brazilian LGPD compliance for education/health sectors.
+---
 
-## Enhanced Research Orchestration System
+## Step 1: Invoke Research Subagent
 
-### Atomic Task Generation Engine
+O Plan Agent DEVE invocar o apex-researcher como subagent com o seguinte prompt:
 
+```markdown
+@apex-researcher Pesquise sobre: $ARGUMENTS
+
+## Contexto do Projeto
+
+- **Stack**: Bun + Convex + TanStack Router + shadcn/ui + Clerk
+- **Domínio**: CRM para gestão de alunos em cursos de saúde estética
+- **Compliance**: LGPD obrigatório para dados de alunos
+- **Produtos**: TRINTAE3, OTB, Black NEON, Comunidade US, Auriculo, Na Mesa Certa
+
+## Instruções
+
+1. Detecte a complexidade (L1-L10) baseado no escopo da pesquisa
+2. Use os MCPs apropriados: serena, context7, gh_grep, sequentialthinking
+3. Delegue para @database-specialist ou @code-reviewer se necessário
+4. Retorne seu research_report no formato YAML especificado no seu Output Contract
+5. SEMPRE inclua atomic_tasks_proposal com tasks detalhadas
+6. Para L5+, inclua subtasks em cada atomic task
+
+## Entregue
+
+Retorne o YAML completo com:
+- research_report (summary, findings, gaps)
+- atomic_tasks_proposal (tasks com subtasks para L5+)
+- validation_tasks (build, lint, test)
+- implementation_notes
+```
+
+---
+
+## Step 2: Process Research Report
+
+Quando o apex-researcher retornar, o Plan Agent deve:
+
+### 2.1 Validar Estrutura YAML
 ```yaml
-task_generation:
-  complexity_assessment: "L1-L10 automatic scoring based on topic, scope, requirements"
-  atomic_decomposition: "Break research into smallest executable units"
-  dependency_mapping: "Identify parallel vs sequential task relationships"
-  time_estimation: "Realistic duration estimates per task complexity"
-  droid_assignment: "Optimal droid combinations based on task requirements"
-  skill_integration: "Automatic skill invocation for domain-specific needs"
+# Verificar que o retorno contém:
+research_report:
+  summary: "[presente]"
+  complexity: "[L1-L10]"
+  key_findings: "[array não vazio]"
 
-parallel_execution_matrix:
-  phase_1_discovery:
-    - apex-researcher (primary coordination)
-    - domain_specialist_droids (parallel)
-    - relevant_skills (context invocation)
+atomic_tasks_proposal:
+  - id: "[AT-XXX formato]"
+    title: "[presente]"
+    # Para L5+: subtasks presentes
 
-  phase_2_analysis:
-    - multiple_droids (simultaneous analysis)
-    - skill_validation (specialized frameworks)
-    - cross_validation (multi-source verification)
-
-  phase_3_synthesis:
-    - apex-researcher (consolidation)
-    - code-reviewer (security validation)
-    - brazilian_compliance_skills (LGPD/education validation)
+validation_tasks:
+  - id: "[VT-XXX formato]"
 ```
 
-### Dynamic Droid Coordination
+### 2.2 Revisar Findings
+- Verificar confidence levels (high/medium/low)
+- Notar gaps_uncertainties para discussão com usuário
+- Confirmar que sources estão identificados
 
-```yaml
-routing_algorithm:
-  research_complexity: "Automatic L1-L10 scoring"
-  brazilian_compliance: "Auto-activation for financial/regulatory topics"
-  security_sensitivity: "Enhanced validation for sensitive research"
-  domain_expertise: "Specialist droid assignment based on research domain"
-  parallel_optimization: "Maximum concurrent task execution"
+### 2.3 Verificar Completude
+- Atomic tasks cobrem todo o escopo da pesquisa
+- Subtasks presentes se complexity >= L5
+- Validation tasks incluem build, lint, test
 
-droid_expertise_matrix:
-  apex-researcher: "Research coordination, synthesis, ≥95% validation"
-  database-specialist: "Database architecture, Neon/Drizzle, LGPD compliance"
-  apex-dev: "Implementation feasibility, performance analysis"
-  code-reviewer: "Security validation, compliance checking"
-  apex-ui-ux-designer: "Interface research, accessibility standards"
-  product-architect: "Market analysis, competitive research"
+---
+
+## Step 3: Create TodoWrite
+
+O Plan Agent DEVE criar as tasks usando TodoWrite baseado no atomic_tasks_proposal.
+
+### Para L1-L4 (Tasks Simples - Sem Subtasks)
+
+```javascript
+// Criar TodoWrite com cada atomic_task como item
+todowrite([
+  {
+    id: "AT-001",
+    content: "[AT-001] Title - Description",
+    status: "pending",
+    priority: "high" // conforme atomic_task.priority
+  },
+  {
+    id: "AT-002",
+    content: "[AT-002] Title - Description",
+    status: "pending",
+    priority: "medium"
+  },
+  // Validation tasks ao final
+  {
+    id: "VT-001",
+    content: "[VT-001] Build validation: bun run build",
+    status: "pending",
+    priority: "high"
+  },
+  {
+    id: "VT-002",
+    content: "[VT-002] Lint check: bun run lint:check",
+    status: "pending",
+    priority: "high"
+  },
+  {
+    id: "VT-003",
+    content: "[VT-003] Test suite: bun run test",
+    status: "pending",
+    priority: "high"
+  }
+])
 ```
 
-### Skill Integration System
+### Para L5+ (Tasks com Subtasks)
 
-```yaml
-skill_mapping:
-  education-lgpd-compliance: "Auto-activated for LGPD/student data protection research"
-  health-aesthetics-research: "Auto-activated for health aesthetics education research"
-  crm-student-management: "Auto-activated for CRM and student lifecycle research"
-  product-management: "Invoked for market analysis, competitive research"
-  frontend-design: "UI/UX research, accessibility standards"
-  ai-data-analyst: "Statistical analysis, data interpretation"
-  webapp-testing: "Testing methodologies, quality assurance"
-
-integration_points:
-  research_phase: "Skills provide domain-specific expertise"
-  analysis_phase: "Skills offer specialized validation frameworks"
-  documentation_phase: "Skills generate standardized outputs"
-  compliance_phase: "Brazilian compliance skills auto-activated"
+```javascript
+// Criar TodoWrite com tasks E subtasks
+todowrite([
+  // Main task
+  {
+    id: "AT-001",
+    content: "[AT-001] Main Task Title",
+    status: "pending",
+    priority: "high"
+  },
+  // Subtasks com indentação visual
+  {
+    id: "AT-001-A",
+    content: "  ↳ [AT-001-A] Subtask A description",
+    status: "pending",
+    priority: "high"
+  },
+  {
+    id: "AT-001-B",
+    content: "  ↳ [AT-001-B] Subtask B description",
+    status: "pending",
+    priority: "high"
+  },
+  // Next main task
+  {
+    id: "AT-002",
+    content: "[AT-002] Second Main Task",
+    status: "pending",
+    priority: "medium"
+  },
+  {
+    id: "AT-002-A",
+    content: "  ↳ [AT-002-A] Subtask description",
+    status: "pending",
+    priority: "medium"
+  },
+  // Validation tasks
+  {
+    id: "VT-001",
+    content: "[VT-001] Build validation: bun run build",
+    status: "pending",
+    priority: "high"
+  },
+  {
+    id: "VT-002",
+    content: "[VT-002] Lint check: bun run lint:check",
+    status: "pending",
+    priority: "high"
+  },
+  {
+    id: "VT-003",
+    content: "[VT-003] Test suite: bun run test",
+    status: "pending",
+    priority: "high"
+  }
+])
 ```
 
-## Automatic Enhanced Research Routing
+---
 
-```yaml
-command_execution:
-  trigger: "/research | /pesquisar"
-  routing: "Enhanced orchestration with multi-droid coordination"
-  atomic_tasks: "Automatic generation with parallel execution planning"
-  skill_integration: "Domain-specific skill invocation"
-  output_format: "Structured markdown in .factory/docs/ with executive summaries"
+## Step 4: Present Plan for Approval
 
-input_parsing:
-  goal: "Extract from research objective description"
-  scope: "Technology, domain, or regulatory area"
-  complexity: "L1-L10 research depth assessment"
-  brazilian_focus: "LGPD/education/health requirements auto-detection"
-  parallel_potential: "Automatic identification of parallelizable tasks"
-  education_triggers: "aluno, matrícula, curso, turma, saúde estética"
-  compliance_triggers: "LGPD, consentimento, proteção de dados, cpf"
+O Plan Agent DEVE apresentar o plano completo ao usuário neste formato:
 
-quality_assurance:
-  accuracy_threshold: "≥95% cross-validation required"
-  multi_droid_validation: "Minimum 3 droids for critical findings"
-  brazilian_compliance: "Mandatory for financial/regulatory research"
-  confidence_scoring: "Explicit confidence levels with source validation"
-  documentation_standards: "Consistent markdown templates"
+```markdown
+---
+
+## 📋 Research Complete: $ARGUMENTS
+
+### Summary
+[research_report.summary]
+
+### Complexity: L[X]
+[research_report.complexity_justification]
+
+---
+
+### 🔍 Key Findings
+
+| # | Finding | Confidence | Source |
+|---|---------|------------|--------|
+| 1 | [finding] | 🟢 High | [source] |
+| 2 | [finding] | 🟡 Medium | [source] |
+| 3 | [finding] | 🔴 Low | [source] |
+
+---
+
+### ⚠️ Gaps & Uncertainties
+
+[Se houver gaps:]
+- **[gap]**: [impact] → Mitigation: [mitigation]
+
+[Se não houver:]
+- Nenhum gap identificado. Pesquisa completa.
+
+---
+
+### 📝 Atomic Tasks Proposal
+
+#### Main Tasks
+
+| ID | Task | Priority | Effort | Dependencies |
+|----|------|----------|--------|--------------|
+| AT-001 | [title] | 🔴 High | [effort] | - |
+| AT-002 | [title] | 🟡 Medium | [effort] | AT-001 |
+| AT-003 | [title] | 🟢 Low | [effort] | AT-002 |
+
+[Se L5+, mostrar subtasks expandidas:]
+
+#### Task Details with Subtasks
+
+**[AT-001] [title]**
+- Description: [description]
+- Files: [files_affected]
+- Acceptance Criteria:
+  - [ ] [criterion 1]
+  - [ ] [criterion 2]
+- Subtasks:
+  - [AT-001-A] [subtask title]
+  - [AT-001-B] [subtask title]
+
+**[AT-002] [title]**
+...
+
+---
+
+### ✅ Validation Tasks
+
+| ID | Task | Command |
+|----|------|---------|
+| VT-001 | Build validation | `bun run build` |
+| VT-002 | Lint check | `bun run lint:check` |
+| VT-003 | Test suite | `bun run test` |
+
+---
+
+### 📌 Implementation Notes
+
+[Listar implementation_notes do research report]
+
+---
+
+## 🚀 Ready to Implement?
+
+O plano acima contém **[N] atomic tasks** com **[M] subtasks**.
+
+**Para aprovar e prosseguir:**
+1. Revise o plano acima
+2. Solicite ajustes se necessário
+3. Confirme com "aprovar plano" ou "approve plan"
+
+**Para ajustar:**
+- "Adicionar task para [X]"
+- "Remover task AT-XXX"
+- "Mudar prioridade de AT-XXX para high"
+- "Preciso de mais detalhes sobre [finding]"
+
+---
 ```
 
-## Docker MCP Gateway Integration
+---
 
-### Available MCP Stack
-- **serena** (direct) - Codebase intelligence & project management
-- **context7** (via MCP_DOCKER) - Documentation intelligence & official docs
-- **tavily** (via MCP_DOCKER) - Web research & community validation
-- **sequential-thinking** (via MCP_DOCKER) - Multi-perspective synthesis & analysis
-- **neon** (via MCP_DOCKER) - PostgreSQL database operations
-- **playwright** (via MCP_DOCKER) - Browser automation & testing
-- **fetch** (via MCP_DOCKER) - URL content retrieval & web scraping
+## Step 5: Handle User Response
 
-### MCP Routing via Docker Gateway
-- **Research Operations**: Topic investigation, technology evaluation → Context7 + Tavily (via Docker)
-- **Knowledge Management**: Knowledge base creation, organization → Serena + Sequential Thinking (via Docker)
-- **Database Research**: Schema analysis, performance optimization → Serena + Neon (via Docker)
-- **Web Intelligence**: Real-time data, regulatory updates → Tavily + Fetch (via Docker)
-- **Brazilian Compliance**: LGPD/education/health research → Context7 + Tavily + Sequential Thinking (via Docker)
-- **Testing & Validation**: Accessibility, performance → Playwright + Serena (via Docker)
+### Se usuário APROVAR:
 
-## MCP Serena: Codebase Intelligence
+```markdown
+✅ **Plano aprovado!**
 
-### Core Capabilities
-- **Symbol Resolution**: `find_symbol` - Function/class/interface discovery
-- **Reference Analysis**: `find_referencing_symbols` - Code relationships mapping
-- **Pattern Search**: `search_for_pattern` - Implementation pattern discovery
-- **Code Overview**: `get_symbols_overview` - High-level code structure analysis
+### Next Steps:
 
-### Usage Patterns
-```yaml
-code_analysis:
-  symbol_resolution: "Function/class/interface discovery"
-  pattern_analysis: "Existing implementation patterns"
-  dependency_mapping: "Code relationships + imports"
-  architecture_insights: "Current system structure"
+1. **Switch to Act Mode** para iniciar implementação
+2. **apex-dev** executará as atomic tasks na ordem definida
+3. Cada task será marcada: `pending` → `in_progress` → `completed`
+4. Validation tasks rodarão ao final
 
-implementation_feasibility:
-  compatibility_check: "Integration with existing codebase"
-  pattern_alignment: "Consistency with current architecture"
-  effort_estimation: "Implementation complexity assessment"
+### TodoWrite Status:
+- [X] Atomic tasks criadas
+- [X] Subtasks criadas (se L5+)
+- [X] Validation tasks incluídas
+- [ ] Aguardando execução em Act Mode
+
+**Mude para Act Mode quando estiver pronto para implementar.**
 ```
 
-### Memory Management
-- Creates persistent knowledge memories for project insights
-- Stores architectural patterns and implementation decisions
-- Enables cross-session context preservation
-- Supports research-to-implementation knowledge transfer
+### Se usuário PEDIR AJUSTES:
 
-## MCP Orchestration Workflow
+1. Processar solicitação de ajuste
+2. Atualizar TodoWrite conforme necessário
+3. Reapresentar plano atualizado
+4. Aguardar nova aprovação
 
-### Docker MCP Multi-Execution Strategy
-```yaml
-parallel_execution:
-  phase_1_discovery:
-    context7: "Official documentation + API references (via Docker)"
-    tavily: "Web research + community validation (via Docker)"
-    serena: "Codebase analysis + symbol resolution"
-    fetch: "Real-time regulatory data (via Docker)"
+### Se usuário PEDIR MAIS PESQUISA:
 
-  phase_2_analysis:
-    sequential_thinking: "Multi-perspective synthesis + logical reasoning (via Docker)"
-    context7: "Deep dive into technical specifics (via Docker)"
-    tavily: "Cross-source verification + credibility assessment (via Docker)"
-    neon: "Database compliance validation (via Docker)"
+1. Invocar `@apex-researcher` novamente com escopo específico
+2. Integrar novos findings ao research report existente
+3. Atualizar atomic tasks se necessário
+4. Reapresentar plano completo
 
-  phase_3_validation:
-    serena: "Implementation feasibility analysis"
-    sequential_thinking: "Pattern recognition + gap identification (via Docker)"
-    playwright: "Accessibility & testing validation (via Docker)"
-    all_mcps: "Cross-validation for ≥95% accuracy through Docker Gateway"
+---
+
+## Quality Checklist
+
+Antes de apresentar o plano ao usuário, verificar:
+
+- [ ] `@apex-researcher` invocado como subagent
+- [ ] Research report recebido em formato YAML válido
+- [ ] Complexity L1-L10 determinada e justificada
+- [ ] Key findings têm confidence levels
+- [ ] Gaps/uncertainties documentados com mitigations
+- [ ] Atomic tasks criadas via TodoWrite
+- [ ] Subtasks criadas para L5+ complexity
+- [ ] Validation tasks incluídas (build, lint, test)
+- [ ] Plano formatado para fácil leitura
+- [ ] Instruções claras para aprovação/ajuste
+
+---
+
+## Brazilian Compliance Triggers
+
+Se a pesquisa envolver estes termos, `@apex-researcher` ativará validação LGPD automaticamente:
+
+| Categoria | Keywords |
+|-----------|----------|
+| Dados Pessoais | `aluno`, `estudante`, `matrícula`, `CPF`, `dados pessoais` |
+| Consentimento | `consentimento`, `proteção de dados`, `LGPD` |
+| Saúde | `saúde estética`, `ANVISA`, `procedimento` |
+| Financeiro | `PIX`, `BCB`, `pagamento`, `fatura` |
+
+Quando compliance é ativado:
+- `@code-reviewer` é delegado para análise de segurança
+- Atomic tasks incluem requisitos de compliance
+- Validation tasks incluem security review
+
+---
+
+## Stack Reference
+
+O projeto usa:
+- **Runtime**: Bun (sempre use bun, nunca npm/yarn)
+- **Frontend**: React 19 + Vite + TanStack Router
+- **Backend**: Convex (database + real-time + functions)
+- **Auth**: Clerk (RBAC: admin, sdr, cs, support)
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Linting**: Biome
+
+---
+
+## Example Flow
+
+### User Request
+```
+/research como implementar sistema de notificações push para alertar SDRs sobre novos leads
 ```
 
-### Docker MCP Performance Optimization
-- **Target Latency**: <3ms via Docker Gateway
-- **Context Management**: Automatic deduplication via Docker
-- **Parallel Execution**: Optimized concurrent MCP calls
-- **Resource Isolation**: Built-in Docker container security
+### Plan Agent Actions
+1. Invoca `@apex-researcher` com o prompt estruturado
+2. Recebe research_report com complexity L6 e 4 atomic tasks
+3. Cria TodoWrite com tasks + subtasks
+4. Apresenta plano formatado
+5. Usuário aprova
+6. Instrui mudança para Act Mode
 
-## Docker MCP Atomic Task Assignment Matrix
-
-### L1-L3 (Simple Research) - 15-30 min
-```yaml
-atomic_tasks:
-  task_1_basic_research:
-    primary_agent: "apex-researcher"
-    support_agents: []
-    skills: []
-    mcps: ["context7", "serena"]
-    brazilian_compliance: "basic_check"
-    deliverable: "Quick research summary (≤2 pages)"
-
-  task_2_codebase_validation:
-    primary_agent: "apex-dev"
-    support_agents: []
-    skills: []
-    mcps: ["serena"]
-    brazilian_compliance: "basic_check"
-    deliverable: "Implementation feasibility note"
+### Resulting TodoWrite
 ```
-
-### L4-L6 (Moderate Research) - 45-90 min
-```yaml
-atomic_tasks:
-  task_1_comprehensive_research:
-    primary_agent: "apex-researcher"
-    support_agents: ["apex-dev"]
-    skills: ["education-lgpd-compliance"]
-    mcps: ["context7", "tavily", "serena", "fetch"]
-    brazilian_compliance: "full_validation"
-    deliverable: "Research analysis (≤5 pages)"
-
-  task_2_feasibility_analysis:
-    primary_agent: "apex-dev"
-    support_agents: ["database-specialist"]
-    skills: []
-    mcps: ["serena", "neon"]
-    brazilian_compliance: "compliance_check"
-    deliverable: "Implementation roadmap"
-
-  task_3_security_validation:
-    primary_agent: "code-reviewer"
-    support_agents: []
-    skills: ["webapp-testing"]
-    mcps: ["context7", "tavily"]
-    brazilian_compliance: "full_validation"
-    deliverable: "Security assessment report"
-```
-
-### L7-L8 (Complex Research) - 2-4 hours
-```yaml
-atomic_tasks:
-  task_1_regulatory_deep_dive:
-    primary_agent: "apex-researcher"
-    support_agents: ["code-reviewer", "database-specialist"]
-    skills: ["education-lgpd-compliance", "webapp-testing"]
-    mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
-    brazilian_compliance: "expert_validation"
-    deliverable: "Regulatory compliance document (≤8 pages)"
-
-  task_2_architecture_analysis:
-    primary_agent: "apex-dev"
-    support_agents: ["database-specialist"]
-    skills: ["aegis-architect"]
-    mcps: ["serena", "neon", "context7"]
-    brazilian_compliance: "compliance_check"
-    deliverable: "System architecture blueprint"
-
-  task_3_database_compliance:
-    primary_agent: "database-specialist"
-    support_agents: ["code-reviewer"]
-    skills: ["education-lgpd-compliance"]
-    mcps: ["serena", "neon", "context7"]
-    brazilian_compliance: "lgpd_expert_validation"
-    deliverable: "Database compliance matrix"
-
-  task_4_ui_ux_validation:
-    primary_agent: "apex-ui-ux-designer"
-    support_agents: ["code-reviewer"]
-    skills: ["webapp-testing"]
-    mcps: ["serena", "context7", "playwright"]
-    brazilian_compliance: "wcag_aa_plus_validation"
-    deliverable: "Accessibility audit report"
-
-  task_5_integration_testing:
-    primary_agent: "apex-dev"
-    support_agents: ["apex-ui-ux-designer"]
-    skills: ["webapp-testing"]
-    mcps: ["serena", "playwright", "neon"]
-    brazilian_compliance: "end_to_end_validation"
-    deliverable: "Integration test plan"
-```
-
-### L9-L10 (Mission-Critical) - 4-8 hours
-```yaml
-atomic_tasks:
-  task_1_strategic_research:
-    primary_agent: "apex-researcher"
-    support_agents: ["product-architect", "code-reviewer"]
-    skills: ["education-lgpd-compliance", "product-management"]
-    mcps: ["context7", "tavily", "serena", "fetch", "sequential-thinking"]
-    brazilian_compliance: "mission_critical_validation"
-    deliverable: "Strategic research intelligence (≤12 pages)"
-
-  task_2_system_architecture:
-    primary_agent: "apex-dev"
-    support_agents: ["database-specialist", "apex-ui-ux-designer"]
-    skills: ["aegis-architect", "ai-data-analyst"]
-    mcps: ["serena", "neon", "context7", "playwright"]
-    brazilian_compliance: "comprehensive_validation"
-    deliverable: "Production-ready architecture spec"
-
-  task_3_security_compliance:
-    primary_agent: "code-reviewer"
-    support_agents: ["database-specialist", "apex-researcher"]
-    skills: ["webapp-testing", "education-lgpd-compliance"]
-    mcps: ["context7", "tavily", "serena", "fetch"]
-    brazilian_compliance: "penetration_testing_validation"
-    deliverable: "Security compliance certification"
-
-  task_4_database_operations:
-    primary_agent: "database-specialist"
-    support_agents: ["apex-dev", "code-reviewer"]
-    skills: ["education-lgpd-compliance"]
-    mcps: ["serena", "neon", "context7", "fetch"]
-    brazilian_compliance: "data_governance_validation"
-    deliverable: "Database operations manual"
-
-  task_5_user_experience:
-    primary_agent: "apex-ui-ux-designer"
-    support_agents: ["apex-researcher"]
-    skills: ["webapp-testing", "education-lgpd-compliance"]
-    mcps: ["serena", "context7", "playwright", "fetch"]
-    brazilian_compliance: "user_testing_validation"
-    deliverable: "UX research & testing report"
-
-  task_6_product_strategy:
-    primary_agent: "product-architect"
-    support_agents: ["apex-researcher"]
-    skills: ["product-management", "education-lgpd-compliance"]
-    mcps: ["serena", "sequential-thinking", "tavily"]
-    brazilian_compliance: "market_validation"
-    deliverable: "Product strategy & roadmap"
-
-  task_7_implementation_roadmap:
-    primary_agent: "apex-dev"
-    support_agents: ["database-specialist", "apex-ui-ux-designer"]
-    skills: ["ai-data-analyst"]
-    mcps: ["serena", "neon", "context7", "playwright"]
-    brazilian_compliance: "milestone_validation"
-    deliverable: "Detailed implementation roadmap"
-```
-
-## Brazilian Compliance Skill Matrix
-
-### Automatic Skill Activation by Research Type
-```yaml
-education_lgpd_compliance:
-  triggers: ["LGPD", "aluno", "matrícula", "cpf", "consentimento", "proteção de dados"]
-  agents: ["apex-researcher", "code-reviewer", "database-specialist"]
-  validation_level: "Expert (≥95% accuracy)"
-
-health_aesthetics_research:
-  triggers: ["saúde estética", "estética", "ANVISA", "certificação profissional", "empreendedor estética"]
-  agents: ["apex-researcher", "apex-ui-ux-designer"]
-  validation_level: "Expert (≥95% accuracy)"
-
-crm_student_management:
-  triggers: ["CRM", "pipeline", "lead", "aluno", "gestão", "SDR", "chat integrado"]
-  agents: ["apex-researcher", "database-specialist", "apex-dev"]
-  validation_level: "Expert (≥95% accuracy)"
-
-webapp_testing:
-  triggers: ["testing", "validation", "accessibility", "performance"]
-  agents: ["apex-ui-ux-designer", "code-reviewer", "apex-dev"]
-  validation_level: "WCAG 2.1 AA+ + Brazilian standards"
-
-product_management:
-  triggers: ["market", "competitive", "roadmap", "strategy"]
-  agents: ["apex-researcher", "product-architect"]
-  validation_level: "Market research (≥90% accuracy)"
-
-ai_data_analyst:
-  triggers: ["statistics", "metrics", "performance", "analytics"]
-  agents: ["apex-dev", "database-specialist"]
-  validation_level: "Data analysis (≥85% accuracy)"
-```
-
-## Parallel Execution Coordination
-
-### Phase-Based Task Scheduling
-```yaml
-phase_1_discovery (parallel):
-  - apex-researcher: [context7, tavily, fetch]
-  - database-specialist: [serena, neon] (if database scope)
-  - code-reviewer: [context7] (if security scope)
-
-phase_2_analysis (parallel):
-  - apex-dev: [serena, context7, neon, playwright]
-  - apex-ui-ux-designer: [serena, context7, playwright] (if UI scope)
-  - product-architect: [sequential-thinking, serena] (if strategy scope)
-
-phase_3_validation (parallel):
-  - code-reviewer: [context7, tavily, fetch]
-  - database-specialist: [serena, neon] (if database validation)
-  - apex-ui-ux-designer: [playwright, serena] (if UI validation)
-```
-
-## Docker MCP Research Deliverables
-
-### Research Intelligence Report (via Docker MCP)
-- **Executive Summary**: Research scope, complexity, Brazilian compliance status
-- **MCP Performance**: Docker Gateway latency (<3ms target), efficiency metrics
-- **Validation Results**: ≥95% cross-source validation via multiple MCPs
-- **Implementation Roadmap**: Technical feasibility with Docker-optimized patterns
-- **Brazilian Compliance**: LGPD/education/health validation through official docs (context7) + current patterns (tavily)
-
-### Quality Assurance via Docker MCP
-- **Source Validation**: Context7 (official docs) + Tavily (community validation)
-- **Code Analysis**: Serena symbol resolution + pattern analysis
-- **Database Compliance**: Neon PostgreSQL validation + security checks
-- **Testing Validation**: Playwright accessibility + performance testing
-
-## Quick Reference Templates
-
-### Auto-Activation Protocol
-```yaml
-triggers: ["/research", "/pesquisar", "spec - research"]
-routing: "Docker MCP Gateway orchestration"
-mcp_stack: ["context7", "tavily", "sequential-thinking", "neon", "playwright", "fetch"]
-quality_gate: "≥95% cross-validation"
-target_latency: "<3ms"
-brazilian_compliance: "Mandatory"
-```
-
-### Example Usage
-```
-/research "LGPD compliance para gestão de alunos"
-
-→ Docker MCP execution:
-- Context7: LGPD official documentation for education
-- Tavily: Current student data protection implementations
-- Serena: Existing Convex schema patterns for students
-- Sequential-thinking: Multi-perspective compliance analysis
-- Neon: PostgreSQL student data validation patterns
-- Output: .factory/docs/2025-12-13-lgpd-aluno-compliance.md
-```
-
-### Education CRM Example
-```
-/research "CRM pipeline para cursos de estética"
-
-→ Docker MCP execution:
-- education-lgpd-compliance: Activated for student CRM patterns
-- context7: Research educational CRM best practices
-- tavily: Analyze current market implementations
-- serena: Review existing Convex lead/student schemas
-- sequential-thinking: Multi-perspective pipeline optimization
-- Output: .factory/docs/2025-12-13-crm-estetica-pipeline.md
+[AT-001] Configure push notification service
+  ↳ [AT-001-A] Research and select push provider
+  ↳ [AT-001-B] Add environment variables
+[AT-002] Create notification Convex mutations
+  ↳ [AT-002-A] Add notifications table to schema
+  ↳ [AT-002-B] Create sendNotification mutation
+  ↳ [AT-002-C] Create markAsRead mutation
+[AT-003] Build notification UI components
+  ↳ [AT-003-A] Create NotificationBell component
+  ↳ [AT-003-B] Create NotificationList dropdown
+[AT-004] Integrate with lead creation flow
+  ↳ [AT-004-A] Trigger notification on new lead
+  ↳ [AT-004-B] Filter by SDR assignment
+[VT-001] Build validation: bun run build
+[VT-002] Lint check: bun run lint:check
+[VT-003] Test suite: bun run test
 ```
