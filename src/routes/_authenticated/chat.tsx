@@ -1,6 +1,7 @@
+import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router';
 import { MessageSquare, Search, Settings } from 'lucide-react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useId, useState } from 'react';
 
 import { AIChatWidget } from '@/components/chat/ai-chat-widget';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface ChatContextValue {
 	statusFilter: string;
 	setSearch: (value: string) => void;
 	setStatusFilter: (value: string) => void;
+	portalTargetId: string;
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -47,15 +49,22 @@ const departments = [
 function ChatPage() {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [search, setSearch] = useState('');
+	const portalTargetId = useId();
 
-	// Get the current department from the route matches
+	// Get the current department and conversation id from the route matches
 	const matches = useMatches();
 	const departmentMatch = matches.find((m) => m.params && 'department' in m.params);
 	const currentDepartment =
 		(departmentMatch?.params as { department?: string })?.department || 'vendas';
 
+	// Extract conversation ID from route params
+	const conversationMatch = matches.find((m) => m.params && 'id' in m.params);
+	const selectedConversationId = (conversationMatch?.params as { id?: string })?.id || null;
+
 	return (
-		<ChatContext.Provider value={{ search, statusFilter, setSearch, setStatusFilter }}>
+		<ChatContext.Provider
+			value={{ search, statusFilter, setSearch, setStatusFilter, portalTargetId }}
+		>
 			<div className="h-[calc(100vh-64px)] flex flex-col">
 				<div className="flex-1 flex min-h-0">
 					{/* Sidebar - Conversation List */}
@@ -117,7 +126,7 @@ function ChatPage() {
 						</div>
 
 						{/* Portal target for ConversationList rendered by child routes */}
-						<div id="conversation-list-portal" className="flex-1 min-h-0" />
+						<div id={portalTargetId} className="flex-1 min-h-0" />
 					</div>
 
 					{/* Main Chat Area - Child routes render here */}
@@ -126,15 +135,17 @@ function ChatPage() {
 					</div>
 				</div>
 
-				{/* AI Assistant Widget */}
-				<AIChatWidget
-					conversationId={null}
-					onInsertResponse={(text) => {
-						// TODO: Implement insert into chat input - should set the chat input value
-						// biome-ignore lint/suspicious/noConsole: TODO - Remove when chat input integration is implemented
-						console.log('Insert response:', text);
-					}}
-				/>
+				{/* AI Assistant Widget - only shown when a conversation is selected */}
+				{selectedConversationId && (
+					<AIChatWidget
+						conversationId={selectedConversationId as Id<'conversations'>}
+						onInsertResponse={(text) => {
+							// TODO: Implement insert into chat input - should set the chat input value
+							// biome-ignore lint/suspicious/noConsole: TODO - Remove when chat input integration is implemented
+							console.log('Insert response:', text);
+						}}
+					/>
+				)}
 			</div>
 		</ChatContext.Provider>
 	);

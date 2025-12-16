@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
@@ -56,6 +56,36 @@ function ReportsPage() {
 						<SelectItem value="year">Este ano</SelectItem>
 					</SelectContent>
 				</Select>
+			</div>
+
+			{/* Report Navigation Cards */}
+			<div className="grid gap-4 md:grid-cols-2">
+				<Link to="/reports/sales">
+					<Card className="cursor-pointer hover:shadow-md hover:border-purple-500/20 transition-all">
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-base font-medium">Relatório de Vendas</CardTitle>
+							<DollarSign className="h-5 w-5 text-green-500" />
+						</CardHeader>
+						<CardContent>
+							<p className="text-sm text-muted-foreground">
+								Análise detalhada de receita, conversões e performance de vendas
+							</p>
+						</CardContent>
+					</Card>
+				</Link>
+				<Link to="/reports/team">
+					<Card className="cursor-pointer hover:shadow-md hover:border-purple-500/20 transition-all">
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-base font-medium">Relatório de Equipe</CardTitle>
+							<Users className="h-5 w-5 text-indigo-500" />
+						</CardHeader>
+						<CardContent>
+							<p className="text-sm text-muted-foreground">
+								Performance individual e métricas por membro da equipe
+							</p>
+						</CardContent>
+					</Card>
+				</Link>
 			</div>
 
 			{/* Overview Stats */}

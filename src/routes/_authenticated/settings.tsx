@@ -101,6 +101,7 @@ function SettingsPage() {
 						icon={<Users className="h-5 w-5 text-indigo-500" />}
 						title="Membros"
 						description="Gerencie usuários e permissões"
+						href="/settings/team"
 					/>
 					<SettingItem
 						icon={<Shield className="h-5 w-5 text-indigo-500" />}
@@ -120,6 +121,7 @@ function SettingsPage() {
 						icon={<FileText className="h-5 w-5 text-green-500" />}
 						title="Templates de Mensagem"
 						description="Gerencie templates para chat"
+						href="/settings/templates"
 					/>
 					<SettingItem
 						icon={<Palette className="h-5 w-5 text-green-500" />}
@@ -134,12 +136,13 @@ function SettingsPage() {
 				<CardHeader>
 					<CardTitle className="text-base">Integrações</CardTitle>
 				</CardHeader>
-				<CardContent>
-					<div className="text-center py-8 text-muted-foreground">
-						<SettingsIcon className="h-12 w-12 mx-auto mb-4 opacity-30" />
-						<p className="text-sm">Integrações com WhatsApp, Instagram e outros</p>
-						<p className="text-xs">Em desenvolvimento</p>
-					</div>
+				<CardContent className="space-y-2">
+					<SettingItem
+						icon={<SettingsIcon className="h-5 w-5 text-orange-500" />}
+						title="Integrações"
+						description="WhatsApp, Instagram e outros canais"
+						href="/settings/integrations"
+					/>
 				</CardContent>
 			</Card>
 		</div>

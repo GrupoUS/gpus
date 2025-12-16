@@ -9,7 +9,7 @@ export interface DifyMessage {
 
 interface UseDifyChatReturn {
 	messages: DifyMessage[];
-	sendMessage: (content: string) => Promise<void>;
+	sendMessage: (content: string) => Promise<string | undefined>;
 	isLoading: boolean;
 	clearMessages: () => void;
 }
@@ -22,8 +22,8 @@ export function useDifyChat(): UseDifyChatReturn {
 	// const DIFY_API_URL = process.env.VITE_DIFY_API_URL;
 	// const DIFY_API_KEY = process.env.VITE_DIFY_API_KEY;
 
-	const sendMessage = useCallback(async (content: string) => {
-		if (!content.trim()) return;
+	const sendMessage = useCallback(async (content: string): Promise<string | undefined> => {
+		if (!content.trim()) return undefined;
 
 		try {
 			setIsLoading(true);
@@ -62,10 +62,12 @@ export function useDifyChat(): UseDifyChatReturn {
 			};
 
 			setMessages((prev) => [...prev, assistantMessage]);
+			return assistantMessage.content;
 		} catch (error) {
 			toast.error(
 				`Erro ao conectar com o assistente IA: ${error instanceof Error ? error.message : 'Tente novamente.'}`,
 			);
+			return undefined;
 		} finally {
 			setIsLoading(false);
 		}

@@ -12,13 +12,13 @@ export const Route = createFileRoute('/_authenticated/chat/$department')({
 function DepartmentRoute() {
 	// Use properly typed params from the Route definition
 	const { department } = Route.useParams();
-	const { search, statusFilter } = useChatContext();
+	const { search, statusFilter, portalTargetId } = useChatContext();
 	const [portalContainer, setPortalContainer] = useState<Element | null>(null);
 
 	useEffect(() => {
-		const el = document.getElementById('conversation-list-portal');
+		const el = document.getElementById(portalTargetId);
 		if (el) setPortalContainer(el);
-	}, []);
+	}, [portalTargetId]);
 
 	return (
 		<>

@@ -195,21 +195,29 @@ export const SidebarLinkWithSubmenu = ({
 	className?: string;
 }) => {
 	const { open, animate } = useSidebar();
-	const [isExpanded, setIsExpanded] = useState(false);
 	const matchRoute = useMatchRoute();
 
 	// Check if any child route is active
 	const isChildActive = link.children?.some((child) => matchRoute({ to: child.href, fuzzy: true }));
 
-	// Check if parent route is active (if applicable, though usually parent with children is abstract)
+	// Check if parent route is active
 	const isParentActive = matchRoute({ to: link.href, fuzzy: true });
 	const isActive = isParentActive || isChildActive;
 
+	// Initialize isExpanded based on active state
+	const [isExpanded, setIsExpanded] = useState(isActive);
+
+	// Auto-expand submenu when a child or parent route becomes active
+	useEffect(() => {
+		if (isActive) {
+			setIsExpanded(true);
+		}
+	}, [isActive]);
+
 	return (
 		<div className="flex flex-col">
-			{/* Parent Link */}
-			<button
-				onClick={() => setIsExpanded(!isExpanded)}
+			{/* Parent Row - Split into Link and Toggle */}
+			<div
 				className={cn(
 					'flex items-center justify-between gap-2 group/sidebar py-2.5 w-full',
 					isActive && 'bg-neutral-200/50 dark:bg-neutral-700/50 rounded-md',
@@ -217,30 +225,43 @@ export const SidebarLinkWithSubmenu = ({
 				)}
 				{...props}
 			>
-				<div className="flex items-center gap-2">
+				{/* Navigable Link - clicking this navigates to parent href */}
+				<Link to={link.href} className="flex items-center gap-2 flex-1 min-w-0">
 					{link.icon}
 					<motion.span
 						animate={{
 							display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
 							opacity: animate ? (open ? 1 : 0) : 1,
 						}}
-						className="text-neutral-700 dark:text-neutral-200 text-sm whitespace-pre"
+						className="text-neutral-700 dark:text-neutral-200 text-sm whitespace-pre group-hover/sidebar:translate-x-1 transition duration-150"
 					>
 						{link.label}
 					</motion.span>
-				</div>
+				</Link>
+
+				{/* Chevron Toggle - clicking this toggles submenu */}
 				{link.children && (
-					<motion.div
-						animate={{
-							display: animate ? (open ? 'block' : 'none') : 'block',
-							opacity: animate ? (open ? 1 : 0) : 1,
-							rotate: isExpanded ? 180 : 0,
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							setIsExpanded(!isExpanded);
 						}}
+						className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded transition-colors"
+						aria-label={isExpanded ? 'Collapse submenu' : 'Expand submenu'}
 					>
-						<ChevronDown className="h-4 w-4 text-neutral-500" />
-					</motion.div>
+						<motion.div
+							animate={{
+								display: animate ? (open ? 'block' : 'none') : 'block',
+								opacity: animate ? (open ? 1 : 0) : 1,
+								rotate: isExpanded ? 180 : 0,
+							}}
+						>
+							<ChevronDown className="h-4 w-4 text-neutral-500" />
+						</motion.div>
+					</button>
 				)}
-			</button>
+			</div>
 
 			{/* Submenu */}
 			{link.children && isExpanded && (

@@ -78,8 +78,19 @@ const roleBadgeVariants: Record<string, 'default' | 'secondary' | 'outline'> = {
 
 function TeamSettingsPage() {
 	const users = useQuery(api.users.list);
-	const [_editingUser, _setEditingUserr] = useState<Id<'users'> | null>(null);
+	const deleteUser = useMutation(api.users.deleteUser);
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+	const handleDeactivateUser = async (userId: Id<'users'>, userName: string) => {
+		if (confirm(`Desativar ${userName}?`)) {
+			try {
+				await deleteUser({ userId });
+				toast.success('Membro desativado com sucesso!');
+			} catch (_error) {
+				toast.error('Erro ao desativar membro');
+			}
+		}
+	};
 
 	return (
 		<div className="space-y-6 p-6">
@@ -103,7 +114,13 @@ function TeamSettingsPage() {
 						<DialogHeader>
 							<DialogTitle>Novo Membro</DialogTitle>
 						</DialogHeader>
-						<UserForm onSuccess={() => setIsCreateOpen(false)} />
+						<p className="text-sm text-muted-foreground mb-4">
+							Para adicionar novos membros, convide-os através do painel de organização do Clerk. Os
+							usuários aparecerão aqui após fazer login.
+						</p>
+						<Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+							Entendi
+						</Button>
 					</DialogContent>
 				</Dialog>
 			</div>
@@ -171,11 +188,7 @@ function TeamSettingsPage() {
 										</Dialog>
 										<DropdownMenuItem
 											className="text-destructive"
-											onClick={() => {
-												if (confirm(`Desativar ${user.name}?`)) {
-													// Will be handled by UserForm's delete logic
-												}
-											}}
+											onClick={() => handleDeactivateUser(user._id, user.name)}
 										>
 											<Trash2 className="h-4 w-4 mr-2" />
 											Desativar

@@ -7,6 +7,7 @@ import {
 	Sparkles,
 	Wand,
 } from 'lucide-react';
+import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
 
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -22,7 +23,10 @@ interface AIChatWidgetProps {
 	onInsertResponse?: (text: string) => void;
 }
 
-export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
+export function AIChatWidget({
+	conversationId: _conversationId,
+	onInsertResponse,
+}: AIChatWidgetProps) {
 	const [isOpen, setIsOpen] = useState(true);
 	const [inputText, setInputText] = useState('');
 	const { messages, sendMessage, isLoading } = useDifyChat();
@@ -31,7 +35,11 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 		if (!inputText.trim() || isLoading) return;
 		const text = inputText;
 		setInputText('');
-		await sendMessage(text);
+		const assistantResponse = await sendMessage(text);
+		// Invoke the callback with the assistant response if available
+		if (assistantResponse && onInsertResponse) {
+			onInsertResponse(assistantResponse);
+		}
 	};
 
 	const handleQuickAction = (action: 'generate' | 'summarize' | 'template') => {
@@ -51,19 +59,15 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 		// Focus logic would go here if we had a ref to input
 	};
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
+	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
 			void handleSend();
 		}
 	};
 
-	// Only render if a conversation is active (implied by plan "when a conversation is selected")
-	// But spec says "Widget is only visible when a conversation is selected"
-	// However, I will check inside the component or parent.
-	// The props say conversationId?
-	// I'll render null if no conversationId provided, to be safe.
-	if (!conversationId) return null;
+	// Widget renders regardless of conversationId - parent controls visibility
+	// This allows the widget to be used for general AI assistance
 
 	return (
 		<div className="border-t border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
