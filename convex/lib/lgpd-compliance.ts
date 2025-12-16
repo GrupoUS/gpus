@@ -1,6 +1,6 @@
 /**
  * LGPD (Lei Geral de Proteção de Dados) Compliance Utilities
- * 
+ *
  * Implements Brazilian data protection law requirements for
  * handling personal data in educational CRM systems.
  */
@@ -109,14 +109,14 @@ export const retentionPolicySchema = v.object({
  * Generates LGPD-compliant consent text
  */
 export function generateConsentText(
-	consentType: string,
+	_consentType: string, // Consent type available for customization if needed
 	dataCategories: string[],
 	processingPurpose: string,
 	retentionDays: number
 ): string {
-	const baseText = `Conforme a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), 
+	const baseText = `Conforme a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018),
 	autorizo o tratamento de meus dados pessoais para as seguintes finalidades:`
-	
+
 	const categoriesText = dataCategories.map(category => {
 		const descriptions: Record<string, string> = {
 			[LGPD_DATA_CATEGORIES.IDENTIFICATION]: 'identificação (nome, CPF, e-mail)',
@@ -128,17 +128,17 @@ export function generateConsentText(
 		}
 		return descriptions[category] || category
 	}).join(', ')
-	
-	const retentionText = `Seus dados serão armazenados por ${retentionDays} dias, 
+
+	const retentionText = `Seus dados serão armazenados por ${retentionDays} dias,
 	exceto quando houver obrigação legal ou contratual de manutenção.`
-	
-	const rightsText = `Você tem direito de acesso, correção, exclusão, 
-	portabilidade e informações sobre o compartilhamento de seus dados, 
+
+	const rightsText = `Você tem direito de acesso, correção, exclusão,
+	portabilidade e informações sobre o compartilhamento de seus dados,
 	conforme previsto nos artigos 18 e 20 da LGPD.`
-	
-	const withdrawalText = `Esta autorização pode ser revogada a qualquer momento, 
+
+	const withdrawalText = `Esta autorização pode ser revogada a qualquer momento,
 	sem efeitos retroativos.`
-	
+
 	return `${baseText}\n\n${processingPurpose}\n\n${categoriesText}\n\n${retentionText}\n\n${rightsText}\n\n${withdrawalText}`
 }
 
@@ -150,11 +150,11 @@ export function isMinor(birthDate: number | string): boolean {
 	const today = new Date()
 	const age = today.getFullYear() - birth.getFullYear()
 	const monthDiff = today.getMonth() - birth.getMonth()
-	
+
 	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
 		return age - 1 < 18
 	}
-	
+
 	return age < 18
 }
 
@@ -177,8 +177,8 @@ export function generateDataExport(
 			email: studentData.email,
 			phone: studentData.phone,
 			// CPF included only with explicit consent
-			cpf: hasConsentForDataCategory(consents, LGPD_DATA_CATEGORIES.IDENTIFICATION) 
-				? studentData.cpf 
+			cpf: hasConsentForDataCategory(consents, LGPD_DATA_CATEGORIES.IDENTIFICATION)
+				? studentData.cpf
 				: '[REDACTED BY CONSENT]',
 		},
 		dataProcessing: {
@@ -209,7 +209,7 @@ export function generateDataExport(
 			objective: true,
 		},
 	}
-	
+
 	return JSON.stringify(exportData, null, 2)
 }
 
@@ -220,7 +220,7 @@ export function hasConsentForDataCategory(
 	consents: any[],
 	dataCategory: string
 ): boolean {
-	return consents.some(consent => 
+	return consents.some(consent =>
 		consent.granted &&
 		!consent.rightsWithdrawal &&
 		consent.dataCategories?.includes(dataCategory)
@@ -256,12 +256,12 @@ export function calculateRetentionDays(
 			formado: 365 * 2, // 2 years
 		},
 	}
-	
+
 	const rules = retentionRules[dataCategory]
 	if (!rules || !rules[studentStatus]) {
 		return 365 * 2 // Default: 2 years
 	}
-	
+
 	return rules[studentStatus]
 }
 
@@ -272,8 +272,8 @@ export function generatePrivacyPolicyText(): string {
 	return `
 POLÍTICA DE PRIVACIDADE - CONFORME LGPD
 
-Esta Política de Privacidade descreve como coletamos, usamos, armazenamos 
-e protegemos seus dados pessoais, em conformidade com a Lei Geral de 
+Esta Política de Privacidade descreve como coletamos, usamos, armazenamos
+e protegemos seus dados pessoais, em conformidade com a Lei Geral de
 Proteção de Dados Pessoais (LGPD - Lei nº 13.709/2018).
 
 1. DADOS COLETADOS
@@ -294,7 +294,7 @@ Seus dados são tratados para:
 - Cumprimento de obrigações legais e contratuais
 
 3. BASE LEGAL
-O tratamento de seus dados se baseia no seu consentimento explícito, 
+O tratamento de seus dados se baseia no seu consentimento explícito,
 conforme o Art. 7, I, da LGPD.
 
 4. COMPARTILHAMENTO DE DADOS
@@ -304,7 +304,7 @@ Compartilhamos dados apenas quando:
 - Com seu consentimento explícito
 
 5. SEGURANÇA
-Adotamos medidas técnicas e administrativas para proteger seus dados, 
+Adotamos medidas técnicas e administrativas para proteger seus dados,
 incluindo criptografia e controle de acesso.
 
 6. SEUS DIREITOS (ART. 18 DA LGPD)
@@ -318,11 +318,11 @@ Você tem direito de:
 - Revogar o consentimento
 
 7. ARMAZENAMENTO E ELIMINAÇÃO
-Seus dados são armazenados pelo período mínimo necessário e eliminados 
+Seus dados são armazenados pelo período mínimo necessário e eliminados
 após expirar o prazo de retenção, exceto se houver obrigação legal.
 
 8. CONTATO
-Para exercer seus direitos, entre em contato com nosso Encarregado 
+Para exercer seus direitos, entre em contato com nosso Encarregado
 de Proteção de Dados através do e-mail: dpo@portalgrupo.us
 
 Esta política foi atualizada em ${new Date().toLocaleDateString('pt-BR')}.

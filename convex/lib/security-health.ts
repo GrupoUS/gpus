@@ -1,13 +1,14 @@
 /**
  * Security Health Check System
- * 
+ *
  * Provides comprehensive security monitoring and health checks
  * for LGPD compliance and overall system security.
  */
 
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import { validateEncryptionConfig } from './encryption'
-import { securityHealthCheck } from './security-middleware'
+// securityHealthCheck available for delegating to middleware
+import { securityHealthCheck as _securityHealthCheck } from './security-middleware'
 import { getAuditLogs } from './audit-logging'
 
 /**
@@ -71,7 +72,7 @@ export async function performSecurityHealthCheck(ctx: QueryCtx): Promise<HealthC
 
 	// Calculate overall status
 	const status = calculateOverallStatus(issues, totalScore)
-	
+
 	return {
 		status,
 		score: Math.max(0, Math.min(100, totalScore)),
@@ -298,10 +299,10 @@ async function checkDataProtection(ctx: QueryCtx): Promise<{
 	const studentsWithoutConsent = await ctx.db
 		.query('lgpdConsent')
 		.collect()
-	
+
 	const uniqueStudentsWithConsent = new Set(studentsWithoutConsent.map(c => c.studentId.toString()))
 	const totalStudents = await ctx.db.query('students').take(1000)
-	
+
 	const studentsWithoutConsentCount = totalStudents.length - uniqueStudentsWithConsent.size
 	if (studentsWithoutConsentCount > 5) {
 		issues.push({
@@ -373,9 +374,9 @@ async function checkMonitoringSecurity(ctx: QueryCtx): Promise<{
 	}
 
 	// Check for missing audit log types
-	const auditLogTypes = new Set(recentAuditLogs.map(log => log.actionType))
-	const requiredTypes = ['data_creation', 'data_modification', 'data_access', 'data_deletion']
-	
+	const auditLogTypes = new Set(recentAuditLogs.map((log: { actionType: string }) => log.actionType))
+	const requiredTypes = ['data_creation', 'data_modification', 'data_access', 'data_deletion'] as const
+
 	const missingTypes = requiredTypes.filter(type => !auditLogTypes.has(type))
 	if (missingTypes.length > 0) {
 		issues.push({
@@ -474,15 +475,15 @@ async function checkLgpdCompliance(ctx: QueryCtx): Promise<{
 function calculateOverallStatus(issues: HealthIssue[], score: number): 'healthy' | 'warning' | 'critical' {
 	const criticalIssues = issues.filter(issue => issue.level === 'critical' && !issue.resolved)
 	const highIssues = issues.filter(issue => issue.level === 'high' && !issue.resolved)
-	
+
 	if (criticalIssues.length > 0 || score < 50) {
 		return 'critical'
 	}
-	
+
 	if (highIssues.length > 0 || score < 75) {
 		return 'warning'
 	}
-	
+
 	return 'healthy'
 }
 
@@ -494,7 +495,7 @@ function getEncryptionKeyAge(): number {
 	if (!key) {
 		return 0
 	}
-	
+
 	// This is a simplified check - in production, track key creation dates
 	return 180 // Assume 6 months old for demo
 }
@@ -510,9 +511,9 @@ export async function createSecurityAlert(
 		// Don't create alerts for healthy systems
 		return ''
 	}
-	
+
 	const alertMessage = `Security Health Check: ${healthResult.status.toUpperCase()} - Score: ${healthResult.score}/100`
-	
+
 	// Create audit log entry for security alert
 	const auditId = await ctx.db.insert('lgpdAudit', {
 		actionType: 'security_event',
@@ -528,7 +529,7 @@ export async function createSecurityAlert(
 		legalBasis: 'obrigação legal de segurança',
 		createdAt: Date.now(),
 	})
-	
+
 	return auditId
 }
 
@@ -537,7 +538,7 @@ export async function createSecurityAlert(
  */
 export function generateSecurityReport(healthResult: HealthCheckResult): string {
 	const { status, score, issues, recommendations, metadata } = healthResult
-	
+
 	return `
 # SECURITY HEALTH REPORT
 

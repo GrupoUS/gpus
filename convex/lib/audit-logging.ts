@@ -1,6 +1,6 @@
 /**
  * LGPD-Compliant Audit Logging
- * 
+ *
  * Provides comprehensive audit trail for all data operations
  * as required by LGPD Article 6, VIII (accountability).
  */
@@ -8,13 +8,27 @@
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { getClerkId } from './auth'
 import { validateEncryptionConfig } from './encryption'
-import { auditLogSchema } from './lgpd-compliance'
+
+/**
+ * Valid action types for audit logs (matches schema)
+ */
+export type AuditActionType =
+	| 'data_access'
+	| 'data_creation'
+	| 'data_modification'
+	| 'data_deletion'
+	| 'consent_granted'
+	| 'consent_withdrawn'
+	| 'data_export'
+	| 'data_portability'
+	| 'security_event'
+	| 'data_breach'
 
 /**
  * Audit log entry interface
  */
 interface AuditLogEntry {
-	actionType: string
+	actionType: AuditActionType
 	dataCategory: string
 	description: string
 	studentId?: string
@@ -23,6 +37,8 @@ interface AuditLogEntry {
 	processingPurpose?: string
 	legalBasis?: string
 	retentionDays?: number
+	ipAddress?: string
+	userAgent?: string
 }
 
 /**
@@ -49,11 +65,11 @@ export async function createAuditLog(
 		console.error('Audit logging failed: Encryption not configured', encryptionValidation.message)
 		throw new Error('LGPD compliance: Encryption configuration required for audit logging')
 	}
-	
+
 	try {
 		const clerkId = await getClerkId(ctx)
 		const timestamp = Date.now()
-		
+
 		// Create comprehensive audit entry
 		const auditId = await ctx.db.insert('lgpdAudit', {
 			studentId: entry.studentId ? ctx.db.normalizeId('students', entry.studentId) as any : undefined,
@@ -62,21 +78,21 @@ export async function createAuditLog(
 			actorRole: await getActorRole(ctx, clerkId),
 			dataCategory: entry.dataCategory,
 			description: entry.description,
-			ipAddress: getClientIP(ctx),
-			userAgent: ctx.headers['user-agent'],
+			ipAddress: entry.ipAddress || 'unknown',
+			userAgent: entry.userAgent || 'unknown',
 			processingPurpose: entry.processingPurpose,
 			legalBasis: entry.legalBasis || 'consentimento',
 			retentionDays: entry.retentionDays || calculateRetentionDays(entry.dataCategory),
 			createdAt: timestamp,
 		})
-		
+
 		// Log to system console for immediate monitoring
 		console.log(`[AUDIT] ${entry.actionType}: ${entry.description}`, {
 			timestamp: new Date(timestamp).toISOString(),
 			actor: clerkId,
 			student: entry.studentId,
 		})
-		
+
 		return auditId
 	} catch (error) {
 		console.error('Failed to create audit log:', error)
@@ -137,7 +153,7 @@ export async function logDataModification(
 ): Promise<string> {
 	const sanitizedOldValue = sanitizeForAuditLog(oldValue, dataCategory)
 	const sanitizedNewValue = sanitizeForAuditLog(newValue, dataCategory)
-	
+
 	return createAuditLog(ctx, {
 		actionType: 'data_modification',
 		dataCategory,
@@ -190,7 +206,7 @@ export async function logConsentOperation(
 	reason?: string
 ): Promise<string> {
 	const actionType = granted ? 'consent_granted' : 'consent_withdrawn'
-	
+
 	return createAuditLog(ctx, {
 		actionType,
 		dataCategory: 'consentimento',
@@ -232,28 +248,10 @@ export async function logDataExport(
 }
 
 /**
- * Gets client IP address from request context
+ * NOTE: Convex functions don't have access to HTTP headers directly.
+ * IP and UserAgent must be passed from HTTP actions or client if needed.
+ * For now, we use placeholder values for audit logging.
  */
-function getClientIP(ctx: MutationCtx | QueryCtx): string {
-	// Try various headers for real IP
-	const forwardedFor = ctx.headers['x-forwarded-for']
-	const realIP = ctx.headers['x-real-ip']
-	const cfConnectingIP = ctx.headers['cf-connecting-ip'] // Cloudflare
-	
-	if (forwardedFor) {
-		return forwardedFor.split(',')[0].trim()
-	}
-	
-	if (realIP) {
-		return realIP
-	}
-	
-	if (cfConnectingIP) {
-		return cfConnectingIP
-	}
-	
-	return '0.0.0.0' // Fallback
-}
 
 /**
  * Gets actor role from authentication context
@@ -264,7 +262,7 @@ async function getActorRole(ctx: MutationCtx, clerkId: string): Promise<string> 
 			.query('users')
 			.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
 			.first()
-		
+
 		return user?.role || 'unknown'
 	} catch (error) {
 		console.error('Failed to get actor role:', error)
@@ -277,13 +275,13 @@ async function getActorRole(ctx: MutationCtx, clerkId: string): Promise<string> 
  */
 function sanitizeForAuditLog(data: any, dataCategory: string): any {
 	if (!data) return data
-	
+
 	// Don't log actual sensitive values, just metadata
 	const sensitiveCategories = ['identificação', 'contato', 'financeiro']
 	if (sensitiveCategories.includes(dataCategory)) {
 		return '[REDACTED_FOR_PRIVACY]'
 	}
-	
+
 	// For non-sensitive data, log normally
 	return data
 }
@@ -300,7 +298,7 @@ function calculateRetentionDays(dataCategory: string): number {
 		'consentimento': 365 * 5, // 5 years for consent records
 		'auditoria': 365 * 7, // 7 years for audit logs
 	}
-	
+
 	return retentionRules[dataCategory] || 365 * 5 // Default: 5 years
 }
 
@@ -343,33 +341,34 @@ export async function getAuditLogs(
 		actorId?: string
 	}
 ) {
-	let query = ctx.db.query('lgpdAudit')
-	
-	// Apply filters
+	// Start with base query
+	let results = await ctx.db.query('lgpdAudit').order('desc').take(1000)
+
+	// Apply filters in memory (Convex doesn't support dynamic chained filters)
 	if (filters.studentId) {
-		query = query.withIndex('by_student', q => 
-			q.eq('studentId', ctx.db.normalizeId('students', filters.studentId) as any))
+		const normalizedId = ctx.db.normalizeId('students', filters.studentId)
+		results = results.filter(r => r.studentId === normalizedId)
 	}
-	
+
 	if (filters.actionType) {
-		query = query.filter(q => q.eq(q.actionType, filters.actionType))
+		results = results.filter(r => r.actionType === filters.actionType)
 	}
-	
+
 	if (filters.dataCategory) {
-		query = query.filter(q => q.eq(q.dataCategory, filters.dataCategory))
+		results = results.filter(r => r.dataCategory === filters.dataCategory)
 	}
-	
+
 	if (filters.startDate) {
-		query = query.filter(q => q.gte(q.createdAt, filters.startDate))
+		results = results.filter(r => r.createdAt >= filters.startDate!)
 	}
-	
+
 	if (filters.endDate) {
-		query = query.filter(q => q.lte(q.createdAt, filters.endDate))
+		results = results.filter(r => r.createdAt <= filters.endDate!)
 	}
-	
+
 	if (filters.actorId) {
-		query = query.filter(q => q.eq(q.actorId, filters.actorId))
+		results = results.filter(r => r.actorId === filters.actorId)
 	}
-	
-	return await query.order('desc').take(1000).collect()
+
+	return results
 }

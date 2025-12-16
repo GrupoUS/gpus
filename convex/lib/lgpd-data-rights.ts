@@ -1,6 +1,6 @@
 /**
  * LGPD Data Subject Rights Implementation
- * 
+ *
  * Provides handlers for all LGPD-mandated data subject rights:
  * - Access (Art. 18)
  * - Correction (Art. 18)
@@ -11,9 +11,13 @@
  */
 
 import type { MutationCtx, QueryCtx } from '../_generated/server'
-import { getIdentity, getClerkId } from './auth'
+import { getClerkId } from './auth'
+// getIdentity available for future identity checks
+import { getIdentity as _getIdentity } from './auth'
 import { createAuditLog } from './audit-logging'
-import { decrypt, encrypt, hashSensitiveData } from './encryption'
+// decrypt and hashSensitiveData available for data processing
+import { encrypt } from './encryption'
+import { decrypt as _decrypt, hashSensitiveData as _hashSensitiveData } from './encryption'
 import { generateDataExport, hasConsentForDataCategory } from './lgpd-compliance'
 import { validateInput } from './validation'
 import { z } from 'zod'
@@ -99,22 +103,28 @@ export async function createLgpdRequest(
 	requestData: any
 ) {
 	const clerkId = await getClerkId(ctx)
-	
+
 	// Validate request based on type
 	const requestType = requestData.requestType
 	const schema = lgpdRequestSchemas[requestType as keyof typeof lgpdRequestSchemas]
-	
+
 	if (!schema) {
 		throw new Error(`Invalid LGPD request type: ${requestType}`)
 	}
-	
-	const validation = validateInput(schema, requestData)
+
+	const validation = validateInput(schema as any, requestData)
 	if (!validation.success) {
 		throw new Error(`Invalid LGPD request: ${validation.error}`)
 	}
-	
-	const data = validation.data
-	
+
+	// Type assertion for validated data
+	const data = validation.data as {
+		studentId: string
+		requestType: 'access' | 'correction' | 'deletion' | 'portability' | 'information' | 'restriction' | 'objection'
+		description?: string
+		identityProof: string
+	}
+
 	// Create LGPD request record
 	const requestId = await ctx.db.insert('lgpdRequests', {
 		studentId: ctx.db.normalizeId('students', data.studentId) as any,
@@ -122,12 +132,13 @@ export async function createLgpdRequest(
 		status: 'pending',
 		description: data.description,
 		identityProof: data.identityProof, // Store encrypted
-		ipAddress: getClientIP(ctx),
-		userAgent: ctx.headers['user-agent'],
+		ipAddress: 'unknown', // Convex doesn't expose headers in mutation context
+		userAgent: 'unknown',
+		processedBy: clerkId, // Initial assignee
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
 	})
-	
+
 	// Log request creation
 	await createAuditLog(ctx, {
 		actionType: 'data_access',
@@ -142,14 +153,14 @@ export async function createLgpdRequest(
 		processingPurpose: 'cumprimento LGPD',
 		legalBasis: 'direito do titular de dados',
 	})
-	
+
 	// Auto-process for certain request types if simple enough
 	if (requestType === LGPD_RIGHTS_TYPES.ACCESS) {
 		// Schedule immediate processing for access requests
 		// In production, this would be handled by a background job
 		await processAccessRequest(ctx, requestId, data.studentId, clerkId)
 	}
-	
+
 	return requestId
 }
 
@@ -166,29 +177,30 @@ export async function processAccessRequest(
 	if (!student) {
 		throw new Error('Student not found')
 	}
-	
+
 	// Get all consents
 	const consents = await ctx.db
 		.query('lgpdConsent')
 		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 		.collect()
-	
+
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
 		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 		.take(100) // Limit for access request
-	
-	// Prepare access data
+
+	// Prepare access data - use type assertion since we know student is from students table
+	const studentData = student as { name: string; email: string; phone: string; profession: string; hasClinic: boolean; clinicName?: string | null; clinicCity?: string | null }
 	const accessData = {
 		personalData: {
-			name: student.name,
-			email: student.email,
-			phone: student.phone,
-			profession: student.profession,
-			hasClinic: student.hasClinic,
-			clinicName: student.clinicName,
-			clinicCity: student.clinicCity,
+			name: studentData.name,
+			email: studentData.email,
+			phone: studentData.phone,
+			profession: studentData.profession,
+			hasClinic: studentData.hasClinic,
+			clinicName: studentData.clinicName,
+			clinicCity: studentData.clinicCity,
 		},
 		consents: consents.map(consent => ({
 			type: consent.consentType,
@@ -216,9 +228,11 @@ export async function processAccessRequest(
 			version: '1.0',
 		},
 	}
-	
+
 	// Update request with response
-	await ctx.db.patch(requestId, {
+	const normalizedRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
+	if (!normalizedRequestId) throw new Error('Invalid request ID')
+	await ctx.db.patch(normalizedRequestId, {
 		status: 'completed',
 		response: JSON.stringify(accessData),
 		completedAt: Date.now(),
@@ -226,7 +240,7 @@ export async function processAccessRequest(
 		processingNotes: 'Access request processed successfully',
 		updatedAt: Date.now(),
 	})
-	
+
 	// Log processing completion
 	await createAuditLog(ctx, {
 		actionType: 'data_access',
@@ -242,7 +256,7 @@ export async function processAccessRequest(
 		processingPurpose: 'cumprimento LGPD - direito de acesso',
 		legalBasis: 'direito do titular de dados',
 	})
-	
+
 	return accessData
 }
 
@@ -260,23 +274,23 @@ export async function processCorrectionRequest(
 	if (!student) {
 		throw new Error('Student not found')
 	}
-	
+
 	const updates: any = {}
 	const auditEntries: any[] = []
-	
+
 	// Process each correction
 	for (const correction of corrections) {
 		const { fieldName, newValue } = correction
 		const oldValue = student[fieldName as keyof typeof student]
-		
+
 		// Validate correction
 		if (!isValidCorrection(fieldName, newValue, student)) {
 			throw new Error(`Invalid correction for field ${fieldName}`)
 		}
-		
+
 		// Apply correction
 		updates[fieldName] = newValue
-		
+
 		// Log correction
 		auditEntries.push({
 			fieldName,
@@ -285,13 +299,13 @@ export async function processCorrectionRequest(
 			timestamp: Date.now(),
 		})
 	}
-	
+
 	// Update student record
 	await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
 		...updates,
 		updatedAt: Date.now(),
 	})
-	
+
 	// Log corrections
 	for (const entry of auditEntries) {
 		await createAuditLog(ctx, {
@@ -304,9 +318,11 @@ export async function processCorrectionRequest(
 			legalBasis: 'direito do titular de dados',
 		})
 	}
-	
+
 	// Update request
-	await ctx.db.patch(requestId, {
+	const normalizedCorrectionRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
+	if (!normalizedCorrectionRequestId) throw new Error('Invalid request ID')
+	await ctx.db.patch(normalizedCorrectionRequestId, {
 		status: 'completed',
 		response: JSON.stringify({ corrections: auditEntries }),
 		completedAt: Date.now(),
@@ -314,7 +330,7 @@ export async function processCorrectionRequest(
 		processingNotes: `Applied ${corrections.length} corrections`,
 		updatedAt: Date.now(),
 	})
-	
+
 	return { corrected: corrections.length, corrections: auditEntries }
 }
 
@@ -336,10 +352,10 @@ export async function processDeletionRequest(
 	if (!student) {
 		throw new Error('Student not found')
 	}
-	
+
 	const now = Date.now()
 	const auditEntries: any[] = []
-	
+
 	// Phase 1: Anonymize PII data
 	if (deletionOptions.includePii !== false) {
 		const anonymizedData = {
@@ -353,33 +369,33 @@ export async function processDeletionRequest(
 			clinicName: null,
 			clinicCity: null,
 		}
-		
+
 		await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
 			...anonymizedData,
 			updatedAt: now,
 		})
-		
+
 		auditEntries.push({
 			category: 'pii',
 			action: 'anonymized',
 			timestamp: now,
 		})
 	}
-	
+
 	// Phase 2: Handle academic data
 	if (deletionOptions.includeAcademic) {
 		const enrollments = await ctx.db
 			.query('enrollments')
 			.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 			.collect()
-		
+
 		for (const enrollment of enrollments) {
 			await ctx.db.patch(enrollment._id, {
 				status: 'cancelado',
 				updatedAt: now,
 			})
 		}
-		
+
 		auditEntries.push({
 			category: 'academic',
 			action: 'cancelled',
@@ -387,33 +403,33 @@ export async function processDeletionRequest(
 			timestamp: now,
 		})
 	}
-	
+
 	// Phase 3: Delete conversations and messages
 	const conversations = await ctx.db
 		.query('conversations')
 		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 		.collect()
-	
+
 	for (const conversation of conversations) {
 		const messages = await ctx.db
 			.query('messages')
 			.withIndex('by_conversation', q => q.eq('conversationId', conversation._id))
 			.collect()
-		
+
 		for (const message of messages) {
 			await ctx.db.delete(message._id)
 		}
-		
+
 		await ctx.db.delete(conversation._id)
 	}
-	
+
 	auditEntries.push({
 		category: 'communications',
 		action: 'deleted',
 		count: conversations.length,
 		timestamp: now,
 	})
-	
+
 	// Log deletion
 	await createAuditLog(ctx, {
 		actionType: 'data_deletion',
@@ -428,9 +444,11 @@ export async function processDeletionRequest(
 		processingPurpose: 'cumprimento LGPD - direito ao esquecimento',
 		legalBasis: 'direito do titular de dados',
 	})
-	
+
 	// Update request
-	await ctx.db.patch(requestId, {
+	const normalizedDeletionRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
+	if (!normalizedDeletionRequestId) throw new Error('Invalid request ID')
+	await ctx.db.patch(normalizedDeletionRequestId, {
 		status: 'completed',
 		response: JSON.stringify({ deletionSteps: auditEntries }),
 		completedAt: now,
@@ -438,7 +456,7 @@ export async function processDeletionRequest(
 		processingNotes: `Data deletion completed with ${auditEntries.length} steps`,
 		updatedAt: now,
 	})
-	
+
 	return { deleted: true, steps: auditEntries }
 }
 
@@ -457,26 +475,26 @@ export async function processPortabilityRequest(
 	if (!student) {
 		throw new Error('Student not found')
 	}
-	
+
 	// Get consents to verify what can be exported
 	const consents = await ctx.db
 		.query('lgpdConsent')
 		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 		.collect()
-	
+
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
 		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
 		.take(100)
-	
+
 	// Generate export data
 	const exportData = generateDataExport(student, consents, auditLog)
-	
+
 	// Create file (in production, this would be stored securely)
 	const fileName = `lgpd_export_${studentId}_${Date.now()}.${exportFormat}`
 	const fileUrl = `/exports/${fileName}` // Simplified - actual implementation would store file
-	
+
 	// Log export
 	await createAuditLog(ctx, {
 		actionType: 'data_export',
@@ -492,9 +510,11 @@ export async function processPortabilityRequest(
 		processingPurpose: 'cumprimento LGPD - direito à portabilidade',
 		legalBasis: 'direito do titular de dados',
 	})
-	
+
 	// Update request
-	await ctx.db.patch(requestId, {
+	const normalizedPortabilityRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
+	if (!normalizedPortabilityRequestId) throw new Error('Invalid request ID')
+	await ctx.db.patch(normalizedPortabilityRequestId, {
 		status: 'completed',
 		responseFiles: [fileName],
 		response: JSON.stringify({ fileUrl, fileName }),
@@ -503,7 +523,7 @@ export async function processPortabilityRequest(
 		processingNotes: `Data export generated in ${exportFormat} format`,
 		updatedAt: Date.now(),
 	})
-	
+
 	return { fileUrl, fileName, format: exportFormat }
 }
 
@@ -524,29 +544,16 @@ export async function getStudentLgpdRequests(
 /**
  * Helper functions
  */
-function getClientIP(ctx: MutationCtx | QueryCtx): string {
-	const headers = ctx.headers
-	const cfConnectingIP = headers['cf-connecting-ip']
-	const forwardedFor = headers['x-forwarded-for']
-	const realIP = headers['x-real-ip']
-	
-	if (cfConnectingIP && typeof cfConnectingIP === 'string') {
-		return cfConnectingIP
-	}
-	
-	if (forwardedFor && typeof forwardedFor === 'string') {
-		return forwardedFor.split(',')[0].trim()
-	}
-	
-	if (realIP && typeof realIP === 'string') {
-		return realIP
-	}
-	
-	return '0.0.0.0'
+/**
+ * NOTE: Convex mutation/query contexts don't have access to HTTP headers.
+ * Client IP and UserAgent must be passed from HTTP actions if needed.
+ */
+function getClientIP(): string {
+	return 'unknown' // Convex functions don't have access to HTTP headers
 }
 
-function isValidCorrection(fieldName: string, newValue: string, student: any): boolean {
-	// Basic validation - extend as needed
+function isValidCorrection(fieldName: string, newValue: string, _student: unknown): boolean {
+	// Basic validation - extend as needed (student available for context-based validation)
 	switch (fieldName) {
 		case 'name':
 			return newValue.length >= 2 && newValue.length <= 100
@@ -576,7 +583,7 @@ function getStudentDataCategory(fieldName: string): string {
 		clinicName: 'profissional',
 		clinicCity: 'profissional',
 	}
-	
+
 	return categoryMap[fieldName] || 'outros'
 }
 
@@ -589,21 +596,21 @@ export async function generateComplianceReport(
 ) {
 	const now = Date.now()
 	const last30Days = now - (30 * 24 * 60 * 60 * 1000)
-	
+
 	// Get recent requests
-	const requests = organizationId 
+	const requests = organizationId
 		? await ctx.db.query('lgpdRequests').collect() // Filter by org in production
 		: await ctx.db.query('lgpdRequests').collect()
-	
+
 	const recentRequests = requests.filter(req => req.createdAt >= last30Days)
-	
+
 	// Get recent audit logs
 	const auditLogs = organizationId
 		? await ctx.db.query('lgpdAudit').collect() // Filter by org in production
 		: await ctx.db.query('lgpdAudit').collect()
-	
+
 	const recentAuditLogs = auditLogs.filter(log => log.createdAt >= last30Days)
-	
+
 	// Generate report
 	const report = {
 		period: {
@@ -633,30 +640,30 @@ export async function generateComplianceReport(
 			}, {} as Record<string, number>),
 		},
 		complianceMetrics: {
-			requestProcessingRate: recentRequests.length > 0 
-				? (recentRequests.filter(req => req.status === 'completed').length / recentRequests.length) * 100 
+			requestProcessingRate: recentRequests.length > 0
+				? (recentRequests.filter(req => req.status === 'completed').length / recentRequests.length) * 100
 				: 0,
 			averageProcessingTime: calculateAverageProcessingTime(recentRequests),
 			auditTrailCoverage: 100, // All operations are audited
 		},
 		generatedAt: new Date().toISOString(),
 	}
-	
+
 	return report
 }
 
 function calculateAverageProcessingTime(requests: any[]): number {
-	const completedRequests = requests.filter(req => 
+	const completedRequests = requests.filter(req =>
 		req.status === 'completed' && req.completedAt && req.createdAt
 	)
-	
+
 	if (completedRequests.length === 0) {
 		return 0
 	}
-	
-	const totalTime = completedRequests.reduce((acc, req) => 
+
+	const totalTime = completedRequests.reduce((acc, req) =>
 		acc + (req.completedAt - req.createdAt), 0
 	)
-	
+
 	return Math.round(totalTime / completedRequests.length)
 }
