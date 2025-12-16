@@ -81,6 +81,10 @@ export const syncUser = mutation({
   },
 })
 
+
+/**
+ * Update a user's role or details
+ */
 export const updateUser = mutation({
   args: {
     userId: v.id('users'),
