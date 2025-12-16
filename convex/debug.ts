@@ -75,6 +75,7 @@ export const testCreate = mutation({
 				source: 'outro',
 				stage: 'novo',
 				temperature: 'frio',
+				organizationId: (identity as any).org_id || identity.subject,
 				createdAt: Date.now(),
 				updatedAt: Date.now(),
 			})

@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth, getOrganizationId } from './lib/auth'
 
 // Common args for lead creation/update
 const leadArgs = {
@@ -86,6 +87,9 @@ export const listLeads = query({
     source: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    // 1. Verify Auth & Get Org ID
+    const organizationId = await getOrganizationId(ctx);
+
     let leads;
     
     // Optimization: Use index if filtering by a single stage
@@ -96,17 +100,23 @@ export const listLeads = query({
     if (singleStage) {
         leads = await ctx.db
             .query('leads')
-            .withIndex('by_stage', q => q.eq('stage', singleStage as any))
+            .withIndex('by_organization_stage', q => 
+                q.eq('organizationId', organizationId)
+                 .eq('stage', singleStage as any)
+            )
             .order('desc')
             .collect();
     } else {
-        leads = await ctx.db.query('leads').order('desc').collect();
+        leads = await ctx.db
+            .query('leads')
+            .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+            .order('desc')
+            .collect();
 
         // Filter by multiple stages if applicable
         if (args.stages && args.stages.length > 0) {
             leads = leads.filter(l => args.stages!.includes(l.stage));
         } else if (args.stage && args.stage !== 'all') {
-             // Fallback to legacy single stage param (only reached if logic above failed somehow, strictly redundant but safe)
              leads = leads.filter(l => l.stage === args.stage);
         }
     }
@@ -146,18 +156,27 @@ export const createLead = mutation({
       assignedTo: v.optional(v.id('users')),
   },
   handler: async (ctx, args) => {
-      // Check for auth if needed
-      const identity = await ctx.auth.getUserIdentity()
-      if (!identity) {
-          console.error("Unauthenticated call to createLead - Check Clerk/Convex integration")
-          throw new Error("Unauthenticated")
-      }
+      // Check for auth and get org
+      const identity = await requireAuth(ctx)
+      const organizationId = await getOrganizationId(ctx)
 
       const leadId = await ctx.db.insert('leads', {
           ...args,
+          organizationId,
           createdAt: Date.now(),
           updatedAt: Date.now(),
       })
+      
+      // Log activity
+      await ctx.db.insert('activities', {
+          type: 'lead_criado',
+          description: `Lead "${args.name}" criado`,
+          leadId: leadId,
+          organizationId,
+          performedBy: identity.subject,
+          createdAt: Date.now(),
+      })
+
       return leadId
   }
 })
@@ -177,12 +196,28 @@ export const updateLeadStage = mutation({
     },
     handler: async (ctx, args) => {
         // Auth check
-        const identity = await ctx.auth.getUserIdentity()
-        if (!identity) throw new Error("Unauthenticated")
+        const identity = await requireAuth(ctx)
+        const organizationId = await getOrganizationId(ctx)
+        
+        const lead = await ctx.db.get(args.leadId)
+        if (!lead || lead.organizationId !== organizationId) {
+             throw new Error("Lead not found or permission denied")
+        }
         
         await ctx.db.patch(args.leadId, {
             stage: args.newStage,
             updatedAt: Date.now()
+        })
+        
+        // Activity log
+        await ctx.db.insert('activities', {
+            type: 'stage_changed',
+            description: `Lead movido para ${args.newStage}`,
+            leadId: args.leadId,
+            organizationId,
+            performedBy: identity.subject,
+            createdAt: Date.now(),
+            metadata: { from: lead.stage, to: args.newStage }
         })
     }
 })
@@ -257,8 +292,13 @@ export const updateLead = mutation({
         })
     },
     handler: async (ctx, args) => {
-         const identity = await ctx.auth.getUserIdentity()
-         if (!identity) throw new Error("Unauthenticated")
+         await requireAuth(ctx)
+         const organizationId = await getOrganizationId(ctx)
+         
+         const lead = await ctx.db.get(args.leadId)
+         if (!lead || lead.organizationId !== organizationId) {
+             throw new Error("Lead not found or permission denied")
+         }
 
          await ctx.db.patch(args.leadId, {
              ...args.patch,
@@ -279,10 +319,33 @@ export const recent = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    // recent leads should also be scoped? usually yes.
+    const organizationId = await getOrganizationId(ctx);
+
+    // filtering by created AND organization is tricky without specific index.
+    // Schema has 'by_created'. 'by_organization' exists. 
+    // Ideally we need 'by_organization_created' but 'by_organization' + manual sort might suffice for small sets.
+    // Or we use the by_organization index and sort in memory if not too many.
+    // Let's assume we want to stick to DB sorting. 
+    // Plan didn't specify recent query index updates. 
+    // I added 'by_organization'. 
+    // Let's use 'by_organization' and take recent.
+    // Actually typically 'recent' dashboard widgets need efficient latest. 
+    // I'll add 'by_organization_created' index to schema? No, I shouldn't modify schema again if I can avoid it.
+    // Let's filter in memory for now or just use standard query if volume is low.
+    // BUT we must filter by organization.
+    
     return await ctx.db
       .query('leads')
-      .withIndex('by_created')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId))
       .order('desc')
+      // .take(args.limit ?? 10) // .take() on query uses the index order. 
+      // by_organization index doesn't guarantee creation order? 
+      // convex indexes are ordered by indexed fields + _creationTime implicitly? 
+      // Wait, standard index is by fields. If duplicates, then _id.
+      // So 'by_organization' order is random for same org? No.
+      // Convex docs: "Records with the same values for the indexed fields are ordered by their creation time."
+      // YES! So by_organization is implicitly by_organization_and_creation_time.
       .take(args.limit ?? 10)
   }
 })

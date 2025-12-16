@@ -48,6 +48,27 @@ export async function requireAuth(ctx: Context): Promise<ClerkIdentity> {
 	return identity
 }
 
+
+
+/**
+ * Get the organization ID for multi-tenant data access
+ *
+ * Priority:
+ * 1. org_id from JWT (if user is in an organization context)
+ * 2. subject (clerkId) as fallback (personal organization)
+ */
+export async function getOrganizationId(ctx: Context): Promise<string> {
+	const identity = await requireAuth(ctx)
+
+	// If org_id is present in JWT, user is in an organization context
+	if (identity.org_id) {
+		return identity.org_id
+	}
+
+	// Fallback: use the user's own ID as their "personal organization"
+	return identity.subject
+}
+
 /**
  * Get the user's Clerk ID (subject claim)
  * @throws Error if not authenticated

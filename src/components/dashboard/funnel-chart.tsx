@@ -68,7 +68,8 @@ export function FunnelChart({ data }: FunnelChartProps) {
 										border: '1px solid hsl(var(--border) / 0.5)',
 										borderRadius: '0.5rem',
 									}}
-									formatter={(value: number) => [value, 'Leads']}
+									// biome-ignore lint/suspicious/noExplicitAny: Recharts type compatibility
+									formatter={(value: any) => [value, 'Leads']}
 								/>
 								<Bar dataKey="value" radius={[0, 4, 4, 0]} animationDuration={1000}>
 									{chartData.map((entry, index) => (

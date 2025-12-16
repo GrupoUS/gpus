@@ -13,6 +13,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
+interface MessageTemplate {
+	_id: string;
+	name: string;
+	content: string;
+	category: string;
+}
+
 interface ChatInputProps {
 	onSend: (message: string) => Promise<void>;
 	disabled?: boolean;
@@ -60,8 +67,8 @@ export function ChatInput({
 	const [open, setOpen] = useState(false);
 
 	const filteredTemplates = conversationTemplates?.filter(
-		(t: any) =>
-			t.title.toLowerCase().includes(templateSearch.toLowerCase()) ||
+		(t: MessageTemplate) =>
+			t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
 			t.content.toLowerCase().includes(templateSearch.toLowerCase()),
 	);
 
@@ -122,7 +129,7 @@ export function ChatInput({
 									</div>
 								) : (
 									<div className="p-1">
-										{filteredTemplates?.map((template: any) => (
+										{filteredTemplates?.map((template: MessageTemplate) => (
 											<button
 												type="button"
 												key={template._id}
@@ -133,7 +140,7 @@ export function ChatInput({
 												}}
 											>
 												<div className="flex items-center justify-between mb-1">
-													<span className="font-medium text-xs">{template.title}</span>
+													<span className="font-medium text-xs">{template.name}</span>
 													<Badge variant="outline" className="text-[10px] py-0 px-1">
 														{template.category}
 													</Badge>

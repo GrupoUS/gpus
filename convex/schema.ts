@@ -17,6 +17,10 @@ export default defineSchema({
     ),
     avatar: v.optional(v.string()),
     isActive: v.boolean(),
+    // Multi-tenant: organização atual
+    organizationId: v.optional(v.string()),
+    organizationRole: v.optional(v.string()), // 'admin' | 'member' basically, but Clerk uses specific strings
+    
     // Métricas de performance
     leadsAtribuidos: v.optional(v.number()),
     conversoes: v.optional(v.number()),
@@ -25,7 +29,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_clerk_id', ['clerkId'])
-    .index('by_role', ['role'])
+    .index('by_organization', ['organizationId'])
     .index('by_email', ['email']),
 
   // ═══════════════════════════════════════════════════════
@@ -115,6 +119,9 @@ export default defineSchema({
     ),
     score: v.optional(v.number()), // 0-100 calculado
     
+    // Multi-tenant
+    organizationId: v.string(), // Obrigatório para leads
+    
     // Timestamps
     lastContactAt: v.optional(v.number()),
     nextFollowUpAt: v.optional(v.number()),
@@ -122,7 +129,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_phone', ['phone'])
-    .index('by_stage', ['stage'])
+    .index('by_organization', ['organizationId'])
+    .index('by_organization_stage', ['organizationId', 'stage'])
     .index('by_assigned', ['assignedTo'])
     .index('by_product', ['interestedProduct'])
     .index('by_temperature', ['temperature'])
@@ -414,13 +422,15 @@ export default defineSchema({
     description: v.string(),
     metadata: v.optional(v.any()), // Dados extras JSON
     
-    // Autor
-    userId: v.optional(v.id('users')),
-    
+    // Multi-tenant
+    organizationId: v.string(),
+    performedBy: v.string(), // clerkId (subject)
+
     // Timestamp
     createdAt: v.number(),
   })
     .index('by_lead', ['leadId'])
+    .index('by_organization', ['organizationId'])
     .index('by_student', ['studentId'])
     .index('by_type', ['type'])
     .index('by_created', ['createdAt']),

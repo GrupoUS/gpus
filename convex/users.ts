@@ -74,6 +74,9 @@ export const syncUser = mutation({
       avatar: args.avatar,
       role: args.role ?? 'sdr', // Default role
       isActive: true,
+      // Multi-tenant defaults
+      organizationId: undefined, // Will be set via webhook usually, or manually
+      organizationRole: undefined, 
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })

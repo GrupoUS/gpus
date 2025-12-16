@@ -1,23 +1,16 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import {
-	ChevronLeft,
-	ChevronRight,
-	GraduationCap,
-	LayoutGrid,
-	TableIcon,
-	Users,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { useEffect } from 'react';
 
 import type { Id } from '../../../convex/_generated/dataModel';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentFilters } from '@/components/students/student-filters';
-import { StudentForm } from '@/components/students/student-form';
+import { StudentHeader } from '@/components/students/student-header';
+import { StudentStats } from '@/components/students/student-stats';
 import { StudentsTable } from '@/components/students/student-table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const Route = createFileRoute('/_authenticated/students')({
 	validateSearch: (search: Record<string, unknown>) => {
@@ -117,78 +110,21 @@ function StudentsPage() {
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
-						<GraduationCap className="h-6 w-6 text-purple-500" />
-						Alunos
-					</h1>
-					<p className="text-muted-foreground">Gerencie seus alunos e matrículas</p>
-				</div>
-				<div className="flex items-center gap-2">
-					{/* View Toggle */}
-					<div className="flex gap-1 border rounded-md p-1">
-						<Button
-							variant={view === 'grid' ? 'secondary' : 'ghost'}
-							size="sm"
-							className="h-8 w-8 p-0"
-							onClick={() => {
-								void navigate({
-									to: '/students',
-									search: { ...{ search, status, churnRisk, product, page }, view: 'grid' },
-								});
-							}}
-						>
-							<LayoutGrid className="h-4 w-4" />
-						</Button>
-						<Button
-							variant={view === 'table' ? 'secondary' : 'ghost'}
-							size="sm"
-							className="h-8 w-8 p-0"
-							onClick={() => {
-								void navigate({
-									to: '/students',
-									search: { ...{ search, status, churnRisk, product, page }, view: 'table' },
-								});
-							}}
-						>
-							<TableIcon className="h-4 w-4" />
-						</Button>
-					</div>
-					<StudentForm />
-				</div>
-			</div>
+			<StudentHeader
+				view={view as 'grid' | 'table'}
+				search={search}
+				status={status}
+				churnRisk={churnRisk}
+				product={product}
+				page={page}
+			/>
 
 			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-3">
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
-						<Users className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{totalStudents}</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Alunos Ativos</CardTitle>
-						<GraduationCap className="h-4 w-4 text-green-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">{activeStudents}</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Risco de Churn</CardTitle>
-						<Users className="h-4 w-4 text-red-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-red-600">{highRiskStudents}</div>
-					</CardContent>
-				</Card>
-			</div>
+			<StudentStats
+				totalStudents={totalStudents}
+				activeStudents={activeStudents}
+				highRiskStudents={highRiskStudents}
+			/>
 
 			{/* Filters */}
 			<StudentFilters
