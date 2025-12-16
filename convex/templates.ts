@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 // Comment 7: Type-safety improvements with explicit unions from schema
 export const list = query({
@@ -28,6 +29,8 @@ export const list = query({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     let templates
     
     if (args.category) {
@@ -67,6 +70,8 @@ export const getByCategory = query({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('messageTemplates')
       .withIndex('by_category', (q) => q.eq('category', args.category))

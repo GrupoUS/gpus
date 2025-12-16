@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 /**
  * Get current user from Clerk auth
@@ -21,10 +22,23 @@ export const current = query({
 
 /**
  * List all users (for dropdowns, assignments, etc.)
+ * SECURITY: Admin-only access - prevents unauthorized user enumeration
  */
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await requireAuth(ctx)
+
+    // Get current user to check role
+    const currentUser = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique()
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Permissão negada. Apenas administradores podem listar usuários.')
+    }
+
     return await ctx.db.query('users').collect()
   },
 })

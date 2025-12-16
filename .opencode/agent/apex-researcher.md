@@ -174,7 +174,7 @@ research_report:
   complexity: "L[1-10]"
   complexity_justification: "[why this level was assigned]"
   sources_validated: [count]
-  
+
   scope:
     topic: "[main subject]"
     brazilian_compliance: [true|false]
@@ -198,7 +198,7 @@ research_report:
 atomic_tasks_proposal:
   # For L1-L4: Simple tasks without subtasks
   # For L5+: Tasks WITH subtasks
-  
+
   - id: "AT-001"
     title: "[Clear action title - verb + noun]"
     description: "[What apex-dev should implement - be specific]"
@@ -215,7 +215,7 @@ atomic_tasks_proposal:
     test_strategy: "[unit|integration|e2e|none]"  # NEW: How to test this task
     rollback_strategy: "[How to undo if task fails]"  # NEW: Rollback instructions
     subtasks: []  # Empty for L1-L4
-    
+
   - id: "AT-002"
     title: "[Clear action title]"
     description: "[What apex-dev should implement]"
@@ -263,6 +263,53 @@ implementation_notes:
   - "[Gotchas or edge cases to watch for]"
   - "[Recommended implementation order if not obvious from dependencies]"
 
+# NEW: Spec artifact paths for /implement to consume
+spec_artifacts:
+  spec_path: ".opencode/specs/[feature-id]/spec.md"  # Always generated
+  feature_id: "[slugified-topic-name]"  # Used by /implement for context loading
+  additional_artifacts:  # Only for L7+ complexity
+    - path: ".opencode/specs/[feature-id]/data-model.md"
+      generated: "[true if complexity >= L7]"
+    - path: ".opencode/specs/[feature-id]/contracts.md"
+      generated: "[true if complexity >= L7]"
+    - path: ".opencode/specs/[feature-id]/quickstart.md"
+      generated: "[true if complexity >= L7]"
+
+# NEW: Constitution compliance validation results
+constitution_compliance:
+  validated: "[true if all principles pass]"
+  principles_checked:
+    - principle: "bun_first"
+      status: "[pass|fail]"
+    - principle: "typescript_strict"
+      status: "[pass|fail]"
+    - principle: "lgpd_compliance"
+      status: "[pass|fail]"
+    - principle: "biome_standards"
+      status: "[pass|fail]"
+    - principle: "convex_patterns"
+      status: "[pass|fail]"
+    - principle: "test_coverage"
+      status: "[pass|fail]"
+    - principle: "accessibility"
+      status: "[pass|fail]"
+    - principle: "portuguese_ui"
+      status: "[pass|fail]"
+    - principle: "performance"
+      status: "[pass|fail]"
+    - principle: "functional_components"
+      status: "[pass|fail]"
+  violations:
+    - task_id: "[AT-XXX if violation found]"
+      principle: "[violated principle]"
+      issue: "[description of violation]"
+      remediation: "[how to fix]"
+  remediation_tasks:
+    - id: "[AT-XXX-FIX]"
+      parent_task: "[AT-XXX]"
+      title: "[Fix description]"
+      priority: "high"
+
 status: "[complete|needs_deeper_research|blocked]"
 blocked_reason: "[only if status is blocked]"
 ```
@@ -278,52 +325,52 @@ Convert your `atomic_tasks_proposal` and `validation_tasks` to TodoWrite format:
 ```javascript
 todowrite([
   // Main tasks ordered by phase (1→5)
-  { 
-    id: "AT-001", 
-    content: "[AT-001] Task Title | Phase: 1 | Files: path/file.ts", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "AT-001",
+    content: "[AT-001] Task Title | Phase: 1 | Files: path/file.ts",
+    status: "pending",
+    priority: "high"
   },
   // Subtasks with indentation (for L5+ complexity)
-  { 
-    id: "AT-001-A", 
-    content: "  ↳ [AT-001-A] Subtask description", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "AT-001-A",
+    content: "  ↳ [AT-001-A] Subtask description",
+    status: "pending",
+    priority: "high"
   },
-  { 
-    id: "AT-001-B", 
-    content: "  ↳ [AT-001-B] Subtask description", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "AT-001-B",
+    content: "  ↳ [AT-001-B] Subtask description",
+    status: "pending",
+    priority: "high"
   },
   // Next main task
-  { 
-    id: "AT-002", 
-    content: "[AT-002] Second Task | Phase: 3 | Files: another/file.ts", 
-    status: "pending", 
-    priority: "medium" 
+  {
+    id: "AT-002",
+    content: "[AT-002] Second Task | Phase: 3 | Files: another/file.ts",
+    status: "pending",
+    priority: "medium"
   },
   // ... more tasks ...
-  
+
   // Validation tasks at the end
-  { 
-    id: "VT-001", 
-    content: "[VT-001] Build validation: bun run build", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "VT-001",
+    content: "[VT-001] Build validation: bun run build",
+    status: "pending",
+    priority: "high"
   },
-  { 
-    id: "VT-002", 
-    content: "[VT-002] Lint check: bun run lint:check", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "VT-002",
+    content: "[VT-002] Lint check: bun run lint:check",
+    status: "pending",
+    priority: "high"
   },
-  { 
-    id: "VT-003", 
-    content: "[VT-003] Test suite: bun run test", 
-    status: "pending", 
-    priority: "high" 
+  {
+    id: "VT-003",
+    content: "[VT-003] Test suite: bun run test",
+    status: "pending",
+    priority: "high"
   }
 ])
 ```
@@ -349,13 +396,15 @@ For subtasks, prefix with `  ↳` (two spaces + arrow) for visual hierarchy.
 
 Query: "How to add a new shadcn button variant?"
 
+### Step 1: Generate Research Report YAML
+
 ```yaml
 research_report:
   summary: "Add custom button variant via Tailwind config and button component extension"
   complexity: "L3"
   complexity_justification: "Single component modification, well-documented pattern"
   sources_validated: 3
-  
+
   scope:
     topic: "shadcn/ui button variant customization"
     brazilian_compliance: false
@@ -378,6 +427,9 @@ atomic_tasks_proposal:
   - id: "AT-001"
     title: "Add new button variant to buttonVariants"
     description: "Extend cva() variants object in button.tsx with new variant classes"
+    type: "core"
+    phase: 3
+    parallel_group: null
     priority: "high"
     estimated_effort: "small"
     files_affected:
@@ -386,6 +438,8 @@ atomic_tasks_proposal:
     acceptance_criteria:
       - "New variant renders with correct styles"
       - "TypeScript autocomplete shows new variant"
+    test_strategy: "none"
+    rollback_strategy: "git checkout src/components/ui/button.tsx"
     subtasks: []
 
 validation_tasks:
@@ -404,9 +458,40 @@ implementation_notes:
 status: "complete"
 ```
 
+### Step 2: Execute TodoWrite (MANDATORY)
+
+After generating the YAML above, you **MUST** immediately execute `todowrite()`:
+
+```javascript
+todowrite([
+  { 
+    id: "AT-001", 
+    content: "[AT-001] Add new button variant to buttonVariants | Phase: 3 | Files: src/components/ui/button.tsx", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "VT-001", 
+    content: "[VT-001] Build validation: bun run build", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "VT-002", 
+    content: "[VT-002] Lint check: bun run lint:check", 
+    status: "pending", 
+    priority: "high" 
+  }
+])
+```
+
+**Result**: TodoWrite now contains 3 executable tasks ready for @apex-dev.
+
 ## Example Output for L7 Query
 
 Query: "Design architecture for lead scoring system"
+
+### Step 1: Generate Research Report YAML
 
 ```yaml
 research_report:
@@ -414,7 +499,7 @@ research_report:
   complexity: "L7"
   complexity_justification: "Architecture decision, multiple files, real-time requirements"
   sources_validated: 5
-  
+
   scope:
     topic: "Lead scoring system architecture"
     brazilian_compliance: false
@@ -462,7 +547,7 @@ atomic_tasks_proposal:
       - id: "AT-001-B"
         title: "Add by_score index"
         description: "Create index for efficient score-based queries"
-        
+
   - id: "AT-002"
     title: "Create scoring mutation"
     description: "Implement calculateLeadScore mutation with configurable factors"
@@ -525,6 +610,105 @@ implementation_notes:
 
 status: "complete"
 ```
+
+### Step 2: Execute TodoWrite (MANDATORY)
+
+After generating the YAML above, you **MUST** immediately execute `todowrite()` with all tasks and subtasks:
+
+```javascript
+todowrite([
+  // Phase 1: Setup (AT-001 - Schema changes)
+  { 
+    id: "AT-001", 
+    content: "[AT-001] Extend leads schema with scoring fields | Phase: 1 | Files: convex/schema.ts", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-001-A", 
+    content: "  ↳ [AT-001-A] Add score fields to leads table", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-001-B", 
+    content: "  ↳ [AT-001-B] Add by_score index", 
+    status: "pending", 
+    priority: "high" 
+  },
+  
+  // Phase 3: Core (AT-002 - Mutation, AT-003 - Component)
+  { 
+    id: "AT-002", 
+    content: "[AT-002] Create scoring mutation | Phase: 3 | Files: convex/leads.ts", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-002-A", 
+    content: "  ↳ [AT-002-A] Define scoring factors interface", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-002-B", 
+    content: "  ↳ [AT-002-B] Implement score calculation logic", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-002-C", 
+    content: "  ↳ [AT-002-C] Add score history tracking", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "AT-003", 
+    content: "[AT-003] Create lead score display component | Phase: 3 | Files: src/components/crm/score-indicator.tsx", 
+    status: "pending", 
+    priority: "medium" 
+  },
+  { 
+    id: "AT-003-A", 
+    content: "  ↳ [AT-003-A] Create ScoreIndicator base component", 
+    status: "pending", 
+    priority: "medium" 
+  },
+  { 
+    id: "AT-003-B", 
+    content: "  ↳ [AT-003-B] Add score history tooltip", 
+    status: "pending", 
+    priority: "medium" 
+  },
+  
+  // Validation Tasks
+  { 
+    id: "VT-001", 
+    content: "[VT-001] Build validation: bun run build", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "VT-002", 
+    content: "[VT-002] Lint check: bun run lint:check", 
+    status: "pending", 
+    priority: "high" 
+  },
+  { 
+    id: "VT-003", 
+    content: "[VT-003] Test suite: bun run test", 
+    status: "pending", 
+    priority: "high" 
+  }
+])
+```
+
+**Result**: TodoWrite now contains 13 executable tasks (3 main + 7 subtasks + 3 validation) ready for @apex-dev.
+
+**Execution Order for /implement**:
+1. **Phase 1**: AT-001 → AT-001-A → AT-001-B (schema setup)
+2. **Phase 3**: AT-002 → AT-002-A → AT-002-B → AT-002-C (mutation), then AT-003 → AT-003-A → AT-003-B (component)
+3. **Validation**: VT-001 → VT-002 → VT-003
 
 ## Project Context
 

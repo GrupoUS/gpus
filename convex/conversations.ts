@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 // Queries
 export const list = query({
@@ -20,6 +21,8 @@ export const list = query({
     )),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     let conversations
 
     if (args.department) {
@@ -112,6 +115,8 @@ export const list = query({
 export const getById = query({
   args: { id: v.id('conversations') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     const conversation = await ctx.db.get(args.id)
     if (!conversation) return null
 
@@ -139,6 +144,8 @@ export const getById = query({
 export const getByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('conversations')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
@@ -149,6 +156,8 @@ export const getByStudent = query({
 export const getByLead = query({
   args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('conversations')
       .withIndex('by_lead', (q) => q.eq('leadId', args.leadId))

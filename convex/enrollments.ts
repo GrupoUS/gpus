@@ -1,9 +1,12 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 export const getByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('enrollments')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
@@ -22,6 +25,8 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     // Use filters if provided
     let q: any = ctx.db.query('enrollments')
     

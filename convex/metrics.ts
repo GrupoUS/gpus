@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 export const getDashboard = query({
   args: {
@@ -12,6 +13,8 @@ export const getDashboard = query({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     // Calculate date ranges
     const now = Date.now()
     let startDate = 0
@@ -164,6 +167,8 @@ export const getTeamPerformance = query({
     period: v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'), v.literal('year')),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     // Comment 2: Explicit documentation and alignment with period argument.
     // Metric: "Conversions in the selected period" based on lead.updatedAt for 'fechado_ganho' leads.
 

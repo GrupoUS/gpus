@@ -33,6 +33,8 @@ const activityArgs = {
 export const listByLead = query({
   args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+
     return await ctx.db
       .query('activities')
       .withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
@@ -44,6 +46,8 @@ export const listByLead = query({
 export const listByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+
     return await ctx.db
       .query('activities')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))

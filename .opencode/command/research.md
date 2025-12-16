@@ -105,7 +105,7 @@ Carregar e validar contra `.opencode/memory/constitution.md`:
 ```yaml
 constitution_validation:
   load: ".opencode/memory/constitution.md"
-  
+
   validate_each_task:
     - principle_1_bun_first: "Task não usa npm/yarn/pnpm"
     - principle_2_typescript_strict: "Task não introduz 'any' types"
@@ -117,7 +117,7 @@ constitution_validation:
     - principle_8_portuguese_ui: "User-facing text em português"
     - principle_9_performance: "Considera bundle size e lazy loading"
     - principle_10_functional: "Sem class components"
-  
+
   on_violation:
     - flag_task: "Marcar task com ⚠️ constitution violation"
     - add_remediation: "Adicionar subtask de correção"
@@ -158,7 +158,7 @@ phase_mapping:
       - "Add npm dependencies"
       - "Configure environment variables"
       - "Add table to Convex schema"
-  
+
   phase_2_tests:
     type: "test"
     activities: ["unit tests", "integration tests", "e2e tests", "fixtures"]
@@ -166,7 +166,7 @@ phase_mapping:
       - "Write unit tests for new component"
       - "Create test fixtures"
       - "Add E2E test for user flow"
-  
+
   phase_3_core:
     type: "core"
     activities: ["queries", "mutations", "components", "hooks", "utilities"]
@@ -174,7 +174,7 @@ phase_mapping:
       - "Implement Convex mutation"
       - "Create React component"
       - "Add custom hook"
-  
+
   phase_4_integration:
     type: "integration"
     activities: ["routes", "auth guards", "middleware", "connections"]
@@ -182,7 +182,7 @@ phase_mapping:
       - "Wire component to route"
       - "Add authentication guard"
       - "Connect frontend to backend"
-  
+
   phase_5_polish:
     type: "polish"
     activities: ["optimization", "cleanup", "documentation", "accessibility"]
@@ -200,19 +200,19 @@ parallel_grouping:
     - "Tasks with NO dependencies can be in parallel groups"
     - "Tasks in same parallel group MUST NOT modify same files"
     - "Assign sequential (null) to tasks with dependencies"
-  
+
   example:
     # These can run in parallel (Group A)
     - id: "AT-002"
       title: "Write notification mutation tests"
       parallel_group: "A"
       files_affected: ["convex/__tests__/notifications.test.ts"]
-    
+
     - id: "AT-003"
       title: "Write notification UI tests"
       parallel_group: "A"
       files_affected: ["src/components/__tests__/NotificationBell.test.tsx"]
-    
+
     # This must be sequential (depends on AT-001)
     - id: "AT-004"
       title: "Implement sendNotification mutation"
@@ -227,87 +227,179 @@ rollback_templates:
   file_created:
     strategy: "rm [path/to/file]"
     example: "rm src/components/notifications/NotificationBell.tsx"
-  
+
   file_modified:
     strategy: "git checkout [path/to/file]"
     example: "git checkout convex/schema.ts"
-  
+
   dependency_added:
     strategy: "bun remove [package]"
     example: "bun remove @tanstack/react-query"
-  
+
   schema_migration:
     strategy: "Revert schema + redeploy: git checkout convex/schema.ts && bunx convex deploy"
     example: "git checkout convex/schema.ts && bunx convex deploy"
-  
+
   multiple_files:
     strategy: "git checkout [file1] [file2] && rm [new_file]"
     example: "git checkout src/lib/utils.ts convex/leads.ts && rm src/hooks/useNotifications.ts"
 ```
 
-### 2.5.6 Spec Artifacts (L7+ Complexity Only)
+### 2.5.6 Persist Spec File (MANDATORY)
 
-Para features de alta complexidade (L7+), opcionalmente gerar artefatos de especificação:
+O Plan Agent DEVE persistir uma especificação executável após o research para `/implement` consumir:
+
+```yaml
+spec_persistence:
+  mandatory: true  # Always persist spec, not just L7+
+  location: ".opencode/specs/[feature-id]/"
+
+  # Generate feature-id from topic (slugified, lowercase, max 30 chars)
+  feature_id_generation:
+    input: "research_report.scope.topic"
+    transform: "lowercase → replace spaces with hyphens → remove special chars → truncate"
+    example: "lead-scoring-system"
+
+  main_spec:
+    path: ".opencode/specs/[feature-id]/spec.md"
+    content: |
+      ---
+      feature_id: "[feature-id]"
+      created: "[timestamp]"
+      complexity: "L[1-10]"
+      status: "approved"
+      ---
+
+      # [Feature Name] Specification
+
+      ## Summary
+      [research_report.summary]
+
+      ## Scope
+      - Topic: [scope.topic]
+      - Brazilian Compliance: [scope.brazilian_compliance]
+      - Compliance Requirements: [scope.compliance_requirements]
+
+      ## Key Findings
+      [Formatted key_findings with confidence levels]
+
+      ## Atomic Tasks
+      [Formatted atomic_tasks_proposal]
+
+      ## Validation Tasks
+      [Formatted validation_tasks]
+
+      ## Implementation Notes
+      [implementation_notes]
+
+      ## Constitution Compliance
+      [constitution_compliance results]
+```
+
+### 2.5.6a Spec Artifacts (L7+ Complexity Only)
+
+Para features de alta complexidade (L7+), gerar artefatos adicionais:
 
 ```yaml
 spec_artifacts:
   when: "complexity >= L7"
   location: ".opencode/specs/[feature-id]/"
-  
+
   files:
     data_model_md:
+      path: ".opencode/specs/[feature-id]/data-model.md"
       purpose: "Entity definitions and relationships"
       content: |
         # Data Model: [Feature Name]
-        
+
         ## Entities
         - Entity1: description
         - Entity2: description
-        
+
         ## Relationships
         - Entity1 → Entity2: relationship type
-        
+
         ## Convex Schema
         ```typescript
         // Proposed schema changes
         ```
-    
+
     contracts_md:
+      path: ".opencode/specs/[feature-id]/contracts.md"
       purpose: "API contracts and interfaces"
       content: |
         # API Contracts: [Feature Name]
-        
+
         ## Queries
         - `api.feature.list`: Returns all items
         - `api.feature.get`: Returns single item
-        
+
         ## Mutations
         - `api.feature.create`: Creates new item
         - `api.feature.update`: Updates existing item
-        
+
         ## TypeScript Interfaces
         ```typescript
         // Proposed interfaces
         ```
-    
+
     quickstart_md:
+      path: ".opencode/specs/[feature-id]/quickstart.md"
       purpose: "Integration guide for developers"
       content: |
         # Quickstart: [Feature Name]
-        
+
         ## Prerequisites
         - [x] Requirement 1
         - [x] Requirement 2
-        
+
         ## Usage
         ```typescript
         // Example usage code
         ```
-        
+
         ## Testing
         ```bash
         bun test src/features/[feature]
         ```
+```
+
+### 2.5.6b Constitution Compliance in Research Report
+
+Incluir resultados de validação constitucional no research report:
+
+```yaml
+constitution_compliance_results:
+  include_in_report: true
+
+  format:
+    validated: true  # false if any violations
+
+    principles_checked:
+      - principle: "bun_first"
+        status: "pass"
+        notes: ""
+      - principle: "typescript_strict"
+        status: "pass"
+        notes: ""
+      # ... all 10 principles
+
+    violations:
+      - task_id: "AT-003"
+        principle: "lgpd_compliance"
+        issue: "Accesses CPF without encryption"
+        remediation: "Add encryption call before storage"
+
+    remediation_tasks:
+      - id: "AT-003-FIX"
+        parent_task: "AT-003"
+        title: "Add LGPD encryption for CPF field"
+        priority: "high"
+
+  on_violations:
+    - "Flag tasks with ⚠️ marker"
+    - "Add remediation subtasks automatically"
+    - "Notify user in plan presentation"
 ```
 
 ### 2.5.7 Validation Checklist
@@ -320,18 +412,18 @@ step_2_5_checklist:
     - [ ] Constitution loaded from .opencode/memory/constitution.md
     - [ ] Each task validated against 10 principles
     - [ ] Violations flagged with remediation subtasks
-  
+
   task_fields:
     - [ ] All tasks have `type` field (setup/test/core/integration/polish)
     - [ ] All tasks have `phase` field (1-5)
     - [ ] Parallel groups assigned where applicable
     - [ ] All tasks have `test_strategy` field
     - [ ] All tasks have `rollback_strategy` field
-  
+
   spec_artifacts:
     - [ ] L7+ features have optional spec artifacts generated
     - [ ] Artifacts stored in .opencode/specs/[feature-id]/
-  
+
   quality:
     - [ ] Tasks are actionable and specific
     - [ ] Dependencies are correctly identified

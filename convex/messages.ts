@@ -1,9 +1,12 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 export const getByConversation = query({
   args: { conversationId: v.id('conversations') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('messages')
       .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
