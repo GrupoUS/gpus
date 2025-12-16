@@ -47,11 +47,14 @@ import {
 	getSchemaFields,
 	mapCSVHeaders,
 	normalizeEmail,
+	normalizePaymentStatus,
 	normalizePhone,
 	normalizeProfession,
 	normalizeStatus,
 	parseBoolean,
 	parseDate,
+	parseInteger,
+	parseMonetary,
 	validateRow,
 } from '@/lib/csv-validator';
 
@@ -70,6 +73,77 @@ interface ImportResult {
 	warnings?: string[];
 }
 
+// Helper function to parse XLSX files
+async function parseXLSXFile(file: File): Promise<ParsedData> {
+	const buffer = await file.arrayBuffer();
+	const workbook = XLSX.read(buffer, { type: 'array' });
+	const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+	const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, {
+		header: 1,
+		raw: false,
+	});
+
+	if (jsonData.length === 0) {
+		return { headers: [], rows: [] };
+	}
+
+	const firstRow = jsonData[0] as unknown as unknown[];
+	const headers = firstRow.map((h) => String(h || '').trim());
+	const rows = jsonData.slice(1).map((row) => {
+		const arr = row as unknown as unknown[];
+		const obj: Record<string, unknown> = {};
+		headers.forEach((header, index) => {
+			obj[header] = arr[index];
+		});
+		return obj;
+	});
+
+	return { headers, rows };
+}
+
+// Helper function to parse CSV files
+async function parseCSVFile(file: File): Promise<ParsedData> {
+	const text = await file.text();
+	const result = Papa.parse<Record<string, unknown>>(text, {
+		header: true,
+		skipEmptyLines: true,
+		transformHeader: (h: string) => h.trim(),
+	});
+
+	return {
+		headers: result.meta.fields || [],
+		rows: result.data,
+	};
+}
+
+// Field transformer type
+type FieldTransformer = (value: unknown, schemaField: string) => unknown;
+
+// Field transformers map to reduce switch complexity
+const FIELD_TRANSFORMERS: Record<string, FieldTransformer> = {
+	name: (value) => String(value || '').trim(),
+	email: (value) => normalizeEmail(String(value || '')),
+	phone: (value) => normalizePhone(String(value || '')),
+	cpf: (value) => (value ? String(value).replace(/\D/g, '') : undefined),
+	profession: (value) => normalizeProfession(String(value || '')),
+	hasClinic: (value) => parseBoolean(value as string | boolean | undefined),
+	status: (value) => normalizeStatus(String(value || '')),
+	birthDate: (value) => (value ? parseDate(value as string | number) : undefined),
+	saleDate: (value) => (value ? parseDate(value as string | number) : undefined),
+	// Financial/Enrollment field transformers
+	totalValue: (value) => parseMonetary(value as string | number | undefined),
+	installmentValue: (value) => parseMonetary(value as string | number | undefined),
+	installments: (value) => parseInteger(value as string | number | undefined),
+	paidInstallments: (value) => parseInteger(value as string | number | undefined),
+	paymentStatus: (value) => normalizePaymentStatus(String(value || '')),
+	startDate: (value) => (value ? parseDate(value as string | number) : undefined),
+	professionalId: (value) => (value ? String(value).trim() : undefined),
+};
+
+// Default transformer for string fields
+const defaultTransformer: FieldTransformer = (value) =>
+	value !== undefined && value !== null && value !== '' ? String(value).trim() : undefined;
+
 export function StudentImportDialog() {
 	const [open, setOpen] = useState(false);
 	const [step, setStep] = useState<ImportStep>('upload');
@@ -84,7 +158,8 @@ export function StudentImportDialog() {
 		failureCount: number;
 		results: ImportResult[];
 	} | null>(null);
-	const [skipDuplicates, setSkipDuplicates] = useState(true);
+	const [selectedProduct, setSelectedProduct] = useState<string>('');
+	const [upsertMode, setUpsertMode] = useState(true);
 
 	// @ts-expect-error - Convex API is generated dynamically
 	const bulkImport = useMutation(api['students-import'].bulkImport);
@@ -100,6 +175,8 @@ export function StudentImportDialog() {
 		setIsProcessing(false);
 		setImportProgress(0);
 		setImportResults(null);
+		setSelectedProduct('');
+		setUpsertMode(true);
 	}, []);
 
 	const handleFileUpload = useCallback(async (uploadedFile: File) => {
@@ -107,50 +184,11 @@ export function StudentImportDialog() {
 		setIsProcessing(true);
 
 		try {
-			let headers: string[] = [];
-			let rows: Record<string, unknown>[] = [];
+			const isXLSX = uploadedFile.name.endsWith('.xlsx') || uploadedFile.name.endsWith('.xls');
+			const parsed = isXLSX ? await parseXLSXFile(uploadedFile) : await parseCSVFile(uploadedFile);
 
-			if (uploadedFile.name.endsWith('.xlsx') || uploadedFile.name.endsWith('.xls')) {
-				// Parse XLSX
-				const buffer = await uploadedFile.arrayBuffer();
-				const workbook = XLSX.read(buffer, { type: 'array' });
-				const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-				const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, {
-					header: 1,
-					raw: false,
-				});
-
-				if (jsonData.length > 0) {
-					const firstRow = jsonData[0] as unknown as unknown[];
-					headers = firstRow.map((h) => String(h || '').trim());
-					rows = jsonData.slice(1).map((row) => {
-						const arr = row as unknown as unknown[];
-						const obj: Record<string, unknown> = {};
-						headers.forEach((header, index) => {
-							obj[header] = arr[index];
-						});
-						return obj;
-					});
-				}
-			} else {
-				// Parse CSV
-				const text = await uploadedFile.text();
-				const result = Papa.parse<Record<string, unknown>>(text, {
-					header: true,
-					skipEmptyLines: true,
-					transformHeader: (h: string) => h.trim(),
-				});
-
-				headers = result.meta.fields || [];
-				rows = result.data;
-			}
-
-			setParsedData({ headers, rows });
-
-			// Auto-map headers
-			const autoMapping = mapCSVHeaders(headers);
-			setColumnMapping(autoMapping);
-
+			setParsedData(parsed);
+			setColumnMapping(mapCSVHeaders(parsed.headers));
 			setStep('mapping');
 		} catch {
 			alert('Erro ao processar arquivo. Verifique se o formato está correto.');
@@ -195,57 +233,17 @@ export function StudentImportDialog() {
 				if (schemaField === '_skip' || !schemaField) continue;
 
 				const value = row[csvHeader];
-
-				switch (schemaField) {
-					case 'name':
-						transformed.name = String(value || '').trim();
-						break;
-					case 'email':
-						transformed.email = normalizeEmail(String(value || ''));
-						break;
-					case 'phone':
-						transformed.phone = normalizePhone(String(value || ''));
-						break;
-					case 'cpf':
-						if (value) {
-							transformed.cpf = String(value).replace(/\D/g, '');
-						}
-						break;
-					case 'profession':
-						transformed.profession = normalizeProfession(String(value || ''));
-						break;
-					case 'hasClinic':
-						transformed.hasClinic = parseBoolean(value as string | boolean | undefined);
-						break;
-					case 'status':
-						transformed.status = normalizeStatus(String(value || ''));
-						break;
-					case 'birthDate':
-					case 'saleDate':
-						if (value) {
-							const parsed = parseDate(value as string | number);
-							if (parsed) {
-								transformed[schemaField] = parsed;
-							}
-						}
-						break;
-					default:
-						if (value !== undefined && value !== null && value !== '') {
-							transformed[schemaField] = String(value).trim();
-						}
+				const transformer = FIELD_TRANSFORMERS[schemaField] || defaultTransformer;
+				const result = transformer(value, schemaField);
+				if (result !== undefined) {
+					transformed[schemaField] = result;
 				}
 			}
 
 			// Set defaults
-			if (!transformed.hasClinic) {
-				transformed.hasClinic = false;
-			}
-			if (!transformed.status) {
-				transformed.status = 'ativo';
-			}
-			if (!transformed.profession) {
-				transformed.profession = 'outro';
-			}
+			if (!transformed.hasClinic) transformed.hasClinic = false;
+			if (!transformed.status) transformed.status = 'ativo';
+			if (!transformed.profession) transformed.profession = 'outro';
 
 			return transformed;
 		},
@@ -275,6 +273,12 @@ export function StudentImportDialog() {
 
 	const handleImport = useCallback(async () => {
 		if (!(parsedData && file)) return;
+
+		// Validate product is selected
+		if (!selectedProduct) {
+			alert('Selecione um produto antes de importar.');
+			return;
+		}
 
 		setStep('importing');
 		setIsProcessing(true);
@@ -310,9 +314,24 @@ export function StudentImportDialog() {
 					contractStatus?: string;
 					leadSource?: string;
 					cohort?: string;
+					// Financial/Enrollment fields
+					totalValue?: number;
+					installments?: number;
+					installmentValue?: number;
+					paymentStatus?: string;
+					paidInstallments?: number;
+					startDate?: number;
+					professionalId?: string;
 				}[],
 				fileName: file.name,
-				skipDuplicates,
+				product: selectedProduct as
+					| 'trintae3'
+					| 'otb'
+					| 'black_neon'
+					| 'comunidade'
+					| 'auriculo'
+					| 'na_mesa_certa',
+				upsertMode,
 			});
 
 			setImportResults(result);
@@ -322,7 +341,7 @@ export function StudentImportDialog() {
 		} finally {
 			setIsProcessing(false);
 		}
-	}, [parsedData, file, skipDuplicates, bulkImport, transformRowData]);
+	}, [parsedData, file, selectedProduct, upsertMode, bulkImport, transformRowData]);
 
 	const downloadErrorLog = useCallback(() => {
 		if (!importResults) return;
@@ -383,32 +402,61 @@ export function StudentImportDialog() {
 
 				{/* Upload Step */}
 				{step === 'upload' && (
-					<button
-						type="button"
-						className="w-full border-2 border-dashed rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer bg-transparent"
-						onDrop={handleDrop}
-						onDragOver={(e) => e.preventDefault()}
-						onClick={() => document.getElementById(fileInputId)?.click()}
-					>
-						<input
-							id={fileInputId}
-							type="file"
-							accept=".csv,.xlsx,.xls"
-							className="hidden"
-							onChange={handleFileSelect}
-						/>
-						{isProcessing ? (
-							<Loader2 className="h-12 w-12 mx-auto mb-4 text-purple-500 animate-spin" />
-						) : (
-							<Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-						)}
-						<p className="text-lg font-medium">
-							{isProcessing ? 'Processando arquivo...' : 'Arraste e solte um arquivo aqui'}
-						</p>
-						<p className="text-sm text-muted-foreground mt-2">
-							ou clique para selecionar (CSV, XLSX)
-						</p>
-					</button>
+					<div className="space-y-4">
+						<div className="space-y-2">
+							<span className="block text-sm font-medium">
+								Produto para matrícula <span className="text-red-500">*</span>
+							</span>
+							<Select value={selectedProduct} onValueChange={setSelectedProduct}>
+								<SelectTrigger aria-label="Selecione o produto para matrícula">
+									<SelectValue placeholder="Selecione o produto..." />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="trintae3">Trinta e 3</SelectItem>
+									<SelectItem value="otb">OTB</SelectItem>
+									<SelectItem value="black_neon">Black Neon</SelectItem>
+									<SelectItem value="comunidade">Comunidade US</SelectItem>
+									<SelectItem value="auriculo">Aurículo</SelectItem>
+									<SelectItem value="na_mesa_certa">Na Mesa Certa</SelectItem>
+								</SelectContent>
+							</Select>
+							<p className="text-xs text-muted-foreground">
+								Todos os alunos importados serão matriculados neste produto.
+							</p>
+						</div>
+
+						<button
+							type="button"
+							className="w-full border-2 border-dashed rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+							onDrop={handleDrop}
+							onDragOver={(e) => e.preventDefault()}
+							onClick={() => document.getElementById(fileInputId)?.click()}
+							disabled={!selectedProduct}
+						>
+							<input
+								id={fileInputId}
+								type="file"
+								accept=".csv,.xlsx,.xls"
+								className="hidden"
+								onChange={handleFileSelect}
+							/>
+							{isProcessing ? (
+								<Loader2 className="h-12 w-12 mx-auto mb-4 text-purple-500 animate-spin" />
+							) : (
+								<Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+							)}
+							<p className="text-lg font-medium">
+								{isProcessing
+									? 'Processando arquivo...'
+									: !selectedProduct
+										? 'Selecione um produto primeiro'
+										: 'Arraste e solte um arquivo aqui'}
+							</p>
+							<p className="text-sm text-muted-foreground mt-2">
+								ou clique para selecionar (CSV, XLSX)
+							</p>
+						</button>
+					</div>
 				)}
 
 				{/* Mapping Step */}
@@ -466,15 +514,24 @@ export function StudentImportDialog() {
 							</div>
 						)}
 
-						<label className="flex items-center gap-2 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={skipDuplicates}
-								onChange={(e) => setSkipDuplicates(e.target.checked)}
-								className="rounded"
-							/>
-							<span className="text-sm">Ignorar registros duplicados (email ou CPF)</span>
-						</label>
+						<div className="space-y-3 border-t pt-4">
+							<label className="flex items-center gap-2 cursor-pointer">
+								<input
+									type="checkbox"
+									checked={upsertMode}
+									onChange={(e) => setUpsertMode(e.target.checked)}
+									className="rounded"
+								/>
+								<span className="text-sm">
+									Atualizar alunos existentes (se email já cadastrado)
+								</span>
+							</label>
+							<p className="text-xs text-muted-foreground ml-6">
+								{upsertMode
+									? 'Alunos existentes serão atualizados e nova matrícula será adicionada.'
+									: 'Alunos com email duplicado serão ignorados.'}
+							</p>
+						</div>
 					</div>
 				)}
 

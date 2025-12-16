@@ -395,6 +395,14 @@ export function getSchemaFields(): { value: string; label: string; required: boo
 		{ value: 'contractStatus', label: 'Status do Contrato', required: false },
 		{ value: 'leadSource', label: 'Origem do Lead', required: false },
 		{ value: 'cohort', label: 'Turma', required: false },
+		// Financial/Enrollment fields
+		{ value: 'totalValue', label: 'Valor Total', required: false },
+		{ value: 'installments', label: 'Parcelas', required: false },
+		{ value: 'installmentValue', label: 'Valor da Parcela', required: false },
+		{ value: 'paymentStatus', label: 'Status Pagamento', required: false },
+		{ value: 'paidInstallments', label: 'Parcelas Pagas', required: false },
+		{ value: 'startDate', label: 'Data de Início', required: false },
+		{ value: 'professionalId', label: 'Registro Profissional', required: false },
 		{ value: '_skip', label: '-- Ignorar --', required: false },
 	];
 }
@@ -407,6 +415,104 @@ export interface ValidationResult {
 	data: Record<string, unknown>;
 }
 
+// Field validator type
+type FieldValidator = (
+	value: unknown,
+	rowNumber: number,
+	errors: string[],
+	warnings: string[],
+	data: Record<string, unknown>,
+	schemaField: string,
+) => void;
+
+// Individual field validators
+const validateNameField: FieldValidator = (value, rowNumber, errors, _warnings, data) => {
+	if (!value || String(value).trim().length < 2) {
+		errors.push(`Linha ${rowNumber}: Nome é obrigatório e deve ter pelo menos 2 caracteres`);
+	} else {
+		data.name = String(value).trim();
+	}
+};
+
+const validateEmailField: FieldValidator = (value, rowNumber, errors, _warnings, data) => {
+	if (!value) {
+		errors.push(`Linha ${rowNumber}: Email é obrigatório`);
+	} else if (!validateEmail(String(value))) {
+		errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
+	} else {
+		data.email = normalizeEmail(String(value));
+	}
+};
+
+const validatePhoneField: FieldValidator = (value, rowNumber, errors, warnings, data) => {
+	if (!value) {
+		errors.push(`Linha ${rowNumber}: Telefone é obrigatório`);
+	} else {
+		if (!validatePhone(String(value))) {
+			warnings.push(`Linha ${rowNumber}: Telefone pode estar em formato inválido: ${value}`);
+		}
+		data.phone = normalizePhone(String(value));
+	}
+};
+
+const validateCPFField: FieldValidator = (value, rowNumber, _errors, warnings, data) => {
+	if (value) {
+		const cpfStr = String(value);
+		if (!validateCPF(cpfStr)) {
+			warnings.push(`Linha ${rowNumber}: CPF inválido: ${value}`);
+		}
+		data.cpf = normalizeCPF(cpfStr);
+	}
+};
+
+const validateDateField: FieldValidator = (
+	value,
+	_rowNumber,
+	_errors,
+	_warnings,
+	data,
+	schemaField,
+) => {
+	if (value) {
+		const parsed = parseDate(value as string | number);
+		if (parsed) {
+			data[schemaField] = parsed;
+		}
+	}
+};
+
+const validateDefaultField: FieldValidator = (
+	value,
+	_rowNumber,
+	_errors,
+	_warnings,
+	data,
+	schemaField,
+) => {
+	if (value !== undefined && value !== null && value !== '') {
+		data[schemaField] = String(value).trim();
+	}
+};
+
+// Field validators map
+const FIELD_VALIDATORS: Record<string, FieldValidator> = {
+	name: validateNameField,
+	email: validateEmailField,
+	phone: validatePhoneField,
+	cpf: validateCPFField,
+	profession: (value, _rn, _e, _w, data) => {
+		data.profession = normalizeProfession(String(value || ''));
+	},
+	hasClinic: (value, _rn, _e, _w, data) => {
+		data.hasClinic = parseBoolean(value as string | boolean | undefined);
+	},
+	status: (value, _rn, _e, _w, data) => {
+		data.status = normalizeStatus(String(value || ''));
+	},
+	birthDate: validateDateField,
+	saleDate: validateDateField,
+};
+
 // Validate a single row of data
 export function validateRow(
 	row: Record<string, unknown>,
@@ -417,81 +523,12 @@ export function validateRow(
 	const warnings: string[] = [];
 	const data: Record<string, unknown> = {};
 
-	// Map and normalize fields
 	for (const [csvHeader, schemaField] of Object.entries(mapping)) {
 		if (schemaField === '_skip') continue;
 
 		const value = row[csvHeader];
-
-		switch (schemaField) {
-			case 'name':
-				if (!value || String(value).trim().length < 2) {
-					errors.push(`Linha ${rowNumber}: Nome é obrigatório e deve ter pelo menos 2 caracteres`);
-				} else {
-					data.name = String(value).trim();
-				}
-				break;
-
-			case 'email':
-				if (!value) {
-					errors.push(`Linha ${rowNumber}: Email é obrigatório`);
-				} else if (!validateEmail(String(value))) {
-					errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
-				} else {
-					data.email = normalizeEmail(String(value));
-				}
-				break;
-
-			case 'phone':
-				if (!value) {
-					errors.push(`Linha ${rowNumber}: Telefone é obrigatório`);
-				} else if (!validatePhone(String(value))) {
-					warnings.push(`Linha ${rowNumber}: Telefone pode estar em formato inválido: ${value}`);
-					data.phone = normalizePhone(String(value));
-				} else {
-					data.phone = normalizePhone(String(value));
-				}
-				break;
-
-			case 'cpf':
-				if (value) {
-					const cpfStr = String(value);
-					if (!validateCPF(cpfStr)) {
-						warnings.push(`Linha ${rowNumber}: CPF inválido: ${value}`);
-					}
-					data.cpf = normalizeCPF(cpfStr);
-				}
-				break;
-
-			case 'profession':
-				data.profession = normalizeProfession(String(value || ''));
-				break;
-
-			case 'hasClinic':
-				data.hasClinic = parseBoolean(value as string | boolean | undefined);
-				break;
-
-			case 'status':
-				data.status = normalizeStatus(String(value || ''));
-				break;
-
-			case 'birthDate':
-			case 'saleDate':
-				if (value) {
-					const parsed = parseDate(value as string | number);
-					if (parsed) {
-						data[schemaField] = parsed;
-					}
-				}
-				break;
-
-			default:
-				// String fields
-				if (value !== undefined && value !== null && value !== '') {
-					data[schemaField] = String(value).trim();
-				}
-				break;
-		}
+		const validator = FIELD_VALIDATORS[schemaField] || validateDefaultField;
+		validator(value, rowNumber, errors, warnings, data, schemaField);
 	}
 
 	// Set defaults for required boolean fields
@@ -505,4 +542,76 @@ export function validateRow(
 		warnings,
 		data,
 	};
+}
+
+// ==========================================
+// Financial Field Utilities
+// ==========================================
+
+// Payment status normalization map
+const PAYMENT_STATUS_MAP: Record<string, 'em_dia' | 'atrasado' | 'quitado' | 'cancelado'> = {
+	em_dia: 'em_dia',
+	'em dia': 'em_dia',
+	adimplente: 'em_dia',
+	regular: 'em_dia',
+	atrasado: 'atrasado',
+	inadimplente: 'atrasado',
+	atraso: 'atrasado',
+	quitado: 'quitado',
+	pago: 'quitado',
+	finalizado: 'quitado',
+	cancelado: 'cancelado',
+	cancelamento: 'cancelado',
+};
+
+/**
+ * Normalize payment status from various inputs to valid enum value
+ */
+export function normalizePaymentStatus(
+	status: string | undefined,
+): 'em_dia' | 'atrasado' | 'quitado' | 'cancelado' {
+	if (!status) return 'em_dia';
+	const normalized = status.trim().toLowerCase();
+	return PAYMENT_STATUS_MAP[normalized] || 'em_dia';
+}
+
+/**
+ * Parse monetary value from Brazilian format (R$ 1.234,56)
+ * Handles both Brazilian (1.234,56) and international (1,234.56) formats
+ */
+export function parseMonetary(value: string | number | undefined): number {
+	if (!value) return 0;
+	if (typeof value === 'number') return value;
+
+	// Remove R$ prefix and spaces
+	let cleaned = value.replace(/[R$\s]/g, '');
+
+	// Detect format: Brazilian uses comma as decimal separator
+	// Check if there's a comma after the last period (Brazilian format)
+	const lastComma = cleaned.lastIndexOf(',');
+	const lastPeriod = cleaned.lastIndexOf('.');
+
+	if (lastComma > lastPeriod) {
+		// Brazilian format: 1.234,56 → remove periods, replace comma with period
+		cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+	} else if (lastPeriod > lastComma) {
+		// International format: 1,234.56 → just remove commas
+		cleaned = cleaned.replace(/,/g, '');
+	} else if (lastComma !== -1) {
+		// Only comma, likely Brazilian decimal: 1234,56
+		cleaned = cleaned.replace(',', '.');
+	}
+
+	const parsed = Number.parseFloat(cleaned);
+	return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Parse integer value (for installments, paidInstallments, etc.)
+ */
+export function parseInteger(value: string | number | undefined): number {
+	if (!value) return 0;
+	if (typeof value === 'number') return Math.floor(value);
+	const parsed = Number.parseInt(String(value).replace(/\D/g, ''), 10);
+	return Number.isNaN(parsed) ? 0 : parsed;
 }

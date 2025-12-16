@@ -14,9 +14,9 @@ Este comando é executado pelo **Plan Agent** em Plan Mode. O fluxo completo é:
 │                                                                  │
 │  Step 1: Plan Agent invoca @apex-researcher                      │
 │      ↓                                                           │
-│  Step 2: apex-researcher retorna Research Report + Atomic Tasks  │
+│  Step 2: apex-researcher pesquisa e gera Research Report         │
 │      ↓                                                           │
-│  Step 3: Plan Agent cria TodoWrite com atomic tasks              │
+│  Step 3: apex-researcher executa todowrite() com atomic tasks    │
 │      ↓                                                           │
 │  Step 4: Plan Agent apresenta plano para aprovação               │
 │      ↓                                                           │

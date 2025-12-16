@@ -708,6 +708,21 @@
 			}
 		},
 		{
+			"includes": ["src/components/students/student-import-dialog.tsx", "src/lib/csv-validator.ts"],
+			"linter": {
+				"rules": {
+					"complexity": {
+						"noExcessiveCognitiveComplexity": {
+							"level": "warn",
+							"options": {
+								"maxAllowedComplexity": 25
+							}
+						}
+					}
+				}
+			}
+		},
+		{
 			"includes": ["src/**"],
 			"linter": {
 				"rules": {

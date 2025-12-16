@@ -108,6 +108,7 @@ Use available MCP tools strategically:
 | MCP | When to Use |
 |-----|-------------|
 | `serena` | Semantic code analysis, find symbols, understand codebase structure |
+| `mgrep` | Semantic search by concept using embeddings (Mixedbread AI) |
 | `gh_grep` | Search real-world code patterns from GitHub repositories |
 
 ### Docker MCP Toolkit Gateway
@@ -118,11 +119,47 @@ Use available MCP tools strategically:
 | `sequentialthinking` | Complex problem reasoning |
 | `tavily` | Web search for research |
 
-**Pipeline:**
+### MCP Decision Criteria
+
+| Need | Primary Tool | Fallback | Why |
+|------|-------------|----------|-----|
+| Exact symbol location | `serena find_symbol` | `mgrep` | LSP provides precise positions |
+| Conceptual understanding | `mgrep` | `serena search_for_pattern` | Embeddings understand semantics |
+| All usages of X | `serena find_referencing_symbols` | `mgrep` | LSP tracks references |
+| External patterns | `gh_grep` | `context7` | Production examples from GitHub |
+| Official API docs | `context7` | `tavily` | Authoritative documentation |
+| Architecture questions | `mgrep` | `serena get_symbols_overview` | Semantic search across files |
+
+### Fallback Strategies
+
+When primary tool fails or returns insufficient results:
+
+```
+serena → mgrep → search_for_pattern
+   │        │           │
+   │        │           └─ Regex-based text search
+   │        └─ Semantic/conceptual search
+   └─ LSP symbol resolution
+
+mgrep → serena → gh_grep
+   │       │         │
+   │       │         └─ External production patterns
+   │       └─ Exact symbol analysis
+   └─ Conceptual understanding
+
+gh_grep → context7 → tavily
+   │          │          │
+   │          │          └─ Web search (current solutions)
+   │          └─ Official documentation
+   └─ Real-world GitHub code
+```
+
+### Pipeline (Updated)
 1. `serena` → Understand existing patterns in codebase
-2. `gh_grep` → Research production patterns for unfamiliar APIs
-3. `context7` → Official docs when needed
-4. Implement with confidence
+2. `mgrep` → Conceptual queries for architecture understanding  
+3. `gh_grep` → Research production patterns for unfamiliar APIs
+4. `context7` → Official docs when needed
+5. Implement with confidence
 
 ## Execution Workflow
 

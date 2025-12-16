@@ -162,7 +162,7 @@ Before creating a PR:
 | Command | Description |
 |---------|-------------|
 | `/research [topic]` | Multi-source research with cross-validation |
-| `/qc [scope]` | Quality control pipeline (lint, build, test, deploy) |
+| `/qa [scope]` | Quality control pipeline (lint, build, test, deploy) |
 | `/clean [scope]` | Dead code detection and cleanup with Knip |
 
 ### MCP Tools Available
@@ -170,11 +170,11 @@ Before creating a PR:
 | MCP | Purpose |
 |-----|---------|
 | `serena` | Semantic code analysis, symbol discovery |
+| `mgrep` | Semantic search by concept (embeddings-based) |
 | `gh_grep` | Search real-world GitHub code patterns |
 | `context7` | Official documentation lookup |
 | `tavily` | Web search for current patterns (research only) |
 | `sequential_thinking` | Step-by-step reasoning (research only) |
-| `docker` | Container management |
 
 ### Agent Invocation
 
@@ -188,3 +188,164 @@ Before creating a PR:
 @database-specialist  # Convex database tasks
 @apex-ui-ux-designer  # UI/UX components
 ```
+
+---
+
+## MCP Intelligence Guide
+
+### MCP Decision Flowchart
+
+```mermaid
+graph TD
+    A[Need information?] --> B{What type?}
+    B -->|Symbol/Code location| C[serena]
+    B -->|Concept/Semantic meaning| D[mgrep]
+    B -->|External patterns| E[gh_grep]
+    B -->|Official docs| F[context7]
+    
+    C --> G{Found?}
+    G -->|Yes| H[Use result]
+    G -->|No| D
+    
+    D --> I{Found?}
+    I -->|Yes| H
+    I -->|No| E
+    
+    E --> J{Found?}
+    J -->|Yes| H
+    J -->|No| F
+```
+
+### Tool Selection Matrix
+
+| Scenario | Primary Tool | Fallback | Why |
+|----------|-------------|----------|-----|
+| "Find function X" | `serena find_symbol` | `mgrep` | Exact symbol match via LSP |
+| "How does auth work?" | `mgrep` | `serena search_for_pattern` | Conceptual/semantic query |
+| "Real-world React patterns" | `gh_grep` | `context7` | External production examples |
+| "Convex query syntax" | `context7` | `gh_grep` | Official docs first |
+| "All usages of hook Y" | `serena find_referencing_symbols` | - | Reference tracking via LSP |
+| "Similar error handling" | `mgrep` | `serena search_for_pattern` | Pattern similarity |
+| "How to use library Z" | `context7` | `tavily` | Authoritative documentation |
+
+### Anti-Patterns (When NOT to Use)
+
+| Tool | DON'T Use When | Use Instead |
+|------|---------------|-------------|
+| `serena` | Searching concepts like "authentication flow" | `mgrep` |
+| `mgrep` | Looking for exact function/class name | `serena find_symbol` |
+| `gh_grep` | Project-specific patterns | `serena` or `mgrep` |
+| `context7` | Searching for code examples | `gh_grep` |
+| `tavily` | Looking for code in this project | `serena` or `mgrep` |
+
+---
+
+## Serena Tool Chains
+
+### 1. Code Exploration Chain
+```bash
+serena_get_symbols_overview(file) 
+  → serena_find_symbol(pattern) 
+  → serena_find_referencing_symbols(symbol)
+```
+**Use case**: Understanding unfamiliar code structure
+
+### 2. Refactoring Chain
+```bash
+serena_find_symbol(target) 
+  → serena_find_referencing_symbols(target) 
+  → serena_rename_symbol() OR serena_replace_symbol_body()
+```
+**Use case**: Safe rename or body replacement across codebase
+
+### 3. Symbol Discovery Chain
+```bash
+serena_list_dir(path, recursive=true) 
+  → serena_get_symbols_overview(each_file) 
+  → serena_find_symbol(interesting_patterns)
+```
+**Use case**: Discovering patterns and conventions across codebase
+
+---
+
+## Semantic Search with mgrep
+
+### How It Works
+mgrep uses embeddings (Mixedbread AI) to find semantically similar code, not just text matches. It understands concepts and relationships.
+
+### Query Patterns
+
+| Query Type | Example | Best For |
+|------------|---------|----------|
+| Conceptual | "user authentication flow" | Understanding architecture |
+| Behavioral | "error handling in API calls" | Finding patterns |
+| Data flow | "how leads are created" | Tracing data paths |
+| Integration | "Clerk with Convex" | Understanding connections |
+
+### Project-Specific Examples
+
+```bash
+# Find auth-related code
+mgrep search "Clerk authentication user identity"
+
+# Find lead management patterns  
+mgrep search "CRM lead stage pipeline kanban"
+
+# Find Convex query patterns
+mgrep search "Convex real-time subscription useQuery"
+
+# Find form validation patterns
+mgrep search "form validation Zod schema"
+
+# Find error handling
+mgrep search "error boundary try catch mutation"
+```
+
+### mgrep vs serena vs gh_grep
+
+| Aspect | serena | mgrep | gh_grep |
+|--------|--------|-------|---------|
+| Search type | LSP symbols | Embeddings | Regex patterns |
+| Scope | This project | This project | GitHub public repos |
+| Best for | Exact symbols | Concepts | External patterns |
+| Speed | Fast | Medium | Medium |
+| Accuracy | Exact | Semantic | Pattern-based |
+
+---
+
+## Combined Workflow Examples
+
+### Example 1: Implementing New Feature
+```
+1. mgrep → "how similar features are implemented"
+2. serena find_symbol → locate related components
+3. context7 → official API documentation
+4. gh_grep → production patterns for unfamiliar APIs
+5. serena → implement with codebase consistency
+```
+
+### Example 2: Debugging Issue
+```
+1. serena find_symbol → locate error source
+2. serena find_referencing_symbols → trace call chain
+3. mgrep → "similar error handling patterns"
+4. context7 → library-specific debugging docs
+```
+
+### Example 3: Research Task
+```
+1. mgrep → conceptual understanding of area
+2. serena get_symbols_overview → file structure
+3. tavily → current best practices (2024+)
+4. context7 → official recommendations
+5. Synthesize findings → atomic tasks with ≥95% confidence
+```
+
+### Example 4: Code Review Preparation
+```
+1. serena find_symbol → locate changed code
+2. serena find_referencing_symbols → impact analysis
+3. mgrep → "security patterns for [feature]"
+4. context7 → OWASP/LGPD compliance patterns
+```
+
