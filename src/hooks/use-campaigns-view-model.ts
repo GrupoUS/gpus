@@ -110,6 +110,7 @@ export function useCampaignsViewModel(Route: any) {
 	const navigateToNewCampaign = () => {
 		void navigate({
 			to: '/marketing/nova',
+			search: { search: '', status: 'all', view: view || 'grid', page: 1 },
 		});
 	};
 

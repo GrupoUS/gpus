@@ -14,7 +14,15 @@ function CampaignDetailPage() {
 
 	return (
 		<div className="space-y-6">
-			<Button variant="ghost" onClick={() => navigate({ to: '/marketing' })}>
+			<Button
+				variant="ghost"
+				onClick={() =>
+					navigate({
+						to: '/marketing',
+						search: { search: '', status: 'all', view: 'grid', page: 1 },
+					})
+				}
+			>
 				<ArrowLeft className="mr-2 h-4 w-4" />
 				Voltar para campanhas
 			</Button>

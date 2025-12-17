@@ -7,6 +7,7 @@ import {
 	GraduationCap,
 	Kanban,
 	LayoutDashboard,
+	Mail,
 	MessageSquare,
 	Plug,
 	Settings,
@@ -43,6 +44,11 @@ const menuItems = [
 		label: 'Chat',
 		href: '/chat',
 		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Marketing',
+		href: '/marketing',
+		icon: <Mail className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Reports',

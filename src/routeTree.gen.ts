@@ -24,7 +24,6 @@ import { Route as AuthenticatedMarketingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedSettingsTemplatesRouteImport } from './routes/_authenticated/settings/templates'
@@ -112,12 +111,6 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedMarketingIndexRoute =
-  AuthenticatedMarketingIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedMarketingRoute,
-  } as any)
 const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -215,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
-  '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -223,6 +215,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/students': typeof AuthenticatedStudentsRouteWithChildren
@@ -241,7 +234,6 @@ export interface FileRoutesByTo {
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
-  '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -272,7 +264,6 @@ export interface FileRoutesById {
   '/_authenticated/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
-  '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -303,7 +294,6 @@ export interface FileRouteTypes {
     | '/settings/templates'
     | '/students/$studentId'
     | '/chat/'
-    | '/marketing/'
     | '/chat/$department/$id'
     | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
@@ -311,6 +301,7 @@ export interface FileRouteTypes {
     | '/'
     | '/crm'
     | '/dashboard'
+    | '/marketing'
     | '/reports'
     | '/settings'
     | '/students'
@@ -329,7 +320,6 @@ export interface FileRouteTypes {
     | '/settings/templates'
     | '/students/$studentId'
     | '/chat'
-    | '/marketing'
     | '/chat/$department/$id'
     | '/chat/$department'
   id:
@@ -359,7 +349,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/templates'
     | '/_authenticated/students/$studentId'
     | '/_authenticated/chat/'
-    | '/_authenticated/marketing/'
     | '/_authenticated/chat/$department/$id'
     | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
@@ -482,13 +471,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/marketing/': {
-      id: '/_authenticated/marketing/'
-      path: '/'
-      fullPath: '/marketing/'
-      preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
-      parentRoute: typeof AuthenticatedMarketingRoute
-    }
     '/_authenticated/chat/': {
       id: '/_authenticated/chat/'
       path: '/'
@@ -610,7 +592,6 @@ const AuthenticatedChatRouteWithChildren =
 interface AuthenticatedMarketingRouteChildren {
   AuthenticatedMarketingCampaignIdRoute: typeof AuthenticatedMarketingCampaignIdRoute
   AuthenticatedMarketingNovaRoute: typeof AuthenticatedMarketingNovaRoute
-  AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
 }
 
 const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
@@ -618,7 +599,6 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
     AuthenticatedMarketingCampaignIdRoute:
       AuthenticatedMarketingCampaignIdRoute,
     AuthenticatedMarketingNovaRoute: AuthenticatedMarketingNovaRoute,
-    AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
   }
 
 const AuthenticatedMarketingRouteWithChildren =

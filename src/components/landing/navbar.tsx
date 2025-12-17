@@ -81,6 +81,8 @@ export function Navbar() {
 					size="sm"
 					className="md:hidden"
 					onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+					aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+					aria-expanded={mobileMenuOpen}
 				>
 					{mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
 				</Button>

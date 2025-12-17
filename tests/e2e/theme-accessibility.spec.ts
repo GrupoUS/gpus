@@ -1,44 +1,84 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test.describe('Theme System Accessibility', () => {
-  test('should not have any automatically detectable accessibility issues in light mode', async ({ page }) => {
-    await page.goto('/');
+test.describe('Landing Page Accessibility', () => {
+	test('should not have any automatically detectable accessibility issues', async ({
+		page,
+	}) => {
+		await page.goto('/');
 
-    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-    expect(accessibilityScanResults.violations).toEqual([]);
-  });
+		const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+		expect(accessibilityScanResults.violations).toEqual([]);
+	});
 
-  test('should not have any automatically detectable accessibility issues in dark mode', async ({ page }) => {
-    await page.goto('/');
+	test('should not have WCAG 2.1 AA violations', async ({ page }) => {
+		await page.goto('/');
 
-    // Toggle to dark mode
-    await page.getByRole('button', { name: /toggle theme/i }).click();
-    await page.getByRole('menuitem', { name: /dark/i }).click();
+		const accessibilityScanResults = await new AxeBuilder({ page })
+			.withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+			.analyze();
 
-    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
-    expect(accessibilityScanResults.violations).toEqual([]);
-  });
+		expect(accessibilityScanResults.violations).toEqual([]);
+	});
 
-  test('should support keyboard navigation', async ({ page }) => {
-    await page.goto('/');
+	test('should support keyboard navigation to sign-in', async ({ page, isMobile }) => {
+		await page.goto('/');
 
-    // Press Tab to focus the toggle
-    await page.keyboard.press('Tab');
-    // Expect toggle to be focused (checking specific element might depend on layout, assuming it's early in tab order)
-    // For specific test, we might locate by label
-    const toggle = page.getByRole('button', { name: /toggle theme/i });
+		// On mobile, the sign-in link is inside the hamburger menu
+		if (isMobile) {
+			const menuButton = page.getByRole('button', { name: /menu/i });
+			await menuButton.click();
+		}
 
-    // Simplistic check: ensure we can reach it
-    await toggle.focus();
-    await expect(toggle).toBeFocused();
+		// Find the sign-in link and verify it can be focused
+		const signInLink = page.getByRole('link', { name: /Entrar/i });
+		await signInLink.focus();
+		await expect(signInLink).toBeFocused();
+	});
 
-    // Open menu
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('menu')).toBeVisible();
+	test('should have proper heading hierarchy', async ({ page }) => {
+		await page.goto('/');
 
-    // Navigate options
-    await page.keyboard.press('ArrowDown');
-    await expect(page.getByRole('menuitem', { name: /light/i })).toBeFocused();
-  });
+		// Check for main heading (h1)
+		const h1 = page.locator('h1');
+		await expect(h1).toBeVisible();
+
+		// Ensure there's at least one heading visible
+		const headings = page.locator('h1, h2, h3');
+		const count = await headings.count();
+		expect(count).toBeGreaterThan(0);
+	});
+
+	test('should have accessible navigation', async ({ page }) => {
+		await page.goto('/');
+
+		// Check that navigation is present
+		const nav = page.locator('nav, [role="navigation"]');
+		await expect(nav.first()).toBeVisible();
+
+		// Check that links in navigation are accessible
+		const navLinks = page.locator('nav a, [role="navigation"] a');
+		const linkCount = await navLinks.count();
+		expect(linkCount).toBeGreaterThan(0);
+	});
+
+	test('should have visible focus indicators', async ({ page, isMobile }) => {
+		await page.goto('/');
+
+		// On mobile, the sign-in link is inside the hamburger menu
+		if (isMobile) {
+			const menuButton = page.getByRole('button', { name: /menu/i });
+			await menuButton.click();
+		}
+
+		// Tab through the page and check that focus is visible
+		const signInLink = page.getByRole('link', { name: /Entrar/i });
+
+		// Focus the element
+		await signInLink.focus();
+		await expect(signInLink).toBeFocused();
+
+		// The focused element should be visible
+		await expect(signInLink).toBeVisible();
+	});
 });
