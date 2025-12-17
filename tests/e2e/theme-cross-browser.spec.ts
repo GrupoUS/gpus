@@ -23,7 +23,10 @@ test.describe('Theme System Cross-Browser', () => {
 });
 
 test.describe('Landing Page Theme Support', () => {
-	test('should respect system color scheme preference', async ({ page }) => {
+	// NOTE: These tests validate browser color scheme detection via Playwright's
+	// emulateMedia API. This is separate from the app's theme toggle (light/dark only).
+
+	test('should respect browser color scheme preference', async ({ page }) => {
 		// Emulate dark mode system preference
 		await page.emulateMedia({ colorScheme: 'dark' });
 		await page.goto('/');
@@ -32,7 +35,7 @@ test.describe('Landing Page Theme Support', () => {
 		await expect(page.locator('body')).toBeVisible();
 	});
 
-	test('should render correctly in light mode system preference', async ({
+	test('should render correctly with light mode browser preference', async ({
 		page,
 	}) => {
 		// Emulate light mode system preference

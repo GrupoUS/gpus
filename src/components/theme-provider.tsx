@@ -28,11 +28,6 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
 	const [theme, setThemeState] = useState<Theme>(() => {
 		const stored = localStorage.getItem(storageKey);
-		// Migrate 'system' to 'dark' for users with old preference
-		if (stored === 'system') {
-			localStorage.setItem(storageKey, 'dark');
-			return 'dark';
-		}
 		return (stored as Theme) || defaultTheme;
 	});
 

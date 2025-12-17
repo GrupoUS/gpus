@@ -24,7 +24,6 @@
         "serena_*": true,
         "context7_*": true,
         "sequentialthinking_*": true,
-        "gh_grep_*": true,
         "fetch_*": true
       }
     },
@@ -33,30 +32,31 @@
         "context7_*": true,
         "sequentialthinking_*": true,
         "serena_*": true,
-        "gh_grep_*": true,
-        "fetch_*": true
+        "fetch_*": true,
+        "tavily_*": true
       }
     },
     "code-reviewer": {
       "tools": {
         "serena_*": true,
         "sequentialthinking_*": true,
-        "gh_grep_*": true,
         "context7_*": true
       }
     },
     "database-specialist": {
       "tools": {
         "serena_*": true,
-        "gh_grep_*": true,
-        "context7_*": true
+        "context7_*": true,
+        "sequentialthinking_*": true
       }
     },
     "apex-ui-ux-designer": {
       "tools": {
         "serena_*": true,
-        "gh_grep_*": true,
-        "context7_*": true
+        "sequentialthinking_*": true,
+        "context7_*": true,
+        "tavily_*": true,
+        "fetch_*": true
       }
     }
   }
