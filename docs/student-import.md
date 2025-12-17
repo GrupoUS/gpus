@@ -302,6 +302,48 @@ Cada importacao gera registros de auditoria contendo:
 - **Causa**: Formato ou codificacao invalidos
 - **Solucao**: Certifique-se de que o arquivo e CSV (UTF-8) ou XLSX
 
+### Erros Especificos de Arquivos XLSX
+
+#### "Arquivo XLSX protegido por senha nao e suportado"
+- **Causa**: O arquivo XLSX possui protecao por senha
+- **Solucao**: Remova a protecao por senha no Excel/LibreOffice antes de importar
+
+#### "Estrutura de arquivo XLSX invalida"
+- **Causa**: O arquivo esta corrompido ou nao e um XLSX valido
+- **Solucao**: Verifique se o arquivo nao esta corrompido e se foi salvo corretamente como XLSX
+
+#### "Nenhuma planilha encontrada no arquivo XLSX"
+- **Causa**: O arquivo XLSX nao contem nenhuma planilha (sheet)
+- **Solucao**: Abra o arquivo no Excel e verifique se ha pelo menos uma planilha com dados
+
+#### "Primeira planilha esta vazia ou corrompida"
+- **Causa**: A primeira aba do arquivo nao contem dados ou esta corrompida
+- **Solucao**: Verifique se os dados estao na primeira aba (sheet) do arquivo
+
+#### "Nenhum dado encontrado na primeira planilha"
+- **Causa**: A planilha esta vazia, sem cabecalho ou registros
+- **Solucao**: Adicione pelo menos o cabecalho na primeira linha e registros nas linhas seguintes
+
+#### "Cabecalho invalido na primeira linha"
+- **Causa**: A primeira linha nao contem um cabecalho valido (array de colunas)
+- **Solucao**: Certifique-se de que a primeira linha contem os nomes das colunas
+
+#### "Nenhuma coluna valida encontrada no cabecalho"
+- **Causa**: Todas as celulas do cabecalho estao vazias ou invalidas
+- **Solucao**: Preencha a primeira linha com os nomes das colunas (NOME, EMAIL, TELEFONE, etc.)
+
+#### "Erro ao processar linhas da planilha"
+- **Causa**: Erro ao converter as linhas de dados em objetos
+- **Solucao**: Verifique se os dados estao no formato correto e nao ha celulas com formatos especiais
+
+#### "Arquivo muito grande (XMB). O tamanho maximo e 10MB"
+- **Causa**: O arquivo excede o limite de 10MB
+- **Solucao**: Divida o arquivo em lotes menores de 500-1000 registros cada
+
+#### "Formato de arquivo nao suportado: .xxx"
+- **Causa**: A extensao do arquivo nao e .csv, .xlsx ou .xls
+- **Solucao**: Converta o arquivo para CSV ou XLSX antes de importar
+
 ---
 
 ## Arquitetura Tecnica
@@ -317,7 +359,7 @@ Cada importacao gera registros de auditoria contendo:
 ### Fluxo de Dados
 
 ```
-[CSV/XLSX] 
+[CSV/XLSX]
     |
     v
 [Papa Parse / XLSX.js] -- Parse do arquivo

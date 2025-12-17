@@ -140,7 +140,7 @@ async function parseXLSXFile(file: File): Promise<ParsedData> {
 			raw: false,
 			defval: '',
 		});
-	} catch {
+	} catch (_error) {
 		throw new XLSXParseError(
 			'Erro ao processar dados da planilha. Verifique o formato dos dados.',
 			'PARSE_ERROR',
@@ -161,20 +161,30 @@ async function parseXLSXFile(file: File): Promise<ParsedData> {
 		);
 	}
 
+	// Validate header shape
+	if (!Array.isArray(firstRow)) {
+		throw new XLSXParseError('Cabeçalho inválido na primeira linha.', 'INVALID_HEADER_SHAPE');
+	}
+
 	const headers = firstRow.map((h) => String(h || '').trim()).filter(Boolean);
 
 	if (headers.length === 0) {
 		throw new XLSXParseError('Nenhuma coluna válida encontrada no cabeçalho.', 'INVALID_HEADER');
 	}
 
-	const rows = jsonData.slice(1).map((row) => {
-		const arr = row as unknown[];
-		const obj: Record<string, unknown> = {};
-		headers.forEach((header, index) => {
-			obj[header] = arr[index];
+	let rows: Record<string, unknown>[];
+	try {
+		rows = jsonData.slice(1).map((row) => {
+			const arr = row as unknown[];
+			const obj: Record<string, unknown> = {};
+			headers.forEach((header, index) => {
+				obj[header] = arr[index];
+			});
+			return obj;
 		});
-		return obj;
-	});
+	} catch (_error) {
+		throw new XLSXParseError('Erro ao processar linhas da planilha.', 'ROW_MAPPING_ERROR');
+	}
 
 	return { headers, rows };
 }
