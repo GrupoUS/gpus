@@ -10,7 +10,6 @@ Need to find code?
 ├── Conceptual/architecture question? → mgrep
 ├── Regex pattern match? → serena search_for_pattern
 ├── Find all usages of X? → serena find_referencing_symbols
-└── Need external examples? → gh_grep
 
 Need documentation?
 ├── Official library docs? → context7
@@ -30,7 +29,6 @@ Need to reason/analyze?
 | `serena search_for_pattern` | Regex | Code patterns, imports | Semantic meaning |
 | `serena get_symbols_overview` | LSP | File structure overview | Detailed code |
 | `mgrep` | Embeddings | Architecture, "how does X work" | Exact function names |
-| `gh_grep` | GitHub | External production examples | Project-specific code |
 | `context7` | Docs | Official API documentation | Community solutions |
 | `tavily` | Web | Latest practices, discussions | Authoritative specs |
 | `fetch` | Web | Specific URL content | General research |
@@ -45,8 +43,6 @@ Need to reason/analyze?
 2. mgrep (semantic search)
    ↓ not found
 3. serena search_for_pattern (regex)
-   ↓ not found
-4. gh_grep (external examples)
 ```
 
 ### Research Fallback
@@ -64,9 +60,7 @@ Need to reason/analyze?
 ```
 1. context7 (authoritative)
    ↓ not found
-2. gh_grep (real examples)
-   ↓ need more context
-3. tavily (community)
+2. tavily (community)
 ```
 
 ## Project-Specific Patterns

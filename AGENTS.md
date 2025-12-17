@@ -171,7 +171,6 @@ Before creating a PR:
 |-----|---------|
 | `serena` | Semantic code analysis, symbol discovery |
 | `mgrep` | Semantic search by concept (embeddings-based) |
-| `gh_grep` | Search real-world GitHub code patterns |
 | `context7` | Official documentation lookup |
 | `tavily` | Web search for current patterns (research only) |
 | `sequential_thinking` | Step-by-step reasoning (research only) |
@@ -301,16 +300,6 @@ mgrep search "form validation Zod schema"
 mgrep search "error boundary try catch mutation"
 ```
 
-### mgrep vs serena vs gh_grep
-
-| Aspect | serena | mgrep | gh_grep |
-|--------|--------|-------|---------|
-| Search type | LSP symbols | Embeddings | Regex patterns |
-| Scope | This project | This project | GitHub public repos |
-| Best for | Exact symbols | Concepts | External patterns |
-| Speed | Fast | Medium | Medium |
-| Accuracy | Exact | Semantic | Pattern-based |
-
 ---
 
 ## Combined Workflow Examples
@@ -320,7 +309,6 @@ mgrep search "error boundary try catch mutation"
 1. mgrep → "how similar features are implemented"
 2. serena find_symbol → locate related components
 3. context7 → official API documentation
-4. gh_grep → production patterns for unfamiliar APIs
 5. serena → implement with codebase consistency
 ```
 

@@ -7,34 +7,14 @@
     ".opencode/command/*.md"
   ],
   "mcp": {
-    "gh_grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
-    },
     "serena": {
       "type": "local",
       "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"],
       "enabled": true
     },
-    "docker": {
+    "MCP_DOCKER": {
       "type": "local",
-      "command": ["uvx", "mcp-server-docker"],
-      "enabled": true
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    },
-    "sequentialthinking": {
-      "type": "local",
-      "command": ["docker", "run", "-i", "--rm", "mcp/sequentialthinking"],
-      "enabled": true
-    },
-    "fetch": {
-      "type": "local",
-      "command": ["docker", "run", "-i", "--rm", "mcp/fetch"],
+      "command": ["docker", "mcp", "gateway", "run"],
       "enabled": true
     }
   },
@@ -42,8 +22,9 @@
     "apex-dev": {
       "tools": {
         "serena_*": true,
-        "gh_grep_*": true,
         "context7_*": true,
+        "sequentialthinking_*": true,
+        "gh_grep_*": true,
         "fetch_*": true
       }
     },
@@ -59,6 +40,7 @@
     "code-reviewer": {
       "tools": {
         "serena_*": true,
+        "sequentialthinking_*": true,
         "gh_grep_*": true,
         "context7_*": true
       }

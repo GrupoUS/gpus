@@ -2,17 +2,7 @@ import { api } from '@convex/_generated/api';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
-import {
-	Area,
-	AreaChart,
-	CartesianGrid,
-	Line,
-	LineChart,
-	ResponsiveContainer,
-	XAxis,
-	YAxis,
-} from 'recharts';
+import { lazy, Suspense, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -22,6 +12,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load heavy chart components
+const LeadsOverTimeChart = lazy(() => import('@/components/reports/leads-over-time-chart'));
+const MessagesOverTimeChart = lazy(() => import('@/components/reports/messages-over-time-chart'));
 
 export const Route = createFileRoute('/_authenticated/reports')({
 	component: ReportsPage,
@@ -196,7 +191,7 @@ function ReportsPage() {
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
 													<div
-														className="p-2 bg-linear-to-r from-blue-500/10 to-indigo-500/10 rounded-lg"
+														className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>
@@ -209,71 +204,15 @@ function ReportsPage() {
 				</Card>
 			</div>
 
-			{/* Charts Section */}
+			{/* Charts Section - Lazy Loaded */}
 			{stats?.dailyMetrics && stats.dailyMetrics.length > 0 && (
 				<div className="grid gap-4 md:grid-cols-2">
-					<Card>
-						<CardHeader>
-							<CardTitle>Leads ao Longo do Tempo</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<ResponsiveContainer width="100%" height={300}>
-								<AreaChart data={stats.dailyMetrics}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tickFormatter={(value) => {
-											const [, month, day] = value.split('-');
-											return `${day}/${month}`;
-										}}
-									/>
-									<YAxis />
-									<Area
-										type="monotone"
-										dataKey="newLeads"
-										stroke="#8b5cf6"
-										fill="#8b5cf6"
-										fillOpacity={0.2}
-									/>
-								</AreaChart>
-							</ResponsiveContainer>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Mensagens ao Longo do Tempo</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<ResponsiveContainer width="100%" height={300}>
-								<LineChart data={stats.dailyMetrics}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tickFormatter={(value) => {
-											const [, month, day] = value.split('-');
-											return `${day}/${month}`;
-										}}
-									/>
-									<YAxis />
-									<Line
-										type="monotone"
-										dataKey="messagesReceived"
-										stroke="#3b82f6"
-										strokeWidth={2}
-										name="Recebidas"
-									/>
-									<Line
-										type="monotone"
-										dataKey="messagesSent"
-										stroke="#10b981"
-										strokeWidth={2}
-										name="Enviadas"
-									/>
-								</LineChart>
-							</ResponsiveContainer>
-						</CardContent>
-					</Card>
+					<Suspense fallback={<Skeleton className="h-[380px] w-full rounded-lg" />}>
+						<LeadsOverTimeChart data={stats.dailyMetrics} />
+					</Suspense>
+					<Suspense fallback={<Skeleton className="h-[380px] w-full rounded-lg" />}>
+						<MessagesOverTimeChart data={stats.dailyMetrics} />
+					</Suspense>
 				</div>
 			)}
 
