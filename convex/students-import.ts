@@ -62,8 +62,9 @@ const studentImportData = v.object({
 	name: v.string(),
 	email: v.string(),
 	phone: v.string(),
-	profession: v.string(),
-	hasClinic: v.boolean(),
+	// Optional fields (profession/hasClinic have defaults applied during import)
+	profession: v.optional(v.string()),
+	hasClinic: v.optional(v.boolean()),
 
 	// Optional fields
 	cpf: v.optional(v.string()),
@@ -205,12 +206,10 @@ export const bulkImport = mutation({
 				if (!student.email || !student.email.includes('@')) {
 					throw new Error('Email é obrigatório e deve ser válido');
 				}
-				if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
-					throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-				}
-				if (!student.profession) {
-					throw new Error('Profissão é obrigatória');
-				}
+			if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
+				throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
+			}
+			// profession and hasClinic are optional - defaults applied below
 
 				// Normalize email
 				const normalizedEmail = student.email.trim().toLowerCase();
@@ -279,12 +278,12 @@ export const bulkImport = mutation({
 				const encryptedCPF = student.cpf ? encryptCPF(student.cpf) : undefined;
 
 				const studentData = {
-					name: student.name.trim(),
-					email: normalizedEmail,
-					phone: student.phone.replace(/\D/g, ''),
-					profession: student.profession,
-					hasClinic: student.hasClinic,
-					status: student.status || ('ativo' as const),
+				name: student.name.trim(),
+				email: normalizedEmail,
+				phone: student.phone.replace(/\D/g, ''),
+				profession: student.profession ?? 'outro',
+				hasClinic: student.hasClinic ?? false,
+				status: student.status || ('ativo' as const),
 					churnRisk: 'baixo' as const,
 
 					// Encrypted fields
@@ -563,12 +562,10 @@ export const validateImport = mutation({
 				seenEmails.add(normalizedEmail);
 			}
 
-			if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
-				rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-			}
-			if (!student.profession) {
-				rowErrors.push('Profissão é obrigatória');
-			}
+		if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
+			rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
+		}
+		// profession and hasClinic are optional - defaults applied during import
 
 			// Check CPF duplicates
 			if (student.cpf) {

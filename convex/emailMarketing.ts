@@ -36,6 +36,8 @@ const internalEmailMarketing = (internal as any).emailMarketing as {
 	updateTemplateBrevoId: any
 	recordEmailEvent: any
 	syncCampaignToBrevoInternal: any
+	getContactByEmailInternal: any
+	updateContactSubscriptionInternal: any
 }
 import { getOrganizationId, requireAuth, getClerkId } from './lib/auth'
 import {
@@ -142,6 +144,20 @@ export const getContactInternal = internalQuery({
 	args: { contactId: v.id('emailContacts') },
 	handler: async (ctx, args) => {
 		return await ctx.db.get(args.contactId)
+	},
+})
+
+
+/**
+ * Internal query to get contact by email (for webhook handler)
+ */
+export const getContactByEmailInternal = internalQuery({
+	args: { email: v.string() },
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query('emailContacts')
+			.withIndex('by_email', (q) => q.eq('email', args.email))
+			.first()
 	},
 })
 
@@ -494,7 +510,7 @@ export const createList = mutation({
 		const organizationId = await getOrganizationId(ctx)
 		const now = Date.now()
 
-		return await ctx.db.insert('emailLists', {
+		const listId = await ctx.db.insert('emailLists', {
 			name: args.name,
 			description: args.description,
 			organizationId,
@@ -503,6 +519,18 @@ export const createList = mutation({
 			createdAt: now,
 			updatedAt: now,
 		})
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_creation',
+			dataCategory: 'email_marketing',
+			description: `Lista de email marketing criada: ${args.name}`,
+			entityId: listId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
+
+		return listId
 	},
 })
 
@@ -531,6 +559,16 @@ export const updateList = mutation({
 		if (args.isActive !== undefined) updates.isActive = args.isActive
 
 		await ctx.db.patch(args.listId, updates)
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_modification',
+			dataCategory: 'email_marketing',
+			description: `Lista de email marketing atualizada: ${args.name || list.name}`,
+			entityId: args.listId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 	},
 })
 
@@ -547,6 +585,16 @@ export const deleteList = mutation({
 		if (!list || list.organizationId !== organizationId) {
 			throw new Error('Lista não encontrada')
 		}
+
+		// LGPD Audit Log (before deletion to capture entity info)
+		await createAuditLog(ctx, {
+			actionType: 'data_deletion',
+			dataCategory: 'email_marketing',
+			description: `Lista de email marketing excluída: ${list.name}`,
+			entityId: args.listId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 
 		await ctx.db.delete(args.listId)
 	},
@@ -587,6 +635,16 @@ export const addContactToList = mutation({
 				contactCount: list.contactCount + 1,
 				updatedAt: Date.now(),
 			})
+
+			// LGPD Audit Log
+			await createAuditLog(ctx, {
+				actionType: 'data_modification',
+				dataCategory: 'email_marketing',
+				description: `Contato ${contact.email} adicionado à lista: ${list.name}`,
+				entityId: args.contactId,
+				processingPurpose: 'email marketing',
+				legalBasis: 'interesse legítimo',
+			})
 		}
 	},
 })
@@ -625,6 +683,16 @@ export const removeContactFromList = mutation({
 			await ctx.db.patch(args.listId, {
 				contactCount: Math.max(0, list.contactCount - 1),
 				updatedAt: Date.now(),
+			})
+
+			// LGPD Audit Log
+			await createAuditLog(ctx, {
+				actionType: 'data_modification',
+				dataCategory: 'email_marketing',
+				description: `Contato ${contact.email} removido da lista: ${list.name}`,
+				entityId: args.contactId,
+				processingPurpose: 'email marketing',
+				legalBasis: 'interesse legítimo',
 			})
 		}
 	},
@@ -790,7 +858,7 @@ export const createCampaign = mutation({
 
 		const now = Date.now()
 
-		return await ctx.db.insert('emailCampaigns', {
+		const campaignId = await ctx.db.insert('emailCampaigns', {
 			name: args.name,
 			subject: args.subject,
 			htmlContent: args.htmlContent,
@@ -802,6 +870,18 @@ export const createCampaign = mutation({
 			createdAt: now,
 			updatedAt: now,
 		})
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_creation',
+			dataCategory: 'email_marketing',
+			description: `Campanha de email marketing criada: ${args.name}`,
+			entityId: campaignId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
+
+		return campaignId
 	},
 })
 
@@ -838,6 +918,16 @@ export const updateCampaign = mutation({
 		if (args.listIds !== undefined) updates.listIds = args.listIds
 
 		await ctx.db.patch(args.campaignId, updates)
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_modification',
+			dataCategory: 'email_marketing',
+			description: `Campanha de email marketing atualizada: ${args.name || campaign.name}`,
+			entityId: args.campaignId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 	},
 })
 
@@ -858,6 +948,16 @@ export const deleteCampaign = mutation({
 		if (campaign.status !== 'draft') {
 			throw new Error('Apenas campanhas em rascunho podem ser excluídas')
 		}
+
+		// LGPD Audit Log (before deletion to capture entity info)
+		await createAuditLog(ctx, {
+			actionType: 'data_deletion',
+			dataCategory: 'email_marketing',
+			description: `Campanha de email marketing excluída: ${campaign.name}`,
+			entityId: args.campaignId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 
 		await ctx.db.delete(args.campaignId)
 	},
@@ -1226,7 +1326,7 @@ export const createTemplate = mutation({
 		const organizationId = await getOrganizationId(ctx)
 		const now = Date.now()
 
-		return await ctx.db.insert('emailTemplates', {
+		const templateId = await ctx.db.insert('emailTemplates', {
 			name: args.name,
 			subject: args.subject,
 			htmlContent: args.htmlContent,
@@ -1236,6 +1336,18 @@ export const createTemplate = mutation({
 			createdAt: now,
 			updatedAt: now,
 		})
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_creation',
+			dataCategory: 'email_marketing',
+			description: `Template de email marketing criado: ${args.name}`,
+			entityId: templateId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
+
+		return templateId
 	},
 })
 
@@ -1268,6 +1380,16 @@ export const updateTemplate = mutation({
 		if (args.isActive !== undefined) updates.isActive = args.isActive
 
 		await ctx.db.patch(args.templateId, updates)
+
+		// LGPD Audit Log
+		await createAuditLog(ctx, {
+			actionType: 'data_modification',
+			dataCategory: 'email_marketing',
+			description: `Template de email marketing atualizado: ${args.name || template.name}`,
+			entityId: args.templateId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 	},
 })
 
@@ -1284,6 +1406,16 @@ export const deleteTemplate = mutation({
 		if (!template || template.organizationId !== organizationId) {
 			throw new Error('Template não encontrado')
 		}
+
+		// LGPD Audit Log (before deletion to capture entity info)
+		await createAuditLog(ctx, {
+			actionType: 'data_deletion',
+			dataCategory: 'email_marketing',
+			description: `Template de email marketing excluído: ${template.name}`,
+			entityId: args.templateId,
+			processingPurpose: 'email marketing',
+			legalBasis: 'interesse legítimo',
+		})
 
 		await ctx.db.delete(args.templateId)
 	},

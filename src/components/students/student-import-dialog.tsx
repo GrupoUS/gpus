@@ -59,7 +59,7 @@ import {
 	validateRow,
 } from '@/lib/csv-validator';
 
-type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'results';
+type ImportStep = 'upload' | 'sheet-select' | 'mapping' | 'preview' | 'importing' | 'results';
 
 interface ParsedData {
 	headers: string[];
@@ -85,8 +85,15 @@ class XLSXParseError extends Error {
 	}
 }
 
+// Helper function to get sheet names from XLSX file
+async function getXLSXSheetNames(file: File): Promise<string[]> {
+	const buffer = await file.arrayBuffer();
+	const workbook = XLSX.read(buffer, { type: 'array' });
+	return workbook.SheetNames;
+}
+
 // Helper function to parse XLSX files with robust error handling
-async function parseXLSXFile(file: File): Promise<ParsedData> {
+async function parseXLSXFile(file: File, sheetName?: string): Promise<ParsedData> {
 	// Step 1: Read file buffer
 	let buffer: ArrayBuffer;
 	try {
@@ -124,18 +131,23 @@ async function parseXLSXFile(file: File): Promise<ParsedData> {
 		throw new XLSXParseError('Nenhuma planilha encontrada no arquivo XLSX.', 'NO_SHEETS');
 	}
 
-	// Step 4: Get first sheet
-	const firstSheetName = workbook.SheetNames[0];
-	const firstSheet = workbook.Sheets[firstSheetName];
+	// Step 4: Get target sheet (specified or first)
+	const targetSheetName = sheetName || workbook.SheetNames[0];
+	const targetSheet = workbook.Sheets[targetSheetName];
 
-	if (!firstSheet) {
-		throw new XLSXParseError('Primeira planilha está vazia ou corrompida.', 'EMPTY_SHEET');
+	if (!targetSheet) {
+		throw new XLSXParseError(
+			sheetName
+				? `Planilha "${sheetName}" não encontrada.`
+				: 'Primeira planilha está vazia ou corrompida.',
+			'EMPTY_SHEET',
+		);
 	}
 
 	// Step 5: Convert to JSON
 	let jsonData: unknown[][];
 	try {
-		jsonData = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
+		jsonData = XLSX.utils.sheet_to_json<unknown[]>(targetSheet, {
 			header: 1,
 			raw: false,
 			defval: '',
@@ -281,8 +293,9 @@ export function StudentImportDialog() {
 	} | null>(null);
 	const [selectedProduct, setSelectedProduct] = useState<string>('');
 	const [upsertMode, setUpsertMode] = useState(true);
+	const [availableSheets, setAvailableSheets] = useState<string[]>([]);
+	const [selectedSheet, setSelectedSheet] = useState<string>('');
 
-	// @ts-expect-error - Convex API is generated dynamically
 	const bulkImport = useMutation(api['students-import'].bulkImport);
 	const fileInputId = useId();
 
@@ -298,6 +311,8 @@ export function StudentImportDialog() {
 		setImportResults(null);
 		setSelectedProduct('');
 		setUpsertMode(true);
+		setAvailableSheets([]);
+		setSelectedSheet('');
 	}, []);
 
 	const handleFileUpload = useCallback(async (uploadedFile: File) => {
@@ -315,8 +330,20 @@ export function StudentImportDialog() {
 
 		try {
 			const isXLSX = uploadedFile.name.endsWith('.xlsx') || uploadedFile.name.endsWith('.xls');
-			const parsed = isXLSX ? await parseXLSXFile(uploadedFile) : await parseCSVFile(uploadedFile);
 
+			// Check for multiple sheets in XLSX files
+			if (isXLSX) {
+				const sheets = await getXLSXSheetNames(uploadedFile);
+				if (sheets.length > 1) {
+					setAvailableSheets(sheets);
+					setSelectedSheet(sheets[0]);
+					setStep('sheet-select');
+					setIsProcessing(false);
+					return;
+				}
+			}
+
+			const parsed = isXLSX ? await parseXLSXFile(uploadedFile) : await parseCSVFile(uploadedFile);
 			setParsedData(parsed);
 			setColumnMapping(mapCSVHeaders(parsed.headers));
 			setStep('mapping');
@@ -335,6 +362,25 @@ export function StudentImportDialog() {
 			setIsProcessing(false);
 		}
 	}, []);
+
+	const handleSheetSelect = useCallback(async () => {
+		if (!(file && selectedSheet)) return;
+		setIsProcessing(true);
+		try {
+			const parsed = await parseXLSXFile(file, selectedSheet);
+			setParsedData(parsed);
+			setColumnMapping(mapCSVHeaders(parsed.headers));
+			setStep('mapping');
+		} catch (error) {
+			if (error instanceof XLSXParseError) {
+				toast.error('Erro ao processar planilha', { description: error.message });
+			} else {
+				toast.error('Erro ao processar arquivo');
+			}
+		} finally {
+			setIsProcessing(false);
+		}
+	}, [file, selectedSheet]);
 
 	const handleDrop = useCallback(
 		(e: React.DragEvent<HTMLButtonElement>) => {
@@ -508,7 +554,7 @@ export function StudentImportDialog() {
 	}, [importResults]);
 
 	const previewValidation = validatePreview();
-	const requiredFields = ['name', 'email', 'phone', 'profession', 'hasClinic'];
+	const requiredFields = ['name', 'email', 'phone'];
 	const missingFields = requiredFields.filter((f) => !Object.values(columnMapping).includes(f));
 	const canProceed = missingFields.length === 0; // All required fields must be mapped
 
@@ -534,6 +580,7 @@ export function StudentImportDialog() {
 					</DialogTitle>
 					<DialogDescription>
 						{step === 'upload' && 'Faça upload de um arquivo CSV ou XLSX com os dados dos alunos.'}
+						{step === 'sheet-select' && 'Selecione a planilha para importar.'}
 						{step === 'mapping' && 'Mapeie as colunas do arquivo para os campos do sistema.'}
 						{step === 'preview' && 'Revise os dados antes de importar.'}
 						{step === 'importing' && 'Importando alunos...'}
@@ -597,6 +644,32 @@ export function StudentImportDialog() {
 								ou clique para selecionar (CSV, XLSX)
 							</p>
 						</button>
+					</div>
+				)}
+
+				{/* Sheet Selection Step */}
+				{step === 'sheet-select' && (
+					<div className="space-y-4">
+						<div className="flex items-center gap-2 text-sm text-muted-foreground">
+							<FileSpreadsheet className="h-4 w-4" />
+							<span>Arquivo: {file?.name}</span>
+						</div>
+						<p className="text-sm">
+							O arquivo contém <strong>{availableSheets.length} planilhas</strong>. Selecione qual
+							deseja importar:
+						</p>
+						<Select value={selectedSheet} onValueChange={setSelectedSheet}>
+							<SelectTrigger>
+								<SelectValue placeholder="Selecione a planilha..." />
+							</SelectTrigger>
+							<SelectContent>
+								{availableSheets.map((sheet) => (
+									<SelectItem key={sheet} value={sheet}>
+										{sheet}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				)}
 
@@ -824,6 +897,23 @@ export function StudentImportDialog() {
 				)}
 
 				<DialogFooter>
+					{step === 'sheet-select' && (
+						<>
+							<Button variant="outline" onClick={resetState}>
+								Cancelar
+							</Button>
+							<Button onClick={handleSheetSelect} disabled={isProcessing || !selectedSheet}>
+								{isProcessing ? (
+									<>
+										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+										Processando...
+									</>
+								) : (
+									'Continuar'
+								)}
+							</Button>
+						</>
+					)}
 					{step === 'mapping' && (
 						<>
 							<Button variant="outline" onClick={resetState}>
