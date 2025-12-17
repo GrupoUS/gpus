@@ -1,7 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
-model: claude-sonnet-4
+model: github-copilot/gpt-5.2
 temperature: 0.2
 tools:
   write: true
@@ -110,7 +110,6 @@ Use available MCP tools strategically:
 |-----|-------------|
 | `serena` | Semantic code analysis, find symbols, understand codebase structure |
 | `mgrep` | Semantic search by concept using embeddings (Mixedbread AI) |
-| `gh_grep` | Search real-world code patterns from GitHub repositories |
 
 ### Docker MCP Toolkit Gateway
 | MCP | When to Use |
@@ -142,25 +141,18 @@ serena → mgrep → search_for_pattern
    │        └─ Semantic/conceptual search
    └─ LSP symbol resolution
 
-mgrep → serena → gh_grep
-   │       │         │
-   │       │         └─ External production patterns
+mgrep → serena
+   │       │         
+   │       │       
    │       └─ Exact symbol analysis
    └─ Conceptual understanding
-
-gh_grep → context7 → tavily
-   │          │          │
-   │          │          └─ Web search (current solutions)
-   │          └─ Official documentation
-   └─ Real-world GitHub code
 ```
 
 ### Pipeline (Updated)
 1. `serena` → Understand existing patterns in codebase
 2. `mgrep` → Conceptual queries for architecture understanding  
-3. `gh_grep` → Research production patterns for unfamiliar APIs
-4. `context7` → Official docs when needed
-5. Implement with confidence
+3. `context7` → Official docs when needed
+4. Implement with confidence
 
 ## Execution Workflow
 

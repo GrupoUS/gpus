@@ -19,6 +19,16 @@
     }
   },
   "agent": {
+    "build": {
+          "mode": "primary",
+          "model": "github-copilot/gpt-5.2",
+          "prompt": "{file:.opencode/prompts/build.txt}"
+        },
+        "plan": {
+          "mode": "primary",
+          "model": "github-copilot/claude-opus-4.5",
+          "prompt": "{file:.opencode/prompts/plan.txt}"
+    },
     "apex-dev": {
       "tools": {
         "serena_*": true,

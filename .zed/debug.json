@@ -1,0 +1,292 @@
+[
+  // === CONVEX BACKEND DEBUG CONFIGURATIONS ===
+  {
+    "label": "Convex: Debug Functions",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/tsx",
+    "args": [
+      "watch",
+      "convex/dev.ts"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "development",
+      "CONVEX_DEPLOYMENT": "${env:CONVEX_DEPLOYMENT}",
+      "CONVEX_URL": "${env:VITE_CONVEX_URL}"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Convex: Run Specific Function",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "debug/convex-runner.js"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "development"
+    },
+    "presentation": "hidden"
+  },
+
+  // === FRONTEND DEBUG CONFIGURATIONS ===
+  {
+    "label": "Vite: Development Server",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/vite",
+    "args": [
+      "--port",
+      "5173",
+      "--host",
+      "localhost"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "development",
+      "VITE_CONVEX_URL": "${env:VITE_CONVEX_URL}",
+      "VITE_CLERK_PUBLISHABLE_KEY": "${env:VITE_CLERK_PUBLISHABLE_KEY}"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Vite: Debug Mode",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/vite",
+    "args": [
+      "--debug",
+      "--port",
+      "5174"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_OPTIONS": "--inspect",
+      "VITE_CONVEX_URL": "${env:VITE_CONVEX_URL}"
+    },
+    "presentation": "hidden"
+  },
+
+  // === TESTING CONFIGURATIONS (based on qa.md and test.md) ===
+  {
+    "label": "Tests: Run Vitest",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/vitest",
+    "args": [
+      "run",
+      "--reporter=verbose",
+      "--no-coverage"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "test",
+      "VITE_CONVEX_URL": "http://localhost:3000"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Tests: Vitest Watch Mode",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/vitest",
+    "args": [
+      "watch",
+      "--reporter=verbose"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "test",
+      "CI": "false"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Tests: Vitest with Coverage",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/vitest",
+    "args": [
+      "run",
+      "--coverage",
+      "--reporter=verbose"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "test",
+      "VITE_CONVEX_URL": "http://localhost:3000"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Tests: Run Playwright E2E",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/playwright",
+    "args": [
+      "test",
+      "--headed",
+      "--project=chromium"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "BASE_URL": "http://localhost:5173",
+      "CI": "false"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Tests: Playwright Debug Mode",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/playwright",
+    "args": [
+      "test",
+      "--debug",
+      "--project=chromium",
+      "--timeout=60000"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "BASE_URL": "http://localhost:5173",
+      "PLAYWRIGHT_DEBUG": "1"
+    },
+    "presentation": "hidden"
+  },
+  {
+    "label": "Tests: Playwright UI Mode",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/playwright",
+    "args": [
+      "test",
+      "--ui",
+      "--project=chromium"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "BASE_URL": "http://localhost:5173"
+    },
+    "presentation": "hidden"
+  },
+
+  // === QUALITY CONTROL CONFIGURATIONS (based on qa.md) ===
+  {
+    "label": "QA: Build Check",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "run",
+      "build"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "QA: Lint Check",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "run",
+      "lint:check"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "QA: Full Quality Pipeline",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "run",
+      "lint:check",
+      "&&",
+      "bun",
+      "run",
+      "build",
+      "&&",
+      "bun",
+      "run",
+      "test:coverage"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "test",
+      "CI": "true"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+
+  // === DEPLOYMENT DEBUG CONFIGURATIONS ===
+  {
+    "label": "Deploy: Railway Debug",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "x",
+      "railway",
+      "logs",
+      "--follow"
+    ],
+    "cwd": "${workspaceFolder}",
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+  {
+    "label": "Deploy: Convex Debug",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "x",
+      "convex",
+      "logs",
+      "--follow"
+    ],
+    "cwd": "${workspaceFolder}",
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+
+  // === COMPONENT DEBUG CONFIGURATIONS ===
+  {
+    "label": "Debug: Component Storybook",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "run",
+      "storybook",
+      "--port",
+      "6006"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "NODE_ENV": "development"
+    },
+    "presentation": "hidden",
+    "console": "integratedTerminal"
+  },
+
+  // === MCP DEBUG CONFIGURATIONS ===
+  {
+    "label": "MCP: Serena Debug Mode",
+    "adapter": "node",
+    "program": "${workspaceFolder}/node_modules/.bin/bun",
+    "args": [
+      "debug/mcp.js"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "MCP_DEBUG": "serena",
+      "LOG_LEVEL": "debug"
+    },
+    "presentation": "hidden"
+  }
+]

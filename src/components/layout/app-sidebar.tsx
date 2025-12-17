@@ -28,64 +28,64 @@ const menuItems = [
 	{
 		label: 'Dashboard',
 		href: '/dashboard',
-		icon: <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <LayoutDashboard className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'CRM',
 		href: '/crm',
-		icon: <Kanban className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <Kanban className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Students',
 		href: '/students',
-		icon: <GraduationCap className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <GraduationCap className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Chat',
 		href: '/chat',
-		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <MessageSquare className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Marketing',
 		href: '/marketing',
-		icon: <Mail className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <Mail className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Reports',
 		href: '/reports',
-		icon: <BarChart3 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <BarChart3 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 		children: [
 			{
 				label: 'Sales',
 				href: '/reports/sales',
-				icon: <TrendingUp className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+				icon: <TrendingUp className="text-sidebar-foreground h-4 w-4 shrink-0" />,
 			},
 			{
 				label: 'Team',
 				href: '/reports/team',
-				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+				icon: <Users className="text-sidebar-foreground h-4 w-4 shrink-0" />,
 			},
 		],
 	},
 	{
 		label: 'Settings',
 		href: '/settings',
-		icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <Settings className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 		children: [
 			{
 				label: 'Team',
 				href: '/settings/team',
-				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+				icon: <Users className="text-sidebar-foreground h-4 w-4 shrink-0" />,
 			},
 			{
 				label: 'Templates',
 				href: '/settings/templates',
-				icon: <FileText className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+				icon: <FileText className="text-sidebar-foreground h-4 w-4 shrink-0" />,
 			},
 			{
 				label: 'Integrations',
 				href: '/settings/integrations',
-				icon: <Plug className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
+				icon: <Plug className="text-sidebar-foreground h-4 w-4 shrink-0" />,
 			},
 		],
 	},
@@ -140,7 +140,7 @@ export function AppSidebar() {
 							label: user?.fullName || 'Usuário',
 							href: '#',
 							icon: (
-								<div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden">
+								<div className="h-7 w-7 shrink-0 rounded-full bg-muted flex items-center justify-center overflow-hidden">
 									<UserButton
 										afterSignOutUrl="/sign-in"
 										appearance={{
@@ -166,13 +166,13 @@ export const Logo = () => {
 	return (
 		<Link
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
 			<motion.span
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
-				className="font-medium text-black dark:text-white whitespace-pre"
+				className="font-medium text-foreground whitespace-pre"
 			>
 				Grupo US
 			</motion.span>
@@ -184,9 +184,9 @@ export const LogoIcon = () => {
 	return (
 		<Link
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
 		</Link>
 	);
 };

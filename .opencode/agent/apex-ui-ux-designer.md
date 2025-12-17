@@ -1,15 +1,15 @@
 ---
 description: UI/UX design specialist with accessibility-first approach and shadcn/ui expertise
 mode: subagent
-model: google/gemini-3-pro
-temperature: 0.3
+model: github-copilot/gemini-3-pro-preview
+temperature: 0.5
 tools:
   write: true
   edit: true
   bash: false
 permission:
   edit: allow
-  bash: deny
+  bash: allow
   webfetch: allow
 ---
 

@@ -47,10 +47,10 @@ export function CampaignStats({
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between pb-2">
 					<CardTitle className="text-sm font-medium">Taxa de Abertura</CardTitle>
-					<Eye className="h-4 w-4 text-blue-500" />
+					<Eye className="h-4 w-4 text-primary" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold text-blue-600">{avgOpenRate.toFixed(1)}%</div>
+					<div className="text-2xl font-bold text-primary">{avgOpenRate.toFixed(1)}%</div>
 				</CardContent>
 			</Card>
 		</div>

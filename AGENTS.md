@@ -151,8 +151,8 @@ Before creating a PR:
 
 | Agent | Mode | Description |
 |-------|------|-------------|
-| `apex-dev` | Primary | Full-stack developer with TDD methodology. Orchestrates subagents. |
-| `apex-researcher` | Primary | Research & planning specialist. NEVER implements. |
+| `apex-dev` | Subagent | Full-stack developer with TDD methodology. Orchestrates subagents. |
+| `apex-researcher` | Subagent | Research & planning specialist. NEVER implements. |
 | `code-reviewer` | Subagent | Security architect with OWASP + LGPD compliance. Read-only. |
 | `database-specialist` | Subagent | Convex expert for schema, queries, mutations. |
 | `apex-ui-ux-designer` | Subagent | UI/UX with accessibility-first approach + shadcn/ui. |

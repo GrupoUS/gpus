@@ -2,20 +2,62 @@ import '@testing-library/jest-dom/vitest';
 
 import { afterEach, vi } from 'vitest';
 
-// Mock matchMedia globally for all tests
-Object.defineProperty(window, 'matchMedia', {
-	writable: true,
-	value: vi.fn().mockImplementation((query: string) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(), // deprecated
-		removeListener: vi.fn(), // deprecated
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
-});
+// Mock localStorage globally for jsdom environment
+const createLocalStorageMock = () => {
+	let store: Record<string, string> = {};
+	return {
+		getItem: vi.fn((key: string) => store[key] ?? null),
+		setItem: vi.fn((key: string, value: string) => {
+			store[key] = value;
+		}),
+		removeItem: vi.fn((key: string) => {
+			delete store[key];
+		}),
+		clear: vi.fn(() => {
+			store = {};
+		}),
+		get length() {
+			return Object.keys(store).length;
+		},
+		key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
+	};
+};
+
+const localStorageMock = createLocalStorageMock();
+
+// Set up localStorage mock on globalThis for jsdom
+if (typeof globalThis !== 'undefined') {
+	Object.defineProperty(globalThis, 'localStorage', {
+		value: localStorageMock,
+		writable: true,
+		configurable: true,
+	});
+}
+
+// Also set on window if it exists (for jsdom)
+if (typeof window !== 'undefined') {
+	Object.defineProperty(window, 'localStorage', {
+		value: localStorageMock,
+		writable: true,
+		configurable: true,
+	});
+
+	// Mock matchMedia globally for all tests
+	Object.defineProperty(window, 'matchMedia', {
+		writable: true,
+		configurable: true,
+		value: vi.fn().mockImplementation((query: string) => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener: vi.fn(), // deprecated
+			removeListener: vi.fn(), // deprecated
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+		})),
+	});
+}
 
 // Mock startViewTransition globally
 if (typeof document !== 'undefined') {
@@ -42,7 +84,9 @@ if (typeof document !== 'undefined') {
 
 // Clear localStorage and document classes after each test to prevent state leakage
 afterEach(() => {
-	localStorage.clear();
-	document.documentElement.classList.remove('light', 'dark');
-	document.documentElement.removeAttribute('style');
+	localStorageMock.clear();
+	if (typeof document !== 'undefined') {
+		document.documentElement.classList.remove('light', 'dark');
+		document.documentElement.removeAttribute('style');
+	}
 });

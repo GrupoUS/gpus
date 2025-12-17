@@ -32,7 +32,7 @@ function ReportsPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold flex items-center gap-2">
-						<BarChart3 className="h-6 w-6 text-purple-500" />
+						<BarChart3 className="h-6 w-6 text-primary" />
 						Relatórios
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
@@ -56,7 +56,7 @@ function ReportsPage() {
 			{/* Report Navigation Cards */}
 			<div className="grid gap-4 md:grid-cols-2">
 				<Link to="/reports/sales">
-					<Card className="cursor-pointer hover:shadow-md hover:border-purple-500/20 transition-all">
+					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
 						<CardHeader className="flex flex-row items-center justify-between pb-2">
 							<CardTitle className="text-base font-medium">Relatório de Vendas</CardTitle>
 							<DollarSign className="h-5 w-5 text-green-500" />
@@ -69,10 +69,10 @@ function ReportsPage() {
 					</Card>
 				</Link>
 				<Link to="/reports/team">
-					<Card className="cursor-pointer hover:shadow-md hover:border-purple-500/20 transition-all">
+					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
 						<CardHeader className="flex flex-row items-center justify-between pb-2">
 							<CardTitle className="text-base font-medium">Relatório de Equipe</CardTitle>
-							<Users className="h-5 w-5 text-indigo-500" />
+							<Users className="h-5 w-5 text-primary" />
 						</CardHeader>
 						<CardContent>
 							<p className="text-sm text-muted-foreground">
@@ -112,10 +112,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Mensagens</CardTitle>
-						<MessageSquare className="h-4 w-4 text-blue-500" />
+						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">{stats?.totalMessages ?? 0}</div>
+						<div className="text-2xl font-bold text-primary">{stats?.totalMessages ?? 0}</div>
 						<p className="text-xs text-muted-foreground">Total de mensagens</p>
 					</CardContent>
 				</Card>
@@ -123,10 +123,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Conversas</CardTitle>
-						<MessageSquare className="h-4 w-4 text-indigo-500" />
+						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-indigo-600">
+						<div className="text-2xl font-bold text-primary">
 							{Math.round(((stats?.conversionRate ?? 0) * (stats?.totalLeads ?? 1)) / 100)}
 						</div>
 						<p className="text-xs text-muted-foreground">Total de conversas</p>
@@ -136,10 +136,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-						<TrendingUp className="h-4 w-4 text-purple-500" />
+						<TrendingUp className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-purple-600">{stats?.conversionRate ?? 0}%</div>
+						<div className="text-2xl font-bold text-primary">{stats?.conversionRate ?? 0}%</div>
 						<p className="text-xs text-muted-foreground">Lead → Cliente</p>
 					</CardContent>
 				</Card>
@@ -168,7 +168,7 @@ function ReportsPage() {
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
-							<BarChart3 className="h-5 w-5 text-purple-500" />
+							<BarChart3 className="h-5 w-5 text-primary" />
 							Leads por Estágio
 						</CardTitle>
 					</CardHeader>
@@ -191,7 +191,7 @@ function ReportsPage() {
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
 													<div
-														className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg"
+														className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-lg"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>
@@ -228,7 +228,7 @@ function ReportsPage() {
 								([product, count]) => (
 									<div key={product} className="p-4 border rounded-lg">
 										<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
-										<p className="text-2xl font-bold text-purple-600">{count as number}</p>
+										<p className="text-2xl font-bold text-primary">{count as number}</p>
 										<p className="text-xs text-muted-foreground">leads interessados</p>
 									</div>
 								),

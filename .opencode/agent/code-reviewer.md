@@ -1,14 +1,14 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: claude-sonnet-4
+model: github-copilot/gpt-5.2
 temperature: 0.1
 tools:
   write: false
   edit: false
   bash: false
 permission:
-  edit: deny
+  edit: allow
   bash:
     "git diff": allow
     "git log*": allow

@@ -52,7 +52,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 			<CardHeader className="pb-2">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center">
 							<Mail className="h-5 w-5 text-white" />
 						</div>
 						<div className="min-w-0 flex-1">
@@ -74,8 +74,8 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 							<span className="text-xs text-muted-foreground">Entregues</span>
 						</div>
 						<div className="flex flex-col items-center gap-1">
-							<Eye className="h-4 w-4 text-blue-500" />
-							<span className="text-sm font-medium text-blue-600">{openRate.toFixed(1)}%</span>
+							<Eye className="h-4 w-4 text-primary" />
+							<span className="text-sm font-medium text-primary">{openRate.toFixed(1)}%</span>
 							<span className="text-xs text-muted-foreground">Abertos</span>
 						</div>
 						<div className="flex flex-col items-center gap-1">
