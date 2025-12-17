@@ -1,7 +1,7 @@
 'use client';
 
 import { useNavigate } from '@tanstack/react-router';
-import { LayoutGrid, Mail, Plus, TableIcon } from 'lucide-react';
+import { LayoutGrid, List, Mail, Plus, TableIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -58,6 +58,18 @@ export function CampaignHeader({ view, search, status, page }: CampaignHeaderPro
 						<TableIcon className="h-4 w-4" />
 					</Button>
 				</div>
+				<Button
+					variant="outline"
+					onClick={() => {
+						void navigate({
+							to: '/marketing/listas',
+							search: { search: '', status: 'all', view: 'grid', page: 1 },
+						});
+					}}
+				>
+					<List className="h-4 w-4 mr-2" />
+					Listas
+				</Button>
 				<Button onClick={handleNewCampaign}>
 					<Plus className="h-4 w-4 mr-2" />
 					Nova Campanha
