@@ -1,3 +1,5 @@
+"use node";
+
 /**
  * LGPD-Compliant Encryption Utilities
  *
