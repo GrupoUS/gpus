@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
@@ -59,7 +59,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	const createStudent = useMutation(api.students.create);
 	const updateStudent = useMutation(api.students.update);
 	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const users = useQuery(api.users.list, {});
+	const csUsers = useQuery(api.users.listCSUsers, {});
 
 	const isEditMode = !!studentId;
 
@@ -269,13 +269,11 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											</FormControl>
 											<SelectContent>
 												<SelectItem value="">Nenhum</SelectItem>
-												{users
-													?.filter((u: Doc<'users'>) => u.role === 'cs')
-													.map((user: Doc<'users'>) => (
-														<SelectItem key={user._id} value={user._id}>
-															{user.name}
-														</SelectItem>
-													))}
+												{csUsers?.map((user) => (
+													<SelectItem key={user._id} value={user._id}>
+														{user.name}
+													</SelectItem>
+												))}
 											</SelectContent>
 										</Select>
 										<FormMessage />

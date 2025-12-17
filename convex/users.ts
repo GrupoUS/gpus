@@ -67,6 +67,39 @@ export const list = query({
 })
 
 /**
+ * List CS (Customer Success) users for dropdowns
+ * SECURITY: Requires authentication but NOT admin role
+ * Returns minimal data (LGPD compliance): only _id, name, email
+ */
+export const listCSUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('Não autenticado. Faça login para continuar.')
+    }
+
+    // Filter for active CS users only
+    const csUsers = await ctx.db
+      .query('users')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('role'), 'cs'),
+          q.eq(q.field('isActive'), true)
+        )
+      )
+      .collect()
+
+    // Return minimal data for LGPD compliance
+    return csUsers.map((user) => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    }))
+  },
+})
+
+/**
  * Create or update a user (sync from Clerk webhooks)
  *
  * SECURITY: This is an internalMutation - only callable from:
