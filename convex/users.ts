@@ -33,7 +33,7 @@ export const list = query({
     const currentUser = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .unique()
+      .first()
 
     if (!currentUser || currentUser.role !== 'admin') {
       throw new Error('Permissão negada. Apenas administradores podem listar usuários.')
@@ -45,12 +45,12 @@ export const list = query({
 
 /**
  * Create or update a user (sync from Clerk webhooks)
- * 
+ *
  * SECURITY: This is an internalMutation - only callable from:
  * - Clerk webhooks (via internal action)
  * - Other internal Convex functions
  * - HTTP actions with proper authentication
- * 
+ *
  * NOT callable from the frontend client.
  */
 export const syncUser = internalMutation({
@@ -129,7 +129,7 @@ export const updateUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
-    
+
     await ctx.db.patch(args.userId, {
       ...args.patch,
       updatedAt: Date.now(),
@@ -144,7 +144,7 @@ export const deleteUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
-    
+
     // Soft delete by setting isActive to false
     await ctx.db.patch(args.userId, {
       isActive: false,

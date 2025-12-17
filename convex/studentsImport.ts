@@ -272,10 +272,10 @@ export const bulkImport = mutation({
 					existingByCP = cpfToStudent.get(normalizedCPF);
 				}
 
-				// Prepare student data
-				const encryptedEmail = await encrypt(normalizedEmail);
-				const encryptedPhone = await encrypt(student.phone.replace(/\D/g, ''));
-				const encryptedCPF = student.cpf ? await encryptCPF(student.cpf) : undefined;
+				// Prepare student data with awaited encrypted fields
+				const encryptedEmailValue = await encrypt(normalizedEmail);
+				const encryptedPhoneValue = await encrypt(student.phone.replace(/\D/g, ''));
+				const encryptedCPFValue = student.cpf ? await encryptCPF(student.cpf) : undefined;
 
 				const studentData = {
 				name: student.name.trim(),
@@ -286,10 +286,10 @@ export const bulkImport = mutation({
 				status: student.status || ('ativo' as const),
 					churnRisk: 'baixo' as const,
 
-					// Encrypted fields
-					encryptedEmail,
-					encryptedPhone,
-					encryptedCPF,
+					// Encrypted fields (already resolved)
+					encryptedEmail: encryptedEmailValue,
+					encryptedPhone: encryptedPhoneValue,
+					encryptedCPF: encryptedCPFValue,
 
 					// Optional fields
 					cpf: student.cpf ? student.cpf.replace(/\D/g, '') : undefined,
