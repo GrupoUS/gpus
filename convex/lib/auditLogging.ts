@@ -60,7 +60,7 @@ export async function createAuditLog(
 	entry: AuditLogEntry
 ): Promise<string> {
 	// Validate encryption is configured
-	const encryptionValidation = validateEncryptionConfig()
+	const encryptionValidation = await validateEncryptionConfig()
 	if (!encryptionValidation.valid) {
 		console.error('Audit logging failed: Encryption not configured', encryptionValidation.message)
 		throw new Error('LGPD compliance: Encryption configuration required for audit logging')

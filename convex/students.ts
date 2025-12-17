@@ -81,9 +81,9 @@ export const getById = query({
 
     // Decrypt sensitive fields for authorized view
     // Note: In a real scenario, checks access policy here
-    if (student.encryptedCPF) student.cpf = decryptCPF(student.encryptedCPF)
-    if (student.encryptedEmail) student.email = decrypt(student.encryptedEmail)
-    if (student.encryptedPhone) student.phone = decrypt(student.encryptedPhone)
+    if (student.encryptedCPF) student.cpf = await decryptCPF(student.encryptedCPF)
+    if (student.encryptedEmail) student.email = await decrypt(student.encryptedEmail)
+    if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone)
 
     // Note: Audit logging for data access should be done in a mutation
     // or action that wraps this query, as logAudit requires MutationCtx
@@ -194,9 +194,9 @@ export const create = mutation({
     if (!identity) throw new Error('Unauthenticated')
 
     // Prepare encrypted fields
-    const encryptedCPF = args.cpf ? encryptCPF(args.cpf) : undefined
-    const encryptedEmail = encrypt(args.email)
-    const encryptedPhone = encrypt(args.phone)
+    const encryptedCPF = args.cpf ? await encryptCPF(args.cpf) : undefined
+    const encryptedEmail = await encrypt(args.email)
+    const encryptedPhone = await encrypt(args.phone)
 
     const studentId = await ctx.db.insert('students', {
       ...args,

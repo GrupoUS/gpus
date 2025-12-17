@@ -13,10 +13,10 @@
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 // getIdentity available for identity checks, getClerkId used
 import { getClerkId, getIdentity as _getIdentity } from './auth'
-import { createAuditLog } from './audit-logging'
+import { createAuditLog } from './auditLogging'
 // encrypt, decrypt, hashSensitiveData available for data processing
 import { encrypt as _encrypt, decrypt as _decrypt, hashSensitiveData as _hashSensitiveData } from './encryption'
-import { generateDataExport, hasConsentForDataCategory as _hasConsentForDataCategory } from './lgpd-compliance'
+import { generateDataExport, hasConsentForDataCategory as _hasConsentForDataCategory } from './lgpdCompliance'
 import { validateInput } from './validation'
 import { z } from 'zod'
 

@@ -1,73 +1,104 @@
-"use node";
-
 /**
  * LGPD-Compliant Encryption Utilities
  *
  * Provides AES-256-GCM encryption for sensitive PII data
  * following Brazilian data protection requirements.
+ *
+ * Uses Web Crypto API for Convex V8 runtime compatibility.
  */
 
-import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto'
+// Text encoder/decoder for string conversion
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
 
 /**
  * Encryption configuration for LGPD compliance
  */
 const ENCRYPTION_CONFIG = {
-	algorithm: 'aes-256-gcm' as const,
-	keyLength: 32, // 256 bits
-	ivLength: 16, // 128 bits
-	tagLength: 16, // 128 bits
-	encoding: 'utf8' as const,
-	outputEncoding: 'hex' as const,
+	algorithm: 'AES-GCM' as const,
+	keyLength: 256, // bits
+	ivLength: 12, // 96 bits recommended for AES-GCM
+	tagLength: 128, // bits
 } as const
+
+/**
+ * Converts ArrayBuffer to hex string
+ */
+function bufferToHex(buffer: ArrayBuffer): string {
+	return Array.from(new Uint8Array(buffer))
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
+}
+
+/**
+ * Converts hex string to Uint8Array
+ */
+function hexToBuffer(hex: string): Uint8Array {
+	const bytes = new Uint8Array(hex.length / 2)
+	for (let i = 0; i < hex.length; i += 2) {
+		bytes[i / 2] = Number.parseInt(hex.substring(i, i + 2), 16)
+	}
+	return bytes
+}
 
 /**
  * Derives encryption key from environment variable
  * Uses SHA-256 to ensure proper key length
  */
-function getEncryptionKey(): Buffer {
-	const key = process.env.ENCRYPTION_KEY
-	if (!key) {
+async function getEncryptionKey(): Promise<CryptoKey> {
+	const keyString = process.env.ENCRYPTION_KEY
+	if (!keyString) {
 		throw new Error('ENCRYPTION_KEY environment variable is required for LGPD compliance')
 	}
 
-	// Ensure key is exactly 32 bytes (256 bits)
-	return createHash('sha256').update(key).digest()
+	// Hash the key string to get exactly 256 bits
+	const keyMaterial = encoder.encode(keyString)
+	const keyHash = await crypto.subtle.digest('SHA-256', keyMaterial)
+
+	// Import as AES-GCM key
+	return crypto.subtle.importKey('raw', keyHash, { name: ENCRYPTION_CONFIG.algorithm }, false, [
+		'encrypt',
+		'decrypt',
+	])
 }
 
 /**
  * Generates cryptographically secure random IV
  */
-function generateIV(): Buffer {
-	return randomBytes(ENCRYPTION_CONFIG.ivLength)
+function generateIV(): Uint8Array {
+	return crypto.getRandomValues(new Uint8Array(ENCRYPTION_CONFIG.ivLength))
 }
 
 /**
  * Encrypts sensitive data using AES-256-GCM
  *
  * @param data Plain text data to encrypt
- * @returns Encrypted data with IV and authentication tag
+ * @returns Encrypted data with IV (hex encoded)
  */
-export function encrypt(data: string): string {
+export async function encrypt(data: string): Promise<string> {
 	if (!data) return data
 
 	try {
-		const key = getEncryptionKey()
+		const key = await getEncryptionKey()
 		const iv = generateIV()
+		const encodedData = encoder.encode(data)
 
-		const cipher = createCipheriv(ENCRYPTION_CONFIG.algorithm, key, iv)
+		const encrypted = await crypto.subtle.encrypt(
+			{
+				name: ENCRYPTION_CONFIG.algorithm,
+				iv: iv as Uint8Array<ArrayBuffer>,
+				tagLength: ENCRYPTION_CONFIG.tagLength,
+			},
+			key,
+			encodedData
+		)
 
-		let encrypted = cipher.update(data, ENCRYPTION_CONFIG.encoding, ENCRYPTION_CONFIG.outputEncoding)
-		encrypted += cipher.final(ENCRYPTION_CONFIG.outputEncoding)
+		// Combine IV + encrypted data (which includes auth tag in Web Crypto)
+		const combined = new Uint8Array(iv.length + encrypted.byteLength)
+		combined.set(iv, 0)
+		combined.set(new Uint8Array(encrypted), iv.length)
 
-		const tag = cipher.getAuthTag()
-
-		// Combine IV + tag + encrypted data for storage
-		const combined = iv.toString(ENCRYPTION_CONFIG.outputEncoding) +
-						  tag.toString(ENCRYPTION_CONFIG.outputEncoding) +
-						  encrypted
-
-		return combined
+		return bufferToHex(combined.buffer as ArrayBuffer)
 	} catch (error) {
 		console.error('Encryption error:', error)
 		throw new Error('Failed to encrypt sensitive data')
@@ -77,37 +108,31 @@ export function encrypt(data: string): string {
 /**
  * Decrypts sensitive data using AES-256-GCM
  *
- * @param encryptedData Combined encrypted data (IV + tag + encrypted)
+ * @param encryptedData Combined encrypted data (IV + encrypted, hex encoded)
  * @returns Decrypted plain text data
  */
-export function decrypt(encryptedData: string): string {
+export async function decrypt(encryptedData: string): Promise<string> {
 	if (!encryptedData) return encryptedData
 
 	try {
-		const key = getEncryptionKey()
+		const key = await getEncryptionKey()
 
-		// Extract IV, tag, and encrypted data
-		const ivHex = encryptedData.substring(0, ENCRYPTION_CONFIG.ivLength * 2)
-		const tagHex = encryptedData.substring(
-			ENCRYPTION_CONFIG.ivLength * 2,
-			(ENCRYPTION_CONFIG.ivLength + ENCRYPTION_CONFIG.tagLength) * 2
+		// Extract IV and encrypted data from hex string
+		const combined = hexToBuffer(encryptedData)
+		const iv = combined.slice(0, ENCRYPTION_CONFIG.ivLength)
+		const encrypted = combined.slice(ENCRYPTION_CONFIG.ivLength)
+
+		const decrypted = await crypto.subtle.decrypt(
+			{
+				name: ENCRYPTION_CONFIG.algorithm,
+				iv: iv.buffer as ArrayBuffer,
+				tagLength: ENCRYPTION_CONFIG.tagLength,
+			},
+			key,
+			encrypted.buffer as ArrayBuffer
 		)
-		const encryptedHex = encryptedData.substring((ENCRYPTION_CONFIG.ivLength + ENCRYPTION_CONFIG.tagLength) * 2)
 
-		const iv = Buffer.from(ivHex, ENCRYPTION_CONFIG.outputEncoding)
-		const tag = Buffer.from(tagHex, ENCRYPTION_CONFIG.outputEncoding)
-		const encrypted = Buffer.from(encryptedHex, ENCRYPTION_CONFIG.outputEncoding)
-
-		const decipher = createDecipheriv(ENCRYPTION_CONFIG.algorithm, key, iv)
-		decipher.setAuthTag(tag)
-
-		// For Buffer input, we don't specify inputEncoding
-		const decryptedBuffer = Buffer.concat([
-			decipher.update(encrypted),
-			decipher.final()
-		])
-
-		return decryptedBuffer.toString(ENCRYPTION_CONFIG.encoding)
+		return decoder.decode(decrypted)
 	} catch (error) {
 		console.error('Decryption error:', error)
 		throw new Error('Failed to decrypt sensitive data')
@@ -119,7 +144,7 @@ export function decrypt(encryptedData: string): string {
  * (basic heuristic for migration purposes)
  */
 export function isEncrypted(data: string): boolean {
-	if (!data || data.length < (ENCRYPTION_CONFIG.ivLength + ENCRYPTION_CONFIG.tagLength) * 2) {
+	if (!data || data.length < ENCRYPTION_CONFIG.ivLength * 2 + 32) {
 		return false
 	}
 
@@ -132,18 +157,18 @@ export function isEncrypted(data: string): boolean {
  * Hashes sensitive data for comparison without decrypting
  * Used for secure data validation and indexing
  */
-export function hashSensitiveData(data: string): string {
+export async function hashSensitiveData(data: string): Promise<string> {
 	if (!data) return ''
 
-	return createHash('sha256')
-		.update(data, ENCRYPTION_CONFIG.encoding)
-		.digest('hex')
+	const encoded = encoder.encode(data)
+	const hashBuffer = await crypto.subtle.digest('SHA-256', encoded)
+	return bufferToHex(hashBuffer)
 }
 
 /**
  * Encrypts CPF with specific formatting for Brazilian compliance
  */
-export function encryptCPF(cpf: string): string {
+export async function encryptCPF(cpf: string): Promise<string> {
 	if (!cpf) return cpf
 
 	// Remove formatting before encryption
@@ -154,10 +179,10 @@ export function encryptCPF(cpf: string): string {
 /**
  * Decrypts CPF and formats it for display
  */
-export function decryptCPF(encryptedCPF: string): string {
+export async function decryptCPF(encryptedCPF: string): Promise<string> {
 	if (!encryptedCPF) return encryptedCPF
 
-	const decrypted = decrypt(encryptedCPF)
+	const decrypted = await decrypt(encryptedCPF)
 
 	// Format CPF: XXX.XXX.XXX-XX
 	if (decrypted.length === 11) {
@@ -170,32 +195,32 @@ export function decryptCPF(encryptedCPF: string): string {
 /**
  * Validates if encryption key is properly configured
  */
-export function validateEncryptionConfig(): { valid: boolean; message?: string } {
+export async function validateEncryptionConfig(): Promise<{ valid: boolean; message?: string }> {
 	try {
 		const key = process.env.ENCRYPTION_KEY
 		if (!key) {
 			return {
 				valid: false,
-				message: 'ENCRYPTION_KEY environment variable is required for LGPD compliance'
+				message: 'ENCRYPTION_KEY environment variable is required for LGPD compliance',
 			}
 		}
 
 		if (key.length < 16) {
 			return {
 				valid: false,
-				message: 'ENCRYPTION_KEY must be at least 16 characters long'
+				message: 'ENCRYPTION_KEY must be at least 16 characters long',
 			}
 		}
 
 		// Test encryption/decryption
 		const testData = 'test encryption'
-		const encrypted = encrypt(testData)
-		const decrypted = decrypt(encrypted)
+		const encrypted = await encrypt(testData)
+		const decrypted = await decrypt(encrypted)
 
 		if (decrypted !== testData) {
 			return {
 				valid: false,
-				message: 'Encryption configuration test failed'
+				message: 'Encryption configuration test failed',
 			}
 		}
 
@@ -203,7 +228,7 @@ export function validateEncryptionConfig(): { valid: boolean; message?: string }
 	} catch (error) {
 		return {
 			valid: false,
-			message: `Encryption validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+			message: `Encryption validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 		}
 	}
 }

@@ -685,7 +685,7 @@ export function StudentImportDialog() {
 	const [availableSheets, setAvailableSheets] = useState<string[]>([]);
 	const [selectedSheet, setSelectedSheet] = useState<string>('');
 
-	const bulkImport = useMutation(api['students-import'].bulkImport);
+	const bulkImport = useMutation(api.studentsImport.bulkImport);
 	const fileInputId = useId();
 
 	const schemaFields = getSchemaFields();

@@ -16,17 +16,17 @@ export * from './encryption'
 export * from './validation'
 
 // Audit Logging
-export * from './audit-logging'
+export * from './auditLogging'
 
 // LGPD Compliance
-export * from './lgpd-compliance'
-export * from './lgpd-data-rights'
+export * from './lgpdCompliance'
+export * from './lgpdDataRights'
 
 // Security Middleware
-export * from './security-middleware'
+export * from './securityMiddleware'
 
 // Security Health Monitoring
-export * from './security-health'
+export * from './securityHealth'
 
 // Re-export commonly used types
 export type {
@@ -35,9 +35,10 @@ export type {
 
 export type {
 	SecurityContext,
-} from './security-middleware'
+} from './securityMiddleware'
 
 export type {
 	HealthCheckResult,
 	HealthIssue,
-} from './security-health'
+} from './securityHealth'
+

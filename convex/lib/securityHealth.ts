@@ -8,8 +8,8 @@
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import { validateEncryptionConfig } from './encryption'
 // securityHealthCheck available for delegating to middleware
-import { securityHealthCheck as _securityHealthCheck } from './security-middleware'
-import { getAuditLogs } from './audit-logging'
+import { securityHealthCheck as _securityHealthCheck } from './securityMiddleware'
+import { getAuditLogs } from './auditLogging'
 
 /**
  * Health check result interface
@@ -103,7 +103,7 @@ async function checkEncryptionSecurity(ctx: QueryCtx): Promise<{
 	let scoreDeduction = 0
 
 	// Validate encryption configuration
-	const encryptionValidation = validateEncryptionConfig()
+	const encryptionValidation = await validateEncryptionConfig()
 	if (!encryptionValidation.valid) {
 		issues.push({
 			level: 'critical',

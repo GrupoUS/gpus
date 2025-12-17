@@ -46,7 +46,7 @@ import {
 	brevoLists,
 	brevoTemplates,
 } from './lib/brevo'
-import { createAuditLog } from './lib/audit-logging'
+import { createAuditLog } from './lib/auditLogging'
 
 // ═══════════════════════════════════════════════════════
 // SECTION 1: CONTACT MANAGEMENT

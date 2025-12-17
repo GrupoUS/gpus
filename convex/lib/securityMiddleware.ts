@@ -9,7 +9,7 @@ import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { requireAuth, getClerkId as _getClerkId } from './auth'
 // validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
 import { validateInput, rateLimiters, validateFileUpload, validationSchemas as _validationSchemas } from './validation'
-import { logSecurityEvent } from './audit-logging'
+import { logSecurityEvent } from './auditLogging'
 // hashSensitiveData available for security hashing if needed
 import { hashSensitiveData as _hashSensitiveData } from './encryption'
 
@@ -486,7 +486,7 @@ export async function securityHealthCheck(ctx: QueryCtx): Promise<{
 
 	// Check encryption configuration
 	const { validateEncryptionConfig } = await import('./encryption')
-	const encryptionValidation = validateEncryptionConfig()
+	const encryptionValidation = await validateEncryptionConfig()
 	if (!encryptionValidation.valid) {
 		issues.push(`Encryption: ${encryptionValidation.message}`)
 	}

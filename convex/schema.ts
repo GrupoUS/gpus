@@ -120,7 +120,7 @@ export default defineSchema({
     score: v.optional(v.number()), // 0-100 calculado
 
     // Multi-tenant
-    organizationId: v.string(), // Obrigatório para leads
+    organizationId: v.optional(v.string()), // Optional for backward compatibility with existing data
 
     // Timestamps
     lastContactAt: v.optional(v.number()),

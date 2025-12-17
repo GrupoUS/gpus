@@ -273,9 +273,9 @@ export const bulkImport = mutation({
 				}
 
 				// Prepare student data
-				const encryptedEmail = encrypt(normalizedEmail);
-				const encryptedPhone = encrypt(student.phone.replace(/\D/g, ''));
-				const encryptedCPF = student.cpf ? encryptCPF(student.cpf) : undefined;
+				const encryptedEmail = await encrypt(normalizedEmail);
+				const encryptedPhone = await encrypt(student.phone.replace(/\D/g, ''));
+				const encryptedCPF = student.cpf ? await encryptCPF(student.cpf) : undefined;
 
 				const studentData = {
 				name: student.name.trim(),
