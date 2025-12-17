@@ -1,30 +1,13 @@
+// @vitest-environment jsdom
 import { act, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ThemeProvider, useTheme } from '../theme-provider';
 
-// Mock matchMedia
-Object.defineProperty(window, 'matchMedia', {
-	writable: true,
-	value: vi.fn().mockImplementation((query) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(), // deprecated
-		removeListener: vi.fn(), // deprecated
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
-});
+// matchMedia and startViewTransition mocks are in src/test/setup.ts
 
-// Mock startViewTransition
-if (typeof document !== 'undefined') {
-	(document as any).startViewTransition = (cb: any) => {
-		cb();
-		return { finished: Promise.resolve(), ready: Promise.resolve() };
-	};
-}
+// Storage key used by ThemeProvider (must match implementation)
+const STORAGE_KEY = 'gpus-ui-theme';
 
 // Helper component to test hook
 const TestComponent = () => {
@@ -45,24 +28,25 @@ describe('ThemeProvider', () => {
 		document.documentElement.classList.remove('light', 'dark');
 	});
 
-	it('uses default theme (system) if no storage', () => {
+	it('uses default theme (dark) if no storage', () => {
 		render(
 			<ThemeProvider>
 				<TestComponent />
 			</ThemeProvider>,
 		);
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('system');
+		// ThemeProvider defaults to 'dark' when no storage value exists
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
 	});
 
 	it('uses stored theme from localStorage', () => {
-		localStorage.setItem('vite-ui-theme', 'dark');
+		localStorage.setItem(STORAGE_KEY, 'light');
 		render(
 			<ThemeProvider>
 				<TestComponent />
 			</ThemeProvider>,
 		);
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
-		expect(document.documentElement.classList.contains('dark')).toBe(true);
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+		expect(document.documentElement.classList.contains('light')).toBe(true);
 	});
 
 	it('updates theme and storage when setTheme is called', () => {
@@ -78,7 +62,16 @@ describe('ThemeProvider', () => {
 		});
 
 		expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
-		expect(localStorage.getItem('vite-ui-theme')).toBe('dark');
+		expect(localStorage.getItem(STORAGE_KEY)).toBe('dark');
 		expect(document.documentElement.classList.contains('dark')).toBe(true);
+	});
+
+	it('respects custom defaultTheme prop', () => {
+		render(
+			<ThemeProvider defaultTheme="system">
+				<TestComponent />
+			</ThemeProvider>,
+		);
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('system');
 	});
 });

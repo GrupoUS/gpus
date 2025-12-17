@@ -1,8 +1,26 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useThemeTransition } from '../lib/theme-transitions';
 
-// ... imports
+type Theme = 'dark' | 'light' | 'system';
+
+type ThemeProviderProps = {
+	children: React.ReactNode;
+	defaultTheme?: Theme;
+	storageKey?: string;
+};
+
+type ThemeProviderState = {
+	theme: Theme;
+	setTheme: (theme: Theme) => void;
+};
+
+const initialState: ThemeProviderState = {
+	theme: 'system',
+	setTheme: () => null,
+};
+
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
 	children,

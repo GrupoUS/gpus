@@ -2,7 +2,7 @@
 
 ## Package Identity
 
-**Purpose:** Reusable React components for UI, CRM, dashboard, and layout  
+**Purpose:** Reusable React components for UI, CRM, dashboard, and layout
 **Tech:** React 19 + shadcn/ui + Tailwind CSS v4
 
 ---
@@ -232,4 +232,28 @@ bun run lint
 
 # Type check
 bun run build
+```
+
+---
+
+## Theme System
+
+The project uses a custom Theme System with View Transition API support.
+
+### Key Components
+- `theme-provider.tsx`: Context provider. Handles `localStorage` and `matchMedia`.
+- `theme-toggle.tsx`: Dropdown component for user selection.
+- `lib/theme-transitions.ts`: Hook (`useThemeTransition`) for smooth animations.
+
+### Usage
+- Use `useTheme()` hook to get/set theme.
+- Use `ThemeToggle` component in navbars/settings.
+- Ensure colors in `index.css` meet WCAG 2.1 AA (contrast > 4.5:1).
+
+### View Transitions
+To enable the circular reveal animation, use the `useThemeTransition` hook and pass the event coordinates:
+```tsx
+const { animateThemeChange } = useThemeTransition();
+// ...
+animateThemeChange(newTheme, () => setTheme(newTheme), { x: e.clientX, y: e.clientY });
 ```
