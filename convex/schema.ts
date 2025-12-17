@@ -134,7 +134,8 @@ export default defineSchema({
     .index('by_assigned', ['assignedTo'])
     .index('by_product', ['interestedProduct'])
     .index('by_temperature', ['temperature'])
-    .index('by_created', ['createdAt']),
+    .index('by_created', ['createdAt'])
+    .index('by_organization_phone', ['organizationId', 'phone']),
 
   // ═══════════════════════════════════════════════════════
   // ALUNOS (Clientes convertidos) - LGPD COMPLIANT

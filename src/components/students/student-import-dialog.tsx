@@ -58,12 +58,37 @@ import {
 	parseMonetary,
 	validateRow,
 } from '@/lib/csv-validator';
+import {
+	detectHeaderRow,
+	extractDataWithHeaders,
+	parseXLSXWithPassword,
+	type HeaderDetectionResult,
+} from '@/lib/xlsx-helper';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-type ImportStep = 'upload' | 'sheet-select' | 'mapping' | 'preview' | 'importing' | 'results';
+type ImportStep =
+	| 'upload'
+	| 'sheet-select'
+	| 'header-select'
+	| 'mapping'
+	| 'preview'
+	| 'importing'
+	| 'results';
 
 interface ParsedData {
 	headers: string[];
 	rows: Record<string, unknown>[];
+}
+
+interface XLSXParseResult {
+	data: ParsedData;
+	headerDetection: HeaderDetectionResult;
+	rawData: unknown[][];
+	needsPassword?: boolean;
 }
 
 interface ImportResult {
@@ -92,8 +117,12 @@ async function getXLSXSheetNames(file: File): Promise<string[]> {
 	return workbook.SheetNames;
 }
 
-// Helper function to parse XLSX files with robust error handling
-async function parseXLSXFile(file: File, sheetName?: string): Promise<ParsedData> {
+// Helper function to parse XLSX files with header detection and password support
+async function parseXLSXFile(
+	file: File,
+	sheetName?: string,
+	password?: string,
+): Promise<XLSXParseResult> {
 	// Step 1: Read file buffer
 	let buffer: ArrayBuffer;
 	try {
@@ -105,18 +134,34 @@ async function parseXLSXFile(file: File, sheetName?: string): Promise<ParsedData
 		);
 	}
 
-	// Step 2: Parse workbook
+	// Step 2: Parse workbook (with password support)
 	let workbook: XLSX.WorkBook;
 	try {
-		workbook = XLSX.read(buffer, {
-			type: 'array',
-			cellDates: true,
-			cellNF: false,
-		});
+		if (password) {
+			// Use password-protected parsing from xlsx-helper
+			const result = parseXLSXWithPassword(buffer, password);
+			if (!result.success) {
+				if (result.needsPassword) {
+					throw new XLSXParseError('Senha incorreta. Tente novamente.', 'WRONG_PASSWORD');
+				}
+				throw new XLSXParseError(
+					result.error || 'Erro ao processar arquivo protegido.',
+					'PASSWORD_ERROR',
+				);
+			}
+			workbook = result.workbook!;
+		} else {
+			workbook = XLSX.read(buffer, {
+				type: 'array',
+				cellDates: true,
+				cellNF: false,
+			});
+		}
 	} catch (error) {
+		if (error instanceof XLSXParseError) throw error;
 		if (error instanceof Error && error.message.includes('password')) {
 			throw new XLSXParseError(
-				'Arquivo XLSX protegido por senha não é suportado. Remova a proteção e tente novamente.',
+				'Arquivo protegido por senha. Por favor, informe a senha.',
 				'PASSWORD_PROTECTED',
 			);
 		}
@@ -144,7 +189,7 @@ async function parseXLSXFile(file: File, sheetName?: string): Promise<ParsedData
 		);
 	}
 
-	// Step 5: Convert to JSON
+	// Step 5: Convert to JSON (raw 2D array)
 	let jsonData: unknown[][];
 	try {
 		jsonData = XLSX.utils.sheet_to_json<unknown[]>(targetSheet, {
@@ -164,41 +209,21 @@ async function parseXLSXFile(file: File, sheetName?: string): Promise<ParsedData
 		throw new XLSXParseError('Nenhum dado encontrado na primeira planilha.', 'NO_DATA');
 	}
 
-	// Step 7: Extract headers and rows
-	const firstRow = jsonData[0];
-	if (!firstRow || firstRow.length === 0) {
-		throw new XLSXParseError(
-			'Cabeçalho da planilha está vazio. A primeira linha deve conter os nomes das colunas.',
-			'EMPTY_HEADER',
-		);
-	}
+	// Step 7: Detect header row using smart detection
+	const headerDetection = detectHeaderRow(jsonData);
 
-	// Validate header shape
-	if (!Array.isArray(firstRow)) {
-		throw new XLSXParseError('Cabeçalho inválido na primeira linha.', 'INVALID_HEADER_SHAPE');
-	}
+	// Step 8: Extract data using detected header row
+	const extractedData = extractDataWithHeaders(jsonData, headerDetection.rowIndex);
 
-	const headers = firstRow.map((h) => String(h || '').trim()).filter(Boolean);
-
-	if (headers.length === 0) {
+	if (extractedData.headers.length === 0) {
 		throw new XLSXParseError('Nenhuma coluna válida encontrada no cabeçalho.', 'INVALID_HEADER');
 	}
 
-	let rows: Record<string, unknown>[];
-	try {
-		rows = jsonData.slice(1).map((row) => {
-			const arr = row as unknown[];
-			const obj: Record<string, unknown> = {};
-			headers.forEach((header, index) => {
-				obj[header] = arr[index];
-			});
-			return obj;
-		});
-	} catch (_error) {
-		throw new XLSXParseError('Erro ao processar linhas da planilha.', 'ROW_MAPPING_ERROR');
-	}
-
-	return { headers, rows };
+	return {
+		data: extractedData,
+		headerDetection,
+		rawData: jsonData,
+	};
 }
 
 // Helper function to parse CSV files

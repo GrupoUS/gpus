@@ -193,6 +193,17 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error('Unauthenticated')
 
+    // Check for existing student with same phone (duplicate prevention)
+    const existingStudent = await ctx.db
+      .query('students')
+      .withIndex('by_phone', (q) => q.eq('phone', args.phone))
+      .first()
+
+    // Idempotent: return existing student ID if duplicate
+    if (existingStudent) {
+      return existingStudent._id
+    }
+
     // Prepare encrypted fields
     const encryptedCPF = args.cpf ? await encryptCPF(args.cpf) : undefined
     const encryptedEmail = await encrypt(args.email)
