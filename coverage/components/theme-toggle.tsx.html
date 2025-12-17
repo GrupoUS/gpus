@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.5% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/8</span>
+                <span class='fraction'>7/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">16.66% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.44% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -134,19 +134,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -155,21 +153,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -195,11 +195,11 @@ export function ThemeToggle() {
 	const { setTheme, theme } = useTheme();
 	const { animateThemeChange } = useThemeTransition();
 &nbsp;
-	const handleThemeChange = <span class="fstat-no" title="function not covered" >(n</span>ewTheme: 'light' | 'dark' | 'system', e: React.MouseEvent) =&gt; {
+	const handleThemeChange = (newTheme: 'light' | 'dark' | 'system', e: React.MouseEvent) =&gt; {
 		// Only pass coordinates if it's a click event
-		const position = <span class="cstat-no" title="statement not covered" >e ? { x: e.clientX, y: e.clientY } : undefined;</span>
+		const position = e ? { x: e.clientX, y: e.clientY } : <span class="branch-1 cbranch-no" title="branch not covered" >undefined;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >		animateThemeChange(newTheme, <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTheme(newTheme), p</span>osition);</span>
+		animateThemeChange(newTheme, () =&gt; setTheme(newTheme), position);
 	};
 &nbsp;
 	return (
@@ -213,22 +213,22 @@ export function ThemeToggle() {
 			&lt;/DropdownMenuTrigger&gt;
 			&lt;DropdownMenuContent align="end"&gt;
 				&lt;DropdownMenuItem
-					onClick={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >handleThemeChange('light', e)}</span>
-					className={theme === 'light' ? <span class="branch-0 cbranch-no" title="branch not covered" >'bg-accent' : '</span>'}
+					onClick={(e) =&gt; handleThemeChange('light', e)}
+					className={theme === 'light' ? 'bg-accent' : ''}
 				&gt;
 					&lt;Sun className="mr-2 h-4 w-4" /&gt;
 					Light
 				&lt;/DropdownMenuItem&gt;
 				&lt;DropdownMenuItem
-					onClick={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >handleThemeChange('dark', e)}</span>
-					className={theme === 'dark' ? 'bg-accent' : <span class="branch-1 cbranch-no" title="branch not covered" >''}</span>
+					onClick={(e) =&gt; handleThemeChange('dark', e)}
+					className={theme === 'dark' ? 'bg-accent' : ''}
 				&gt;
 					&lt;Moon className="mr-2 h-4 w-4" /&gt;
 					Dark
 				&lt;/DropdownMenuItem&gt;
 				&lt;DropdownMenuItem
-					onClick={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >handleThemeChange('system', e)}</span>
-					className={theme === 'system' ? <span class="branch-0 cbranch-no" title="branch not covered" >'bg-accent' : '</span>'}
+					onClick={(e) =&gt; handleThemeChange('system', e)}
+					className={theme === 'system' ? 'bg-accent' : ''}
 				&gt;
 					&lt;Laptop className="mr-2 h-4 w-4" /&gt;
 					System
@@ -244,7 +244,7 @@ export function ThemeToggle() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-17T16:23:18.731Z
+                at 2025-12-17T17:17:58.750Z
             </div>
         <script src="../prettify.js"></script>
         <script>
