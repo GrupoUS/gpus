@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
+// import { requireAuth } from './lib/auth'
 
 /**
  * Get current user from Clerk auth
@@ -27,19 +27,42 @@ export const current = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await requireAuth(ctx)
+    try {
+      console.log('Starting users:list query (Inlined Auth)');
 
-    // Get current user to check role
-    const currentUser = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first()
+      const identity = await ctx.auth.getUserIdentity();
+      console.log('Identity raw:', identity);
 
-    if (!currentUser || currentUser.role !== 'admin') {
-      throw new Error('Permissão negada. Apenas administradores podem listar usuários.')
+      if (!identity) {
+        throw new Error('Não autenticado. Faça login para continuar.');
+      }
+
+      // Safe access subject
+      const subject = identity.subject;
+      if (!subject) {
+        throw new Error('Identity missing subject claim.');
+      }
+
+      // Get current user to check role
+      const currentUser = await ctx.db
+        .query('users')
+        .withIndex('by_clerk_id', (q) => q.eq('clerkId', subject))
+        .first();
+
+      console.log('Current user query result:', currentUser);
+
+      // Allow if admin or if checking self (optional extension, but here strictly admin as per original)
+      if (!currentUser || currentUser.role !== 'admin') {
+        console.log('Permission denied logic triggered. Role:', currentUser?.role);
+        throw new Error('Permissão negada. Apenas administradores podem listar usuários.');
+      }
+
+      console.log('Fetching all users');
+      return await ctx.db.query('users').collect();
+    } catch (error: any) {
+      console.error('CRITICAL ERROR in users:list:', error);
+      throw new Error(`Debug: ${error.message} \nStack: ${error.stack}`);
     }
-
-    return await ctx.db.query('users').collect()
   },
 })
 
