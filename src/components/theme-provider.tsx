@@ -1,24 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-type Theme = 'dark' | 'light' | 'system';
+import { useThemeTransition } from '../lib/theme-transitions';
 
-type ThemeProviderProps = {
-	children: React.ReactNode;
-	defaultTheme?: Theme;
-	storageKey?: string;
-};
-
-type ThemeProviderState = {
-	theme: Theme;
-	setTheme: (theme: Theme) => void;
-};
-
-const initialState: ThemeProviderState = {
-	theme: 'system',
-	setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+// ... imports
 
 export function ThemeProvider({
 	children,
@@ -26,9 +10,10 @@ export function ThemeProvider({
 	storageKey = 'gpus-ui-theme',
 	...props
 }: ThemeProviderProps) {
-	const [theme, setTheme] = useState<Theme>(
+	const [theme, setThemeState] = useState<Theme>(
 		() => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
 	);
+	const { animateThemeChange } = useThemeTransition();
 
 	useEffect(() => {
 		const root = window.document.documentElement;
@@ -47,13 +32,23 @@ export function ThemeProvider({
 		root.classList.add(theme);
 	}, [theme]);
 
-	const value = {
-		theme,
-		setTheme: (theme: Theme) => {
-			localStorage.setItem(storageKey, theme);
-			setTheme(theme);
+	const setTheme = useCallback(
+		(newTheme: Theme) => {
+			animateThemeChange(newTheme, () => {
+				localStorage.setItem(storageKey, newTheme);
+				setThemeState(newTheme);
+			});
 		},
-	};
+		[storageKey, animateThemeChange],
+	);
+
+	const value = useMemo(
+		() => ({
+			theme,
+			setTheme,
+		}),
+		[theme, setTheme],
+	);
 
 	return (
 		<ThemeProviderContext.Provider {...props} value={value}>

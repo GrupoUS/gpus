@@ -38,7 +38,7 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -58,50 +58,50 @@
     /* Background layers */
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
-    
+
     /* Cards & elevated surfaces */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    
+
     /* Popover & dropdowns */
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    
+
     /* Primary action - Teal/Petrol Blue */
     --primary: 199 89% 32%;
     --primary-foreground: 0 0% 100%;
-    
+
     /* Secondary - Slate neutral */
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
-    
+
     /* Muted backgrounds */
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    
+    --muted-foreground: 215 25% 40%;
+
     /* Accent highlights */
     --accent: 199 89% 95%;
     --accent-foreground: 199 89% 25%;
-    
+
     /* Destructive/Error */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Borders & inputs */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 199 89% 48%;
-    
+
     /* Chart colors - Modern palette without purple */
     --chart-1: 199 89% 48%;   /* Teal */
     --chart-2: 142 76% 36%;   /* Green */
     --chart-3: 38 92% 50%;    /* Amber */
     --chart-4: 0 84% 60%;     /* Red */
     --chart-5: 217 91% 60%;   /* Blue */
-    
+
     /* Radius */
     --radius: 0.625rem;
-    
+
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 222 47% 11%;
@@ -118,47 +118,47 @@
     /* Background layers */
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
-    
+
     /* Cards & elevated surfaces */
     --card: 222 47% 9%;
     --card-foreground: 210 40% 98%;
-    
+
     /* Popover & dropdowns */
     --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
-    
+
     /* Primary action - Brighter teal for dark mode */
     --primary: 199 89% 48%;
     --primary-foreground: 222 47% 6%;
-    
+
     /* Secondary */
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    
+
     /* Muted */
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    
+
     /* Accent */
     --accent: 199 89% 15%;
     --accent-foreground: 199 89% 70%;
-    
+
     /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Borders & inputs */
     --border: 217 33% 20%;
     --input: 217 33% 20%;
     --ring: 199 89% 48%;
-    
+
     /* Chart colors - Adjusted for dark mode */
     --chart-1: 199 89% 55%;
     --chart-2: 142 76% 45%;
     --chart-3: 38 92% 55%;
     --chart-4: 0 72% 55%;
     --chart-5: 217 91% 65%;
-    
+
     /* Sidebar */
     --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;
@@ -175,7 +175,7 @@
   * {
     @apply border-(--border);
   }
-  
+
   body {
     @apply bg-(--background) text-(--foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -187,7 +187,7 @@ html {
   transition: color-scheme 0.3s ease;
 }
 
-body, 
+body,
 .bg-background,
 .bg-card,
 .bg-popover,
@@ -196,3 +196,27 @@ body,
 .bg-sidebar {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* View Transition API for theme toggle animation */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}
+
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+

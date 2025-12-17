@@ -73,8 +73,8 @@ components/
 ├── layout/            # Layout components
 │   ├── app-sidebar.tsx         # Main navigation sidebar
 │   └── main-layout.tsx         # Authenticated layout wrapper
-├── theme-provider.tsx  # Dark/light theme context
-├── theme-toggle.tsx    # Theme toggle button
+├── theme-provider.tsx  # Dark/light theme context (optimized with useCallback/useMemo)
+├── ui/animated-theme-toggler.tsx  # Animated theme toggle with View Transition API
 ├── debug-auth.tsx      # Auth debugging (dev only)
 └── not-found.tsx       # 404 component
 ```
