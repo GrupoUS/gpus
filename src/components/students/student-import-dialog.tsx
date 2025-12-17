@@ -912,7 +912,7 @@ export function StudentImportDialog() {
 
 			setImportResults(result);
 			setStep('results');
-		} catch {
+		} catch (_error) {
 			toast.error('Erro na importação', {
 				description: 'Verifique os dados e tente novamente.',
 			});

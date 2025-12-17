@@ -32,9 +32,12 @@ import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/
 import { Route as AuthenticatedReportsTeamRouteImport } from './routes/_authenticated/reports/team'
 import { Route as AuthenticatedReportsSalesRouteImport } from './routes/_authenticated/reports/sales'
 import { Route as AuthenticatedMarketingNovaRouteImport } from './routes/_authenticated/marketing/nova'
+import { Route as AuthenticatedMarketingListasRouteImport } from './routes/_authenticated/marketing/listas'
 import { Route as AuthenticatedMarketingCampaignIdRouteImport } from './routes/_authenticated/marketing/$campaignId'
 import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
 import { Route as AuthenticatedChatDepartmentIndexRouteImport } from './routes/_authenticated/chat/$department/index'
+import { Route as AuthenticatedMarketingListasNovaRouteImport } from './routes/_authenticated/marketing/listas/nova'
+import { Route as AuthenticatedMarketingListasListIdRouteImport } from './routes/_authenticated/marketing/listas/$listId'
 import { Route as AuthenticatedChatDepartmentIdRouteImport } from './routes/_authenticated/chat/$department/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -158,6 +161,12 @@ const AuthenticatedMarketingNovaRoute =
     path: '/nova',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedMarketingListasRoute =
+  AuthenticatedMarketingListasRouteImport.update({
+    id: '/listas',
+    path: '/listas',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
 const AuthenticatedMarketingCampaignIdRoute =
   AuthenticatedMarketingCampaignIdRouteImport.update({
     id: '/$campaignId',
@@ -175,6 +184,18 @@ const AuthenticatedChatDepartmentIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedChatDepartmentRoute,
+  } as any)
+const AuthenticatedMarketingListasNovaRoute =
+  AuthenticatedMarketingListasNovaRouteImport.update({
+    id: '/nova',
+    path: '/nova',
+    getParentRoute: () => AuthenticatedMarketingListasRoute,
+  } as any)
+const AuthenticatedMarketingListasListIdRoute =
+  AuthenticatedMarketingListasListIdRouteImport.update({
+    id: '/$listId',
+    path: '/$listId',
+    getParentRoute: () => AuthenticatedMarketingListasRoute,
   } as any)
 const AuthenticatedChatDepartmentIdRoute =
   AuthenticatedChatDepartmentIdRouteImport.update({
@@ -200,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpIndexRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
   '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
@@ -209,6 +231,8 @@ export interface FileRoutesByFullPath {
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesByTo {
@@ -226,6 +250,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
   '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
@@ -235,6 +260,8 @@ export interface FileRoutesByTo {
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/chat': typeof AuthenticatedChatIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesById {
@@ -256,6 +283,7 @@ export interface FileRoutesById {
   '/sign-up/': typeof SignUpIndexRoute
   '/_authenticated/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/_authenticated/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/_authenticated/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
   '/_authenticated/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/_authenticated/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/_authenticated/reports/team': typeof AuthenticatedReportsTeamRoute
@@ -265,6 +293,8 @@ export interface FileRoutesById {
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
   '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/_authenticated/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/_authenticated/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRouteTypes {
@@ -286,6 +316,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/chat/$department'
     | '/marketing/$campaignId'
+    | '/marketing/listas'
     | '/marketing/nova'
     | '/reports/sales'
     | '/reports/team'
@@ -295,6 +326,8 @@ export interface FileRouteTypes {
     | '/students/$studentId'
     | '/chat/'
     | '/chat/$department/$id'
+    | '/marketing/listas/$listId'
+    | '/marketing/listas/nova'
     | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -312,6 +345,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/marketing/$campaignId'
+    | '/marketing/listas'
     | '/marketing/nova'
     | '/reports/sales'
     | '/reports/team'
@@ -321,6 +355,8 @@ export interface FileRouteTypes {
     | '/students/$studentId'
     | '/chat'
     | '/chat/$department/$id'
+    | '/marketing/listas/$listId'
+    | '/marketing/listas/nova'
     | '/chat/$department'
   id:
     | '__root__'
@@ -341,6 +377,7 @@ export interface FileRouteTypes {
     | '/sign-up/'
     | '/_authenticated/chat/$department'
     | '/_authenticated/marketing/$campaignId'
+    | '/_authenticated/marketing/listas'
     | '/_authenticated/marketing/nova'
     | '/_authenticated/reports/sales'
     | '/_authenticated/reports/team'
@@ -350,6 +387,8 @@ export interface FileRouteTypes {
     | '/_authenticated/students/$studentId'
     | '/_authenticated/chat/'
     | '/_authenticated/chat/$department/$id'
+    | '/_authenticated/marketing/listas/$listId'
+    | '/_authenticated/marketing/listas/nova'
     | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
 }
@@ -527,6 +566,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingNovaRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/marketing/listas': {
+      id: '/_authenticated/marketing/listas'
+      path: '/listas'
+      fullPath: '/marketing/listas'
+      preLoaderRoute: typeof AuthenticatedMarketingListasRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
     '/_authenticated/marketing/$campaignId': {
       id: '/_authenticated/marketing/$campaignId'
       path: '/$campaignId'
@@ -547,6 +593,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat/$department/'
       preLoaderRoute: typeof AuthenticatedChatDepartmentIndexRouteImport
       parentRoute: typeof AuthenticatedChatDepartmentRoute
+    }
+    '/_authenticated/marketing/listas/nova': {
+      id: '/_authenticated/marketing/listas/nova'
+      path: '/nova'
+      fullPath: '/marketing/listas/nova'
+      preLoaderRoute: typeof AuthenticatedMarketingListasNovaRouteImport
+      parentRoute: typeof AuthenticatedMarketingListasRoute
+    }
+    '/_authenticated/marketing/listas/$listId': {
+      id: '/_authenticated/marketing/listas/$listId'
+      path: '/$listId'
+      fullPath: '/marketing/listas/$listId'
+      preLoaderRoute: typeof AuthenticatedMarketingListasListIdRouteImport
+      parentRoute: typeof AuthenticatedMarketingListasRoute
     }
     '/_authenticated/chat/$department/$id': {
       id: '/_authenticated/chat/$department/$id'
@@ -589,8 +649,27 @@ const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
 const AuthenticatedChatRouteWithChildren =
   AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
 
+interface AuthenticatedMarketingListasRouteChildren {
+  AuthenticatedMarketingListasListIdRoute: typeof AuthenticatedMarketingListasListIdRoute
+  AuthenticatedMarketingListasNovaRoute: typeof AuthenticatedMarketingListasNovaRoute
+}
+
+const AuthenticatedMarketingListasRouteChildren: AuthenticatedMarketingListasRouteChildren =
+  {
+    AuthenticatedMarketingListasListIdRoute:
+      AuthenticatedMarketingListasListIdRoute,
+    AuthenticatedMarketingListasNovaRoute:
+      AuthenticatedMarketingListasNovaRoute,
+  }
+
+const AuthenticatedMarketingListasRouteWithChildren =
+  AuthenticatedMarketingListasRoute._addFileChildren(
+    AuthenticatedMarketingListasRouteChildren,
+  )
+
 interface AuthenticatedMarketingRouteChildren {
   AuthenticatedMarketingCampaignIdRoute: typeof AuthenticatedMarketingCampaignIdRoute
+  AuthenticatedMarketingListasRoute: typeof AuthenticatedMarketingListasRouteWithChildren
   AuthenticatedMarketingNovaRoute: typeof AuthenticatedMarketingNovaRoute
 }
 
@@ -598,6 +677,8 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
     AuthenticatedMarketingCampaignIdRoute:
       AuthenticatedMarketingCampaignIdRoute,
+    AuthenticatedMarketingListasRoute:
+      AuthenticatedMarketingListasRouteWithChildren,
     AuthenticatedMarketingNovaRoute: AuthenticatedMarketingNovaRoute,
   }
 
