@@ -318,7 +318,7 @@ interface StepContentProps {
 	downloadErrorLog?: () => void;
 }
 
-function _renderUploadStep(props: StepContentProps) {
+function renderUploadStep(props: StepContentProps) {
 	const {
 		selectedProduct = '',
 		setSelectedProduct,
@@ -385,7 +385,7 @@ function _renderUploadStep(props: StepContentProps) {
 	);
 }
 
-function _renderSheetSelectStep(props: StepContentProps) {
+function renderSheetSelectStep(props: StepContentProps) {
 	const { fileName = '', availableSheets = [], selectedSheet = '', setSelectedSheet } = props;
 
 	return (
@@ -414,7 +414,7 @@ function _renderSheetSelectStep(props: StepContentProps) {
 	);
 }
 
-function _renderMappingStep(props: StepContentProps) {
+function renderMappingStep(props: StepContentProps) {
 	const {
 		fileName = '',
 		parsedData,
@@ -511,7 +511,7 @@ function _renderMappingStep(props: StepContentProps) {
 	);
 }
 
-function _renderPreviewStep(props: StepContentProps) {
+function renderPreviewStep(props: StepContentProps) {
 	const {
 		parsedData,
 		previewValidation = { valid: 0, invalid: 0, errors: [] },
@@ -587,7 +587,7 @@ function _renderPreviewStep(props: StepContentProps) {
 	);
 }
 
-function _renderImportingStep(props: StepContentProps) {
+function renderImportingStep(props: StepContentProps) {
 	const { parsedData, importProgress = 0 } = props;
 
 	return (
@@ -607,7 +607,7 @@ function _renderImportingStep(props: StepContentProps) {
 	);
 }
 
-function _renderResultsStep(props: StepContentProps) {
+function renderResultsStep(props: StepContentProps) {
 	const { importResults, downloadErrorLog } = props;
 
 	if (!importResults) return null;
@@ -978,265 +978,65 @@ export function StudentImportDialog() {
 				</DialogHeader>
 
 				{/* Upload Step */}
-				{step === 'upload' && (
-					<UploadStepContent
-						selectedProduct={selectedProduct}
-						setSelectedProduct={setSelectedProduct}
-						isProcessing={isProcessing}
-						fileInputId={fileInputId}
-						handleDrop={handleDrop}
-						handleFileSelect={handleFileSelect}
-					/>
-				)}
+				{step === 'upload' &&
+					renderUploadStep({
+						selectedProduct,
+						setSelectedProduct,
+						isProcessing,
+						fileInputId,
+						handleDrop,
+						handleFileSelect,
+					})}
 
 				{/* Sheet Selection Step */}
-				{step === 'sheet-select' && (
-					<div className="space-y-4">
-						<div className="flex items-center gap-2 text-sm text-muted-foreground">
-							<FileSpreadsheet className="h-4 w-4" />
-							<span>Arquivo: {file?.name}</span>
-						</div>
-						<p className="text-sm">
-							O arquivo contém <strong>{availableSheets.length} planilhas</strong>. Selecione qual
-							deseja importar:
-						</p>
-						<Select value={selectedSheet} onValueChange={setSelectedSheet}>
-							<SelectTrigger>
-								<SelectValue placeholder="Selecione a planilha..." />
-							</SelectTrigger>
-							<SelectContent>
-								{availableSheets.map((sheet) => (
-									<SelectItem key={sheet} value={sheet}>
-										{sheet}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-				)}
+				{step === 'sheet-select' &&
+					renderSheetSelectStep({
+						fileName: file?.name,
+						availableSheets,
+						selectedSheet,
+						setSelectedSheet,
+					})}
 
 				{/* Mapping Step */}
-				{step === 'mapping' && parsedData && (
-					<div className="space-y-4">
-						<div className="flex items-center justify-between text-sm text-muted-foreground">
-							<span>Arquivo: {file?.name}</span>
-							<span>{parsedData.rows.length} registros encontrados</span>
-						</div>
-
-						<div className="border rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead className="w-1/3">Coluna do Arquivo</TableHead>
-										<TableHead className="w-1/3">Campo do Sistema</TableHead>
-										<TableHead className="w-1/3">Exemplo</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{parsedData.headers.map((header) => (
-										<TableRow key={header}>
-											<TableCell className="font-medium">{header}</TableCell>
-											<TableCell>
-												<Select
-													value={columnMapping[header] || '_skip'}
-													onValueChange={(value) => handleMappingChange(header, value)}
-												>
-													<SelectTrigger className="w-full">
-														<SelectValue placeholder="Selecione..." />
-													</SelectTrigger>
-													<SelectContent>
-														{schemaFields.map((field) => (
-															<SelectItem key={field.value} value={field.value}>
-																{field.label}
-																{field.required && ' *'}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</TableCell>
-											<TableCell className="text-sm text-muted-foreground truncate max-w-[200px]">
-												{String(parsedData.rows[0]?.[header] || '-')}
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</div>
-
-						{!canProceed && (
-							<div className="flex items-start gap-2 text-amber-500 text-sm">
-								<AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-								<div>
-									<span className="font-medium">Campos obrigatórios faltando:</span>
-									<ul className="list-disc list-inside mt-1">
-										{missingFields.map((field) => {
-											const fieldLabel =
-												schemaFields.find((f) => f.value === field)?.label || field;
-											return <li key={field}>{fieldLabel}</li>;
-										})}
-									</ul>
-								</div>
-							</div>
-						)}
-
-						<div className="space-y-3 border-t pt-4">
-							<label className="flex items-center gap-2 cursor-pointer">
-								<input
-									type="checkbox"
-									checked={upsertMode}
-									onChange={(e) => setUpsertMode(e.target.checked)}
-									className="rounded"
-								/>
-								<span className="text-sm">
-									Atualizar alunos existentes (se email já cadastrado)
-								</span>
-							</label>
-							<p className="text-xs text-muted-foreground ml-6">
-								{upsertMode
-									? 'Alunos existentes serão atualizados e nova matrícula será adicionada.'
-									: 'Alunos com email duplicado serão ignorados.'}
-							</p>
-						</div>
-					</div>
-				)}
+				{step === 'mapping' &&
+					parsedData &&
+					renderMappingStep({
+						fileName: file?.name,
+						parsedData,
+						columnMapping,
+						handleMappingChange,
+						schemaFields,
+						canProceed,
+						missingFields,
+						upsertMode,
+						setUpsertMode,
+					})}
 
 				{/* Preview Step */}
-				{step === 'preview' && parsedData && (
-					<div className="space-y-4">
-						<div className="grid grid-cols-3 gap-4 text-center">
-							<div className="border rounded-lg p-4">
-								<p className="text-2xl font-bold">{parsedData.rows.length}</p>
-								<p className="text-sm text-muted-foreground">Total de registros</p>
-							</div>
-							<div className="border rounded-lg p-4">
-								<p className="text-2xl font-bold text-green-500">{previewValidation.valid}</p>
-								<p className="text-sm text-muted-foreground">Válidos (amostra)</p>
-							</div>
-							<div className="border rounded-lg p-4">
-								<p className="text-2xl font-bold text-red-500">{previewValidation.invalid}</p>
-								<p className="text-sm text-muted-foreground">Com erros (amostra)</p>
-							</div>
-						</div>
-
-						{previewValidation.errors.length > 0 && (
-							<div className="border border-red-200 rounded-lg p-4 bg-red-50 dark:bg-red-950">
-								<h4 className="font-medium text-red-700 dark:text-red-300 mb-2">
-									Erros encontrados:
-								</h4>
-								<ul className="text-sm text-red-600 dark:text-red-400 list-disc list-inside">
-									{previewValidation.errors.slice(0, 5).map((error, i) => (
-										<li key={i}>{error}</li>
-									))}
-								</ul>
-							</div>
-						)}
-
-						<div className="border rounded-lg overflow-hidden">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>#</TableHead>
-										{Object.values(columnMapping)
-											.filter((v) => v !== '_skip')
-											.slice(0, 5)
-											.map((field) => (
-												<TableHead key={field}>
-													{schemaFields.find((f) => f.value === field)?.label || field}
-												</TableHead>
-											))}
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{parsedData.rows.slice(0, 5).map((row, i) => {
-										const transformed = transformRowData(row);
-										return (
-											<TableRow key={i}>
-												<TableCell>{i + 2}</TableCell>
-												{Object.values(columnMapping)
-													.filter((v) => v !== '_skip')
-													.slice(0, 5)
-													.map((field) => (
-														<TableCell key={field} className="truncate max-w-[150px]">
-															{String(transformed[field] || '-')}
-														</TableCell>
-													))}
-											</TableRow>
-										);
-									})}
-								</TableBody>
-							</Table>
-						</div>
-					</div>
-				)}
+				{step === 'preview' &&
+					parsedData &&
+					renderPreviewStep({
+						parsedData,
+						previewValidation,
+						columnMapping,
+						schemaFields,
+						transformRowData,
+					})}
 
 				{/* Importing Step */}
-				{step === 'importing' && (
-					<div className="py-8 text-center">
-						<Loader2 className="h-12 w-12 mx-auto mb-4 text-purple-500 animate-spin" />
-						<p className="text-lg font-medium">Importando alunos...</p>
-						<p className="text-sm text-muted-foreground mt-2">
-							Processando {parsedData?.rows.length || 0} registros
-						</p>
-						<div className="w-full bg-secondary rounded-full h-2 mt-4">
-							<div
-								className="bg-purple-500 h-2 rounded-full transition-all"
-								style={{ width: `${importProgress}%` }}
-							/>
-						</div>
-					</div>
-				)}
+				{step === 'importing' &&
+					renderImportingStep({
+						parsedData: parsedData ?? undefined,
+						importProgress,
+					})}
 
 				{/* Results Step */}
-				{step === 'results' && importResults && (
-					<div className="space-y-4">
-						<div className="grid grid-cols-3 gap-4 text-center">
-							<div className="border rounded-lg p-4">
-								<p className="text-2xl font-bold">{importResults.totalRows}</p>
-								<p className="text-sm text-muted-foreground">Total</p>
-							</div>
-							<div className="border rounded-lg p-4">
-								<CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-500" />
-								<p className="text-2xl font-bold text-green-500">{importResults.successCount}</p>
-								<p className="text-sm text-muted-foreground">Importados</p>
-							</div>
-							<div className="border rounded-lg p-4">
-								<XCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-								<p className="text-2xl font-bold text-red-500">{importResults.failureCount}</p>
-								<p className="text-sm text-muted-foreground">Com erros</p>
-							</div>
-						</div>
-
-						{importResults.failureCount > 0 && (
-							<>
-								<div className="border border-red-200 rounded-lg p-4 bg-red-50 dark:bg-red-950 max-h-48 overflow-y-auto">
-									<h4 className="font-medium text-red-700 dark:text-red-300 mb-2">
-										Erros na importação:
-									</h4>
-									<ul className="text-sm text-red-600 dark:text-red-400 space-y-1">
-										{importResults.results
-											.filter((r) => !r.success)
-											.slice(0, 10)
-											.map((result, i) => (
-												<li key={i}>
-													Linha {result.rowNumber}: {result.error}
-												</li>
-											))}
-										{importResults.failureCount > 10 && (
-											<li className="font-medium">
-												... e mais {importResults.failureCount - 10} erros
-											</li>
-										)}
-									</ul>
-								</div>
-
-								<Button variant="outline" className="gap-2" onClick={downloadErrorLog}>
-									<Download className="h-4 w-4" />
-									Baixar log de erros
-								</Button>
-							</>
-						)}
-					</div>
-				)}
+				{step === 'results' &&
+					importResults &&
+					renderResultsStep({
+						importResults,
+						downloadErrorLog,
+					})}
 
 				<DialogFooter>
 					{step === 'sheet-select' && (

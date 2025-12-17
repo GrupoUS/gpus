@@ -34,7 +34,7 @@ export function Navbar() {
 			<div className="container mx-auto flex items-center justify-between">
 				{/* Logo */}
 				<Link to="/" className="flex items-center space-x-2 group">
-					<div className="w-8 h-8 bg-gradient-to-br from-primary to-us-gold rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+					<div className="w-8 h-8 bg-linear-gradient-to-br from-primary to-us-gold rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
 						<span className="text-primary-foreground font-bold text-sm font-display">GU</span>
 					</div>
 					<span className="font-display font-bold text-xl tracking-tight text-gradient group-hover:text-primary transition-colors">
