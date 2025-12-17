@@ -1,6 +1,7 @@
 ---
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise
 mode: subagent
+model: claude-sonnet-4
 temperature: 0.2
 tools:
   write: true

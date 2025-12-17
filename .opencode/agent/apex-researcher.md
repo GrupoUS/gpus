@@ -1,6 +1,7 @@
 ---
 description: Research & planning specialist with multi-source validation. NEVER implements - research and planning only.
 mode: subagent
+model: claude-sonnet-4
 temperature: 0.1
 tools:
   write: true   # Required for todowrite() execution

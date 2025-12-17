@@ -1,6 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
+model: claude-sonnet-4
 temperature: 0.2
 tools:
   write: true

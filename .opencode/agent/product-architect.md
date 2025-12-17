@@ -1,6 +1,7 @@
 ---
 description: Documentation and PRD specialist using Diataxis framework for clear, actionable deliverables
 mode: subagent
+model: claude-sonnet-4
 temperature: 0.2
 tools:
   write: true
