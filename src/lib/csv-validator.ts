@@ -85,6 +85,92 @@ export function formatPhone(phone: string): string {
 	return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
 }
 
+// ==========================================
+// CEP Validation - Brazilian Postal Code
+// ==========================================
+
+/**
+ * Validate Brazilian CEP (postal code)
+ * Format: 8 digits, typically displayed as XXXXX-XXX
+ */
+export function validateCEP(cep: string): boolean {
+	if (!cep) return false;
+	const cleaned = cep.replace(/\D/g, '');
+	// Must be exactly 8 digits
+	if (cleaned.length !== 8) return false;
+	// Cannot be all zeros
+	if (/^0+$/.test(cleaned)) return false;
+	return true;
+}
+
+/**
+ * Normalize CEP - remove formatting, keep only digits
+ */
+export function normalizeCEP(cep: string): string {
+	return cep.replace(/\D/g, '');
+}
+
+/**
+ * Format CEP with hyphen (XXXXX-XXX)
+ */
+export function formatCEP(cep: string): string {
+	const cleaned = normalizeCEP(cep);
+	if (cleaned.length !== 8) return cleaned;
+	return cleaned.replace(/(\d{5})(\d{3})/, '$1-$2');
+}
+
+// ==========================================
+// UF Validation - Brazilian States
+// ==========================================
+
+export const BRAZILIAN_STATES = [
+	'AC',
+	'AL',
+	'AP',
+	'AM',
+	'BA',
+	'CE',
+	'DF',
+	'ES',
+	'GO',
+	'MA',
+	'MT',
+	'MS',
+	'MG',
+	'PA',
+	'PB',
+	'PR',
+	'PE',
+	'PI',
+	'RJ',
+	'RN',
+	'RS',
+	'RO',
+	'RR',
+	'SC',
+	'SP',
+	'SE',
+	'TO',
+] as const;
+
+export type BrazilianState = (typeof BRAZILIAN_STATES)[number];
+
+/**
+ * Validate Brazilian state abbreviation (UF)
+ */
+export function validateUF(uf: string): boolean {
+	if (!uf) return false;
+	const normalized = uf.trim().toUpperCase();
+	return BRAZILIAN_STATES.includes(normalized as BrazilianState);
+}
+
+/**
+ * Normalize UF - trim and uppercase
+ */
+export function normalizeUF(uf: string): string {
+	return uf.trim().toUpperCase();
+}
+
 // Detect CSV delimiter
 export function detectCSVDelimiter(content: string): string {
 	const firstLine = content.split('\n')[0] || '';
