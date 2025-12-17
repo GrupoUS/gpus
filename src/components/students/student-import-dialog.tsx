@@ -19,7 +19,9 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 import { api } from '../../../convex/_generated/api';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
 	Dialog,
 	DialogContent,
@@ -29,6 +31,9 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
 	Select,
 	SelectContent,
@@ -61,14 +66,9 @@ import {
 import {
 	detectHeaderRow,
 	extractDataWithHeaders,
-	parseXLSXWithPassword,
 	type HeaderDetectionResult,
+	parseXLSXWithPassword,
 } from '@/lib/xlsx-helper';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type ImportStep =
 	| 'upload'
@@ -117,6 +117,45 @@ async function getXLSXSheetNames(file: File): Promise<string[]> {
 	return workbook.SheetNames;
 }
 
+// Helper function to parse workbook from buffer with password support
+// Extracted to reduce complexity of parseXLSXFile
+function parseWorkbookFromBuffer(buffer: ArrayBuffer, password?: string): XLSX.WorkBook {
+	if (password) {
+		const result = parseXLSXWithPassword(buffer, password);
+		if (!result.success) {
+			if ('needsPassword' in result && result.needsPassword) {
+				throw new XLSXParseError('Senha incorreta. Tente novamente.', 'WRONG_PASSWORD');
+			}
+			if ('error' in result) {
+				throw new XLSXParseError(result.error, 'PASSWORD_ERROR');
+			}
+			throw new XLSXParseError('Erro ao processar arquivo protegido.', 'PASSWORD_ERROR');
+		}
+		return result.workbook;
+	}
+
+	return XLSX.read(buffer, {
+		type: 'array',
+		cellDates: true,
+		cellNF: false,
+	});
+}
+
+// Helper function to handle workbook parsing errors
+function handleWorkbookParseError(error: unknown): never {
+	if (error instanceof XLSXParseError) throw error;
+	if (error instanceof Error && error.message.includes('password')) {
+		throw new XLSXParseError(
+			'Arquivo protegido por senha. Por favor, informe a senha.',
+			'PASSWORD_PROTECTED',
+		);
+	}
+	throw new XLSXParseError(
+		'Estrutura de arquivo XLSX inválida. Verifique se o arquivo não está corrompido.',
+		'INVALID_STRUCTURE',
+	);
+}
+
 // Helper function to parse XLSX files with header detection and password support
 async function parseXLSXFile(
 	file: File,
@@ -137,38 +176,9 @@ async function parseXLSXFile(
 	// Step 2: Parse workbook (with password support)
 	let workbook: XLSX.WorkBook;
 	try {
-		if (password) {
-			// Use password-protected parsing from xlsx-helper
-			const result = parseXLSXWithPassword(buffer, password);
-			if (!result.success) {
-				if (result.needsPassword) {
-					throw new XLSXParseError('Senha incorreta. Tente novamente.', 'WRONG_PASSWORD');
-				}
-				throw new XLSXParseError(
-					result.error || 'Erro ao processar arquivo protegido.',
-					'PASSWORD_ERROR',
-				);
-			}
-			workbook = result.workbook!;
-		} else {
-			workbook = XLSX.read(buffer, {
-				type: 'array',
-				cellDates: true,
-				cellNF: false,
-			});
-		}
+		workbook = parseWorkbookFromBuffer(buffer, password);
 	} catch (error) {
-		if (error instanceof XLSXParseError) throw error;
-		if (error instanceof Error && error.message.includes('password')) {
-			throw new XLSXParseError(
-				'Arquivo protegido por senha. Por favor, informe a senha.',
-				'PASSWORD_PROTECTED',
-			);
-		}
-		throw new XLSXParseError(
-			'Estrutura de arquivo XLSX inválida. Verifique se o arquivo não está corrompido.',
-			'INVALID_STRUCTURE',
-		);
+		handleWorkbookParseError(error);
 	}
 
 	// Step 3: Validate sheets exist
@@ -213,14 +223,14 @@ async function parseXLSXFile(
 	const headerDetection = detectHeaderRow(jsonData);
 
 	// Step 8: Extract data using detected header row
-	const extractedData = extractDataWithHeaders(jsonData, headerDetection.rowIndex);
+	const extractedData = extractDataWithHeaders(jsonData, headerDetection.headerRowIndex);
 
 	if (extractedData.headers.length === 0) {
 		throw new XLSXParseError('Nenhuma coluna válida encontrada no cabeçalho.', 'INVALID_HEADER');
 	}
 
 	return {
-		data: extractedData,
+		data: { headers: extractedData.headers, rows: extractedData.dataRows },
 		headerDetection,
 		rawData: jsonData,
 	};
@@ -435,6 +445,87 @@ function renderSheetSelectStep(props: StepContentProps) {
 					))}
 				</SelectContent>
 			</Select>
+		</div>
+	);
+}
+
+interface HeaderSelectStepProps {
+	headerDetection: import('@/lib/xlsx-helper').HeaderDetectionResult | null;
+	selectedHeaderRow: number;
+	setSelectedHeaderRow: (row: number) => void;
+	rawXLSXData: unknown[][] | null;
+}
+
+function renderHeaderSelectStep(props: HeaderSelectStepProps) {
+	const { headerDetection, selectedHeaderRow, setSelectedHeaderRow, rawXLSXData } = props;
+
+	if (!(headerDetection && rawXLSXData)) return null;
+
+	// Get preview rows (first 5 data rows after selected header)
+	const previewRows = rawXLSXData.slice(selectedHeaderRow + 1, selectedHeaderRow + 6);
+	const headerRow = rawXLSXData[selectedHeaderRow] as string[];
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<span className="text-sm text-muted-foreground">Confiança na detecção:</span>
+				<Badge variant={headerDetection.confidence >= 0.7 ? 'default' : 'secondary'}>
+					{Math.round(headerDetection.confidence * 100)}%
+				</Badge>
+			</div>
+
+			<div className="space-y-2">
+				<Label>Selecione a linha de cabeçalho:</Label>
+				<RadioGroup
+					value={String(selectedHeaderRow)}
+					onValueChange={(v) => setSelectedHeaderRow(Number(v))}
+				>
+					{headerDetection.candidates.map((candidate) => (
+						<div key={candidate.rowIndex} className="flex items-center space-x-2">
+							<RadioGroupItem value={String(candidate.rowIndex)} id={`row-${candidate.rowIndex}`} />
+							<Label htmlFor={`row-${candidate.rowIndex}`} className="flex-1 cursor-pointer">
+								<span className="font-medium">Linha {candidate.rowIndex + 1}</span>
+								<span className="text-muted-foreground ml-2">
+									({Math.round(candidate.score * 100)}% - {candidate.headers.slice(0, 3).join(', ')}
+									{candidate.headers.length > 3 && '...'})
+								</span>
+							</Label>
+						</div>
+					))}
+				</RadioGroup>
+			</div>
+
+			<Card>
+				<CardContent className="p-4">
+					<p className="text-sm font-medium mb-2">Prévia dos dados:</p>
+					<div className="overflow-x-auto">
+						<table className="text-xs w-full">
+							<thead>
+								<tr className="border-b">
+									{headerRow?.slice(0, 5).map((h, i) => (
+										<th key={i} className="p-1 text-left font-medium">
+											{String(h) || `Col ${i + 1}`}
+										</th>
+									))}
+									{(headerRow?.length ?? 0) > 5 && <th className="p-1">...</th>}
+								</tr>
+							</thead>
+							<tbody>
+								{previewRows.map((row, i) => (
+									<tr key={i} className="border-b last:border-0">
+										{(row as unknown[]).slice(0, 5).map((cell, j) => (
+											<td key={j} className="p-1 truncate max-w-[150px]">
+												{String(cell ?? '')}
+											</td>
+										))}
+										{(row as unknown[]).length > 5 && <td className="p-1">...</td>}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
@@ -688,6 +779,110 @@ function renderResultsStep(props: StepContentProps) {
 }
 
 // ============================================================================
+// Dialog Footer Buttons Component (extracted to reduce complexity)
+// ============================================================================
+
+interface DialogFooterButtonsProps {
+	step: ImportStep;
+	isProcessing: boolean;
+	canProceed: boolean;
+	selectedSheet: string;
+	parsedDataRowCount: number;
+	resetState: () => void;
+	handleSheetSelect: () => void;
+	handleHeaderSelect: () => void;
+	handleImport: () => void;
+	setStep: (step: ImportStep) => void;
+	setOpen: (open: boolean) => void;
+}
+
+function DialogFooterButtons({
+	step,
+	isProcessing,
+	canProceed,
+	selectedSheet,
+	parsedDataRowCount,
+	resetState,
+	handleSheetSelect,
+	handleHeaderSelect,
+	handleImport,
+	setStep,
+	setOpen,
+}: DialogFooterButtonsProps) {
+	switch (step) {
+		case 'sheet-select':
+			return (
+				<>
+					<Button variant="outline" onClick={resetState}>
+						Cancelar
+					</Button>
+					<Button onClick={handleSheetSelect} disabled={isProcessing || !selectedSheet}>
+						{isProcessing ? (
+							<>
+								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								Processando...
+							</>
+						) : (
+							'Continuar'
+						)}
+					</Button>
+				</>
+			);
+		case 'header-select':
+			return (
+				<>
+					<Button variant="outline" onClick={resetState}>
+						Cancelar
+					</Button>
+					<Button onClick={handleHeaderSelect} disabled={isProcessing}>
+						{isProcessing ? (
+							<>
+								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								Processando...
+							</>
+						) : (
+							'Confirmar e Continuar'
+						)}
+					</Button>
+				</>
+			);
+		case 'mapping':
+			return (
+				<>
+					<Button variant="outline" onClick={resetState}>
+						Cancelar
+					</Button>
+					<Button onClick={() => setStep('preview')} disabled={!canProceed}>
+						Pré-visualizar
+					</Button>
+				</>
+			);
+		case 'preview':
+			return (
+				<>
+					<Button variant="outline" onClick={() => setStep('mapping')}>
+						Voltar
+					</Button>
+					<Button onClick={handleImport} disabled={isProcessing}>
+						{isProcessing ? (
+							<>
+								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								Importando...
+							</>
+						) : (
+							<>Importar {parsedDataRowCount} alunos</>
+						)}
+					</Button>
+				</>
+			);
+		case 'results':
+			return <Button onClick={() => setOpen(false)}>Fechar</Button>;
+		default:
+			return null;
+	}
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -710,8 +905,20 @@ export function StudentImportDialog() {
 	const [availableSheets, setAvailableSheets] = useState<string[]>([]);
 	const [selectedSheet, setSelectedSheet] = useState<string>('');
 
+	// Header detection states
+	const [headerDetection, setHeaderDetection] = useState<HeaderDetectionResult | null>(null);
+	const [rawXLSXData, setRawXLSXData] = useState<unknown[][] | null>(null);
+	const [selectedHeaderRow, setSelectedHeaderRow] = useState<number>(0);
+
+	// Password dialog states
+	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+	const [xlsxPassword, setXlsxPassword] = useState('');
+	const [pendingFile, setPendingFile] = useState<File | null>(null);
+	const [pendingSheet, setPendingSheet] = useState<string | undefined>(undefined);
+
 	const bulkImport = useMutation(api.studentsImport.bulkImport);
 	const fileInputId = useId();
+	const passwordInputId = useId();
 
 	const schemaFields = getSchemaFields();
 
@@ -727,6 +934,13 @@ export function StudentImportDialog() {
 		setUpsertMode(true);
 		setAvailableSheets([]);
 		setSelectedSheet('');
+		setHeaderDetection(null);
+		setRawXLSXData(null);
+		setSelectedHeaderRow(0);
+		setShowPasswordDialog(false);
+		setXlsxPassword('');
+		setPendingFile(null);
+		setPendingSheet(undefined);
 	}, []);
 
 	const handleFileUpload = useCallback(async (uploadedFile: File) => {
@@ -757,13 +971,42 @@ export function StudentImportDialog() {
 				}
 			}
 
-			const parsed = isXLSX ? await parseXLSXFile(uploadedFile) : await parseCSVFile(uploadedFile);
-			setParsedData(parsed);
-			setColumnMapping(mapCSVHeaders(parsed.headers));
+			if (isXLSX) {
+				const xlsxResult = await parseXLSXFile(uploadedFile);
+				// Store header detection info and raw data for potential header-select step
+				setHeaderDetection(xlsxResult.headerDetection);
+				setRawXLSXData(xlsxResult.rawData);
+				setSelectedHeaderRow(xlsxResult.headerDetection.headerRowIndex);
+
+				// If low confidence or multiple candidates, let user confirm header row
+				if (
+					xlsxResult.headerDetection.confidence < 0.7 &&
+					xlsxResult.headerDetection.candidates.length > 1
+				) {
+					setPendingFile(uploadedFile);
+					setStep('header-select');
+					setIsProcessing(false);
+					return;
+				}
+
+				setParsedData(xlsxResult.data);
+				setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
+			} else {
+				const csvData = await parseCSVFile(uploadedFile);
+				setParsedData(csvData);
+				setColumnMapping(mapCSVHeaders(csvData.headers));
+			}
 			setStep('mapping');
 		} catch (error) {
 			// Handle XLSXParseError with specific messages
 			if (error instanceof XLSXParseError) {
+				if (error.code === 'PASSWORD_PROTECTED') {
+					// Store file for password entry
+					setPendingFile(uploadedFile);
+					setShowPasswordDialog(true);
+					setIsProcessing(false);
+					return;
+				}
 				toast.error('Erro ao processar arquivo XLSX', {
 					description: error.message,
 				});
@@ -781,9 +1024,25 @@ export function StudentImportDialog() {
 		if (!(file && selectedSheet)) return;
 		setIsProcessing(true);
 		try {
-			const parsed = await parseXLSXFile(file, selectedSheet);
-			setParsedData(parsed);
-			setColumnMapping(mapCSVHeaders(parsed.headers));
+			const xlsxResult = await parseXLSXFile(file, selectedSheet);
+			// Store header detection info and raw data for potential header-select step
+			setHeaderDetection(xlsxResult.headerDetection);
+			setRawXLSXData(xlsxResult.rawData);
+			setSelectedHeaderRow(xlsxResult.headerDetection.headerRowIndex);
+
+			// If low confidence or multiple candidates, let user confirm header row
+			if (
+				xlsxResult.headerDetection.confidence < 0.7 &&
+				xlsxResult.headerDetection.candidates.length > 1
+			) {
+				setPendingSheet(selectedSheet);
+				setStep('header-select');
+				setIsProcessing(false);
+				return;
+			}
+
+			setParsedData(xlsxResult.data);
+			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
 			setStep('mapping');
 		} catch (error) {
 			if (error instanceof XLSXParseError) {
@@ -795,6 +1054,66 @@ export function StudentImportDialog() {
 			setIsProcessing(false);
 		}
 	}, [file, selectedSheet]);
+
+	// Handle user selecting a header row from candidates
+	const handleHeaderSelect = useCallback(() => {
+		if (!rawXLSXData) return;
+		setIsProcessing(true);
+		try {
+			const extracted = extractDataWithHeaders(rawXLSXData, selectedHeaderRow);
+			setParsedData({ headers: extracted.headers, rows: extracted.dataRows });
+			setColumnMapping(mapCSVHeaders(extracted.headers));
+			setStep('mapping');
+		} catch (_error) {
+			toast.error('Erro ao processar cabeçalhos', {
+				description: 'Não foi possível extrair os dados com o cabeçalho selecionado.',
+			});
+		} finally {
+			setIsProcessing(false);
+		}
+	}, [rawXLSXData, selectedHeaderRow]);
+
+	// Handle password submission for protected XLSX files
+	const handlePasswordSubmit = useCallback(async () => {
+		if (!(pendingFile && xlsxPassword)) return;
+		setIsProcessing(true);
+		setShowPasswordDialog(false);
+		try {
+			const xlsxResult = await parseXLSXFile(pendingFile, pendingSheet ?? undefined, xlsxPassword);
+			setHeaderDetection(xlsxResult.headerDetection);
+			setRawXLSXData(xlsxResult.rawData);
+			setSelectedHeaderRow(xlsxResult.headerDetection.headerRowIndex);
+
+			if (
+				xlsxResult.headerDetection.confidence < 0.7 &&
+				xlsxResult.headerDetection.candidates.length > 1
+			) {
+				setStep('header-select');
+				setIsProcessing(false);
+				return;
+			}
+
+			setParsedData(xlsxResult.data);
+			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
+			setStep('mapping');
+		} catch (error) {
+			if (error instanceof XLSXParseError) {
+				if (error.code === 'WRONG_PASSWORD') {
+					toast.error('Senha incorreta', {
+						description: 'A senha fornecida não está correta. Tente novamente.',
+					});
+					setShowPasswordDialog(true);
+				} else {
+					toast.error('Erro ao processar arquivo XLSX', { description: error.message });
+				}
+			} else {
+				toast.error('Erro ao processar arquivo');
+			}
+		} finally {
+			setIsProcessing(false);
+			setXlsxPassword('');
+		}
+	}, [pendingFile, pendingSheet, xlsxPassword]);
 
 	const handleDrop = useCallback(
 		(e: React.DragEvent<HTMLButtonElement>) => {
@@ -973,144 +1292,159 @@ export function StudentImportDialog() {
 	const canProceed = missingFields.length === 0; // All required fields must be mapped
 
 	return (
-		<Dialog
-			open={open}
-			onOpenChange={(isOpen) => {
-				setOpen(isOpen);
-				if (!isOpen) resetState();
-			}}
-		>
-			<DialogTrigger asChild>
-				<Button variant="outline" className="gap-2">
-					<Upload className="h-4 w-4" />
-					Importar CSV
-				</Button>
-			</DialogTrigger>
-			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
-						<FileSpreadsheet className="h-5 w-5 text-purple-500" />
-						Importar Alunos
-					</DialogTitle>
-					<DialogDescription>
-						{step === 'upload' && 'Faça upload de um arquivo CSV ou XLSX com os dados dos alunos.'}
-						{step === 'sheet-select' && 'Selecione a planilha para importar.'}
-						{step === 'mapping' && 'Mapeie as colunas do arquivo para os campos do sistema.'}
-						{step === 'preview' && 'Revise os dados antes de importar.'}
-						{step === 'importing' && 'Importando alunos...'}
-						{step === 'results' && 'Resultado da importação.'}
-					</DialogDescription>
-				</DialogHeader>
-
-				{/* Upload Step */}
-				{step === 'upload' &&
-					renderUploadStep({
-						selectedProduct,
-						setSelectedProduct,
-						isProcessing,
-						fileInputId,
-						handleDrop,
-						handleFileSelect,
-					})}
-
-				{/* Sheet Selection Step */}
-				{step === 'sheet-select' &&
-					renderSheetSelectStep({
-						fileName: file?.name,
-						availableSheets,
-						selectedSheet,
-						setSelectedSheet,
-					})}
-
-				{/* Mapping Step */}
-				{step === 'mapping' &&
-					parsedData &&
-					renderMappingStep({
-						fileName: file?.name,
-						parsedData,
-						columnMapping,
-						handleMappingChange,
-						schemaFields,
-						canProceed,
-						missingFields,
-						upsertMode,
-						setUpsertMode,
-					})}
-
-				{/* Preview Step */}
-				{step === 'preview' &&
-					parsedData &&
-					renderPreviewStep({
-						parsedData,
-						previewValidation,
-						columnMapping,
-						schemaFields,
-						transformRowData,
-					})}
-
-				{/* Importing Step */}
-				{step === 'importing' &&
-					renderImportingStep({
-						parsedData: parsedData ?? undefined,
-						importProgress,
-					})}
-
-				{/* Results Step */}
-				{step === 'results' &&
-					importResults &&
-					renderResultsStep({
-						importResults,
-						downloadErrorLog,
-					})}
-
-				<DialogFooter>
-					{step === 'sheet-select' && (
-						<>
-							<Button variant="outline" onClick={resetState}>
+		<>
+			{/* Password Dialog for protected XLSX files */}
+			<Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>Arquivo Protegido</DialogTitle>
+						<DialogDescription>
+							Este arquivo XLSX está protegido por senha. Digite a senha para continuar.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4">
+						<div className="space-y-2">
+							<Label htmlFor={passwordInputId}>Senha</Label>
+							<Input
+								id={passwordInputId}
+								type="password"
+								value={xlsxPassword}
+								onChange={(e) => setXlsxPassword(e.target.value)}
+								onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+								placeholder="Digite a senha do arquivo"
+							/>
+						</div>
+						<div className="flex justify-end gap-2">
+							<Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
 								Cancelar
 							</Button>
-							<Button onClick={handleSheetSelect} disabled={isProcessing || !selectedSheet}>
-								{isProcessing ? (
-									<>
-										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-										Processando...
-									</>
-								) : (
-									'Continuar'
-								)}
+							<Button onClick={handlePasswordSubmit} disabled={!xlsxPassword || isProcessing}>
+								{isProcessing ? 'Verificando...' : 'Confirmar'}
 							</Button>
-						</>
-					)}
-					{step === 'mapping' && (
-						<>
-							<Button variant="outline" onClick={resetState}>
-								Cancelar
-							</Button>
-							<Button onClick={() => setStep('preview')} disabled={!canProceed}>
-								Pré-visualizar
-							</Button>
-						</>
-					)}
-					{step === 'preview' && (
-						<>
-							<Button variant="outline" onClick={() => setStep('mapping')}>
-								Voltar
-							</Button>
-							<Button onClick={handleImport} disabled={isProcessing}>
-								{isProcessing ? (
-									<>
-										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-										Importando...
-									</>
-								) : (
-									<>Importar {parsedData?.rows.length || 0} alunos</>
-								)}
-							</Button>
-						</>
-					)}
-					{step === 'results' && <Button onClick={() => setOpen(false)}>Fechar</Button>}
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Main Import Dialog */}
+			<Dialog
+				open={open}
+				onOpenChange={(isOpen) => {
+					setOpen(isOpen);
+					if (!isOpen) resetState();
+				}}
+			>
+				<DialogTrigger asChild>
+					<Button variant="outline" className="gap-2">
+						<Upload className="h-4 w-4" />
+						Importar CSV
+					</Button>
+				</DialogTrigger>
+				<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<FileSpreadsheet className="h-5 w-5 text-purple-500" />
+							Importar Alunos
+						</DialogTitle>
+						<DialogDescription>
+							{step === 'upload' &&
+								'Faça upload de um arquivo CSV ou XLSX com os dados dos alunos.'}
+							{step === 'sheet-select' && 'Selecione a planilha para importar.'}
+							{step === 'header-select' && 'Confirme qual linha contém os cabeçalhos das colunas.'}
+							{step === 'mapping' && 'Mapeie as colunas do arquivo para os campos do sistema.'}
+							{step === 'preview' && 'Revise os dados antes de importar.'}
+							{step === 'importing' && 'Importando alunos...'}
+							{step === 'results' && 'Resultado da importação.'}
+						</DialogDescription>
+					</DialogHeader>
+
+					{/* Upload Step */}
+					{step === 'upload' &&
+						renderUploadStep({
+							selectedProduct,
+							setSelectedProduct,
+							isProcessing,
+							fileInputId,
+							handleDrop,
+							handleFileSelect,
+						})}
+
+					{/* Sheet Selection Step */}
+					{step === 'sheet-select' &&
+						renderSheetSelectStep({
+							fileName: file?.name,
+							availableSheets,
+							selectedSheet,
+							setSelectedSheet,
+						})}
+
+					{/* Header Selection Step */}
+					{step === 'header-select' &&
+						renderHeaderSelectStep({
+							headerDetection,
+							selectedHeaderRow,
+							setSelectedHeaderRow,
+							rawXLSXData,
+						})}
+
+					{/* Mapping Step */}
+					{step === 'mapping' &&
+						parsedData &&
+						renderMappingStep({
+							fileName: file?.name,
+							parsedData,
+							columnMapping,
+							handleMappingChange,
+							schemaFields,
+							canProceed,
+							missingFields,
+							upsertMode,
+							setUpsertMode,
+						})}
+
+					{/* Preview Step */}
+					{step === 'preview' &&
+						parsedData &&
+						renderPreviewStep({
+							parsedData,
+							previewValidation,
+							columnMapping,
+							schemaFields,
+							transformRowData,
+						})}
+
+					{/* Importing Step */}
+					{step === 'importing' &&
+						renderImportingStep({
+							parsedData: parsedData ?? undefined,
+							importProgress,
+						})}
+
+					{/* Results Step */}
+					{step === 'results' &&
+						importResults &&
+						renderResultsStep({
+							importResults,
+							downloadErrorLog,
+						})}
+
+					<DialogFooter>
+						<DialogFooterButtons
+							step={step}
+							isProcessing={isProcessing}
+							canProceed={canProceed}
+							selectedSheet={selectedSheet}
+							parsedDataRowCount={parsedData?.rows.length || 0}
+							resetState={resetState}
+							handleSheetSelect={handleSheetSelect}
+							handleHeaderSelect={handleHeaderSelect}
+							handleImport={handleImport}
+							setStep={setStep}
+							setOpen={setOpen}
+						/>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }
