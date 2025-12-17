@@ -3,19 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ThemeProvider } from '../theme-provider';
-import { AnimatedThemeToggler } from '../ui/animated-theme-toggler';
+import { ThemeToggle } from '../theme-toggle';
 
 // Mock icons to avoid rendering large SVGs in tests
 vi.mock('lucide-react', () => ({
 	Moon: () => <span data-testid="moon-icon">Moon</span>,
 	Sun: () => <span data-testid="sun-icon">Sun</span>,
+	Laptop: () => <span data-testid="laptop-icon">Laptop</span>,
 }));
 
-describe('AnimatedThemeToggler', () => {
+describe('ThemeToggle', () => {
 	it('renders the toggle button', () => {
 		render(
 			<ThemeProvider>
-				<AnimatedThemeToggler />
+				<ThemeToggle />
 			</ThemeProvider>,
 		);
 		expect(screen.getByRole('button')).toBeInTheDocument();
@@ -24,16 +25,16 @@ describe('AnimatedThemeToggler', () => {
 	it('renders with accessible label in Portuguese', () => {
 		render(
 			<ThemeProvider>
-				<AnimatedThemeToggler />
+				<ThemeToggle />
 			</ThemeProvider>,
 		);
-		expect(screen.getByRole('button', { name: /alternar tema/i })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument();
 	});
 
 	it('handles click events', () => {
 		render(
 			<ThemeProvider defaultTheme="dark" storageKey="test-theme">
-				<AnimatedThemeToggler />
+				<ThemeToggle />
 			</ThemeProvider>,
 		);
 
@@ -48,7 +49,7 @@ describe('AnimatedThemeToggler', () => {
 	it('renders correctly', () => {
 		const { container } = render(
 			<ThemeProvider>
-				<AnimatedThemeToggler />
+				<ThemeToggle />
 			</ThemeProvider>,
 		);
 		expect(container).toBeTruthy();

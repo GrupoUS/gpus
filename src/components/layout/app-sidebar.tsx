@@ -15,13 +15,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
 	Sidebar,
 	SidebarBody,
 	SidebarLink,
 	SidebarLinkWithSubmenu,
 } from '@/components/ui/aceternity-sidebar';
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 
 const menuItems = [
 	{
@@ -148,7 +148,7 @@ export function AppSidebar() {
 						}}
 					/>
 					<div className="mt-2 pl-2">
-						<AnimatedThemeToggler />
+						<ThemeToggle />
 					</div>
 				</div>
 			</SidebarBody>

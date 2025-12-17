@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Papa from 'papaparse';
 import { useCallback, useId, useState } from 'react';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 import { api } from '../../../convex/_generated/api';
@@ -73,24 +74,101 @@ interface ImportResult {
 	warnings?: string[];
 }
 
-// Helper function to parse XLSX files
-async function parseXLSXFile(file: File): Promise<ParsedData> {
-	const buffer = await file.arrayBuffer();
-	const workbook = XLSX.read(buffer, { type: 'array' });
-	const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-	const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, {
-		header: 1,
-		raw: false,
-	});
+// Custom error class for XLSX parsing with specific error codes
+class XLSXParseError extends Error {
+	constructor(
+		message: string,
+		public readonly code: string,
+	) {
+		super(message);
+		this.name = 'XLSXParseError';
+	}
+}
 
-	if (jsonData.length === 0) {
-		return { headers: [], rows: [] };
+// Helper function to parse XLSX files with robust error handling
+async function parseXLSXFile(file: File): Promise<ParsedData> {
+	// Step 1: Read file buffer
+	let buffer: ArrayBuffer;
+	try {
+		buffer = await file.arrayBuffer();
+	} catch {
+		throw new XLSXParseError(
+			'Não foi possível ler o arquivo. O arquivo pode estar corrompido ou inacessível.',
+			'FILE_READ_ERROR',
+		);
 	}
 
-	const firstRow = jsonData[0] as unknown as unknown[];
-	const headers = firstRow.map((h) => String(h || '').trim());
+	// Step 2: Parse workbook
+	let workbook: XLSX.WorkBook;
+	try {
+		workbook = XLSX.read(buffer, {
+			type: 'array',
+			cellDates: true,
+			cellNF: false,
+		});
+	} catch (error) {
+		if (error instanceof Error && error.message.includes('password')) {
+			throw new XLSXParseError(
+				'Arquivo XLSX protegido por senha não é suportado. Remova a proteção e tente novamente.',
+				'PASSWORD_PROTECTED',
+			);
+		}
+		throw new XLSXParseError(
+			'Estrutura de arquivo XLSX inválida. Verifique se o arquivo não está corrompido.',
+			'INVALID_STRUCTURE',
+		);
+	}
+
+	// Step 3: Validate sheets exist
+	if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+		throw new XLSXParseError('Nenhuma planilha encontrada no arquivo XLSX.', 'NO_SHEETS');
+	}
+
+	// Step 4: Get first sheet
+	const firstSheetName = workbook.SheetNames[0];
+	const firstSheet = workbook.Sheets[firstSheetName];
+
+	if (!firstSheet) {
+		throw new XLSXParseError('Primeira planilha está vazia ou corrompida.', 'EMPTY_SHEET');
+	}
+
+	// Step 5: Convert to JSON
+	let jsonData: unknown[][];
+	try {
+		jsonData = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
+			header: 1,
+			raw: false,
+			defval: '',
+		});
+	} catch {
+		throw new XLSXParseError(
+			'Erro ao processar dados da planilha. Verifique o formato dos dados.',
+			'PARSE_ERROR',
+		);
+	}
+
+	// Step 6: Validate data exists
+	if (!jsonData || jsonData.length === 0) {
+		throw new XLSXParseError('Nenhum dado encontrado na primeira planilha.', 'NO_DATA');
+	}
+
+	// Step 7: Extract headers and rows
+	const firstRow = jsonData[0];
+	if (!firstRow || firstRow.length === 0) {
+		throw new XLSXParseError(
+			'Cabeçalho da planilha está vazio. A primeira linha deve conter os nomes das colunas.',
+			'EMPTY_HEADER',
+		);
+	}
+
+	const headers = firstRow.map((h) => String(h || '').trim()).filter(Boolean);
+
+	if (headers.length === 0) {
+		throw new XLSXParseError('Nenhuma coluna válida encontrada no cabeçalho.', 'INVALID_HEADER');
+	}
+
 	const rows = jsonData.slice(1).map((row) => {
-		const arr = row as unknown as unknown[];
+		const arr = row as unknown[];
 		const obj: Record<string, unknown> = {};
 		headers.forEach((header, index) => {
 			obj[header] = arr[index];
@@ -114,6 +192,39 @@ async function parseCSVFile(file: File): Promise<ParsedData> {
 		headers: result.meta.fields || [],
 		rows: result.data,
 	};
+}
+
+// File validation constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
+
+// File validation function
+function validateFile(file: File): { valid: boolean; error?: string } {
+	const extension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+
+	if (!ALLOWED_EXTENSIONS.includes(extension)) {
+		return {
+			valid: false,
+			error: `Formato de arquivo não suportado: ${extension}. Use CSV, XLSX ou XLS.`,
+		};
+	}
+
+	if (file.size > MAX_FILE_SIZE) {
+		const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+		return {
+			valid: false,
+			error: `Arquivo muito grande (${sizeMB}MB). O tamanho máximo é 10MB.`,
+		};
+	}
+
+	if (file.size === 0) {
+		return {
+			valid: false,
+			error: 'O arquivo está vazio. Selecione um arquivo com dados.',
+		};
+	}
+
+	return { valid: true };
 }
 
 // Field transformer type
@@ -180,6 +291,15 @@ export function StudentImportDialog() {
 	}, []);
 
 	const handleFileUpload = useCallback(async (uploadedFile: File) => {
+		// Validate file before processing
+		const validation = validateFile(uploadedFile);
+		if (!validation.valid) {
+			toast.error('Arquivo inválido', {
+				description: validation.error,
+			});
+			return;
+		}
+
 		setFile(uploadedFile);
 		setIsProcessing(true);
 
@@ -190,8 +310,17 @@ export function StudentImportDialog() {
 			setParsedData(parsed);
 			setColumnMapping(mapCSVHeaders(parsed.headers));
 			setStep('mapping');
-		} catch {
-			alert('Erro ao processar arquivo. Verifique se o formato está correto.');
+		} catch (error) {
+			// Handle XLSXParseError with specific messages
+			if (error instanceof XLSXParseError) {
+				toast.error('Erro ao processar arquivo XLSX', {
+					description: error.message,
+				});
+			} else {
+				toast.error('Erro ao processar arquivo', {
+					description: 'Verifique se o formato do arquivo está correto e tente novamente.',
+				});
+			}
 		} finally {
 			setIsProcessing(false);
 		}
@@ -276,7 +405,9 @@ export function StudentImportDialog() {
 
 		// Validate product is selected
 		if (!selectedProduct) {
-			alert('Selecione um produto antes de importar.');
+			toast.error('Produto não selecionado', {
+				description: 'Selecione um produto antes de importar os alunos.',
+			});
 			return;
 		}
 
