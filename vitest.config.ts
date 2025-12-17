@@ -7,6 +7,6 @@ export default mergeConfig(viteConfig, defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['**/*.{test,spec}.{ts,tsx,js,jsx}'],
-    exclude: ['node_modules', '**/node_modules/**', 'dist', '.output', '**/tests/e2e/**', '.opencode/**'],
+    exclude: ['node_modules', '**/node_modules/**', 'dist', '.output', 'tests/e2e/**', '**/tests/e2e/**', '.opencode/**'],
   },
 }))
