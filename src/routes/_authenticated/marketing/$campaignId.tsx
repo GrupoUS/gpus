@@ -682,7 +682,7 @@ function CampaignDetailPage() {
 
 					{/* Info Card */}
 					{isDraft && (
-						<Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+						<Card className="border-primary/20 bg-primary/5">
 							<CardContent className="pt-6">
 								<p className="text-sm text-muted-foreground">
 									<strong>Dica:</strong> Revise o conteúdo e as listas de destinatários antes de

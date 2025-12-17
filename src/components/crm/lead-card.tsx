@@ -67,7 +67,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 					<div className="flex items-center gap-2">
 						<p className="font-medium text-sm truncate font-sans">{lead.name}</p>
 						<TempIcon
-							className={`h-3.5 w-3.5 shrink-0 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-gray-500'}`}
+							className={`h-3.5 w-3.5 shrink-0 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-muted-foreground'}`}
 						/>
 					</div>
 					{lead.profession && (

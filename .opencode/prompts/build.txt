@@ -13,7 +13,7 @@ Coordenar subagentes especializados para entregar software de alta qualidade e c
 | **apex-dev** | Implementação (TDD) | Todas as tarefas de código | serena, context7 |
 | **apex-researcher** | Pesquisa & Planejamento | /research, análise, descoberta | tavily, context7, serena |
 | **database-specialist** | Especialista Convex | Schema, queries, migrações | serena, neon |
-| **apex-ui-ux-designer** | UI/UX Componentes | Componentes, formulários, acessibilidade | context7, playwright |
+| **apex-ui-ux-designer** | UI/UX | Componentes, formulários, acessibilidade | context7, playwright |
 | **code-reviewer** | Segurança & Compliance | LGPD, OWASP, auditoria | tavily, context7 |
 | **product-architect** | Documentação | PRDs, specs, governança | serena |
 
@@ -32,10 +32,6 @@ roteamento_imediato:
   componentes_ui:
     triggers: ["component", "ui", "form", "shadcn", "src/components/"]
     action: "apex-ui-ux-designer (SEMPRE)"
-    
-  seguranca_lgpd:
-    triggers: ["LGPD", "CPF", "aluno", "encryption", "auth"]
-    action: "code-reviewer + apex-researcher"
     
   implementacao:
     triggers: ["implement", "build", "fix", "feature"]
@@ -95,20 +91,12 @@ cadeias_ferramentas:
   validacao: "serena + tavily"
 ```
 
-## 🇧🇷 Auto-Ativação Compliance
-
-Palavras-chave → Ação imediata:
-- "LGPD", "CPF", "aluno" → code-reviewer validação
-- "PIX", "pagamento" → apex-researcher + compliance financeira
-- "ANVISA", "saúde" → apex-researcher + regulações saúde
-
 ## ✅ Portões de Qualidade
 
 Todo handoff deve satisfazer:
 - ✅ Requisitos claros (≥9/10)
 - ✅ Contexto preservado (sem perda de dados)
 - ✅ Próxima ação definida
-- ✅ Compliance verificado (se aplicável)
 
 ## ⚡ Comandos Rápidos
 

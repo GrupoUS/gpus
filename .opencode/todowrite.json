@@ -2,31 +2,31 @@
   {
     "id": "AT-001",
     "content": "[AT-001] Create improved build.txt prompt - Phase: 1 | Files: .opencode/prompts/build.txt",
-    "status": "pending",
+    "status": "completed",
     "priority": "high"
   },
   {
     "id": "AT-001-A",
     "content": "  ↳ [AT-001-A] Backup original build.txt as build-original.txt",
-    "status": "pending",
+    "status": "completed",
     "priority": "high"
   },
   {
     "id": "AT-002",
     "content": "[AT-002] Document improvements in memory file",
-    "status": "pending",
+    "status": "completed",
     "priority": "medium"
   },
   {
     "id": "AT-003",
     "content": "[AT-003] Validate improved prompt follows OpenCode agent model",
-    "status": "pending",
+    "status": "completed",
     "priority": "medium"
   },
   {
     "id": "VT-001",
     "content": "[VT-001] Test new prompt: Create test scenario and verify coordination",
-    "status": "pending",
+    "status": "completed",
     "priority": "high"
   }
 ]

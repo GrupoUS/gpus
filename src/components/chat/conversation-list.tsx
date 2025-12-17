@@ -22,7 +22,7 @@ const statusColors: Record<string, string> = {
 	aguardando_atendente: 'bg-yellow-500',
 	em_atendimento: 'bg-green-500',
 	aguardando_cliente: 'bg-blue-500',
-	resolvido: 'bg-gray-500',
+	resolvido: 'bg-muted-foreground',
 	bot_ativo: 'bg-purple-500',
 };
 
@@ -89,7 +89,7 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 									<div
 										className={cn(
 											'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background',
-											statusColors[item.status] || 'bg-gray-400',
+											statusColors[item.status] || 'bg-muted-foreground',
 										)}
 									/>
 								</div>

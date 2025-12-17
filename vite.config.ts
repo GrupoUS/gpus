@@ -48,6 +48,14 @@ export default defineConfig({
           ],
           // Forms chunk
           forms: ['react-hook-form', '@hookform/resolvers/zod', 'zod'],
+          // Charts chunk (recharts is large)
+          charts: ['recharts'],
+          // Authentication chunk
+          auth: ['@clerk/clerk-react'],
+          // Backend chunk (Convex)
+          backend: ['convex', 'convex/react'],
+          // Animation chunk
+          animation: ['framer-motion'],
         },
       },
     },

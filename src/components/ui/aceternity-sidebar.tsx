@@ -257,7 +257,7 @@ export const SidebarLinkWithSubmenu = ({
 								rotate: isExpanded ? 180 : 0,
 							}}
 						>
-							<ChevronDown className="h-4 w-4 text-neutral-500" />
+							<ChevronDown className="h-4 w-4 text-muted-foreground" />
 						</motion.div>
 					</button>
 				)}

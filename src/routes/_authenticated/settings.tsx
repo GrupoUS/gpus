@@ -98,13 +98,13 @@ function SettingsPage() {
 				</CardHeader>
 				<CardContent className="space-y-2">
 					<SettingItem
-						icon={<Users className="h-5 w-5 text-indigo-500" />}
+						icon={<Users className="h-5 w-5 text-primary" />}
 						title="Membros"
 						description="Gerencie usuários e permissões"
 						href="/settings/team"
 					/>
 					<SettingItem
-						icon={<Shield className="h-5 w-5 text-indigo-500" />}
+						icon={<Shield className="h-5 w-5 text-primary" />}
 						title="Funções e Permissões"
 						description="Configure níveis de acesso"
 					/>
