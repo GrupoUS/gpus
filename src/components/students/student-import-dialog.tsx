@@ -478,7 +478,9 @@ export function StudentImportDialog() {
 			setImportResults(result);
 			setStep('results');
 		} catch {
-			alert('Erro durante a importação. Verifique os dados e tente novamente.');
+			toast.error('Erro na importação', {
+				description: 'Verifique os dados e tente novamente.',
+			});
 		} finally {
 			setIsProcessing(false);
 		}

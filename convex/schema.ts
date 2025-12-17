@@ -705,4 +705,193 @@ export default defineSchema({
     .index('by_severity', ['severity'])
     .index('by_detected_at', ['detectedAt'])
     .index('by_detected_by', ['detectedBy']),
+
+  // ═══════════════════════════════════════════════════════
+  // EMAIL MARKETING (Brevo Integration)
+  // ═══════════════════════════════════════════════════════
+
+  // Contatos de email - referência polimórfica (leads OU students)
+  emailContacts: defineTable({
+    brevoId: v.optional(v.string()), // ID do contato no Brevo
+    email: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+
+    // Referência polimórfica: lead OU student
+    sourceType: v.union(v.literal('lead'), v.literal('student')),
+    sourceId: v.optional(v.string()), // ID original como string
+    leadId: v.optional(v.id('leads')),
+    studentId: v.optional(v.id('students')),
+
+    // Multi-tenant
+    organizationId: v.string(),
+
+    // Status de inscrição
+    subscriptionStatus: v.union(
+      v.literal('subscribed'),
+      v.literal('unsubscribed'),
+      v.literal('pending'),
+    ),
+
+    // LGPD compliance
+    consentId: v.optional(v.id('lgpdConsent')),
+
+    // Listas associadas
+    listIds: v.optional(v.array(v.id('emailLists'))),
+
+    // Sincronização
+    lastSyncedAt: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_brevoId', ['brevoId'])
+    .index('by_email', ['email'])
+    .index('by_organization', ['organizationId'])
+    .index('by_sourceType', ['sourceType'])
+    .index('by_subscriptionStatus', ['subscriptionStatus'])
+    .index('by_lead', ['leadId'])
+    .index('by_student', ['studentId']),
+
+  // Listas de distribuição de email
+  emailLists: defineTable({
+    brevoListId: v.optional(v.number()), // ID da lista no Brevo
+    name: v.string(),
+    description: v.optional(v.string()),
+
+    // Multi-tenant
+    organizationId: v.string(),
+
+    // Métricas
+    contactCount: v.number(),
+
+    // Status
+    isActive: v.boolean(),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_brevoListId', ['brevoListId'])
+    .index('by_organization', ['organizationId'])
+    .index('by_active', ['isActive']),
+
+  // Campanhas de email
+  emailCampaigns: defineTable({
+    brevoCampaignId: v.optional(v.number()), // ID da campanha no Brevo
+    name: v.string(),
+    subject: v.string(),
+    htmlContent: v.optional(v.string()),
+
+    // Template opcional
+    templateId: v.optional(v.id('emailTemplates')),
+
+    // Listas de destinatários
+    listIds: v.array(v.id('emailLists')),
+
+    // Status da campanha
+    status: v.union(
+      v.literal('draft'),
+      v.literal('scheduled'),
+      v.literal('sending'),
+      v.literal('sent'),
+      v.literal('failed'),
+    ),
+
+    // Agendamento
+    scheduledAt: v.optional(v.number()),
+    sentAt: v.optional(v.number()),
+
+    // Multi-tenant
+    organizationId: v.string(),
+
+    // Estatísticas (atualizadas via webhook)
+    stats: v.optional(
+      v.object({
+        sent: v.number(),
+        delivered: v.number(),
+        opened: v.number(),
+        clicked: v.number(),
+        bounced: v.number(),
+        unsubscribed: v.number(),
+      }),
+    ),
+
+    // Auditoria
+    createdBy: v.id('users'),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_brevoCampaignId', ['brevoCampaignId'])
+    .index('by_organization', ['organizationId'])
+    .index('by_status', ['status'])
+    .index('by_createdBy', ['createdBy']),
+
+  // Templates de email (diferente de messageTemplates)
+  emailTemplates: defineTable({
+    brevoTemplateId: v.optional(v.number()), // ID do template no Brevo
+    name: v.string(),
+    subject: v.string(),
+    htmlContent: v.string(),
+
+    // Design JSON do Brevo (editor visual)
+    design: v.optional(v.any()),
+
+    // Categorização
+    category: v.optional(v.string()),
+
+    // Multi-tenant
+    organizationId: v.string(),
+
+    // Status
+    isActive: v.boolean(),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_brevoTemplateId', ['brevoTemplateId'])
+    .index('by_organization', ['organizationId'])
+    .index('by_category', ['category'])
+    .index('by_active', ['isActive']),
+
+  // Eventos de email (recebidos via webhook do Brevo)
+  emailEvents: defineTable({
+    // Referências
+    campaignId: v.optional(v.id('emailCampaigns')),
+    contactId: v.optional(v.id('emailContacts')),
+    email: v.string(),
+
+    // Tipo de evento
+    eventType: v.union(
+      v.literal('delivered'),
+      v.literal('opened'),
+      v.literal('clicked'),
+      v.literal('bounced'),
+      v.literal('spam'),
+      v.literal('unsubscribed'),
+    ),
+
+    // Dados do evento
+    link: v.optional(v.string()), // Para eventos de click
+    bounceType: v.optional(v.string()), // hard, soft, etc.
+    brevoMessageId: v.optional(v.string()),
+
+    // Timestamp do evento
+    timestamp: v.number(),
+
+    // Metadados adicionais
+    metadata: v.optional(v.any()),
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index('by_campaign', ['campaignId'])
+    .index('by_contact', ['contactId'])
+    .index('by_eventType', ['eventType'])
+    .index('by_email', ['email'])
+    .index('by_timestamp', ['timestamp']),
 })
