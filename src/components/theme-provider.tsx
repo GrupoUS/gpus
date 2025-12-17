@@ -1,8 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { useThemeTransition } from '../lib/theme-transitions';
-
-type Theme = 'dark' | 'light' | 'system';
+type Theme = 'dark' | 'light';
 
 type ThemeProviderProps = {
 	children: React.ReactNode;
@@ -16,7 +14,7 @@ type ThemeProviderState = {
 };
 
 const initialState: ThemeProviderState = {
-	theme: 'system',
+	theme: 'dark',
 	setTheme: () => null,
 };
 
@@ -28,42 +26,28 @@ export function ThemeProvider({
 	storageKey = 'gpus-ui-theme',
 	...props
 }: ThemeProviderProps) {
-	const [theme, setThemeState] = useState<Theme>(
-		() => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
-	);
-	const { animateThemeChange } = useThemeTransition();
+	const [theme, setThemeState] = useState<Theme>(() => {
+		const stored = localStorage.getItem(storageKey);
+		// Migrate 'system' to 'dark' for users with old preference
+		if (stored === 'system') {
+			localStorage.setItem(storageKey, 'dark');
+			return 'dark';
+		}
+		return (stored as Theme) || defaultTheme;
+	});
 
 	useEffect(() => {
 		const root = window.document.documentElement;
-
 		root.classList.remove('light', 'dark');
-
-		if (theme === 'system') {
-			const media = window.matchMedia('(prefers-color-scheme: dark)');
-
-			const applySystemTheme = () => {
-				const systemTheme = media.matches ? 'dark' : 'light';
-				root.classList.remove('light', 'dark');
-				root.classList.add(systemTheme);
-			};
-
-			applySystemTheme();
-
-			media.addEventListener('change', applySystemTheme);
-			return () => media.removeEventListener('change', applySystemTheme);
-		}
-
 		root.classList.add(theme);
 	}, [theme]);
 
 	const setTheme = useCallback(
 		(newTheme: Theme) => {
-			animateThemeChange(newTheme, () => {
-				localStorage.setItem(storageKey, newTheme);
-				setThemeState(newTheme);
-			});
+			localStorage.setItem(storageKey, newTheme);
+			setThemeState(newTheme);
 		},
-		[storageKey, animateThemeChange],
+		[storageKey],
 	);
 
 	const value = useMemo(

@@ -17,7 +17,6 @@ const TestComponent = () => {
 			<span data-testid="theme-value">{theme}</span>
 			<button onClick={() => setTheme('dark')}>Set Dark</button>
 			<button onClick={() => setTheme('light')}>Set Light</button>
-			<button onClick={() => setTheme('system')}>Set System</button>
 		</div>
 	);
 };
@@ -68,10 +67,23 @@ describe('ThemeProvider', () => {
 
 	it('respects custom defaultTheme prop', () => {
 		render(
-			<ThemeProvider defaultTheme="system">
+			<ThemeProvider defaultTheme="light">
 				<TestComponent />
 			</ThemeProvider>,
 		);
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('system');
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+	});
+
+	it('migrates "system" theme to "dark" automatically', () => {
+		// Simulate user with old 'system' preference
+		localStorage.setItem(STORAGE_KEY, 'system');
+		render(
+			<ThemeProvider>
+				<TestComponent />
+			</ThemeProvider>,
+		);
+		// Should automatically migrate to 'dark'
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
+		expect(localStorage.getItem(STORAGE_KEY)).toBe('dark');
 	});
 });
