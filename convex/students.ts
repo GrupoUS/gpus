@@ -171,70 +171,74 @@ export const getChurnAlerts = query({
   args: {},
   handler: withQuerySecurity(
     async (ctx, _args: Record<string, never>, _security) => {
-      // Comment 4: Use churn-specific index and specific business logic
-      const ENGAGEMENT_WINDOW_DAYS = 30
-      const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
-      const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS
+      try {
+        // Comment 4: Use churn-specific index and specific business logic
+        const ENGAGEMENT_WINDOW_DAYS = 30
+        const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+        const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS
 
-      // 1. Fetch High/Medium risk students
-      const highRiskStudents = await ctx.db
-        .query('students')
-        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
-        .collect()
+        // 1. Fetch High/Medium risk students
+        const highRiskStudents = await ctx.db
+          .query('students')
+          .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
+          .collect()
 
-      const mediumRiskStudents = await ctx.db
-        .query('students')
-        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
-        .collect()
+        const mediumRiskStudents = await ctx.db
+          .query('students')
+          .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
+          .collect()
 
-      const students = [...highRiskStudents, ...mediumRiskStudents]
+        const students = [...highRiskStudents, ...mediumRiskStudents]
 
-      // Sort by lastEngagementAt ascending (most disengaged first)
-      students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
+        // Sort by lastEngagementAt ascending (most disengaged first)
+        students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
 
-      // 2. Fetch ALL late enrollments (Batch Query)
-      // This avoids the N+1 query problem inside the loop
-      const lateEnrollments = await ctx.db
-        .query('enrollments')
-        .withIndex('by_payment', (q) => q.eq('paymentStatus', 'atrasado'))
-        .collect()
+        const alerts: Array<{
+          _id: any
+          studentName: string
+          reason: string
+          risk: 'alto' | 'medio'
+        }> = []
 
-      // Create a Set of student IDs with late payments for O(1) lookups
-      const studentsWithLatePayments = new Set(lateEnrollments.map((e) => e.studentId))
+        // Optimization: Process students one by one until we hit the limit
+        // This avoids fetching ALL enrollments into memory (which caused OOM)
+        for (const student of students) {
+          if (alerts.length >= 5) break // Limit reached
 
-      const alerts: Array<{
-        _id: any
-        studentName: string
-        reason: string
-        risk: 'alto' | 'medio'
-      }> = []
+          // Check 1: Late Payment (Query per student - N+1 but limited to 5 matches, so generic complexity is low)
+          const lateEnrollment = await ctx.db
+            .query('enrollments')
+            .withIndex('by_student', (q) => q.eq('studentId', student._id))
+            .filter((q) => q.eq(q.field('paymentStatus'), 'atrasado'))
+            .first()
 
-      for (const student of students) {
-        if (alerts.length >= 5) break // Limit reached
+          if (lateEnrollment) {
+            alerts.push({
+              _id: student._id,
+              studentName: student.name,
+              reason: 'Pagamento atrasado',
+              risk: 'alto', // Force 'alto' for late payment
+            })
+            continue
+          }
 
-        // Check 1: Late Payment (using the pre-fetched Set)
-        if (studentsWithLatePayments.has(student._id)) {
-          alerts.push({
-            _id: student._id,
-            studentName: student.name,
-            reason: 'Pagamento atrasado',
-            risk: 'alto', // Force 'alto' for late payment
-          })
-          continue
+          // Check 2: Engagement (window check)
+          if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
+            alerts.push({
+              _id: student._id,
+              studentName: student.name,
+              reason: 'Sem engajamento',
+              risk: student.churnRisk as 'alto' | 'medio',
+            })
+          }
         }
 
-        // Check 2: Engagement (window check)
-        if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
-          alerts.push({
-            _id: student._id,
-            studentName: student.name,
-            reason: 'Sem engajamento',
-            risk: student.churnRisk as 'alto' | 'medio',
-          })
-        }
+        return alerts
+      } catch (error) {
+        console.error('Error in getChurnAlerts:', error)
+        // Return empty array to avoid crashing the dashboard, but log the error
+        return []
       }
-
-      return alerts
     },
     {
       requireAuth: true,
