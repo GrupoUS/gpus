@@ -53,67 +53,30 @@ export const list = query({
         students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
       }
 
-      const allEnrollments = await ctx.db.query('enrollments').collect()
+      const results = await Promise.all(students.map(async (student) => {
+        // Fetch latest enrollment for this student
+        const latestEnrollment = await ctx.db
+          .query('enrollments')
+          .withIndex('by_student', (q) => q.eq('studentId', student._id))
+          .order('desc')
+          .first()
 
-      // Build maps:
-      // - studentId -> latest enrollment (by createdAt) for display
-      // - studentId -> set of enrolled products for filtering by membership
-      const latestEnrollmentByStudent = new Map<
-        string,
-        (typeof allEnrollments)[number]
-      >()
-      const productsByStudent = new Map<string, Set<string>>()
+        const enrolledProducts = await ctx.db
+          .query('enrollments')
+          .withIndex('by_student', (q) => q.eq('studentId', student._id))
+          .collect()
 
-      allEnrollments.sort((a, b) => b.createdAt - a.createdAt)
-      for (const enrollment of allEnrollments) {
-        if (!latestEnrollmentByStudent.has(enrollment.studentId)) {
-          latestEnrollmentByStudent.set(enrollment.studentId, enrollment)
-        }
-
-        if (!productsByStudent.has(enrollment.studentId)) {
-          productsByStudent.set(enrollment.studentId, new Set())
-        }
-        if (enrollment.product) {
-          productsByStudent.get(enrollment.studentId)?.add(enrollment.product)
-        }
-      }
-
-
-      const results: Array<{
-        _id: (typeof students)[number]['_id']
-        _creationTime: (typeof students)[number]['_creationTime']
-        name: string
-        email: string
-        phone: string
-        profession: string
-        hasClinic: boolean
-        clinicName?: string
-        clinicCity?: string
-        status: (typeof students)[number]['status']
-        assignedCS?: (typeof students)[number]['assignedCS']
-        churnRisk: (typeof students)[number]['churnRisk']
-        lastEngagementAt?: number
-        leadId?: (typeof students)[number]['leadId']
-        createdAt: number
-        updatedAt: number
-        mainProduct?: string
-      }> = []
-
-      for (const student of students) {
-        const latestEnrollment = latestEnrollmentByStudent.get(student._id)
-        const enrolledProducts = productsByStudent.get(student._id)
+        const productSet = new Set(enrolledProducts.map(e => e.product))
 
         if (args.product) {
           if (args.product === 'sem_produto') {
-            if (enrolledProducts && enrolledProducts.size > 0) {
-              continue
-            }
-          } else if (!enrolledProducts?.has(args.product)) {
-            continue
+            if (productSet.size > 0) return null
+          } else if (!productSet.has(args.product as any)) {
+            return null
           }
         }
 
-        results.push({
+        return {
           _id: student._id,
           _creationTime: student._creationTime,
           name: student.name,
@@ -131,10 +94,10 @@ export const list = query({
           createdAt: student.createdAt,
           updatedAt: student.updatedAt,
           mainProduct: latestEnrollment?.product,
-        })
-      }
+        }
+      }))
 
-      return results
+      return results.filter((r): r is NonNullable<typeof r> => r !== null)
     },
     {
       requireAuth: true,
@@ -294,22 +257,7 @@ export const getStudentsGroupedByProducts = query({
       students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
     }
 
-    // 2. Fetch all enrollments
-    const enrollments = await ctx.db.query('enrollments').collect()
-
-    // 3. Build enrollment map: studentId -> array of products
-    const enrollmentsByStudent = new Map<string, Set<string>>()
-    for (const enrollment of enrollments) {
-      const studentId = enrollment.studentId
-      if (!enrollmentsByStudent.has(studentId)) {
-        enrollmentsByStudent.set(studentId, new Set())
-      }
-      if (enrollment.product) {
-        enrollmentsByStudent.get(studentId)!.add(enrollment.product)
-      }
-    }
-
-    // 4. Define all product groups including sem_produto
+    // 2. Fetch enrollments per student and group them
     const products = [
       'trintae3',
       'otb',
@@ -320,30 +268,31 @@ export const getStudentsGroupedByProducts = query({
       'sem_produto',
     ] as const
 
-    // 5. Initialize groups - ALL products always present (including empty)
     const grouped: Record<string, typeof students> = {}
     for (const p of products) {
       grouped[p] = []
     }
 
-    // 6. Group students by ALL their enrollments (student appears in each product they're enrolled in)
-    for (const student of students) {
-      const studentProducts = enrollmentsByStudent.get(student._id)
+    await Promise.all(students.map(async (student) => {
+      const studentEnrollments = await ctx.db
+        .query('enrollments')
+        .withIndex('by_student', (q) => q.eq('studentId', student._id))
+        .collect()
 
-      if (!studentProducts || studentProducts.size === 0) {
-        // Student has no enrollments -> sem_produto
+      const studentProducts = new Set(studentEnrollments.map(e => e.product))
+
+      if (studentProducts.size === 0) {
         grouped['sem_produto'].push(student)
       } else {
-        // Add student to EACH product they are enrolled in
         for (const prod of studentProducts) {
-          if (grouped[prod]) {
-            grouped[prod].push(student)
+          if (grouped[prod as string]) {
+            grouped[prod as string].push(student)
           }
         }
       }
-    }
+    }))
 
-    // 7. Apply product filter AFTER grouping (filter which groups to include students from)
+    // 7. Apply product filter AFTER grouping
     // If filtering by specific product, only that product's group will have students
     if (args.product && args.product !== 'all') {
       for (const key of Object.keys(grouped)) {

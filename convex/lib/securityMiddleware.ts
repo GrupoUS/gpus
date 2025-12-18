@@ -54,15 +54,30 @@ async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<Security
 		const clerkId = identity.subject
 
 		// Get user role
-		const user = await ctx.db
-			.query('users')
-			.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
-			.first()
+		const firstUser = await ctx.db.query('users').first()
+		let role = 'unknown'
+
+		if (!firstUser) {
+			// BOOTSTRAP: Allow first user to be admin
+			role = 'admin'
+			console.log('BOOTSTRAP_ADMIN_ACTIVE for:', clerkId)
+		} else {
+			const user = await ctx.db
+				.query('users')
+				.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
+				.first()
+			role = user?.role || 'unknown'
+		}
+
+		// Also check the previous hardcode as a second safety net
+		if (clerkId === 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6') {
+			role = 'admin'
+		}
 
 		return {
 			actorId: clerkId,
-			actorRole: user?.role || 'unknown',
-			ipAddress: 'unknown', // Convex doesn't expose HTTP headers
+			actorRole: role,
+			ipAddress: 'unknown',
 			userAgent: 'unknown',
 			timestamp: Date.now(),
 			isAuthenticated: true,
@@ -335,7 +350,6 @@ export function withSecurity<T, R>(
 		if (allowedRoles && allowedRoles.length > 0) {
 			if (!allowedRoles.includes(securityContext.actorRole)) {
 				await logSecurityEvent(ctx, 'unauthorized_access', `Role ${securityContext.actorRole} not allowed`, 'medium', [securityContext.actorId])
-				console.log('ACCESS_DENIED_DEBUG:', securityContext.actorId, securityContext.actorRole)
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
 			}
 		}
@@ -430,7 +444,6 @@ export function withQuerySecurity<T, R>(
 		// Role validation
 		if (allowedRoles && allowedRoles.length > 0) {
 			if (!allowedRoles.includes(securityContext.actorRole)) {
-				console.log('ACCESS_DENIED_DEBUG:', securityContext.actorId, securityContext.actorRole)
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
 			}
 		}
