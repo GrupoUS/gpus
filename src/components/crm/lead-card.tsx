@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { motion } from 'framer-motion';
 import {
 	Building,
 	Flame,
@@ -13,6 +14,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { hotIconVariants, SPRING_SMOOTH } from '@/lib/motion-config';
 
 interface LeadCardProps {
 	lead: {
@@ -43,15 +45,24 @@ const productLabels: Record<string, string> = {
 	na_mesa_certa: 'Na Mesa Certa',
 };
 
+// Create motion-enhanced Card component
+const MotionCard = motion.create(Card);
+
 export function LeadCard({ lead }: LeadCardProps) {
 	// Safe fallback if temp is invalid
 	const TempIcon = temperatureIcons[lead.temperature]?.icon || Thermometer;
 	const isHot = lead.temperature === 'quente';
 
 	return (
-		<Card
+		<MotionCard
 			variant="glass"
-			className="p-3 cursor-grab active:cursor-grabbing lead-card transition-all duration-200 ease-out hover:shadow-[0_12px_24px_-8px_hsl(var(--primary)/0.2)]"
+			className="p-3 cursor-grab active:cursor-grabbing lead-card will-change-transform"
+			whileHover={{
+				scale: 1.02,
+				boxShadow: '0 20px 40px -12px hsl(var(--primary) / 0.3)',
+			}}
+			whileTap={{ scale: 0.98 }}
+			transition={SPRING_SMOOTH}
 		>
 			<div className="flex items-start gap-3">
 				<Avatar className="h-9 w-9 lead-avatar">
@@ -66,9 +77,16 @@ export function LeadCard({ lead }: LeadCardProps) {
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2">
 						<p className="font-medium text-sm truncate font-sans">{lead.name}</p>
-						<TempIcon
-							className={`h-3.5 w-3.5 shrink-0 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-muted-foreground'}`}
-						/>
+						<motion.span
+							variants={hotIconVariants}
+							initial="idle"
+							animate={isHot ? 'hot' : 'idle'}
+							className="shrink-0"
+						>
+							<TempIcon
+								className={`h-3.5 w-3.5 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-muted-foreground'}`}
+							/>
+						</motion.span>
 					</div>
 					{lead.profession && (
 						<p className="text-xs text-muted-foreground truncate">{lead.profession}</p>
@@ -87,31 +105,40 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="flex items-center gap-3 mt-2 text-muted-foreground">
-						<button
+						<motion.button
 							type="button"
 							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 							aria-label="Ligar"
+							whileHover={{ scale: 1.1 }}
+							whileTap={{ scale: 0.9 }}
 						>
 							<Phone className="h-4 w-4" />
-						</button>
-						<button
+						</motion.button>
+						<motion.button
 							type="button"
 							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
 							aria-label="Mensagem"
+							whileHover={{ scale: 1.1 }}
+							whileTap={{ scale: 0.9 }}
 						>
 							<MessageSquare className="h-4 w-4" />
-						</button>
+						</motion.button>
 						{lead.lastContactAt && (
-							<span className="text-[10px] ml-auto font-sans animate-fade-in-up">
+							<motion.span
+								className="text-[10px] ml-auto font-sans"
+								initial={{ opacity: 0, y: 5 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ delay: 0.1 }}
+							>
 								{formatDistanceToNow(lead.lastContactAt, {
 									addSuffix: true,
 									locale: ptBR,
 								})}
-							</span>
+							</motion.span>
 						)}
 					</div>
 				</div>
 			</div>
-		</Card>
+		</MotionCard>
 	);
 }
