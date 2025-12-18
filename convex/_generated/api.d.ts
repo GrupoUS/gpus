@@ -9,6 +9,8 @@
  */
 
 import type * as activities from "../activities.js";
+import type * as asaas_actions from "../asaas/actions.js";
+import type * as asaas_mutations from "../asaas/mutations.js";
 import type * as conversations from "../conversations.js";
 import type * as debug_access from "../debug_access.js";
 import type * as debug_tool from "../debug_tool.js";
@@ -46,6 +48,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
+  "asaas/actions": typeof asaas_actions;
+  "asaas/mutations": typeof asaas_mutations;
   conversations: typeof conversations;
   debug_access: typeof debug_access;
   debug_tool: typeof debug_tool;

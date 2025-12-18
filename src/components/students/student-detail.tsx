@@ -37,7 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
 
 // Helper to handle chunk load errors (e.g., after a new deployment)
-const handleChunkError = (error: Error): Promise<any> => {
+const handleChunkError = (error: Error): Promise<never> => {
 	if (
 		error.message?.includes('Failed to fetch dynamically imported module') ||
 		error.message?.includes('Importing a module script failed')
@@ -46,7 +46,9 @@ const handleChunkError = (error: Error): Promise<any> => {
 			sessionStorage.setItem('chunk_retry', 'true');
 			window.location.reload();
 			// Return a promise that never resolves to prevent further errors while reloading
-			return new Promise(() => {});
+			return new Promise<never>(() => {
+				// Intentionally never resolve: browser is reloading.
+			});
 		}
 	}
 	throw error;

@@ -174,4 +174,93 @@ http.route({
 	}),
 })
 
+/**
+ * Asaas Webhook Endpoint
+ *
+ * Receives payment status updates from Asaas.
+ *
+ * POST /asaas/webhook
+ */
+http.route({
+  path: '/asaas/webhook',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const secret = request.headers.get('asaas-access-token')
+    const expectedSecret = process.env.ASAAS_WEBHOOK_SECRET
+
+    if (!expectedSecret || secret !== expectedSecret) {
+      console.error('Asaas webhook: Invalid or missing secret')
+      return new Response('Unauthorized', { status: 401 })
+    }
+
+    let payload: any
+    try {
+      payload = await request.json()
+    } catch {
+      return new Response('Bad Request', { status: 400 })
+    }
+
+    const { event, payment } = payload
+
+    if (!payment || !payment.id) {
+       return new Response('Invalid payload', { status: 400 })
+    }
+
+    // Log the event
+    await ctx.runMutation(internal.asaas.mutations.logPaymentEvent, {
+      asaasPaymentId: payment.id,
+      eventType: event,
+      webhookPayload: payload,
+      paidAt: payment.confirmedDate ? new Date(payment.confirmedDate).getTime() : undefined,
+      netValue: payment.netValue
+    })
+
+    // Map status
+    let status: any = null
+    switch (event) {
+      case 'PAYMENT_RECEIVED':
+        status = 'RECEIVED'
+        break
+      case 'PAYMENT_CONFIRMED':
+        status = 'CONFIRMED'
+        break
+      case 'PAYMENT_OVERDUE':
+        status = 'OVERDUE'
+        break
+      case 'PAYMENT_REFUNDED':
+        status = 'REFUNDED'
+        break
+      case 'PAYMENT_DELETED':
+        status = 'DELETED'
+        break
+      case 'PAYMENT_DUNNING_REQUESTED':
+        status = 'DUNNING_REQUESTED'
+        break
+      case 'PAYMENT_DUNNING_RECEIVED':
+         status = 'DUNNING_RECEIVED'
+         break
+      case 'PAYMENT_AWAITING_RISK_ANALYSIS':
+         status = 'AWAITING_RISK_ANALYSIS'
+         break
+      case 'PAYMENT_UPDATED':
+         // Maybe description updated?
+         break
+    }
+
+    if (status) {
+       try {
+         await ctx.runMutation(internal.asaas.mutations.updateChargeStatus, {
+           asaasPaymentId: payment.id,
+           status: status
+         })
+       } catch (error) {
+         console.error(`Asaas webhook: Failed to update status for ${payment.id}`, error)
+         // Don't fail the webhook if update fails (e.g. charge not found yet), just log
+       }
+    }
+
+    return new Response('OK', { status: 200 })
+  }),
+})
+
 export default http

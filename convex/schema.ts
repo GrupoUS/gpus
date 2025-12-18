@@ -145,6 +145,7 @@ export default defineSchema({
   students: defineTable({
     // Referência ao lead original
     leadId: v.optional(v.id('leads')),
+    asaasCustomerId: v.optional(v.string()),
 
     // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
@@ -900,4 +901,57 @@ export default defineSchema({
     .index('by_eventType', ['eventType'])
     .index('by_email', ['email'])
     .index('by_timestamp', ['timestamp']),
+
+  // ═══════════════════════════════════════════════════════
+  // FINANCEIRO (Integração Asaas)
+  // ═══════════════════════════════════════════════════════
+  charges: defineTable({
+    studentId: v.id('students'),
+    asaasPaymentId: v.string(), // ID da cobrança no Asaas
+    amount: v.number(),
+    dueDate: v.string(), // YYYY-MM-DD
+    status: v.union(
+      v.literal('PENDING'),
+      v.literal('RECEIVED'),
+      v.literal('CONFIRMED'),
+      v.literal('OVERDUE'),
+      v.literal('REFUNDED'),
+      v.literal('DELETED'),
+      v.literal('DUNNING_REQUESTED'),
+      v.literal('DUNNING_RECEIVED'),
+      v.literal('AWAITING_RISK_ANALYSIS'),
+    ),
+    billingType: v.union(
+      v.literal('BOLETO'),
+      v.literal('PIX'),
+      v.literal('CREDIT_CARD'),
+      v.literal('UNDEFINED')
+    ),
+    boletoUrl: v.optional(v.string()),
+    pixQrCode: v.optional(v.string()),
+    description: v.optional(v.string()),
+    installmentCount: v.optional(v.number()),
+    installmentNumber: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_student', ['studentId'])
+    .index('by_asaas_id', ['asaasPaymentId'])
+    .index('by_status', ['status'])
+    .index('by_due_date', ['dueDate']),
+
+  paymentLogs: defineTable({
+    chargeId: v.id('charges'),
+    eventType: v.string(), // PAYMENT_RECEIVED, etc.
+    paidAt: v.optional(v.number()),
+    netValue: v.optional(v.number()),
+    webhookPayload: v.optional(v.any()), // JSON payload completo
+
+    // Timestamps
+    createdAt: v.number(),
+  })
+    .index('by_charge', ['chargeId'])
+    .index('by_event_type', ['eventType']),
 })
