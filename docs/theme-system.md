@@ -8,6 +8,10 @@ The Theme System provides:
 - WCAG 2.1 AA compliant colors
 - Dropdown UI with active indicators
 
+## Preset de Cores (Navy/Gold)
+- Fonte: TweakCN `cmj4lb6u1000304jxaz15frkc`
+- Implementação: `src/index.css` (bloco `.dark`)
+
 ## Components
 
 ### ThemeProvider

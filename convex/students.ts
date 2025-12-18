@@ -1,10 +1,10 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
 import { withQuerySecurity } from './lib/securityMiddleware'
 
-// Queries
 // Queries
 export const list = query({
   args: {
@@ -148,26 +148,29 @@ export const list = query({
 
 export const getById = query({
   args: { id: v.id('students') },
-  handler: async (ctx, args) => {
-    const student = await ctx.db.get(args.id)
-    if (!student) return null
+  handler: withQuerySecurity(
+    async (ctx, args: { id: Id<'students'> }, _security) => {
+      const student = await ctx.db.get(args.id)
+      if (!student) return null
 
-    // Decrypt sensitive fields for authorized view
-    // Note: In a real scenario, checks access policy here
-    if (student.encryptedCPF) student.cpf = await decryptCPF(student.encryptedCPF)
-    if (student.encryptedEmail) student.email = await decrypt(student.encryptedEmail)
-    if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone)
+      // Decrypt sensitive fields for authorized view
+      if (student.encryptedCPF) student.cpf = await decryptCPF(student.encryptedCPF)
+      if (student.encryptedEmail) student.email = await decrypt(student.encryptedEmail)
+      if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone)
 
-    // Note: Audit logging for data access should be done in a mutation
-    // or action that wraps this query, as logAudit requires MutationCtx
-
-    return student
-  },
+      return student
+    },
+    {
+      requireAuth: true,
+      allowedRoles: ['admin', 'sdr', 'cs', 'support'],
+    },
+  ),
 })
 
 export const getChurnAlerts = query({
   args: {},
-  handler: async (ctx) => {
+  handler: withQuerySecurity(
+    async (ctx, _args: Record<string, never>, _security) => {
     // Comment 4: Use churn-specific index and specific business logic
     const ENGAGEMENT_WINDOW_DAYS = 30
     const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
@@ -238,7 +241,12 @@ export const getChurnAlerts = query({
     }
 
     return alerts
-  },
+    },
+    {
+      requireAuth: true,
+      allowedRoles: ['admin', 'sdr', 'cs', 'support'],
+    },
+  ),
 })
 
 export const getStudentsGroupedByProducts = query({
@@ -248,7 +256,13 @@ export const getStudentsGroupedByProducts = query({
     churnRisk: v.optional(v.string()),
     product: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: withQuerySecurity(
+    async (ctx, args: {
+      search?: string
+      status?: string
+      churnRisk?: string
+      product?: string
+    }, _security) => {
     // 1. Fetch all students (base query with optional indexed filters)
     const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
     const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
@@ -276,14 +290,10 @@ export const getStudentsGroupedByProducts = query({
       students = students.filter((s) => s.churnRisk === churnRisk)
     }
 
+    // LGPD: Search only by name to minimize PII exposure (no email/phone matching)
     if (args.search) {
       const searchLower = args.search.toLowerCase()
-      students = students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchLower) ||
-          s.email.toLowerCase().includes(searchLower) ||
-          s.phone.includes(searchLower)
-      )
+      students = students.filter((s) => s.name.toLowerCase().includes(searchLower))
     }
 
     // 2. Fetch all enrollments
@@ -352,7 +362,13 @@ export const getStudentsGroupedByProducts = query({
       students: grouped[key],
       count: grouped[key].length,
     }))
-  },
+    },
+    {
+      requireAuth: true,
+      allowedRoles: ['admin', 'sdr', 'cs', 'support'],
+      maxResults: 500,
+    },
+  ),
 })
 
 // Mutations

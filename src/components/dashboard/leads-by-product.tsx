@@ -62,7 +62,7 @@ export function LeadsByProduct({ data }: LeadsByProductProps) {
 												className="h-full rounded-full progress-bar"
 												style={{
 													width: `${(value / maxValue) * 100}%`,
-													background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--us-purple-light)))`,
+													background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-3)))`,
 												}}
 											/>
 										</div>

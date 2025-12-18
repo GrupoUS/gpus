@@ -149,7 +149,7 @@ function SalesReportPage() {
 									<Line
 										type="monotone"
 										dataKey="conversionValue"
-										stroke="#10b981"
+										stroke="hsl(var(--chart-2))"
 										strokeWidth={2}
 										name="Receita"
 									/>

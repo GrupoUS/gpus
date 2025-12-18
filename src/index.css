@@ -114,60 +114,64 @@
   }
 
   .dark {
-    /* === DARK THEME - GOLD/CREAM (TweakCN Reference) === */
-    /* Background layers - Deep blue-gray */
-    --background: 218 53% 10%;
-    --foreground: 215 20% 90%;
+    /* === DARK THEME - NAVY/GOLD (TweakCN cmj4lb6u1000304jxaz15frkc) === */
+
+    /* Background layers */
+    --background: 211 49% 10%;
+    --foreground: 39 44% 65%;
 
     /* Cards & elevated surfaces */
-    --card: 218 48% 13%;
-    --card-foreground: 215 20% 90%;
+    --card: 212 48% 13%;
+    --card-foreground: 39 44% 65%;
 
     /* Popover & dropdowns */
-    --popover: 218 48% 13%;
-    --popover-foreground: 215 20% 90%;
+    --popover: 211 49% 10%;
+    --popover-foreground: 39 44% 65%;
 
-    /* Primary action - GOLD (#CCB07D) */
-    --primary: 38 44% 65%;
-    --primary-foreground: 222 47% 11%;
+    /* Primary action - GOLD */
+    --primary: 39 44% 65%;
+    --primary-foreground: 48 10% 80%;
 
     /* Secondary */
-    --secondary: 218 45% 18%;
-    --secondary-foreground: 215 20% 90%;
+    --secondary: 211 49% 10%;
+    --secondary-foreground: 39 44% 65%;
 
     /* Muted */
-    --muted: 218 40% 18%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 39 29% 54%;
+    --muted-foreground: 48 10% 80%;
 
-    /* Accent - CREAM */
-    --accent: 40 12% 25%;
-    --accent-foreground: 40 44% 85%;
+    /* Accent */
+    --accent: 26 5% 27%;
+    --accent-foreground: 39 44% 65%;
 
     /* Destructive */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 30 11% 11%;
 
     /* Borders & inputs */
-    --border: 218 45% 22%;
-    --input: 218 45% 22%;
-    --ring: 38 44% 65%;
+    --border: 26 6% 21%;
+    --input: 26 6% 21%;
+    --ring: 39 29% 54%;
 
-    /* Chart colors - Warm palette with gold primary */
-    --chart-1: 38 44% 65%;
-    --chart-2: 142 70% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 0 72% 55%;
-    --chart-5: 199 70% 50%;
+    /* Chart colors */
+    --chart-1: 234 89% 74%;
+    --chart-2: 239 84% 67%;
+    --chart-3: 243 75% 59%;
+    --chart-4: 245 58% 51%;
+    --chart-5: 244 55% 41%;
+
+    /* Custom brand colors */
+    --us-purple-light: 270 70% 70%;
 
     /* Sidebar */
-    --sidebar-background: 218 50% 11%;
-    --sidebar-foreground: 215 20% 90%;
-    --sidebar-primary: 38 44% 65%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 40 12% 20%;
-    --sidebar-accent-foreground: 40 44% 85%;
-    --sidebar-border: 218 45% 20%;
-    --sidebar-ring: 38 44% 65%;
+    --sidebar-background: 212 48% 13%;
+    --sidebar-foreground: 39 44% 65%;
+    --sidebar-primary: 40 14% 66%;
+    --sidebar-primary-foreground: 207 37% 25%;
+    --sidebar-accent: 26 5% 27%;
+    --sidebar-accent-foreground: 39 44% 65%;
+    --sidebar-border: 39 29% 54%;
+    --sidebar-ring: 39 29% 54%;
   }
 }
 

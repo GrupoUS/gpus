@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const funnelStages = [
-	{ id: 'novo', label: 'Novos', color: '#3b82f6' }, // blue-500
-	{ id: 'primeiro_contato', label: 'Primeiro Contato', color: '#06b6d4' }, // cyan-500
-	{ id: 'qualificado', label: 'Qualificados', color: '#a855f7' }, // purple-500
-	{ id: 'proposta', label: 'Proposta', color: '#f59e0b' }, // amber-500
-	{ id: 'negociacao', label: 'Negociação', color: '#ec4899' }, // pink-500
-	{ id: 'fechado_ganho', label: 'Fechados', color: '#10b981' }, // emerald-500
+	{ id: 'novo', label: 'Novos', color: 'hsl(var(--chart-1))' },
+	{ id: 'primeiro_contato', label: 'Primeiro Contato', color: 'hsl(var(--chart-2))' },
+	{ id: 'qualificado', label: 'Qualificados', color: 'hsl(var(--chart-3))' },
+	{ id: 'proposta', label: 'Proposta', color: 'hsl(var(--chart-4))' },
+	{ id: 'negociacao', label: 'Negociação', color: 'hsl(var(--chart-5))' },
+	{ id: 'fechado_ganho', label: 'Fechados', color: 'hsl(var(--chart-2))' },
 ];
 
 interface FunnelChartProps {
