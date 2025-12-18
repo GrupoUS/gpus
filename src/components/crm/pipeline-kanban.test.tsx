@@ -69,6 +69,11 @@ vi.mock('framer-motion', () => ({
 	LayoutGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+vi.mock('convex/react', () => ({
+	useMutation: () => vi.fn(),
+	useQuery: () => null,
+}));
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
 	observe: vi.fn(),

@@ -81,7 +81,7 @@ export function ProductHeader({
 					<Button
 						variant="outline"
 						size="sm"
-						className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground hidden sm:flex border-muted-foreground/20"
+						className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground flex border-muted-foreground/20"
 						onClick={(e) => {
 							e.stopPropagation();
 							onToggle();
@@ -99,12 +99,6 @@ export function ProductHeader({
 							</>
 						)}
 					</Button>
-					<ChevronDown
-						className={cn(
-							'h-5 w-5 text-muted-foreground transition-transform duration-200',
-							isExpanded && 'rotate-180',
-						)}
-					/>
 				</div>
 			</div>
 		</CollapsibleTrigger>
