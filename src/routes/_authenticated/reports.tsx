@@ -37,10 +37,7 @@ function ReportsPage() {
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
 				</div>
-				<Select
-					value={period}
-					onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
-				>
+				<Select value={period} onValueChange={(value: typeof period) => setPeriod(value)}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
@@ -191,7 +188,7 @@ function ReportsPage() {
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
 													<div
-														className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-lg"
+														className="h-full bg-linear-to-r from-primary to-primary/70 rounded-lg"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>

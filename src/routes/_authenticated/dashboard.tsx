@@ -76,10 +76,7 @@ function DashboardPage() {
 							Visão geral do Grupo US em tempo real
 						</p>
 					</div>
-					<Select
-						value={period}
-						onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
-					>
+					<Select value={period} onValueChange={(value: typeof period) => setPeriod(value)}>
 						<SelectTrigger className="w-[180px]">
 							<SelectValue placeholder="Período" />
 						</SelectTrigger>

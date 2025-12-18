@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { requireAuth } from '@convex/lib/auth'
 import { withQuerySecurity } from './lib/securityMiddleware'
 
 /**
@@ -58,26 +58,29 @@ export const list = query({
  * SECURITY: Requires authentication but NOT admin role
  * Returns minimal data (LGPD compliance): only _id, name, email
  */
-export const listCSUsers = withQuerySecurity(
-  async (ctx) => {
-    // Use index for role lookup, then filter isActive in memory
-    const csUsers = await ctx.db
-      .query('users')
-      .withIndex('by_role', (q) => q.eq('role', 'cs'))
-      .filter((q) => q.eq(q.field('isActive'), true))
-      .collect()
+export const listCSUsers = query({
+  args: {},
+  handler: withQuerySecurity(
+    async (ctx) => {
+      // Use index for role lookup, then filter isActive in memory
+      const csUsers = await ctx.db
+        .query('users')
+        .withIndex('by_role', (q) => q.eq('role', 'cs'))
+        .filter((q) => q.eq(q.field('isActive'), true))
+        .collect()
 
-    // Return minimal data for LGPD compliance
-    return csUsers.map((user) => ({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-    }))
-  },
-  {
-    allowedRoles: ['admin', 'cs', 'sdr'], // CS users need to see themselves/colleagues
-  }
-)
+      // Return minimal data for LGPD compliance
+      return csUsers.map((user) => ({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      }))
+    },
+    {
+      allowedRoles: ['admin', 'cs', 'sdr'], // CS users need to see themselves/colleagues
+    }
+  ),
+})
 
 /**
  * Create or update a user (sync from Clerk webhooks)

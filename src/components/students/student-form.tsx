@@ -59,7 +59,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	const createStudent = useMutation(api.students.create);
 	const updateStudent = useMutation(api.students.update);
 	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const csUsers = useQuery(api.users.listCSUsers, {});
+	const csUsers = useQuery(api.users.listCSUsers);
 
 	const isEditMode = !!studentId;
 
@@ -269,7 +269,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											</FormControl>
 											<SelectContent>
 												<SelectItem value="">Nenhum</SelectItem>
-												{csUsers?.map((user) => (
+												{csUsers?.map((user: { _id: string; name: string }) => (
 													<SelectItem key={user._id} value={user._id}>
 														{user.name}
 													</SelectItem>

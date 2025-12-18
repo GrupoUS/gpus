@@ -65,7 +65,7 @@ function TeamReportPage() {
 
 			{/* Top Performers */}
 			<div className="grid gap-4 md:grid-cols-3">
-				{teamPerformance?.slice(0, 3).map((member, index) => (
+				{teamPerformance?.slice(0, 3).map((member: any, index: number) => (
 					<Card key={member._id} className={index === 0 ? 'border-yellow-500/50' : ''}>
 						<CardHeader className="pb-3">
 							<div className="flex items-center justify-between">
@@ -83,7 +83,7 @@ function TeamReportPage() {
 									<AvatarFallback className="bg-primary/10 text-primary">
 										{member.name
 											.split(' ')
-											.map((n) => n[0])
+											.map((n: string) => n[0])
 											.join('')
 											.slice(0, 2)}
 									</AvatarFallback>
@@ -119,7 +119,7 @@ function TeamReportPage() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{teamPerformance?.map((member, index) => (
+							{teamPerformance?.map((member: any, index: number) => (
 								<TableRow key={member._id}>
 									<TableCell className="font-medium">{index + 1}</TableCell>
 									<TableCell>
@@ -128,7 +128,7 @@ function TeamReportPage() {
 												<AvatarFallback className="text-xs bg-primary/10 text-primary">
 													{member.name
 														.split(' ')
-														.map((n) => n[0])
+														.map((n: string) => n[0])
 														.join('')
 														.slice(0, 2)}
 												</AvatarFallback>
@@ -173,7 +173,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u) => u.role === 'sdr').length ?? 0}
+							{allUsers?.filter((u: any) => u.role === 'sdr').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Vendas</p>
 					</CardContent>
@@ -185,7 +185,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u) => u.role === 'cs').length ?? 0}
+							{allUsers?.filter((u: any) => u.role === 'cs').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Customer Success</p>
 					</CardContent>
