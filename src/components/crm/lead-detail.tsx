@@ -32,6 +32,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<SheetContent
 				side="right"
+				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
 				className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden border-l border-border/50 bg-background/95 backdrop-blur-xl"
 			>
 				{/* Accessibility requirements */}

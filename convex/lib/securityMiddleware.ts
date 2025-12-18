@@ -51,34 +51,16 @@ export interface SecurityContext {
 async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<SecurityContext> {
 	try {
 		const identity = await ctx.auth.getUserIdentity()
-		// DEBUG: Log presence of identity (not the token itself)
-		if (!identity) {
-			console.log('DEBUG: No identity found in ctx.auth.getUserIdentity()')
-		} else {
-			console.log('DEBUG: Identity found for issuer:', identity.issuer)
-		}
+		const clerkId = identity?.subject ?? 'unknown'
 
-		const clerkId = identity?.subject || 'unknown'
-
-		// Get user role
-		const firstUser = await ctx.db.query('users').first()
 		let role = 'unknown'
-
-		if (!firstUser) {
-			// BOOTSTRAP: Allow first user to be admin
-			role = 'admin'
-			console.log('BOOTSTRAP_ADMIN_ACTIVE for:', clerkId)
-		} else {
+		if (identity) {
 			const user = await ctx.db
 				.query('users')
 				.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
 				.first()
-			role = user?.role || 'unknown'
-		}
 
-		// Also check the previous hardcode as a second safety net
-		if (clerkId === 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6') {
-			role = 'admin'
+			role = user?.role ?? identity.org_role ?? 'unknown'
 		}
 
 		return {
@@ -87,10 +69,9 @@ async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<Security
 			ipAddress: 'unknown',
 			userAgent: 'unknown',
 			timestamp: Date.now(),
-			isAuthenticated: !!identity,
+			isAuthenticated: Boolean(identity),
 		}
-	} catch (error: any) {
-		console.log('DEBUG: Security context failure:', error.message)
+	} catch {
 		return {
 			actorId: 'anonymous',
 			actorRole: 'anonymous',

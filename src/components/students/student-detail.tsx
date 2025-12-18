@@ -84,7 +84,11 @@ export function StudentDetail({
 
 	return (
 		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<SheetContent side="right" className="w-full sm:max-w-3xl p-0 flex flex-col overflow-hidden">
+			<SheetContent
+				side="right"
+				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
+				className="w-full sm:max-w-3xl p-0 flex flex-col overflow-hidden"
+			>
 				{/* Accessibility requirements */}
 				<SheetHeader className="sr-only">
 					<SheetTitle>Detalhes do Aluno</SheetTitle>

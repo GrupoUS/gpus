@@ -103,6 +103,11 @@ mcps: [sequential-thinking, serena]
 
 ## Docker MCP Quick Reference
 
+### Secrets & API Keys
+
+- Never commit API keys (e.g. `CONTEXT7_API_KEY`, `TAVILY_API_KEY`). Set them via local/CI environment variables (Railway, GitHub Actions, or your local shell).
+- If a key was committed, rotate it immediately and remove it from tracked files.
+
 ### Escalation Protocol
 1. **Level 1**: Droid self-resolution (using assigned MCPs)
 2. **Level 2**: Request additional context from apex-dev
