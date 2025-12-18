@@ -176,22 +176,22 @@ export function StudentDetail({
 
 									{/* Actions */}
 									<div className="flex flex-wrap gap-2 pt-2">
-										<a
-											href={`https://wa.me/${student.phone.replace(/\D/g, '')}`}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											<Button variant="outline" size="sm" className="gap-2">
+										<Button asChild variant="outline" size="sm" className="gap-2">
+											<a
+												href={`https://wa.me/${student.phone.replace(/\D/g, '')}`}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
 												<MessageSquare className="h-4 w-4" />
 												WhatsApp
-											</Button>
-										</a>
-										<a href={`mailto:${student.email}`}>
-											<Button variant="outline" size="sm" className="gap-2">
+											</a>
+										</Button>
+										<Button asChild variant="outline" size="sm" className="gap-2">
+											<a href={`mailto:${student.email}`}>
 												<Mail className="h-4 w-4" />
 												E-mail
-											</Button>
-										</a>
+											</a>
+										</Button>
 										<StudentForm
 											studentId={studentId ?? undefined}
 											trigger={

@@ -9,6 +9,7 @@
  */
 
 import type * as activities from "../activities.js";
+import type * as asaas from "../asaas.js";
 import type * as asaas_actions from "../asaas/actions.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
 import type * as conversations from "../conversations.js";
@@ -21,6 +22,7 @@ import type * as fix_admin from "../fix_admin.js";
 import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as lgpd from "../lgpd.js";
+import type * as lib_asaas from "../lib/asaas.js";
 import type * as lib_auditLogging from "../lib/auditLogging.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_brevo from "../lib/brevo.js";
@@ -48,6 +50,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
+  asaas: typeof asaas;
   "asaas/actions": typeof asaas_actions;
   "asaas/mutations": typeof asaas_mutations;
   conversations: typeof conversations;
@@ -60,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   leads: typeof leads;
   lgpd: typeof lgpd;
+  "lib/asaas": typeof lib_asaas;
   "lib/auditLogging": typeof lib_auditLogging;
   "lib/auth": typeof lib_auth;
   "lib/brevo": typeof lib_brevo;

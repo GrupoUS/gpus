@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, motion, Reorder } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { LeadCard } from './lead-card';
 import { LeadForm } from './lead-form';
@@ -300,9 +300,9 @@ export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanban
 	);
 
 	// Sync local leads with props when props change
-	useMemo(() => {
+	useEffect(() => {
 		setLocalLeads(null);
-	}, []);
+	}, [leads]);
 
 	return (
 		<LayoutGroup>

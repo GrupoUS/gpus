@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+import axios, { type AxiosInstance, type AxiosError } from "axios";
 
 const ASAAS_API_URL = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY;

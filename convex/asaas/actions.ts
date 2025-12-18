@@ -121,7 +121,7 @@ export const createAsaasSubscription = action({
     description: v.optional(v.string()),
     externalReference: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     try {
       const subscription = await asaasClient.createSubscription({
         customer: args.asaasCustomerId,

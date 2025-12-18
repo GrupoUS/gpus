@@ -231,6 +231,7 @@ http.route({
         status = 'REFUNDED'
         break
       case 'PAYMENT_DELETED':
+      case 'PAYMENT_REMOVED_BY_RECEIVER': // Asaas sometimes uses this
         status = 'DELETED'
         break
       case 'PAYMENT_DUNNING_REQUESTED':
@@ -242,10 +243,10 @@ http.route({
       case 'PAYMENT_AWAITING_RISK_ANALYSIS':
          status = 'AWAITING_RISK_ANALYSIS'
          break
-      case 'PAYMENT_UPDATED':
-         // Maybe description updated?
-         break
     }
+
+    // Also map CANCELLED
+    if (event === 'PAYMENT_CANCELLED') status = 'CANCELLED';
 
     if (status) {
        try {
@@ -255,7 +256,6 @@ http.route({
          })
        } catch (error) {
          console.error(`Asaas webhook: Failed to update status for ${payment.id}`, error)
-         // Don't fail the webhook if update fails (e.g. charge not found yet), just log
        }
     }
 
