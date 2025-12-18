@@ -1,7 +1,7 @@
 ---
 description: Documentation and PRD specialist using Diataxis framework for clear, actionable deliverables
 mode: subagent
-model: github-copilot/claude-opus-4.5
+model: anthropic/claude-opus-4-5
 temperature: 0.2
 tools:
   write: true

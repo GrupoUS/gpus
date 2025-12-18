@@ -2,17 +2,14 @@
 
 import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
-import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
 	Activity,
-	ArrowLeft,
 	BookOpen,
 	Building2,
 	CreditCard,
-	DollarSign,
 	Edit,
 	GraduationCap,
 	Mail,
@@ -28,12 +25,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
-import { cn } from '@/lib/utils';
 
-// Lazy loaded tab components for better performance
 // Lazy loaded tab components for better performance
 const StudentEnrollmentsTab = lazy(() =>
 	import('./tabs/student-enrollments-tab').then((module) => ({
@@ -51,43 +47,55 @@ const StudentConversationsTab = lazy(() =>
 	})),
 );
 
-interface ListSearchParams {
-	page: number;
-	search: string;
-	status: string;
-	churnRisk: string;
-	product: string;
-	view: string;
+// Helper to safely render tabs that require a non-null studentId
+function SafeTab({
+	studentId,
+	Component,
+}: {
+	studentId: Id<'students'> | null;
+	Component: React.ComponentType<{ studentId: Id<'students'> }>;
+}) {
+	if (!studentId) return null;
+	return <Component studentId={studentId} />;
 }
 
-interface StudentDetailProps {
-	studentId: Id<'students'>;
-	mode?: 'full' | 'sheet';
-	listSearch?: ListSearchParams;
-}
-
-export function StudentDetail({ studentId, mode = 'full', listSearch }: StudentDetailProps) {
+export function StudentDetail({
+	studentId,
+	onClose,
+}: {
+	studentId: Id<'students'> | null;
+	onClose: () => void;
+}) {
 	const [activeTab, _setActiveTab] = useState('enrollments');
-	const student = useQuery(api.students.getById, { id: studentId });
-	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
+	const student = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
+	const enrollments = useQuery(api.enrollments.getByStudent, studentId ? { studentId } : 'skip');
 	const activities = useQuery(
 		api.activities.listByStudent,
-		activeTab === 'timeline' ? { studentId } : 'skip',
+		activeTab === 'timeline' && studentId ? { studentId } : 'skip',
 	);
 
-	if (!student) {
+	const isOpen = !!studentId;
+
+	if (!student && isOpen) {
 		return (
-			<div className="space-y-4 p-6">
-				<div className="h-32 bg-muted/20 animate-pulse rounded-lg" />
-				<div className="grid gap-4 md:grid-cols-3">
-					{[1, 2, 3].map((i) => (
-						<div key={i} className="h-24 bg-muted/20 animate-pulse rounded-lg" />
-					))}
-				</div>
-				<div className="h-64 bg-muted/20 animate-pulse rounded-lg" />
-			</div>
+			<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+				<SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
+					<div className="space-y-4 p-6">
+						<div className="h-32 bg-muted/20 animate-pulse rounded-lg" />
+						<div className="grid gap-4 md:grid-cols-3">
+							{[1, 2, 3].map((i) => (
+								<div key={i} className="h-24 bg-muted/20 animate-pulse rounded-lg" />
+							))}
+						</div>
+						<div className="h-64 bg-muted/20 animate-pulse rounded-lg" />
+					</div>
+				</SheetContent>
+			</Sheet>
 		);
 	}
+
+	if (!student) return null;
+
 	const totalEnrollments = enrollments?.length ?? 0;
 	const activeEnrollments =
 		enrollments?.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length ?? 0;
@@ -95,32 +103,14 @@ export function StudentDetail({ studentId, mode = 'full', listSearch }: StudentD
 		enrollments?.reduce((sum: number, e: Doc<'enrollments'>) => sum + e.totalValue, 0) ?? 0;
 
 	return (
-		<div className={cn('space-y-6', mode === 'sheet' ? 'p-4' : 'p-6')}>
-			{/* Back Button (full mode only) */}
-			{mode === 'full' && (
-				<Link
-					to="/students"
-					search={
-						listSearch ?? {
-							page: 1,
-							search: '',
-							status: 'all',
-							churnRisk: 'all',
-							product: 'all',
-							view: 'grid',
-						}
-					}
-				>
-					<Button variant="ghost" size="sm" className="gap-2">
-						<ArrowLeft className="h-4 w-4" />
-						Voltar para lista
-					</Button>
-				</Link>
-			)}
+		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+			<SheetContent side="right" className="w-full sm:max-w-3xl p-0 flex flex-col overflow-hidden">
+				{/* Header Section - Fixed */}
+				<div className="p-6 border-b">
+					<SheetHeader>
+						<SheetTitle className="text-2xl text-left hidden">Detalhes do Aluno</SheetTitle>
+					</SheetHeader>
 
-			{/* Header Section */}
-			<Card>
-				<CardContent className="p-6">
 					<div className="flex flex-col md:flex-row items-start gap-6">
 						{/* Avatar */}
 						<div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
@@ -179,7 +169,7 @@ export function StudentDetail({ studentId, mode = 'full', listSearch }: StudentD
 									</Button>
 								</a>
 								<StudentForm
-									studentId={studentId}
+									studentId={studentId} // safe because student is not null here
 									trigger={
 										<Button variant="outline" size="sm" className="gap-2">
 											<Edit className="h-4 w-4" />
@@ -190,130 +180,132 @@ export function StudentDetail({ studentId, mode = 'full', listSearch }: StudentD
 							</div>
 						</div>
 					</div>
-				</CardContent>
-			</Card>
+				</div>
 
-			{/* Stats Cards */}
-			<div className="grid gap-4 md:grid-cols-3">
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Total de Matrículas</CardTitle>
-						<GraduationCap className="h-4 w-4 text-muted-foreground" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold">{totalEnrollments}</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Matrículas Ativas</CardTitle>
-						<BookOpen className="h-4 w-4 text-green-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">{activeEnrollments}</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-						<DollarSign className="h-4 w-4 text-primary" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-primary">{formatCurrency(totalRevenue)}</div>
-					</CardContent>
-				</Card>
-			</div>
+				{/* Stats Cards */}
+				<div className="px-6 py-4 grid gap-4 md:grid-cols-3">
+					<Card>
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-sm font-medium">Total de Matrículas</CardTitle>
+							<GraduationCap className="h-4 w-4 text-muted-foreground" />
+						</CardHeader>
+						<CardContent>
+							<div className="text-2xl font-bold">{totalEnrollments}</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-sm font-medium">Matrículas Ativas</CardTitle>
+							<BookOpen className="h-4 w-4 text-green-500" />
+						</CardHeader>
+						<CardContent>
+							<div className="text-2xl font-bold text-green-600">{activeEnrollments}</div>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+							<CreditCard className="h-4 w-4 text-primary" />
+						</CardHeader>
+						<CardContent>
+							<div className="text-2xl font-bold text-primary">{formatCurrency(totalRevenue)}</div>
+						</CardContent>
+					</Card>
+				</div>
 
-			{/* Tabs */}
-			<Tabs value={activeTab} onValueChange={(v) => _setActiveTab(v)} className="w-full">
-				<TabsList className="grid w-full grid-cols-4">
-					<TabsTrigger value="enrollments" className="gap-1">
-						<GraduationCap className="h-4 w-4" />
-						<span className="hidden sm:inline">Matrículas</span>
-					</TabsTrigger>
-					<TabsTrigger value="payments" className="gap-1">
-						<CreditCard className="h-4 w-4" />
-						<span className="hidden sm:inline">Pagamentos</span>
-					</TabsTrigger>
-					<TabsTrigger value="timeline" className="gap-1">
-						<Activity className="h-4 w-4" />
-						<span className="hidden sm:inline">Timeline</span>
-					</TabsTrigger>
-					<TabsTrigger value="conversations" className="gap-1">
-						<MessageSquare className="h-4 w-4" />
-						<span className="hidden sm:inline">Conversas</span>
-					</TabsTrigger>
-				</TabsList>
-
-				{/* Enrollments Tab */}
-				<TabsContent value="enrollments" className="mt-4">
-					<Suspense
-						fallback={
-							<div className="grid gap-4 md:grid-cols-2">
-								{[1, 2, 3, 4].map((i) => (
-									<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
-								))}
-							</div>
-						}
+				{/* Tabs - Scrollable */}
+				<div className="flex-1 overflow-hidden">
+					<Tabs
+						value={activeTab}
+						onValueChange={(v) => _setActiveTab(v)}
+						className="h-full flex flex-col"
 					>
-						<StudentEnrollmentsTab studentId={studentId} />
-					</Suspense>
-				</TabsContent>
+						<TabsList className="px-6 grid w-full grid-cols-4">
+							<TabsTrigger value="enrollments" className="gap-1">
+								<GraduationCap className="h-4 w-4" />
+								<span className="hidden sm:inline">Matrículas</span>
+							</TabsTrigger>
+							<TabsTrigger value="payments" className="gap-1">
+								<CreditCard className="h-4 w-4" />
+								<span className="hidden sm:inline">Pagamentos</span>
+							</TabsTrigger>
+							<TabsTrigger value="timeline" className="gap-1">
+								<Activity className="h-4 w-4" />
+								<span className="hidden sm:inline">Timeline</span>
+							</TabsTrigger>
+							<TabsTrigger value="conversations" className="gap-1">
+								<MessageSquare className="h-4 w-4" />
+								<span className="hidden sm:inline">Conversas</span>
+							</TabsTrigger>
+						</TabsList>
 
-				{/* Payments Tab */}
-				<TabsContent value="payments" className="mt-4">
-					<Suspense fallback={<Skeleton className="h-96 w-full" />}>
-						<StudentPaymentsTab studentId={studentId} />
-					</Suspense>
-				</TabsContent>
-
-				{/* Timeline Tab */}
-				<TabsContent value="timeline" className="mt-4">
-					<ScrollArea className="h-[400px]">
-						{!activities || activities.length === 0 ? (
-							<div className="text-center py-12 text-muted-foreground">
-								<Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-								<p>Nenhuma atividade registrada</p>
-							</div>
-						) : (
-							<div className="relative border-l border-border/50 ml-3 space-y-6">
-								{activities.map((activity: Doc<'activities'>) => (
-									<div key={activity._id} className="relative pl-6">
-										<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
-										<div className="flex flex-col gap-1">
-											<span className="text-xs text-muted-foreground">
-												{formatDistanceToNow(activity.createdAt, {
-													addSuffix: true,
-													locale: ptBR,
-												})}
-											</span>
-											<p className="text-sm font-medium">{activity.description}</p>
-											<Badge variant="outline" className="w-fit text-xs">
-												{activity.type.replace(/_/g, ' ')}
-											</Badge>
+						<ScrollArea className="flex-1 px-6">
+							<TabsContent value="enrollments" className="mt-4 pb-6">
+								<Suspense
+									fallback={
+										<div className="grid gap-4 md:grid-cols-2">
+											{[1, 2, 3, 4].map((i) => (
+												<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+											))}
 										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</ScrollArea>
-				</TabsContent>
+									}
+								>
+									<SafeTab studentId={studentId} Component={StudentEnrollmentsTab} />
+								</Suspense>
+							</TabsContent>
 
-				{/* Conversations Tab */}
-				<TabsContent value="conversations" className="mt-4">
-					<Suspense
-						fallback={
-							<div className="space-y-3">
-								{[1, 2, 3, 4].map((i) => (
-									<div key={i} className="h-20 bg-muted/20 animate-pulse rounded-lg" />
-								))}
-							</div>
-						}
-					>
-						<StudentConversationsTab studentId={studentId} />
-					</Suspense>
-				</TabsContent>
-			</Tabs>
-		</div>
+							<TabsContent value="payments" className="mt-4 pb-6">
+								<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+									<SafeTab studentId={studentId} Component={StudentPaymentsTab} />
+								</Suspense>
+							</TabsContent>
+
+							<TabsContent value="timeline" className="mt-4 pb-6">
+								{!activities || activities.length === 0 ? (
+									<div className="text-center py-12 text-muted-foreground">
+										<Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+										<p>Nenhuma atividade registrada</p>
+									</div>
+								) : (
+									<div className="relative border-l border-border/50 ml-3 space-y-6">
+										{activities.map((activity: Doc<'activities'>) => (
+											<div key={activity._id} className="relative pl-6">
+												<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
+												<div className="flex flex-col gap-1">
+													<span className="text-xs text-muted-foreground">
+														{formatDistanceToNow(activity.createdAt, {
+															addSuffix: true,
+															locale: ptBR,
+														})}
+													</span>
+													<p className="text-sm font-medium">{activity.description}</p>
+													<Badge variant="outline" className="w-fit text-xs">
+														{activity.type.replace(/_/g, ' ')}
+													</Badge>
+												</div>
+											</div>
+										))}
+									</div>
+								)}
+							</TabsContent>
+
+							<TabsContent value="conversations" className="mt-4 pb-6">
+								<Suspense
+									fallback={
+										<div className="space-y-3">
+											{[1, 2, 3, 4].map((i) => (
+												<div key={i} className="h-20 bg-muted/20 animate-pulse rounded-lg" />
+											))}
+										</div>
+									}
+								>
+									<SafeTab studentId={studentId} Component={StudentConversationsTab} />
+								</Suspense>
+							</TabsContent>
+						</ScrollArea>
+					</Tabs>
+				</div>
+			</SheetContent>
+		</Sheet>
 	);
 }

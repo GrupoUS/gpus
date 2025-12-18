@@ -26,7 +26,7 @@
         },
         "plan": {
           "mode": "primary",
-          "model": "github-copilot/claude-opus-4.5",
+          "model": "anthropic/claude-opus-4-5",
           "prompt": "{file:.opencode/prompts/plan.txt}"
     },
     "apex-dev": {

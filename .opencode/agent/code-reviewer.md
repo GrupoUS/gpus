@@ -1,7 +1,7 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: github-copilot/gpt-5.2
+model: anthropic/claude-opus-4-5
 temperature: 0.1
 tools:
   write: false
@@ -115,7 +115,7 @@ files_reviewed:
     status: "[pass|issues|critical]"
 
 security_findings:
-  critical: 
+  critical:
     count: 0
     items: []
   high:

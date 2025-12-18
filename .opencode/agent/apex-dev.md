@@ -1,7 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
-model: github-copilot/claude-opus-4.5
+model: anthropic/claude-opus-4-5
 temperature: 0.2
 tools:
   write: true
@@ -83,7 +83,7 @@ Use available MCP tools strategically:
 
 ### Pipeline (Updated)
 1. `serena` → Understand existing patterns in codebase
-2. `mgrep` → Conceptual queries for architecture understanding  
+2. `mgrep` → Conceptual queries for architecture understanding
 3. `context7` → Official docs when needed
 4. Implement with confidence
 

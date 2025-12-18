@@ -1,7 +1,7 @@
 ---
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise
 mode: subagent
-model: github-copilot/gpt-5.2
+model: anthropic/claude-opus-4-5
 temperature: 0.2
 tools:
   write: true
@@ -105,7 +105,7 @@ export const createLead = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthorized");
-    
+
     return await ctx.db.insert("leads", {
       ...args,
       stage: "novo",
@@ -125,10 +125,10 @@ import { api } from "../convex/_generated/api";
 function LeadsPage() {
   // Real-time subscription - auto-updates
   const leads = useQuery(api.leads.getLeadsByStage, { stage: "novo" });
-  
+
   // Mutation hook
   const createLead = useMutation(api.leads.createLead);
-  
+
   // Usage
   await createLead({ name: "João", phone: "11999999999", source: "whatsapp" });
 }

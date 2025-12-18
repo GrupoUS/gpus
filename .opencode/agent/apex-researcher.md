@@ -1,7 +1,7 @@
 ---
 description: Research & planning specialist with multi-source validation. NEVER implements - research and planning only.
 mode: subagent
-model: github-copilot/claude-opus-4.5
+model: anthropic/claude-opus-4-5
 temperature: 0.1
 tools:
   write: false   # BLOCKED - research only
