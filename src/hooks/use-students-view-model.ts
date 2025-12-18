@@ -170,7 +170,7 @@ export function useStudentsViewModel(Route: any) {
 
 		const groups: Record<string, NonNullable<typeof students>> = {};
 
-		for (const group of groupedStudentsData as any[]) {
+		for (const group of groupedStudentsData) {
 			// Map students to the expected format (with mainProduct for compatibility)
 			groups[group.id] = group.students.map((student: (typeof group.students)[number]) => ({
 				_id: student._id,
@@ -199,13 +199,13 @@ export function useStudentsViewModel(Route: any) {
 	// Get the ordered list of product keys from groupedStudentsData
 	const productKeys = React.useMemo(() => {
 		if (!groupedStudentsData) return [];
-		return groupedStudentsData.map((g: any) => g.id);
+		return groupedStudentsData.map((g) => g.id);
 	}, [groupedStudentsData]);
 
 	// Check if any students exist across all groups
 	const hasAnyStudentsInGroups = React.useMemo(() => {
 		if (!groupedStudentsData) return false;
-		return groupedStudentsData.some((g: any) => g.count > 0);
+		return groupedStudentsData.some((g) => g.count > 0);
 	}, [groupedStudentsData]);
 
 	return {
