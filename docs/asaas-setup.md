@@ -15,10 +15,6 @@ Configure as seguintes variáveis no **Convex Dashboard** (não no código):
 - Configure **APENAS** no Convex Dashboard (Settings > Environment Variables)
 - A chave deve ser adicionada exatamente como está, sem espaços ou quebras de linha
 
-**Sua chave API (configure no Convex Dashboard):**
-```
-$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjYzMzllZThiLWM4ZDUtNDc3Yi04YTBmLWQ5MTdjMWYzZTE5Mzo6JGFhY2hfY2VkNDdiZDctMjUzYi00Y2EzLWJiNzYtZGYwN2Q4MmY4Y2Yy
-```
 
 ### 2. ASAAS_BASE_URL
 
