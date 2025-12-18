@@ -1,10 +1,10 @@
 'use client';
 
 import { Link, useMatchRoute } from '@tanstack/react-router';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import type React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -161,6 +161,21 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 	const matchRoute = useMatchRoute();
 	const isActive = matchRoute({ to: link.href, fuzzy: true });
 
+	const mouseX = useMotionValue(Number.POSITIVE_INFINITY);
+	const ref = useRef<HTMLDivElement>(null);
+
+	const distance = useTransform(mouseX, (val) => {
+		const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+		return val - bounds.x - bounds.width / 2;
+	});
+
+	const widthTransform = useTransform(distance, [-150, 0, 150], [0.8, 1.3, 0.8]);
+	const scale = useSpring(widthTransform, {
+		mass: 0.1,
+		stiffness: 150,
+		damping: 12,
+	});
+
 	return (
 		<Link
 			to={link.href}
@@ -169,9 +184,18 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 				isActive && 'bg-sidebar-accent rounded-md px-2',
 				className,
 			)}
+			onMouseMove={(e) => mouseX.set(e.pageX)}
+			onMouseLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
 			{...props}
 		>
-			{link.icon}
+			<motion.div
+				ref={ref}
+				style={{ scale }}
+				className="will-change-transform origin-center"
+				transition={{ type: 'spring', stiffness: 150, damping: 12 }}
+			>
+				{link.icon}
+			</motion.div>
 
 			<motion.span
 				animate={{

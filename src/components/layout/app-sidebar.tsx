@@ -3,91 +3,53 @@ import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import {
 	BarChart3,
-	FileText,
 	GraduationCap,
-	Kanban,
 	LayoutDashboard,
-	Mail,
-	MessageSquare,
-	Plug,
-	Settings,
-	TrendingUp,
-	Users,
+	Megaphone,
+	MessageCircle,
+	Settings2,
+	Users2,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
-import {
-	Sidebar,
-	SidebarBody,
-	SidebarLink,
-	SidebarLinkWithSubmenu,
-} from '@/components/ui/aceternity-sidebar';
+import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
 
 const menuItems = [
 	{
-		label: 'Dashboard',
+		label: 'Painel',
 		href: '/dashboard',
 		icon: <LayoutDashboard className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'CRM',
 		href: '/crm',
-		icon: <Kanban className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <Users2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
-		label: 'Students',
+		label: 'Alunos',
 		href: '/students',
 		icon: <GraduationCap className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Chat',
 		href: '/chat',
-		icon: <MessageSquare className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <MessageCircle className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Marketing',
 		href: '/marketing',
-		icon: <Mail className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <Megaphone className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
-		label: 'Reports',
+		label: 'Relatórios',
 		href: '/reports',
 		icon: <BarChart3 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
-		children: [
-			{
-				label: 'Sales',
-				href: '/reports/sales',
-				icon: <TrendingUp className="text-sidebar-foreground h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Team',
-				href: '/reports/team',
-				icon: <Users className="text-sidebar-foreground h-4 w-4 shrink-0" />,
-			},
-		],
 	},
 	{
-		label: 'Settings',
+		label: 'Configurações',
 		href: '/settings',
-		icon: <Settings className="text-sidebar-foreground h-5 w-5 shrink-0" />,
-		children: [
-			{
-				label: 'Team',
-				href: '/settings/team',
-				icon: <Users className="text-sidebar-foreground h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Templates',
-				href: '/settings/templates',
-				icon: <FileText className="text-sidebar-foreground h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Integrations',
-				href: '/settings/integrations',
-				icon: <Plug className="text-sidebar-foreground h-4 w-4 shrink-0" />,
-			},
-		],
+		icon: <Settings2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 ];
 
@@ -103,33 +65,15 @@ export function AppSidebar() {
 					<div className="mt-8">
 						{/* Desktop View */}
 						<div className="hidden md:flex flex-col gap-2">
-							{menuItems.map((item, idx) =>
-								item.children ? (
-									<SidebarLinkWithSubmenu key={idx} link={item} />
-								) : (
-									<SidebarLink key={idx} link={item} />
-								),
-							)}
+							{menuItems.map((item, idx) => (
+								<SidebarLink key={idx} link={item} />
+							))}
 						</div>
 
 						{/* Mobile View */}
 						<div className="md:hidden flex flex-col gap-2">
 							{menuItems.map((item, idx) => (
-								<div key={idx}>
-									{item.children ? (
-										<>
-											{/* Render parent as navigable link */}
-											<SidebarLink link={item} />
-											<div className="ml-4 space-y-1">
-												{item.children.map((child, cIdx) => (
-													<SidebarLink key={cIdx} link={child} />
-												))}
-											</div>
-										</>
-									) : (
-										<SidebarLink link={item} />
-									)}
-								</div>
+								<SidebarLink key={idx} link={item} />
 							))}
 						</div>
 					</div>

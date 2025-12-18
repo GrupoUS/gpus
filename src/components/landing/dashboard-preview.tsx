@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, TrendingUp, Users } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MacbookScreenContent, MacbookScroll } from '@/components/ui/macbook-scroll';
 import { fadeInUp, float, staggerContainer } from '@/lib/animations';
 
 interface PreviewCardProps {
@@ -39,7 +40,11 @@ function PreviewCard({ title, value, icon: Icon, delay = 0 }: PreviewCardProps) 
 	);
 }
 
-export function DashboardPreview() {
+/**
+ * DashboardContent - Internal component that renders the dashboard metrics
+ * and chart placeholder inside the MacBook screen.
+ */
+function DashboardContent() {
 	const previewData = [
 		{ title: 'Leads este mês', value: '127', icon: Users },
 		{ title: 'Taxa de Conversão', value: '24.5%', icon: TrendingUp },
@@ -48,7 +53,41 @@ export function DashboardPreview() {
 	];
 
 	return (
-		<section className="py-24 relative">
+		<MacbookScreenContent className="bg-background/95">
+			{/* Grid of floating cards */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+				{previewData.map((item, index) => (
+					<PreviewCard
+						key={item.title}
+						title={item.title}
+						value={item.value}
+						icon={item.icon}
+						delay={index * 0.2}
+					/>
+				))}
+			</div>
+
+			{/* Chart preview placeholder */}
+			<motion.div
+				variants={fadeInUp}
+				initial="hidden"
+				animate="visible"
+				className="mt-4 md:mt-6 h-32 md:h-48 lg:h-56 rounded-lg bg-gradient-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 border border-primary/20 flex items-center justify-center"
+			>
+				<div className="text-center">
+					<BarChart3 className="h-8 w-8 md:h-10 md:w-10 mx-auto mb-2 md:mb-3 text-primary/50" />
+					<p className="text-xs md:text-sm text-muted-foreground font-sans">
+						Visualização de dados em tempo real
+					</p>
+				</div>
+			</motion.div>
+		</MacbookScreenContent>
+	);
+}
+
+export function DashboardPreview() {
+	return (
+		<section className="py-16 md:py-24 relative overflow-hidden">
 			{/* Background overlay */}
 			<div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
 
@@ -59,7 +98,7 @@ export function DashboardPreview() {
 				viewport={{ once: true, margin: '-100px' }}
 				className="container px-4 md:px-6 mx-auto relative z-10"
 			>
-				<motion.div variants={fadeInUp} className="text-center mb-12">
+				<motion.div variants={fadeInUp} className="text-center mb-8 md:mb-12">
 					<h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-4">
 						Veja seu negócio em tempo real
 					</h2>
@@ -69,35 +108,11 @@ export function DashboardPreview() {
 					</p>
 				</motion.div>
 
-				{/* Glass container */}
-				<motion.div variants={fadeInUp} className="relative max-w-5xl mx-auto">
-					<div className="glass-card rounded-2xl p-8 md:p-12">
-						{/* Grid of floating cards */}
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-							{previewData.map((item, index) => (
-								<PreviewCard
-									key={item.title}
-									title={item.title}
-									value={item.value}
-									icon={item.icon}
-									delay={index * 0.2}
-								/>
-							))}
-						</div>
-
-						{/* Chart preview placeholder */}
-						<motion.div
-							variants={fadeInUp}
-							className="mt-8 h-64 rounded-lg bg-gradient-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 border border-primary/20 flex items-center justify-center"
-						>
-							<div className="text-center">
-								<BarChart3 className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-								<p className="text-sm text-muted-foreground font-sans">
-									Visualização de dados em tempo real
-								</p>
-							</div>
-						</motion.div>
-					</div>
+				{/* MacBook with Dashboard Content */}
+				<motion.div variants={fadeInUp}>
+					<MacbookScroll showGradient>
+						<DashboardContent />
+					</MacbookScroll>
 				</motion.div>
 			</motion.div>
 		</section>
