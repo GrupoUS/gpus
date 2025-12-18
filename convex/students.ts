@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
+import { withQuerySecurity } from './lib/securityMiddleware'
 
 // Queries
 // Queries
@@ -13,29 +14,37 @@ export const list = query({
     churnRisk: v.optional(v.string()),
   },
   handler: withQuerySecurity(
-    async (ctx, args, _security) => {
+    async (ctx, args: {
+      search?: string
+      product?: string
+      status?: string
+      churnRisk?: string
+    }, _security) => {
       // Prefer indexed query when possible; fall back to in-memory filters.
       // NOTE: We purposely avoid returning full student documents to minimize PII exposure (LGPD).
-      let students = args.status
+      const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
+      const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
+
+      let students = status
         ? await ctx.db
             .query('students')
-            .withIndex('by_status', (q) => q.eq('status', args.status))
+            .withIndex('by_status', (q) => q.eq('status', status))
             .order('desc')
             .collect()
-        : args.churnRisk
+        : churnRisk
           ? await ctx.db
               .query('students')
-              .withIndex('by_churn_risk', (q) => q.eq('churnRisk', args.churnRisk))
+              .withIndex('by_churn_risk', (q) => q.eq('churnRisk', churnRisk))
               .order('desc')
               .collect()
           : await ctx.db.query('students').order('desc').collect()
 
-      if (args.status && !students.every((s) => s.status === args.status)) {
-        students = students.filter((s) => s.status === args.status)
+      if (status && !students.every((s) => s.status === status)) {
+        students = students.filter((s) => s.status === status)
       }
 
-      if (args.churnRisk && !students.every((s) => s.churnRisk === args.churnRisk)) {
-        students = students.filter((s) => s.churnRisk === args.churnRisk)
+      if (churnRisk && !students.every((s) => s.churnRisk === churnRisk)) {
+        students = students.filter((s) => s.churnRisk === churnRisk)
       }
 
       // Search: minimize sensitive matching (do NOT match against email/phone here).
