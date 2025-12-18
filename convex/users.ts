@@ -83,20 +83,52 @@ export const syncUser = internalMutation({
     role: v.optional(v.union(v.literal('admin'), v.literal('sdr'), v.literal('cs'), v.literal('support'))),
   },
   handler: async (ctx, args) => {
+    // Additional security: Ensure this is only used for legitimate user sync operations
+    // This prevents abuse of the internal mutation for creating unauthorized admin users
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) {
+      throw new Error('Internal operation requires authentication')
+    }
+
     const existing = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
       .unique()
 
     if (existing) {
+      // Only allow role changes for existing users if the caller has appropriate permissions
+      if (args.role && args.role !== existing.role) {
+        const caller = await ctx.db
+          .query('users')
+          .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+          .unique()
+        
+        if (!caller || caller.role !== 'admin') {
+          throw new Error('Only admins can change user roles')
+        }
+      }
+
       await ctx.db.patch(existing._id, {
         name: args.name || existing.name,
         email: args.email,
         avatar: args.pictureUrl || existing.avatar,
         // Only update org if provided
         ...(args.organizationId ? { organizationId: args.organizationId } : {}),
+        ...(args.role ? { role: args.role } : {}),
       })
       return existing._id
+    }
+
+    // For new users, enforce stricter validation
+    if (args.role === 'admin') {
+      const caller = await ctx.db
+        .query('users')
+        .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+        .unique()
+      
+      if (!caller || caller.role !== 'admin') {
+        throw new Error('Only admins can create admin users')
+      }
     }
 
     return await ctx.db.insert('users', {

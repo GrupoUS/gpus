@@ -1,9 +1,8 @@
 import { mutation } from './_generated/server'
 
 /**
- * DEBUG: Verify authentication configuration
+ * Verify authentication configuration
  *
- * Use this to diagnose Clerk + Convex connection issues.
  * Returns detailed information about the current authentication state.
  */
 export const checkAuth = mutation({
@@ -39,9 +38,6 @@ export const checkAuth = mutation({
 				jwt_template: 'convex',
 			},
 		}
-
-		console.log('=== AUTH DEBUG ===')
-		console.log(JSON.stringify(debug, null, 2))
 
 		return debug
 	},

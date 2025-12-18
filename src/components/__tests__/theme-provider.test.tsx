@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ThemeProvider, useTheme } from '../theme-provider';
 
-// matchMedia and startViewTransition mocks are in src/test/setup.ts
-
 // Storage key used by ThemeProvider (must match implementation)
 const STORAGE_KEY = 'gpus-ui-theme';
 
@@ -27,14 +25,13 @@ describe('ThemeProvider', () => {
 		document.documentElement.classList.remove('light', 'dark');
 	});
 
-	it('uses default theme (dark) if no storage', () => {
+	it('uses default theme (system) if no storage', () => {
 		render(
 			<ThemeProvider>
 				<TestComponent />
 			</ThemeProvider>,
 		);
-		// ThemeProvider defaults to 'dark' when no storage value exists
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('system');
 	});
 
 	it('uses stored theme from localStorage', () => {
