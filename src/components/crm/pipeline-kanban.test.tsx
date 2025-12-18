@@ -7,17 +7,25 @@ import { PipelineKanban } from './pipeline-kanban';
 // Mock Framer Motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
 	motion: {
-		div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-		button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-		span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
-		create: (Component: any) => (props: any) => <Component {...props} />,
+		div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+		button: ({ children, ...props }: React.ComponentProps<'button'>) => (
+			<button {...props}>{children}</button>
+		),
+		span: ({ children, ...props }: React.ComponentProps<'span'>) => (
+			<span {...props}>{children}</span>
+		),
+		create: (Component: React.ElementType) => (props: React.ComponentProps<typeof Component>) => (
+			<Component {...props} />
+		),
 	},
 	Reorder: {
-		Group: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-		Item: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+		Group: ({ children, ...props }: React.ComponentProps<'div'>) => (
+			<div {...props}>{children}</div>
+		),
+		Item: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
 	},
-	AnimatePresence: ({ children }: any) => <>{children}</>,
-	LayoutGroup: ({ children }: any) => <>{children}</>,
+	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	LayoutGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock ResizeObserver
@@ -28,7 +36,7 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 }));
 
 describe('PipelineKanban', () => {
-	const mockLeads: any[] = [
+	const mockLeads: React.ComponentProps<typeof PipelineKanban>['leads'] = [
 		{
 			_id: '1',
 			name: 'Lead 1',

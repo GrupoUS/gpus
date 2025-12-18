@@ -26,7 +26,7 @@ export const ScrollFloat = ({
 
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
-		offset: [scrollStart as any, scrollEnd as any],
+		offset: [scrollStart as 'start end', scrollEnd as 'end start'],
 	});
 
 	const words = useMemo(() => {

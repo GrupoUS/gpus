@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for components/ui/button.tsx</title>
+    <title>Code coverage report for components/ui/scroll-area.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/ui</a> button.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">components/ui</a> scroll-area.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/3</span>
+                <span class='fraction'>4/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -107,14 +107,7 @@
 <a name='L42'></a><a href='#L42'>42</a>
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a>
-<a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a>
-<a name='L48'></a><a href='#L48'>48</a>
-<a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -123,6 +116,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -134,11 +128,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -154,65 +150,51 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import * as React from 'react';
 &nbsp;
 import { cn } from '@/lib/utils';
 &nbsp;
-const buttonVariants = cva(
-	'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0',
-	{
-		variants: {
-			variant: {
-				default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
-				destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
-				outline:
-					'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
-				secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
-				ghost: 'hover:bg-accent hover:text-accent-foreground',
-				link: 'text-primary underline-offset-4 hover:underline',
-			},
-			size: {
-				default: 'h-9 px-4 py-2',
-				sm: 'h-8 rounded-md px-3 text-xs',
-				lg: 'h-10 rounded-md px-8',
-				icon: 'h-9 w-9',
-			},
-		},
-		defaultVariants: {
-			variant: 'default',
-			size: 'default',
-		},
-	},
-);
+const ScrollArea = React.forwardRef&lt;
+	React.ElementRef&lt;typeof ScrollAreaPrimitive.Root&gt;,
+	React.ComponentPropsWithoutRef&lt;typeof ScrollAreaPrimitive.Root&gt;
+&gt;(({ className, children, ...props }, ref) =&gt; (
+	&lt;ScrollAreaPrimitive.Root
+		ref={ref}
+		className={cn('relative overflow-hidden', className)}
+		{...props}
+	&gt;
+		&lt;ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]"&gt;
+			{children}
+		&lt;/ScrollAreaPrimitive.Viewport&gt;
+		&lt;ScrollBar /&gt;
+		&lt;ScrollAreaPrimitive.Corner /&gt;
+	&lt;/ScrollAreaPrimitive.Root&gt;
+));
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 &nbsp;
-export interface ButtonProps
-	extends React.ButtonHTMLAttributes&lt;HTMLButtonElement&gt;,
-		VariantProps&lt;typeof buttonVariants&gt; {
-	asChild?: boolean;
-}
+const ScrollBar = React.forwardRef&lt;
+	React.ElementRef&lt;typeof ScrollAreaPrimitive.ScrollAreaScrollbar&gt;,
+	React.ComponentPropsWithoutRef&lt;typeof ScrollAreaPrimitive.ScrollAreaScrollbar&gt;
+&gt;(({ className, orientation = 'vertical', ...props }, ref) =&gt; (
+	&lt;ScrollAreaPrimitive.ScrollAreaScrollbar
+		ref={ref}
+		orientation={orientation}
+		className={cn(
+			'flex touch-none select-none transition-colors',
+			orientation === 'vertical' &amp;&amp; 'h-full w-2.5 border-l border-l-transparent p-[1px]',
+			orientation === 'horizontal' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >'h-2.5 flex-col border-t border-t-transparent p-[1px]',</span>
+			className,
+		)}
+		{...props}
+	&gt;
+		&lt;ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" /&gt;
+	&lt;/ScrollAreaPrimitive.ScrollAreaScrollbar&gt;
+));
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
 &nbsp;
-const Button = React.forwardRef&lt;HTMLButtonElement, ButtonProps&gt;(
-	({ className, variant, size, asChild = false, ...props }, ref) =&gt; {
-		const Comp = asChild ? <span class="branch-0 cbranch-no" title="branch not covered" >Slot : '</span>button';
-		return (
-			&lt;Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} /&gt;
-		);
-	},
-);
-Button.displayName = 'Button';
-&nbsp;
-export { Button, buttonVariants };
+export { ScrollArea, ScrollBar };
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

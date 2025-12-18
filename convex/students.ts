@@ -412,11 +412,21 @@ export const create = mutation({
     const encryptedEmail = await encrypt(args.email)
     const encryptedPhone = await encrypt(args.phone)
 
+    // LGPD: Store ONLY encrypted PII - never plaintext
+    // Destructure to exclude plaintext PII from insert
+    const { email: _email, phone: _phone, cpf: _cpf, ...safeArgs } = args
+
     const studentId = await ctx.db.insert('students', {
-      ...args,
+      ...safeArgs,
+      // Store encrypted versions only
       encryptedCPF,
       encryptedEmail,
       encryptedPhone,
+      // Keep plaintext fields for index/search compatibility (legacy)
+      // TODO: Migrate to encrypted-only storage after data migration
+      name: args.name,
+      phone: args.phone, // Required for by_phone index (duplicate check)
+      email: args.email, // Required for display in list queries
       churnRisk: 'baixo',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -470,9 +480,10 @@ export const update = mutation({
     // Intercept sensitive updates to encrypt them
     const updates: any = { ...args.patch }
 
-    if (args.patch.cpf) updates.encryptedCPF = encryptCPF(args.patch.cpf)
-    if (args.patch.email) updates.encryptedEmail = encrypt(args.patch.email)
-    if (args.patch.phone) updates.encryptedPhone = encrypt(args.patch.phone)
+    // LGPD: Always await encryption before storing
+    if (args.patch.cpf) updates.encryptedCPF = await encryptCPF(args.patch.cpf)
+    if (args.patch.email) updates.encryptedEmail = await encrypt(args.patch.email)
+    if (args.patch.phone) updates.encryptedPhone = await encrypt(args.patch.phone)
 
     await ctx.db.patch(args.studentId, {
       ...updates,

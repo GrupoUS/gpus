@@ -23,6 +23,7 @@ import type * as lib_encryption from "../lib/encryption.js";
 import type * as lib_index from "../lib/index.js";
 import type * as lib_lgpdCompliance from "../lib/lgpdCompliance.js";
 import type * as lib_lgpdDataRights from "../lib/lgpdDataRights.js";
+import type * as lib_messaging from "../lib/messaging.js";
 import type * as lib_securityHealth from "../lib/securityHealth.js";
 import type * as lib_securityMiddleware from "../lib/securityMiddleware.js";
 import type * as lib_validation from "../lib/validation.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   "lib/index": typeof lib_index;
   "lib/lgpdCompliance": typeof lib_lgpdCompliance;
   "lib/lgpdDataRights": typeof lib_lgpdDataRights;
+  "lib/messaging": typeof lib_messaging;
   "lib/securityHealth": typeof lib_securityHealth;
   "lib/securityMiddleware": typeof lib_securityMiddleware;
   "lib/validation": typeof lib_validation;

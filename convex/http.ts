@@ -14,6 +14,11 @@ import {
 	normalizeEventType,
 	validateWebhookSecret,
 } from './lib/brevo'
+import {
+	type MessagingWebhookPayload,
+	normalizeMessageStatus,
+	validateMessagingWebhookSecret,
+} from './lib/messaging'
 
 const http = httpRouter()
 
@@ -101,6 +106,70 @@ http.route({
 		}
 
 		console.log(`Brevo webhook: Processed ${payload.event} for ${payload.email}`)
+		return new Response('OK', { status: 200 })
+	}),
+})
+
+/**
+ * Messaging Webhook Endpoint
+ *
+ * Receives message status updates from messaging providers (WhatsApp, SMS, etc.)
+ * and updates the message status in the database.
+ *
+ * POST /messaging/webhook
+ *
+ * Headers:
+ * - X-Messaging-Secret: Webhook secret for authentication
+ *
+ * Body: MessagingWebhookPayload (JSON)
+ */
+http.route({
+	path: '/messaging/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook secret
+		const secret = request.headers.get('X-Messaging-Secret')
+		if (!validateMessagingWebhookSecret(secret)) {
+			console.error('Messaging webhook: Invalid secret')
+			return new Response('Unauthorized', { status: 401 })
+		}
+
+		// 2. Parse payload
+		let payload: MessagingWebhookPayload
+		try {
+			payload = (await request.json()) as MessagingWebhookPayload
+		} catch {
+			console.error('Messaging webhook: Invalid JSON payload')
+			return new Response('Bad Request', { status: 400 })
+		}
+
+		// 3. Validate required fields
+		if (!payload.messageId || !payload.status) {
+			console.error(
+				'Messaging webhook: Missing required fields (messageId, status)',
+			)
+			return new Response('Bad Request: Missing required fields', {
+				status: 400,
+			})
+		}
+
+		// 4. Normalize status to internal format
+		const normalizedStatus = normalizeMessageStatus(payload.status)
+
+		// 5. Update message status via internal mutation
+		try {
+			await ctx.runMutation(internal.messages.updateStatusInternal, {
+				messageId: payload.messageId as any, // ID comes from external provider
+				status: normalizedStatus,
+			})
+		} catch (error) {
+			console.error('Messaging webhook: Failed to update message status', error)
+			return new Response('Internal Server Error', { status: 500 })
+		}
+
+		console.log(
+			`Messaging webhook: Updated message ${payload.messageId} to ${normalizedStatus}`,
+		)
 		return new Response('OK', { status: 200 })
 	}),
 })

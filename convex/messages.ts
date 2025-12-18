@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 
 export const getByConversation = query({
@@ -71,7 +71,11 @@ export const send = mutation({
   },
 })
 
-export const updateStatus = mutation({
+/**
+ * Internal mutation for updating message status
+ * Called only by authenticated webhook endpoints - never directly from client
+ */
+export const updateStatusInternal = internalMutation({
   args: {
     messageId: v.id('messages'),
     status: v.union(
@@ -83,7 +87,12 @@ export const updateStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // No auth check required as per plan (webhook usage)
+    const message = await ctx.db.get(args.messageId)
+    if (!message) {
+      console.error(`Message not found: ${args.messageId}`)
+      return
+    }
+    
     await ctx.db.patch(args.messageId, {
       status: args.status,
     })

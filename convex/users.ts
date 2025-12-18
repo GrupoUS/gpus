@@ -27,42 +27,28 @@ export const current = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    try {
-      console.log('Starting users:list query (Inlined Auth)');
+    const identity = await ctx.auth.getUserIdentity()
 
-      const identity = await ctx.auth.getUserIdentity();
-      console.log('Identity raw:', identity);
-
-      if (!identity) {
-        throw new Error('Não autenticado. Faça login para continuar.');
-      }
-
-      // Safe access subject
-      const subject = identity.subject;
-      if (!subject) {
-        throw new Error('Identity missing subject claim.');
-      }
-
-      // Get current user to check role
-      const currentUser = await ctx.db
-        .query('users')
-        .withIndex('by_clerk_id', (q) => q.eq('clerkId', subject))
-        .first();
-
-      console.log('Current user query result:', currentUser);
-
-      // Allow if admin or if checking self (optional extension, but here strictly admin as per original)
-      if (!currentUser || currentUser.role !== 'admin') {
-        console.log('Permission denied logic triggered. Role:', currentUser?.role);
-        throw new Error('Permissão negada. Apenas administradores podem listar usuários.');
-      }
-
-      console.log('Fetching all users');
-      return await ctx.db.query('users').collect();
-    } catch (error: any) {
-      console.error('CRITICAL ERROR in users:list:', error);
-      throw new Error(`Debug: ${error.message} \nStack: ${error.stack}`);
+    if (!identity) {
+      throw new Error('Não autenticado. Faça login para continuar.')
     }
+
+    const subject = identity.subject
+    if (!subject) {
+      throw new Error('Sessão inválida. Faça login novamente.')
+    }
+
+    // Get current user to check role
+    const currentUser = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', subject))
+      .first()
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Permissão negada. Apenas administradores podem listar usuários.')
+    }
+
+    return await ctx.db.query('users').collect()
   },
 })
 
@@ -79,15 +65,11 @@ export const listCSUsers = query({
       throw new Error('Não autenticado. Faça login para continuar.')
     }
 
-    // Filter for active CS users only
+    // Use index for role lookup, then filter isActive in memory
     const csUsers = await ctx.db
       .query('users')
-      .filter((q) =>
-        q.and(
-          q.eq(q.field('role'), 'cs'),
-          q.eq(q.field('isActive'), true)
-        )
-      )
+      .withIndex('by_role', (q) => q.eq('role', 'cs'))
+      .filter((q) => q.eq(q.field('isActive'), true))
       .collect()
 
     // Return minimal data for LGPD compliance

@@ -30,7 +30,8 @@ export default defineSchema({
   })
     .index('by_clerk_id', ['clerkId'])
     .index('by_organization', ['organizationId'])
-    .index('by_email', ['email']),
+    .index('by_email', ['email'])
+    .index('by_role', ['role']),
 
   // ═══════════════════════════════════════════════════════
   // LEADS (Potenciais clientes)
