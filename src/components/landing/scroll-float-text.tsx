@@ -9,6 +9,8 @@ interface ScrollFloatTextProps {
 	containerClassName?: string;
 	textClassName?: string;
 	subNoteClassName?: string;
+	floatDistance?: number;
+	duration?: number;
 }
 
 export function ScrollFloatText({

@@ -1,6 +1,6 @@
 import { api } from '@convex/_generated/api';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
+import { useConvexAuth, useQuery } from 'convex/react';
 import React, { useEffect } from 'react';
 
 import type { Id } from '../../convex/_generated/dataModel';
@@ -11,6 +11,7 @@ const PAGE_SIZE = 12;
 export function useStudentsViewModel(Route: any) {
 	const navigate = useNavigate();
 	const { search, status, churnRisk, product, view, page } = Route.useSearch();
+	const { isAuthenticated } = useConvexAuth();
 
 	// Set default search params
 	useEffect(() => {
@@ -34,7 +35,7 @@ export function useStudentsViewModel(Route: any) {
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	const students = useQuery(api.students.list, {
+	const students = useQuery(isAuthenticated ? api.students.list : 'skip', {
 		search: search || undefined,
 		status: status === 'all' ? undefined : status,
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
@@ -42,12 +43,15 @@ export function useStudentsViewModel(Route: any) {
 	});
 
 	// Use grouped query for grid view (ALL students, grouped by ALL enrollments)
-	const groupedStudentsData = useQuery(api.students.getStudentsGroupedByProducts, {
-		search: search || undefined,
-		status: status === 'all' ? undefined : status,
-		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
-		product: product === 'all' ? undefined : product,
-	});
+	const groupedStudentsData = useQuery(
+		isAuthenticated ? api.students.getStudentsGroupedByProducts : 'skip',
+		{
+			search: search || undefined,
+			status: status === 'all' ? undefined : status,
+			churnRisk: churnRisk === 'all' ? undefined : churnRisk,
+			product: product === 'all' ? undefined : product,
+		},
+	);
 
 	const clearFilters = () => {
 		void navigate({
@@ -98,7 +102,6 @@ export function useStudentsViewModel(Route: any) {
 				churnRisk,
 				product,
 				view,
-				studentId: undefined,
 			},
 		});
 	};
