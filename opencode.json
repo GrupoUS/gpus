@@ -6,18 +6,6 @@
     ".opencode/agent/*.md",
     ".opencode/command/*.md"
   ],
-  "mcp": {
-    "serena": {
-      "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"],
-      "enabled": true
-    },
-    "MCP_DOCKER": {
-      "type": "local",
-      "command": ["docker", "mcp", "gateway", "run"],
-      "enabled": true
-    }
-  },
   "agent": {
     "build": {
           "mode": "primary",

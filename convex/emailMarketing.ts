@@ -22,7 +22,7 @@ import { internal } from './_generated/api'
 
 // Type assertion helper for internal functions during code generation bootstrap
 // Once Convex generates types for this file, these can be removed
-// @ts-expect-error - Convex type inference is excessively deep for internal API references
+// @ts-ignore - Convex type inference is excessively deep for internal API references
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
 const _internalAny: any = internal
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
