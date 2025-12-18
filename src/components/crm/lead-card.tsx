@@ -29,7 +29,7 @@ interface LeadCardProps {
 }
 
 const temperatureIcons: Record<string, { icon: LucideIcon; color: string }> = {
-	frio: { icon: Snowflake, color: 'text-blue-500' },
+	frio: { icon: Snowflake, color: 'text-primary' },
 	morno: { icon: Thermometer, color: 'text-yellow-500' },
 	quente: { icon: Flame, color: 'text-red-500' },
 };

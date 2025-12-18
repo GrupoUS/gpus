@@ -21,7 +21,7 @@ interface ConversationListProps {
 const statusColors: Record<string, string> = {
 	aguardando_atendente: 'bg-yellow-500',
 	em_atendimento: 'bg-green-500',
-	aguardando_cliente: 'bg-blue-500',
+	aguardando_cliente: 'bg-primary',
 	resolvido: 'bg-muted-foreground',
 	bot_ativo: 'bg-purple-500',
 };

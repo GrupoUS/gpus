@@ -469,7 +469,7 @@ export function LeadForm() {
 												<FormControl>
 													<RadioGroupItem value="frio" />
 												</FormControl>
-												<FormLabel className="font-normal cursor-pointer text-blue-400">
+												<FormLabel className="font-normal cursor-pointer text-primary">
 													❄️ Frio
 												</FormLabel>
 											</FormItem>

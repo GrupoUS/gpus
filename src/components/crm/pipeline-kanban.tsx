@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const stages = [
-	{ id: 'novo', label: 'Novo', color: 'bg-blue-500' },
+	{ id: 'novo', label: 'Novo', color: 'bg-primary' },
 	{ id: 'primeiro_contato', label: 'Primeiro Contato', color: 'bg-yellow-500' },
 	{ id: 'qualificado', label: 'Qualificado', color: 'bg-purple-500' },
 	{ id: 'proposta', label: 'Proposta', color: 'bg-orange-500' },

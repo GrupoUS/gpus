@@ -16,7 +16,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 	enviando: <Clock className="h-3 w-3 text-muted-foreground" />,
 	enviado: <Check className="h-3 w-3 text-muted-foreground" />,
 	entregue: <CheckCheck className="h-3 w-3 text-muted-foreground" />,
-	lido: <CheckCheck className="h-3 w-3 text-blue-500" />,
+	lido: <CheckCheck className="h-3 w-3 text-primary" />,
 	falhou: <XCircle className="h-3 w-3 text-destructive" />,
 };
 

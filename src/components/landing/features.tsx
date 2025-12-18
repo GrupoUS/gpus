@@ -26,8 +26,8 @@ const features = [
 		title: 'Predictive Analytics',
 		description: 'Análises preditivas para antecendar tendências e oportunidades.',
 		icon: BarChart3,
-		color: 'text-blue-dark',
-		bgColor: 'bg-blue-dark/10',
+		color: 'text-primary',
+		bgColor: 'bg-primary/10',
 	},
 	{
 		title: 'Smart Segmentation',
