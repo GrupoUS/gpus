@@ -122,13 +122,14 @@ export function useIntegrationSettings(integration: IntegrationType) {
 	const getIntegrationStatus = useCallback(() => {
 		if (settings === undefined) return 'loading';
 		// Check if essential fields are present
-		const hasKey = !!settings.apiKey;
+		// settings will be an empty object {} if query fails, which is safe
+		const hasKey = !!settings?.apiKey;
 		if (hasKey) return 'active';
 		return 'inactive';
 	}, [settings]);
 
 	return {
-		settings,
+		settings: settings || {},
 		loading: settings === undefined,
 		saveSettings,
 		testConnection,

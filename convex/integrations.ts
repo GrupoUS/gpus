@@ -14,79 +14,104 @@ const integrationArgs = v.union(v.literal("asaas"), v.literal("evolution"), v.li
 export const getIntegrationConfig = query({
   args: { integration: integrationArgs },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
+    try {
+      await requireAuth(ctx);
 
-    const fields = {
+      // Validate integration argument
+      const validIntegrations = ['asaas', 'evolution', 'dify'] as const;
+      if (!validIntegrations.includes(args.integration as any)) {
+        console.error(`Invalid integration type: ${args.integration}`);
+        return {};
+      }
+
+      const fields = {
         asaas: ['api_key', 'base_url', 'environment', 'webhook_secret'],
         evolution: ['api_key', 'base_url', 'instance'],
         dify: ['api_key', 'base_url', 'app_id']
-    };
+      };
 
-    const config: any = {};
-    const relevantFields = fields[args.integration as keyof typeof fields];
+      const config: any = {};
+      const relevantFields = fields[args.integration as keyof typeof fields];
 
-    for (const field of relevantFields) {
-        // Map fields to settings keys:
-        // evolution base_url -> integration_evolution_base_url
-        // evolution instance -> integration_evolution_instance
-        const key = `integration_${args.integration}_${field}`;
-        const setting = await ctx.db
+      // Validate that relevantFields exists
+      if (!relevantFields || !Array.isArray(relevantFields)) {
+        console.error(`No fields defined for integration: ${args.integration}`);
+        return {};
+      }
+
+      for (const field of relevantFields) {
+        try {
+          // Map fields to settings keys:
+          // evolution base_url -> integration_evolution_base_url
+          // evolution instance -> integration_evolution_instance
+          const key = `integration_${args.integration}_${field}`;
+          const setting = await ctx.db
             .query("settings")
             .withIndex("by_key", (q) => q.eq("key", key))
             .unique();
 
-        if (setting && setting.value) {
-             let value = setting.value;
-             // Decrypt if encrypted
-             if (typeof value === 'string' && isEncrypted(value)) {
-                 try {
-                    value = await decrypt(value);
-                 } catch (e) {
-                     // ignore error
-                 }
-             }
+          if (setting && setting.value !== null && setting.value !== undefined) {
+            let value = setting.value;
 
-             // Mask sensitive fields for frontend display
-             // We do NOT return the full API key to the frontend ever for security reasons mentioned in plan
-             if (field.includes('api_key') || field.includes('secret') || field.includes('token')) {
-                 config[field] = maskKey(value);
-                 // Also return a flag indicating it is set?
-                 // Frontend can infer from masked value.
-             } else {
-                 config[field] = value;
-             }
+            // Decrypt if encrypted - with proper error handling
+            if (typeof value === 'string' && value.length > 0) {
+              if (isEncrypted(value)) {
+                try {
+                  value = await decrypt(value);
+                } catch (decryptError) {
+                  // Log error but continue with masked value
+                  console.error(`Failed to decrypt value for ${key}:`, decryptError);
+                  // If decryption fails, use the encrypted value but mask it
+                  // This prevents the query from failing completely
+                  value = typeof value === 'string' ? value : String(value);
+                }
+              }
+            }
+
+            // Ensure value is a string for masking
+            const stringValue = typeof value === 'string' ? value : String(value);
+
+            // Mask sensitive fields for frontend display
+            // We do NOT return the full API key to the frontend ever for security reasons
+            if (field.includes('api_key') || field.includes('secret') || field.includes('token')) {
+              config[field] = maskKey(stringValue);
+            } else {
+              config[field] = stringValue;
+            }
+          }
+        } catch (fieldError) {
+          // Log error for this specific field but continue processing other fields
+          console.error(`Error processing field ${field} for integration ${args.integration}:`, fieldError);
+          // Continue to next field instead of breaking the entire query
         }
-    }
+      }
 
-    // Map snake_case back to camelCase for frontend?
-    // The plan didn't strictly specify return casing, but frontend usually expects camelCase.
-    // However, keeping consistent with plan names.
-    // Plan example: `asaas_api_key`.
-    // Hook uses: `config.apiKey`.
-    // I should map back to camelCase for the hook consumption, or update the hook to read snake_case.
-    // The hook code I wrote (Step 1) expects `apiKey`, `baseUrl`, `instanceName` (for evolution), `appId`.
-    // I will transform here to match hook expectations.
-
-    const mappedConfig: any = {};
-    if (config.api_key) mappedConfig.apiKey = config.api_key;
-    if (config.base_url) {
+      // Map snake_case back to camelCase for frontend
+      const mappedConfig: any = {};
+      if (config.api_key) mappedConfig.apiKey = config.api_key;
+      if (config.base_url) {
         mappedConfig.baseUrl = config.base_url;
         mappedConfig.url = config.base_url; // Alias
-    }
-    if (config.webhook_secret) mappedConfig.webhookSecret = config.webhook_secret;
-    if (config.environment) mappedConfig.environment = config.environment;
+      }
+      if (config.webhook_secret) mappedConfig.webhookSecret = config.webhook_secret;
+      if (config.environment) mappedConfig.environment = config.environment;
 
-    // Specifics
-    if (args.integration === 'evolution') {
+      // Specifics
+      if (args.integration === 'evolution') {
         if (config.instance) mappedConfig.instanceName = config.instance;
         if (config.base_url) mappedConfig.url = config.base_url; // Evolution schema uses `url`
-    }
-    if (args.integration === 'dify') {
+      }
+      if (args.integration === 'dify') {
         if (config.app_id) mappedConfig.appId = config.app_id;
         if (config.base_url) mappedConfig.url = config.base_url; // Dify schema uses `url`
-    }
+      }
 
-    return mappedConfig;
+      return mappedConfig;
+    } catch (error) {
+      // Catch any unexpected errors and return empty object instead of throwing
+      console.error(`Error in getIntegrationConfig for ${args.integration}:`, error);
+      return {};
+    }
   }
 });
 
