@@ -1,7 +1,7 @@
 ---
 description: Documentation and PRD specialist using Diataxis framework for clear, actionable deliverables
 mode: subagent
-model: anthropic/claude-opus-4-5
+model: openai/gpt-5.2-medium
 temperature: 0.2
 tools:
   write: true

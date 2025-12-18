@@ -1,7 +1,7 @@
 ---
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise
 mode: subagent
-model: anthropic/claude-opus-4-5
+model: openai/gpt-5.2-medium
 temperature: 0.2
 tools:
   write: true
