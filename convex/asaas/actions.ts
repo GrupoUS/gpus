@@ -346,15 +346,18 @@ export const importPaymentsFromAsaas = action({
 
     let offset = 0;
     const limit = 100;
+    const MAX_PAGES = 50; // Safety limit
     let hasMore = true;
     let recordsProcessed = 0;
     let recordsCreated = 0;
     let recordsUpdated = 0;
     let recordsFailed = 0;
     const errors: string[] = [];
+    let pageCount = 0;
 
     try {
-      while (hasMore) {
+      while (hasMore && pageCount < MAX_PAGES) {
+        pageCount++;
         const response = await client.listAllPayments({
           dateCreatedGe: args.startDate,
           dateCreatedLe: args.endDate,
@@ -487,15 +490,18 @@ export const importSubscriptionsFromAsaas = action({
 
     let offset = 0;
     const limit = 100;
+    const MAX_PAGES = 50; // Safety limit
     let hasMore = true;
     let recordsProcessed = 0;
     let recordsCreated = 0;
     let recordsUpdated = 0;
     let recordsFailed = 0;
     const errors: string[] = [];
+    let pageCount = 0;
 
     try {
-      while (hasMore) {
+      while (hasMore && pageCount < MAX_PAGES) {
+        pageCount++;
         const response = await client.listAllSubscriptions({
           status: args.status,
           offset,

@@ -249,7 +249,7 @@ import { internalAction } from '../_generated/server'
 export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		// @ts-expect-error - Type instantiation is excessively deep due to Convex internals
+		// @ts-ignore - Deep type instantiation error
 		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
 
 		if (!config.enabled) {
