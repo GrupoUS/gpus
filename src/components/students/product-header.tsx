@@ -55,13 +55,6 @@ export function ProductHeader({
 					'w-full flex items-center justify-between p-4 h-16 group transition-colors duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 					colors.bg,
 				)}
-				onClick={onToggle}
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						onToggle();
-					}
-				}}
 				role="button"
 				tabIndex={0}
 				aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} seção de ${label}`}

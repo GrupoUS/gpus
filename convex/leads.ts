@@ -336,26 +336,20 @@ export const getLead = query({
     return lead
   }
 })
-    // Let's assume we want to stick to DB sorting.
-    // Plan didn't specify recent query index updates.
-    // I added 'by_organization'.
-    // Let's use 'by_organization' and take recent.
-    // Actually typically 'recent' dashboard widgets need efficient latest.
-    // I'll add 'by_organization_created' index to schema? No, I shouldn't modify schema again if I can avoid it.
-    // Let's filter in memory for now or just use standard query if volume is low.
-    // BUT we must filter by organization.
+export const recent = query({
+  args: {
+    limit: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const organizationId = await getOrganizationId(ctx);
 
     return await ctx.db
       .query('leads')
       .withIndex('by_organization', q => q.eq('organizationId', organizationId))
       .order('desc')
-      // .take(args.limit ?? 10) // .take() on query uses the index order.
-      // by_organization index doesn't guarantee creation order?
-      // convex indexes are ordered by indexed fields + _creationTime implicitly?
-      // Wait, standard index is by fields. If duplicates, then _id.
-      // So 'by_organization' order is random for same org? No.
-      // Convex docs: "Records with the same values for the indexed fields are ordered by their creation time."
-      // YES! So by_organization is implicitly by_organization_and_creation_time.
       .take(args.limit ?? 10)
   }
 })

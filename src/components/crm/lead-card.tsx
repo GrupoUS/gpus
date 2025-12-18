@@ -105,44 +105,30 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="flex items-center gap-3 mt-2 text-muted-foreground">
-						{/* Botão de ligar - usando div com role=button para acessibilidade */}
-						<div
-							role="button"
-							tabIndex={0}
+						{/* Botão de ligar - usando button para acessibilidade */}
+						<button
+							type="button"
 							onClick={(e) => {
 								e.stopPropagation();
 								// Lógica de ligar aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none"
 							aria-label="Ligar"
-							onKeyDown={(e) => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									// Lógica de ligar aqui
-								}
-							}}
 						>
 							<Phone className="h-4 w-4" />
-						</div>
-						{/* Botão de mensagem - usando div com role=button para acessibilidade */}
-						<div
-							role="button"
-							tabIndex={0}
+						</button>
+						{/* Botão de mensagem - usando button para acessibilidade */}
+						<button
+							type="button"
 							onClick={(e) => {
 								e.stopPropagation();
 								// Lógica de mensagem aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none"
 							aria-label="Mensagem"
-							onKeyDown={(e) => {
-								if (e.key === 'Enter' || e.key === ' ') {
-									e.preventDefault();
-									// Lógica de mensagem aqui
-								}
-							}}
 						>
 							<MessageSquare className="h-4 w-4" />
-						</div>
+						</button>
 						{lead.lastContactAt && (
 							<motion.span
 								className="text-[10px] ml-auto font-sans"

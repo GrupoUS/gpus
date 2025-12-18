@@ -6,7 +6,7 @@
  */
 
 import type { MutationCtx, QueryCtx } from '../_generated/server'
-import { requireAuth, getClerkId as _getClerkId } from './auth'
+import { getClerkId as _getClerkId } from './auth'
 // validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
 import { validateInput, rateLimiters, validateFileUpload, validationSchemas as _validationSchemas } from './validation'
 import { logSecurityEvent } from './auditLogging'
