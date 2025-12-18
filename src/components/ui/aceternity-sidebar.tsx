@@ -2,9 +2,9 @@
 
 import { Link, useMatchRoute } from '@tanstack/react-router';
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import type React from 'react';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -207,102 +207,5 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 				{link.label}
 			</motion.span>
 		</Link>
-	);
-};
-
-export const SidebarLinkWithSubmenu = ({
-	link,
-	className,
-	...props
-}: {
-	link: Links;
-	className?: string;
-}) => {
-	const { open, animate } = useSidebar();
-	const matchRoute = useMatchRoute();
-
-	// Check if any child route is active
-	const isChildActive = link.children?.some((child) => matchRoute({ to: child.href, fuzzy: true }));
-
-	// Check if parent route is active
-	const isParentActive = matchRoute({ to: link.href, fuzzy: true });
-	const isActive = isParentActive || isChildActive;
-
-	// Initialize isExpanded based on active state
-	const [isExpanded, setIsExpanded] = useState(isActive);
-
-	// Auto-expand submenu when a child or parent route becomes active
-	useEffect(() => {
-		if (isActive) {
-			setIsExpanded(true);
-		}
-	}, [isActive]);
-
-	return (
-		<div className="flex flex-col">
-			{/* Parent Row - Split into Link and Toggle */}
-			<div
-				className={cn(
-					'flex items-center justify-between gap-2 group/sidebar py-2.5 w-full',
-					isActive && 'bg-sidebar-accent rounded-md',
-					className,
-				)}
-				{...props}
-			>
-				{/* Navigable Link - clicking this navigates to parent href */}
-				<Link to={link.href} className="flex items-center gap-2 flex-1 min-w-0">
-					{link.icon}
-					<motion.span
-						animate={{
-							display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
-							opacity: animate ? (open ? 1 : 0) : 1,
-						}}
-						className="text-sidebar-foreground text-sm whitespace-pre group-hover/sidebar:translate-x-1 transition duration-150"
-					>
-						{link.label}
-					</motion.span>
-				</Link>
-
-				{/* Chevron Toggle - clicking this toggles submenu */}
-				{link.children && (
-					<button
-						type="button"
-						onClick={(e) => {
-							e.stopPropagation();
-							setIsExpanded(!isExpanded);
-						}}
-						className="p-1 hover:bg-muted rounded transition-colors"
-						aria-label={isExpanded ? 'Collapse submenu' : 'Expand submenu'}
-					>
-						<motion.div
-							animate={{
-								display: animate ? (open ? 'block' : 'none') : 'block',
-								opacity: animate ? (open ? 1 : 0) : 1,
-								rotate: isExpanded ? 180 : 0,
-							}}
-						>
-							<ChevronDown className="h-4 w-4 text-muted-foreground" />
-						</motion.div>
-					</button>
-				)}
-			</div>
-
-			{/* Submenu */}
-			{link.children && isExpanded && (
-				<motion.div
-					initial={{ height: 0, opacity: 0 }}
-					animate={{
-						height: open ? 'auto' : 0,
-						opacity: open ? 1 : 0,
-					}}
-					exit={{ height: 0, opacity: 0 }}
-					className="ml-6 mt-1 space-y-1 overflow-hidden"
-				>
-					{link.children.map((child, idx) => (
-						<SidebarLink key={idx} link={child} className="py-1.5" />
-					))}
-				</motion.div>
-			)}
-		</div>
 	);
 };

@@ -8,6 +8,7 @@
 
 import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
 import {
 	type BrevoWebhookPayload,

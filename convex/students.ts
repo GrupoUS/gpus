@@ -50,7 +50,7 @@ export const list = query({
       // Search: minimize sensitive matching (do NOT match against email/phone here).
       if (args.search) {
         const searchLower = args.search.toLowerCase()
-        students = students.filter((s) => s.name.toLowerCase().includes(searchLower))
+        students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
       }
 
       const allEnrollments = await ctx.db.query('enrollments').collect()
@@ -293,7 +293,7 @@ export const getStudentsGroupedByProducts = query({
     // LGPD: Search only by name to minimize PII exposure (no email/phone matching)
     if (args.search) {
       const searchLower = args.search.toLowerCase()
-      students = students.filter((s) => s.name.toLowerCase().includes(searchLower))
+      students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
     }
 
     // 2. Fetch all enrollments
