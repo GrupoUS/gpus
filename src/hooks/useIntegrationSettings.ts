@@ -17,6 +17,22 @@ export interface IntegrationConfig {
 	[key: string]: unknown;
 }
 
+function validateAsaasConfig(config: IntegrationConfig) {
+	if (!(config.apiKey && config.baseUrl)) throw new Error('Configuração incompleta');
+	return { apiKey: config.apiKey, baseUrl: config.baseUrl };
+}
+
+function validateEvolutionConfig(config: IntegrationConfig) {
+	if (!(config.apiKey && config.url && config.instanceName))
+		throw new Error('Configuração incompleta');
+	return { apiKey: config.apiKey, apiUrl: config.url, instanceName: config.instanceName };
+}
+
+function validateDifyConfig(config: IntegrationConfig) {
+	if (!(config.apiKey && config.url && config.appId)) throw new Error('Configuração incompleta');
+	return { apiKey: config.apiKey, apiUrl: config.url, appId: config.appId };
+}
+
 export function useIntegrationSettings(integration: IntegrationType) {
 	const [isTesting, setIsTesting] = useState(false);
 	const [lastTestResult, setLastTestResult] = useState<{
@@ -59,41 +75,41 @@ export function useIntegrationSettings(integration: IntegrationType) {
 		async (config: IntegrationConfig) => {
 			setIsTesting(true);
 			setLastTestResult(null);
+
 			try {
 				let result: { success: boolean; message: string; details?: unknown } | undefined;
-				if (integration === 'asaas') {
-					if (!(config.apiKey && config.baseUrl)) throw new Error('Configuração incompleta');
-					result = await testAsaas({ apiKey: config.apiKey, baseUrl: config.baseUrl });
-				} else if (integration === 'evolution') {
-					if (!(config.apiKey && config.url && config.instanceName))
-						throw new Error('Configuração incompleta');
-					result = await testEvolution({
-						apiKey: config.apiKey,
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						apiUrl: config.url!,
-						instanceName: config.instanceName,
-					});
-				} else if (integration === 'dify') {
-					if (!(config.apiKey && config.url && config.appId))
-						throw new Error('Configuração incompleta');
-					result = await testDify({
-						apiKey: config.apiKey,
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						apiUrl: config.url!,
-						appId: config.appId,
-					});
+
+				// Validate and execute based on type
+				switch (integration) {
+					case 'asaas': {
+						const args = validateAsaasConfig(config);
+						result = await testAsaas(args);
+						break;
+					}
+					case 'evolution': {
+						const args = validateEvolutionConfig(config);
+						result = await testEvolution(args);
+						break;
+					}
+					case 'dify': {
+						const args = validateDifyConfig(config);
+						result = await testDify(args);
+						break;
+					}
 				}
 
 				if (result?.success) {
 					toast.success(result.message || 'Conexão estabelecida com sucesso');
 					setLastTestResult({ success: true, message: result.message });
 				} else {
-					toast.error(result?.message || 'Falha na conexão');
-					setLastTestResult({ success: false, message: result?.message || 'Falha desconhecida' });
+					const failureMsg = result?.message || 'Falha na conexão';
+					toast.error(failureMsg);
+					setLastTestResult({ success: false, message: failureMsg });
 				}
 				return result;
-			} catch (error: any) {
-				const msg = error.message || 'Erro ao testar conexão';
+			} catch (error: unknown) {
+				const err = error as Error;
+				const msg = err.message || 'Erro ao testar conexão';
 				toast.error(msg);
 				setLastTestResult({ success: false, message: msg });
 				return { success: false, message: msg };

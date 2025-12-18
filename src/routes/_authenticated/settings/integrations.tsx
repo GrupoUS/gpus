@@ -59,7 +59,7 @@ const difySchema = z.object({
 const asaasSchema = z.object({
 	baseUrl: z.string().url('URL inválida').min(1, 'URL é obrigatória'),
 	apiKey: z.string().min(1, 'API Key é obrigatória'),
-	environment: z.enum(['production', 'sandbox']).default('production'),
+	environment: z.enum(['production', 'sandbox']),
 	webhookSecret: z.string().optional(),
 });
 
@@ -76,7 +76,7 @@ function IntegrationsSettingsPage() {
 	// Evolution API
 	const evolution = useIntegrationSettings('evolution');
 	const evolutionForm = useForm<EvolutionFormData>({
-		resolver: zodResolver(evolutionSchema) as any,
+		resolver: zodResolver(evolutionSchema),
 		defaultValues: {
 			url: '',
 			apiKey: '',
@@ -97,7 +97,7 @@ function IntegrationsSettingsPage() {
 	// Dify AI
 	const dify = useIntegrationSettings('dify');
 	const difyForm = useForm<DifyFormData>({
-		resolver: zodResolver(difySchema) as any,
+		resolver: zodResolver(difySchema),
 		defaultValues: {
 			url: '',
 			apiKey: '',
@@ -118,7 +118,7 @@ function IntegrationsSettingsPage() {
 	// Asaas
 	const asaas = useIntegrationSettings('asaas');
 	const asaasForm = useForm<AsaasFormData>({
-		resolver: zodResolver(asaasSchema) as any,
+		resolver: zodResolver(asaasSchema),
 		defaultValues: {
 			baseUrl: 'https://api.asaas.com/v3',
 			apiKey: '',
@@ -275,7 +275,7 @@ function IntegrationsSettingsPage() {
 				<CardContent className="space-y-4">
 					<Form {...evolutionForm}>
 						<form
-							onSubmit={evolutionForm.handleSubmit((d: any) => handleSaveEvolution(d))}
+							onSubmit={evolutionForm.handleSubmit((d) => handleSaveEvolution(d))}
 							className="space-y-4"
 						>
 							<FormField
@@ -363,10 +363,7 @@ function IntegrationsSettingsPage() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<Form {...difyForm}>
-						<form
-							onSubmit={difyForm.handleSubmit((d: any) => handleSaveDify(d))}
-							className="space-y-4"
-						>
+						<form onSubmit={difyForm.handleSubmit((d) => handleSaveDify(d))} className="space-y-4">
 							<FormField
 								control={difyForm.control}
 								name="url"
@@ -453,7 +450,7 @@ function IntegrationsSettingsPage() {
 				<CardContent className="space-y-4">
 					<Form {...asaasForm}>
 						<form
-							onSubmit={asaasForm.handleSubmit((d: any) => handleSaveAsaas(d))}
+							onSubmit={asaasForm.handleSubmit((d) => handleSaveAsaas(d))}
 							className="space-y-4"
 						>
 							<FormField

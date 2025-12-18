@@ -124,7 +124,7 @@ export const testDifyConnection = action({
       // We'll try to get Application meta or similar.
       const url = `${baseUrl}/parameters`; // Often available for accessing app parameters
 
-      const _response = await axios.get(url, {
+      await axios.get(url, {
         headers: {
             "Authorization": `Bearer ${args.apiKey}`
         },
