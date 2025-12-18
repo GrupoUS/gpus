@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, TrendingUp, Users } from 'lucide-react';
 
+import { ScrollFloatText } from './scroll-float-text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MacbookScreenContent, MacbookScroll } from '@/components/ui/macbook-scroll';
 import { fadeInUp, float, staggerContainer } from '@/lib/animations';
@@ -98,14 +99,12 @@ export function DashboardPreview() {
 				viewport={{ once: true, margin: '-100px' }}
 				className="container px-4 md:px-6 mx-auto relative z-10"
 			>
-				<motion.div variants={fadeInUp} className="text-center mb-8 md:mb-12">
-					<h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-4">
-						Veja seu negócio em tempo real
-					</h2>
-					<p className="font-sans text-muted-foreground text-lg max-w-2xl mx-auto">
-						Dashboard completo com métricas atualizadas e insights acionáveis para tomar decisões
-						melhores.
-					</p>
+				<motion.div variants={fadeInUp} className="mb-8 md:mb-12">
+					<ScrollFloatText
+						containerClassName="max-w-4xl mx-auto"
+						textClassName="text-3xl md:text-4xl font-display font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/50"
+						subNoteClassName="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4"
+					/>
 				</motion.div>
 
 				{/* MacBook with Dashboard Content */}

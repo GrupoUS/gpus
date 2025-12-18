@@ -5,24 +5,65 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PipelineKanban } from './pipeline-kanban';
 
 // Mock Framer Motion to avoid animation issues in tests
+type UnknownProps = Record<string, unknown>;
+
+function stripMotionProps<T extends UnknownProps>(props: T): UnknownProps {
+	const {
+		animate,
+		initial,
+		exit,
+		transition,
+		variants,
+		whileHover,
+		whileTap,
+		whileDrag,
+		layout,
+		layoutId,
+		layoutScroll,
+		drag,
+		dragConstraints,
+		dragElastic,
+		dragMomentum,
+		dragTransition,
+		onDrag,
+		onDragStart,
+		onDragEnd,
+		onReorder,
+		axis,
+		values,
+		value,
+		...domProps
+	} = props;
+
+	return domProps;
+}
+
 vi.mock('framer-motion', () => ({
 	motion: {
-		div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
-		button: ({ children, ...props }: React.ComponentProps<'button'>) => (
-			<button {...props}>{children}</button>
+		div: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
 		),
-		span: ({ children, ...props }: React.ComponentProps<'span'>) => (
-			<span {...props}>{children}</span>
+		button: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+			<button {...(stripMotionProps(props) as React.ComponentProps<'button'>)}>{children}</button>
 		),
-		create: (Component: React.ElementType) => (props: React.ComponentProps<typeof Component>) => (
-			<Component {...props} />
+		span: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+			<span {...(stripMotionProps(props) as React.ComponentProps<'span'>)}>{children}</span>
 		),
+		create:
+			(Component: React.ElementType) =>
+			(props: React.ComponentProps<typeof Component> & UnknownProps) => (
+				<Component
+					{...(stripMotionProps(props as UnknownProps) as React.ComponentProps<typeof Component>)}
+				/>
+			),
 	},
 	Reorder: {
-		Group: ({ children, ...props }: React.ComponentProps<'div'>) => (
-			<div {...props}>{children}</div>
+		Group: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
 		),
-		Item: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+		Item: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
+		),
 	},
 	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	LayoutGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">54% </span>
+                <span class="strong">50.87% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>27/50</span>
+                <span class='fraction'>29/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.3% </span>
+                <span class="strong">36.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>11/26</span>
+                <span class='fraction'>13/36</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55% </span>
+                <span class="strong">52.38% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>11/20</span>
+                <span class='fraction'>11/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.31% </span>
+                <span class="strong">51.85% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>26/47</span>
+                <span class='fraction'>28/54</span>
             </div>
         
             
@@ -368,7 +368,22 @@
 <a name='L303'></a><a href='#L303'>303</a>
 <a name='L304'></a><a href='#L304'>304</a>
 <a name='L305'></a><a href='#L305'>305</a>
-<a name='L306'></a><a href='#L306'>306</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -476,7 +491,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -776,16 +806,31 @@ function DraggableLeadCard({
 			}}
 			variants={cardVariants}
 			transition={layoutTransition}
-			className="rounded-lg touch-none will-change-transform"
-			style={{ position: 'relative' }}
+			className="relative rounded-lg touch-none will-change-transform"
 		&gt;
-			&lt;button
-				type="button"
-				onClick={() =&gt; !isDragging &amp;&amp; onLeadClick?.(lead._id)}
+			&lt;div
+				role="button"
+				tabIndex={0}
+				onClick={(event) =&gt; {
+					<span class="missing-if-branch" title="if path not taken" >I</span>if (event.target instanceof HTMLElement &amp;&amp; event.target.closest('button')) {
+<span class="cstat-no" title="statement not covered" >						return;</span>
+					}
+					<span class="missing-if-branch" title="else path not taken" >E</span>if (!isDragging) {
+						onLeadClick?.(lead._id);
+					}
+				}}
+				onKeyDown={<span class="fstat-no" title="function not covered" >(e</span>vent) =&gt; {
+<span class="cstat-no" title="statement not covered" >					if (event.key === 'Enter' || event.key === ' ') {</span>
+<span class="cstat-no" title="statement not covered" >						event.preventDefault();</span>
+<span class="cstat-no" title="statement not covered" >						if (!isDragging) {</span>
+<span class="cstat-no" title="statement not covered" >							onLeadClick?.(lead._id);</span>
+						}
+					}
+				}}
 				className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
 			&gt;
 				&lt;LeadCard lead={lead} /&gt;
-			&lt;/button&gt;
+			&lt;/div&gt;
 			{lead.phone &amp;&amp; (
 				&lt;motion.button
 					type="button"
@@ -985,7 +1030,7 @@ export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanban
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-18T13:23:27.480Z
+                at 2025-12-18T13:33:51.052Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

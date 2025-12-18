@@ -101,16 +101,31 @@ function DraggableLeadCard({
 			}}
 			variants={cardVariants}
 			transition={layoutTransition}
-			className="rounded-lg touch-none will-change-transform"
-			style={{ position: 'relative' }}
+			className="relative rounded-lg touch-none will-change-transform"
 		>
-			<button
-				type="button"
-				onClick={() => !isDragging && onLeadClick?.(lead._id)}
+			<div
+				role="button"
+				tabIndex={0}
+				onClick={(event) => {
+					if (event.target instanceof HTMLElement && event.target.closest('button')) {
+						return;
+					}
+					if (!isDragging) {
+						onLeadClick?.(lead._id);
+					}
+				}}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault();
+						if (!isDragging) {
+							onLeadClick?.(lead._id);
+						}
+					}
+				}}
 				className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
 			>
 				<LeadCard lead={lead} />
-			</button>
+			</div>
 			{lead.phone && (
 				<motion.button
 					type="button"
