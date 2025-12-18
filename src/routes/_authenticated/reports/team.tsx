@@ -43,6 +43,9 @@ function TeamReportPage() {
 	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
 	const allUsers = useQuery(api.users.list);
 
+	// Ensure allUsers is defined before filtering
+	const safeAllUsers = allUsers || [];
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}

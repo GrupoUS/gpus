@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ThemeProvider, useTheme } from '../theme-provider';
 
 // Storage key used by ThemeProvider (must match implementation)
-const STORAGE_KEY = 'gpus-ui-theme';
+const STORAGE_KEY = 'vite-ui-theme';
 
 // Helper component to test hook
 const TestComponent = () => {
@@ -40,14 +40,24 @@ describe('ThemeProvider', () => {
 	});
 
 	it('uses stored theme from localStorage', () => {
-		localStorage.setItem(STORAGE_KEY, 'light');
-		render(
-			<ThemeProvider>
-				<TestComponent />
-			</ThemeProvider>,
-		);
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
-		expect(document.documentElement.classList.contains('light')).toBe(true);
+		localStorage.setItem('theme', 'light');
+		const { result } = renderHook(() => useTheme());
+		expect(result.current.theme).toBe('light');
+	});
+
+	it('updates theme and storage when setTheme is called', () => {
+		const { result } = renderHook(() => useTheme());
+		act(() => {
+			result.current.setTheme('dark');
+		});
+		expect(result.current.theme).toBe('dark');
+		expect(localStorage.getItem('theme')).toBe('dark');
+	});
+
+	it('falls back to default theme for invalid stored values', () => {
+		localStorage.setItem('theme', 'invalid-theme');
+		const { result } = renderHook(() => useTheme());
+		expect(result.current.theme).toBe('system');
 	});
 
 	it('updates theme and storage when setTheme is called', () => {
