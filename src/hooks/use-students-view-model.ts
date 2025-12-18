@@ -79,7 +79,11 @@ export function useStudentsViewModel(Route: any) {
 	const handleFilterChange = (key: string, value: string) => {
 		void navigate({
 			to: '/students',
-			search: { ...{ search, status, churnRisk, product, view, page, studentId: undefined }, [key]: value, page: 1 },
+			search: {
+				...{ search, status, churnRisk, product, view, page, studentId: undefined },
+				[key]: value,
+				page: 1,
+			},
 		});
 	};
 
