@@ -335,6 +335,7 @@ export function withSecurity<T, R>(
 		if (allowedRoles && allowedRoles.length > 0) {
 			if (!allowedRoles.includes(securityContext.actorRole)) {
 				await logSecurityEvent(ctx, 'unauthorized_access', `Role ${securityContext.actorRole} not allowed`, 'medium', [securityContext.actorId])
+				console.log('ACCESS_DENIED_DEBUG:', securityContext.actorId, securityContext.actorRole)
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
 			}
 		}
@@ -421,6 +422,7 @@ export function withQuerySecurity<T, R>(
 		const securityContext = await getSecurityContext(ctx)
 
 		// Authentication check
+		// Authentication check
 		if (requireAuth && !securityContext.isAuthenticated) {
 			throw new Error('Authentication required')
 		}
@@ -428,6 +430,7 @@ export function withQuerySecurity<T, R>(
 		// Role validation
 		if (allowedRoles && allowedRoles.length > 0) {
 			if (!allowedRoles.includes(securityContext.actorRole)) {
+				console.log('ACCESS_DENIED_DEBUG:', securityContext.actorId, securityContext.actorRole)
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
 			}
 		}

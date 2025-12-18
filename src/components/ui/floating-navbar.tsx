@@ -52,7 +52,7 @@ export const FloatingNavbar = ({ className }: { className?: string }) => {
 						className="bg-background text-foreground flex items-center space-x-2"
 					>
 						<RippleButton
-							className="bg-transparent hover:bg-transparent text-transparent bg-clip-text bg-linear-to-r from-teal-500 to-amber-400 font-bold px-8 py-2 text-lg hover:scale-105 transition-transform"
+							className="bg-transparent hover:bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-400 font-bold px-8 py-2 text-lg hover:scale-105 transition-transform"
 							rippleColor="rgba(217, 119, 6, 0.2)"
 						>
 							Login

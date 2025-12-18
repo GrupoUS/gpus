@@ -10,9 +10,12 @@
 
 import type * as activities from "../activities.js";
 import type * as conversations from "../conversations.js";
+import type * as debug_access from "../debug_access.js";
 import type * as debug_tool from "../debug_tool.js";
+import type * as debug_users from "../debug_users.js";
 import type * as emailMarketing from "../emailMarketing.js";
 import type * as enrollments from "../enrollments.js";
+import type * as fix_admin from "../fix_admin.js";
 import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as lgpd from "../lgpd.js";
@@ -44,9 +47,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   conversations: typeof conversations;
+  debug_access: typeof debug_access;
   debug_tool: typeof debug_tool;
+  debug_users: typeof debug_users;
   emailMarketing: typeof emailMarketing;
   enrollments: typeof enrollments;
+  fix_admin: typeof fix_admin;
   http: typeof http;
   leads: typeof leads;
   lgpd: typeof lgpd;
