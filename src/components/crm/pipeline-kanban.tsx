@@ -3,9 +3,10 @@ import { MessageSquare } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { LeadCard } from './lead-card';
+import { LeadForm } from './lead-form';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollArea } from '@/components/ui/scroll-area';
 import { cardVariants, dragTransition, layoutTransition, SPRING_SMOOTH } from '@/lib/motion-config';
 
 const stages = [
@@ -167,7 +168,9 @@ function KanbanColumn({
 	onReorder: (stageId: string, newOrder: Lead[]) => void;
 	onDragToColumn: (leadId: string, newStage: string) => void;
 	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
+	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
 	registerColumn: (stageId: string, element: HTMLDivElement | null) => void;
+	headerAction?: React.ReactNode;
 }) {
 	return (
 		<motion.div
@@ -201,7 +204,8 @@ function KanbanColumn({
 						</Badge>
 					</div>
 				</CardHeader>
-				<CardContent className="flex-1 min-h-0">
+				<CardContent className="flex-1 min-h-0 flex flex-col">
+					{headerAction}
 					<ScrollArea className="h-full">
 						<Reorder.Group
 							axis="y"
@@ -312,6 +316,7 @@ export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanban
 						onDragToColumn={handleDragToColumn}
 						columnRefs={columnRefs}
 						registerColumn={registerColumn}
+						headerAction={stage.id === 'novo' ? <LeadForm /> : null}
 					/>
 				))}
 			</div>

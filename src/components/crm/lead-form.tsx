@@ -16,6 +16,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog';
+import { FlipButton, FlipButtonBack, FlipButtonFront } from '@/components/ui/flip-button';
 import {
 	Form,
 	FormControl,
@@ -24,6 +25,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
+import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -171,10 +173,30 @@ export function LeadForm() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20">
-					<Plus className="h-4 w-4" />
-					Novo Lead
-				</Button>
+				<DialogTrigger asChild>
+					<div className="w-full mb-4 px-1">
+						<FlipButton className="w-full h-12" initial={false}>
+							<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full">
+								<HoverBorderGradient
+									containerClassName="rounded-full w-full h-full"
+									className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
+								>
+									<Plus className="h-4 w-4 mr-2" />
+									Novo Lead
+								</HoverBorderGradient>
+							</FlipButtonFront>
+							<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full">
+								<HoverBorderGradient
+									containerClassName="rounded-full w-full h-full"
+									className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center font-bold tracking-wide"
+									clockwise={false}
+								>
+									Cadastrar
+								</HoverBorderGradient>
+							</FlipButtonBack>
+						</FlipButton>
+					</div>
+				</DialogTrigger>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
 				<DialogHeader>

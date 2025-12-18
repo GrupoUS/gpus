@@ -11,9 +11,6 @@ import { LeadFilters } from '@/components/crm/lead-filters';
 const LeadDetail = lazy(() =>
 	import('@/components/crm/lead-detail').then((module) => ({ default: module.LeadDetail })),
 );
-const LeadForm = lazy(() =>
-	import('@/components/crm/lead-form').then((module) => ({ default: module.LeadForm })),
-);
 const PipelineKanban = lazy(() =>
 	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
 );
@@ -72,11 +69,6 @@ function CRMPage() {
 						<p className="font-sans text-base text-muted-foreground">
 							Gerencie seus leads e oportunidades
 						</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<Suspense fallback={<div>Carregando formulário...</div>}>
-							<LeadForm />
-						</Suspense>
 					</div>
 				</div>
 
