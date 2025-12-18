@@ -12,65 +12,107 @@ export const list = query({
     status: v.optional(v.string()),
     churnRisk: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    let students = await ctx.db.query('students').order('desc').collect()
+  handler: withQuerySecurity(
+    async (ctx, args, _security) => {
+      // Prefer indexed query when possible; fall back to in-memory filters.
+      // NOTE: We purposely avoid returning full student documents to minimize PII exposure (LGPD).
+      let students = args.status
+        ? await ctx.db
+            .query('students')
+            .withIndex('by_status', (q) => q.eq('status', args.status))
+            .order('desc')
+            .collect()
+        : args.churnRisk
+          ? await ctx.db
+              .query('students')
+              .withIndex('by_churn_risk', (q) => q.eq('churnRisk', args.churnRisk))
+              .order('desc')
+              .collect()
+          : await ctx.db.query('students').order('desc').collect()
 
-    // Apply filters
-    if (args.status) {
-      students = students.filter((s) => s.status === args.status)
-    }
-    if (args.churnRisk) {
-      students = students.filter((s) => s.churnRisk === args.churnRisk)
-    }
-    if (args.search) {
-      const searchLower = args.search.toLowerCase()
-      students = students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchLower) ||
-          s.email.toLowerCase().includes(searchLower) ||
-          s.phone.includes(searchLower)
-      )
-    }
+      if (args.status && !students.every((s) => s.status === args.status)) {
+        students = students.filter((s) => s.status === args.status)
+      }
 
-    // Comment 3: Batch enrollment lookups.
-    // Fetch all enrollments once. Note: This assumes enrollments table fits in memory/query limit.
-    // For scalability, we should ideally filter enrollments by the student IDs we have,
-    // but Convex doesn't support 'in' queries efficiently for ad-hoc lists yet without iterating.
-    // Given the instruction "issue one or a few enrollments queries... to build a map", we collect all.
-    const allEnrollments = await ctx.db.query('enrollments').collect()
+      if (args.churnRisk && !students.every((s) => s.churnRisk === args.churnRisk)) {
+        students = students.filter((s) => s.churnRisk === args.churnRisk)
+      }
 
-    // Build map: studentId -> latest enrollment (by createdAt)
-    const enrollmentsByStudent = new Map<string, typeof allEnrollments[0]>()
+      // Search: minimize sensitive matching (do NOT match against email/phone here).
+      if (args.search) {
+        const searchLower = args.search.toLowerCase()
+        students = students.filter((s) => s.name.toLowerCase().includes(searchLower))
+      }
 
-    // Sort enrollments by created desc so we process newest first??
-    // Actually simpler: iterate and keep latest.
-    // We want the latest enrollment per student.
-    // Let's sort allEnrollments desc first or handle in reducer.
-    allEnrollments.sort((a,b) => b.createdAt - a.createdAt)
+      const allEnrollments = await ctx.db.query('enrollments').collect()
 
-    for (const enrollment of allEnrollments) {
+      // Build map: studentId -> latest enrollment (by createdAt)
+      const enrollmentsByStudent = new Map<string, (typeof allEnrollments)[number]>()
+      allEnrollments.sort((a, b) => b.createdAt - a.createdAt)
+      for (const enrollment of allEnrollments) {
         if (!enrollmentsByStudent.has(enrollment.studentId)) {
-            enrollmentsByStudent.set(enrollment.studentId, enrollment)
+          enrollmentsByStudent.set(enrollment.studentId, enrollment)
         }
-    }
+      }
 
-    // Enrich with mainProduct
-    const enrichedStudents = students.map((student) => {
+      const results: Array<{
+        _id: (typeof students)[number]['_id']
+        _creationTime: (typeof students)[number]['_creationTime']
+        name: string
+        email: string
+        phone: string
+        profession: string
+        hasClinic: boolean
+        clinicName?: string
+        clinicCity?: string
+        status: (typeof students)[number]['status']
+        assignedCS?: (typeof students)[number]['assignedCS']
+        churnRisk: (typeof students)[number]['churnRisk']
+        lastEngagementAt?: number
+        leadId?: (typeof students)[number]['leadId']
+        createdAt: number
+        updatedAt: number
+        mainProduct?: string
+      }> = []
+
+      for (const student of students) {
         const enrollment = enrollmentsByStudent.get(student._id)
 
-        // Filter by product if requested
         if (args.product && enrollment?.product !== args.product) {
-          return null
+          continue
         }
 
-        return {
-          ...student,
+        results.push({
+          _id: student._id,
+          _creationTime: student._creationTime,
+          name: student.name,
+          email: student.email,
+          phone: student.phone,
+          profession: student.profession,
+          hasClinic: student.hasClinic,
+          clinicName: student.clinicName,
+          clinicCity: student.clinicCity,
+          status: student.status,
+          assignedCS: student.assignedCS,
+          churnRisk: student.churnRisk,
+          lastEngagementAt: student.lastEngagementAt,
+          leadId: student.leadId,
+          createdAt: student.createdAt,
+          updatedAt: student.updatedAt,
           mainProduct: enrollment?.product,
-        }
-    })
+        })
+      }
 
-    return enrichedStudents.filter((s) => s !== null)
-  },
+      return results
+    },
+    {
+      requireAuth: true,
+      // Portal internal roles. Adjust if some roles should not list students.
+      allowedRoles: ['admin', 'sdr', 'cs', 'support'],
+      // Defensive: cap results to avoid accidental bulk-export.
+      maxResults: 500,
+    },
+  ),
 })
 
 export const getById = query({
