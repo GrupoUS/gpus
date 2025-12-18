@@ -439,8 +439,11 @@ function CampaignDetailPage() {
 	const getListNames = (): string[] => {
 		if (!(campaign?.listIds && lists)) return [];
 		return campaign.listIds
-			.map((listId) => lists.find((l) => l._id === listId)?.name)
-			.filter((name): name is string => !!name);
+			.map(
+				(listId: Id<'emailLists'>) =>
+					lists.find((l: { _id: Id<'emailLists'> }) => l._id === listId)?.name,
+			)
+			.filter((name: string | undefined): name is string => !!name);
 	};
 
 	// Navigation back to list
@@ -510,7 +513,10 @@ function CampaignDetailPage() {
 		return <CampaignNotFound onBack={handleBack} />;
 	}
 
-	const status = statusConfig[campaign.status];
+	const status =
+		campaign.status in statusConfig
+			? statusConfig[campaign.status as CampaignStatus]
+			: statusConfig.draft;
 	const StatusIcon = status.icon;
 	const isDraft = campaign.status === 'draft';
 	const isSent = campaign.status === 'sent';

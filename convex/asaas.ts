@@ -241,7 +241,7 @@ export const syncStudentAsCustomer = mutation({
 			customerPayload.address = student.address
 			customerPayload.addressNumber = student.addressNumber
 			customerPayload.complement = student.complement
-			customerPayload.neighborhood = student.neighborhood
+			customerPayload.province = student.neighborhood
 			customerPayload.city = student.city
 			customerPayload.state = student.state
 			customerPayload.postalCode = student.zipCode
@@ -671,7 +671,7 @@ export const refreshPaymentStatus = mutation({
  */
 export const syncAllStudents = action({
 	args: {},
-	handler: async (ctx) => {
+	handler: async (ctx): Promise<{ synced: number; errors: number; total: number }> => {
 		const identity = await ctx.auth.getUserIdentity()
 		if (!identity) {
 			throw new Error('Unauthenticated')
@@ -747,7 +747,7 @@ export const syncStudentAsCustomerInternal = internalMutation({
 			customerPayload.address = student.address
 			customerPayload.addressNumber = student.addressNumber
 			customerPayload.complement = student.complement
-			customerPayload.neighborhood = student.neighborhood
+			customerPayload.province = student.neighborhood
 			customerPayload.city = student.city
 			customerPayload.state = student.state
 			customerPayload.postalCode = student.zipCode

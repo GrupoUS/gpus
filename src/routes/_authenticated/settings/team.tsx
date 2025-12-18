@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
@@ -137,7 +137,7 @@ function TeamSettingsPage() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{users?.map((user) => (
+					{users?.map((user: Doc<'users'>) => (
 						<TableRow key={user._id}>
 							<TableCell>
 								<div className="flex items-center gap-3">
@@ -145,7 +145,7 @@ function TeamSettingsPage() {
 										<AvatarFallback className="text-xs bg-primary/10 text-primary">
 											{user.name
 												.split(' ')
-												.map((n) => n[0])
+												.map((n: string) => n[0])
 												.join('')
 												.slice(0, 2)}
 										</AvatarFallback>

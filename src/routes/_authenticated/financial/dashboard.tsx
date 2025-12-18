@@ -1,11 +1,14 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { Calendar, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
+import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	Select,
@@ -15,8 +18,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatsCard } from '@/components/dashboard/stats-card';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export const Route = createFileRoute('/_authenticated/financial/dashboard')({
 	component: FinancialDashboardPage,
@@ -75,7 +76,10 @@ function FinancialDashboardPage() {
 					<h1 className="text-3xl font-bold">Dashboard Financeiro</h1>
 					<p className="text-muted-foreground">Visão geral das finanças do negócio</p>
 				</div>
-				<Select value={period} onValueChange={(value: any) => setPeriod(value)}>
+				<Select
+					value={period}
+					onValueChange={(value: 'day' | 'week' | 'month' | 'year') => setPeriod(value)}
+				>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
@@ -97,28 +101,24 @@ function FinancialDashboardPage() {
 							value={formatCurrency(summary.revenue.total)}
 							description="Pagamentos recebidos"
 							icon={TrendingUp}
-							trend="up"
 						/>
 						<StatsCard
 							title="Total Líquido"
 							value={formatCurrency(summary.revenue.net)}
 							description="Após descontos e taxas"
 							icon={DollarSign}
-							trend={summary.revenue.net > 0 ? 'up' : 'down'}
 						/>
 						<StatsCard
 							title="A Receber"
 							value={formatCurrency(summary.charges.pendingAmount)}
 							description={`${summary.charges.pending} cobranças pendentes`}
 							icon={Calendar}
-							trend="neutral"
 						/>
 						<StatsCard
 							title="Vencidas"
 							value={formatCurrency(summary.charges.overdueAmount)}
 							description={`${summary.charges.overdue} cobranças vencidas`}
 							icon={TrendingDown}
-							trend="down"
 						/>
 					</>
 				) : (
@@ -149,7 +149,11 @@ function FinancialDashboardPage() {
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis dataKey="name" />
 									<YAxis />
-									<Tooltip formatter={(value: number) => formatCurrency(value)} />
+									<Tooltip
+										formatter={(value: number | undefined) =>
+											value !== undefined ? formatCurrency(value) : ''
+										}
+									/>
 									<Bar dataKey="value" fill="#8884d8" />
 								</BarChart>
 							</ResponsiveContainer>
@@ -172,7 +176,8 @@ function FinancialDashboardPage() {
 										{summary.metrics.defaultRate.toFixed(1)}%
 									</div>
 									<p className="text-muted-foreground mt-2">
-										{summary.charges.overdue} de {summary.charges.pending + summary.charges.overdue} cobranças
+										{summary.charges.overdue} de {summary.charges.pending + summary.charges.overdue}{' '}
+										cobranças
 									</p>
 								</div>
 							</div>
@@ -196,7 +201,7 @@ function FinancialDashboardPage() {
 						<p className="text-muted-foreground text-center py-8">Nenhuma cobrança pendente</p>
 					) : (
 						<div className="space-y-2">
-							{pendingPayments.slice(0, 5).map((payment) => (
+							{pendingPayments.slice(0, 5).map((payment: Doc<'asaasPayments'>) => (
 								<div
 									key={payment._id}
 									className="flex items-center justify-between p-3 border rounded-lg"
@@ -227,7 +232,7 @@ function FinancialDashboardPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-2">
-							{overduePayments.slice(0, 5).map((payment) => (
+							{overduePayments.slice(0, 5).map((payment: Doc<'asaasPayments'>) => (
 								<div
 									key={payment._id}
 									className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50"
@@ -251,4 +256,3 @@ function FinancialDashboardPage() {
 		</div>
 	);
 }
-

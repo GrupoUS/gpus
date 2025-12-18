@@ -41,20 +41,19 @@ export function useIntegrationSettings(integration: IntegrationType) {
 	} | null>(null);
 
 	// Load settings
-	// @ts-expect-error - integrations not yet generated in API
+	// @ts-expect-error - integrations module not yet implemented
 	const settings = useQuery(api.integrations.getIntegrationConfig, { integration });
 
 	// Mutations and Actions
-	// @ts-expect-error - integrations not yet generated in API
+	// @ts-expect-error - integrations module not yet implemented
 	const saveConfigMutation = useMutation(api.integrations.saveIntegrationConfig);
 
 	// Actions
-	// Note: These actions will fail type check until convex/integrations/actions.ts is created
-	// @ts-expect-error - actions not yet generated in API
+	// @ts-expect-error - integrations module not yet implemented
 	const testAsaas = useAction(api.integrations.actions.testAsaasConnection);
-	// @ts-expect-error - actions not yet generated in API
+	// @ts-expect-error - integrations module not yet implemented
 	const testEvolution = useAction(api.integrations.actions.testEvolutionConnection);
-	// @ts-expect-error - actions not yet generated in API
+	// @ts-expect-error - integrations module not yet implemented
 	const testDify = useAction(api.integrations.actions.testDifyConnection);
 
 	const saveSettings = useCallback(

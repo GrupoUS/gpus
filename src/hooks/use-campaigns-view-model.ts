@@ -42,7 +42,7 @@ export function useCampaignsViewModel(Route: any) {
 
 		const searchLower = search.toLowerCase();
 		return campaigns.filter(
-			(c) =>
+			(c: { name: string; subject: string }) =>
 				c.name.toLowerCase().includes(searchLower) || c.subject.toLowerCase().includes(searchLower),
 		);
 	}, [campaigns, search]);
@@ -61,21 +61,27 @@ export function useCampaignsViewModel(Route: any) {
 
 	// Stats
 	const totalCampaigns = filteredCampaigns?.length ?? 0;
-	const draftCount = filteredCampaigns?.filter((c) => c.status === 'draft').length ?? 0;
-	const sentCount = filteredCampaigns?.filter((c) => c.status === 'sent').length ?? 0;
+	const draftCount =
+		filteredCampaigns?.filter((c: { status: string }) => c.status === 'draft').length ?? 0;
+	const sentCount =
+		filteredCampaigns?.filter((c: { status: string }) => c.status === 'sent').length ?? 0;
 
 	// Calculate average open rate from sent campaigns
 	const avgOpenRate = useMemo(() => {
 		if (!filteredCampaigns) return 0;
 		const sentCampaigns = filteredCampaigns.filter(
-			(c) => c.status === 'sent' && c.stats && c.stats.delivered > 0,
+			(c: { status: string; stats?: { delivered: number } }) =>
+				c.status === 'sent' && c.stats && c.stats.delivered > 0,
 		);
 		if (sentCampaigns.length === 0) return 0;
 
-		const totalRate = sentCampaigns.reduce((acc, c) => {
-			const rate = c.stats ? (c.stats.opened / c.stats.delivered) * 100 : 0;
-			return acc + rate;
-		}, 0);
+		const totalRate = sentCampaigns.reduce(
+			(acc: number, c: { stats?: { opened: number; delivered: number } }) => {
+				const rate = c.stats ? (c.stats.opened / c.stats.delivered) * 100 : 0;
+				return acc + rate;
+			},
+			0,
+		);
 		return totalRate / sentCampaigns.length;
 	}, [filteredCampaigns]);
 

@@ -39,6 +39,7 @@ export const createAsaasCustomer = action({
       });
 
       // Save Asaas ID to student record
+      // @ts-ignore - TypeScript has issues with deep type inference in Convex internal mutations
       await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
         studentId: args.studentId,
         asaasCustomerId: customer.id,
@@ -123,7 +124,7 @@ export const createAsaasSubscription = action({
     description: v.optional(v.string()),
     externalReference: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     try {
       const client = getAsaasClient();
       const subscription = await client.createSubscription({
@@ -158,7 +159,7 @@ export const createAsaasSubscription = action({
  */
 export const testAsaasConnection = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (_ctx) => {
     try {
       const client = getAsaasClient();
 

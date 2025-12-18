@@ -60,7 +60,7 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 	return (
 		<ScrollArea className="h-full">
 			<div className="space-y-1 p-2">
-				{conversations.map((conversation) => {
+				{conversations.map((conversation: Doc<'conversations'>) => {
 					// Type assertion for enriched data that comes from the backend but isn't in the generated Doc type yet
 					// Note: lastMessage is returned as a string from the backend, not an object
 					const item = conversation as Doc<'conversations'> & {

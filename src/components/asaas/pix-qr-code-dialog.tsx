@@ -1,3 +1,6 @@
+import { Copy } from 'lucide-react';
+import { useId } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -7,8 +10,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import { Copy } from 'lucide-react';
-
 import { useToast } from '@/hooks/use-toast';
 
 interface PixQrCodeDialogProps {
@@ -18,8 +19,14 @@ interface PixQrCodeDialogProps {
 	onClose: () => void;
 }
 
-export function PixQrCodeDialog({ pixCode, pixQrCodeBase64, value, onClose }: PixQrCodeDialogProps) {
+export function PixQrCodeDialog({
+	pixCode,
+	pixQrCodeBase64,
+	value,
+	onClose,
+}: PixQrCodeDialogProps) {
 	const { toast } = useToast();
+	const textareaId = useId();
 
 	const copyPixCode = () => {
 		if (navigator.clipboard) {
@@ -69,9 +76,12 @@ export function PixQrCodeDialog({ pixCode, pixQrCodeBase64, value, onClose }: Pi
 					)}
 
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Código PIX (Copiar e Colar)</label>
+						<label htmlFor={textareaId} className="text-sm font-medium">
+							Código PIX (Copiar e Colar)
+						</label>
 						<div className="flex gap-2">
 							<textarea
+								id={textareaId}
 								readOnly
 								value={pixCode}
 								className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono text-xs"
@@ -99,4 +109,3 @@ export function PixQrCodeDialog({ pixCode, pixQrCodeBase64, value, onClose }: Pi
 		</Dialog>
 	);
 }
-

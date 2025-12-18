@@ -203,13 +203,13 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	// Get the ordered list of product keys from groupedStudentsData
 	const productKeys = React.useMemo(() => {
 		if (!groupedStudentsData) return [];
-		return groupedStudentsData.map((g) => g.id);
+		return groupedStudentsData.map((g: { id: string }) => g.id);
 	}, [groupedStudentsData]);
 
 	// Check if any students exist across all groups
 	const hasAnyStudentsInGroups = React.useMemo(() => {
 		if (!groupedStudentsData) return false;
-		return groupedStudentsData.some((g) => g.count > 0);
+		return groupedStudentsData.some((g: { count: number }) => g.count > 0);
 	}, [groupedStudentsData]);
 
 	return {

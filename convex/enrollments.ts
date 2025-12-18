@@ -149,13 +149,15 @@ export const generateAsaasPayments = mutation({
 			v.literal('UNDEFINED'),
 		),
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<{ paymentIds: string[]; count: number }> => {
 		await requireAuth(ctx)
 
 		// Use the existing mutation from asaas.ts
-		return await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
+		// @ts-ignore - TypeScript has issues with deep type inference in Convex mutations
+		const result = (await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
 			enrollmentId: args.enrollmentId,
 			billingType: args.billingType,
-		})
+		})) as { paymentIds: string[]; count: number };
+		return result;
 	},
 })

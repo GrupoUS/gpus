@@ -1,11 +1,11 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
 import { useState } from 'react';
 
-import { useToast } from '@/hooks/use-toast';
 import { PixQrCodeDialog } from './pix-qr-code-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentCardProps {
 	payment: {
@@ -26,7 +26,10 @@ interface PaymentCardProps {
 	};
 }
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const statusConfig: Record<
+	string,
+	{ label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+> = {
 	PENDING: { label: 'Pendente', variant: 'secondary' },
 	RECEIVED: { label: 'Recebido', variant: 'default' },
 	CONFIRMED: { label: 'Confirmado', variant: 'default' },
@@ -48,8 +51,12 @@ export function PaymentCard({ payment }: PaymentCardProps) {
 	const { toast } = useToast();
 	const [showPixDialog, setShowPixDialog] = useState(false);
 
-	const statusInfo = statusConfig[payment.status] || { label: payment.status, variant: 'outline' as const };
-	const isOverdue = payment.status === 'OVERDUE' || (payment.status === 'PENDING' && payment.dueDate < Date.now());
+	const statusInfo = statusConfig[payment.status] || {
+		label: payment.status,
+		variant: 'outline' as const,
+	};
+	const isOverdue =
+		payment.status === 'OVERDUE' || (payment.status === 'PENDING' && payment.dueDate < Date.now());
 
 	const copyPixCode = () => {
 		if (payment.pixQrCode && navigator.clipboard) {
@@ -89,7 +96,8 @@ export function PaymentCard({ payment }: PaymentCardProps) {
 					<div className="flex items-start justify-between">
 						<div>
 							<CardTitle className="text-lg">
-								{payment.description || `Cobrança ${payment.installmentNumber ? `#${payment.installmentNumber}` : ''}`}
+								{payment.description ||
+									`Cobrança ${payment.installmentNumber ? `#${payment.installmentNumber}` : ''}`}
 							</CardTitle>
 							<CardDescription>
 								{billingTypeLabels[payment.billingType] || payment.billingType}
@@ -141,8 +149,8 @@ export function PaymentCard({ payment }: PaymentCardProps) {
 								variant="outline"
 								size="sm"
 								onClick={() => {
-									if (navigator.clipboard) {
-										void navigator.clipboard.writeText(payment.boletoBarcode!);
+									if (navigator.clipboard && payment.boletoBarcode) {
+										void navigator.clipboard.writeText(payment.boletoBarcode);
 										toast({
 											title: 'Sucesso',
 											description: 'Código de barras copiado!',
@@ -181,4 +189,3 @@ export function PaymentCard({ payment }: PaymentCardProps) {
 		</>
 	);
 }
-

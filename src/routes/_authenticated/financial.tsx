@@ -25,7 +25,10 @@ function FinancialDashboard() {
 	const summary = useQuery(api.asaas.getFinancialSummary, {});
 	const pendingPayments = useQuery(api.asaas.getPendingPayments);
 	const overduePayments = useQuery(api.asaas.getOverduePayments);
-	const payments = pendingPayments && overduePayments ? [...pendingPayments, ...overduePayments].slice(0, 20) : undefined;
+	const payments =
+		pendingPayments && overduePayments
+			? [...pendingPayments, ...overduePayments].slice(0, 20)
+			: undefined;
 
 	const getStatusBadge = (status: string) => {
 		const map: Record<string, string> = {
@@ -82,7 +85,9 @@ function FinancialDashboard() {
 							)}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							{summary ? `${summary.charges.pending} cobranças pendentes` : 'Cobranças geradas e aguardando pagamento'}
+							{summary
+								? `${summary.charges.pending} cobranças pendentes`
+								: 'Cobranças geradas e aguardando pagamento'}
 						</p>
 					</CardContent>
 				</Card>

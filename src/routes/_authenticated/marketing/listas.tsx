@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { ArrowLeft, List, Plus, Search, Users } from 'lucide-react';
@@ -61,7 +62,7 @@ function ListsPage() {
 	// Filter lists by search query
 	const filteredLists =
 		lists?.filter(
-			(list) =>
+			(list: { name: string; description?: string }) =>
 				list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				(list.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 		) ?? [];
@@ -146,7 +147,7 @@ function ListsPage() {
 				)
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{filteredLists.map((list) => (
+					{filteredLists.map((list: Doc<'emailLists'>) => (
 						<Card
 							key={list._id}
 							className="cursor-pointer transition-colors hover:bg-muted/50"
@@ -193,7 +194,14 @@ function ListsPage() {
 						{filteredLists.length} de {lists.length} lista
 						{lists.length !== 1 ? 's' : ''}
 					</span>
-					<span>Total: {lists.reduce((sum, l) => sum + (l.contactCount ?? 0), 0)} contatos</span>
+					<span>
+						Total:{' '}
+						{lists.reduce(
+							(sum: number, l: { contactCount?: number }) => sum + (l.contactCount ?? 0),
+							0,
+						)}{' '}
+						contatos
+					</span>
 				</div>
 			)}
 		</div>

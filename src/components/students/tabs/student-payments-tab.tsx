@@ -1,6 +1,6 @@
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
-import { useAction, useQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { Copy, CreditCard, Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -65,13 +65,13 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 	const payments = useQuery(api.asaas.getPaymentsByStudent, {
 		studentId,
-	}) as Array<PaymentRow> | undefined;
+	}) as PaymentRow[] | undefined;
 
 	// Note: Direct payment creation removed - use createPaymentFromEnrollment or createInstallmentsFromEnrollment instead
 	// This component now only displays payments
 
 	const [isNewPaymentOpen, setIsNewPaymentOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isSubmitting, _setIsSubmitting] = useState(false);
 
 	// New Payment Form
 	const [billingType, setBillingType] = useState<'BOLETO' | 'PIX' | 'CREDIT_CARD'>('PIX');
@@ -82,10 +82,11 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 	// Payment creation is now handled through enrollments
 	// This component is for viewing payments only
-	const handleCreatePayment = async () => {
+	const handleCreatePayment = () => {
 		toast({
 			title: 'Info',
-			description: 'Para gerar cobranças, use a aba de Matrículas e clique em "Gerar Cobranças Asaas".',
+			description:
+				'Para gerar cobranças, use a aba de Matrículas e clique em "Gerar Cobranças Asaas".',
 		});
 		setIsNewPaymentOpen(false);
 	};

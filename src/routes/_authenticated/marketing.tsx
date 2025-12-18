@@ -1,3 +1,4 @@
+import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 
@@ -82,7 +83,7 @@ function MarketingPage() {
 			) : (
 				/* Grid View */
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{paginatedCampaigns.map((campaign) => (
+					{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
 						<CampaignCard
 							key={campaign._id}
 							campaign={campaign}

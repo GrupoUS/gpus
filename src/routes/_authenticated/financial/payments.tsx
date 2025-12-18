@@ -17,6 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
 	Table,
 	TableBody,
@@ -25,8 +26,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PaymentCard } from '@/components/asaas/payment-card';
 
 export const Route = createFileRoute('/_authenticated/financial/payments')({
 	component: PaymentsPage,
@@ -43,10 +42,7 @@ function PaymentsPage() {
 	const overduePayments = useQuery(api.asaas.getOverduePayments);
 
 	// Combine and filter payments
-	const allPayments = [
-		...(pendingPayments || []),
-		...(overduePayments || []),
-	].filter((payment) => {
+	const allPayments = [...(pendingPayments || []), ...(overduePayments || [])].filter((payment) => {
 		if (search && !payment.description?.toLowerCase().includes(search.toLowerCase())) {
 			return false;
 		}
@@ -74,7 +70,10 @@ function PaymentsPage() {
 		});
 	};
 
-	const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+	const statusConfig: Record<
+		string,
+		{ label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+	> = {
 		PENDING: { label: 'Pendente', variant: 'secondary' },
 		RECEIVED: { label: 'Recebido', variant: 'default' },
 		CONFIRMED: { label: 'Confirmado', variant: 'default' },
@@ -142,7 +141,8 @@ function PaymentsPage() {
 				<CardHeader>
 					<CardTitle>Cobranças</CardTitle>
 					<CardDescription>
-						{allPayments.length} cobrança{allPayments.length !== 1 ? 's' : ''} encontrada{allPayments.length !== 1 ? 's' : ''}
+						{allPayments.length} cobrança{allPayments.length !== 1 ? 's' : ''} encontrada
+						{allPayments.length !== 1 ? 's' : ''}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -209,4 +209,3 @@ function PaymentsPage() {
 		</div>
 	);
 }
-
