@@ -35,7 +35,7 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
-// @ts-expect-error - Deep type instantiation error confuses the compiler (fluctuating)
+// @ts-expect-error - Deep type instantiation error
 type TeamPerformanceMember = FunctionReturnType<typeof api.metrics.getTeamPerformance>[number];
 type User = FunctionReturnType<typeof api.users.list>[number];
 
