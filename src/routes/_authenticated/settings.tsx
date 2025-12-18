@@ -77,16 +77,19 @@ function SettingsPage() {
 						icon={<User className="h-5 w-5 text-purple-500" />}
 						title="Perfil"
 						description="Gerencie suas informações pessoais"
+						href="/settings/profile"
 					/>
 					<SettingItem
 						icon={<Key className="h-5 w-5 text-purple-500" />}
 						title="Segurança"
 						description="Autenticação e controle de acesso"
+						href="/settings/security"
 					/>
 					<SettingItem
 						icon={<Bell className="h-5 w-5 text-purple-500" />}
 						title="Notificações"
 						description="Configure alertas e preferências"
+						href="/settings/notifications"
 					/>
 				</CardContent>
 			</Card>
@@ -107,6 +110,7 @@ function SettingsPage() {
 						icon={<Shield className="h-5 w-5 text-primary" />}
 						title="Funções e Permissões"
 						description="Configure níveis de acesso"
+						href="/settings/roles"
 					/>
 				</CardContent>
 			</Card>
@@ -127,6 +131,7 @@ function SettingsPage() {
 						icon={<Palette className="h-5 w-5 text-green-500" />}
 						title="Aparência"
 						description="Personalize a interface"
+						href="/settings/appearance"
 					/>
 				</CardContent>
 			</Card>

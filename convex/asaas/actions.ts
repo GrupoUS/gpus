@@ -3,7 +3,7 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { asaasClient } from "../lib/asaas";
+import { getAsaasClient } from "../lib/asaas";
 
 export const createAsaasCustomer = action({
   args: {
@@ -22,7 +22,8 @@ export const createAsaasCustomer = action({
   },
   handler: async (ctx, args) => {
     try {
-      const customer = await asaasClient.createCustomer({
+      const client = await getAsaasClient(ctx);
+      const customer = await client.createCustomer({
         name: args.name,
         cpfCnpj: args.cpfCnpj.replace(/\D/g, ""),
         email: args.email,
@@ -65,7 +66,8 @@ export const createAsaasPayment = action({
   },
   handler: async (ctx, args) => {
     try {
-      const payment = await asaasClient.createPayment({
+      const client = await getAsaasClient(ctx);
+      const payment = await client.createPayment({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
         value: args.value,
@@ -80,7 +82,7 @@ export const createAsaasPayment = action({
       let pixData = { encodedImage: undefined, payload: undefined };
       if (args.billingType === "PIX") {
          try {
-             const qrResponse = await asaasClient.getPixQrCode(payment.id);
+             const qrResponse = await client.getPixQrCode(payment.id);
              pixData = { encodedImage: qrResponse.encodedImage, payload: qrResponse.payload };
          } catch (qrError) {
              console.error("Failed to fetch PIX QrCode", qrError);
@@ -121,9 +123,10 @@ export const createAsaasSubscription = action({
     description: v.optional(v.string()),
     externalReference: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     try {
-      const subscription = await asaasClient.createSubscription({
+      const client = await getAsaasClient(ctx);
+      const subscription = await client.createSubscription({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
         value: args.value,
@@ -145,6 +148,53 @@ export const createAsaasSubscription = action({
     } catch (error: any) {
       console.error("Asaas createSubscription error:", error.response?.data || error.message);
       throw new Error(`Failed to create Asaas subscription: ${JSON.stringify(error.response?.data || error.message)}`);
+    }
+  },
+});
+
+/**
+ * Test Asaas API connection
+ * Validates credentials by making a simple API call
+ */
+export const testAsaasConnection = action({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const client = await getAsaasClient(ctx);
+
+      // Make a simple API call to validate credentials
+      const response = await client.testConnection();
+
+      return {
+        success: true,
+        message: "Conexão com Asaas validada com sucesso",
+        status: response.status,
+      };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.errors?.[0]?.description || error.message || "Erro desconhecido";
+      const statusCode = error.response?.status;
+
+      if (statusCode === 401) {
+        return {
+          success: false,
+          message: "API Key inválida ou expirada",
+          error: errorMessage,
+        };
+      }
+
+      if (statusCode === 404) {
+        return {
+          success: false,
+          message: "URL base inválida ou endpoint não encontrado",
+          error: errorMessage,
+        };
+      }
+
+      return {
+        success: false,
+        message: "Erro ao conectar com Asaas",
+        error: errorMessage,
+      };
     }
   },
 });

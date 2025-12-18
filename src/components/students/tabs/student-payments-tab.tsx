@@ -1,7 +1,5 @@
-'use client';
-
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Id } from '@convex/_generated/dataModel';
 import { useAction, useQuery } from 'convex/react';
 import { Copy, CreditCard, Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -37,6 +35,20 @@ import {
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 
+type PaymentRow = {
+	_id: string;
+	createdAt: number;
+	dueDate?: string;
+	value: number;
+	status: string;
+	billingType: string;
+	description?: string;
+	installmentNumber?: number;
+	totalInstallments?: number;
+	boletoUrl?: string;
+	pixQrCode?: string;
+};
+
 interface StudentPaymentsTabProps {
 	studentId: Id<'students'>;
 }
@@ -46,10 +58,14 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 	// Fetch student to get Asaas ID
 	const student = useQuery(api.students.getById, { id: studentId });
+	const asaasCustomerId =
+		typeof (student as { asaasCustomerId?: unknown } | null)?.asaasCustomerId === 'string'
+			? (student as { asaasCustomerId: string }).asaasCustomerId
+			: undefined;
 
 	const payments = useQuery(api.asaas.getPaymentsByStudent, {
-		studentId: studentId,
-	});
+		studentId,
+	}) as Array<PaymentRow> | undefined;
 
 	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
 
@@ -64,7 +80,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	const [installments, setInstallments] = useState('1');
 
 	const handleCreatePayment = async () => {
-		if (!student?.asaasCustomerId) {
+		if (!asaasCustomerId) {
 			toast({
 				title: 'Erro',
 				description: 'Aluno não sincronizado com Asaas.',
@@ -76,12 +92,12 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 		setIsSubmitting(true);
 		try {
 			await createPayment({
-				studentId: studentId,
-				asaasCustomerId: student.asaasCustomerId,
-				billingType: billingType,
+				studentId,
+				asaasCustomerId,
+				billingType,
 				value: Number.parseFloat(amount),
-				dueDate: dueDate,
-				description: description,
+				dueDate,
+				description,
 				installmentCount:
 					Number.parseInt(installments, 10) > 1 ? Number.parseInt(installments, 10) : undefined,
 				installmentValue:
@@ -92,7 +108,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 			toast({ title: 'Sucesso', description: 'Cobrança gerada com sucesso!' });
 			setIsNewPaymentOpen(false);
-			// Reset form
+
 			setAmount('');
 			setDescription('');
 			setInstallments('1');
@@ -105,7 +121,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	};
 
 	const getStatusBadge = (status: string) => {
-		const map: any = {
+		const map: Record<string, string> = {
 			PENDING: 'bg-yellow-500',
 			RECEIVED: 'bg-green-500',
 			CONFIRMED: 'bg-green-600',
@@ -114,11 +130,9 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 			DELETED: 'bg-gray-400',
 			CANCELLED: 'bg-gray-500',
 		};
-		return (
-			<Badge className={`${map[status] || 'bg-gray-500'} hover:${map[status] || 'bg-gray-500'}`}>
-				{status}
-			</Badge>
-		);
+
+		const className = map[status] || 'bg-gray-500';
+		return <Badge className={`${className} hover:${className}`}>{status}</Badge>;
 	};
 
 	if (!student) {
@@ -139,7 +153,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 				<Dialog open={isNewPaymentOpen} onOpenChange={setIsNewPaymentOpen}>
 					<DialogTrigger asChild>
-						<Button disabled={!student.asaasCustomerId}>
+						<Button disabled={!asaasCustomerId}>
 							<Plus className="w-4 h-4 mr-2" />
 							Nova Cobrança
 						</Button>
@@ -154,7 +168,14 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 						<div className="grid gap-4 py-4">
 							<div className="grid grid-cols-4 items-center gap-4">
 								<Label className="text-right">Tipo</Label>
-								<Select value={billingType} onValueChange={(v: any) => setBillingType(v)}>
+								<Select
+									value={billingType}
+									onValueChange={(value: string) => {
+										if (value === 'PIX' || value === 'BOLETO' || value === 'CREDIT_CARD') {
+											setBillingType(value);
+										}
+									}}
+								>
 									<SelectTrigger className="col-span-3">
 										<SelectValue placeholder="Selecione" />
 									</SelectTrigger>
@@ -216,7 +237,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 				</Dialog>
 			</div>
 
-			{!student.asaasCustomerId && (
+			{!asaasCustomerId && (
 				<div className="bg-yellow-500/10 text-yellow-600 p-4 rounded-md border border-yellow-500/20 text-sm">
 					Atenção: Este aluno ainda não possui ID Asaas. A sincronização ocorre automaticamente ao
 					editar CPF/Email, ou contate o suporte.
@@ -251,7 +272,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 									</TableCell>
 								</TableRow>
 							) : (
-								payments.map((payment: Doc<'asaasPayments'>) => (
+								payments.map((payment) => (
 									<TableRow key={payment._id}>
 										<TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
 										<TableCell>{payment.description || '-'}</TableCell>
@@ -281,9 +302,19 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 													variant="ghost"
 													size="sm"
 													onClick={() => {
-														if (payment.pixQrCode) {
-															(navigator as any).clipboard.writeText(payment.pixQrCode);
-															toast({ title: 'Copia e Cola copiado!' });
+														const qr = payment.pixQrCode;
+														if (qr && navigator.clipboard) {
+															void navigator.clipboard.writeText(qr);
+															toast({
+																title: 'Sucesso',
+																description: 'Copia e Cola copiado!',
+															});
+														} else {
+															toast({
+																title: 'Erro',
+																description: 'Não foi possível acessar a área de transferência.',
+																variant: 'destructive',
+															});
 														}
 													}}
 												>

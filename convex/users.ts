@@ -164,3 +164,34 @@ export const deleteUser = mutation({
     })
   },
 })
+
+// Update own profile
+export const updateProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    email: v.optional(v.string()), // Usually managed by Clerk, but good to have sync
+    preferences: v.optional(v.any()), // JSON object for notifications, etc.
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique()
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    await ctx.db.patch(user._id, {
+      ...(args.name ? { name: args.name } : {}),
+      ...(args.avatar ? { avatar: args.avatar } : {}),
+      ...(args.email ? { email: args.email } : {}),
+      ...(args.preferences ? { preferences: args.preferences } : {}),
+      updatedAt: Date.now(),
+    })
+  },
+})

@@ -37,6 +37,7 @@ import type * as lib_validation from "../lib/validation.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
+import type * as settings from "../settings.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
 import type * as templates from "../templates.js";
@@ -78,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
   metrics: typeof metrics;
+  settings: typeof settings;
   students: typeof students;
   studentsImport: typeof studentsImport;
   templates: typeof templates;

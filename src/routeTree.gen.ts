@@ -29,7 +29,12 @@ import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedSettingsTemplatesRouteImport } from './routes/_authenticated/settings/templates'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings/team'
+import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings/security'
+import { Route as AuthenticatedSettingsRolesRouteImport } from './routes/_authenticated/settings/roles'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings/integrations'
+import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedReportsTeamRouteImport } from './routes/_authenticated/reports/team'
 import { Route as AuthenticatedReportsSalesRouteImport } from './routes/_authenticated/reports/sales'
 import { Route as AuthenticatedMarketingNovaRouteImport } from './routes/_authenticated/marketing/nova'
@@ -143,10 +148,40 @@ const AuthenticatedSettingsTeamRoute =
     path: '/team',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsSecurityRoute =
+  AuthenticatedSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsRolesRoute =
+  AuthenticatedSettingsRolesRouteImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/integrations',
     path: '/integrations',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsAppearanceRoute =
+  AuthenticatedSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
 const AuthenticatedReportsTeamRoute =
@@ -232,7 +267,12 @@ export interface FileRoutesByFullPath {
   '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -262,7 +302,12 @@ export interface FileRoutesByTo {
   '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -296,7 +341,12 @@ export interface FileRoutesById {
   '/_authenticated/marketing/nova': typeof AuthenticatedMarketingNovaRoute
   '/_authenticated/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/_authenticated/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
@@ -330,7 +380,12 @@ export interface FileRouteTypes {
     | '/marketing/nova'
     | '/reports/sales'
     | '/reports/team'
+    | '/settings/appearance'
     | '/settings/integrations'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
@@ -360,7 +415,12 @@ export interface FileRouteTypes {
     | '/marketing/nova'
     | '/reports/sales'
     | '/reports/team'
+    | '/settings/appearance'
     | '/settings/integrations'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
@@ -393,7 +453,12 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/nova'
     | '/_authenticated/reports/sales'
     | '/_authenticated/reports/team'
+    | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/settings/notifications'
+    | '/_authenticated/settings/profile'
+    | '/_authenticated/settings/roles'
+    | '/_authenticated/settings/security'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/templates'
     | '/_authenticated/students/$studentId'
@@ -557,11 +622,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsTeamRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/security': {
+      id: '/_authenticated/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/roles': {
+      id: '/_authenticated/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AuthenticatedSettingsRolesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
       path: '/integrations'
       fullPath: '/settings/integrations'
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/appearance': {
+      id: '/_authenticated/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/reports/team': {
@@ -720,14 +820,25 @@ const AuthenticatedReportsRouteWithChildren =
   AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
 
 interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
+  AuthenticatedSettingsRolesRoute: typeof AuthenticatedSettingsRolesRoute
+  AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsTemplatesRoute: typeof AuthenticatedSettingsTemplatesRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsRolesRoute: AuthenticatedSettingsRolesRoute,
+  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsTemplatesRoute: AuthenticatedSettingsTemplatesRoute,
 }

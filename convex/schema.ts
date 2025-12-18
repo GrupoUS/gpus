@@ -27,6 +27,9 @@ export default defineSchema({
     tempoMedioResposta: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
+
+    // User Preferences (Notifications, UI, etc)
+    preferences: v.optional(v.any()), // JSON object for flexibility
   })
     .index('by_clerk_id', ['clerkId'])
     .index('by_organization', ['organizationId'])
@@ -453,7 +456,8 @@ export default defineSchema({
       v.literal('ticket_aberto'),
       v.literal('ticket_resolvido'),
       v.literal('nota_adicionada'),
-      v.literal('atribuicao_alterada')
+      v.literal('atribuicao_alterada'),
+      v.literal('integracao_configurada')
     ),
 
     // Detalhes

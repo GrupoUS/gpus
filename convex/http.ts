@@ -186,7 +186,10 @@ http.route({
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
     const secret = request.headers.get('asaas-access-token')
-    const expectedSecret = process.env.ASAAS_WEBHOOK_SECRET
+
+    // Get webhook secret from database (with fallback to env var)
+    const { getAsaasWebhookSecret } = await import('./lib/asaas')
+    const expectedSecret = await getAsaasWebhookSecret(ctx) || process.env.ASAAS_WEBHOOK_SECRET
 
     if (!expectedSecret || secret !== expectedSecret) {
       console.error('Asaas webhook: Invalid or missing secret')
