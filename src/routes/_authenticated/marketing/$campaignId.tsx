@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import {
@@ -440,8 +440,7 @@ function CampaignDetailPage() {
 		if (!(campaign?.listIds && lists)) return [];
 		return campaign.listIds
 			.map(
-				(listId: Id<'emailLists'>) =>
-					lists.find((l: { _id: Id<'emailLists'> }) => l._id === listId)?.name,
+				(listId: Id<'emailLists'>) => lists.find((l: Doc<'emailLists'>) => l._id === listId)?.name,
 			)
 			.filter((name: string | undefined): name is string => !!name);
 	};

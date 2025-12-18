@@ -1010,4 +1010,55 @@ export default defineSchema({
     .index('by_enrollment', ['enrollmentId'])
     .index('by_student', ['studentId'])
     .index('by_asaas_subscription_id', ['asaasSubscriptionId']),
+
+  // ═══════════════════════════════════════════════════════
+  // ASAAS SYNC LOGS (Import/Sync History)
+  // ═══════════════════════════════════════════════════════
+  asaasSyncLogs: defineTable({
+    // Tipo de sincronização
+    syncType: v.union(
+      v.literal('customers'),
+      v.literal('payments'),
+      v.literal('subscriptions'),
+      v.literal('financial')
+    ),
+
+    // Status da sincronização
+    status: v.union(
+      v.literal('pending'),
+      v.literal('running'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+
+    // Timing
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+
+    // Contadores
+    recordsProcessed: v.number(),
+    recordsCreated: v.number(),
+    recordsUpdated: v.number(),
+    recordsFailed: v.number(),
+
+    // Erros (se houver)
+    errors: v.optional(v.array(v.string())),
+
+    // Filtros usados (opcional)
+    filters: v.optional(v.object({
+      startDate: v.optional(v.string()),
+      endDate: v.optional(v.string()),
+      status: v.optional(v.string()),
+    })),
+
+    // Quem iniciou
+    initiatedBy: v.string(), // clerkId
+
+    // Timestamp
+    createdAt: v.number(),
+  })
+    .index('by_sync_type', ['syncType'])
+    .index('by_status', ['status'])
+    .index('by_created', ['createdAt'])
+    .index('by_initiated_by', ['initiatedBy']),
 })

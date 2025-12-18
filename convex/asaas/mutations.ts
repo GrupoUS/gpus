@@ -151,3 +151,240 @@ export const updateStudentAsaasId = internalMutation({
     });
   },
 });
+
+// ═══════════════════════════════════════════════════════
+// IMPORT HELPER QUERIES (Internal)
+// ═══════════════════════════════════════════════════════
+
+import { internalQuery } from "../_generated/server";
+
+/**
+ * Get student by Asaas customer ID
+ */
+export const getStudentByAsaasId = internalQuery({
+  args: { asaasCustomerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("students")
+      .filter((q) => q.eq(q.field("asaasCustomerId"), args.asaasCustomerId))
+      .first();
+  },
+});
+
+/**
+ * Get payment by Asaas payment ID
+ */
+export const getPaymentByAsaasId = internalQuery({
+  args: { asaasPaymentId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_asaas_payment_id", (q) => q.eq("asaasPaymentId", args.asaasPaymentId))
+      .first();
+  },
+});
+
+/**
+ * Get subscription by Asaas subscription ID
+ */
+export const getSubscriptionByAsaasId = internalQuery({
+  args: { asaasSubscriptionId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("asaasSubscriptions")
+      .withIndex("by_asaas_subscription_id", (q) => q.eq("asaasSubscriptionId", args.asaasSubscriptionId))
+      .first();
+  },
+});
+
+// ═══════════════════════════════════════════════════════
+// IMPORT MUTATIONS (Internal)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Create a new student from Asaas customer data
+ */
+export const createStudentFromAsaas = internalMutation({
+  args: {
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.string(),
+    cpf: v.optional(v.string()),
+    asaasCustomerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    return await ctx.db.insert("students", {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      cpf: args.cpf,
+      asaasCustomerId: args.asaasCustomerId,
+      asaasCustomerSyncedAt: now,
+      status: "ativo",
+      // Required fields with sensible defaults for Asaas imports
+      profession: "Não informado",
+      hasClinic: false,
+      churnRisk: "baixo",
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+/**
+ * Update student from Asaas customer data
+ */
+export const updateStudentFromAsaas = internalMutation({
+  args: {
+    studentId: v.id("students"),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    cpf: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { studentId, ...updates } = args;
+    const patch: Record<string, unknown> = { updatedAt: Date.now() };
+
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.email !== undefined) patch.email = updates.email;
+    if (updates.phone !== undefined) patch.phone = updates.phone;
+    if (updates.cpf !== undefined) patch.cpf = updates.cpf;
+
+    await ctx.db.patch(studentId, patch);
+  },
+});
+
+/**
+ * Create a new payment record from Asaas data
+ */
+export const createPaymentFromAsaas = internalMutation({
+  args: {
+    studentId: v.id("students"),
+    asaasPaymentId: v.string(),
+    asaasCustomerId: v.string(),
+    value: v.number(),
+    netValue: v.optional(v.number()),
+    status: v.string(),
+    dueDate: v.number(),
+    billingType: v.union(
+      v.literal("BOLETO"),
+      v.literal("PIX"),
+      v.literal("CREDIT_CARD"),
+      v.literal("DEBIT_CARD"),
+      v.literal("UNDEFINED")
+    ),
+    description: v.optional(v.string()),
+    boletoUrl: v.optional(v.string()),
+    confirmedDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    return await ctx.db.insert("asaasPayments", {
+      studentId: args.studentId,
+      asaasPaymentId: args.asaasPaymentId,
+      asaasCustomerId: args.asaasCustomerId,
+      value: args.value,
+      netValue: args.netValue,
+      status: args.status as any, // Trust the status from Asaas
+      dueDate: args.dueDate,
+      billingType: args.billingType,
+      description: args.description,
+      boletoUrl: args.boletoUrl,
+      confirmedDate: args.confirmedDate,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+/**
+ * Update payment from Asaas data
+ */
+export const updatePaymentFromAsaas = internalMutation({
+  args: {
+    paymentId: v.id("asaasPayments"),
+    status: v.optional(v.string()),
+    netValue: v.optional(v.number()),
+    confirmedDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { paymentId, ...updates } = args;
+    const patch: Record<string, unknown> = { updatedAt: Date.now() };
+
+    if (updates.status !== undefined) patch.status = updates.status;
+    if (updates.netValue !== undefined) patch.netValue = updates.netValue;
+    if (updates.confirmedDate !== undefined) patch.confirmedDate = updates.confirmedDate;
+
+    await ctx.db.patch(paymentId, patch);
+  },
+});
+
+/**
+ * Create a new subscription record from Asaas data
+ */
+export const createSubscriptionFromAsaas = internalMutation({
+  args: {
+    studentId: v.id("students"),
+    asaasSubscriptionId: v.string(),
+    asaasCustomerId: v.string(),
+    value: v.number(),
+    cycle: v.union(
+      v.literal("WEEKLY"),
+      v.literal("BIWEEKLY"),
+      v.literal("MONTHLY"),
+      v.literal("QUARTERLY"),
+      v.literal("SEMIANNUALLY"),
+      v.literal("YEARLY")
+    ),
+    status: v.union(
+      v.literal("ACTIVE"),
+      v.literal("INACTIVE"),
+      v.literal("CANCELLED"),
+      v.literal("EXPIRED")
+    ),
+    nextDueDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    return await ctx.db.insert("asaasSubscriptions", {
+      studentId: args.studentId,
+      asaasSubscriptionId: args.asaasSubscriptionId,
+      asaasCustomerId: args.asaasCustomerId,
+      value: args.value,
+      cycle: args.cycle,
+      status: args.status,
+      nextDueDate: args.nextDueDate,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+/**
+ * Update subscription from Asaas data
+ */
+export const updateSubscriptionFromAsaas = internalMutation({
+  args: {
+    subscriptionId: v.id("asaasSubscriptions"),
+    status: v.optional(v.union(
+      v.literal("ACTIVE"),
+      v.literal("INACTIVE"),
+      v.literal("CANCELLED"),
+      v.literal("EXPIRED")
+    )),
+    value: v.optional(v.number()),
+    nextDueDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { subscriptionId, ...updates } = args;
+    const patch: Record<string, unknown> = { updatedAt: Date.now() };
+
+    if (updates.status !== undefined) patch.status = updates.status;
+    if (updates.value !== undefined) patch.value = updates.value;
+    if (updates.nextDueDate !== undefined) patch.nextDueDate = updates.nextDueDate;
+
+    await ctx.db.patch(subscriptionId, patch);
+  },
+});

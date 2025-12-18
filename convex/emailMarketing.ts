@@ -23,22 +23,9 @@ import { internal } from './_generated/api'
 // Type assertion helper for internal functions during code generation bootstrap
 // Once Convex generates types for this file, these can be removed
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const internalEmailMarketing = (internal as any).emailMarketing as {
-	getContactInternal: any
-	getListInternal: any
-	getCampaignInternal: any
-	getTemplateInternal: any
-	updateContactBrevoId: any
-	updateListBrevoId: any
-	updateCampaignBrevoId: any
-	updateCampaignStatus: any
-	updateCampaignStats: any
-	updateTemplateBrevoId: any
-	recordEmailEvent: any
-	syncCampaignToBrevoInternal: any
-	getContactByEmailInternal: any
-	updateContactSubscriptionInternal: any
-}
+const _internalAny: any = internal
+// biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
+const internalEmailMarketing: Record<string, any> = _internalAny.emailMarketing
 import { getOrganizationId, requireAuth, getClerkId } from './lib/auth'
 import {
 	brevoCampaigns,

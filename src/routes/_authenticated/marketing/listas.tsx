@@ -62,7 +62,7 @@ function ListsPage() {
 	// Filter lists by search query
 	const filteredLists =
 		lists?.filter(
-			(list: { name: string; description?: string }) =>
+			(list: Doc<'emailLists'>) =>
 				list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				(list.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 		) ?? [];
@@ -196,10 +196,7 @@ function ListsPage() {
 					</span>
 					<span>
 						Total:{' '}
-						{lists.reduce(
-							(sum: number, l: { contactCount?: number }) => sum + (l.contactCount ?? 0),
-							0,
-						)}{' '}
+						{lists.reduce((sum: number, l: Doc<'emailLists'>) => sum + (l.contactCount ?? 0), 0)}{' '}
 						contatos
 					</span>
 				</div>

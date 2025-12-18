@@ -213,6 +213,53 @@ export interface AsaasApiError {
 	message?: string
 }
 
+/**
+ * Customer list response
+ */
+export interface AsaasCustomerListResponse {
+	object: 'list'
+	hasMore: boolean
+	totalCount: number
+	limit: number
+	offset: number
+	data: AsaasCustomerResponse[]
+}
+
+/**
+ * Subscription list response
+ */
+export interface AsaasSubscriptionListResponse {
+	object: 'list'
+	hasMore: boolean
+	totalCount: number
+	limit: number
+	offset: number
+	data: AsaasSubscriptionResponse[]
+}
+
+/**
+ * Financial statistics response from Asaas
+ */
+export interface AsaasFinancialStatistics {
+	incomeValue: number
+	pendingValue: number
+	overdueValue: number
+	receivedValue: number
+}
+
+/**
+ * Financial summary response (custom aggregated)
+ */
+export interface AsaasFinancialSummaryResponse {
+	totalReceived: number
+	totalPending: number
+	totalOverdue: number
+	totalValue: number
+	paymentsCount: number
+	periodStart?: string
+	periodEnd?: string
+}
+
 // ═══════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════
@@ -568,6 +615,137 @@ export class AsaasClient {
 			method: 'POST',
 			body: payload,
 		})
+	}
+
+	/**
+	 * List all customers with pagination
+	 */
+	public async listAllCustomers(params?: {
+		name?: string
+		email?: string
+		cpfCnpj?: string
+		offset?: number
+		limit?: number
+	}): Promise<AsaasCustomerListResponse> {
+		const queryParams = new URLSearchParams()
+		if (params?.name) queryParams.append('name', params.name)
+		if (params?.email) queryParams.append('email', params.email)
+		if (params?.cpfCnpj) queryParams.append('cpfCnpj', params.cpfCnpj)
+		if (params?.offset !== undefined) queryParams.append('offset', String(params.offset))
+		if (params?.limit !== undefined) queryParams.append('limit', String(params.limit))
+
+		const query = queryParams.toString()
+		return this.fetch<AsaasCustomerListResponse>(`/customers${query ? `?${query}` : ''}`)
+	}
+
+	/**
+	 * List all payments with filters
+	 */
+	public async listAllPayments(params?: {
+		customer?: string
+		status?: string
+		billingType?: string
+		dateCreatedGe?: string  // Date created >= (YYYY-MM-DD)
+		dateCreatedLe?: string  // Date created <= (YYYY-MM-DD)
+		paymentDateGe?: string  // Payment date >= (YYYY-MM-DD)
+		paymentDateLe?: string  // Payment date <= (YYYY-MM-DD)
+		offset?: number
+		limit?: number
+	}): Promise<AsaasPaymentListResponse> {
+		const queryParams = new URLSearchParams()
+		if (params?.customer) queryParams.append('customer', params.customer)
+		if (params?.status) queryParams.append('status', params.status)
+		if (params?.billingType) queryParams.append('billingType', params.billingType)
+		if (params?.dateCreatedGe) queryParams.append('dateCreated[ge]', params.dateCreatedGe)
+		if (params?.dateCreatedLe) queryParams.append('dateCreated[le]', params.dateCreatedLe)
+		if (params?.paymentDateGe) queryParams.append('paymentDate[ge]', params.paymentDateGe)
+		if (params?.paymentDateLe) queryParams.append('paymentDate[le]', params.paymentDateLe)
+		if (params?.offset !== undefined) queryParams.append('offset', String(params.offset))
+		if (params?.limit !== undefined) queryParams.append('limit', String(params.limit))
+
+		const query = queryParams.toString()
+		return this.fetch<AsaasPaymentListResponse>(`/payments${query ? `?${query}` : ''}`)
+	}
+
+	/**
+	 * Get a single payment by ID
+	 */
+	public async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
+		return this.fetch<AsaasPaymentResponse>(`/payments/${paymentId}`)
+	}
+
+	/**
+	 * List all subscriptions with filters
+	 */
+	public async listAllSubscriptions(params?: {
+		customer?: string
+		status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED'
+		offset?: number
+		limit?: number
+	}): Promise<AsaasSubscriptionListResponse> {
+		const queryParams = new URLSearchParams()
+		if (params?.customer) queryParams.append('customer', params.customer)
+		if (params?.status) queryParams.append('status', params.status)
+		if (params?.offset !== undefined) queryParams.append('offset', String(params.offset))
+		if (params?.limit !== undefined) queryParams.append('limit', String(params.limit))
+
+		const query = queryParams.toString()
+		return this.fetch<AsaasSubscriptionListResponse>(`/subscriptions${query ? `?${query}` : ''}`)
+	}
+
+	/**
+	 * Get financial summary for a period (aggregates payment data)
+	 * Note: Asaas doesn't have a direct financial summary endpoint,
+	 * so we aggregate from payments list
+	 */
+	public async getFinancialSummary(params?: {
+		startDate?: string  // YYYY-MM-DD
+		endDate?: string    // YYYY-MM-DD
+	}): Promise<AsaasFinancialSummaryResponse> {
+		// Fetch all payments in the period to aggregate
+		let offset = 0
+		const limit = 100
+		let hasMore = true
+		let totalReceived = 0
+		let totalPending = 0
+		let totalOverdue = 0
+		let totalValue = 0
+		let paymentsCount = 0
+
+		while (hasMore) {
+			const response = await this.listAllPayments({
+				dateCreatedGe: params?.startDate,
+				dateCreatedLe: params?.endDate,
+				offset,
+				limit,
+			})
+
+			for (const payment of response.data) {
+				paymentsCount++
+				totalValue += payment.value
+
+				if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED') {
+					totalReceived += payment.netValue || payment.value
+				} else if (payment.status === 'PENDING') {
+					totalPending += payment.value
+				} else if (payment.status === 'OVERDUE') {
+					totalOverdue += payment.value
+				}
+			}
+
+			hasMore = response.hasMore
+			offset += limit
+		}
+
+		return {
+			totalReceived,
+			totalPending,
+			totalOverdue,
+			totalValue,
+			paymentsCount,
+			periodStart: params?.startDate,
+			periodEnd: params?.endDate,
+		}
 	}
 }
 
