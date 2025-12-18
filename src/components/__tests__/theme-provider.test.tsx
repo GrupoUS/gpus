@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { act, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, render, renderHook, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 import { ThemeProvider, useTheme } from '../theme-provider';
 
@@ -20,9 +20,9 @@ const TestComponent = () => {
 };
 
 describe('ThemeProvider', () => {
-	beforeEach(() => {
-		localStorage.clear();
-		document.documentElement.classList.remove('light', 'dark');
+	it('should use default theme when no storage value exists', () => {
+		const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider });
+		expect(result.current.theme).toBe('system');
 	});
 
 	it('uses default theme (system) if no storage', () => {

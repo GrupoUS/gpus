@@ -1,5 +1,6 @@
 import { GraduationCap } from 'lucide-react';
 
+import { AsaasImportButton } from '@/components/students/asaas-import-button';
 import { StudentForm } from '@/components/students/student-form';
 import { StudentImportDialog } from '@/components/students/student-import-dialog';
 
@@ -14,6 +15,7 @@ export function StudentHeader() {
 				<p className="text-muted-foreground">Gerencie seus alunos e matrículas</p>
 			</div>
 			<div className="flex items-center gap-2">
+				<AsaasImportButton />
 				<StudentImportDialog />
 				<StudentForm />
 			</div>
