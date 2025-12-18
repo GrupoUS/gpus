@@ -2,7 +2,8 @@ import { Link } from '@tanstack/react-router';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
+import { RippleButton } from '@/components/ui/ripple-button';
 import { cn } from '@/lib/utils';
 
 export const FloatingNavbar = ({ className }: { className?: string }) => {
@@ -40,23 +41,24 @@ export const FloatingNavbar = ({ className }: { className?: string }) => {
 					duration: 0.2,
 				}}
 				className={cn(
-					'flex max-w-fit fixed top-10 inset-x-0 mx-auto border border-primary/20 rounded-full bg-background/80 backdrop-blur-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] z-5000 pr-2 pl-4 py-2  items-center justify-between space-x-14',
+					'flex max-w-fit fixed top-10 inset-x-0 mx-auto rounded-full z-5000 items-center justify-center',
 					className,
 				)}
 			>
-				<Link to="/" className="flex items-center space-x-2 h-10">
-					<img src="/grupo-us-logo.png" alt="Grupo US Logo" className="h-8 w-auto object-contain" />
-				</Link>
-
-				<div className="flex items-center space-x-4">
-					<Button
-						asChild
-						size="sm"
-						className="rounded-full bg-black dark:bg-white text-white dark:text-black px-6 hover:bg-black/90 dark:hover:bg-white/90"
+				<Link to="/sign-in">
+					<HoverBorderGradient
+						containerClassName="rounded-full"
+						as="div"
+						className="bg-background text-foreground flex items-center space-x-2"
 					>
-						<Link to="/sign-in">Login</Link>
-					</Button>
-				</div>
+						<RippleButton
+							className="bg-transparent hover:bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-amber-400 font-bold px-8 py-2 text-lg hover:scale-105 transition-transform"
+							rippleColor="rgba(217, 119, 6, 0.2)"
+						>
+							Login
+						</RippleButton>
+					</HoverBorderGradient>
+				</Link>
 			</motion.nav>
 		</AnimatePresence>
 	);

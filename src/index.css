@@ -204,22 +204,22 @@ body,
 
 @layer utilities {
   .bg-mesh {
-    background-image: 
+    background-image:
       radial-gradient(at 40% 20%, hsl(var(--primary) / 0.1) 0px, transparent 50%),
       radial-gradient(at 80% 0%, hsl(var(--accent) / 0.1) 0px, transparent 50%),
       radial-gradient(at 0% 50%, hsl(var(--primary) / 0.05) 0px, transparent 50%);
   }
-  
+
   .glass-card {
     background: hsl(var(--card) / 0.8);
     backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--border) / 0.5);
   }
-  
+
   .bg-noise {
     position: relative;
   }
-  
+
   .bg-noise::before {
     content: '';
     position: absolute;
@@ -236,5 +236,22 @@ body,
 ::view-transition-old(root),
 ::view-transition-new(root) {
   mix-blend-mode: normal;
+}
+
+@layer utilities {
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .animate-ripple {
+    animation: ripple 0.6s linear;
+  }
 }
 

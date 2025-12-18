@@ -104,7 +104,7 @@ function DraggableLeadCard({
 			className="relative rounded-lg touch-none will-change-transform"
 		>
 			<div
-				{/* biome-ignore lint/a11y/useSemanticElements: wrapper cannot be <button> because LeadCard contains inner buttons */}
+				// biome-ignore lint/a11y/useSemanticElements: wrapper cannot be <button> because LeadCard contains inner buttons
 				role="button"
 				tabIndex={0}
 				onClick={(event) => {
