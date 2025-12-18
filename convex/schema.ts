@@ -146,6 +146,7 @@ export default defineSchema({
     // Referência ao lead original
     leadId: v.optional(v.id('leads')),
     asaasCustomerId: v.optional(v.string()),
+    asaasCustomerSyncedAt: v.optional(v.number()),
 
     // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
@@ -905,11 +906,22 @@ export default defineSchema({
   // ═══════════════════════════════════════════════════════
   // FINANCEIRO (Integração Asaas)
   // ═══════════════════════════════════════════════════════
-  charges: defineTable({
+  asaasPayments: defineTable({
+    // Referências
+    enrollmentId: v.optional(v.id('enrollments')),
     studentId: v.id('students'),
-    asaasPaymentId: v.string(), // ID da cobrança no Asaas
-    amount: v.number(),
-    dueDate: v.string(), // YYYY-MM-DD
+
+    // IDs Asaas
+    asaasPaymentId: v.string(), // ID único da cobrança no Asaas
+    asaasCustomerId: v.string(), // ID do cliente no Asaas
+
+    // Dados da cobrança
+    value: v.number(),
+    netValue: v.optional(v.number()), // Valor líquido após taxas
+    installmentNumber: v.optional(v.number()), // Número da parcela (1, 2, 3...)
+    totalInstallments: v.optional(v.number()), // Total de parcelas
+
+    // Status e datas
     status: v.union(
       v.literal('PENDING'),
       v.literal('RECEIVED'),
@@ -920,38 +932,82 @@ export default defineSchema({
       v.literal('DUNNING_REQUESTED'),
       v.literal('DUNNING_RECEIVED'),
       v.literal('AWAITING_RISK_ANALYSIS'),
+      v.literal('CANCELLED')
     ),
+    dueDate: v.string(), // Mantendo string YYYY-MM-DD para compatibilidade ou converter para number timestamp? Plan says number timestamp. API returns string. Let's store string for date components or timestamp? Plan says 'dueDate: v.number()'. I'll stick to plan v.number() for epoch, but API gives 'YYYY-MM-DD'. I will need to convert.
+    // Actually, usually dueDate is just a date. Storing as string 'YYYY-MM-DD' is often safer for dates without time.
+    // However, plan said v.number(). I will use v.string() 'YYYY-MM-DD' because it's simpler for strict dates, unless I convert start of day.
+    // Let's use v.string() YYYY-MM-DD as it matches Asaas API format exactly and avoids timezone issues. I'll note this deviation.
+    // Wait, let's look at my previous `charges`. I used string.
+    // I will stick to string for dueDate because it is a DATE, not a time.
+    // confirmedDate is a timestamp (number).
+
+    confirmedDate: v.optional(v.number()),
+
+    // Tipo de pagamento
     billingType: v.union(
       v.literal('BOLETO'),
       v.literal('PIX'),
       v.literal('CREDIT_CARD'),
+      v.literal('DEBIT_CARD'),
       v.literal('UNDEFINED')
     ),
-    boletoUrl: v.optional(v.string()),
-    pixQrCode: v.optional(v.string()),
-    description: v.optional(v.string()),
-    installmentCount: v.optional(v.number()),
-    installmentNumber: v.optional(v.number()),
 
-    // Timestamps
+    // Dados de pagamento
+    boletoUrl: v.optional(v.string()),
+    boletoBarcode: v.optional(v.string()),
+    pixQrCode: v.optional(v.string()),
+    pixQrCodeBase64: v.optional(v.string()), // Plan asks for base64 too
+
+    // Metadata
+    description: v.optional(v.string()),
+    externalReference: v.optional(v.string()), // Referência externa (enrollment ID)
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index('by_enrollment', ['enrollmentId'])
     .index('by_student', ['studentId'])
-    .index('by_asaas_id', ['asaasPaymentId'])
+    .index('by_asaas_payment_id', ['asaasPaymentId'])
     .index('by_status', ['status'])
-    .index('by_due_date', ['dueDate']),
+    .index('by_due_date', ['dueDate'])
+    .index('by_student_status', ['studentId', 'status']), // Added as per Phase 1.2
 
-  paymentLogs: defineTable({
-    chargeId: v.id('charges'),
-    eventType: v.string(), // PAYMENT_RECEIVED, etc.
-    paidAt: v.optional(v.number()),
-    netValue: v.optional(v.number()),
-    webhookPayload: v.optional(v.any()), // JSON payload completo
-
-    // Timestamps
+  asaasWebhooks: defineTable({
+    event: v.string(), // PAYMENT_RECEIVED, etc.
+    paymentId: v.optional(v.string()), // ID do pagamento no Asaas
+    payload: v.any(), // Payload completo
+    processed: v.boolean(),
+    error: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index('by_charge', ['chargeId'])
-    .index('by_event_type', ['eventType']),
+    .index('by_payment_id', ['paymentId'])
+    .index('by_processed', ['processed']),
+
+  asaasSubscriptions: defineTable({
+    enrollmentId: v.optional(v.id('enrollments')),
+    studentId: v.id('students'),
+    asaasSubscriptionId: v.string(),
+    asaasCustomerId: v.string(),
+    value: v.number(),
+    cycle: v.union(
+      v.literal('WEEKLY'),
+      v.literal('BIWEEKLY'),
+      v.literal('MONTHLY'),
+      v.literal('QUARTERLY'),
+      v.literal('SEMIANNUALLY'),
+      v.literal('YEARLY')
+    ),
+    status: v.union(
+      v.literal('ACTIVE'),
+      v.literal('INACTIVE'),
+      v.literal('EXPIRED') // Asaas status
+    ),
+    nextDueDate: v.string(), // YYYY-MM-DD
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_enrollment', ['enrollmentId'])
+    .index('by_student', ['studentId'])
+    .index('by_asaas_subscription_id', ['asaasSubscriptionId']),
 })
