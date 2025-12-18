@@ -25,7 +25,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
@@ -159,7 +165,7 @@ export function StudentDetail({
 											</Button>
 										</a>
 										<StudentForm
-											studentId={studentId}
+											studentId={studentId ?? undefined}
 											trigger={
 												<Button variant="outline" size="sm" className="gap-2">
 													<Edit className="h-4 w-4" />
