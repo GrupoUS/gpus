@@ -35,6 +35,7 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
+// @ts-expect-error - Type instantiation may be deep due to Convex internals
 type TeamPerformanceMember = FunctionReturnType<typeof api.metrics.getTeamPerformance>[number];
 type User = FunctionReturnType<typeof api.users.list>[number];
 
