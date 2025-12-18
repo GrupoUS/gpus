@@ -6,7 +6,7 @@ import { LeadCard } from './lead-card';
 import { LeadForm } from './lead-form';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea, ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cardVariants, dragTransition, layoutTransition, SPRING_SMOOTH } from '@/lib/motion-config';
 
 const stages = [
@@ -160,6 +160,7 @@ function KanbanColumn({
 	onReorder,
 	onDragToColumn,
 	columnRefs,
+	headerAction,
 	registerColumn,
 }: {
 	stage: (typeof stages)[0];
@@ -167,7 +168,6 @@ function KanbanColumn({
 	onLeadClick?: (id: string) => void;
 	onReorder: (stageId: string, newOrder: Lead[]) => void;
 	onDragToColumn: (leadId: string, newStage: string) => void;
-	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
 	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
 	registerColumn: (stageId: string, element: HTMLDivElement | null) => void;
 	headerAction?: React.ReactNode;
