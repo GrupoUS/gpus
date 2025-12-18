@@ -249,7 +249,8 @@ import { internalAction } from '../_generated/server'
 export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		const config = (await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)) as any
+		// @ts-expect-error - Type instantiation is excessively deep due to Convex internals
+		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
 
 		if (!config.enabled) {
 			console.log('Asaas auto-sync is disabled, skipping.')

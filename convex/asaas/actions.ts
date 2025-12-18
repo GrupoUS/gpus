@@ -213,6 +213,7 @@ export const importCustomersFromAsaas = action({
   },
   handler: async (ctx, args) => {
     const client = getAsaasClient();
+    const MAX_PAGES = 50; // Safety limit: 50 pages * 100 items = 5000 items per run
 
     // Create sync log
     // @ts-ignore - TypeScript has issues with deep type inference
@@ -230,8 +231,11 @@ export const importCustomersFromAsaas = action({
     let recordsFailed = 0;
     const errors: string[] = [];
 
+    let pageCount = 0;
+
     try {
-      while (hasMore) {
+      while (hasMore && pageCount < MAX_PAGES) {
+        pageCount++;
         const response = await client.listAllCustomers({ offset, limit });
 
         for (const customer of response.data) {
