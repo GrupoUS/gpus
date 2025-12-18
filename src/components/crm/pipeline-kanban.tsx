@@ -108,7 +108,11 @@ function DraggableLeadCard({
 				type="button"
 				aria-label="Abrir lead"
 				onClick={(event) => {
-					if (event.target instanceof HTMLElement && event.target.closest('button')) {
+					// Only prevent if clicking on nested WhatsApp button
+					if (
+						event.target instanceof HTMLElement &&
+						event.target.closest('button') !== event.currentTarget
+					) {
 						return;
 					}
 					if (!isDragging) {

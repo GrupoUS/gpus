@@ -1,0 +1,1378 @@
+$ biome check
+src\components\kokonutui\gemini.tsx:15:13 lint/correctness/useUniqueElementIds ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! id attribute should not be a static string literal. Generate unique IDs using useId().
+  
+    13 Ôöé         <title>{"Gemini"}</title>
+    14 Ôöé         <defs>
+  > 15 Ôöé             <linearGradient
+       Ôöé             ^^^^^^^^^^^^^^^
+  > 16 Ôöé                 id="lobe-icons-gemini-fill"
+        ...
+  > 20 Ôöé                 y2="30.395%"
+  > 21 Ôöé             >
+       Ôöé             ^
+    22 Ôöé                 <stop offset="0%" stopColor="#1C7DFF" />
+    23 Ôöé                 <stop offset="52.021%" stopColor="#1C69FF" />
+  
+  i In React, if you hardcode IDs and use the component multiple times, it can lead to duplicate IDs in the DOM. Instead, generate unique IDs using useId().
+  
+
+src\components\__tests__\theme-provider.test.tsx:40:4 parse ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Expected corresponding JSX closing tag for 'ThemeProvider'.
+  
+    38 Ôöé 		localStorage.setItem(STORAGE_KEY, 'light');
+    39 Ôöé 		render(
+  > 40 Ôöé 			<ThemeProvider>
+       Ôöé 			^^^^^^^^^^^^^^^
+    41 Ôöé 				<TestComponent />
+    42 Ôöé 			</Typography>
+  
+  i Opening tag
+  
+    38 Ôöé 		localStorage.setItem(STORAGE_KEY, 'light');
+    39 Ôöé 		render(
+  > 40 Ôöé 			<ThemeProvider>
+       Ôöé 			^^^^^^^^^^^^^^^
+    41 Ôöé 				<TestComponent />
+    42 Ôöé 			</Typography>
+  
+  i closing tag
+  
+    40 Ôöé 			<ThemeProvider>
+    41 Ôöé 				<TestComponent />
+  > 42 Ôöé 			</Typography>
+       Ôöé 			^^^^^^^^^^^^^
+    43 Ôöé 		);
+    44 Ôöé 		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+  
+
+src\components\__tests__\theme-provider.test.tsx:42:6 lint/correctness/noUndeclaredVariables ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The Typography variable is undeclared.
+  
+    40 Ôöé 			<ThemeProvider>
+    41 Ôöé 				<TestComponent />
+  > 42 Ôöé 			</Typography>
+       Ôöé 			  ^^^^^^^^^^
+    43 Ôöé 		);
+    44 Ôöé 		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+  
+  i By default, Biome recognizes browser and Node.js globals.
+    You can ignore more globals using the javascript.globals configuration.
+  
+
+src\components\__tests__\theme-provider.test.tsx:40:4 parse ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Expected corresponding JSX closing tag for 'ThemeProvider'.
+  
+    38 Ôöé 		localStorage.setItem(STORAGE_KEY, 'light');
+    39 Ôöé 		render(
+  > 40 Ôöé 			<ThemeProvider>
+       Ôöé 			^^^^^^^^^^^^^^^
+    41 Ôöé 				<TestComponent />
+    42 Ôöé 			</Typography>
+  
+  i Opening tag
+  
+    38 Ôöé 		localStorage.setItem(STORAGE_KEY, 'light');
+    39 Ôöé 		render(
+  > 40 Ôöé 			<ThemeProvider>
+       Ôöé 			^^^^^^^^^^^^^^^
+    41 Ôöé 				<TestComponent />
+    42 Ôöé 			</Typography>
+  
+  i closing tag
+  
+    40 Ôöé 			<ThemeProvider>
+    41 Ôöé 				<TestComponent />
+  > 42 Ôöé 			</Typography>
+       Ôöé 			^^^^^^^^^^^^^
+    43 Ôöé 		);
+    44 Ôöé 		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+  
+
+src\components\__tests__\theme-provider.test.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Code formatting aborted due to parsing errors. To format code with errors, enable the 'formatter.formatWithErrors' option.
+  
+
+src\components\asaas\auto-sync-settings.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+      1     Ôöé - import┬À{┬ÀuseMutation,┬ÀuseQuery┬À}┬Àfrom┬À'convex/react';ÔÉì
+      2     Ôöé - import┬À{┬ÀLoader2,┬ÀRefreshCw┬À}┬Àfrom┬À'lucide-react';ÔÉì
+      3     Ôöé - import┬À{┬ÀuseEffect,┬ÀuseId,┬ÀuseState┬À}┬Àfrom┬À'react';ÔÉì
+      4     Ôöé - import┬À{┬Àtoast┬À}┬Àfrom┬À'sonner';ÔÉì
+      5     Ôöé - ÔÉì
+      6     Ôöé - import┬À{┬Àapi┬À}┬Àfrom┬À'../../../convex/_generated/api';ÔÉì
+      7     Ôöé - import┬À{┬ÀButton┬À}┬Àfrom┬À'@/components/ui/button';ÔÉì
+      8     Ôöé - import┬À{ÔÉì
+      9     Ôöé - ÔåÆ Card,ÔÉì
+     10     Ôöé - ÔåÆ CardContent,ÔÉì
+     11     Ôöé - ÔåÆ CardDescription,ÔÉì
+     12     Ôöé - ÔåÆ CardFooter,ÔÉì
+     13     Ôöé - ÔåÆ CardHeader,ÔÉì
+     14     Ôöé - ÔåÆ CardTitle,ÔÉì
+     15     Ôöé - }┬Àfrom┬À'@/components/ui/card';ÔÉì
+     16     Ôöé - import┬À{┬ÀInput┬À}┬Àfrom┬À'@/components/ui/input';ÔÉì
+     17     Ôöé - import┬À{┬ÀLabel┬À}┬Àfrom┬À'@/components/ui/label';ÔÉì
+     18     Ôöé - import┬À{┬ÀSwitch┬À}┬Àfrom┬À'@/components/ui/switch';ÔÉì
+     19     Ôöé - ÔÉì
+     20     Ôöé - export┬Àfunction┬ÀAutoSyncSettings()┬À{ÔÉì
+     21     Ôöé - ÔåÆ const┬Àconfig┬À=┬ÀuseQuery(api.asaas.sync.getAutoSyncConfig);ÔÉì
+     22     Ôöé - ÔåÆ const┬ÀsaveConfig┬À=┬ÀuseMutation(api.asaas.sync.saveAutoSyncConfig);ÔÉì
+     23     Ôöé - ÔåÆ const┬ÀlastSyncLogs┬À=┬ÀuseQuery(api.asaas.sync.getSyncLogs,┬À{ÔÉì
+     24     Ôöé - ÔåÆ ÔåÆ syncType:┬À'customers',ÔÉì
+     25     Ôöé - ÔåÆ ÔåÆ limit:┬À1,ÔÉì
+     26     Ôöé - ÔåÆ });ÔÉì
+     27     Ôöé - ÔÉì
+     28     Ôöé - ÔåÆ const┬À[enabled,┬ÀsetEnabled]┬À=┬ÀuseState(false);ÔÉì
+     29     Ôöé - ÔåÆ const┬À[intervalHours,┬ÀsetIntervalHours]┬À=┬ÀuseState(1);ÔÉì
+     30     Ôöé - ÔåÆ const┬À[updateExisting,┬ÀsetUpdateExisting]┬À=┬ÀuseState(true);ÔÉì
+     31     Ôöé - ÔåÆ const┬À[isSaving,┬ÀsetIsSaving]┬À=┬ÀuseState(false);ÔÉì
+     32     Ôöé - ÔÉì
+     33     Ôöé - ÔåÆ //┬ÀGenerate┬Àunique┬ÀIDs┬Àfor┬Àform┬ÀelementsÔÉì
+     34     Ôöé - ÔåÆ const┬ÀautoSyncId┬À=┬ÀuseId();ÔÉì
+     35     Ôöé - ÔåÆ const┬ÀintervalId┬À=┬ÀuseId();ÔÉì
+     36     Ôöé - ÔåÆ const┬ÀupdateExistingId┬À=┬ÀuseId();ÔÉì
+     37     Ôöé - ÔÉì
+     38     Ôöé - ÔåÆ //┬ÀInitialize┬Àstate┬Àfrom┬ÀconfigÔÉì
+     39     Ôöé - ÔåÆ useEffect(()┬À=>┬À{ÔÉì
+     40     Ôöé - ÔåÆ ÔåÆ if┬À(config)┬À{ÔÉì
+     41     Ôöé - ÔåÆ ÔåÆ ÔåÆ setEnabled(config.enabled);ÔÉì
+     42     Ôöé - ÔåÆ ÔåÆ ÔåÆ setIntervalHours(config.intervalHours);ÔÉì
+     43     Ôöé - ÔåÆ ÔåÆ ÔåÆ setUpdateExisting(config.updateExisting);ÔÉì
+     44     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+     45     Ôöé - ÔåÆ },┬À[config]);ÔÉì
+     46     Ôöé - ÔÉì
+     47     Ôöé - ÔåÆ const┬ÀhandleSave┬À=┬Àasync┬À()┬À=>┬À{ÔÉì
+     48     Ôöé - ÔåÆ ÔåÆ setIsSaving(true);ÔÉì
+     49     Ôöé - ÔåÆ ÔåÆ try┬À{ÔÉì
+     50     Ôöé - ÔåÆ ÔåÆ ÔåÆ await┬ÀsaveConfig({ÔÉì
+     51     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ enabled,ÔÉì
+     52     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ intervalHours:┬ÀNumber(intervalHours),ÔÉì
+     53     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ updateExisting,ÔÉì
+     54     Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+     55     Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.success('Configura├º├Áes┬Àde┬Àsincroniza├º├úo┬Àsalvas');ÔÉì
+     56     Ôöé - ÔåÆ ÔåÆ }┬Àcatch┬À{ÔÉì
+     57     Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.error('Erro┬Àao┬Àsalvar┬Àconfigura├º├Áes');ÔÉì
+     58     Ôöé - ÔåÆ ÔåÆ }┬Àfinally┬À{ÔÉì
+     59     Ôöé - ÔåÆ ÔåÆ ÔåÆ setIsSaving(false);ÔÉì
+     60     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+     61     Ôöé - ÔåÆ };ÔÉì
+     62     Ôöé - ÔÉì
+     63     Ôöé - ÔåÆ const┬ÀlastSync┬À=┬ÀlastSyncLogs?.[0];ÔÉì
+     64     Ôöé - ÔÉì
+     65     Ôöé - ÔåÆ if┬À(config┬À===┬Àundefined)┬À{ÔÉì
+     66     Ôöé - ÔåÆ ÔåÆ return┬À(ÔÉì
+     67     Ôöé - ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-center┬Àp-8">ÔÉì
+     68     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Loader2┬ÀclassName="h-6┬Àw-6┬Àanimate-spin┬Àtext-muted-foreground"┬À/>ÔÉì
+     69     Ôöé - ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+     70     Ôöé - ÔåÆ ÔåÆ );ÔÉì
+     71     Ôöé - ÔåÆ }ÔÉì
+     72     Ôöé - ÔÉì
+     73     Ôöé - ÔåÆ return┬À(ÔÉì
+     74     Ôöé - ÔåÆ ÔåÆ <Card>ÔÉì
+     75     Ôöé - ÔåÆ ÔåÆ ÔåÆ <CardHeader>ÔÉì
+     76     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardTitle┬ÀclassName="flex┬Àitems-center┬Àgap-2">ÔÉì
+     77     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <RefreshCw┬ÀclassName="h-5┬Àw-5"┬À/>ÔÉì
+     78     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ Sincroniza├º├úo┬ÀAutom├íticaÔÉì
+     79     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </CardTitle>ÔÉì
+     80     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardDescription>Configure┬Àa┬Àimporta├º├úo┬Àautom├ítica┬Àde┬Àalunos┬Àdo┬ÀAsaas.</CardDescription>ÔÉì
+     81     Ôöé - ÔåÆ ÔåÆ ÔåÆ </CardHeader>ÔÉì
+     82     Ôöé - ÔåÆ ÔåÆ ÔåÆ <CardContent┬ÀclassName="space-y-6">ÔÉì
+     83     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-between┬Àspace-x-2">ÔÉì
+     84     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Label┬ÀhtmlFor={autoSyncId}┬ÀclassName="flex┬Àflex-col┬Àspace-y-1">ÔÉì
+     85     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span>Habilitar┬ÀSincroniza├º├úo┬ÀAutom├ítica</span>ÔÉì
+     86     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName="font-normal┬Àtext-xs┬Àtext-muted-foreground">ÔÉì
+     87     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ O┬Àsistema┬Àir├í┬Àbuscar┬Ànovos┬Àalunos┬Àautomaticamente.ÔÉì
+     88     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </span>ÔÉì
+     89     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Label>ÔÉì
+     90     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Switch┬Àid={autoSyncId}┬Àchecked={enabled}┬ÀonCheckedChange={setEnabled}┬À/>ÔÉì
+     91     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+     92     Ôöé - ÔÉì
+     93     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="grid┬Àgap-2">ÔÉì
+     94     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Label┬ÀhtmlFor={intervalId}>Intervalo┬À(horas)</Label>ÔÉì
+     95     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <InputÔÉì
+     96     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ id={intervalId}ÔÉì
+     97     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ type="number"ÔÉì
+     98     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ min="1"ÔÉì
+     99     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ max="24"ÔÉì
+    100     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ value={intervalHours}ÔÉì
+    101     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ onChange={(e)┬À=>┬ÀsetIntervalHours(Number(e.target.value))}ÔÉì
+    102     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ disabled={!enabled}ÔÉì
+    103     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="max-w-[120px]"ÔÉì
+    104     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ />ÔÉì
+    105     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p┬ÀclassName="text-xs┬Àtext-muted-foreground">ÔÉì
+    106     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ Defina┬Àa┬Àfrequ├¬ncia┬Àda┬Àsincroniza├º├úo┬À(m├¡nimo┬À1┬Àhora).ÔÉì
+    107     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </p>ÔÉì
+    108     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    109     Ôöé - ÔÉì
+    110     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-between┬Àspace-x-2">ÔÉì
+    111     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Label┬ÀhtmlFor={updateExistingId}┬ÀclassName="flex┬Àflex-col┬Àspace-y-1">ÔÉì
+    112     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span>Atualizar┬ÀAlunos┬ÀExistentes</span>ÔÉì
+    113     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName="font-normal┬Àtext-xs┬Àtext-muted-foreground">ÔÉì
+    114     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ Se┬Àativado,┬Àdados┬Àde┬Àalunos┬Àj├í┬Àcadastrados┬Àser├úo┬Àatualizados.ÔÉì
+    115     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </span>ÔÉì
+    116     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Label>ÔÉì
+    117     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <SwitchÔÉì
+    118     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ id={updateExistingId}ÔÉì
+    119     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ checked={updateExisting}ÔÉì
+    120     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ onCheckedChange={setUpdateExisting}ÔÉì
+    121     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ disabled={!enabled}ÔÉì
+    122     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ />ÔÉì
+    123     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    124     Ôöé - ÔÉì
+    125     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ {lastSync┬À&&┬À(ÔÉì
+    126     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="rounded-md┬Àbg-muted┬Àp-3┬Àtext-sm">ÔÉì
+    127     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p┬ÀclassName="font-medium┬Àmb-1">├Ültima┬Àsincroniza├º├úo:</p>ÔÉì
+    128     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àjustify-between┬Àitems-center┬Àtext-muted-foreground">ÔÉì
+    129     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span>{new┬ÀDate(lastSync.completedAt┬À||┬ÀlastSync.startedAt).toLocaleString()}</span>ÔÉì
+    130     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <spanÔÉì
+    131     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className={ÔÉì
+    132     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ lastSync.status┬À===┬À'completed'ÔÉì
+    133     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ?┬À'text-green-500'ÔÉì
+    134     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ :┬ÀlastSync.status┬À===┬À'failed'ÔÉì
+    135     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ?┬À'text-red-500'ÔÉì
+    136     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ :┬À'text-blue-500'ÔÉì
+    137     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }ÔÉì
+    138     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ >ÔÉì
+    139     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {lastSync.status┬À===┬À'completed'ÔÉì
+    140     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ?┬À'Sucesso'ÔÉì
+    141     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ :┬ÀlastSync.status┬À===┬À'failed'ÔÉì
+    142     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ?┬À'Falha'ÔÉì
+    143     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ :┬À'Em┬Àandamento'}ÔÉì
+    144     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </span>ÔÉì
+    145     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    146     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {lastSync.status┬À===┬À'completed'┬À&&┬À(ÔÉì
+    147     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p┬ÀclassName="text-xs┬Àmt-1┬Àtext-muted-foreground">ÔÉì
+    148     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {lastSync.recordsCreated┬À||┬À0}┬Àcriados,┬À{lastSync.recordsUpdated┬À||┬À0}┬ÀatualizadosÔÉì
+    149     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </p>ÔÉì
+    150     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )}ÔÉì
+  175 more lines truncated
+  
+
+src\components\asaas\sync-section.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+      1     Ôöé - /**ÔÉì
+      2     Ôöé - ┬À*┬ÀAsaas┬ÀSync┬ÀSection┬ÀComponentÔÉì
+      3     Ôöé - ┬À*ÔÉì
+      4     Ôöé - ┬À*┬ÀProvides┬ÀUI┬Àfor┬Àtriggering┬Àdata┬Àimport┬Àfrom┬ÀAsaas┬Àand┬Àviewing┬Àsync┬Àstatus.ÔÉì
+      5     Ôöé - ┬À*/ÔÉì
+      6     Ôöé - ÔÉì
+      7     Ôöé - import┬À{┬Àapi┬À}┬Àfrom┬À'@convex/_generated/api';ÔÉì
+      8     Ôöé - import┬À{┬ÀuseAction┬À}┬Àfrom┬À'convex/react';ÔÉì
+      9     Ôöé - import┬À{┬ÀCreditCard,┬ÀDollarSign,┬ÀDownload,┬ÀLoader2,┬ÀRepeat,┬ÀUsers┬À}┬Àfrom┬À'lucide-react';ÔÉì
+     10     Ôöé - import┬À{┬ÀuseState┬À}┬Àfrom┬À'react';ÔÉì
+     11     Ôöé - import┬À{┬Àtoast┬À}┬Àfrom┬À'sonner';ÔÉì
+     12     Ôöé - ÔÉì
+     13     Ôöé - import┬À{┬ÀSyncStatusIndicator┬À}┬Àfrom┬À'@/components/asaas/sync-status';ÔÉì
+     14     Ôöé - import┬À{┬ÀButton┬À}┬Àfrom┬À'@/components/ui/button';ÔÉì
+     15     Ôöé - import┬À{┬ÀSeparator┬À}┬Àfrom┬À'@/components/ui/separator';ÔÉì
+     16     Ôöé - ÔÉì
+     17     Ôöé - interface┬ÀAsaasSyncSectionProps┬À{ÔÉì
+     18     Ôöé - ÔåÆ userId:┬Àstring;ÔÉì
+     19     Ôöé - }ÔÉì
+     20     Ôöé - ÔÉì
+     21     Ôöé - type┬ÀSyncType┬À=┬À'customers'┬À|┬À'payments'┬À|┬À'subscriptions'┬À|┬À'financial';ÔÉì
+     22     Ôöé - ÔÉì
+     23     Ôöé - export┬Àfunction┬ÀAsaasSyncSection({┬ÀuserId┬À}:┬ÀAsaasSyncSectionProps)┬À{ÔÉì
+     24     Ôöé - ÔåÆ const┬À[syncingType,┬ÀsetSyncingType]┬À=┬ÀuseState<SyncType┬À|┬Ànull>(null);ÔÉì
+     25     Ôöé - ÔÉì
+     26     Ôöé - ÔåÆ const┬ÀimportCustomers┬À=┬ÀuseAction(api.asaas.actions.importCustomersFromAsaas);ÔÉì
+     27     Ôöé - ÔåÆ const┬ÀimportPayments┬À=┬ÀuseAction(api.asaas.actions.importPaymentsFromAsaas);ÔÉì
+     28     Ôöé - ÔåÆ const┬ÀimportSubscriptions┬À=┬ÀuseAction(api.asaas.actions.importSubscriptionsFromAsaas);ÔÉì
+     29     Ôöé - ÔåÆ const┬ÀsyncFinancial┬À=┬ÀuseAction(api.asaas.actions.syncFinancialDataFromAsaas);ÔÉì
+     30     Ôöé - ÔÉì
+     31     Ôöé - ÔåÆ const┬ÀhandleSync┬À=┬Àasync┬À(type:┬ÀSyncType)┬À=>┬À{ÔÉì
+     32     Ôöé - ÔåÆ ÔåÆ if┬À(!userId)┬À{ÔÉì
+     33     Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.error('Usu├írio┬Àn├úo┬Àidentificado');ÔÉì
+     34     Ôöé - ÔåÆ ÔåÆ ÔåÆ return;ÔÉì
+     35     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+     36     Ôöé - ÔÉì
+     37     Ôöé - ÔåÆ ÔåÆ setSyncingType(type);ÔÉì
+     38     Ôöé - ÔåÆ ÔåÆ try┬À{ÔÉì
+     39     Ôöé - ÔåÆ ÔåÆ ÔåÆ let┬Àresult:┬À{ÔÉì
+     40     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ recordsCreated?:┬Ànumber;ÔÉì
+     41     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ recordsUpdated?:┬Ànumber;ÔÉì
+     42     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ summary?:┬À{┬ÀpaymentsCount:┬Ànumber┬À};ÔÉì
+     43     Ôöé - ÔåÆ ÔåÆ ÔåÆ };ÔÉì
+     44     Ôöé - ÔåÆ ÔåÆ ÔåÆ switch┬À(type)┬À{ÔÉì
+     45     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ case┬À'customers':ÔÉì
+     46     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ result┬À=┬Àawait┬ÀimportCustomers({┬ÀinitiatedBy:┬ÀuserId┬À});ÔÉì
+     47     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success(ÔÉì
+     48     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ `Clientes┬Àimportados:┬À${result.recordsCreated}┬Àcriados,┬À${result.recordsUpdated}┬Àatualizados`,ÔÉì
+     49     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     50     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ break;ÔÉì
+     51     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ case┬À'payments':ÔÉì
+     52     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ result┬À=┬Àawait┬ÀimportPayments({┬ÀinitiatedBy:┬ÀuserId┬À});ÔÉì
+     53     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success(ÔÉì
+     54     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ `Pagamentos┬Àimportados:┬À${result.recordsCreated}┬Àcriados,┬À${result.recordsUpdated}┬Àatualizados`,ÔÉì
+     55     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     56     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ break;ÔÉì
+     57     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ case┬À'subscriptions':ÔÉì
+     58     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ result┬À=┬Àawait┬ÀimportSubscriptions({┬ÀinitiatedBy:┬ÀuserId┬À});ÔÉì
+     59     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success(ÔÉì
+     60     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ `Assinaturas┬Àimportadas:┬À${result.recordsCreated}┬Àcriadas,┬À${result.recordsUpdated}┬Àatualizadas`,ÔÉì
+     61     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     62     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ break;ÔÉì
+     63     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ case┬À'financial':ÔÉì
+     64     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ result┬À=┬Àawait┬ÀsyncFinancial({┬ÀinitiatedBy:┬ÀuserId┬À});ÔÉì
+     65     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success(ÔÉì
+     66     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ `Dados┬Àfinanceiros┬Àsincronizados:┬À${result.summary?.paymentsCount┬À??┬À0}┬Àpagamentos┬Àprocessados`,ÔÉì
+     67     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     68     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ break;ÔÉì
+     69     Ôöé - ÔåÆ ÔåÆ ÔåÆ }ÔÉì
+     70     Ôöé - ÔåÆ ÔåÆ }┬Àcatch┬À(error:┬Àunknown)┬À{ÔÉì
+     71     Ôöé - ÔåÆ ÔåÆ ÔåÆ const┬ÀerrorMessage┬À=┬Àerror┬Àinstanceof┬ÀError┬À?┬Àerror.message┬À:┬À'Erro┬Àdesconhecido';ÔÉì
+     72     Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.error(`Erro┬Àao┬Àsincronizar┬À${type}:┬À${errorMessage}`);ÔÉì
+     73     Ôöé - ÔåÆ ÔåÆ }┬Àfinally┬À{ÔÉì
+     74     Ôöé - ÔåÆ ÔåÆ ÔåÆ setSyncingType(null);ÔÉì
+     75     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+     76     Ôöé - ÔåÆ };ÔÉì
+     77     Ôöé - ÔÉì
+     78     Ôöé - ÔåÆ const┬ÀsyncItems┬À=┬À[ÔÉì
+     79     Ôöé - ÔåÆ ÔåÆ {ÔÉì
+     80     Ôöé - ÔåÆ ÔåÆ ÔåÆ type:┬À'customers'┬Àas┬Àconst,ÔÉì
+     81     Ôöé - ÔåÆ ÔåÆ ÔåÆ label:┬À'Clientes',ÔÉì
+     82     Ôöé - ÔåÆ ÔåÆ ÔåÆ description:┬À'Importar┬Àclientes┬Àdo┬ÀAsaas┬Àcomo┬Àalunos',ÔÉì
+     83     Ôöé - ÔåÆ ÔåÆ ÔåÆ icon:┬À<Users┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     84     Ôöé - ÔåÆ ÔåÆ ÔåÆ color:┬À'text-blue-500',ÔÉì
+     85     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+     86     Ôöé - ÔåÆ ÔåÆ {ÔÉì
+     87     Ôöé - ÔåÆ ÔåÆ ÔåÆ type:┬À'payments'┬Àas┬Àconst,ÔÉì
+     88     Ôöé - ÔåÆ ÔåÆ ÔåÆ label:┬À'Pagamentos',ÔÉì
+     89     Ôöé - ÔåÆ ÔåÆ ÔåÆ description:┬À'Importar┬Àpagamentos┬Àe┬Àcobran├ºas',ÔÉì
+     90     Ôöé - ÔåÆ ÔåÆ ÔåÆ icon:┬À<CreditCard┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     91     Ôöé - ÔåÆ ÔåÆ ÔåÆ color:┬À'text-green-500',ÔÉì
+     92     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+     93     Ôöé - ÔåÆ ÔåÆ {ÔÉì
+     94     Ôöé - ÔåÆ ÔåÆ ÔåÆ type:┬À'subscriptions'┬Àas┬Àconst,ÔÉì
+     95     Ôöé - ÔåÆ ÔåÆ ÔåÆ label:┬À'Assinaturas',ÔÉì
+     96     Ôöé - ÔåÆ ÔåÆ ÔåÆ description:┬À'Importar┬Àassinaturas┬Àrecorrentes',ÔÉì
+     97     Ôöé - ÔåÆ ÔåÆ ÔåÆ icon:┬À<Repeat┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     98     Ôöé - ÔåÆ ÔåÆ ÔåÆ color:┬À'text-purple-500',ÔÉì
+     99     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+    100     Ôöé - ÔåÆ ÔåÆ {ÔÉì
+    101     Ôöé - ÔåÆ ÔåÆ ÔåÆ type:┬À'financial'┬Àas┬Àconst,ÔÉì
+    102     Ôöé - ÔåÆ ÔåÆ ÔåÆ label:┬À'Financeiro',ÔÉì
+    103     Ôöé - ÔåÆ ÔåÆ ÔåÆ description:┬À'Sincronizar┬Àresumo┬Àfinanceiro',ÔÉì
+    104     Ôöé - ÔåÆ ÔåÆ ÔåÆ icon:┬À<DollarSign┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+    105     Ôöé - ÔåÆ ÔåÆ ÔåÆ color:┬À'text-amber-500',ÔÉì
+    106     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+    107     Ôöé - ÔåÆ ];ÔÉì
+    108     Ôöé - ÔÉì
+    109     Ôöé - ÔåÆ return┬À(ÔÉì
+    110     Ôöé - ÔåÆ ÔåÆ <div┬ÀclassName="space-y-4">ÔÉì
+    111     Ôöé - ÔåÆ ÔåÆ ÔåÆ {syncItems.map((item,┬Àindex)┬À=>┬À(ÔÉì
+    112     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬Àkey={item.type}>ÔÉì
+    113     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {index┬À>┬À0┬À&&┬À<Separator┬ÀclassName="my-3"┬À/>}ÔÉì
+    114     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-between">ÔÉì
+    115     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àgap-3">ÔÉì
+    116     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName={`${item.color}`}>{item.icon}</div>ÔÉì
+    117     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div>ÔÉì
+    118     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p┬ÀclassName="font-medium┬Àtext-sm">{item.label}</p>ÔÉì
+    119     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p┬ÀclassName="text-xs┬Àtext-muted-foreground">{item.description}</p>ÔÉì
+    120     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <SyncStatusIndicator┬ÀsyncType={item.type}┬ÀclassName="mt-1"┬À/>ÔÉì
+    121     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    122     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    123     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <ButtonÔÉì
+    124     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ variant="outline"ÔÉì
+    125     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ size="sm"ÔÉì
+    126     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ onClick={()┬À=>┬ÀhandleSync(item.type)}ÔÉì
+    127     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ disabled={syncingType┬À!==┬Ànull}ÔÉì
+    128     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ >ÔÉì
+    129     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {syncingType┬À===┬Àitem.type┬À?┬À(ÔÉì
+    130     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Loader2┬ÀclassName="h-4┬Àw-4┬Àanimate-spin┬Àmr-2"┬À/>ÔÉì
+    131     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )┬À:┬À(ÔÉì
+    132     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Download┬ÀclassName="h-4┬Àw-4┬Àmr-2"┬À/>ÔÉì
+    133     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )}ÔÉì
+    134     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ImportarÔÉì
+    135     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Button>ÔÉì
+    136     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    137     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    138     Ôöé - ÔåÆ ÔåÆ ÔåÆ ))}ÔÉì
+    139     Ôöé - ÔåÆ ÔåÆ </div>ÔÉì
+    140     Ôöé - ÔåÆ );ÔÉì
+    141     Ôöé - }ÔÉì
+    142     Ôöé - ÔÉì
+    143     Ôöé - export┬Àdefault┬ÀAsaasSyncSection;ÔÉì
+          1 Ôöé + /**
+          2 Ôöé + ┬À*┬ÀAsaas┬ÀSync┬ÀSection┬ÀComponent
+          3 Ôöé + ┬À*
+          4 Ôöé + ┬À*┬ÀProvides┬ÀUI┬Àfor┬Àtriggering┬Àdata┬Àimport┬Àfrom┬ÀAsaas┬Àand┬Àviewing┬Àsync┬Àstatus.
+          5 Ôöé + ┬À*/
+          6 Ôöé + 
+          7 Ôöé + import┬À{┬Àapi┬À}┬Àfrom┬À'@convex/_generated/api';
+  137 more lines truncated
+  
+
+src\components\asaas\sync-status.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+      1     Ôöé - /**ÔÉì
+      2     Ôöé - ┬À*┬ÀAsaas┬ÀSync┬ÀStatus┬ÀComponentÔÉì
+      3     Ôöé - ┬À*ÔÉì
+      4     Ôöé - ┬À*┬ÀDisplays┬Àsync┬Àstatus,┬Àprogress,┬Àand┬Àlogs┬Àfor┬ÀAsaas┬Àimport┬Àoperations.ÔÉì
+      5     Ôöé - ┬À*/ÔÉì
+      6     Ôöé - ÔÉì
+      7     Ôöé - import┬À{┬Àapi┬À}┬Àfrom┬À'@convex/_generated/api';ÔÉì
+      8     Ôöé - import┬À{┬ÀuseQuery┬À}┬Àfrom┬À'convex/react';ÔÉì
+      9     Ôöé - import┬À{┬Àformat,┬ÀformatDistanceToNow┬À}┬Àfrom┬À'date-fns';ÔÉì
+     10     Ôöé - import┬À{┬ÀptBR┬À}┬Àfrom┬À'date-fns/locale';ÔÉì
+     11     Ôöé - import┬À{ÔÉì
+     12     Ôöé - ÔåÆ AlertCircle,ÔÉì
+     13     Ôöé - ÔåÆ CheckCircle2,ÔÉì
+     14     Ôöé - ÔåÆ Clock,ÔÉì
+     15     Ôöé - ÔåÆ CreditCard,ÔÉì
+     16     Ôöé - ÔåÆ DollarSign,ÔÉì
+     17     Ôöé - ÔåÆ Loader2,ÔÉì
+     18     Ôöé - ÔåÆ RefreshCw,ÔÉì
+     19     Ôöé - ÔåÆ Repeat,ÔÉì
+     20     Ôöé - ÔåÆ Users,ÔÉì
+     21     Ôöé - }┬Àfrom┬À'lucide-react';ÔÉì
+     22     Ôöé - ÔÉì
+     23     Ôöé - import┬À{ÔÉì
+     24     Ôöé - ÔåÆ Accordion,ÔÉì
+     25     Ôöé - ÔåÆ AccordionContent,ÔÉì
+     26     Ôöé - ÔåÆ AccordionItem,ÔÉì
+     27     Ôöé - ÔåÆ AccordionTrigger,ÔÉì
+     28     Ôöé - }┬Àfrom┬À'@/components/ui/accordion';ÔÉì
+     29     Ôöé - import┬À{┬ÀBadge┬À}┬Àfrom┬À'@/components/ui/badge';ÔÉì
+     30     Ôöé - import┬À{┬ÀCard,┬ÀCardContent,┬ÀCardDescription,┬ÀCardHeader,┬ÀCardTitle┬À}┬Àfrom┬À'@/components/ui/card';ÔÉì
+     31     Ôöé - import┬À{┬ÀProgress┬À}┬Àfrom┬À'@/components/ui/progress';ÔÉì
+     32     Ôöé - ÔÉì
+     33     Ôöé - type┬ÀSyncType┬À=┬À'customers'┬À|┬À'payments'┬À|┬À'subscriptions'┬À|┬À'financial';ÔÉì
+     34     Ôöé - ÔÉì
+     35     Ôöé - interface┬ÀSyncLog┬À{ÔÉì
+     36     Ôöé - ÔåÆ _id:┬Àstring;ÔÉì
+     37     Ôöé - ÔåÆ syncType:┬ÀSyncType;ÔÉì
+     38     Ôöé - ÔåÆ status:┬À'pending'┬À|┬À'running'┬À|┬À'completed'┬À|┬À'failed';ÔÉì
+     39     Ôöé - ÔåÆ startedAt:┬Ànumber;ÔÉì
+     40     Ôöé - ÔåÆ completedAt?:┬Ànumber;ÔÉì
+     41     Ôöé - ÔåÆ recordsProcessed:┬Ànumber;ÔÉì
+     42     Ôöé - ÔåÆ recordsCreated:┬Ànumber;ÔÉì
+     43     Ôöé - ÔåÆ recordsUpdated:┬Ànumber;ÔÉì
+     44     Ôöé - ÔåÆ recordsFailed:┬Ànumber;ÔÉì
+     45     Ôöé - ÔåÆ errors?:┬Àstring[];ÔÉì
+     46     Ôöé - ÔåÆ filters?:┬À{ÔÉì
+     47     Ôöé - ÔåÆ ÔåÆ startDate?:┬Àstring;ÔÉì
+     48     Ôöé - ÔåÆ ÔåÆ endDate?:┬Àstring;ÔÉì
+     49     Ôöé - ÔåÆ ÔåÆ status?:┬Àstring;ÔÉì
+     50     Ôöé - ÔåÆ };ÔÉì
+     51     Ôöé - ÔåÆ initiatedBy:┬Àstring;ÔÉì
+     52     Ôöé - ÔåÆ createdAt:┬Ànumber;ÔÉì
+     53     Ôöé - }ÔÉì
+     54     Ôöé - ÔÉì
+     55     Ôöé - const┬ÀsyncTypeConfig:┬ÀRecord<SyncType,┬À{┬Àlabel:┬Àstring;┬Àicon:┬ÀReact.ReactNode;┬Àcolor:┬Àstring┬À}>┬À=┬À{ÔÉì
+     56     Ôöé - ÔåÆ customers:┬À{ÔÉì
+     57     Ôöé - ÔåÆ ÔåÆ label:┬À'Clientes',ÔÉì
+     58     Ôöé - ÔåÆ ÔåÆ icon:┬À<Users┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     59     Ôöé - ÔåÆ ÔåÆ color:┬À'text-blue-500',ÔÉì
+     60     Ôöé - ÔåÆ },ÔÉì
+     61     Ôöé - ÔåÆ payments:┬À{ÔÉì
+     62     Ôöé - ÔåÆ ÔåÆ label:┬À'Pagamentos',ÔÉì
+     63     Ôöé - ÔåÆ ÔåÆ icon:┬À<CreditCard┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     64     Ôöé - ÔåÆ ÔåÆ color:┬À'text-green-500',ÔÉì
+     65     Ôöé - ÔåÆ },ÔÉì
+     66     Ôöé - ÔåÆ subscriptions:┬À{ÔÉì
+     67     Ôöé - ÔåÆ ÔåÆ label:┬À'Assinaturas',ÔÉì
+     68     Ôöé - ÔåÆ ÔåÆ icon:┬À<Repeat┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     69     Ôöé - ÔåÆ ÔåÆ color:┬À'text-purple-500',ÔÉì
+     70     Ôöé - ÔåÆ },ÔÉì
+     71     Ôöé - ÔåÆ financial:┬À{ÔÉì
+     72     Ôöé - ÔåÆ ÔåÆ label:┬À'Financeiro',ÔÉì
+     73     Ôöé - ÔåÆ ÔåÆ icon:┬À<DollarSign┬ÀclassName="h-4┬Àw-4"┬À/>,ÔÉì
+     74     Ôöé - ÔåÆ ÔåÆ color:┬À'text-amber-500',ÔÉì
+     75     Ôöé - ÔåÆ },ÔÉì
+     76     Ôöé - };ÔÉì
+     77     Ôöé - ÔÉì
+     78     Ôöé - function┬ÀgetStatusBadge(status:┬ÀSyncLog['status'])┬À{ÔÉì
+     79     Ôöé - ÔåÆ switch┬À(status)┬À{ÔÉì
+     80     Ôöé - ÔåÆ ÔåÆ case┬À'completed':ÔÉì
+     81     Ôöé - ÔåÆ ÔåÆ ÔåÆ return┬À(ÔÉì
+     82     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <BadgeÔÉì
+     83     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ variant="outline"ÔÉì
+     84     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="text-green-600┬Àborder-green-600┬Àflex┬Àgap-1┬Àitems-center"ÔÉì
+     85     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ >ÔÉì
+     86     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CheckCircle2┬ÀclassName="h-3┬Àw-3"┬À/>ÔÉì
+     87     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ Conclu├¡doÔÉì
+     88     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Badge>ÔÉì
+     89     Ôöé - ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     90     Ôöé - ÔåÆ ÔåÆ case┬À'running':ÔÉì
+     91     Ôöé - ÔåÆ ÔåÆ ÔåÆ return┬À(ÔÉì
+     92     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Badge┬Àvariant="outline"┬ÀclassName="text-blue-600┬Àborder-blue-600┬Àflex┬Àgap-1┬Àitems-center">ÔÉì
+     93     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Loader2┬ÀclassName="h-3┬Àw-3┬Àanimate-spin"┬À/>ÔÉì
+     94     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ Em┬ÀprogressoÔÉì
+     95     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Badge>ÔÉì
+     96     Ôöé - ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+     97     Ôöé - ÔåÆ ÔåÆ case┬À'failed':ÔÉì
+     98     Ôöé - ÔåÆ ÔåÆ ÔåÆ return┬À(ÔÉì
+     99     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Badge┬Àvariant="outline"┬ÀclassName="text-red-600┬Àborder-red-600┬Àflex┬Àgap-1┬Àitems-center">ÔÉì
+    100     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <AlertCircle┬ÀclassName="h-3┬Àw-3"┬À/>ÔÉì
+    101     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ FalhouÔÉì
+    102     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Badge>ÔÉì
+    103     Ôöé - ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+    104     Ôöé - ÔåÆ ÔåÆ default:ÔÉì
+    105     Ôöé - ÔåÆ ÔåÆ ÔåÆ return┬À(ÔÉì
+    106     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <BadgeÔÉì
+    107     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ variant="outline"ÔÉì
+    108     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="text-yellow-600┬Àborder-yellow-600┬Àflex┬Àgap-1┬Àitems-center"ÔÉì
+    109     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ >ÔÉì
+    110     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Clock┬ÀclassName="h-3┬Àw-3"┬À/>ÔÉì
+    111     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ PendenteÔÉì
+    112     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Badge>ÔÉì
+    113     Ôöé - ÔåÆ ÔåÆ ÔåÆ );ÔÉì
+    114     Ôöé - ÔåÆ }ÔÉì
+    115     Ôöé - }ÔÉì
+    116     Ôöé - ÔÉì
+    117     Ôöé - interface┬ÀSyncStatusCardProps┬À{ÔÉì
+    118     Ôöé - ÔåÆ syncType:┬ÀSyncType;ÔÉì
+    119     Ôöé - ÔåÆ log:┬ÀSyncLog┬À|┬Ànull;ÔÉì
+    120     Ôöé - ÔåÆ isRunning?:┬Àboolean;ÔÉì
+    121     Ôöé - }ÔÉì
+    122     Ôöé - ÔÉì
+    123     Ôöé - export┬Àfunction┬ÀSyncStatusCard({┬ÀsyncType,┬Àlog,┬ÀisRunning┬À}:┬ÀSyncStatusCardProps)┬À{ÔÉì
+    124     Ôöé - ÔåÆ const┬Àconfig┬À=┬ÀsyncTypeConfig[syncType];ÔÉì
+    125     Ôöé - ÔÉì
+    126     Ôöé - ÔåÆ if┬À(!log)┬À{ÔÉì
+    127     Ôöé - ÔåÆ ÔåÆ return┬À(ÔÉì
+    128     Ôöé - ÔåÆ ÔåÆ ÔåÆ <Card┬ÀclassName="opacity-60">ÔÉì
+    129     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardHeader┬ÀclassName="pb-2">ÔÉì
+    130     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àgap-2">ÔÉì
+    131     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName={config.color}>{config.icon}</span>ÔÉì
+    132     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardTitle┬ÀclassName="text-sm">{config.label}</CardTitle>ÔÉì
+    133     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+    134     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardDescription>Nunca┬Àsincronizado</CardDescription>ÔÉì
+    135     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </CardHeader>ÔÉì
+    136     Ôöé - ÔåÆ ÔåÆ ÔåÆ </Card>ÔÉì
+    137     Ôöé - ÔåÆ ÔåÆ );ÔÉì
+    138     Ôöé - ÔåÆ }ÔÉì
+    139     Ôöé - ÔÉì
+    140     Ôöé - ÔåÆ const┬Àduration┬À=ÔÉì
+    141     Ôöé - ÔåÆ ÔåÆ log.completedAt┬À&&┬Àlog.startedAt┬À?┬ÀMath.round((log.completedAt┬À-┬Àlog.startedAt)┬À/┬À1000)┬À:┬Ànull;ÔÉì
+    142     Ôöé - ÔÉì
+    143     Ôöé - ÔåÆ return┬À(ÔÉì
+    144     Ôöé - ÔåÆ ÔåÆ <Card┬ÀclassName={log.status┬À===┬À'running'┬À?┬À'border-blue-500/50'┬À:┬À''}>ÔÉì
+    145     Ôöé - ÔåÆ ÔåÆ ÔåÆ <CardHeader┬ÀclassName="pb-2">ÔÉì
+    146     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-between">ÔÉì
+    147     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àgap-2">ÔÉì
+    148     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName={config.color}>{config.icon}</span>ÔÉì
+    149     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <CardTitle┬ÀclassName="text-sm">{config.label}</CardTitle>ÔÉì
+    150     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </div>ÔÉì
+  449 more lines truncated
+  
+
+src\components\kokonutui\anthropic-dark.tsx:1:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+  > 1 Ôöé import type { SVGProps } from "react";
+      Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 Ôöé const AnthropicDark = (props: SVGProps<SVGSVGElement>) => (
+    3 Ôöé     <svg
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1  1 Ôöé   import type { SVGProps } from "react";
+        2 Ôöé + 
+     2  3 Ôöé   const AnthropicDark = (props: SVGProps<SVGSVGElement>) => (
+     3  4 Ôöé       <svg
+  
+
+src\components\kokonutui\anthropic-dark.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1    Ôöé - import┬Àtype┬À{┬ÀSVGProps┬À}┬Àfrom┬À"react";
+        1 Ôöé + import┬Àtype┬À{┬ÀSVGProps┬À}┬Àfrom┬À'react';
+     2  2 Ôöé   const AnthropicDark = (props: SVGProps<SVGSVGElement>) => (
+     3    Ôöé - ┬À┬À┬À┬À<svg
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àfill="#ffff"
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀfillRule="evenodd"
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àstyle={{
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àflex:┬À"none",
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬ÀlineHeight:┬À1,
+     9    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À}}
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À24┬À24"
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+    12    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+    14    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+    15    Ôöé - ┬À┬À┬À┬À>
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>{"Anthropic"}</title>
+    17    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M13.827┬À3.52h3.603L24┬À20h-3.603l-6.57-16.48zm-7.258┬À0h3.767L16.906┬À20h-3.674l-1.343-3.461H5.017l-1.344┬À3.46H0L6.57┬À3.522zm4.132┬À9.959L8.453┬À7.687┬À6.205┬À13.48H10.7z"┬À/>
+    18    Ôöé - ┬À┬À┬À┬À</svg>
+        3 Ôöé + ÔåÆ <svg
+        4 Ôöé + ÔåÆ ÔåÆ fill="#ffff"
+        5 Ôöé + ÔåÆ ÔåÆ fillRule="evenodd"
+        6 Ôöé + ÔåÆ ÔåÆ style={{
+        7 Ôöé + ÔåÆ ÔåÆ ÔåÆ flex:┬À'none',
+        8 Ôöé + ÔåÆ ÔåÆ ÔåÆ lineHeight:┬À1,
+        9 Ôöé + ÔåÆ ÔåÆ }}
+       10 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À24┬À24"
+       11 Ôöé + ÔåÆ ÔåÆ width="1em"
+       12 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+       13 Ôöé + ÔåÆ ÔåÆ height="1em"
+       14 Ôöé + ÔåÆ ÔåÆ {...props}
+       15 Ôöé + ÔåÆ >
+       16 Ôöé + ÔåÆ ÔåÆ <title>{'Anthropic'}</title>
+       17 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M13.827┬À3.52h3.603L24┬À20h-3.603l-6.57-16.48zm-7.258┬À0h3.767L16.906┬À20h-3.674l-1.343-3.461H5.017l-1.344┬À3.46H0L6.57┬À3.522zm4.132┬À9.959L8.453┬À7.687┬À6.205┬À13.48H10.7z"┬À/>
+       18 Ôöé + ÔåÆ </svg>
+    19 19 Ôöé   );
+    20 20 Ôöé   export default AnthropicDark;
+  
+
+src\components\kokonutui\anthropic.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1  1 Ôöé   const Anthropic = (props: React.SVGProps<SVGSVGElement>) => (
+     2    Ôöé - ┬À┬À┬À┬À<svg
+     3    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àfill="#000"
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀfillRule="evenodd"
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àstyle={{
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àflex:┬À"none",
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬ÀlineHeight:┬À1,
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À}}
+     9    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À24┬À24"
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+    12    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+    14    Ôöé - ┬À┬À┬À┬À>
+    15    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>{"Anthropic"}</title>
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M13.827┬À3.52h3.603L24┬À20h-3.603l-6.57-16.48zm-7.258┬À0h3.767L16.906┬À20h-3.674l-1.343-3.461H5.017l-1.344┬À3.46H0L6.57┬À3.522zm4.132┬À9.959L8.453┬À7.687┬À6.205┬À13.48H10.7z"┬À/>
+    17    Ôöé - ┬À┬À┬À┬À</svg>
+        2 Ôöé + ÔåÆ <svg
+        3 Ôöé + ÔåÆ ÔåÆ fill="#000"
+        4 Ôöé + ÔåÆ ÔåÆ fillRule="evenodd"
+        5 Ôöé + ÔåÆ ÔåÆ style={{
+        6 Ôöé + ÔåÆ ÔåÆ ÔåÆ flex:┬À'none',
+        7 Ôöé + ÔåÆ ÔåÆ ÔåÆ lineHeight:┬À1,
+        8 Ôöé + ÔåÆ ÔåÆ }}
+        9 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À24┬À24"
+       10 Ôöé + ÔåÆ ÔåÆ width="1em"
+       11 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+       12 Ôöé + ÔåÆ ÔåÆ height="1em"
+       13 Ôöé + ÔåÆ ÔåÆ {...props}
+       14 Ôöé + ÔåÆ >
+       15 Ôöé + ÔåÆ ÔåÆ <title>{'Anthropic'}</title>
+       16 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M13.827┬À3.52h3.603L24┬À20h-3.603l-6.57-16.48zm-7.258┬À0h3.767L16.906┬À20h-3.674l-1.343-3.461H5.017l-1.344┬À3.46H0L6.57┬À3.522zm4.132┬À9.959L8.453┬À7.687┬À6.205┬À13.48H10.7z"┬À/>
+       17 Ôöé + ÔåÆ </svg>
+    18 18 Ôöé   );
+    19 19 Ôöé   export default Anthropic;
+  
+
+src\components\kokonutui\deepseek.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1  1 Ôöé   const DeepSeek = (props: React.SVGProps<SVGSVGElement>) => (
+     2    Ôöé - ┬À┬À┬À┬À<svg
+     3    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àstyle={{
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àflex:┬À"none",
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬ÀlineHeight:┬À1,
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À}}
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À24┬À24"
+     9    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+    12    Ôöé - ┬À┬À┬À┬À>
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>DeepSeek</title>
+    14    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    15    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#4D6BFE"
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M23.748┬À4.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434┬À1.202-.422┬À1.84.027┬À1.436.633┬À2.58┬À1.838┬À3.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526┬À5.526┬À0┬À0┬À1-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365┬À11.365┬À0┬À0┬À0-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055┬À3.055┬À0┬À0┬À1-.465.137┬À9.597┬À9.597┬À0┬À0┬À0-2.883-.102c-1.885.21-3.39┬À1.102-4.497┬À2.623C.082┬À8.606-.231┬À10.684.152┬À12.85c.403┬À2.284┬À1.569┬À4.175┬À3.36┬À5.653┬À1.858┬À1.533┬À3.997┬À2.284┬À6.438┬À2.14┬À1.482-.085┬À3.133-.284┬À4.994-1.86.47.234.962.327┬À1.78.397.63.059┬À1.236-.03┬À1.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926┬À1.096-1.296┬À2.746-2.642┬À3.392-7.003.05-.347.007-.565┬À0-.845-.004-.17.035-.237.23-.256a4.173┬À4.173┬À0┬À0┬À0┬À1.545-.475c1.396-.763┬À1.96-2.015┬À2.093-3.517.02-.23-.004-.467-.247-.588zM11.581┬À18c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696┬À4.696┬À0┬À0┬À1┬À1.529-.039c2.132.312┬À3.946┬À1.265┬À5.468┬À2.774.868.86┬À1.525┬À1.887┬À2.202┬À2.891.72┬À1.066┬À1.494┬À2.082┬À2.48┬À2.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306┬À0┬À0┬À1┬À.415-.287.302.302┬À0┬À0┬À1┬À.2.288.306.306┬À0┬À0┬À1-.31.307.303.303┬À0┬À0┬À1-.304-.308zm3.11┬À1.596c-.2.081-.399.151-.59.16a1.245┬À1.245┬À0┬À0┬À1-.798-.254c-.274-.23-.47-.358-.552-.758a1.73┬À1.73┬À0┬À0┬À1┬À.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559┬À0┬À0┬À1-.254-.078.253.253┬À0┬À0┬À1-.114-.358c.028-.054.16-.186.192-.21.356-.202.767-.136┬À1.146.016.352.144.618.408┬À1.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z"
+    17    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    18    Ôöé - ┬À┬À┬À┬À</svg>
+        2 Ôöé + ÔåÆ <svg
+        3 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+        4 Ôöé + ÔåÆ ÔåÆ style={{
+        5 Ôöé + ÔåÆ ÔåÆ ÔåÆ flex:┬À'none',
+        6 Ôöé + ÔåÆ ÔåÆ ÔåÆ lineHeight:┬À1,
+        7 Ôöé + ÔåÆ ÔåÆ }}
+        8 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À24┬À24"
+        9 Ôöé + ÔåÆ ÔåÆ width="1em"
+       10 Ôöé + ÔåÆ ÔåÆ height="1em"
+       11 Ôöé + ÔåÆ ÔåÆ {...props}
+       12 Ôöé + ÔåÆ >
+       13 Ôöé + ÔåÆ ÔåÆ <title>DeepSeek</title>
+       14 Ôöé + ÔåÆ ÔåÆ <path
+       15 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#4D6BFE"
+       16 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M23.748┬À4.482c-.254-.124-.364.113-.512.234-.051.039-.094.09-.137.136-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.156-.708-.311-.955-.65-.172-.241-.219-.51-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434┬À1.202-.422┬À1.84.027┬À1.436.633┬À2.58┬À1.838┬À3.393.137.093.172.187.129.323-.082.28-.18.552-.266.833-.055.179-.137.217-.329.14a5.526┬À5.526┬À0┬À0┬À1-1.736-1.18c-.857-.828-1.631-1.742-2.597-2.458a11.365┬À11.365┬À0┬À0┬À0-.689-.471c-.985-.957.13-1.743.388-1.836.27-.098.093-.432-.779-.428-.872.004-1.67.295-2.687.684a3.055┬À3.055┬À0┬À0┬À1-.465.137┬À9.597┬À9.597┬À0┬À0┬À0-2.883-.102c-1.885.21-3.39┬À1.102-4.497┬À2.623C.082┬À8.606-.231┬À10.684.152┬À12.85c.403┬À2.284┬À1.569┬À4.175┬À3.36┬À5.653┬À1.858┬À1.533┬À3.997┬À2.284┬À6.438┬À2.14┬À1.482-.085┬À3.133-.284┬À4.994-1.86.47.234.962.327┬À1.78.397.63.059┬À1.236-.03┬À1.705-.128.735-.156.684-.837.419-.961-2.155-1.004-1.682-.595-2.113-.926┬À1.096-1.296┬À2.746-2.642┬À3.392-7.003.05-.347.007-.565┬À0-.845-.004-.17.035-.237.23-.256a4.173┬À4.173┬À0┬À0┬À0┬À1.545-.475c1.396-.763┬À1.96-2.015┬À2.093-3.517.02-.23-.004-.467-.247-.588zM11.581┬À18c-2.089-1.642-3.102-2.183-3.52-2.16-.392.024-.321.471-.235.763.09.288.207.486.371.739.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.167-1.361-.802-2.5-1.86-3.301-3.307-.774-1.393-1.224-2.887-1.298-4.482-.02-.386.093-.522.477-.592a4.696┬À4.696┬À0┬À0┬À1┬À1.529-.039c2.132.312┬À3.946┬À1.265┬À5.468┬À2.774.868.86┬À1.525┬À1.887┬À2.202┬À2.891.72┬À1.066┬À1.494┬À2.082┬À2.48┬À2.914.348.292.625.514.891.677-.802.09-2.14.11-3.054-.614zm1-6.44a.306.306┬À0┬À0┬À1┬À.415-.287.302.302┬À0┬À0┬À1┬À.2.288.306.306┬À0┬À0┬À1-.31.307.303.303┬À0┬À0┬À1-.304-.308zm3.11┬À1.596c-.2.081-.399.151-.59.16a1.245┬À1.245┬À0┬À0┬À1-.798-.254c-.274-.23-.47-.358-.552-.758a1.73┬À1.73┬À0┬À0┬À1┬À.016-.588c.07-.327-.008-.537-.239-.727-.187-.156-.426-.199-.688-.199a.559.559┬À0┬À0┬À1-.254-.078.253.253┬À0┬À0┬À1-.114-.358c.028-.054.16-.186.192-.21.356-.202.767-.136┬À1.146.016.352.144.618.408┬À1.001.782.391.451.462.576.685.914.176.265.336.537.445.848.067.195-.019.354-.25.452z"
+       17 Ôöé + ÔåÆ ÔåÆ />
+       18 Ôöé + ÔåÆ </svg>
+    19 19 Ôöé   );
+    20 20 Ôöé   export default DeepSeek;
+  
+
+src\components\kokonutui\gemini.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1  1 Ôöé   const Gemini = (props: React.SVGProps<SVGSVGElement>) => (
+     2    Ôöé - ┬À┬À┬À┬À<svg
+     3    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àstyle={{
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àflex:┬À"none",
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬ÀlineHeight:┬À1,
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À}}
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À24┬À24"
+     9    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+    12    Ôöé - ┬À┬À┬À┬À>
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>{"Gemini"}</title>
+    14    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<defs>
+    15    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À<linearGradient
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àid="lobe-icons-gemini-fill"
+    17    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àx1="0%"
+    18    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àx2="68.73%"
+    19    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Ày1="100%"
+    20    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Ày2="30.395%"
+    21    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À>
+    22    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À<stop┬Àoffset="0%"┬ÀstopColor="#1C7DFF"┬À/>
+    23    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À<stop┬Àoffset="52.021%"┬ÀstopColor="#1C69FF"┬À/>
+    24    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À<stop┬Àoffset="100%"┬ÀstopColor="#F0DCD6"┬À/>
+    25    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À</linearGradient>
+    26    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À</defs>
+    27    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    28    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M12┬À24A14.304┬À14.304┬À0┬À000┬À12┬À14.304┬À14.304┬À0┬À0012┬À0a14.305┬À14.305┬À0┬À0012┬À12┬À14.305┬À14.305┬À0┬À00-12┬À12"
+    29    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="url(#lobe-icons-gemini-fill)"
+    30    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬ÀfillRule="nonzero"
+    31    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    32    Ôöé - ┬À┬À┬À┬À</svg>
+        2 Ôöé + ÔåÆ <svg
+        3 Ôöé + ÔåÆ ÔåÆ height="1em"
+        4 Ôöé + ÔåÆ ÔåÆ style={{
+        5 Ôöé + ÔåÆ ÔåÆ ÔåÆ flex:┬À'none',
+        6 Ôöé + ÔåÆ ÔåÆ ÔåÆ lineHeight:┬À1,
+        7 Ôöé + ÔåÆ ÔåÆ }}
+        8 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À24┬À24"
+        9 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+       10 Ôöé + ÔåÆ ÔåÆ width="1em"
+       11 Ôöé + ÔåÆ ÔåÆ {...props}
+       12 Ôöé + ÔåÆ >
+       13 Ôöé + ÔåÆ ÔåÆ <title>{'Gemini'}</title>
+       14 Ôöé + ÔåÆ ÔåÆ <defs>
+       15 Ôöé + ÔåÆ ÔåÆ ÔåÆ <linearGradient┬Àid="lobe-icons-gemini-fill"┬Àx1="0%"┬Àx2="68.73%"┬Ày1="100%"┬Ày2="30.395%">
+       16 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ <stop┬Àoffset="0%"┬ÀstopColor="#1C7DFF"┬À/>
+       17 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ <stop┬Àoffset="52.021%"┬ÀstopColor="#1C69FF"┬À/>
+       18 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ <stop┬Àoffset="100%"┬ÀstopColor="#F0DCD6"┬À/>
+       19 Ôöé + ÔåÆ ÔåÆ ÔåÆ </linearGradient>
+       20 Ôöé + ÔåÆ ÔåÆ </defs>
+       21 Ôöé + ÔåÆ ÔåÆ <path
+       22 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M12┬À24A14.304┬À14.304┬À0┬À000┬À12┬À14.304┬À14.304┬À0┬À0012┬À0a14.305┬À14.305┬À0┬À0012┬À12┬À14.305┬À14.305┬À0┬À00-12┬À12"
+       23 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="url(#lobe-icons-gemini-fill)"
+       24 Ôöé + ÔåÆ ÔåÆ ÔåÆ fillRule="nonzero"
+       25 Ôöé + ÔåÆ ÔåÆ />
+       26 Ôöé + ÔåÆ </svg>
+    33 27 Ôöé   );
+    34 28 Ôöé   export default Gemini;
+  
+
+src\components\kokonutui\mistral.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1  1 Ôöé   const MistralAI = (props: React.SVGProps<SVGSVGElement>) => (
+     2    Ôöé - ┬À┬À┬À┬À<svg
+     3    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀpreserveAspectRatio="xMidYMid"
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À256┬À233"
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+     9    Ôöé - ┬À┬À┬À┬À>
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>Mistral┬ÀAI</title>
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M186.18182┬À0h46.54545v46.54545h-46.54545z"┬À/>
+    12    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àfill="#F7D046"┬Àd="M209.45454┬À0h46.54545v46.54545h-46.54545z"┬À/>
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M0┬À0h46.54545v46.54545H0zM0┬À46.54545h46.54545V93.0909H0zM0┬À93.09091h46.54545v46.54545H0zM0┬À139.63636h46.54545v46.54545H0zM0┬À186.18182h46.54545v46.54545H0z"┬À/>
+    14    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àfill="#F7D046"┬Àd="M23.27273┬À0h46.54545v46.54545H23.27273z"┬À/>
+    15    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#F2A73B"
+    17    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M209.45454┬À46.54545h46.54545V93.0909h-46.54545zM23.27273┬À46.54545h46.54545V93.0909H23.27273z"
+    18    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    19    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M139.63636┬À46.54545h46.54545V93.0909h-46.54545z"┬À/>
+    20    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    21    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#F2A73B"
+    22    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M162.90909┬À46.54545h46.54545V93.0909h-46.54545zM69.81818┬À46.54545h46.54545V93.0909H69.81818z"
+    23    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    24    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    25    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EE792F"
+    26    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M116.36364┬À93.09091h46.54545v46.54545h-46.54545zM162.90909┬À93.09091h46.54545v46.54545h-46.54545zM69.81818┬À93.09091h46.54545v46.54545H69.81818z"
+    27    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    28    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M93.09091┬À139.63636h46.54545v46.54545H93.09091z"┬À/>
+    29    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    30    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EB5829"
+    31    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M116.36364┬À139.63636h46.54545v46.54545h-46.54545z"
+    32    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    33    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    34    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EE792F"
+    35    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M209.45454┬À93.09091h46.54545v46.54545h-46.54545zM23.27273┬À93.09091h46.54545v46.54545H23.27273z"
+    36    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    37    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M186.18182┬À139.63636h46.54545v46.54545h-46.54545z"┬À/>
+    38    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    39    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EB5829"
+    40    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M209.45454┬À139.63636h46.54545v46.54545h-46.54545z"
+    41    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    42    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M186.18182┬À186.18182h46.54545v46.54545h-46.54545z"┬À/>
+    43    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    44    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EB5829"
+    45    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M23.27273┬À139.63636h46.54545v46.54545H23.27273z"
+    46    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    47    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    48    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#EA3326"
+    49    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M209.45454┬À186.18182h46.54545v46.54545h-46.54545zM23.27273┬À186.18182h46.54545v46.54545H23.27273z"
+    50    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    51    Ôöé - ┬À┬À┬À┬À</svg>
+        2 Ôöé + ÔåÆ <svg
+        3 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+        4 Ôöé + ÔåÆ ÔåÆ preserveAspectRatio="xMidYMid"
+        5 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À256┬À233"
+        6 Ôöé + ÔåÆ ÔåÆ width="1em"
+        7 Ôöé + ÔåÆ ÔåÆ height="1em"
+        8 Ôöé + ÔåÆ ÔåÆ {...props}
+        9 Ôöé + ÔåÆ >
+       10 Ôöé + ÔåÆ ÔåÆ <title>Mistral┬ÀAI</title>
+       11 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M186.18182┬À0h46.54545v46.54545h-46.54545z"┬À/>
+       12 Ôöé + ÔåÆ ÔåÆ <path┬Àfill="#F7D046"┬Àd="M209.45454┬À0h46.54545v46.54545h-46.54545z"┬À/>
+       13 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M0┬À0h46.54545v46.54545H0zM0┬À46.54545h46.54545V93.0909H0zM0┬À93.09091h46.54545v46.54545H0zM0┬À139.63636h46.54545v46.54545H0zM0┬À186.18182h46.54545v46.54545H0z"┬À/>
+       14 Ôöé + ÔåÆ ÔåÆ <path┬Àfill="#F7D046"┬Àd="M23.27273┬À0h46.54545v46.54545H23.27273z"┬À/>
+       15 Ôöé + ÔåÆ ÔåÆ <path
+       16 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#F2A73B"
+       17 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M209.45454┬À46.54545h46.54545V93.0909h-46.54545zM23.27273┬À46.54545h46.54545V93.0909H23.27273z"
+       18 Ôöé + ÔåÆ ÔåÆ />
+       19 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M139.63636┬À46.54545h46.54545V93.0909h-46.54545z"┬À/>
+       20 Ôöé + ÔåÆ ÔåÆ <path
+       21 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#F2A73B"
+       22 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M162.90909┬À46.54545h46.54545V93.0909h-46.54545zM69.81818┬À46.54545h46.54545V93.0909H69.81818z"
+       23 Ôöé + ÔåÆ ÔåÆ />
+       24 Ôöé + ÔåÆ ÔåÆ <path
+       25 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#EE792F"
+       26 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M116.36364┬À93.09091h46.54545v46.54545h-46.54545zM162.90909┬À93.09091h46.54545v46.54545h-46.54545zM69.81818┬À93.09091h46.54545v46.54545H69.81818z"
+       27 Ôöé + ÔåÆ ÔåÆ />
+       28 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M93.09091┬À139.63636h46.54545v46.54545H93.09091z"┬À/>
+       29 Ôöé + ÔåÆ ÔåÆ <path┬Àfill="#EB5829"┬Àd="M116.36364┬À139.63636h46.54545v46.54545h-46.54545z"┬À/>
+       30 Ôöé + ÔåÆ ÔåÆ <path
+       31 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#EE792F"
+       32 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M209.45454┬À93.09091h46.54545v46.54545h-46.54545zM23.27273┬À93.09091h46.54545v46.54545H23.27273z"
+       33 Ôöé + ÔåÆ ÔåÆ />
+       34 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M186.18182┬À139.63636h46.54545v46.54545h-46.54545z"┬À/>
+       35 Ôöé + ÔåÆ ÔåÆ <path┬Àfill="#EB5829"┬Àd="M209.45454┬À139.63636h46.54545v46.54545h-46.54545z"┬À/>
+       36 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M186.18182┬À186.18182h46.54545v46.54545h-46.54545z"┬À/>
+       37 Ôöé + ÔåÆ ÔåÆ <path┬Àfill="#EB5829"┬Àd="M23.27273┬À139.63636h46.54545v46.54545H23.27273z"┬À/>
+       38 Ôöé + ÔåÆ ÔåÆ <path
+       39 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#EA3326"
+       40 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M209.45454┬À186.18182h46.54545v46.54545h-46.54545zM23.27273┬À186.18182h46.54545v46.54545H23.27273z"
+       41 Ôöé + ÔåÆ ÔåÆ />
+       42 Ôöé + ÔåÆ </svg>
+    52 43 Ôöé   );
+    53 44 Ôöé   export default MistralAI;
+  
+
+src\components\kokonutui\open-ai-dark.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1    Ôöé - import┬Àtype┬À{┬ÀSVGProps┬À}┬Àfrom┬À"react";
+        1 Ôöé + import┬Àtype┬À{┬ÀSVGProps┬À}┬Àfrom┬À'react';
+     2  2 Ôöé   
+     3  3 Ôöé   const OpenAIDark = (props: SVGProps<SVGSVGElement>) => (
+     4    Ôöé - ┬À┬À┬À┬À<svg
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀpreserveAspectRatio="xMidYMid"
+     9    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À256┬À260"
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+    11    Ôöé - ┬À┬À┬À┬À>
+    12    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>OpenAI</title>
+    13    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path
+    14    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àfill="#fff"
+    15    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬À┬Àd="M239.184┬À106.203a64.716┬À64.716┬À0┬À0┬À0-5.576-53.103C219.452┬À28.459┬À191┬À15.784┬À163.213┬À21.74A65.586┬À65.586┬À0┬À0┬À0┬À52.096┬À45.22a64.716┬À64.716┬À0┬À0┬À0-43.23┬À31.36c-14.31┬À24.602-11.061┬À55.634┬À8.033┬À76.74a64.665┬À64.665┬À0┬À0┬À0┬À5.525┬À53.102c14.174┬À24.65┬À42.644┬À37.324┬À70.446┬À31.36a64.72┬À64.72┬À0┬À0┬À0┬À48.754┬À21.744c28.481.025┬À53.714-18.361┬À62.414-45.481a64.767┬À64.767┬À0┬À0┬À0┬À43.229-31.36c14.137-24.558┬À10.875-55.423-8.083-76.483Zm-97.56┬À136.338a48.397┬À48.397┬À0┬À0┬À1-31.105-11.255l1.535-.87┬À51.67-29.825a8.595┬À8.595┬À0┬À0┬À0┬À4.247-7.367v-72.85l21.845┬À12.636c.218.111.37.32.409.563v60.367c-.056┬À26.818-21.783┬À48.545-48.601┬À48.601Zm-104.466-44.61a48.345┬À48.345┬À0┬À0┬À1-5.781-32.589l1.534.921┬À51.722┬À29.826a8.339┬À8.339┬À0┬À0┬À0┬À8.441┬À0l63.181-36.425v25.221a.87.87┬À0┬À0┬À1-.358.665l-52.335┬À30.184c-23.257┬À13.398-52.97┬À5.431-66.404-17.803ZM23.549┬À85.38a48.499┬À48.499┬À0┬À0┬À1┬À25.58-21.333v61.39a8.288┬À8.288┬À0┬À0┬À0┬À4.195┬À7.316l62.874┬À36.272-21.845┬À12.636a.819.819┬À0┬À0┬À1-.767┬À0L41.353┬À151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466┬À41.695-63.08-36.63L161.73┬À77.86a.819.819┬À0┬À0┬À1┬À.768┬À0l52.233┬À30.184a48.6┬À48.6┬À0┬À0┬À1-7.316┬À87.635v-61.391a8.544┬À8.544┬À0┬À0┬À0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39┬À8.39┬À0┬À0┬À0-8.492┬À0L99.98┬À99.808V74.587a.716.716┬À0┬À0┬À1┬À.307-.665l52.233-30.133a48.652┬À48.652┬À0┬À0┬À1┬À72.236┬À50.391v.205ZM88.061┬À139.097l-21.845-12.585a.87.87┬À0┬À0┬À1-.41-.614V65.685a48.652┬À48.652┬À0┬À0┬À1┬À79.757-37.346l-1.535.87-51.67┬À29.825a8.595┬À8.595┬À0┬À0┬À0-4.246┬À7.367l-.051┬À72.697Zm11.868-25.58┬À28.138-16.217┬À28.188┬À16.218v32.434l-28.086┬À16.218-28.188-16.218-.052-32.434Z"
+    16    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À/>
+    17    Ôöé - ┬À┬À┬À┬À</svg>
+        4 Ôöé + ÔåÆ <svg
+        5 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+        6 Ôöé + ÔåÆ ÔåÆ width="1em"
+        7 Ôöé + ÔåÆ ÔåÆ height="1em"
+        8 Ôöé + ÔåÆ ÔåÆ preserveAspectRatio="xMidYMid"
+        9 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À256┬À260"
+       10 Ôöé + ÔåÆ ÔåÆ {...props}
+       11 Ôöé + ÔåÆ >
+       12 Ôöé + ÔåÆ ÔåÆ <title>OpenAI</title>
+       13 Ôöé + ÔåÆ ÔåÆ <path
+       14 Ôöé + ÔåÆ ÔåÆ ÔåÆ fill="#fff"
+       15 Ôöé + ÔåÆ ÔåÆ ÔåÆ d="M239.184┬À106.203a64.716┬À64.716┬À0┬À0┬À0-5.576-53.103C219.452┬À28.459┬À191┬À15.784┬À163.213┬À21.74A65.586┬À65.586┬À0┬À0┬À0┬À52.096┬À45.22a64.716┬À64.716┬À0┬À0┬À0-43.23┬À31.36c-14.31┬À24.602-11.061┬À55.634┬À8.033┬À76.74a64.665┬À64.665┬À0┬À0┬À0┬À5.525┬À53.102c14.174┬À24.65┬À42.644┬À37.324┬À70.446┬À31.36a64.72┬À64.72┬À0┬À0┬À0┬À48.754┬À21.744c28.481.025┬À53.714-18.361┬À62.414-45.481a64.767┬À64.767┬À0┬À0┬À0┬À43.229-31.36c14.137-24.558┬À10.875-55.423-8.083-76.483Zm-97.56┬À136.338a48.397┬À48.397┬À0┬À0┬À1-31.105-11.255l1.535-.87┬À51.67-29.825a8.595┬À8.595┬À0┬À0┬À0┬À4.247-7.367v-72.85l21.845┬À12.636c.218.111.37.32.409.563v60.367c-.056┬À26.818-21.783┬À48.545-48.601┬À48.601Zm-104.466-44.61a48.345┬À48.345┬À0┬À0┬À1-5.781-32.589l1.534.921┬À51.722┬À29.826a8.339┬À8.339┬À0┬À0┬À0┬À8.441┬À0l63.181-36.425v25.221a.87.87┬À0┬À0┬À1-.358.665l-52.335┬À30.184c-23.257┬À13.398-52.97┬À5.431-66.404-17.803ZM23.549┬À85.38a48.499┬À48.499┬À0┬À0┬À1┬À25.58-21.333v61.39a8.288┬À8.288┬À0┬À0┬À0┬À4.195┬À7.316l62.874┬À36.272-21.845┬À12.636a.819.819┬À0┬À0┬À1-.767┬À0L41.353┬À151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466┬À41.695-63.08-36.63L161.73┬À77.86a.819.819┬À0┬À0┬À1┬À.768┬À0l52.233┬À30.184a48.6┬À48.6┬À0┬À0┬À1-7.316┬À87.635v-61.391a8.544┬À8.544┬À0┬À0┬À0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39┬À8.39┬À0┬À0┬À0-8.492┬À0L99.98┬À99.808V74.587a.716.716┬À0┬À0┬À1┬À.307-.665l52.233-30.133a48.652┬À48.652┬À0┬À0┬À1┬À72.236┬À50.391v.205ZM88.061┬À139.097l-21.845-12.585a.87.87┬À0┬À0┬À1-.41-.614V65.685a48.652┬À48.652┬À0┬À0┬À1┬À79.757-37.346l-1.535.87-51.67┬À29.825a8.595┬À8.595┬À0┬À0┬À0-4.246┬À7.367l-.051┬À72.697Zm11.868-25.58┬À28.138-16.217┬À28.188┬À16.218v32.434l-28.086┬À16.218-28.188-16.218-.052-32.434Z"
+       16 Ôöé + ÔåÆ ÔåÆ />
+       17 Ôöé + ÔåÆ </svg>
+    18 18 Ôöé   );
+    19 19 Ôöé   export default OpenAIDark;
+  
+
+src\components\kokonutui\open-ai.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1  1 Ôöé   const OpenAI = (props: React.SVGProps<SVGSVGElement>) => (
+     2    Ôöé - ┬À┬À┬À┬À<svg
+     3    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àxmlns="http://www.w3.org/2000/svg"
+     4    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àwidth="1em"
+     5    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬Àheight="1em"
+     6    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀpreserveAspectRatio="xMidYMid"
+     7    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀviewBox="0┬À0┬À256┬À260"
+     8    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À{...props}
+     9    Ôöé - ┬À┬À┬À┬À>
+    10    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<title>OpenAI</title>
+    11    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À<path┬Àd="M239.184┬À106.203a64.716┬À64.716┬À0┬À0┬À0-5.576-53.103C219.452┬À28.459┬À191┬À15.784┬À163.213┬À21.74A65.586┬À65.586┬À0┬À0┬À0┬À52.096┬À45.22a64.716┬À64.716┬À0┬À0┬À0-43.23┬À31.36c-14.31┬À24.602-11.061┬À55.634┬À8.033┬À76.74a64.665┬À64.665┬À0┬À0┬À0┬À5.525┬À53.102c14.174┬À24.65┬À42.644┬À37.324┬À70.446┬À31.36a64.72┬À64.72┬À0┬À0┬À0┬À48.754┬À21.744c28.481.025┬À53.714-18.361┬À62.414-45.481a64.767┬À64.767┬À0┬À0┬À0┬À43.229-31.36c14.137-24.558┬À10.875-55.423-8.083-76.483Zm-97.56┬À136.338a48.397┬À48.397┬À0┬À0┬À1-31.105-11.255l1.535-.87┬À51.67-29.825a8.595┬À8.595┬À0┬À0┬À0┬À4.247-7.367v-72.85l21.845┬À12.636c.218.111.37.32.409.563v60.367c-.056┬À26.818-21.783┬À48.545-48.601┬À48.601Zm-104.466-44.61a48.345┬À48.345┬À0┬À0┬À1-5.781-32.589l1.534.921┬À51.722┬À29.826a8.339┬À8.339┬À0┬À0┬À0┬À8.441┬À0l63.181-36.425v25.221a.87.87┬À0┬À0┬À1-.358.665l-52.335┬À30.184c-23.257┬À13.398-52.97┬À5.431-66.404-17.803ZM23.549┬À85.38a48.499┬À48.499┬À0┬À0┬À1┬À25.58-21.333v61.39a8.288┬À8.288┬À0┬À0┬À0┬À4.195┬À7.316l62.874┬À36.272-21.845┬À12.636a.819.819┬À0┬À0┬À1-.767┬À0L41.353┬À151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466┬À41.695-63.08-36.63L161.73┬À77.86a.819.819┬À0┬À0┬À1┬À.768┬À0l52.233┬À30.184a48.6┬À48.6┬À0┬À0┬À1-7.316┬À87.635v-61.391a8.544┬À8.544┬À0┬À0┬À0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39┬À8.39┬À0┬À0┬À0-8.492┬À0L99.98┬À99.808V74.587a.716.716┬À0┬À0┬À1┬À.307-.665l52.233-30.133a48.652┬À48.652┬À0┬À0┬À1┬À72.236┬À50.391v.205ZM88.061┬À139.097l-21.845-12.585a.87.87┬À0┬À0┬À1-.41-.614V65.685a48.652┬À48.652┬À0┬À0┬À1┬À79.757-37.346l-1.535.87-51.67┬À29.825a8.595┬À8.595┬À0┬À0┬À0-4.246┬À7.367l-.051┬À72.697Zm11.868-25.58┬À28.138-16.217┬À28.188┬À16.218v32.434l-28.086┬À16.218-28.188-16.218-.052-32.434Z"┬À/>
+    12    Ôöé - ┬À┬À┬À┬À</svg>
+        2 Ôöé + ÔåÆ <svg
+        3 Ôöé + ÔåÆ ÔåÆ xmlns="http://www.w3.org/2000/svg"
+        4 Ôöé + ÔåÆ ÔåÆ width="1em"
+        5 Ôöé + ÔåÆ ÔåÆ height="1em"
+        6 Ôöé + ÔåÆ ÔåÆ preserveAspectRatio="xMidYMid"
+        7 Ôöé + ÔåÆ ÔåÆ viewBox="0┬À0┬À256┬À260"
+        8 Ôöé + ÔåÆ ÔåÆ {...props}
+        9 Ôöé + ÔåÆ >
+       10 Ôöé + ÔåÆ ÔåÆ <title>OpenAI</title>
+       11 Ôöé + ÔåÆ ÔåÆ <path┬Àd="M239.184┬À106.203a64.716┬À64.716┬À0┬À0┬À0-5.576-53.103C219.452┬À28.459┬À191┬À15.784┬À163.213┬À21.74A65.586┬À65.586┬À0┬À0┬À0┬À52.096┬À45.22a64.716┬À64.716┬À0┬À0┬À0-43.23┬À31.36c-14.31┬À24.602-11.061┬À55.634┬À8.033┬À76.74a64.665┬À64.665┬À0┬À0┬À0┬À5.525┬À53.102c14.174┬À24.65┬À42.644┬À37.324┬À70.446┬À31.36a64.72┬À64.72┬À0┬À0┬À0┬À48.754┬À21.744c28.481.025┬À53.714-18.361┬À62.414-45.481a64.767┬À64.767┬À0┬À0┬À0┬À43.229-31.36c14.137-24.558┬À10.875-55.423-8.083-76.483Zm-97.56┬À136.338a48.397┬À48.397┬À0┬À0┬À1-31.105-11.255l1.535-.87┬À51.67-29.825a8.595┬À8.595┬À0┬À0┬À0┬À4.247-7.367v-72.85l21.845┬À12.636c.218.111.37.32.409.563v60.367c-.056┬À26.818-21.783┬À48.545-48.601┬À48.601Zm-104.466-44.61a48.345┬À48.345┬À0┬À0┬À1-5.781-32.589l1.534.921┬À51.722┬À29.826a8.339┬À8.339┬À0┬À0┬À0┬À8.441┬À0l63.181-36.425v25.221a.87.87┬À0┬À0┬À1-.358.665l-52.335┬À30.184c-23.257┬À13.398-52.97┬À5.431-66.404-17.803ZM23.549┬À85.38a48.499┬À48.499┬À0┬À0┬À1┬À25.58-21.333v61.39a8.288┬À8.288┬À0┬À0┬À0┬À4.195┬À7.316l62.874┬À36.272-21.845┬À12.636a.819.819┬À0┬À0┬À1-.767┬À0L41.353┬À151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466┬À41.695-63.08-36.63L161.73┬À77.86a.819.819┬À0┬À0┬À1┬À.768┬À0l52.233┬À30.184a48.6┬À48.6┬À0┬À0┬À1-7.316┬À87.635v-61.391a8.544┬À8.544┬À0┬À0┬À0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39┬À8.39┬À0┬À0┬À0-8.492┬À0L99.98┬À99.808V74.587a.716.716┬À0┬À0┬À1┬À.307-.665l52.233-30.133a48.652┬À48.652┬À0┬À0┬À1┬À72.236┬À50.391v.205ZM88.061┬À139.097l-21.845-12.585a.87.87┬À0┬À0┬À1-.41-.614V65.685a48.652┬À48.652┬À0┬À0┬À1┬À79.757-37.346l-1.535.87-51.67┬À29.825a8.595┬À8.595┬À0┬À0┬À0-4.246┬À7.367l-.051┬À72.697Zm11.868-25.58┬À28.138-16.217┬À28.188┬À16.218v32.434l-28.086┬À16.218-28.188-16.218-.052-32.434Z"┬À/>
+       12 Ôöé + ÔåÆ </svg>
+    13 13 Ôöé   );
+    14 14 Ôöé   
+  
+
+src\components\students\asaas-import-button.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1    Ôöé - import┬À{┬ÀuseAction┬À}┬Àfrom┬À'convex/react';ÔÉì
+     2    Ôöé - import┬À{┬ÀDownload,┬ÀLoader2┬À}┬Àfrom┬À'lucide-react';ÔÉì
+     3    Ôöé - import┬À{┬ÀuseState┬À}┬Àfrom┬À'react';ÔÉì
+     4    Ôöé - import┬À{┬Àtoast┬À}┬Àfrom┬À'sonner';ÔÉì
+     5    Ôöé - ÔÉì
+     6    Ôöé - import┬À{┬Àapi┬À}┬Àfrom┬À'../../../convex/_generated/api';ÔÉì
+     7    Ôöé - import┬À{┬ÀButton┬À}┬Àfrom┬À'@/components/ui/button';ÔÉì
+     8    Ôöé - import┬À{┬ÀTooltip,┬ÀTooltipContent,┬ÀTooltipProvider,┬ÀTooltipTrigger┬À}┬Àfrom┬À'@/components/ui/tooltip';ÔÉì
+     9    Ôöé - ÔÉì
+    10    Ôöé - export┬Àfunction┬ÀAsaasImportButton()┬À{ÔÉì
+    11    Ôöé - ÔåÆ const┬À[isLoading,┬ÀsetIsLoading]┬À=┬ÀuseState(false);ÔÉì
+    12    Ôöé - ÔåÆ //┬À@ts-expect-error┬À-┬ÀConvex┬Àtype┬Àgeneration┬Àmay┬Àhave┬Àdeep┬Àinstantiation┬ÀissuesÔÉì
+    13    Ôöé - ÔåÆ const┬ÀimportCustomers┬À=┬ÀuseAction(api.asaas.actions.importCustomersFromAsaas);ÔÉì
+    14    Ôöé - ÔÉì
+    15    Ôöé - ÔåÆ const┬ÀhandleImport┬À=┬Àasync┬À()┬À=>┬À{ÔÉì
+    16    Ôöé - ÔåÆ ÔåÆ setIsLoading(true);ÔÉì
+    17    Ôöé - ÔåÆ ÔåÆ try┬À{ÔÉì
+    18    Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.info('Iniciando┬Àimporta├º├úo┬Àdo┬ÀAsaas...');ÔÉì
+    19    Ôöé - ÔÉì
+    20    Ôöé - ÔåÆ ÔåÆ ÔåÆ const┬Àresult┬À=┬Àawait┬ÀimportCustomers({ÔÉì
+    21    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ initiatedBy:┬À'manual_import_button',ÔÉì
+    22    Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+    23    Ôöé - ÔÉì
+    24    Ôöé - ÔåÆ ÔåÆ ÔåÆ if┬À(result?.success)┬À{ÔÉì
+    25    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success('Importa├º├úo┬Àconclu├¡da┬Àcom┬Àsucesso!',┬À{ÔÉì
+    26    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ description:┬À`${result.recordsProcessed}┬Àprocessados:┬À${result.recordsCreated}┬Àcriados,┬À${result.recordsUpdated}┬Àatualizados.`,ÔÉì
+    27    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+    28    Ôöé - ÔåÆ ÔåÆ ÔåÆ }ÔÉì
+    29    Ôöé - ÔåÆ ÔåÆ }┬Àcatch┬À(error)┬À{ÔÉì
+    30    Ôöé - ÔåÆ ÔåÆ ÔåÆ toast.error('Falha┬Àna┬Àimporta├º├úo┬Àdo┬ÀAsaas',┬À{ÔÉì
+    31    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ description:┬Àerror┬Àinstanceof┬ÀError┬À?┬Àerror.message┬À:┬À'Erro┬Àdesconhecido',ÔÉì
+    32    Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+    33    Ôöé - ÔåÆ ÔåÆ }┬Àfinally┬À{ÔÉì
+    34    Ôöé - ÔåÆ ÔåÆ ÔåÆ setIsLoading(false);ÔÉì
+    35    Ôöé - ÔåÆ ÔåÆ }ÔÉì
+    36    Ôöé - ÔåÆ };ÔÉì
+    37    Ôöé - ÔÉì
+    38    Ôöé - ÔåÆ return┬À(ÔÉì
+    39    Ôöé - ÔåÆ ÔåÆ <TooltipProvider>ÔÉì
+    40    Ôöé - ÔåÆ ÔåÆ ÔåÆ <Tooltip>ÔÉì
+    41    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <TooltipTrigger┬ÀasChild>ÔÉì
+    42    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <ButtonÔÉì
+    43    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ variant="outline"ÔÉì
+    44    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ size="sm"ÔÉì
+    45    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ onClick={handleImport}ÔÉì
+    46    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ disabled={isLoading}ÔÉì
+    47    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="gap-2┬Àborder-purple-200┬Àhover:border-purple-500┬Àhover:text-purple-600┬Àdark:border-purple-800┬Àdark:hover:border-purple-400┬Àdark:hover:text-purple-400"ÔÉì
+    48    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ >ÔÉì
+    49    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {isLoading┬À?┬À(ÔÉì
+    50    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Loader2┬ÀclassName="h-4┬Àw-4┬Àanimate-spin"┬À/>ÔÉì
+    51    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )┬À:┬À(ÔÉì
+    52    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Download┬ÀclassName="h-4┬Àw-4"┬À/>ÔÉì
+    53    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )}ÔÉì
+    54    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName="hidden┬Àsm:inline">ÔÉì
+    55    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {isLoading┬À?┬À'Importando...'┬À:┬À'Importar┬Àdo┬ÀAsaas'}ÔÉì
+    56    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </span>ÔÉì
+    57    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Button>ÔÉì
+    58    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </TooltipTrigger>ÔÉì
+    59    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ <TooltipContent>ÔÉì
+    60    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p>Sincronizar┬Àalunos┬Àmanualmente┬Àdo┬ÀAsaas</p>ÔÉì
+    61    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ </TooltipContent>ÔÉì
+    62    Ôöé - ÔåÆ ÔåÆ ÔåÆ </Tooltip>ÔÉì
+    63    Ôöé - ÔåÆ ÔåÆ </TooltipProvider>ÔÉì
+    64    Ôöé - ÔåÆ );ÔÉì
+    65    Ôöé - }ÔÉì
+        1 Ôöé + import┬À{┬ÀuseAction┬À}┬Àfrom┬À'convex/react';
+        2 Ôöé + import┬À{┬ÀDownload,┬ÀLoader2┬À}┬Àfrom┬À'lucide-react';
+        3 Ôöé + import┬À{┬ÀuseState┬À}┬Àfrom┬À'react';
+        4 Ôöé + import┬À{┬Àtoast┬À}┬Àfrom┬À'sonner';
+        5 Ôöé + 
+        6 Ôöé + import┬À{┬Àapi┬À}┬Àfrom┬À'../../../convex/_generated/api';
+        7 Ôöé + import┬À{┬ÀButton┬À}┬Àfrom┬À'@/components/ui/button';
+        8 Ôöé + import┬À{┬ÀTooltip,┬ÀTooltipContent,┬ÀTooltipProvider,┬ÀTooltipTrigger┬À}┬Àfrom┬À'@/components/ui/tooltip';
+        9 Ôöé + 
+       10 Ôöé + export┬Àfunction┬ÀAsaasImportButton()┬À{
+       11 Ôöé + ÔåÆ const┬À[isLoading,┬ÀsetIsLoading]┬À=┬ÀuseState(false);
+       12 Ôöé + ÔåÆ //┬À@ts-expect-error┬À-┬ÀConvex┬Àtype┬Àgeneration┬Àmay┬Àhave┬Àdeep┬Àinstantiation┬Àissues
+       13 Ôöé + ÔåÆ const┬ÀimportCustomers┬À=┬ÀuseAction(api.asaas.actions.importCustomersFromAsaas);
+       14 Ôöé + 
+       15 Ôöé + ÔåÆ const┬ÀhandleImport┬À=┬Àasync┬À()┬À=>┬À{
+       16 Ôöé + ÔåÆ ÔåÆ setIsLoading(true);
+       17 Ôöé + ÔåÆ ÔåÆ try┬À{
+       18 Ôöé + ÔåÆ ÔåÆ ÔåÆ toast.info('Iniciando┬Àimporta├º├úo┬Àdo┬ÀAsaas...');
+       19 Ôöé + 
+       20 Ôöé + ÔåÆ ÔåÆ ÔåÆ const┬Àresult┬À=┬Àawait┬ÀimportCustomers({
+       21 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ initiatedBy:┬À'manual_import_button',
+       22 Ôöé + ÔåÆ ÔåÆ ÔåÆ });
+       23 Ôöé + 
+       24 Ôöé + ÔåÆ ÔåÆ ÔåÆ if┬À(result?.success)┬À{
+       25 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ toast.success('Importa├º├úo┬Àconclu├¡da┬Àcom┬Àsucesso!',┬À{
+       26 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ description:┬À`${result.recordsProcessed}┬Àprocessados:┬À${result.recordsCreated}┬Àcriados,┬À${result.recordsUpdated}┬Àatualizados.`,
+       27 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ });
+       28 Ôöé + ÔåÆ ÔåÆ ÔåÆ }
+       29 Ôöé + ÔåÆ ÔåÆ }┬Àcatch┬À(error)┬À{
+       30 Ôöé + ÔåÆ ÔåÆ ÔåÆ toast.error('Falha┬Àna┬Àimporta├º├úo┬Àdo┬ÀAsaas',┬À{
+       31 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ description:┬Àerror┬Àinstanceof┬ÀError┬À?┬Àerror.message┬À:┬À'Erro┬Àdesconhecido',
+       32 Ôöé + ÔåÆ ÔåÆ ÔåÆ });
+       33 Ôöé + ÔåÆ ÔåÆ }┬Àfinally┬À{
+       34 Ôöé + ÔåÆ ÔåÆ ÔåÆ setIsLoading(false);
+       35 Ôöé + ÔåÆ ÔåÆ }
+       36 Ôöé + ÔåÆ };
+       37 Ôöé + 
+       38 Ôöé + ÔåÆ return┬À(
+       39 Ôöé + ÔåÆ ÔåÆ <TooltipProvider>
+       40 Ôöé + ÔåÆ ÔåÆ ÔåÆ <Tooltip>
+       41 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ <TooltipTrigger┬ÀasChild>
+       42 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Button
+       43 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ variant="outline"
+       44 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ size="sm"
+       45 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ onClick={handleImport}
+       46 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ disabled={isLoading}
+       47 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="gap-2┬Àborder-purple-200┬Àhover:border-purple-500┬Àhover:text-purple-600┬Àdark:border-purple-800┬Àdark:hover:border-purple-400┬Àdark:hover:text-purple-400"
+       48 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ >
+       49 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {isLoading┬À?┬À(
+       50 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Loader2┬ÀclassName="h-4┬Àw-4┬Àanimate-spin"┬À/>
+       51 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )┬À:┬À(
+       52 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <Download┬ÀclassName="h-4┬Àw-4"┬À/>
+       53 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ )}
+       54 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <span┬ÀclassName="hidden┬Àsm:inline">
+       55 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ {isLoading┬À?┬À'Importando...'┬À:┬À'Importar┬Àdo┬ÀAsaas'}
+       56 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </span>
+       57 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ </Button>
+       58 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ </TooltipTrigger>
+       59 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ <TooltipContent>
+       60 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ <p>Sincronizar┬Àalunos┬Àmanualmente┬Àdo┬ÀAsaas</p>
+       61 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ </TooltipContent>
+       62 Ôöé + ÔåÆ ÔåÆ ÔåÆ </Tooltip>
+       63 Ôöé + ÔåÆ ÔåÆ </TooltipProvider>
+       64 Ôöé + ÔåÆ );
+       65 Ôöé + }
+    66 66 Ôöé   
+  
+
+src\components\ui\accordion.tsx:1:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+  > 1 Ôöé import * as React from "react"
+      Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 Ôöé import * as AccordionPrimitive from "@radix-ui/react-accordion"
+    3 Ôöé import { ChevronDown } from "lucide-react"
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1    Ôöé - import┬À*┬Àas┬ÀReact┬Àfrom┬À"react"
+     2    Ôöé - import┬À*┬Àas┬ÀAccordionPrimitive┬Àfrom┬À"@radix-ui/react-accordion"
+     3    Ôöé - import┬À{┬ÀChevronDown┬À}┬Àfrom┬À"lucide-react"
+        1 Ôöé + import┬À*┬Àas┬ÀAccordionPrimitive┬Àfrom┬À"@radix-ui/react-accordion"
+        2 Ôöé + import┬À{┬ÀChevronDown┬À}┬Àfrom┬À"lucide-react"
+        3 Ôöé + import┬À*┬Àas┬ÀReact┬Àfrom┬À"react"
+     4  4 Ôöé   
+     5  5 Ôöé   import { cn } from "@/lib/utils"
+  
+
+src\components\ui\accordion.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+     1    Ôöé - import┬À*┬Àas┬ÀReact┬Àfrom┬À"react"
+     2    Ôöé - import┬À*┬Àas┬ÀAccordionPrimitive┬Àfrom┬À"@radix-ui/react-accordion"
+     3    Ôöé - import┬À{┬ÀChevronDown┬À}┬Àfrom┬À"lucide-react"
+        1 Ôöé + import┬À*┬Àas┬ÀReact┬Àfrom┬À'react';
+        2 Ôöé + import┬À*┬Àas┬ÀAccordionPrimitive┬Àfrom┬À'@radix-ui/react-accordion';
+        3 Ôöé + import┬À{┬ÀChevronDown┬À}┬Àfrom┬À'lucide-react';
+     4  4 Ôöé   
+     5    Ôöé - import┬À{┬Àcn┬À}┬Àfrom┬À"@/lib/utils"
+        5 Ôöé + import┬À{┬Àcn┬À}┬Àfrom┬À'@/lib/utils';
+     6  6 Ôöé   
+     7    Ôöé - const┬ÀAccordion┬À=┬ÀAccordionPrimitive.Root
+        7 Ôöé + const┬ÀAccordion┬À=┬ÀAccordionPrimitive.Root;
+     8  8 Ôöé   
+     9  9 Ôöé   const AccordionItem = React.forwardRef<
+    10    Ôöé - ┬À┬ÀReact.ElementRef<typeof┬ÀAccordionPrimitive.Item>,
+    11    Ôöé - ┬À┬ÀReact.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Item>
+       10 Ôöé + ÔåÆ React.ElementRef<typeof┬ÀAccordionPrimitive.Item>,
+       11 Ôöé + ÔåÆ React.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Item>
+    12 12 Ôöé   >(({ className, ...props }, ref) => (
+    13    Ôöé - ┬À┬À<AccordionPrimitive.Item
+    14    Ôöé - ┬À┬À┬À┬Àref={ref}
+    15    Ôöé - ┬À┬À┬À┬ÀclassName={cn("border-b",┬ÀclassName)}
+    16    Ôöé - ┬À┬À┬À┬À{...props}
+    17    Ôöé - ┬À┬À/>
+    18    Ôöé - ))
+    19    Ôöé - AccordionItem.displayName┬À=┬À"AccordionItem"
+       13 Ôöé + ÔåÆ <AccordionPrimitive.Item┬Àref={ref}┬ÀclassName={cn('border-b',┬ÀclassName)}┬À{...props}┬À/>
+       14 Ôöé + ));
+       15 Ôöé + AccordionItem.displayName┬À=┬À'AccordionItem';
+    20 16 Ôöé   
+    21 17 Ôöé   const AccordionTrigger = React.forwardRef<
+    22    Ôöé - ┬À┬ÀReact.ElementRef<typeof┬ÀAccordionPrimitive.Trigger>,
+    23    Ôöé - ┬À┬ÀReact.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Trigger>
+       18 Ôöé + ÔåÆ React.ElementRef<typeof┬ÀAccordionPrimitive.Trigger>,
+       19 Ôöé + ÔåÆ React.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Trigger>
+    24 20 Ôöé   >(({ className, children, ...props }, ref) => (
+    25    Ôöé - ┬À┬À<AccordionPrimitive.Header┬ÀclassName="flex">
+    26    Ôöé - ┬À┬À┬À┬À<AccordionPrimitive.Trigger
+    27    Ôöé - ┬À┬À┬À┬À┬À┬Àref={ref}
+    28    Ôöé - ┬À┬À┬À┬À┬À┬ÀclassName={cn(
+    29    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬À"flex┬Àflex-1┬Àitems-center┬Àjustify-between┬Àpy-4┬Àtext-sm┬Àfont-medium┬Àtransition-all┬Àhover:underline┬Àtext-left┬À[&[data-state=open]>svg]:rotate-180",
+    30    Ôöé - ┬À┬À┬À┬À┬À┬À┬À┬ÀclassName
+    31    Ôöé - ┬À┬À┬À┬À┬À┬À)}
+    32    Ôöé - ┬À┬À┬À┬À┬À┬À{...props}
+    33    Ôöé - ┬À┬À┬À┬À>
+    34    Ôöé - ┬À┬À┬À┬À┬À┬À{children}
+    35    Ôöé - ┬À┬À┬À┬À┬À┬À<ChevronDown┬ÀclassName="h-4┬Àw-4┬Àshrink-0┬Àtext-muted-foreground┬Àtransition-transform┬Àduration-200"┬À/>
+    36    Ôöé - ┬À┬À┬À┬À</AccordionPrimitive.Trigger>
+    37    Ôöé - ┬À┬À</AccordionPrimitive.Header>
+    38    Ôöé - ))
+    39    Ôöé - AccordionTrigger.displayName┬À=┬ÀAccordionPrimitive.Trigger.displayName
+       21 Ôöé + ÔåÆ <AccordionPrimitive.Header┬ÀclassName="flex">
+       22 Ôöé + ÔåÆ ÔåÆ <AccordionPrimitive.Trigger
+       23 Ôöé + ÔåÆ ÔåÆ ÔåÆ ref={ref}
+       24 Ôöé + ÔåÆ ÔåÆ ÔåÆ className={cn(
+       25 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ 'flex┬Àflex-1┬Àitems-center┬Àjustify-between┬Àpy-4┬Àtext-sm┬Àfont-medium┬Àtransition-all┬Àhover:underline┬Àtext-left┬À[&[data-state=open]>svg]:rotate-180',
+       26 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ className,
+       27 Ôöé + ÔåÆ ÔåÆ ÔåÆ )}
+       28 Ôöé + ÔåÆ ÔåÆ ÔåÆ {...props}
+       29 Ôöé + ÔåÆ ÔåÆ >
+       30 Ôöé + ÔåÆ ÔåÆ ÔåÆ {children}
+       31 Ôöé + ÔåÆ ÔåÆ ÔåÆ <ChevronDown┬ÀclassName="h-4┬Àw-4┬Àshrink-0┬Àtext-muted-foreground┬Àtransition-transform┬Àduration-200"┬À/>
+       32 Ôöé + ÔåÆ ÔåÆ </AccordionPrimitive.Trigger>
+       33 Ôöé + ÔåÆ </AccordionPrimitive.Header>
+       34 Ôöé + ));
+       35 Ôöé + AccordionTrigger.displayName┬À=┬ÀAccordionPrimitive.Trigger.displayName;
+    40 36 Ôöé   
+    41 37 Ôöé   const AccordionContent = React.forwardRef<
+    42    Ôöé - ┬À┬ÀReact.ElementRef<typeof┬ÀAccordionPrimitive.Content>,
+    43    Ôöé - ┬À┬ÀReact.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Content>
+       38 Ôöé + ÔåÆ React.ElementRef<typeof┬ÀAccordionPrimitive.Content>,
+       39 Ôöé + ÔåÆ React.ComponentPropsWithoutRef<typeof┬ÀAccordionPrimitive.Content>
+    44 40 Ôöé   >(({ className, children, ...props }, ref) => (
+    45    Ôöé - ┬À┬À<AccordionPrimitive.Content
+    46    Ôöé - ┬À┬À┬À┬Àref={ref}
+    47    Ôöé - ┬À┬À┬À┬ÀclassName="overflow-hidden┬Àtext-sm┬Àdata-[state=closed]:animate-accordion-up┬Àdata-[state=open]:animate-accordion-down"
+    48    Ôöé - ┬À┬À┬À┬À{...props}
+    49    Ôöé - ┬À┬À>
+    50    Ôöé - ┬À┬À┬À┬À<div┬ÀclassName={cn("pb-4┬Àpt-0",┬ÀclassName)}>{children}</div>
+    51    Ôöé - ┬À┬À</AccordionPrimitive.Content>
+    52    Ôöé - ))
+    53    Ôöé - AccordionContent.displayName┬À=┬ÀAccordionPrimitive.Content.displayName
+       41 Ôöé + ÔåÆ <AccordionPrimitive.Content
+       42 Ôöé + ÔåÆ ÔåÆ ref={ref}
+       43 Ôöé + ÔåÆ ÔåÆ className="overflow-hidden┬Àtext-sm┬Àdata-[state=closed]:animate-accordion-up┬Àdata-[state=open]:animate-accordion-down"
+       44 Ôöé + ÔåÆ ÔåÆ {...props}
+       45 Ôöé + ÔåÆ >
+       46 Ôöé + ÔåÆ ÔåÆ <div┬ÀclassName={cn('pb-4┬Àpt-0',┬ÀclassName)}>{children}</div>
+       47 Ôöé + ÔåÆ </AccordionPrimitive.Content>
+       48 Ôöé + ));
+       49 Ôöé + AccordionContent.displayName┬À=┬ÀAccordionPrimitive.Content.displayName;
+    54 50 Ôöé   
+    55    Ôöé - export┬À{┬ÀAccordion,┬ÀAccordionItem,┬ÀAccordionTrigger,┬ÀAccordionContent┬À}
+       51 Ôöé + export┬À{┬ÀAccordion,┬ÀAccordionItem,┬ÀAccordionTrigger,┬ÀAccordionContent┬À};
+    56 52 Ôöé   
+  
+
+src\routes\_authenticated\settings\integrations.tsx format ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Formatter would have printed the following content:
+  
+      1     Ôöé - import┬À{┬Àapi┬À}┬Àfrom┬À'@convex/_generated/api';ÔÉì
+      2     Ôöé - import┬À{┬ÀzodResolver┬À}┬Àfrom┬À'@hookform/resolvers/zod';ÔÉì
+      3     Ôöé - import┬À{┬ÀcreateFileRoute┬À}┬Àfrom┬À'@tanstack/react-router';ÔÉì
+      4     Ôöé - import┬À{┬ÀuseQuery┬À}┬Àfrom┬À'convex/react';ÔÉì
+      5     Ôöé - import┬À{ÔÉì
+      6     Ôöé - ÔåÆ AlertCircle,ÔÉì
+      7     Ôöé - ÔåÆ Bot,ÔÉì
+      8     Ôöé - ÔåÆ CheckCircle2,ÔÉì
+      9     Ôöé - ÔåÆ CreditCard,ÔÉì
+     10     Ôöé - ÔåÆ ExternalLink,ÔÉì
+     11     Ôöé - ÔåÆ HelpCircle,ÔÉì
+     12     Ôöé - ÔåÆ Loader2,ÔÉì
+     13     Ôöé - ÔåÆ MessageSquare,ÔÉì
+     14     Ôöé - ÔåÆ Settings,ÔÉì
+     15     Ôöé - }┬Àfrom┬À'lucide-react';ÔÉì
+     16     Ôöé - import┬À{┬ÀuseEffect┬À}┬Àfrom┬À'react';ÔÉì
+     17     Ôöé - import┬À{┬ÀuseForm┬À}┬Àfrom┬À'react-hook-form';ÔÉì
+     18     Ôöé - import┬À{┬Àtoast┬À}┬Àfrom┬À'sonner';ÔÉì
+     19     Ôöé - import┬À*┬Àas┬Àz┬Àfrom┬À'zod';ÔÉì
+     20     Ôöé - ÔÉì
+     21     Ôöé - import┬À{┬ÀAutoSyncSettings┬À}┬Àfrom┬À'@/components/asaas/auto-sync-settings';ÔÉì
+     22     Ôöé - import┬À{┬ÀBadge┬À}┬Àfrom┬À'@/components/ui/badge';ÔÉì
+     23     Ôöé - import┬À{┬ÀButton┬À}┬Àfrom┬À'@/components/ui/button';ÔÉì
+     24     Ôöé - import┬À{┬ÀCard,┬ÀCardContent,┬ÀCardDescription,┬ÀCardHeader,┬ÀCardTitle┬À}┬Àfrom┬À'@/components/ui/card';ÔÉì
+     25     Ôöé - import┬À{ÔÉì
+     26     Ôöé - ÔåÆ Form,ÔÉì
+     27     Ôöé - ÔåÆ FormControl,ÔÉì
+     28     Ôöé - ÔåÆ FormDescription,ÔÉì
+     29     Ôöé - ÔåÆ FormField,ÔÉì
+     30     Ôöé - ÔåÆ FormItem,ÔÉì
+     31     Ôöé - ÔåÆ FormLabel,ÔÉì
+     32     Ôöé - ÔåÆ FormMessage,ÔÉì
+     33     Ôöé - }┬Àfrom┬À'@/components/ui/form';ÔÉì
+     34     Ôöé - import┬À{┬ÀInput┬À}┬Àfrom┬À'@/components/ui/input';ÔÉì
+     35     Ôöé - import┬À{ÔÉì
+     36     Ôöé - ÔåÆ Select,ÔÉì
+     37     Ôöé - ÔåÆ SelectContent,ÔÉì
+     38     Ôöé - ÔåÆ SelectItem,ÔÉì
+     39     Ôöé - ÔåÆ SelectTrigger,ÔÉì
+     40     Ôöé - ÔåÆ SelectValue,ÔÉì
+     41     Ôöé - }┬Àfrom┬À'@/components/ui/select';ÔÉì
+     42     Ôöé - import┬À{┬ÀuseIntegrationSettings┬À}┬Àfrom┬À'@/hooks/useIntegrationSettings';ÔÉì
+     43     Ôöé - ÔÉì
+     44     Ôöé - export┬Àconst┬ÀRoute┬À=┬ÀcreateFileRoute('/_authenticated/settings/integrations')({ÔÉì
+     45     Ôöé - ÔåÆ component:┬ÀIntegrationsSettingsPage,ÔÉì
+     46     Ôöé - });ÔÉì
+     47     Ôöé - ÔÉì
+     48     Ôöé - const┬ÀevolutionSchema┬À=┬Àz.object({ÔÉì
+     49     Ôöé - ÔåÆ url:┬Àz.string().url('URL┬Àinv├ílida').min(1,┬À'URL┬À├®┬Àobrigat├│ria'),ÔÉì
+     50     Ôöé - ÔåÆ apiKey:┬Àz.string().min(1,┬À'API┬ÀKey┬À├®┬Àobrigat├│ria'),ÔÉì
+     51     Ôöé - ÔåÆ instanceName:┬Àz.string().min(1,┬À'Nome┬Àda┬Àinst├óncia┬À├®┬Àobrigat├│rio'),ÔÉì
+     52     Ôöé - });ÔÉì
+     53     Ôöé - ÔÉì
+     54     Ôöé - const┬ÀdifySchema┬À=┬Àz.object({ÔÉì
+     55     Ôöé - ÔåÆ url:┬Àz.string().url('URL┬Àinv├ílida').min(1,┬À'URL┬À├®┬Àobrigat├│ria'),ÔÉì
+     56     Ôöé - ÔåÆ apiKey:┬Àz.string().min(1,┬À'API┬ÀKey┬À├®┬Àobrigat├│ria'),ÔÉì
+     57     Ôöé - ÔåÆ appId:┬Àz.string().min(1,┬À'App┬ÀID┬À├®┬Àobrigat├│rio'),ÔÉì
+     58     Ôöé - });ÔÉì
+     59     Ôöé - ÔÉì
+     60     Ôöé - const┬ÀasaasSchema┬À=┬Àz.object({ÔÉì
+     61     Ôöé - ÔåÆ baseUrl:┬Àz.string().url('URL┬Àinv├ílida').min(1,┬À'URL┬À├®┬Àobrigat├│ria'),ÔÉì
+     62     Ôöé - ÔåÆ apiKey:┬Àz.string().min(1,┬À'API┬ÀKey┬À├®┬Àobrigat├│ria'),ÔÉì
+     63     Ôöé - ÔåÆ environment:┬Àz.enum(['production',┬À'sandbox']),ÔÉì
+     64     Ôöé - ÔåÆ webhookSecret:┬Àz.string().optional(),ÔÉì
+     65     Ôöé - });ÔÉì
+     66     Ôöé - ÔÉì
+     67     Ôöé - type┬ÀEvolutionFormData┬À=┬Àz.infer<typeof┬ÀevolutionSchema>;ÔÉì
+     68     Ôöé - type┬ÀDifyFormData┬À=┬Àz.infer<typeof┬ÀdifySchema>;ÔÉì
+     69     Ôöé - type┬ÀAsaasFormData┬À=┬Àz.infer<typeof┬ÀasaasSchema>;ÔÉì
+     70     Ôöé - ÔÉì
+     71     Ôöé - type┬ÀIntegrationTestResult┬À=┬À{┬Àsuccess:┬Àboolean;┬Àmessage:┬Àstring;┬Àdetails?:┬Àunknown┬À}┬À|┬Ànull;ÔÉì
+     72     Ôöé - ÔÉì
+     73     Ôöé - function┬ÀIntegrationsSettingsPage()┬À{ÔÉì
+     74     Ôöé - ÔåÆ const┬ÀcurrentUser┬À=┬ÀuseQuery(api.users.current);ÔÉì
+     75     Ôöé - ÔåÆ const┬ÀisAdmin┬À=┬ÀcurrentUser?.role┬À===┬À'admin';ÔÉì
+     76     Ôöé - ÔÉì
+     77     Ôöé - ÔåÆ //┬ÀEvolution┬ÀAPIÔÉì
+     78     Ôöé - ÔåÆ const┬Àevolution┬À=┬ÀuseIntegrationSettings('evolution');ÔÉì
+     79     Ôöé - ÔåÆ const┬ÀevolutionForm┬À=┬ÀuseForm<EvolutionFormData>({ÔÉì
+     80     Ôöé - ÔåÆ ÔåÆ resolver:┬ÀzodResolver(evolutionSchema),ÔÉì
+     81     Ôöé - ÔåÆ ÔåÆ defaultValues:┬À{ÔÉì
+     82     Ôöé - ÔåÆ ÔåÆ ÔåÆ url:┬À'',ÔÉì
+     83     Ôöé - ÔåÆ ÔåÆ ÔåÆ apiKey:┬À'',ÔÉì
+     84     Ôöé - ÔåÆ ÔåÆ ÔåÆ instanceName:┬À'',ÔÉì
+     85     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+     86     Ôöé - ÔåÆ });ÔÉì
+     87     Ôöé - ÔÉì
+     88     Ôöé - ÔåÆ useEffect(()┬À=>┬À{ÔÉì
+     89     Ôöé - ÔåÆ ÔåÆ if┬À(evolution.settings┬À&&┬À!evolution.loading)┬À{ÔÉì
+     90     Ôöé - ÔåÆ ÔåÆ ÔåÆ evolutionForm.reset({ÔÉì
+     91     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ url:┬Àevolution.settings.url┬À||┬À'',ÔÉì
+     92     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ apiKey:┬Àevolution.settings.apiKey┬À||┬À'',┬À//┬ÀThis┬Àwill┬Àbe┬Àmasked┬ÀversionÔÉì
+     93     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ instanceName:┬Àevolution.settings.instanceName┬À||┬À'',ÔÉì
+     94     Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+     95     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+     96     Ôöé - ÔåÆ },┬À[evolution.settings,┬Àevolution.loading,┬ÀevolutionForm]);ÔÉì
+     97     Ôöé - ÔÉì
+     98     Ôöé - ÔåÆ //┬ÀDify┬ÀAIÔÉì
+     99     Ôöé - ÔåÆ const┬Àdify┬À=┬ÀuseIntegrationSettings('dify');ÔÉì
+    100     Ôöé - ÔåÆ const┬ÀdifyForm┬À=┬ÀuseForm<DifyFormData>({ÔÉì
+    101     Ôöé - ÔåÆ ÔåÆ resolver:┬ÀzodResolver(difySchema),ÔÉì
+    102     Ôöé - ÔåÆ ÔåÆ defaultValues:┬À{ÔÉì
+    103     Ôöé - ÔåÆ ÔåÆ ÔåÆ url:┬À'',ÔÉì
+    104     Ôöé - ÔåÆ ÔåÆ ÔåÆ apiKey:┬À'',ÔÉì
+    105     Ôöé - ÔåÆ ÔåÆ ÔåÆ appId:┬À'',ÔÉì
+    106     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+    107     Ôöé - ÔåÆ });ÔÉì
+    108     Ôöé - ÔÉì
+    109     Ôöé - ÔåÆ useEffect(()┬À=>┬À{ÔÉì
+    110     Ôöé - ÔåÆ ÔåÆ if┬À(dify.settings┬À&&┬À!dify.loading)┬À{ÔÉì
+    111     Ôöé - ÔåÆ ÔåÆ ÔåÆ difyForm.reset({ÔÉì
+    112     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ url:┬Àdify.settings.url┬À||┬À'',ÔÉì
+    113     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ apiKey:┬Àdify.settings.apiKey┬À||┬À'',ÔÉì
+    114     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ appId:┬Àdify.settings.appId┬À||┬À'',ÔÉì
+    115     Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+    116     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+    117     Ôöé - ÔåÆ },┬À[dify.settings,┬Àdify.loading,┬ÀdifyForm]);ÔÉì
+    118     Ôöé - ÔÉì
+    119     Ôöé - ÔåÆ //┬ÀAsaasÔÉì
+    120     Ôöé - ÔåÆ const┬Àasaas┬À=┬ÀuseIntegrationSettings('asaas');ÔÉì
+    121     Ôöé - ÔåÆ const┬ÀasaasForm┬À=┬ÀuseForm<AsaasFormData>({ÔÉì
+    122     Ôöé - ÔåÆ ÔåÆ resolver:┬ÀzodResolver(asaasSchema),ÔÉì
+    123     Ôöé - ÔåÆ ÔåÆ defaultValues:┬À{ÔÉì
+    124     Ôöé - ÔåÆ ÔåÆ ÔåÆ baseUrl:┬À'https://api.asaas.com/v3',ÔÉì
+    125     Ôöé - ÔåÆ ÔåÆ ÔåÆ apiKey:┬À'',ÔÉì
+    126     Ôöé - ÔåÆ ÔåÆ ÔåÆ environment:┬À'production',ÔÉì
+    127     Ôöé - ÔåÆ ÔåÆ ÔåÆ webhookSecret:┬À'',ÔÉì
+    128     Ôöé - ÔåÆ ÔåÆ },ÔÉì
+    129     Ôöé - ÔåÆ });ÔÉì
+    130     Ôöé - ÔÉì
+    131     Ôöé - ÔåÆ useEffect(()┬À=>┬À{ÔÉì
+    132     Ôöé - ÔåÆ ÔåÆ if┬À(asaas.settings┬À&&┬À!asaas.loading)┬À{ÔÉì
+    133     Ôöé - ÔåÆ ÔåÆ ÔåÆ asaasForm.reset({ÔÉì
+    134     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ baseUrl:┬Àasaas.settings.baseUrl┬À||┬À'https://api.asaas.com/v3',ÔÉì
+    135     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ apiKey:┬Àasaas.settings.apiKey┬À||┬À'',ÔÉì
+    136     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ environment:┬À(asaas.settings.environment┬Àas┬À'production'┬À|┬À'sandbox')┬À||┬À'production',ÔÉì
+    137     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ webhookSecret:┬Àasaas.settings.webhookSecret┬À||┬À'',ÔÉì
+    138     Ôöé - ÔåÆ ÔåÆ ÔåÆ });ÔÉì
+    139     Ôöé - ÔåÆ ÔåÆ }ÔÉì
+    140     Ôöé - ÔåÆ },┬À[asaas.settings,┬Àasaas.loading,┬ÀasaasForm]);ÔÉì
+    141     Ôöé - ÔÉì
+    142     Ôöé - ÔåÆ const┬ÀhandleSaveEvolution┬À=┬Àasync┬À(values:┬ÀEvolutionFormData)┬À=>┬À{ÔÉì
+    143     Ôöé - ÔåÆ ÔåÆ if┬À(!isAdmin)┬Àreturn┬Àtoast.error('Permiss├úo┬Ànegada');ÔÉì
+    144     Ôöé - ÔåÆ ÔåÆ await┬Àevolution.saveSettings(values);ÔÉì
+    145     Ôöé - ÔåÆ };ÔÉì
+    146     Ôöé - ÔÉì
+    147     Ôöé - ÔåÆ const┬ÀhandleTestEvolution┬À=┬Àasync┬À()┬À=>┬À{ÔÉì
+    148     Ôöé - ÔåÆ ÔåÆ const┬Àvalues┬À=┬ÀevolutionForm.getValues();ÔÉì
+    149     Ôöé - ÔåÆ ÔåÆ //┬ÀManually┬Àvalidate┬Àrequired┬Àfields┬Àsimply┬Àor┬Àrely┬Àon┬Àform┬Àstate?ÔÉì
+    150     Ôöé - ÔåÆ ÔåÆ //┬ÀuseIntegrationSettings┬Àhook┬Àhandles┬Àvalidation┬Àinside┬ÀtestConnection┬Àtoo┬Àbut┬Àbetter┬Àto┬Àpass┬Àvalid┬ÀdataÔÉì
+  1031 more lines truncated
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 1.
+Checked 181 files in 1626ms. No fixes applied.
+Found 20 errors.
+Found 1 warning.
+check ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Some errors were emitted while running checks.
+  
+
+error: script "lint:check" exited with code 1
