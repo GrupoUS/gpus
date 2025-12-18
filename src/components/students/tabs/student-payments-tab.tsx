@@ -5,7 +5,6 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useAction, useQuery } from 'convex/react';
 import { Copy, CreditCard, Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,12 +35,15 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 
 interface StudentPaymentsTabProps {
 	studentId: Id<'students'>;
 }
 
 export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
+	const { toast } = useToast();
+
 	// Fetch student to get Asaas ID
 	const student = useQuery(api.students.getById, { id: studentId });
 
@@ -63,7 +65,11 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 	const handleCreatePayment = async () => {
 		if (!student?.asaasCustomerId) {
-			toast.error('Aluno não sincronizado com Asaas.');
+			toast({
+				title: 'Erro',
+				description: 'Aluno não sincronizado com Asaas.',
+				variant: 'destructive',
+			});
 			return;
 		}
 
@@ -84,7 +90,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 						: undefined,
 			});
 
-			toast.success('Cobrança gerada com sucesso!');
+			toast({ title: 'Sucesso', description: 'Cobrança gerada com sucesso!' });
 			setIsNewPaymentOpen(false);
 			// Reset form
 			setAmount('');
@@ -92,7 +98,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 			setInstallments('1');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Erro desconhecido';
-			toast.error(message);
+			toast({ title: 'Erro', description: message, variant: 'destructive' });
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -276,7 +282,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 													size="sm"
 													onClick={() => {
 														if (payment.pixQrCode) {
-															navigator.clipboard.writeText(payment.pixQrCode);
+															(navigator as any).clipboard.writeText(payment.pixQrCode);
 															toast({ title: 'Copia e Cola copiado!' });
 														}
 													}}

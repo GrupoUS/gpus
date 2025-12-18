@@ -26,7 +26,7 @@ function FinancialDashboard() {
 	const payments = useQuery(api.asaas.listPayments, { limit: 20 });
 
 	const getStatusBadge = (status: string) => {
-		const map: any = {
+		const map: Record<string, string> = {
 			PENDING: 'bg-yellow-500',
 			RECEIVED: 'bg-green-500',
 			CONFIRMED: 'bg-green-600',
@@ -35,7 +35,7 @@ function FinancialDashboard() {
 			DELETED: 'bg-gray-400',
 			CANCELLED: 'bg-gray-500',
 		};
-		return <Badge className={`${map[status] || 'bg-gray-500'}`}>{status}</Badge>;
+		return <Badge className={map[status] ?? 'bg-gray-500'}>{status}</Badge>;
 	};
 
 	return (

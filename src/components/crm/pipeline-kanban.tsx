@@ -299,10 +299,12 @@ export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanban
 		[onDragEnd],
 	);
 
+	const leadsSignature = useMemo(() => leads.map((l) => `${l._id}:${l.stage}`).join('|'), [leads]);
+
 	// Sync local leads with props when props change
 	useEffect(() => {
 		setLocalLeads(null);
-	}, [leads]);
+	}, [leadsSignature]);
 
 	return (
 		<LayoutGroup>
