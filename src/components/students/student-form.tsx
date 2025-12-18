@@ -269,14 +269,17 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>CS Atribuído (Opcional)</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
+										<Select
+											onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+											value={field.value || 'none'}
+										>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione um CS" />
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="">Nenhum</SelectItem>
+												<SelectItem value="none">Nenhum</SelectItem>
 												{csUsers?.map((user: { _id: string; name: string }) => (
 													<SelectItem key={user._id} value={user._id}>
 														{user.name}

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAuth, hasOrgRole } from "./lib/auth";
+import { getIdentity, hasOrgRole, requireAuth } from "./lib/auth";
 import { encrypt, decrypt, isEncrypted } from "./lib/encryption";
 
 // Helper to mask keys
@@ -15,7 +15,12 @@ export const getIntegrationConfig = query({
   args: { integration: integrationArgs },
   handler: async (ctx, args) => {
     try {
-      await requireAuth(ctx);
+      // Use getIdentity to avoid throwing - return empty if not authenticated
+      const identity = await getIdentity(ctx);
+      if (!identity) {
+        // User not authenticated - return empty config instead of throwing
+        return {};
+      }
 
       // Validate integration argument
       const validIntegrations = ['asaas', 'evolution', 'dify'] as const;

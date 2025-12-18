@@ -1,7 +1,7 @@
 ---
 description: Documentation and PRD specialist using Diataxis framework for clear, actionable deliverables
 mode: subagent
-model: openai/gpt-5.2-medium
+model: zhipuai-coding-plan/glm-4.6v
 temperature: 0.2
 tools:
   write: true

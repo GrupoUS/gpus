@@ -1,7 +1,7 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: openai/gpt-5.2-high
+model: zhipuai-coding-plan/glm-4.6v
 temperature: 0.1
 tools:
   write: false
