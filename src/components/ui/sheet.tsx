@@ -71,16 +71,17 @@ const sheetMotionVariants = {
 interface SheetContentProps
 	extends Omit<
 			React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-			'onAnimationStart' | 'onDrag' | 'onDragEnd' | 'onDragStart' | 'style'
+			'onAnimationStart' | 'onDrag' | 'onDragEnd' | 'onDragStart'
 		>,
 		VariantProps<typeof sheetVariants> {
 	showCloseButton?: boolean;
+	style?: React.CSSProperties;
 }
 
 const SheetContent = React.forwardRef<
 	React.ElementRef<typeof SheetPrimitive.Content>,
 	SheetContentProps
->(({ side = 'right', className, children, showCloseButton = true, ...props }, ref) => (
+>(({ side = 'right', className, children, showCloseButton = true, style, ...props }, ref) => (
 	<SheetPortal>
 		<SheetOverlay />
 		<SheetPrimitive.Content
@@ -96,7 +97,8 @@ const SheetContent = React.forwardRef<
 				animate={sheetMotionVariants[side || 'right'].animate}
 				exit={sheetMotionVariants[side || 'right'].exit}
 				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
-				ref={ref as any}
+				ref={ref as React.Ref<HTMLDivElement>}
+				style={style}
 				{...(props as HTMLMotionProps<'div'>)}
 			>
 				{children}

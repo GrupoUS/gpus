@@ -19,9 +19,11 @@ export const Route = createFileRoute('/_authenticated/students/$studentId')({
 
 function StudentDetailPage() {
 	const { studentId } = Route.useParams();
-	const listSearch = Route.useSearch();
+	const navigate = Route.useNavigate();
 
-	return (
-		<StudentDetail studentId={studentId as Id<'students'>} mode="full" listSearch={listSearch} />
-	);
+	const handleClose = () => {
+		navigate({ to: '/students', search: (prev) => prev });
+	};
+
+	return <StudentDetail studentId={studentId as Id<'students'>} onClose={handleClose} />;
 }

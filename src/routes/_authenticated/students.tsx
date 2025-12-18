@@ -1,7 +1,9 @@
+import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { ProductSection } from '@/components/students/product-section';
 import { ProductSectionSkeleton } from '@/components/students/product-section-skeleton';
+import { StudentDetail } from '@/components/students/student-detail';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentHeader } from '@/components/students/student-header';
 import { StudentListEmptyState } from '@/components/students/student-list-empty-state';
@@ -19,6 +21,7 @@ export const Route = createFileRoute('/_authenticated/students')({
 			product: (search.product as string) || 'all',
 			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
 			page: Math.max(1, Number(search.page) || 1),
+			studentId: (search.studentId as Id<'students'>) || undefined,
 		};
 	},
 	component: StudentsPage,
@@ -45,7 +48,6 @@ function StudentsPage() {
 		totalPages,
 		clearFilters,
 		handleFilterChange,
-		navigateToStudent,
 		toggleSection,
 		expandAll,
 		collapseAll,
@@ -53,13 +55,29 @@ function StudentsPage() {
 		PAGE_SIZE,
 	} = useStudentsViewModel(Route);
 
+	const params = Route.useSearch();
+
 	// Check if filters are active
 	const isFiltering = search || status !== 'all' || churnRisk !== 'all' || product !== 'all';
 
 	const handlePageChange = (newPage: number) => {
 		void navigate({
 			to: '/students',
-			search: { ...{ search, status, churnRisk, product, view }, page: newPage },
+			search: { ...params, page: newPage },
+		});
+	};
+
+	const handleStudentClick = (studentId: Id<'students'>) => {
+		void navigate({
+			to: '/students',
+			search: { ...params, studentId },
+		});
+	};
+
+	const handleCloseDetail = () => {
+		void navigate({
+			to: '/students',
+			search: { ...params, studentId: undefined },
 		});
 	};
 
@@ -110,7 +128,7 @@ function StudentsPage() {
 				<StudentListEmptyState isFiltering={true} search={search} />
 			) : view === 'table' ? (
 				/* Table View */
-				<StudentsTable students={paginatedStudents} onStudentClick={navigateToStudent} />
+				<StudentsTable students={paginatedStudents} onStudentClick={handleStudentClick} />
 			) : (
 				/* Grid View (Product Sections) - ALL products rendered, including empty ones */
 				<div className="space-y-2">
@@ -126,7 +144,7 @@ function StudentsPage() {
 								isExpanded={!!expandedSections[productId]}
 								onToggle={() => toggleSection(productId)}
 								students={groupStudents}
-								onStudentClick={navigateToStudent}
+								onStudentClick={handleStudentClick}
 								searchTerm={search}
 							/>
 						);
@@ -144,6 +162,8 @@ function StudentsPage() {
 					onPageChange={handlePageChange}
 				/>
 			)}
+
+			<StudentDetail studentId={params.studentId ?? null} onClose={handleCloseDetail} />
 		</div>
 	);
 }

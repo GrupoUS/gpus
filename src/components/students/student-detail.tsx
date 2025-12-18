@@ -169,7 +169,7 @@ export function StudentDetail({
 									</Button>
 								</a>
 								<StudentForm
-									studentId={studentId} // safe because student is not null here
+									studentId={studentId}
 									trigger={
 										<Button variant="outline" size="sm" className="gap-2">
 											<Edit className="h-4 w-4" />
