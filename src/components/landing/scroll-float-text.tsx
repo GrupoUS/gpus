@@ -45,7 +45,11 @@ export function ScrollFloatText({
 
 	return (
 		<div ref={containerRef} className={`relative overflow-hidden ${containerClassName}`}>
-			<motion.div style={{ y, opacity }} transition={{ duration }} className="space-y-4">
+			<motion.div
+				style={{ y, opacity }}
+				transition={{ duration }}
+				className="space-y-4 text-center"
+			>
 				<motion.h2
 					className={
 						textClassName ||
