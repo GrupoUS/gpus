@@ -74,8 +74,8 @@ export function Hero() {
 					variants={fadeInUp}
 					className="font-sans text-xl text-muted-foreground max-w-2xl mx-auto"
 				>
-					Uma plataforma completa para escalar suas vendas, gerenciar leads e automatizar processos.
-					Tudo isso com a segurança e conformidade que você precisa.
+					A plataforma que escala suas vendas, gerencia o controle de leads e automatiza seus
+					processos, em um só lugar!
 				</motion.p>
 			</motion.div>
 		</section>
