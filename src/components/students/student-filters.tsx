@@ -24,8 +24,6 @@ interface StudentFiltersProps {
 	product: string;
 	onProductChange: (value: string) => void;
 	onClear: () => void;
-	onExpandAll?: () => void;
-	onCollapseAll?: () => void;
 }
 
 export function StudentFilters({
@@ -38,8 +36,6 @@ export function StudentFilters({
 	product,
 	onProductChange,
 	onClear,
-	onExpandAll,
-	onCollapseAll,
 }: StudentFiltersProps) {
 	const hasFilters = search || status !== 'all' || churnRisk !== 'all' || product !== 'all';
 

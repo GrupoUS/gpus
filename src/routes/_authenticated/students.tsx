@@ -49,8 +49,6 @@ function StudentsPage() {
 		clearFilters,
 		handleFilterChange,
 		toggleSection,
-		expandAll,
-		collapseAll,
 		navigate,
 		PAGE_SIZE,
 	} = useStudentsViewModel(Route);
@@ -113,8 +111,6 @@ function StudentsPage() {
 				product={product || 'all'}
 				onProductChange={(v) => handleFilterChange('product', v)}
 				onClear={clearFilters}
-				onExpandAll={expandAll}
-				onCollapseAll={collapseAll}
 			/>
 
 			{/* Students List */}

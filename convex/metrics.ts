@@ -5,151 +5,157 @@ export const getDashboard = withQuerySecurity(
   async (ctx, args: {
     period: '7d' | '30d' | '90d' | 'year' | 'all'
   }) => {
-
     // Calculate date ranges
     const now = Date.now()
     let startDate = 0
     let previousStartDate = 0
 
-    // Comment 1: "all" case uses specific comparison or omits trends.
-    // We choose to omit trends (set to 0) and use full history for current.
     if (args.period !== 'all') {
-    let startDate = 0
-    let previousStartDate = 0
-
-    // Comment 1: "all" case uses specific comparison or omits trends.
-    // We choose to omit trends (set to 0) and use full history for current.
-    if (args.period !== 'all') {
-        const periodDays = { '7d': 7, '30d': 30, '90d': 90, 'year': 365 }
-        const days = periodDays[args.period as keyof typeof periodDays]
-        startDate = now - (days * 24 * 60 * 60 * 1000)
-        previousStartDate = startDate - (days * 24 * 60 * 60 * 1000)
+      const periodDays = { '7d': 7, '30d': 30, '90d': 90, 'year': 365 }
+      const days = periodDays[args.period]
+      startDate = now - days * 24 * 60 * 60 * 1000
+      previousStartDate = startDate - days * 24 * 60 * 60 * 1000
     }
 
-    // 1. Leads Metrics
-    let currentLeadsQuery = ctx.db.query('leads')
-    let previousLeadsQuery = ctx.db.query('leads')
+    // 1. Leads Metrics (with Trends)
+    const currentLeads = await (args.period === 'all'
+      ? ctx.db.query('leads')
+      : ctx.db.query('leads').withIndex('by_created', (q) => q.gte('createdAt', startDate))
+    ).collect()
 
-    if (args.period !== 'all') {
-      currentLeadsQuery = currentLeadsQuery.withIndex('by_created', q => q.gte('createdAt', startDate))
-      previousLeadsQuery = previousLeadsQuery.withIndex('by_created', q => q.gte('createdAt', previousStartDate).lt('createdAt', startDate))
-    }
-
-    const currentLeads = await currentLeadsQuery.collect()
-    const previousLeads = args.period === 'all' ? [] : await previousLeadsQuery.collect()
-
+    const previousLeads =
+      args.period === 'all'
+        ? []
+        : await ctx.db
+            .query('leads')
+            .withIndex('by_created', (q) =>
+              q.gte('createdAt', previousStartDate).lt('createdAt', startDate)
+            )
+            .collect()
 
     const totalLeads = currentLeads.length
     const previousTotalLeads = previousLeads.length
 
     // Explicitly 0 trend for 'all'
-    const leadsTrend = (args.period !== 'all' && previousTotalLeads > 0)
-      ? ((totalLeads - previousTotalLeads) / previousTotalLeads) * 100
-      : 0
+    const leadsTrend =
+      args.period !== 'all' && previousTotalLeads > 0
+        ? ((totalLeads - previousTotalLeads) / previousTotalLeads) * 100
+        : 0
 
     // leadsThisMonth (specific for reports)
-    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
-    const leadsThisMonth = (await ctx.db.query('leads').withIndex('by_created', q => q.gte('createdAt', startOfMonth.getTime())).collect()).length
-
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+    const leadsThisMonth = (
+      await ctx.db
+        .query('leads')
+        .withIndex('by_created', (q) => q.gte('createdAt', startOfMonth.getTime()))
+        .collect()
+    ).length
 
     // Conversion Rate (stage = 'fechado_ganho')
-    const currentConversions = currentLeads.filter(l => l.stage === 'fechado_ganho').length
-    const previousConversions = previousLeads.filter(l => l.stage === 'fechado_ganho').length
+    const currentConversions = currentLeads.filter((l) => l.stage === 'fechado_ganho').length
+    const previousConversions = previousLeads.filter((l) => l.stage === 'fechado_ganho').length
 
     const conversionRate = totalLeads > 0 ? (currentConversions / totalLeads) * 100 : 0
-    const previousConversionRate = previousTotalLeads > 0 ? (previousConversions / previousTotalLeads) * 100 : 0
+    const previousConversionRate =
+      previousTotalLeads > 0 ? (previousConversions / previousTotalLeads) * 100 : 0
 
-    const conversionTrend = (args.period !== 'all' && previousConversionRate > 0)
-      ? ((conversionRate - previousConversionRate) / previousConversionRate) * 100
-      : 0
+    const conversionTrend =
+      args.period !== 'all' && previousConversionRate > 0
+        ? ((conversionRate - previousConversionRate) / previousConversionRate) * 100
+        : 0
 
     // 2. Revenue (from Enrollments)
-    let currentEnrollmentsQuery = ctx.db.query('enrollments')
-    let previousEnrollmentsQuery = ctx.db.query('enrollments')
+    const currentEnrollments = await (args.period === 'all'
+      ? ctx.db.query('enrollments')
+      : ctx.db.query('enrollments').withIndex('by_created', (q) => q.gte('createdAt', startDate))
+    ).collect()
 
-    if (args.period !== 'all') {
-      currentEnrollmentsQuery = currentEnrollmentsQuery.withIndex('by_created', q => q.gte('createdAt', startDate))
-      previousEnrollmentsQuery = previousEnrollmentsQuery.withIndex('by_created', q => q.gte('createdAt', previousStartDate).lt('createdAt', startDate))
-    }
-
-    const currentEnrollments = await currentEnrollmentsQuery.collect()
-    const previousEnrollments = args.period === 'all' ? [] : await previousEnrollmentsQuery.collect()
-
+    const previousEnrollments =
+      args.period === 'all'
+        ? []
+        : await ctx.db
+            .query('enrollments')
+            .withIndex('by_created', (q) =>
+              q.gte('createdAt', previousStartDate).lt('createdAt', startDate)
+            )
+            .collect()
 
     const revenue = currentEnrollments.reduce((sum, e) => sum + e.totalValue, 0)
     const previousRevenue = previousEnrollments.reduce((sum, e) => sum + e.totalValue, 0)
 
-    const revenueTrend = (args.period !== 'all' && previousRevenue > 0)
-      ? ((revenue - previousRevenue) / previousRevenue) * 100
-      : 0
+    const revenueTrend =
+      args.period !== 'all' && previousRevenue > 0
+        ? ((revenue - previousRevenue) / previousRevenue) * 100
+        : 0
 
     // 3. Messages & Response Time
-    let currentMessagesQuery = ctx.db.query('messages')
-    if (args.period !== 'all') {
-      currentMessagesQuery = currentMessagesQuery.withIndex('by_created', q => q.gte('createdAt', startDate))
-    }
-    const currentMessages = await currentMessagesQuery.collect()
-
+    const currentMessages = await (args.period === 'all'
+      ? ctx.db.query('messages')
+      : ctx.db.query('messages').withIndex('by_created', (q) => q.gte('createdAt', startDate))
+    ).collect()
 
     const totalMessages = currentMessages.length
 
-    // Avg Response Time
-    let currentConversationsQuery = ctx.db.query('conversations')
-    let previousConversationsQuery = ctx.db.query('conversations')
+    // Avg Response Time (from Conversations)
+    const currentConversations = await (args.period === 'all'
+      ? ctx.db.query('conversations').filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+      : ctx.db
+          .query('conversations')
+          .withIndex('by_created', (q) => q.gte('createdAt', startDate))
+          .filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+    ).collect()
 
-    if (args.period === 'all') {
-      currentConversationsQuery = currentConversationsQuery.filter(c => c.neq(c.field('firstResponseAt'), undefined))
-    } else {
-      currentConversationsQuery = currentConversationsQuery
-        .withIndex('by_created', q => q.gte('createdAt', startDate))
-        .filter(c => c.neq(c.field('firstResponseAt'), undefined))
-
-      previousConversationsQuery = previousConversationsQuery
-        .withIndex('by_created', q => q.gte('createdAt', previousStartDate).lt('createdAt', startDate))
-        .filter(c => c.neq(c.field('firstResponseAt'), undefined))
-    }
-
-    const currentConversations = await currentConversationsQuery.collect()
-    const previousConversations = args.period === 'all' ? [] : await previousConversationsQuery.collect()
-
+    const previousConversations =
+      args.period === 'all'
+        ? []
+        : await ctx.db
+            .query('conversations')
+            .withIndex('by_created', (q) =>
+              q.gte('createdAt', previousStartDate).lt('createdAt', startDate)
+            )
+            .filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+            .collect()
 
     const conversationsCount = currentConversations.length
 
     const calculateAvgResponseTime = (convs: typeof currentConversations) => {
       if (convs.length === 0) return 0
       const totalTime = convs.reduce((sum, c) => sum + ((c.firstResponseAt || 0) - c.createdAt), 0)
-      return Math.round((totalTime / convs.length) / 60000) // in minutes
+      return Math.round(totalTime / convs.length / 60000) // in minutes
     }
 
     const avgResponseTime = calculateAvgResponseTime(currentConversations)
     const previousAvgResponseTime = calculateAvgResponseTime(previousConversations)
 
-    const responseTimeTrend = (args.period !== 'all' && previousAvgResponseTime > 0)
-      ? ((avgResponseTime - previousAvgResponseTime) / previousAvgResponseTime) * 100
-      : 0
+    const responseTimeTrend =
+      args.period !== 'all' && previousAvgResponseTime > 0
+        ? ((avgResponseTime - previousAvgResponseTime) / previousAvgResponseTime) * 100
+        : 0
 
     // 4. Funnel
     const funnel = {
-        novo: currentLeads.filter(l => l.stage === 'novo').length,
-        primeiro_contato: currentLeads.filter(l => l.stage === 'primeiro_contato').length,
-        qualificado: currentLeads.filter(l => l.stage === 'qualificado').length,
-        proposta: currentLeads.filter(l => l.stage === 'proposta').length,
-        negociacao: currentLeads.filter(l => l.stage === 'negociacao').length,
-        fechado_ganho: currentLeads.filter(l => l.stage === 'fechado_ganho').length,
+      novo: currentLeads.filter((l) => l.stage === 'novo').length,
+      primeiro_contato: currentLeads.filter((l) => l.stage === 'primeiro_contato').length,
+      qualificado: currentLeads.filter((l) => l.stage === 'qualificado').length,
+      proposta: currentLeads.filter((l) => l.stage === 'proposta').length,
+      negociacao: currentLeads.filter((l) => l.stage === 'negociacao').length,
+      fechado_ganho: currentLeads.filter((l) => l.stage === 'fechado_ganho').length,
     }
 
     // 5. Leads By Product
     const leadsByProduct: Record<string, number> = {}
-    currentLeads.forEach(l => {
-        const prod = l.interestedProduct || 'indefinido'
-        leadsByProduct[prod] = (leadsByProduct[prod] || 0) + 1
+    currentLeads.forEach((l) => {
+      const prod = l.interestedProduct || 'indefinido'
+      leadsByProduct[prod] = (leadsByProduct[prod] || 0) + 1
     })
 
     // 6. Daily Metrics for Charts
     const dailyMetricsData = await ctx.db.query('dailyMetrics').collect()
     const dailyMetrics = dailyMetricsData
-        .filter(m => args.period === 'all' ? true : new Date(m.date).getTime() >= startDate)
-        .sort((a,b) => a.date.localeCompare(b.date))
+      .filter((m) => (args.period === 'all' ? true : new Date(m.date).getTime() >= startDate))
+      .sort((a, b) => a.date.localeCompare(b.date))
 
     // Round trend values to one decimal place for readability
     const roundTrend = (value: number) => Math.round(value * 10) / 10
@@ -175,33 +181,24 @@ export const getDashboard = withQuerySecurity(
   },
   {
     validationSchema: {
-      period: v.union(
-        v.literal('7d'),
-        v.literal('30d'),
-        v.literal('90d'),
-        v.literal('year'),
-        v.literal('all')
-      ),
+      period: v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'), v.literal('year'), v.literal('all')),
     },
-    allowedRoles: ['admin', 'sdr']
+    allowedRoles: ['admin', 'sdr'],
   }
 )
-
 
 export const getTeamPerformance = withQuerySecurity(
   async (ctx, args: {
     period: '7d' | '30d' | '90d' | 'year'
   }) => {
-    // Comment 2: Explicit documentation and alignment with period argument.
     // Metric: "Conversions in the selected period" based on lead.updatedAt for 'fechado_ganho' leads.
-
     const periodDays = { '7d': 7, '30d': 30, '90d': 90, 'year': 365 }
     const days = periodDays[args.period]
     const startDate = Date.now() - days * 24 * 60 * 60 * 1000
 
     const leads = await ctx.db
       .query('leads')
-      .withIndex('by_organization_stage', (q) => q.eq('stage', 'fechado_ganho'))
+      .withIndex('by_stage', (q) => q.eq('stage', 'fechado_ganho'))
       .collect()
 
     // Ensure we only count leads updated to won within the period

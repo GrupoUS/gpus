@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-// import { requireAuth } from './lib/auth'
+import { requireAuth } from './lib/auth'
+import { withQuerySecurity } from './lib/securityMiddleware'
 
 /**
  * Get current user from Clerk auth
@@ -57,14 +58,8 @@ export const list = query({
  * SECURITY: Requires authentication but NOT admin role
  * Returns minimal data (LGPD compliance): only _id, name, email
  */
-export const listCSUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new Error('Não autenticado. Faça login para continuar.')
-    }
-
+export const listCSUsers = withQuerySecurity(
+  async (ctx) => {
     // Use index for role lookup, then filter isActive in memory
     const csUsers = await ctx.db
       .query('users')
@@ -79,7 +74,10 @@ export const listCSUsers = query({
       email: user.email,
     }))
   },
-})
+  {
+    allowedRoles: ['admin', 'cs', 'sdr'], // CS users need to see themselves/colleagues
+  }
+)
 
 /**
  * Create or update a user (sync from Clerk webhooks)

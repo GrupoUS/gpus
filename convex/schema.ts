@@ -136,6 +136,7 @@ export default defineSchema({
     .index('by_product', ['interestedProduct'])
     .index('by_temperature', ['temperature'])
     .index('by_created', ['createdAt'])
+    .index('by_stage', ['stage'])
     .index('by_organization_phone', ['organizationId', 'phone']),
 
   // ═══════════════════════════════════════════════════════

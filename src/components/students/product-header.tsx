@@ -4,6 +4,7 @@ import {
 	Activity,
 	Briefcase,
 	ChevronDown,
+	ChevronUp,
 	Package,
 	Sparkles,
 	Users,
@@ -49,13 +50,20 @@ export function ProductHeader({
 
 	return (
 		<CollapsibleTrigger asChild>
-			<Button
-				variant="ghost"
+			<div
 				className={cn(
-					'w-full flex items-center justify-between p-4 h-16 group transition-colors duration-200',
+					'w-full flex items-center justify-between p-4 h-16 group transition-colors duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 					colors.bg,
 				)}
 				onClick={onToggle}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						onToggle();
+					}
+				}}
+				role="button"
+				tabIndex={0}
 				aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} seção de ${label}`}
 				aria-expanded={isExpanded}
 			>
@@ -76,13 +84,36 @@ export function ProductHeader({
 					</div>
 				</div>
 
-				<ChevronDown
-					className={cn(
-						'h-5 w-5 text-muted-foreground transition-transform duration-200',
-						isExpanded && 'rotate-180',
-					)}
-				/>
-			</Button>
+				<div className="flex items-center gap-3">
+					<Button
+						variant="outline"
+						size="sm"
+						className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground hidden sm:flex border-muted-foreground/20"
+						onClick={(e) => {
+							e.stopPropagation();
+							onToggle();
+						}}
+					>
+						{isExpanded ? (
+							<>
+								<ChevronUp className="h-3.5 w-3.5 mr-1" />
+								Recolher
+							</>
+						) : (
+							<>
+								<ChevronDown className="h-3.5 w-3.5 mr-1" />
+								Expandir
+							</>
+						)}
+					</Button>
+					<ChevronDown
+						className={cn(
+							'h-5 w-5 text-muted-foreground transition-transform duration-200',
+							isExpanded && 'rotate-180',
+						)}
+					/>
+				</div>
+			</div>
 		</CollapsibleTrigger>
 	);
 }
