@@ -41,19 +41,14 @@ export function useIntegrationSettings(integration: IntegrationType) {
 	} | null>(null);
 
 	// Load settings
-	// @ts-expect-error - integrations module not yet implemented
 	const settings = useQuery(api.integrations.getIntegrationConfig, { integration });
 
 	// Mutations and Actions
-	// @ts-expect-error - integrations module not yet implemented
 	const saveConfigMutation = useMutation(api.integrations.saveIntegrationConfig);
 
 	// Actions
-	// @ts-expect-error - integrations module not yet implemented
 	const testAsaas = useAction(api.integrations.actions.testAsaasConnection);
-	// @ts-expect-error - integrations module not yet implemented
 	const testEvolution = useAction(api.integrations.actions.testEvolutionConnection);
-	// @ts-expect-error - integrations module not yet implemented
 	const testDify = useAction(api.integrations.actions.testDifyConnection);
 
 	const saveSettings = useCallback(

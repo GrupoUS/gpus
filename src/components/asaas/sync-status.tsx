@@ -216,7 +216,6 @@ export function SyncStatusCard({ syncType, log, isRunning }: SyncStatusCardProps
  * Full sync status dashboard showing all sync types
  */
 export function SyncStatusDashboard() {
-	// @ts-expect-error - Convex type inference is excessively deep for this query
 	const lastSyncStatus = useQuery(api.asaas.sync.getLastSyncStatus) as
 		| Record<SyncType, SyncLog | null>
 		| undefined;
@@ -252,7 +251,6 @@ interface SyncStatusIndicatorProps {
 }
 
 export function SyncStatusIndicator({ syncType, className }: SyncStatusIndicatorProps) {
-	// @ts-expect-error - Convex type inference is excessively deep for this query
 	const lastSyncStatus = useQuery(api.asaas.sync.getLastSyncStatus) as
 		| Record<SyncType, SyncLog | null>
 		| undefined;
