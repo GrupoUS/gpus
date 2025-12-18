@@ -175,7 +175,7 @@ export function LeadForm() {
 			<DialogTrigger asChild>
 				<div className="w-full mb-4 px-1">
 					<FlipButton className="w-full h-12" initial={false}>
-						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full">
+						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
 							<HoverBorderGradient
 								containerClassName="rounded-full w-full h-full"
 								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
@@ -184,10 +184,10 @@ export function LeadForm() {
 								Novo Lead
 							</HoverBorderGradient>
 						</FlipButtonFront>
-						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full">
+						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
 							<HoverBorderGradient
-								containerClassName="rounded-full w-full h-full"
-								className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center font-bold tracking-wide"
+								containerClassName="rounded-full w-full h-full border-none"
+								className="bg-[#004b5a] text-[#d4af37] w-full h-full flex items-center justify-center font-bold tracking-wide"
 								clockwise={false}
 							>
 								Cadastrar

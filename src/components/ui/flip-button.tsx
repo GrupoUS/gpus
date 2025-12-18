@@ -25,7 +25,8 @@ export const FlipButton = React.forwardRef<HTMLButtonElement, FlipButtonProps>(
 			<FlipButtonContext.Provider value={{ isFlipped }}>
 				<motion.button
 					className={cn(
-						'group relative w-32 cursor-pointer rounded-md border-none bg-transparent p-0',
+						'group relative w-32 cursor-pointer border-none bg-transparent p-0',
+						'preserve-3d perspective-1000',
 						className,
 					)}
 					initial="initial"
@@ -38,47 +39,48 @@ export const FlipButton = React.forwardRef<HTMLButtonElement, FlipButtonProps>(
 					ref={ref}
 					{...props}
 				>
-					<motion.div
-						className="h-full w-full"
-						transition={{
-							type: 'spring',
-							stiffness: 100,
-							damping: 20,
-							mass: 1,
-						}}
-						variants={{
-							initial: { rotateX: 0 },
-							flipped: { rotateX: 90 },
-						}}
-					>
-						{React.Children.map(children, (child) => {
-							if (React.isValidElement(child) && child.type === FlipButtonFront) {
-								return child;
-							}
-							return null;
-						})}
-					</motion.div>
+					<div className="relative h-full w-full preserve-3d transition-transform duration-500">
+						<motion.div
+							className="absolute inset-0 h-full w-full backface-hidden"
+							transition={{
+								type: 'spring',
+								stiffness: 260,
+								damping: 20,
+							}}
+							variants={{
+								initial: { rotateX: 0, opacity: 1 },
+								flipped: { rotateX: 180, opacity: 0 },
+							}}
+						>
+							{React.Children.map(children, (child) => {
+								if (React.isValidElement(child) && child.type === FlipButtonFront) {
+									return child;
+								}
+								return null;
+							})}
+						</motion.div>
 
-					<motion.div
-						className="absolute left-0 top-0 h-full w-full"
-						transition={{
-							type: 'spring',
-							stiffness: 100,
-							damping: 20,
-							mass: 1,
-						}}
-						variants={{
-							initial: { rotateX: -90, opacity: 0 },
-							flipped: { rotateX: 0, opacity: 1 },
-						}}
-					>
-						{React.Children.map(children, (child) => {
-							if (React.isValidElement(child) && child.type === FlipButtonBack) {
-								return child;
-							}
-							return null;
-						})}
-					</motion.div>
+						<motion.div
+							className="absolute inset-0 h-full w-full backface-hidden"
+							style={{ rotateX: 180 }}
+							transition={{
+								type: 'spring',
+								stiffness: 260,
+								damping: 20,
+							}}
+							variants={{
+								initial: { rotateX: 180, opacity: 0 },
+								flipped: { rotateX: 0, opacity: 1 },
+							}}
+						>
+							{React.Children.map(children, (child) => {
+								if (React.isValidElement(child) && child.type === FlipButtonBack) {
+									return child;
+								}
+								return null;
+							})}
+						</motion.div>
+					</div>
 				</motion.button>
 			</FlipButtonContext.Provider>
 		);
@@ -95,7 +97,7 @@ export const FlipButtonFront = ({ children, className, ...props }: FlipButtonFro
 	return (
 		<motion.div
 			className={cn(
-				'flex h-full w-full items-center justify-center rounded-md bg-white text-black',
+				'flex h-full w-full items-center justify-center rounded-md bg-white text-black backface-hidden',
 				className,
 			)}
 			{...props}
@@ -113,7 +115,7 @@ export const FlipButtonBack = ({ children, className, ...props }: FlipButtonBack
 	return (
 		<motion.div
 			className={cn(
-				'flex h-full w-full items-center justify-center rounded-md bg-black text-white',
+				'flex h-full w-full items-center justify-center rounded-md bg-black text-white backface-hidden',
 				className,
 			)}
 			{...props}
