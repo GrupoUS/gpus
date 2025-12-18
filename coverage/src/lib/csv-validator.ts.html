@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/components/crm/lead-form.tsx</title>
+    <title>Code coverage report for src/lib/csv-validator.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/components/crm</a> lead-form.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/lib</a> csv-validator.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">18.18% </span>
+                <span class="strong">6.38% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/33</span>
+                <span class='fraction'>12/188</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.06% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/33</span>
+                <span class='fraction'>0/126</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.88% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/17</span>
+                <span class='fraction'>0/33</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">18.75% </span>
+                <span class="strong">7.45% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/32</span>
+                <span class='fraction'>12/161</span>
             </div>
         
             
@@ -605,7 +605,315 @@
 <a name='L540'></a><a href='#L540'>540</a>
 <a name='L541'></a><a href='#L541'>541</a>
 <a name='L542'></a><a href='#L542'>542</a>
-<a name='L543'></a><a href='#L543'>543</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L543'></a><a href='#L543'>543</a>
+<a name='L544'></a><a href='#L544'>544</a>
+<a name='L545'></a><a href='#L545'>545</a>
+<a name='L546'></a><a href='#L546'>546</a>
+<a name='L547'></a><a href='#L547'>547</a>
+<a name='L548'></a><a href='#L548'>548</a>
+<a name='L549'></a><a href='#L549'>549</a>
+<a name='L550'></a><a href='#L550'>550</a>
+<a name='L551'></a><a href='#L551'>551</a>
+<a name='L552'></a><a href='#L552'>552</a>
+<a name='L553'></a><a href='#L553'>553</a>
+<a name='L554'></a><a href='#L554'>554</a>
+<a name='L555'></a><a href='#L555'>555</a>
+<a name='L556'></a><a href='#L556'>556</a>
+<a name='L557'></a><a href='#L557'>557</a>
+<a name='L558'></a><a href='#L558'>558</a>
+<a name='L559'></a><a href='#L559'>559</a>
+<a name='L560'></a><a href='#L560'>560</a>
+<a name='L561'></a><a href='#L561'>561</a>
+<a name='L562'></a><a href='#L562'>562</a>
+<a name='L563'></a><a href='#L563'>563</a>
+<a name='L564'></a><a href='#L564'>564</a>
+<a name='L565'></a><a href='#L565'>565</a>
+<a name='L566'></a><a href='#L566'>566</a>
+<a name='L567'></a><a href='#L567'>567</a>
+<a name='L568'></a><a href='#L568'>568</a>
+<a name='L569'></a><a href='#L569'>569</a>
+<a name='L570'></a><a href='#L570'>570</a>
+<a name='L571'></a><a href='#L571'>571</a>
+<a name='L572'></a><a href='#L572'>572</a>
+<a name='L573'></a><a href='#L573'>573</a>
+<a name='L574'></a><a href='#L574'>574</a>
+<a name='L575'></a><a href='#L575'>575</a>
+<a name='L576'></a><a href='#L576'>576</a>
+<a name='L577'></a><a href='#L577'>577</a>
+<a name='L578'></a><a href='#L578'>578</a>
+<a name='L579'></a><a href='#L579'>579</a>
+<a name='L580'></a><a href='#L580'>580</a>
+<a name='L581'></a><a href='#L581'>581</a>
+<a name='L582'></a><a href='#L582'>582</a>
+<a name='L583'></a><a href='#L583'>583</a>
+<a name='L584'></a><a href='#L584'>584</a>
+<a name='L585'></a><a href='#L585'>585</a>
+<a name='L586'></a><a href='#L586'>586</a>
+<a name='L587'></a><a href='#L587'>587</a>
+<a name='L588'></a><a href='#L588'>588</a>
+<a name='L589'></a><a href='#L589'>589</a>
+<a name='L590'></a><a href='#L590'>590</a>
+<a name='L591'></a><a href='#L591'>591</a>
+<a name='L592'></a><a href='#L592'>592</a>
+<a name='L593'></a><a href='#L593'>593</a>
+<a name='L594'></a><a href='#L594'>594</a>
+<a name='L595'></a><a href='#L595'>595</a>
+<a name='L596'></a><a href='#L596'>596</a>
+<a name='L597'></a><a href='#L597'>597</a>
+<a name='L598'></a><a href='#L598'>598</a>
+<a name='L599'></a><a href='#L599'>599</a>
+<a name='L600'></a><a href='#L600'>600</a>
+<a name='L601'></a><a href='#L601'>601</a>
+<a name='L602'></a><a href='#L602'>602</a>
+<a name='L603'></a><a href='#L603'>603</a>
+<a name='L604'></a><a href='#L604'>604</a>
+<a name='L605'></a><a href='#L605'>605</a>
+<a name='L606'></a><a href='#L606'>606</a>
+<a name='L607'></a><a href='#L607'>607</a>
+<a name='L608'></a><a href='#L608'>608</a>
+<a name='L609'></a><a href='#L609'>609</a>
+<a name='L610'></a><a href='#L610'>610</a>
+<a name='L611'></a><a href='#L611'>611</a>
+<a name='L612'></a><a href='#L612'>612</a>
+<a name='L613'></a><a href='#L613'>613</a>
+<a name='L614'></a><a href='#L614'>614</a>
+<a name='L615'></a><a href='#L615'>615</a>
+<a name='L616'></a><a href='#L616'>616</a>
+<a name='L617'></a><a href='#L617'>617</a>
+<a name='L618'></a><a href='#L618'>618</a>
+<a name='L619'></a><a href='#L619'>619</a>
+<a name='L620'></a><a href='#L620'>620</a>
+<a name='L621'></a><a href='#L621'>621</a>
+<a name='L622'></a><a href='#L622'>622</a>
+<a name='L623'></a><a href='#L623'>623</a>
+<a name='L624'></a><a href='#L624'>624</a>
+<a name='L625'></a><a href='#L625'>625</a>
+<a name='L626'></a><a href='#L626'>626</a>
+<a name='L627'></a><a href='#L627'>627</a>
+<a name='L628'></a><a href='#L628'>628</a>
+<a name='L629'></a><a href='#L629'>629</a>
+<a name='L630'></a><a href='#L630'>630</a>
+<a name='L631'></a><a href='#L631'>631</a>
+<a name='L632'></a><a href='#L632'>632</a>
+<a name='L633'></a><a href='#L633'>633</a>
+<a name='L634'></a><a href='#L634'>634</a>
+<a name='L635'></a><a href='#L635'>635</a>
+<a name='L636'></a><a href='#L636'>636</a>
+<a name='L637'></a><a href='#L637'>637</a>
+<a name='L638'></a><a href='#L638'>638</a>
+<a name='L639'></a><a href='#L639'>639</a>
+<a name='L640'></a><a href='#L640'>640</a>
+<a name='L641'></a><a href='#L641'>641</a>
+<a name='L642'></a><a href='#L642'>642</a>
+<a name='L643'></a><a href='#L643'>643</a>
+<a name='L644'></a><a href='#L644'>644</a>
+<a name='L645'></a><a href='#L645'>645</a>
+<a name='L646'></a><a href='#L646'>646</a>
+<a name='L647'></a><a href='#L647'>647</a>
+<a name='L648'></a><a href='#L648'>648</a>
+<a name='L649'></a><a href='#L649'>649</a>
+<a name='L650'></a><a href='#L650'>650</a>
+<a name='L651'></a><a href='#L651'>651</a>
+<a name='L652'></a><a href='#L652'>652</a>
+<a name='L653'></a><a href='#L653'>653</a>
+<a name='L654'></a><a href='#L654'>654</a>
+<a name='L655'></a><a href='#L655'>655</a>
+<a name='L656'></a><a href='#L656'>656</a>
+<a name='L657'></a><a href='#L657'>657</a>
+<a name='L658'></a><a href='#L658'>658</a>
+<a name='L659'></a><a href='#L659'>659</a>
+<a name='L660'></a><a href='#L660'>660</a>
+<a name='L661'></a><a href='#L661'>661</a>
+<a name='L662'></a><a href='#L662'>662</a>
+<a name='L663'></a><a href='#L663'>663</a>
+<a name='L664'></a><a href='#L664'>664</a>
+<a name='L665'></a><a href='#L665'>665</a>
+<a name='L666'></a><a href='#L666'>666</a>
+<a name='L667'></a><a href='#L667'>667</a>
+<a name='L668'></a><a href='#L668'>668</a>
+<a name='L669'></a><a href='#L669'>669</a>
+<a name='L670'></a><a href='#L670'>670</a>
+<a name='L671'></a><a href='#L671'>671</a>
+<a name='L672'></a><a href='#L672'>672</a>
+<a name='L673'></a><a href='#L673'>673</a>
+<a name='L674'></a><a href='#L674'>674</a>
+<a name='L675'></a><a href='#L675'>675</a>
+<a name='L676'></a><a href='#L676'>676</a>
+<a name='L677'></a><a href='#L677'>677</a>
+<a name='L678'></a><a href='#L678'>678</a>
+<a name='L679'></a><a href='#L679'>679</a>
+<a name='L680'></a><a href='#L680'>680</a>
+<a name='L681'></a><a href='#L681'>681</a>
+<a name='L682'></a><a href='#L682'>682</a>
+<a name='L683'></a><a href='#L683'>683</a>
+<a name='L684'></a><a href='#L684'>684</a>
+<a name='L685'></a><a href='#L685'>685</a>
+<a name='L686'></a><a href='#L686'>686</a>
+<a name='L687'></a><a href='#L687'>687</a>
+<a name='L688'></a><a href='#L688'>688</a>
+<a name='L689'></a><a href='#L689'>689</a>
+<a name='L690'></a><a href='#L690'>690</a>
+<a name='L691'></a><a href='#L691'>691</a>
+<a name='L692'></a><a href='#L692'>692</a>
+<a name='L693'></a><a href='#L693'>693</a>
+<a name='L694'></a><a href='#L694'>694</a>
+<a name='L695'></a><a href='#L695'>695</a>
+<a name='L696'></a><a href='#L696'>696</a>
+<a name='L697'></a><a href='#L697'>697</a>
+<a name='L698'></a><a href='#L698'>698</a>
+<a name='L699'></a><a href='#L699'>699</a>
+<a name='L700'></a><a href='#L700'>700</a>
+<a name='L701'></a><a href='#L701'>701</a>
+<a name='L702'></a><a href='#L702'>702</a>
+<a name='L703'></a><a href='#L703'>703</a>
+<a name='L704'></a><a href='#L704'>704</a>
+<a name='L705'></a><a href='#L705'>705</a>
+<a name='L706'></a><a href='#L706'>706</a>
+<a name='L707'></a><a href='#L707'>707</a>
+<a name='L708'></a><a href='#L708'>708</a>
+<a name='L709'></a><a href='#L709'>709</a>
+<a name='L710'></a><a href='#L710'>710</a>
+<a name='L711'></a><a href='#L711'>711</a>
+<a name='L712'></a><a href='#L712'>712</a>
+<a name='L713'></a><a href='#L713'>713</a>
+<a name='L714'></a><a href='#L714'>714</a>
+<a name='L715'></a><a href='#L715'>715</a>
+<a name='L716'></a><a href='#L716'>716</a>
+<a name='L717'></a><a href='#L717'>717</a>
+<a name='L718'></a><a href='#L718'>718</a>
+<a name='L719'></a><a href='#L719'>719</a>
+<a name='L720'></a><a href='#L720'>720</a>
+<a name='L721'></a><a href='#L721'>721</a>
+<a name='L722'></a><a href='#L722'>722</a>
+<a name='L723'></a><a href='#L723'>723</a>
+<a name='L724'></a><a href='#L724'>724</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -641,7 +949,145 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -707,41 +1153,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -763,21 +1174,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -821,267 +1238,27 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1141,553 +1318,919 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { api } from '@convex/_generated/api';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from 'convex/react';
-import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * CSV/XLSX Validation Utilities
+ * Validates and normalizes data for student imports
+ */
 &nbsp;
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '@/components/ui/dialog';
-import { FlipButton, FlipButtonBack, FlipButtonFront } from '@/components/ui/flip-button';
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from '@/components/ui/form';
-import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { getIntelligentMappings } from './import-intelligence';
 &nbsp;
-// Schema definition matching Convex schema
-const formSchema = z
-	.object({
-		name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
-		phone: z.string().min(10, { message: 'Telefone inválido' }),
-		email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
-		source: z.enum([
-			'whatsapp',
-			'instagram',
-			'landing_page',
-			'indicacao',
-			'evento',
-			'organico',
-			'trafego_pago',
-			'outro',
-		]),
-		profession: z
-			.enum([
-				'enfermeiro',
-				'dentista',
-				'biomedico',
-				'farmaceutico',
-				'medico',
-				'esteticista',
-				'outro',
-			])
-			.optional(),
-		interestedProduct: z
-			.enum([
-				'trintae3',
-				'otb',
-				'black_neon',
-				'comunidade',
-				'auriculo',
-				'na_mesa_certa',
-				'indefinido',
-			])
-			.optional(),
-		temperature: z.enum(['frio', 'morno', 'quente']),
-		stage: z.enum([
-			'novo',
-			'primeiro_contato',
-			'qualificado',
-			'proposta',
-			'negociacao',
-			'fechado_ganho',
-			'fechado_perdido',
-		]),
-		// Clinic qualification
-		hasClinic: z.boolean().optional(),
-		clinicName: z.string().optional(),
-		clinicCity: z.string().optional(),
-		// Professional background
-		yearsInAesthetics: z.string().optional(),
-		currentRevenue: z.enum(['0-5k', '5k-10k', '10k-20k', '20k-50k', '50k+']).optional(),
-		// Diagnosis
-		mainPain: z
-			.enum(['tecnica', 'vendas', 'gestao', 'posicionamento', 'escala', 'certificacao', 'outro'])
-			.optional(),
-		mainDesire: z.string().max(500).optional(),
-	})
-	.refine(
-<span class="fstat-no" title="function not covered" >		(d</span>ata) =&gt; {
-<span class="cstat-no" title="statement not covered" >			if (data.hasClinic &amp;&amp; !data.clinicName) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >			return true;</span>
-		},
-		{ message: 'Nome da clínica é obrigatório', path: ['clinicName'] },
-	);
+// CPF Validation - Brazilian Individual Taxpayer Registry
+export function <span class="fstat-no" title="function not covered" >validateCPF(c</span>pf: string): boolean {
+<span class="cstat-no" title="statement not covered" >	if (!cpf) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 &nbsp;
-export function LeadForm() {
-	const [open, setOpen] = useState(false);
-	const createLead = useMutation(api.leads.createLead);
+	// Remove formatting
+	const cleaned = <span class="cstat-no" title="statement not covered" >cpf.replace(/\D/g, '');</span>
 &nbsp;
-	const form = useForm({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			name: '',
-			phone: '',
-			email: '',
-			source: 'instagram' as const,
-			profession: undefined,
-			interestedProduct: undefined,
-			temperature: 'frio' as const,
-			stage: 'novo' as const,
-			hasClinic: false,
-			clinicName: '',
-			clinicCity: '',
-			yearsInAesthetics: '',
-			currentRevenue: undefined,
-			mainPain: undefined,
-			mainDesire: '',
-		},
-	});
+	// Must be 11 digits
+<span class="cstat-no" title="statement not covered" >	if (cleaned.length !== 11) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 &nbsp;
-	const onSubmit = <span class="fstat-no" title="function not covered" >async (v</span>alues: z.infer&lt;typeof formSchema&gt;) =&gt; {
-<span class="cstat-no" title="statement not covered" >		try {</span>
-			// Clean up optional empty strings to undefined for Convex compatibility
-			const payload = <span class="cstat-no" title="statement not covered" >{</span>
-				name: values.name,
-				phone: values.phone,
-				source: values.source,
-				temperature: values.temperature,
-				stage: values.stage,
-				// Optional fields - only include if they have values
-				...(values.email &amp;&amp; { email: values.email }),
-				...(values.profession &amp;&amp; { profession: values.profession }),
-				...(values.interestedProduct &amp;&amp; { interestedProduct: values.interestedProduct }),
-				...(values.hasClinic !== undefined &amp;&amp; { hasClinic: values.hasClinic }),
-				...(values.clinicName &amp;&amp; { clinicName: values.clinicName }),
-				...(values.clinicCity &amp;&amp; { clinicCity: values.clinicCity }),
-				...(values.yearsInAesthetics &amp;&amp;
-					!Number.isNaN(Number(values.yearsInAesthetics)) &amp;&amp; {
-						yearsInAesthetics: Number(values.yearsInAesthetics),
-					}),
-				...(values.currentRevenue &amp;&amp; { currentRevenue: values.currentRevenue }),
-				...(values.mainPain &amp;&amp; { mainPain: values.mainPain }),
-				...(values.mainDesire &amp;&amp; { mainDesire: values.mainDesire }),
-			};
+	// Check for known invalid patterns (all same digits)
+<span class="cstat-no" title="statement not covered" >	if (/^(\d)\1{10}$/.test(cleaned)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >			await createLead(payload);</span>
-<span class="cstat-no" title="statement not covered" >			toast.success('Lead criado com sucesso!');</span>
-<span class="cstat-no" title="statement not covered" >			setOpen(false);</span>
-<span class="cstat-no" title="statement not covered" >			form.reset();</span>
-		} catch (error) {
-			const message = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : 'Erro desconhecido';</span>
-<span class="cstat-no" title="statement not covered" >			if (message.includes('Unauthenticated')) {</span>
-<span class="cstat-no" title="statement not covered" >				toast.error('Sessão expirada. Por favor, faça login novamente.');</span>
-			} else {
-<span class="cstat-no" title="statement not covered" >				toast.error(`Erro ao criar lead: ${message}`);</span>
+	// Validate first check digit
+	let sum = <span class="cstat-no" title="statement not covered" >0;</span>
+<span class="cstat-no" title="statement not covered" >	for (let i = <span class="cstat-no" title="statement not covered" >0; i</span> &lt; 9; i++) {</span>
+<span class="cstat-no" title="statement not covered" >		sum += Number.parseInt(cleaned.charAt(i), 10) * (10 - i);</span>
+	}
+	let remainder = (<span class="cstat-no" title="statement not covered" >sum * 10) % 11;</span>
+<span class="cstat-no" title="statement not covered" >	if (remainder === 10 || remainder === 11) <span class="cstat-no" title="statement not covered" >remainder = 0;</span></span>
+<span class="cstat-no" title="statement not covered" >	if (remainder !== Number.parseInt(cleaned.charAt(9), 10)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+&nbsp;
+	// Validate second check digit
+<span class="cstat-no" title="statement not covered" >	sum = 0;</span>
+<span class="cstat-no" title="statement not covered" >	for (let i = <span class="cstat-no" title="statement not covered" >0; i</span> &lt; 10; i++) {</span>
+<span class="cstat-no" title="statement not covered" >		sum += Number.parseInt(cleaned.charAt(i), 10) * (11 - i);</span>
+	}
+<span class="cstat-no" title="statement not covered" >	remainder = (sum * 10) % 11;</span>
+<span class="cstat-no" title="statement not covered" >	if (remainder === 10 || remainder === 11) <span class="cstat-no" title="statement not covered" >remainder = 0;</span></span>
+<span class="cstat-no" title="statement not covered" >	if (remainder !== Number.parseInt(cleaned.charAt(10), 10)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	return true;</span>
+}
+&nbsp;
+// Normalize CPF - remove formatting
+export function <span class="fstat-no" title="function not covered" >normalizeCPF(c</span>pf: string): string {
+<span class="cstat-no" title="statement not covered" >	return cpf.replace(/\D/g, '');</span>
+}
+&nbsp;
+// Format CPF with dots and dash
+export function <span class="fstat-no" title="function not covered" >formatCPF(c</span>pf: string): string {
+	const cleaned = <span class="cstat-no" title="statement not covered" >normalizeCPF(cpf);</span>
+<span class="cstat-no" title="statement not covered" >	return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');</span>
+}
+&nbsp;
+// Email Validation
+export function <span class="fstat-no" title="function not covered" >validateEmail(e</span>mail: string): boolean {
+<span class="cstat-no" title="statement not covered" >	if (!email) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+&nbsp;
+	const emailRegex = <span class="cstat-no" title="statement not covered" >/^[^\s@]+@[^\s@]+\.[^\s@]+$/;</span>
+<span class="cstat-no" title="statement not covered" >	return emailRegex.test(email.trim().toLowerCase());</span>
+}
+&nbsp;
+// Normalize Email
+export function <span class="fstat-no" title="function not covered" >normalizeEmail(e</span>mail: string): string {
+<span class="cstat-no" title="statement not covered" >	return email.trim().toLowerCase();</span>
+}
+&nbsp;
+// Phone Validation - Brazilian format (10-11 digits)
+export function <span class="fstat-no" title="function not covered" >validatePhone(p</span>hone: string): boolean {
+<span class="cstat-no" title="statement not covered" >	if (!phone) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+&nbsp;
+	const cleaned = <span class="cstat-no" title="statement not covered" >phone.replace(/\D/g, '');</span>
+&nbsp;
+	// Brazilian phone: 10 digits (landline) or 11 digits (mobile)
+<span class="cstat-no" title="statement not covered" >	return cleaned.length &gt;= 10 &amp;&amp; cleaned.length &lt;= 11;</span>
+}
+&nbsp;
+// Normalize Phone - remove formatting
+export function <span class="fstat-no" title="function not covered" >normalizePhone(p</span>hone: string): string {
+<span class="cstat-no" title="statement not covered" >	return phone.replace(/\D/g, '');</span>
+}
+&nbsp;
+// Format Phone with Brazilian mask
+export function <span class="fstat-no" title="function not covered" >formatPhone(p</span>hone: string): string {
+	const cleaned = <span class="cstat-no" title="statement not covered" >normalizePhone(phone);</span>
+<span class="cstat-no" title="statement not covered" >	if (cleaned.length === 11) {</span>
+<span class="cstat-no" title="statement not covered" >		return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');</span>
+	}
+<span class="cstat-no" title="statement not covered" >	return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');</span>
+}
+&nbsp;
+// ==========================================
+// CEP Validation - Brazilian Postal Code
+// ==========================================
+&nbsp;
+/**
+ * Validate Brazilian CEP (postal code)
+ * Format: 8 digits, typically displayed as XXXXX-XXX
+ */
+export function <span class="fstat-no" title="function not covered" >validateCEP(c</span>ep: string): boolean {
+<span class="cstat-no" title="statement not covered" >	if (!cep) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+	const cleaned = <span class="cstat-no" title="statement not covered" >cep.replace(/\D/g, '');</span>
+	// Must be exactly 8 digits
+<span class="cstat-no" title="statement not covered" >	if (cleaned.length !== 8) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+	// Cannot be all zeros
+<span class="cstat-no" title="statement not covered" >	if (/^0+$/.test(cleaned)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+<span class="cstat-no" title="statement not covered" >	return true;</span>
+}
+&nbsp;
+/**
+ * Normalize CEP - remove formatting, keep only digits
+ */
+export function <span class="fstat-no" title="function not covered" >normalizeCEP(c</span>ep: string): string {
+<span class="cstat-no" title="statement not covered" >	return cep.replace(/\D/g, '');</span>
+}
+&nbsp;
+/**
+ * Format CEP with hyphen (XXXXX-XXX)
+ */
+export function <span class="fstat-no" title="function not covered" >formatCEP(c</span>ep: string): string {
+	const cleaned = <span class="cstat-no" title="statement not covered" >normalizeCEP(cep);</span>
+<span class="cstat-no" title="statement not covered" >	if (cleaned.length !== 8) <span class="cstat-no" title="statement not covered" >return cleaned;</span></span>
+<span class="cstat-no" title="statement not covered" >	return cleaned.replace(/(\d{5})(\d{3})/, '$1-$2');</span>
+}
+&nbsp;
+// ==========================================
+// UF Validation - Brazilian States
+// ==========================================
+&nbsp;
+export const BRAZILIAN_STATES = [
+	'AC',
+	'AL',
+	'AP',
+	'AM',
+	'BA',
+	'CE',
+	'DF',
+	'ES',
+	'GO',
+	'MA',
+	'MT',
+	'MS',
+	'MG',
+	'PA',
+	'PB',
+	'PR',
+	'PE',
+	'PI',
+	'RJ',
+	'RN',
+	'RS',
+	'RO',
+	'RR',
+	'SC',
+	'SP',
+	'SE',
+	'TO',
+] as const;
+&nbsp;
+export type BrazilianState = (typeof BRAZILIAN_STATES)[number];
+&nbsp;
+/**
+ * Validate Brazilian state abbreviation (UF)
+ */
+export function <span class="fstat-no" title="function not covered" >validateUF(u</span>f: string): boolean {
+<span class="cstat-no" title="statement not covered" >	if (!uf) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+	const normalized = <span class="cstat-no" title="statement not covered" >uf.trim().toUpperCase();</span>
+<span class="cstat-no" title="statement not covered" >	return BRAZILIAN_STATES.includes(normalized as BrazilianState);</span>
+}
+&nbsp;
+/**
+ * Normalize UF - trim and uppercase
+ */
+export function <span class="fstat-no" title="function not covered" >normalizeUF(u</span>f: string): string {
+<span class="cstat-no" title="statement not covered" >	return uf.trim().toUpperCase();</span>
+}
+&nbsp;
+// Detect CSV delimiter
+export function <span class="fstat-no" title="function not covered" >detectCSVDelimiter(c</span>ontent: string): string {
+	const firstLine = <span class="cstat-no" title="statement not covered" >content.split('\n')[0] || '';</span>
+	const delimiters = <span class="cstat-no" title="statement not covered" >[',', ';', '\t', '|'];</span>
+&nbsp;
+	let maxCount = <span class="cstat-no" title="statement not covered" >0;</span>
+	let detected = <span class="cstat-no" title="statement not covered" >',';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	for (const delimiter of delimiters) {</span>
+		const <span class="cstat-no" title="statement not covered" >count = (firstLine.match(new RegExp(`\\${delimiter}`, 'g')) || []).length;</span>
+<span class="cstat-no" title="statement not covered" >		if (count &gt; maxCount) {</span>
+<span class="cstat-no" title="statement not covered" >			maxCount = count;</span>
+<span class="cstat-no" title="statement not covered" >			detected = delimiter;</span>
+		}
+	}
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	return detected;</span>
+}
+&nbsp;
+// Profession mapping from Portuguese variations to schema values
+const PROFESSION_MAP: Record&lt;string, string&gt; = {
+	enfermagem: 'enfermeiro',
+	enfermeiro: 'enfermeiro',
+	enfermeira: 'enfermeiro',
+	dentista: 'dentista',
+	odontologia: 'dentista',
+	odontologo: 'dentista',
+	odontólogo: 'dentista',
+	biomedico: 'biomedico',
+	biomédico: 'biomedico',
+	biomédica: 'biomedico',
+	biomedica: 'biomedico',
+	biomedicina: 'biomedico',
+	farmaceutico: 'farmaceutico',
+	farmacêutico: 'farmaceutico',
+	farmacêutica: 'farmaceutico',
+	farmaceutica: 'farmaceutico',
+	farmácia: 'farmaceutico',
+	farmacia: 'farmaceutico',
+	medico: 'medico',
+	médico: 'medico',
+	médica: 'medico',
+	medica: 'medico',
+	medicina: 'medico',
+	esteticista: 'esteticista',
+	estética: 'esteticista',
+	estetica: 'esteticista',
+	fisioterapeuta: 'outro',
+	fisioterapia: 'outro',
+};
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >normalizeProfession(p</span>rofession: string): string {
+<span class="cstat-no" title="statement not covered" >	if (!profession) <span class="cstat-no" title="statement not covered" >return 'outro';</span></span>
+&nbsp;
+	const normalized = <span class="cstat-no" title="statement not covered" >profession.trim().toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >	return PROFESSION_MAP[normalized] || 'outro';</span>
+}
+&nbsp;
+// Status normalization
+const STATUS_MAP: Record&lt;string, string&gt; = {
+	ativo: 'ativo',
+	ativa: 'ativo',
+	active: 'ativo',
+	inativo: 'inativo',
+	inativa: 'inativo',
+	inactive: 'inativo',
+	pausado: 'pausado',
+	pausada: 'pausado',
+	paused: 'pausado',
+	formado: 'formado',
+	formada: 'formado',
+	concluido: 'formado',
+	concluído: 'formado',
+	graduated: 'formado',
+	assinado: 'ativo', // Contract signed = active
+};
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >normalizeStatus(s</span>tatus: string): 'ativo' | 'inativo' | 'pausado' | 'formado' {
+<span class="cstat-no" title="statement not covered" >	if (!status) <span class="cstat-no" title="statement not covered" >return 'ativo';</span></span>
+&nbsp;
+	const normalized = <span class="cstat-no" title="statement not covered" >status.trim().toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >	return (STATUS_MAP[normalized] as 'ativo' | 'inativo' | 'pausado' | 'formado') || 'ativo';</span>
+}
+&nbsp;
+// Boolean from various Portuguese/English values
+export function <span class="fstat-no" title="function not covered" >parseBoolean(v</span>alue: string | boolean | undefined): boolean {
+<span class="cstat-no" title="statement not covered" >	if (typeof value === 'boolean') <span class="cstat-no" title="statement not covered" >return value;</span></span>
+<span class="cstat-no" title="statement not covered" >	if (!value) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+&nbsp;
+	const normalized = <span class="cstat-no" title="statement not covered" >String(value).trim().toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >	return ['sim', 'yes', 'true', '1', 's', 'y', 'verdadeiro'].includes(normalized);</span>
+}
+&nbsp;
+// Date parsing from various formats
+export function <span class="fstat-no" title="function not covered" >parseDate(v</span>alue: string | number | undefined): number | undefined {
+<span class="cstat-no" title="statement not covered" >	if (!value) <span class="cstat-no" title="statement not covered" >return undefined;</span></span>
+&nbsp;
+	// Excel serial date
+<span class="cstat-no" title="statement not covered" >	if (typeof value === 'number') {</span>
+		// Excel dates start from 1900-01-01 (day 1)
+		// But Excel has a bug where 1900 is treated as leap year, so subtract 2
+		const excelEpoch = <span class="cstat-no" title="statement not covered" >new Date(1899, 11, 30);</span>
+<span class="cstat-no" title="statement not covered" >		return excelEpoch.getTime() + value * 24 * 60 * 60 * 1000;</span>
+	}
+&nbsp;
+	const str = <span class="cstat-no" title="statement not covered" >String(value).trim();</span>
+&nbsp;
+	// DD/MM/YYYY format
+	const brFormat = <span class="cstat-no" title="statement not covered" >/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;</span>
+	const match = <span class="cstat-no" title="statement not covered" >str.match(brFormat);</span>
+<span class="cstat-no" title="statement not covered" >	if (match) {</span>
+		const [, day, month, year] = <span class="cstat-no" title="statement not covered" >match;</span>
+		const date = <span class="cstat-no" title="statement not covered" >new Date(</span>
+			Number.parseInt(year, 10),
+			Number.parseInt(month, 10) - 1,
+			Number.parseInt(day, 10),
+		);
+<span class="cstat-no" title="statement not covered" >		return date.getTime();</span>
+	}
+&nbsp;
+	// Try standard Date parsing
+	const parsed = <span class="cstat-no" title="statement not covered" >new Date(str);</span>
+<span class="cstat-no" title="statement not covered" >	if (!Number.isNaN(parsed.getTime())) {</span>
+<span class="cstat-no" title="statement not covered" >		return parsed.getTime();</span>
+	}
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	return undefined;</span>
+}
+&nbsp;
+// Header mapping from Portuguese to schema fields
+const HEADER_MAP: Record&lt;string, string&gt; = {
+	// Name variations
+	nome: 'name',
+	'nome completo': 'name',
+	aluno: 'name',
+&nbsp;
+	// Email variations
+	email: 'email',
+	'e-mail': 'email',
+	'correio eletrônico': 'email',
+&nbsp;
+	// Phone variations
+	telefone: 'phone',
+	celular: 'phone',
+	whatsapp: 'phone',
+	contato: 'phone',
+&nbsp;
+	// CPF variations
+	cpf: 'cpf',
+	documento: 'cpf',
+	'documento cpf': 'cpf',
+&nbsp;
+	// Profession variations
+	graduação: 'profession',
+	graduacao: 'profession',
+	profissão: 'profession',
+	profissao: 'profession',
+	formação: 'profession',
+	formacao: 'profession',
+&nbsp;
+	// Clinic variations
+	'tem clínica': 'hasClinic',
+	'tem clinica': 'hasClinic',
+	clinica: 'hasClinic',
+&nbsp;
+	'nome clínica': 'clinicName',
+	'nome clinica': 'clinicName',
+	'clínica nome': 'clinicName',
+	'clinica nome': 'clinicName',
+&nbsp;
+	'cidade clínica': 'clinicCity',
+	'cidade clinica': 'clinicCity',
+&nbsp;
+	// Status variations
+	status: 'status',
+	'status contrato': 'contractStatus',
+	situacao: 'status',
+	situação: 'status',
+&nbsp;
+	// Address variations
+	endereço: 'address',
+	endereco: 'address',
+	rua: 'address',
+	logradouro: 'address',
+&nbsp;
+	número: 'addressNumber',
+	numero: 'addressNumber',
+	nº: 'addressNumber',
+&nbsp;
+	complemento: 'complement',
+&nbsp;
+	bairro: 'neighborhood',
+&nbsp;
+	cidade: 'city',
+	municipio: 'city',
+	município: 'city',
+&nbsp;
+	estado: 'state',
+	uf: 'state',
+&nbsp;
+	cep: 'zipCode',
+	'código postal': 'zipCode',
+	'codigo postal': 'zipCode',
+&nbsp;
+	país: 'country',
+	pais: 'country',
+&nbsp;
+	// Birth date
+	'data nasc': 'birthDate',
+	'data de nascimento': 'birthDate',
+	nascimento: 'birthDate',
+	'data nascimento': 'birthDate',
+&nbsp;
+	// Sale variations
+	'data da venda': 'saleDate',
+	'data venda': 'saleDate',
+&nbsp;
+	vendedor: 'salesperson',
+	vendedora: 'salesperson',
+&nbsp;
+	// Lead source
+	'origem lead': 'leadSource',
+	origem: 'leadSource',
+	fonte: 'leadSource',
+&nbsp;
+	// Turma/Cohort
+	turma: 'cohort',
+&nbsp;
+	// Financial fields (for enrollments)
+	'valor total': 'totalValue',
+	valor_total: 'totalValue',
+	valortotal: 'totalValue',
+	'total value': 'totalValue',
+	total: 'totalValue',
+&nbsp;
+	parcelas: 'installments',
+	'número de parcelas': 'installments',
+	'numero de parcelas': 'installments',
+	'qtd parcelas': 'installments',
+	installments: 'installments',
+&nbsp;
+	'valor parcela': 'installmentValue',
+	valor_parcela: 'installmentValue',
+	valorparcela: 'installmentValue',
+	'installment value': 'installmentValue',
+&nbsp;
+	'status pagamento': 'paymentStatus',
+	status_pagamento: 'paymentStatus',
+	'payment status': 'paymentStatus',
+	pagamento: 'paymentStatus',
+&nbsp;
+	'parcelas pagas': 'paidInstallments',
+	parcelas_pagas: 'paidInstallments',
+	'paid installments': 'paidInstallments',
+&nbsp;
+	'data início': 'startDate',
+	'data inicio': 'startDate',
+	data_inicio: 'startDate',
+	'start date': 'startDate',
+	inicio: 'startDate',
+&nbsp;
+	// Professional ID
+	registro: 'professionalId',
+	'registro profissional': 'professionalId',
+	coren: 'professionalId',
+	cro: 'professionalId',
+	crm: 'professionalId',
+	crf: 'professionalId',
+};
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >mapCSVHeaders(</span>
+	headers: string[],
+	rows: Record&lt;string, unknown&gt;[] = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span>
+): Record&lt;string, string&gt; {
+	const mapping: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{};</span>
+&nbsp;
+	// Use intelligent mapping if rows are provided to analyze patterns
+<span class="cstat-no" title="statement not covered" >	if (rows.length &gt; 0) {</span>
+		const <span class="cstat-no" title="statement not covered" >intelligentMap = getIntelligentMappings(headers, rows);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >		for (const [header, suggestion] of Object.entries(intelligentMap)) {</span>
+			// Only apply if confidence is decent enough to be a default
+<span class="cstat-no" title="statement not covered" >			if (suggestion.confidence &gt; 0.5) {</span>
+<span class="cstat-no" title="statement not covered" >				mapping[header] = suggestion.schemaField;</span>
 			}
 		}
+	}
+&nbsp;
+	// Fallback/Overwrite with exact dictionary matches (historically trusted)
+<span class="cstat-no" title="statement not covered" >	for (const header of headers) {</span>
+		const normalized = <span class="cstat-no" title="statement not covered" >header.trim().toLowerCase();</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >		if (HEADER_MAP[normalized]) {</span>
+<span class="cstat-no" title="statement not covered" >			mapping[header] = HEADER_MAP[normalized];</span>
+		}
+	}
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	return mapping;</span>
+}
+&nbsp;
+// Get all available schema fields for mapping UI
+export function <span class="fstat-no" title="function not covered" >getSchemaFields(): { value: string; label: string; required: boolean }[] {</span>
+<span class="cstat-no" title="statement not covered" >	return [</span>
+		{ value: 'name', label: 'Nome', required: true },
+		{ value: 'email', label: 'Email', required: true },
+		{ value: 'phone', label: 'Telefone', required: true },
+		{ value: 'cpf', label: 'CPF', required: false },
+		{ value: 'profession', label: 'Profissão', required: false },
+		{ value: 'hasClinic', label: 'Tem Clínica', required: false },
+		{ value: 'clinicName', label: 'Nome da Clínica', required: false },
+		{ value: 'clinicCity', label: 'Cidade da Clínica', required: false },
+		{ value: 'status', label: 'Status', required: false },
+		{ value: 'birthDate', label: 'Data de Nascimento', required: false },
+		{ value: 'address', label: 'Endereço', required: false },
+		{ value: 'addressNumber', label: 'Número', required: false },
+		{ value: 'complement', label: 'Complemento', required: false },
+		{ value: 'neighborhood', label: 'Bairro', required: false },
+		{ value: 'city', label: 'Cidade', required: false },
+		{ value: 'state', label: 'Estado', required: false },
+		{ value: 'zipCode', label: 'CEP', required: false },
+		{ value: 'country', label: 'País', required: false },
+		{ value: 'saleDate', label: 'Data da Venda', required: false },
+		{ value: 'salesperson', label: 'Vendedor', required: false },
+		{ value: 'contractStatus', label: 'Status do Contrato', required: false },
+		{ value: 'leadSource', label: 'Origem do Lead', required: false },
+		{ value: 'cohort', label: 'Turma', required: false },
+		// Financial/Enrollment fields
+		{ value: 'totalValue', label: 'Valor Total', required: false },
+		{ value: 'installments', label: 'Parcelas', required: false },
+		{ value: 'installmentValue', label: 'Valor da Parcela', required: false },
+		{ value: 'paymentStatus', label: 'Status Pagamento', required: false },
+		{ value: 'paidInstallments', label: 'Parcelas Pagas', required: false },
+		{ value: 'startDate', label: 'Data de Início', required: false },
+		{ value: 'professionalId', label: 'Registro Profissional', required: false },
+		{ value: '_skip', label: '-- Ignorar --', required: false },
+	];
+}
+&nbsp;
+// Validation result type
+export interface ValidationResult {
+	isValid: boolean;
+	errors: string[];
+	warnings: string[];
+	data: Record&lt;string, unknown&gt;;
+}
+&nbsp;
+// Field validator type
+type FieldValidator = (
+	value: unknown,
+	rowNumber: number,
+	errors: string[],
+	warnings: string[],
+	data: Record&lt;string, unknown&gt;,
+	schemaField: string,
+) =&gt; void;
+&nbsp;
+// Individual field validators
+const validateNameField: FieldValidator = <span class="fstat-no" title="function not covered" >(v</span>alue, rowNumber, errors, _warnings, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >	if (!value || String(value).trim().length &lt; 2) {</span>
+<span class="cstat-no" title="statement not covered" >		errors.push(`Linha ${rowNumber}: Nome é obrigatório e deve ter pelo menos 2 caracteres`);</span>
+	} else {
+<span class="cstat-no" title="statement not covered" >		data.name = String(value).trim();</span>
+	}
+};
+&nbsp;
+const validateEmailField: FieldValidator = <span class="fstat-no" title="function not covered" >(v</span>alue, rowNumber, errors, _warnings, data) =&gt; {
+	// Email is now optional - only validate format if provided
+<span class="cstat-no" title="statement not covered" >	if (value) {</span>
+<span class="cstat-no" title="statement not covered" >		if (!validateEmail(String(value))) {</span>
+<span class="cstat-no" title="statement not covered" >			errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);</span>
+		} else {
+<span class="cstat-no" title="statement not covered" >			data.email = normalizeEmail(String(value));</span>
+		}
+	}
+	// If value is empty/undefined, email is simply not set (optional field)
+};
+&nbsp;
+const validatePhoneField: FieldValidator = <span class="fstat-no" title="function not covered" >(v</span>alue, rowNumber, errors, warnings, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >	if (!value) {</span>
+<span class="cstat-no" title="statement not covered" >		errors.push(`Linha ${rowNumber}: Telefone é obrigatório`);</span>
+	} else {
+<span class="cstat-no" title="statement not covered" >		if (!validatePhone(String(value))) {</span>
+<span class="cstat-no" title="statement not covered" >			warnings.push(`Linha ${rowNumber}: Telefone pode estar em formato inválido: ${value}`);</span>
+		}
+<span class="cstat-no" title="statement not covered" >		data.phone = normalizePhone(String(value));</span>
+	}
+};
+&nbsp;
+const validateCPFField: FieldValidator = <span class="fstat-no" title="function not covered" >(v</span>alue, rowNumber, _errors, warnings, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >	if (value) {</span>
+		const cpfStr = <span class="cstat-no" title="statement not covered" >String(value);</span>
+<span class="cstat-no" title="statement not covered" >		if (!validateCPF(cpfStr)) {</span>
+<span class="cstat-no" title="statement not covered" >			warnings.push(`Linha ${rowNumber}: CPF inválido: ${value}`);</span>
+		}
+<span class="cstat-no" title="statement not covered" >		data.cpf = normalizeCPF(cpfStr);</span>
+	}
+};
+&nbsp;
+const validateDateField: FieldValidator = <span class="fstat-no" title="function not covered" >(</span>
+	value,
+	_rowNumber,
+	_errors,
+	_warnings,
+	data,
+	schemaField,
+) =&gt; {
+<span class="cstat-no" title="statement not covered" >	if (value) {</span>
+		const parsed = <span class="cstat-no" title="statement not covered" >parseDate(value as string | number);</span>
+<span class="cstat-no" title="statement not covered" >		if (parsed) {</span>
+<span class="cstat-no" title="statement not covered" >			data[schemaField] = parsed;</span>
+		}
+	}
+};
+&nbsp;
+const validateDefaultField: FieldValidator = <span class="fstat-no" title="function not covered" >(</span>
+	value,
+	_rowNumber,
+	_errors,
+	_warnings,
+	data,
+	schemaField,
+) =&gt; {
+<span class="cstat-no" title="statement not covered" >	if (value !== undefined &amp;&amp; value !== null &amp;&amp; value !== '') {</span>
+<span class="cstat-no" title="statement not covered" >		data[schemaField] = String(value).trim();</span>
+	}
+};
+&nbsp;
+// Field validators map
+const FIELD_VALIDATORS: Record&lt;string, FieldValidator&gt; = {
+	name: validateNameField,
+	email: validateEmailField,
+	phone: validatePhoneField,
+	cpf: validateCPFField,
+	profession: <span class="fstat-no" title="function not covered" >(v</span>alue, _rn, _e, _w, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >		data.profession = normalizeProfession(String(value || ''));</span>
+	},
+	hasClinic: <span class="fstat-no" title="function not covered" >(v</span>alue, _rn, _e, _w, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >		data.hasClinic = parseBoolean(value as string | boolean | undefined);</span>
+	},
+	status: <span class="fstat-no" title="function not covered" >(v</span>alue, _rn, _e, _w, data) =&gt; {
+<span class="cstat-no" title="statement not covered" >		data.status = normalizeStatus(String(value || ''));</span>
+	},
+	birthDate: validateDateField,
+	saleDate: validateDateField,
+};
+&nbsp;
+// Validate a single row of data
+export function <span class="fstat-no" title="function not covered" >validateRow(</span>
+	row: Record&lt;string, unknown&gt;,
+	rowNumber: number,
+	mapping: Record&lt;string, string&gt;,
+): ValidationResult {
+	const errors: string[] = <span class="cstat-no" title="statement not covered" >[];</span>
+	const warnings: string[] = <span class="cstat-no" title="statement not covered" >[];</span>
+	const data: Record&lt;string, unknown&gt; = <span class="cstat-no" title="statement not covered" >{};</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	for (const [csvHeader, schemaField] of Object.entries(mapping)) {</span>
+<span class="cstat-no" title="statement not covered" >		if (schemaField === '_skip') <span class="cstat-no" title="statement not covered" >continue;</span></span>
+&nbsp;
+		const value = <span class="cstat-no" title="statement not covered" >row[csvHeader];</span>
+		const validator = <span class="cstat-no" title="statement not covered" >FIELD_VALIDATORS[schemaField] || validateDefaultField;</span>
+<span class="cstat-no" title="statement not covered" >		validator(value, rowNumber, errors, warnings, data, schemaField);</span>
+	}
+&nbsp;
+	// Set defaults for required boolean fields
+<span class="cstat-no" title="statement not covered" >	if (data.hasClinic === undefined) {</span>
+<span class="cstat-no" title="statement not covered" >		data.hasClinic = false;</span>
+	}
+&nbsp;
+<span class="cstat-no" title="statement not covered" >	return {</span>
+		isValid: errors.length === 0,
+		errors,
+		warnings,
+		data,
 	};
+}
 &nbsp;
-	return (
-		&lt;Dialog open={open} onOpenChange={setOpen}&gt;
-			&lt;div className="w-full mb-4 px-1"&gt;
-				&lt;DialogTrigger asChild&gt;
-					&lt;FlipButton className="w-full h-12" initial={false}&gt;
-						&lt;FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden"&gt;
-							&lt;HoverBorderGradient
-								as="div"
-								containerClassName="rounded-full w-full h-full"
-								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
-							&gt;
-								&lt;Plus className="h-4 w-4 mr-2" /&gt;
-								Novo Lead
-							&lt;/HoverBorderGradient&gt;
-						&lt;/FlipButtonFront&gt;
-						&lt;FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden"&gt;
-							&lt;HoverBorderGradient
-								as="div"
-								containerClassName="rounded-full w-full h-full border-none"
-								className="bg-[#004b5a] text-[#d4af37] w-full h-full flex items-center justify-center font-bold tracking-wide"
-								clockwise={false}
-							&gt;
-								Cadastrar
-							&lt;/HoverBorderGradient&gt;
-						&lt;/FlipButtonBack&gt;
-					&lt;/FlipButton&gt;
-				&lt;/DialogTrigger&gt;
-			&lt;/div&gt;
-			&lt;DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50"&gt;
-				&lt;DialogHeader&gt;
-					&lt;DialogTitle&gt;Novo Lead&lt;/DialogTitle&gt;
-				&lt;/DialogHeader&gt;
+// ==========================================
+// Financial Field Utilities
+// ==========================================
 &nbsp;
-				&lt;Form {...form}&gt;
-					&lt;form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6"&gt;
-						&lt;div className="grid grid-cols-1 md:grid-cols-2 gap-4"&gt;
-							{/* Nome */}
-							&lt;FormField
-								control={form.control}
-								name="name"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Nome Completo&lt;/FormLabel&gt;
-										&lt;FormControl&gt;
-											&lt;Input placeholder="Ex: João Silva" {...field} /&gt;
-										&lt;/FormControl&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+// Payment status normalization map
+const PAYMENT_STATUS_MAP: Record&lt;string, 'em_dia' | 'atrasado' | 'quitado' | 'cancelado'&gt; = {
+	em_dia: 'em_dia',
+	'em dia': 'em_dia',
+	adimplente: 'em_dia',
+	regular: 'em_dia',
+	atrasado: 'atrasado',
+	inadimplente: 'atrasado',
+	atraso: 'atrasado',
+	quitado: 'quitado',
+	pago: 'quitado',
+	finalizado: 'quitado',
+	cancelado: 'cancelado',
+	cancelamento: 'cancelado',
+};
 &nbsp;
-							{/* Telefone */}
-							&lt;FormField
-								control={form.control}
-								name="phone"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Telefone (WhatsApp)&lt;/FormLabel&gt;
-										&lt;FormControl&gt;
-											&lt;Input placeholder="Ex: 11999999999" {...field} /&gt;
-										&lt;/FormControl&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+/**
+ * Normalize payment status from various inputs to valid enum value
+ */
+export function <span class="fstat-no" title="function not covered" >normalizePaymentStatus(</span>
+	status: string | undefined,
+): 'em_dia' | 'atrasado' | 'quitado' | 'cancelado' {
+<span class="cstat-no" title="statement not covered" >	if (!status) <span class="cstat-no" title="statement not covered" >return 'em_dia';</span></span>
+	const normalized = <span class="cstat-no" title="statement not covered" >status.trim().toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >	return PAYMENT_STATUS_MAP[normalized] || 'em_dia';</span>
+}
 &nbsp;
-							{/* Email */}
-							&lt;FormField
-								control={form.control}
-								name="email"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Email (Opcional)&lt;/FormLabel&gt;
-										&lt;FormControl&gt;
-											&lt;Input placeholder="Ex: joao@email.com" {...field} /&gt;
-										&lt;/FormControl&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+/**
+ * Parse monetary value from Brazilian format (R$ 1.234,56)
+ * Handles both Brazilian (1.234,56) and international (1,234.56) formats
+ */
+export function <span class="fstat-no" title="function not covered" >parseMonetary(v</span>alue: string | number | undefined): number {
+<span class="cstat-no" title="statement not covered" >	if (!value) <span class="cstat-no" title="statement not covered" >return 0;</span></span>
+<span class="cstat-no" title="statement not covered" >	if (typeof value === 'number') <span class="cstat-no" title="statement not covered" >return value;</span></span>
 &nbsp;
-							{/* Fonte */}
-							&lt;FormField
-								control={form.control}
-								name="source"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Fonte de Aquisição&lt;/FormLabel&gt;
-										&lt;Select onValueChange={field.onChange} defaultValue={field.value}&gt;
-											&lt;FormControl&gt;
-												&lt;SelectTrigger&gt;
-													&lt;SelectValue placeholder="Selecione a fonte" /&gt;
-												&lt;/SelectTrigger&gt;
-											&lt;/FormControl&gt;
-											&lt;SelectContent&gt;
-												&lt;SelectItem value="whatsapp"&gt;WhatsApp&lt;/SelectItem&gt;
-												&lt;SelectItem value="instagram"&gt;Instagram&lt;/SelectItem&gt;
-												&lt;SelectItem value="landing_page"&gt;Landing Page&lt;/SelectItem&gt;
-												&lt;SelectItem value="trafego_pago"&gt;Tráfego Pago&lt;/SelectItem&gt;
-												&lt;SelectItem value="indicacao"&gt;Indicação&lt;/SelectItem&gt;
-												&lt;SelectItem value="evento"&gt;Evento&lt;/SelectItem&gt;
-												&lt;SelectItem value="organico"&gt;Orgânico&lt;/SelectItem&gt;
-												&lt;SelectItem value="outro"&gt;Outro&lt;/SelectItem&gt;
-											&lt;/SelectContent&gt;
-										&lt;/Select&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+	// Remove R$ prefix and spaces
+	let cleaned = <span class="cstat-no" title="statement not covered" >value.replace(/[R$\s]/g, '');</span>
 &nbsp;
-							{/* Profissão */}
-							&lt;FormField
-								control={form.control}
-								name="profession"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Profissão&lt;/FormLabel&gt;
-										&lt;Select onValueChange={field.onChange} defaultValue={field.value}&gt;
-											&lt;FormControl&gt;
-												&lt;SelectTrigger&gt;
-													&lt;SelectValue placeholder="Selecione..." /&gt;
-												&lt;/SelectTrigger&gt;
-											&lt;/FormControl&gt;
-											&lt;SelectContent&gt;
-												&lt;SelectItem value="enfermeiro"&gt;Enfermeiro(a)&lt;/SelectItem&gt;
-												&lt;SelectItem value="dentista"&gt;Dentista&lt;/SelectItem&gt;
-												&lt;SelectItem value="biomedico"&gt;Biomédico(a)&lt;/SelectItem&gt;
-												&lt;SelectItem value="farmaceutico"&gt;Farmacêutico(a)&lt;/SelectItem&gt;
-												&lt;SelectItem value="medico"&gt;Médico(a)&lt;/SelectItem&gt;
-												&lt;SelectItem value="esteticista"&gt;Esteticista&lt;/SelectItem&gt;
-												&lt;SelectItem value="outro"&gt;Outro&lt;/SelectItem&gt;
-											&lt;/SelectContent&gt;
-										&lt;/Select&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+	// Detect format: Brazilian uses comma as decimal separator
+	// Check if there's a comma after the last period (Brazilian format)
+	const lastComma = <span class="cstat-no" title="statement not covered" >cleaned.lastIndexOf(',');</span>
+	const lastPeriod = <span class="cstat-no" title="statement not covered" >cleaned.lastIndexOf('.');</span>
 &nbsp;
-							{/* Produto */}
-							&lt;FormField
-								control={form.control}
-								name="interestedProduct"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Produto de Interesse&lt;/FormLabel&gt;
-										&lt;Select onValueChange={field.onChange} defaultValue={field.value}&gt;
-											&lt;FormControl&gt;
-												&lt;SelectTrigger&gt;
-													&lt;SelectValue placeholder="Selecione..." /&gt;
-												&lt;/SelectTrigger&gt;
-											&lt;/FormControl&gt;
-											&lt;SelectContent&gt;
-												&lt;SelectItem value="trintae3"&gt;TrintaE3 (33)&lt;/SelectItem&gt;
-												&lt;SelectItem value="otb"&gt;OTB&lt;/SelectItem&gt;
-												&lt;SelectItem value="black_neon"&gt;Black Neon&lt;/SelectItem&gt;
-												&lt;SelectItem value="comunidade"&gt;Comunidade&lt;/SelectItem&gt;
-												&lt;SelectItem value="auriculo"&gt;Aurículo&lt;/SelectItem&gt;
-												&lt;SelectItem value="na_mesa_certa"&gt;Na Mesa Certa&lt;/SelectItem&gt;
-												&lt;SelectItem value="indefinido"&gt;Ainda não sabe&lt;/SelectItem&gt;
-											&lt;/SelectContent&gt;
-										&lt;/Select&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
-						&lt;/div&gt;
+<span class="cstat-no" title="statement not covered" >	if (lastComma &gt; lastPeriod) {</span>
+		// Brazilian format: 1.234,56 → remove periods, replace comma with period
+<span class="cstat-no" title="statement not covered" >		cleaned = cleaned.replace(/\./g, '').replace(',', '.');</span>
+<span class="cstat-no" title="statement not covered" >	} else if (lastPeriod &gt; lastComma) {</span>
+		// International format: 1,234.56 → just remove commas
+<span class="cstat-no" title="statement not covered" >		cleaned = cleaned.replace(/,/g, '');</span>
+<span class="cstat-no" title="statement not covered" >	} else if (lastComma !== -1) {</span>
+		// Only comma, likely Brazilian decimal: 1234,56
+<span class="cstat-no" title="statement not covered" >		cleaned = cleaned.replace(',', '.');</span>
+	}
 &nbsp;
-						{/* Clínica */}
-						&lt;div className="space-y-4 p-4 rounded-lg border border-border/50 bg-muted/30"&gt;
-							&lt;FormField
-								control={form.control}
-								name="hasClinic"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem className="flex flex-row items-start space-x-3 space-y-0"&gt;</span>
-										&lt;FormControl&gt;
-											&lt;Checkbox checked={field.value} onCheckedChange={field.onChange} /&gt;
-										&lt;/FormControl&gt;
-										&lt;div className="space-y-1 leading-none"&gt;
-											&lt;FormLabel&gt;Possui clínica ou consultório próprio?&lt;/FormLabel&gt;
-										&lt;/div&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
+	const parsed = <span class="cstat-no" title="statement not covered" >Number.parseFloat(cleaned);</span>
+<span class="cstat-no" title="statement not covered" >	return Number.isNaN(parsed) ? 0 : parsed;</span>
+}
 &nbsp;
-							{form.watch('hasClinic') &amp;&amp; (
-<span class="branch-1 cbranch-no" title="branch not covered" >								&lt;div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2"&gt;</span>
-									&lt;FormField
-										control={form.control}
-										name="clinicName"
-										render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >											&lt;FormItem&gt;</span>
-												&lt;FormLabel&gt;Nome da Clínica&lt;/FormLabel&gt;
-												&lt;FormControl&gt;
-													&lt;Input placeholder="Ex: Clínica Estética Bella" {...field} /&gt;
-												&lt;/FormControl&gt;
-												&lt;FormMessage /&gt;
-											&lt;/FormItem&gt;
-										)}
-									/&gt;
-									&lt;FormField
-										control={form.control}
-										name="clinicCity"
-										render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >											&lt;FormItem&gt;</span>
-												&lt;FormLabel&gt;Cidade&lt;/FormLabel&gt;
-												&lt;FormControl&gt;
-													&lt;Input placeholder="Ex: São Paulo" {...field} /&gt;
-												&lt;/FormControl&gt;
-												&lt;FormMessage /&gt;
-											&lt;/FormItem&gt;
-										)}
-									/&gt;
-								&lt;/div&gt;
-							)}
-						&lt;/div&gt;
-&nbsp;
-						{/* Background Profissional */}
-						&lt;div className="grid grid-cols-1 md:grid-cols-2 gap-4"&gt;
-							&lt;FormField
-								control={form.control}
-								name="yearsInAesthetics"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Anos na Estética&lt;/FormLabel&gt;
-										&lt;FormControl&gt;
-											&lt;Input type="number" placeholder="Ex: 3" {...field} /&gt;
-										&lt;/FormControl&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
-							&lt;FormField
-								control={form.control}
-								name="currentRevenue"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Faturamento Mensal&lt;/FormLabel&gt;
-										&lt;Select onValueChange={field.onChange} defaultValue={field.value}&gt;
-											&lt;FormControl&gt;
-												&lt;SelectTrigger&gt;
-													&lt;SelectValue placeholder="Selecione..." /&gt;
-												&lt;/SelectTrigger&gt;
-											&lt;/FormControl&gt;
-											&lt;SelectContent&gt;
-												&lt;SelectItem value="0-5k"&gt;Até R$ 5.000&lt;/SelectItem&gt;
-												&lt;SelectItem value="5k-10k"&gt;R$ 5.000 - R$ 10.000&lt;/SelectItem&gt;
-												&lt;SelectItem value="10k-20k"&gt;R$ 10.000 - R$ 20.000&lt;/SelectItem&gt;
-												&lt;SelectItem value="20k-50k"&gt;R$ 20.000 - R$ 50.000&lt;/SelectItem&gt;
-												&lt;SelectItem value="50k+"&gt;Acima de R$ 50.000&lt;/SelectItem&gt;
-											&lt;/SelectContent&gt;
-										&lt;/Select&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
-						&lt;/div&gt;
-&nbsp;
-						{/* Diagnóstico */}
-						&lt;div className="space-y-4"&gt;
-							&lt;FormField
-								control={form.control}
-								name="mainPain"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Dor Principal&lt;/FormLabel&gt;
-										&lt;Select onValueChange={field.onChange} defaultValue={field.value}&gt;
-											&lt;FormControl&gt;
-												&lt;SelectTrigger&gt;
-													&lt;SelectValue placeholder="Qual a maior dificuldade?" /&gt;
-												&lt;/SelectTrigger&gt;
-											&lt;/FormControl&gt;
-											&lt;SelectContent&gt;
-												&lt;SelectItem value="tecnica"&gt;Técnica / Conhecimento&lt;/SelectItem&gt;
-												&lt;SelectItem value="vendas"&gt;Vendas / Captação&lt;/SelectItem&gt;
-												&lt;SelectItem value="gestao"&gt;Gestão / Processos&lt;/SelectItem&gt;
-												&lt;SelectItem value="posicionamento"&gt;Posicionamento / Marketing&lt;/SelectItem&gt;
-												&lt;SelectItem value="escala"&gt;Escala / Crescimento&lt;/SelectItem&gt;
-												&lt;SelectItem value="certificacao"&gt;Certificação / Regularização&lt;/SelectItem&gt;
-												&lt;SelectItem value="outro"&gt;Outro&lt;/SelectItem&gt;
-											&lt;/SelectContent&gt;
-										&lt;/Select&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
-							&lt;FormField
-								control={form.control}
-								name="mainDesire"
-								render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >									&lt;FormItem&gt;</span>
-										&lt;FormLabel&gt;Principal Desejo / Objetivo&lt;/FormLabel&gt;
-										&lt;FormControl&gt;
-											&lt;Textarea
-												placeholder="Ex: Quero faturar R$ 30k/mês com procedimentos estéticos..."
-												className="resize-none"
-												{...field}
-											/&gt;
-										&lt;/FormControl&gt;
-										&lt;FormMessage /&gt;
-									&lt;/FormItem&gt;
-								)}
-							/&gt;
-						&lt;/div&gt;
-&nbsp;
-						{/* Temperatura */}
-						&lt;FormField
-							control={form.control}
-							name="temperature"
-							render={<span class="fstat-no" title="function not covered" >({</span> field }) =&gt; (
-<span class="cstat-no" title="statement not covered" >								&lt;FormItem className="space-y-3"&gt;</span>
-									&lt;FormLabel&gt;Temperatura Inicial&lt;/FormLabel&gt;
-									&lt;FormControl&gt;
-										&lt;RadioGroup
-											onValueChange={field.onChange}
-											defaultValue={field.value}
-											className="flex space-x-4"
-										&gt;
-											&lt;FormItem className="flex items-center space-x-2 space-y-0"&gt;
-												&lt;FormControl&gt;
-													&lt;RadioGroupItem value="frio" /&gt;
-												&lt;/FormControl&gt;
-												&lt;FormLabel className="font-normal cursor-pointer text-primary"&gt;
-													❄️ Frio
-												&lt;/FormLabel&gt;
-											&lt;/FormItem&gt;
-											&lt;FormItem className="flex items-center space-x-2 space-y-0"&gt;
-												&lt;FormControl&gt;
-													&lt;RadioGroupItem value="morno" /&gt;
-												&lt;/FormControl&gt;
-												&lt;FormLabel className="font-normal cursor-pointer text-yellow-400"&gt;
-													🌤️ Morno
-												&lt;/FormLabel&gt;
-											&lt;/FormItem&gt;
-											&lt;FormItem className="flex items-center space-x-2 space-y-0"&gt;
-												&lt;FormControl&gt;
-													&lt;RadioGroupItem value="quente" /&gt;
-												&lt;/FormControl&gt;
-												&lt;FormLabel className="font-normal cursor-pointer text-red-500"&gt;
-													🔥 Quente
-												&lt;/FormLabel&gt;
-											&lt;/FormItem&gt;
-										&lt;/RadioGroup&gt;
-									&lt;/FormControl&gt;
-									&lt;FormMessage /&gt;
-								&lt;/FormItem&gt;
-							)}
-						/&gt;
-&nbsp;
-						&lt;div className="flex justify-end pt-4"&gt;
-							&lt;Button
-								type="submit"
-								disabled={form.formState.isSubmitting}
-								className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-							&gt;
-								{form.formState.isSubmitting ? (
-<span class="branch-0 cbranch-no" title="branch not covered" >									&lt;&gt;</span>
-										&lt;Loader2 className="mr-2 h-4 w-4 animate-spin" /&gt;
-										Criando...
-									&lt;/&gt;
-								) : (
-									'Criar Lead'
-								)}
-							&lt;/Button&gt;
-						&lt;/div&gt;
-					&lt;/form&gt;
-				&lt;/Form&gt;
-			&lt;/DialogContent&gt;
-		&lt;/Dialog&gt;
-	);
+/**
+ * Parse integer value (for installments, paidInstallments, etc.)
+ */
+export function <span class="fstat-no" title="function not covered" >parseInteger(v</span>alue: string | number | undefined): number {
+<span class="cstat-no" title="statement not covered" >	if (!value) <span class="cstat-no" title="statement not covered" >return 0;</span></span>
+<span class="cstat-no" title="statement not covered" >	if (typeof value === 'number') <span class="cstat-no" title="statement not covered" >return Math.floor(value);</span></span>
+	const parsed = <span class="cstat-no" title="statement not covered" >Number.parseInt(String(value).replace(/\D/g, ''), 10);</span>
+<span class="cstat-no" title="statement not covered" >	return Number.isNaN(parsed) ? 0 : parsed;</span>
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -1698,14 +2241,14 @@ export function LeadForm() {
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
                 at 2025-12-18T16:48:12.915Z
             </div>
-        <script src="../../../prettify.js"></script>
+        <script src="../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../../sorter.js"></script>
-        <script src="../../../block-navigation.js"></script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
     </body>
 </html>
     
