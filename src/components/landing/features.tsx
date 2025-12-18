@@ -6,7 +6,7 @@ import { BarChart3, BrainCircuit, MessageSquareText, ShieldCheck, Users, Zap } f
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 
-const features = [
+export const features = [
 	{
 		title: 'AI Lead Scoring',
 		description:

@@ -9,7 +9,7 @@ import type { Id } from '../../convex/_generated/dataModel';
 const PAGE_SIZE = 12;
 
 // biome-ignore lint/suspicious/noExplicitAny: generic route typing
-export function useStudentsViewModel(Route: any) {
+export function useStudentsViewModel<RouteType extends { useSearch: () => any }>(Route: RouteType) {
 	const navigate = useNavigate();
 	const { search, status, churnRisk, product, view, page } = Route.useSearch();
 	const { isAuthenticated } = useConvexAuth();
@@ -82,9 +82,13 @@ export function useStudentsViewModel(Route: any) {
 	// Stats - from the list query for accuracy
 	const totalStudents = students?.length ?? 0;
 	const activeStudents =
-		students?.filter((s: StudentType | null) => s && s.status === 'ativo').length ?? 0;
+		students?.filter(
+			(s: StudentType | null): s is StudentType => s !== null && s.status === 'ativo',
+		).length ?? 0;
 	const highRiskStudents =
-		students?.filter((s: StudentType | null) => s && s.churnRisk === 'alto').length ?? 0;
+		students?.filter(
+			(s: StudentType | null): s is StudentType => s !== null && s.churnRisk === 'alto',
+		).length ?? 0;
 
 	// Pagination logic - only for table view
 	const totalPages = Math.ceil(totalStudents / PAGE_SIZE);

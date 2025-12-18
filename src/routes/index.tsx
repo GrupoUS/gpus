@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { DashboardPreview } from '@/components/landing/dashboard-preview';
-import { Features } from '@/components/landing/features';
+import { FeaturesParallax } from '@/components/landing/features-parallax';
 import { Footer } from '@/components/landing/footer';
 import { Hero } from '@/components/landing/hero';
 import { FloatingNavbar } from '@/components/ui/floating-navbar';
@@ -17,7 +17,7 @@ function LandingPage() {
 			<main>
 				<Hero />
 				<DashboardPreview />
-				<Features />
+				<FeaturesParallax />
 			</main>
 			<Footer />
 		</div>

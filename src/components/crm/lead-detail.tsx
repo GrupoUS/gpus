@@ -26,7 +26,11 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 		// Loading state or not found
 		return (
 			<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<SheetContent className="sm:max-w-xl w-full">
+				<SheetContent
+					side="right"
+					transition={{ type: 'spring', stiffness: 150, damping: 22 }}
+					className="sm:max-w-xl w-full"
+				>
 					<div className="flex items-center justify-center h-full">Loading...</div>
 				</SheetContent>
 			</Sheet>
@@ -38,7 +42,11 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 
 	return (
 		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<SheetContent className="sm:max-w-2xl w-full overflow-hidden flex flex-col p-0 gap-0 border-l border-border/50 bg-background/95 backdrop-blur-xl">
+			<SheetContent
+				side="right"
+				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
+				className="sm:max-w-2xl w-full overflow-hidden flex flex-col p-0 gap-0 border-l border-border/50 bg-background/95 backdrop-blur-xl"
+			>
 				{/* Header */}
 				<div className="p-6 border-b border-border/50 bg-muted/20">
 					<div className="flex items-start justify-between mb-4">

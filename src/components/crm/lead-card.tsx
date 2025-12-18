@@ -105,24 +105,44 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="flex items-center gap-3 mt-2 text-muted-foreground">
-						<motion.button
-							type="button"
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+						{/* Botão de ligar - usando div com role=button para acessibilidade */}
+						<div
+							role="button"
+							tabIndex={0}
+							onClick={(e) => {
+								e.stopPropagation();
+								// Lógica de ligar aqui
+							}}
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
 							aria-label="Ligar"
-							whileHover={{ scale: 1.1 }}
-							whileTap={{ scale: 0.9 }}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									// Lógica de ligar aqui
+								}
+							}}
 						>
 							<Phone className="h-4 w-4" />
-						</motion.button>
-						<motion.button
-							type="button"
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+						</div>
+						{/* Botão de mensagem - usando div com role=button para acessibilidade */}
+						<div
+							role="button"
+							tabIndex={0}
+							onClick={(e) => {
+								e.stopPropagation();
+								// Lógica de mensagem aqui
+							}}
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
 							aria-label="Mensagem"
-							whileHover={{ scale: 1.1 }}
-							whileTap={{ scale: 0.9 }}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									// Lógica de mensagem aqui
+								}
+							}}
 						>
 							<MessageSquare className="h-4 w-4" />
-						</motion.button>
+						</div>
 						{lead.lastContactAt && (
 							<motion.span
 								className="text-[10px] ml-auto font-sans"

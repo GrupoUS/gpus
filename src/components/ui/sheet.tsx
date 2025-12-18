@@ -2,7 +2,7 @@
 
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { type HTMLMotionProps, motion } from 'framer-motion';
+import { type HTMLMotionProps, motion, type Transition } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
@@ -76,42 +76,48 @@ interface SheetContentProps
 		VariantProps<typeof sheetVariants> {
 	showCloseButton?: boolean;
 	style?: React.CSSProperties;
+	transition?: Transition;
 }
 
 const SheetContent = React.forwardRef<
 	React.ElementRef<typeof SheetPrimitive.Content>,
 	SheetContentProps
->(({ side = 'right', className, children, showCloseButton = true, style, ...props }, ref) => (
-	<SheetPortal>
-		<SheetOverlay />
-		<SheetPrimitive.Content
-			asChild
-			forceMount
-			onEscapeKeyDown={props.onEscapeKeyDown}
-			onPointerDownOutside={props.onPointerDownOutside}
-			onInteractOutside={props.onInteractOutside}
-		>
-			<motion.div
-				className={cn(sheetVariants({ side }), className)}
-				initial={sheetMotionVariants[side || 'right'].initial}
-				animate={sheetMotionVariants[side || 'right'].animate}
-				exit={sheetMotionVariants[side || 'right'].exit}
-				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
-				ref={ref as React.Ref<HTMLDivElement>}
-				style={style}
-				{...(props as HTMLMotionProps<'div'>)}
+>(
+	(
+		{ side = 'right', className, children, showCloseButton = true, style, transition, ...props },
+		ref,
+	) => (
+		<SheetPortal>
+			<SheetOverlay />
+			<SheetPrimitive.Content
+				asChild
+				forceMount
+				onEscapeKeyDown={props.onEscapeKeyDown}
+				onPointerDownOutside={props.onPointerDownOutside}
+				onInteractOutside={props.onInteractOutside}
 			>
-				{children}
-				{showCloseButton && (
-					<SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-						<X className="h-4 w-4" />
-						<span className="sr-only">Close</span>
-					</SheetPrimitive.Close>
-				)}
-			</motion.div>
-		</SheetPrimitive.Content>
-	</SheetPortal>
-));
+				<motion.div
+					className={cn(sheetVariants({ side }), className)}
+					initial={sheetMotionVariants[side || 'right'].initial}
+					animate={sheetMotionVariants[side || 'right'].animate}
+					exit={sheetMotionVariants[side || 'right'].exit}
+					transition={transition || { type: 'spring', stiffness: 150, damping: 22 }}
+					ref={ref as React.Ref<HTMLDivElement>}
+					style={style}
+					{...(props as HTMLMotionProps<'div'>)}
+				>
+					{children}
+					{showCloseButton && (
+						<SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+							<X className="h-4 w-4" />
+							<span className="sr-only">Close</span>
+						</SheetPrimitive.Close>
+					)}
+				</motion.div>
+			</SheetPrimitive.Content>
+		</SheetPortal>
+	),
+);
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
