@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useState } from 'react';
 
-import { GrupoUSLogo } from './grupo-us-logo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -41,14 +40,12 @@ export const FloatingNavbar = ({ className }: { className?: string }) => {
 					duration: 0.2,
 				}}
 				className={cn(
-					'flex max-w-fit fixed top-10 inset-x-0 mx-auto border border-transparent dark:border-white/20 rounded-full dark:bg-black bg-white shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] z-5000 pr-2 pl-4 py-2  items-center justify-between space-x-14',
+					'flex max-w-fit fixed top-10 inset-x-0 mx-auto border border-primary/20 rounded-full bg-background/80 backdrop-blur-md shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] z-5000 pr-2 pl-4 py-2  items-center justify-between space-x-14',
 					className,
 				)}
 			>
 				<Link to="/" className="flex items-center space-x-2 h-10">
-					<GrupoUSLogo className="h-8 w-auto text-foreground" />
-					{/* Fallback text if logo is too abstract, but logo has text 'GRUPO US' implied or explicit */}
-					<span className="sr-only">Grupo US</span>
+					<img src="/grupo-us-logo.png" alt="Grupo US Logo" className="h-8 w-auto object-contain" />
 				</Link>
 
 				<div className="flex items-center space-x-4">
