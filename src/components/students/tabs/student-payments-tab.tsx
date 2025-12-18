@@ -67,7 +67,8 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 		studentId,
 	}) as Array<PaymentRow> | undefined;
 
-	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
+	// Note: Direct payment creation removed - use createPaymentFromEnrollment or createInstallmentsFromEnrollment instead
+	// This component now only displays payments
 
 	const [isNewPaymentOpen, setIsNewPaymentOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,45 +80,14 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	const [description, setDescription] = useState('');
 	const [installments, setInstallments] = useState('1');
 
+	// Payment creation is now handled through enrollments
+	// This component is for viewing payments only
 	const handleCreatePayment = async () => {
-		if (!asaasCustomerId) {
-			toast({
-				title: 'Erro',
-				description: 'Aluno não sincronizado com Asaas.',
-				variant: 'destructive',
-			});
-			return;
-		}
-
-		setIsSubmitting(true);
-		try {
-			await createPayment({
-				studentId,
-				asaasCustomerId,
-				billingType,
-				value: Number.parseFloat(amount),
-				dueDate,
-				description,
-				installmentCount:
-					Number.parseInt(installments, 10) > 1 ? Number.parseInt(installments, 10) : undefined,
-				installmentValue:
-					Number.parseInt(installments, 10) > 1
-						? Number.parseFloat(amount) / Number.parseInt(installments, 10)
-						: undefined,
-			});
-
-			toast({ title: 'Sucesso', description: 'Cobrança gerada com sucesso!' });
-			setIsNewPaymentOpen(false);
-
-			setAmount('');
-			setDescription('');
-			setInstallments('1');
-		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Erro desconhecido';
-			toast({ title: 'Erro', description: message, variant: 'destructive' });
-		} finally {
-			setIsSubmitting(false);
-		}
+		toast({
+			title: 'Info',
+			description: 'Para gerar cobranças, use a aba de Matrículas e clique em "Gerar Cobranças Asaas".',
+		});
+		setIsNewPaymentOpen(false);
 	};
 
 	const getStatusBadge = (status: string) => {
@@ -153,9 +123,9 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 				<Dialog open={isNewPaymentOpen} onOpenChange={setIsNewPaymentOpen}>
 					<DialogTrigger asChild>
-						<Button disabled={!asaasCustomerId}>
+						<Button variant="outline" disabled>
 							<Plus className="w-4 h-4 mr-2" />
-							Nova Cobrança
+							Gerar Cobranças (via Matrículas)
 						</Button>
 					</DialogTrigger>
 					<DialogContent>

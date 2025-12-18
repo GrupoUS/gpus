@@ -938,13 +938,7 @@ export default defineSchema({
       v.literal('AWAITING_RISK_ANALYSIS'),
       v.literal('CANCELLED')
     ),
-    dueDate: v.string(), // Mantendo string YYYY-MM-DD para compatibilidade ou converter para number timestamp? Plan says number timestamp. API returns string. Let's store string for date components or timestamp? Plan says 'dueDate: v.number()'. I'll stick to plan v.number() for epoch, but API gives 'YYYY-MM-DD'. I will need to convert.
-    // Actually, usually dueDate is just a date. Storing as string 'YYYY-MM-DD' is often safer for dates without time.
-    // However, plan said v.number(). I will use v.string() 'YYYY-MM-DD' because it's simpler for strict dates, unless I convert start of day.
-    // Let's use v.string() YYYY-MM-DD as it matches Asaas API format exactly and avoids timezone issues. I'll note this deviation.
-    // Wait, let's look at my previous `charges`. I used string.
-    // I will stick to string for dueDate because it is a DATE, not a time.
-    // confirmedDate is a timestamp (number).
+    dueDate: v.number(), // Timestamp (start of day)
 
     confirmedDate: v.optional(v.number()),
 
@@ -975,7 +969,8 @@ export default defineSchema({
     .index('by_asaas_payment_id', ['asaasPaymentId'])
     .index('by_status', ['status'])
     .index('by_due_date', ['dueDate'])
-    .index('by_student_status', ['studentId', 'status']), // Added as per Phase 1.2
+    .index('by_student_status', ['studentId', 'status'])
+    .index('by_due_date_status', ['dueDate', 'status']), // Para encontrar cobranças vencidas
 
   asaasWebhooks: defineTable({
     event: v.string(), // PAYMENT_RECEIVED, etc.
@@ -1005,9 +1000,10 @@ export default defineSchema({
     status: v.union(
       v.literal('ACTIVE'),
       v.literal('INACTIVE'),
+      v.literal('CANCELLED'),
       v.literal('EXPIRED') // Asaas status
     ),
-    nextDueDate: v.string(), // YYYY-MM-DD
+    nextDueDate: v.number(), // Timestamp (start of day)
     createdAt: v.number(),
     updatedAt: v.number(),
   })

@@ -177,93 +177,61 @@ http.route({
 /**
  * Asaas Webhook Endpoint
  *
- * Receives payment status updates from Asaas.
+ * Receives payment status updates from Asaas (PAYMENT_RECEIVED, PAYMENT_CONFIRMED, etc.)
+ * and processes them asynchronously.
  *
  * POST /asaas/webhook
+ *
+ * Headers:
+ * - asaas-access-token: Webhook token for authentication
+ *
+ * Body: Asaas webhook payload with event and payment data
  */
 http.route({
-  path: '/asaas/webhook',
-  method: 'POST',
-  handler: httpAction(async (ctx, request) => {
-    const secret = request.headers.get('asaas-access-token')
+	path: '/asaas/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook token
+		const receivedToken = request.headers.get('asaas-access-token')
+		const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
 
-    // Get webhook secret from database (with fallback to env var)
-    const { getAsaasWebhookSecret } = await import('./lib/asaas')
-    const expectedSecret = await getAsaasWebhookSecret(ctx) || process.env.ASAAS_WEBHOOK_SECRET
+		if (!expectedToken || receivedToken !== expectedToken) {
+			console.error('Asaas webhook: Invalid or missing token')
+			return new Response('Unauthorized', { status: 401 })
+		}
 
-    if (!expectedSecret || secret !== expectedSecret) {
-      console.error('Asaas webhook: Invalid or missing secret')
-      return new Response('Unauthorized', { status: 401 })
-    }
+		// 2. Parse payload
+		let payload: any
+		try {
+			payload = await request.json()
+		} catch {
+			console.error('Asaas webhook: Invalid JSON payload')
+			return new Response('Bad Request', { status: 400 })
+		}
 
-    let payload: any
-    try {
-      payload = await request.json()
-    } catch {
-      return new Response('Bad Request', { status: 400 })
-    }
+		// 3. Validate required fields
+		const { event, payment } = payload
+		if (!event || !payment || !payment.id) {
+			console.error('Asaas webhook: Missing required fields (event, payment.id)')
+			return new Response('Bad Request: Missing required fields', {
+				status: 400,
+			})
+		}
 
-    const { event, payment } = payload
+		// 4. Process webhook asynchronously (don't wait for completion)
+		// This ensures we respond quickly to Asaas to avoid retries
+		ctx.runMutation(internal.asaas.processWebhook, {
+			event,
+			paymentId: payment.id,
+			payload,
+		}).catch((error) => {
+			console.error(`Asaas webhook: Error processing event ${event} for payment ${payment.id}:`, error)
+		})
 
-    if (!payment || !payment.id) {
-       return new Response('Invalid payload', { status: 400 })
-    }
-
-    // Log the event
-    await ctx.runMutation(internal.asaas.mutations.logPaymentEvent, {
-      asaasPaymentId: payment.id,
-      eventType: event,
-      webhookPayload: payload,
-      paidAt: payment.confirmedDate ? new Date(payment.confirmedDate).getTime() : undefined,
-      netValue: payment.netValue
-    })
-
-    // Map status
-    let status: any = null
-    switch (event) {
-      case 'PAYMENT_RECEIVED':
-        status = 'RECEIVED'
-        break
-      case 'PAYMENT_CONFIRMED':
-        status = 'CONFIRMED'
-        break
-      case 'PAYMENT_OVERDUE':
-        status = 'OVERDUE'
-        break
-      case 'PAYMENT_REFUNDED':
-        status = 'REFUNDED'
-        break
-      case 'PAYMENT_DELETED':
-      case 'PAYMENT_REMOVED_BY_RECEIVER': // Asaas sometimes uses this
-        status = 'DELETED'
-        break
-      case 'PAYMENT_DUNNING_REQUESTED':
-        status = 'DUNNING_REQUESTED'
-        break
-      case 'PAYMENT_DUNNING_RECEIVED':
-         status = 'DUNNING_RECEIVED'
-         break
-      case 'PAYMENT_AWAITING_RISK_ANALYSIS':
-         status = 'AWAITING_RISK_ANALYSIS'
-         break
-    }
-
-    // Also map CANCELLED
-    if (event === 'PAYMENT_CANCELLED') status = 'CANCELLED';
-
-    if (status) {
-       try {
-         await ctx.runMutation(internal.asaas.mutations.updateChargeStatus, {
-           asaasPaymentId: payment.id,
-           status: status
-         })
-       } catch (error) {
-         console.error(`Asaas webhook: Failed to update status for ${payment.id}`, error)
-       }
-    }
-
-    return new Response('OK', { status: 200 })
-  }),
+		// 5. Return immediate success response
+		console.log(`Asaas webhook: Received ${event} for payment ${payment.id}`)
+		return new Response('OK', { status: 200 })
+	}),
 })
 
 export default http

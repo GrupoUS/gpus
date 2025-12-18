@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
@@ -85,15 +85,15 @@ function NewCampaignPage() {
 	// Calculate total contacts from selected lists
 	const totalContacts =
 		lists
-			?.filter((list) => selectedListIds.includes(list._id))
-			.reduce((sum, list) => sum + (list.contactCount ?? 0), 0) ?? 0;
+			?.filter((list: Doc<'emailLists'>) => selectedListIds.includes(list._id))
+			.reduce((sum: number, list: Doc<'emailLists'>) => sum + (list.contactCount ?? 0), 0) ?? 0;
 
 	// Handle template selection - populate subject from template
 	const handleTemplateChange = (templateId: string) => {
 		form.setValue('templateId', templateId === 'none' ? undefined : templateId);
 
 		if (templateId && templateId !== 'none') {
-			const template = templates?.find((t) => t._id === templateId);
+			const template = templates?.find((t: Doc<'emailTemplates'>) => t._id === templateId);
 			if (template) {
 				// Populate subject if template has one
 				if (template.subject && !form.getValues('subject')) {
@@ -237,7 +237,7 @@ function NewCampaignPage() {
 																Nenhum template disponível
 															</SelectItem>
 														) : (
-															templates.map((template) => (
+															templates.map((template: Doc<'emailTemplates'>) => (
 																<SelectItem key={template._id} value={template._id}>
 																	{template.name}
 																	{template.category && (
@@ -322,7 +322,7 @@ function NewCampaignPage() {
 													</div>
 												) : (
 													<div className="space-y-3">
-														{lists.map((list) => (
+														{lists.map((list: Doc<'emailLists'>) => (
 															<FormField
 																key={list._id}
 																control={form.control}

@@ -22,7 +22,7 @@ export const createAsaasCustomer = action({
   },
   handler: async (ctx, args) => {
     try {
-      const client = await getAsaasClient(ctx);
+      const client = getAsaasClient();
       const customer = await client.createCustomer({
         name: args.name,
         cpfCnpj: args.cpfCnpj.replace(/\D/g, ""),
@@ -66,7 +66,7 @@ export const createAsaasPayment = action({
   },
   handler: async (ctx, args) => {
     try {
-      const client = await getAsaasClient(ctx);
+      const client = getAsaasClient();
       const payment = await client.createPayment({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
@@ -79,7 +79,7 @@ export const createAsaasPayment = action({
       });
 
       // For PIX, fetch QrCode
-      let pixData = { encodedImage: undefined, payload: undefined };
+      let pixData: { encodedImage?: string, payload?: string } = {};
       if (args.billingType === "PIX") {
          try {
              const qrResponse = await client.getPixQrCode(payment.id);
@@ -98,7 +98,7 @@ export const createAsaasPayment = action({
         dueDate: payment.dueDate,
         billingType: args.billingType,
         description: payment.description,
-        installmentCount: payment.installmentCount,
+        installmentCount: args.installmentCount,
         installmentNumber: payment.installmentNumber,
         boletoUrl: payment.bankSlipUrl,
         pixQrCode: pixData.payload, // Save payload string
@@ -125,7 +125,7 @@ export const createAsaasSubscription = action({
   },
   handler: async (ctx, args) => {
     try {
-      const client = await getAsaasClient(ctx);
+      const client = getAsaasClient();
       const subscription = await client.createSubscription({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
@@ -160,7 +160,7 @@ export const testAsaasConnection = action({
   args: {},
   handler: async (ctx) => {
     try {
-      const client = await getAsaasClient(ctx);
+      const client = getAsaasClient();
 
       // Make a simple API call to validate credentials
       const response = await client.testConnection();

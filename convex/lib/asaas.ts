@@ -1,181 +1,586 @@
-import axios, { type AxiosInstance, type AxiosError } from "axios";
-import { internal } from "../_generated/api";
-import type { ActionCtx } from "../_generated/server";
+/**
+ * Asaas Payment API Client Library
+ *
+ * Type-safe client for Asaas API v3 integration.
+ * Provides typed wrappers for customers, payments, subscriptions, and webhooks.
+ *
+ * @see https://docs.asaas.com/reference/introducao
+ */
 
-const DEFAULT_ASAAS_API_URL = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
-const DEFAULT_ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+// ═══════════════════════════════════════════════════════
+// TYPES - Asaas API Request/Response Payloads
+// ═══════════════════════════════════════════════════════
 
-export interface AsaasConfig {
-  baseUrl?: string;
-  apiKey?: string;
+/**
+ * Customer creation/update payload
+ */
+export interface AsaasCustomerPayload {
+	name: string
+	cpfCnpj?: string
+	email?: string
+	phone?: string
+	mobilePhone?: string
+	postalCode?: string
+	address?: string
+	addressNumber?: string
+	complement?: string
+	province?: string
+	city?: string
+	state?: string
+	country?: string
+	externalReference?: string
+	notificationDisabled?: boolean
+	additionalEmails?: string
 }
+
+/**
+ * Customer response from Asaas API
+ */
+export interface AsaasCustomerResponse {
+	id: string
+	dateCreated: string
+	name: string
+	email?: string
+	phone?: string
+	mobilePhone?: string
+	cpfCnpj?: string
+	postalCode?: string
+	address?: string
+	addressNumber?: string
+	complement?: string
+	province?: string
+	city?: string
+	state?: string
+	country?: string
+	externalReference?: string
+	notificationDisabled: boolean
+	additionalEmails?: string
+	personType: 'FISICA' | 'JURIDICA'
+}
+
+/**
+ * Payment creation payload
+ */
+export interface AsaasPaymentPayload {
+	customer: string // Customer ID
+	billingType: 'BOLETO' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'UNDEFINED'
+	value: number
+	dueDate: string // YYYY-MM-DD
+	description?: string
+	externalReference?: string
+	installmentCount?: number
+	installmentValue?: number
+	totalValue?: number
+	discount?: {
+		value: number
+		dueDateLimitDays: number
+		type: 'FIXED' | 'PERCENTAGE'
+	}
+	fine?: {
+		value: number
+		type: 'FIXED' | 'PERCENTAGE'
+	}
+	interest?: {
+		value: number
+		type: 'PERCENTAGE'
+	}
+	postalService?: boolean
+}
+
+/**
+ * Payment response from Asaas API
+ */
+export interface AsaasPaymentResponse {
+	id: string
+	dateCreated: string
+	customer: string
+	subscription?: string
+	installment?: string
+	paymentLink?: string
+	value: number
+	netValue: number
+	originalValue?: number
+	interestValue?: number
+	description?: string
+	billingType: 'BOLETO' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'UNDEFINED'
+	status:
+		| 'PENDING'
+		| 'CONFIRMED'
+		| 'RECEIVED'
+		| 'OVERDUE'
+		| 'REFUNDED'
+		| 'RECEIVED_IN_CASH_UNDONE'
+		| 'CHARGEBACK_REQUESTED'
+		| 'CHARGEBACK_DISPUTE'
+		| 'AWAITING_CHARGEBACK_REVERSAL'
+		| 'DUNNING_REQUESTED'
+		| 'DUNNING_RECEIVED'
+		| 'AWAITING_RISK_ANALYSIS'
+		| 'APPROVED_BY_RISK_ANALYSIS'
+		| 'REJECTED_BY_RISK_ANALYSIS'
+		| 'DELETED'
+		| 'CANCELLED'
+	dueDate: string // YYYY-MM-DD
+	originalDueDate: string
+	paymentDate?: string
+	clientPaymentDate?: string
+	installmentNumber?: number
+	transactionReceiptUrl?: string
+	nossoNumero?: string
+	invoiceUrl?: string
+	bankSlipUrl?: string
+	identificationField?: string
+	externalReference?: string
+	deleted?: boolean
+	postalService?: boolean
+	creditDate?: string
+	estimatedCreditDate?: string
+	// PIX fields
+	pixTransactionId?: string
+	pixQrCodeId?: string
+	pixQrCode?: string
+	// Credit card fields
+	creditCard?: {
+		creditCardNumber?: string
+		creditCardBrand?: string
+		creditCardToken?: string
+	}
+}
+
+/**
+ * Subscription creation payload
+ */
+export interface AsaasSubscriptionPayload {
+	customer: string
+	billingType: 'BOLETO' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'UNDEFINED'
+	value: number
+	nextDueDate: string // YYYY-MM-DD
+	cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY'
+	description?: string
+	externalReference?: string
+	updatePendingPayments?: boolean
+	discount?: {
+		value: number
+		dueDateLimitDays: number
+		type: 'FIXED' | 'PERCENTAGE'
+	}
+	fine?: {
+		value: number
+		type: 'FIXED' | 'PERCENTAGE'
+	}
+	interest?: {
+		value: number
+		type: 'PERCENTAGE'
+	}
+}
+
+/**
+ * Subscription response from Asaas API
+ */
+export interface AsaasSubscriptionResponse {
+	id: string
+	dateCreated: string
+	customer: string
+	billingType: 'BOLETO' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'UNDEFINED'
+	value: number
+	nextDueDate: string
+	cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY'
+	description?: string
+	status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED' | 'CANCELLED'
+	externalReference?: string
+}
+
+/**
+ * Payment list response
+ */
+export interface AsaasPaymentListResponse {
+	object: 'list'
+	hasMore: boolean
+	totalCount: number
+	limit: number
+	offset: number
+	data: AsaasPaymentResponse[]
+}
+
+/**
+ * Asaas API Error
+ */
+export interface AsaasApiError {
+	errors?: Array<{
+		code: string
+		description: string
+	}>
+	message?: string
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+const ASAAS_API_BASE = process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3'
+const MAX_RETRIES = 3
+const INITIAL_RETRY_DELAY = 1000 // 1 second
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Convert date string (YYYY-MM-DD) to timestamp (start of day in UTC)
+ */
+export function dateStringToTimestamp(dateStr: string): number {
+	const date = new Date(dateStr + 'T00:00:00.000Z')
+	return date.getTime()
+}
+
+/**
+ * Convert timestamp to date string (YYYY-MM-DD)
+ */
+export function timestampToDateString(timestamp: number): string {
+	const date = new Date(timestamp)
+	const year = date.getUTCFullYear()
+	const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+	const day = String(date.getUTCDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
+}
+
+// ═══════════════════════════════════════════════════════
+// ASAAS API CLIENT
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Generic fetch wrapper for Asaas API
+ * Handles authentication, retry logic, error handling, and response parsing
+ */
+async function asaasFetch<T>(
+	endpoint: string,
+	options: {
+		method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+		body?: unknown
+		apiKey?: string
+		retries?: number
+	} = {},
+): Promise<T> {
+	const apiKey = options.apiKey || process.env.ASAAS_API_KEY
+	const retries = options.retries ?? MAX_RETRIES
+
+	if (!apiKey) {
+		throw new Error('ASAAS_API_KEY environment variable is not set')
+	}
+
+	const url = `${ASAAS_API_BASE}${endpoint}`
+
+	let lastError: Error | null = null
+
+	for (let attempt = 0; attempt <= retries; attempt++) {
+		try {
+			const response = await fetch(url, {
+				method: options.method || 'GET',
+				headers: {
+					access_token: apiKey,
+					'Content-Type': 'application/json',
+					'User-Agent': 'gpus-saas/1.0',
+				},
+				body: options.body ? JSON.stringify(options.body) : undefined,
+			})
+
+			// Handle no content responses
+			if (response.status === 204) {
+				return undefined as T
+			}
+
+			const data = await response.json()
+
+			if (!response.ok) {
+				const error = data as AsaasApiError
+				const errorMessage =
+					error.errors?.map((e) => `${e.code}: ${e.description}`).join(', ') ||
+					error.message ||
+					`HTTP ${response.status}`
+
+				// Don't retry on client errors (4xx)
+				if (response.status >= 400 && response.status < 500) {
+					throw new Error(`Asaas API Error: ${errorMessage}`)
+				}
+
+				// Retry on server errors (5xx) or rate limiting (429)
+				if (response.status >= 500 || response.status === 429) {
+					lastError = new Error(`Asaas API Error: ${errorMessage}`)
+					if (attempt < retries) {
+						const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt)
+						await sleep(delay)
+						continue
+					}
+					throw lastError
+				}
+
+				throw new Error(`Asaas API Error: ${errorMessage}`)
+			}
+
+			return data as T
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error))
+
+			// Don't retry on non-network errors (unless it's a 5xx)
+			if (error instanceof Error && !error.message.includes('Asaas API Error')) {
+				throw error
+			}
+
+			// Retry on network errors or server errors
+			if (attempt < retries) {
+				const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt)
+				await sleep(delay)
+				continue
+			}
+
+			throw lastError
+		}
+	}
+
+	throw lastError || new Error('Unknown error in asaasFetch')
+}
+
+// ═══════════════════════════════════════════════════════
+// CUSTOMERS API
+// ═══════════════════════════════════════════════════════
+
+export const asaasCustomers = {
+	/**
+	 * Create a new customer
+	 */
+	async create(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+		return asaasFetch<AsaasCustomerResponse>('/customers', {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Update an existing customer
+	 */
+	async update(
+		customerId: string,
+		payload: Partial<AsaasCustomerPayload>,
+	): Promise<AsaasCustomerResponse> {
+		return asaasFetch<AsaasCustomerResponse>(`/customers/${customerId}`, {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Get customer by ID
+	 */
+	async get(customerId: string): Promise<AsaasCustomerResponse> {
+		return asaasFetch<AsaasCustomerResponse>(`/customers/${customerId}`)
+	},
+
+	/**
+	 * List customers with filters
+	 */
+	async list(params?: {
+		name?: string
+		email?: string
+		cpfCnpj?: string
+		offset?: number
+		limit?: number
+	}): Promise<{ object: string; hasMore: boolean; totalCount: number; data: AsaasCustomerResponse[] }> {
+		const queryParams = new URLSearchParams()
+		if (params?.name) queryParams.append('name', params.name)
+		if (params?.email) queryParams.append('email', params.email)
+		if (params?.cpfCnpj) queryParams.append('cpfCnpj', params.cpfCnpj)
+		if (params?.offset) queryParams.append('offset', String(params.offset))
+		if (params?.limit) queryParams.append('limit', String(params.limit))
+
+		const query = queryParams.toString()
+		return asaasFetch(`/customers${query ? `?${query}` : ''}`)
+	},
+}
+
+// ═══════════════════════════════════════════════════════
+// PAYMENTS API
+// ═══════════════════════════════════════════════════════
+
+export const asaasPayments = {
+	/**
+	 * Create a new payment
+	 */
+	async create(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+		return asaasFetch<AsaasPaymentResponse>('/payments', {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Get payment by ID
+	 */
+	async get(paymentId: string): Promise<AsaasPaymentResponse> {
+		return asaasFetch<AsaasPaymentResponse>(`/payments/${paymentId}`)
+	},
+
+	/**
+	 * List payments with filters
+	 */
+	async list(params?: {
+		customer?: string
+		subscription?: string
+		status?: string
+		paymentDate?: string
+		dateCreated?: string
+		offset?: number
+		limit?: number
+	}): Promise<AsaasPaymentListResponse> {
+		const queryParams = new URLSearchParams()
+		if (params?.customer) queryParams.append('customer', params.customer)
+		if (params?.subscription) queryParams.append('subscription', params.subscription)
+		if (params?.status) queryParams.append('status', params.status)
+		if (params?.paymentDate) queryParams.append('paymentDate[ge]', params.paymentDate)
+		if (params?.dateCreated) queryParams.append('dateCreated[ge]', params.dateCreated)
+		if (params?.offset) queryParams.append('offset', String(params.offset))
+		if (params?.limit) queryParams.append('limit', String(params.limit))
+
+		const query = queryParams.toString()
+		return asaasFetch<AsaasPaymentListResponse>(`/payments${query ? `?${query}` : ''}`)
+	},
+
+	/**
+	 * Delete (cancel) a payment
+	 */
+	async delete(paymentId: string): Promise<void> {
+		return asaasFetch<void>(`/payments/${paymentId}`, {
+			method: 'DELETE',
+		})
+	},
+
+	/**
+	 * Get payment identification field (barcode for BOLETO)
+	 */
+	async getIdentificationField(paymentId: string): Promise<{ identificationField: string }> {
+		return asaasFetch<{ identificationField: string }>(`/payments/${paymentId}/identificationField`)
+	},
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBSCRIPTIONS API
+// ═══════════════════════════════════════════════════════
+
+export const asaasSubscriptions = {
+	/**
+	 * Create a new subscription
+	 */
+	async create(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
+		return asaasFetch<AsaasSubscriptionResponse>('/subscriptions', {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Get subscription by ID
+	 */
+	async get(subscriptionId: string): Promise<AsaasSubscriptionResponse> {
+		return asaasFetch<AsaasSubscriptionResponse>(`/subscriptions/${subscriptionId}`)
+	},
+
+	/**
+	 * Update subscription
+	 */
+	async update(
+		subscriptionId: string,
+		payload: Partial<AsaasSubscriptionPayload>,
+	): Promise<AsaasSubscriptionResponse> {
+		return asaasFetch<AsaasSubscriptionResponse>(`/subscriptions/${subscriptionId}`, {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Delete (cancel) a subscription
+	 */
+	async delete(subscriptionId: string): Promise<void> {
+		return asaasFetch<void>(`/subscriptions/${subscriptionId}`, {
+			method: 'DELETE',
+		})
+	},
+}
+
+// ═══════════════════════════════════════════════════════
+// INSTANCE CLIENT (For dynamic auth)
+// ═══════════════════════════════════════════════════════
 
 export class AsaasClient {
-  private client: AxiosInstance;
-  private config: AsaasConfig;
+	private config: { apiKey: string; baseUrl: string }
 
-  constructor(config?: AsaasConfig) {
-    this.config = config || {};
-    const baseURL = this.config.baseUrl || DEFAULT_ASAAS_API_URL;
-    const apiKey = this.config.apiKey || DEFAULT_ASAAS_API_KEY;
+	constructor(config: { apiKey: string; baseUrl?: string }) {
+		this.config = {
+			apiKey: config.apiKey,
+			baseUrl: config.baseUrl || process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3',
+		}
+	}
 
-    // We suppress the warning here because we might strictly rely on DB config in some cases
-    // if (!apiKey) {
-    //   console.warn("ASAAS_API_KEY is not set.");
-    // }
+	private async fetch<T>(endpoint: string, options: any = {}): Promise<T> {
+		// Use the internal fetch implementation but force this client's key
+		return asaasFetch<T>(endpoint, {
+            ...options,
+			apiKey: this.config.apiKey,
+		})
+	}
 
-    this.client = axios.create({
-      baseURL,
-      headers: {
-        "Content-Type": "application/json",
-        "access_token": apiKey || "",
-        "User-Agent": "gpus-saas/1.0",
-      },
-      timeout: 30000,
-    });
+	public async testConnection(): Promise<any> {
+		try {
+			const response = await this.fetch<any>('/customers?limit=1')
+            // Return a mocked response-like object or the data, adapted for actions.ts usage
+            // actions.ts expects response.status
+			return { status: 200, ...response }
+		} catch (error: any) {
+            // If fetch throws, we might want to ensure it has response.status if possible
+			throw error
+		}
+	}
 
-    // Add retry interceptor
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        const config = error.config as any;
-        if (!config || !config.retry) {
-          return Promise.reject(error);
-        }
+    public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+		return this.fetch<AsaasCustomerResponse>('/customers', {
+			method: 'POST',
+			body: payload,
+		})
+	}
 
-        config.__retryCount = config.__retryCount || 0;
+    public async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+		return this.fetch<AsaasPaymentResponse>('/payments', {
+			method: 'POST',
+			body: payload,
+		})
+	}
 
-        if (config.__retryCount >= config.retry) {
-          return Promise.reject(error);
-        }
+    public async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
+		return this.fetch<{ encodedImage: string; payload: string }>(`/payments/${paymentId}/pixQrCode`, {
+            method: 'GET'
+        })
+	}
 
-        config.__retryCount += 1;
-        const backoff = Math.pow(2, config.__retryCount) * 1000;
-
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-        return this.client(config);
-      }
-    );
-  }
-
-  async createCustomer(data: {
-    name: string;
-    cpfCnpj: string;
-    email?: string;
-    phone?: string;
-    mobilePhone?: string;
-    postalCode?: string;
-    address?: string;
-    addressNumber?: string;
-    complement?: string;
-    province?: string;
-    externalReference: string;
-    notificationDisabled?: boolean;
-  }) {
-    // Retry up to 3 times
-    const config = { retry: 3 } as any;
-    const response = await this.client.post("/customers", data, config);
-    return response.data;
-  }
-
-  async createPayment(data: {
-    customer: string;
-    billingType: "BOLETO" | "PIX" | "CREDIT_CARD" | "DEBIT_CARD" | "UNDEFINED";
-    value: number;
-    dueDate: string;
-    description?: string;
-    externalReference?: string;
-    installmentCount?: number;
-    installmentValue?: number;
-  }) {
-    const config = { retry: 3 } as any;
-    const response = await this.client.post("/payments", data, config);
-    return response.data;
-  }
-
-  async createSubscription(data: {
-    customer: string;
-    billingType: "BOLETO" | "PIX" | "CREDIT_CARD";
-    value: number;
-    nextDueDate: string;
-    cycle: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "SEMIANNUALLY" | "YEARLY";
-    description?: string;
-    externalReference?: string;
-  }) {
-    const config = { retry: 3 } as any;
-    const response = await this.client.post("/subscriptions", data, config);
-    return response.data;
-  }
-
-  async getPixQrCode(paymentId: string) {
-      const config = { retry: 3 } as any;
-      const response = await this.client.get(`/payments/${paymentId}/pixQrCode`, config);
-      return response.data;
-  }
-
-  async getPayment(paymentId: string) {
-      const config = { retry: 3 } as any;
-      const response = await this.client.get(`/payments/${paymentId}`, config);
-      return response.data;
-  }
-
-  /**
-   * Test connection by making a lightweight API call
-   * Used for validating credentials
-   */
-  async testConnection() {
-    const config = { retry: 0 } as any; // No retry for test
-    const response = await this.client.get("/customers?limit=1", config);
-    return response;
-  }
-
-  /**
-   * Get the underlying axios client (for advanced usage)
-   */
-  getClient(): AxiosInstance {
-    return this.client;
-  }
+    public async createSubscription(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
+		return this.fetch<AsaasSubscriptionResponse>('/subscriptions', {
+			method: 'POST',
+			body: payload,
+		})
+	}
 }
 
-// Legacy default client (relies on env vars)
-// Usage of this is discouraged if DB config is preferred
-export const asaasClient = new AsaasClient();
-
-/**
- * Creates an AsaasClient configured from the database (via internal query).
- * Falls back to env vars if DB config is missing.
- * Must be called from a Convex Action.
- */
-export async function getAsaasClient(ctx: ActionCtx): Promise<AsaasClient> {
-    const dbConfig = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
-        integrationName: "asaas"
-    });
-
-    const config: AsaasConfig = {
-        baseUrl: dbConfig?.base_url || process.env.ASAAS_BASE_URL,
-        apiKey: dbConfig?.api_key || process.env.ASAAS_API_KEY
-    };
-
-    // Also support webhook secret retrieval if needed in other contexts,
-    // but client doesn't usually need it.
-
-    return new AsaasClient(config);
+export function createAsaasClient(config: { apiKey: string; baseUrl?: string }) {
+	return new AsaasClient(config)
 }
 
-/**
- * Helper to get the Webhook Secret (for http actions)
- */
-export async function getAsaasWebhookSecret(ctx: ActionCtx): Promise<string | undefined> {
-    const dbConfig = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
-        integrationName: "asaas"
-    });
-
-    return dbConfig?.webhook_secret || process.env.ASAAS_WEBHOOK_SECRET;
+export function getAsaasClient() {
+    const apiKey = process.env.ASAAS_API_KEY
+    if (!apiKey) throw new Error("ASAAS_API_KEY not set")
+    return new AsaasClient({ apiKey })
 }
 
-/**
- * Create AsaasClient with manual configuration
- */
-export function createAsaasClient(config: AsaasConfig): AsaasClient {
-  return new AsaasClient(config);
+export function getAsaasWebhookSecret() {
+    return process.env.ASAAS_WEBHOOK_SECRET
 }

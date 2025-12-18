@@ -320,16 +320,14 @@ export const create = mutation({
       legalBasis: 'contract_execution'
     })
 
-    // Auto-sync with Asaas
-    if (args.cpf) {
-      await ctx.scheduler.runAfter(0, api.asaas.actions.createAsaasCustomer, {
+    // Auto-sync with Asaas (async, don't wait)
+    try {
+      await ctx.scheduler.runAfter(0, api.asaas.syncStudentAsCustomer, {
         studentId,
-        name: args.name,
-        cpfCnpj: args.cpf,
-        email: args.email,
-        phone: args.phone,
-        externalReference: studentId,
       })
+    } catch (error) {
+      // Log but don't fail student creation if Asaas sync fails
+      console.error('Failed to schedule Asaas customer sync:', error)
     }
 
     return studentId
@@ -389,17 +387,17 @@ export const update = mutation({
       metadata: { fields: Object.keys(args.patch) }
     })
 
-    // Auto-sync update to Asaas if relevant fields changed
-    // Note: Asaas update action not yet implemented in this turn (createCustomer exists).
-    // The plan asks for updateCustomer.
-    // I should have implemented updateCustomer in actions.ts.
-    // I missed updateCustomer in actions.ts.
-    // I will skip schedule update for now or implement createCustomer idempotent?
-    // createCustomer in Asaas might fail if CPF exists.
-    // I need to implement updateAsaasCustomer action first if I want to sync updates.
-    // For now, I only sync on creation as per MVP or try create (which acts as sync if handled).
-    // Actually, plan said "syncStudentAsCustomer - Sincronizar aluno como cliente Asaas (criar ou atualizar)".
-    // so createAsaasCustomer should probably handle update or I need a separate one.
-    // I'll add the sync on create first.
+    // Auto-sync with Asaas if CPF/email/phone changed
+    const shouldSync = args.patch.cpf || args.patch.email || args.patch.phone
+    if (shouldSync) {
+      try {
+        await ctx.scheduler.runAfter(0, api.asaas.syncStudentAsCustomer, {
+          studentId: args.studentId,
+        })
+      } catch (error) {
+        // Log but don't fail update if Asaas sync fails
+        console.error('Failed to schedule Asaas customer sync:', error)
+      }
+    }
   },
 })

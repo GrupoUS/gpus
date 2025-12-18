@@ -1,12 +1,13 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { api } from './_generated/api'
 import { requireAuth } from './lib/auth'
 
 export const getByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
     await requireAuth(ctx)
-    
+
     return await ctx.db
       .query('enrollments')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
@@ -26,10 +27,10 @@ export const list = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx)
-    
+
     // Use filters if provided
     let q: any = ctx.db.query('enrollments')
-    
+
     if (args.studentId) {
         q = q.withIndex('by_student', (q: any) => q.eq('studentId', args.studentId!))
     } else if (args.product) {
@@ -85,7 +86,7 @@ export const create = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
-    
+
     return enrollmentId
   },
 })
@@ -131,4 +132,30 @@ export const update = mutation({
       updatedAt: Date.now(),
     })
   },
+})
+
+/**
+ * Generate Asaas payments for an enrollment
+ * Creates payments (installments) in Asaas for the enrollment
+ */
+export const generateAsaasPayments = mutation({
+	args: {
+		enrollmentId: v.id('enrollments'),
+		billingType: v.union(
+			v.literal('BOLETO'),
+			v.literal('PIX'),
+			v.literal('CREDIT_CARD'),
+			v.literal('DEBIT_CARD'),
+			v.literal('UNDEFINED'),
+		),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		// Use the existing mutation from asaas.ts
+		return await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
+			enrollmentId: args.enrollmentId,
+			billingType: args.billingType,
+		})
+	},
 })

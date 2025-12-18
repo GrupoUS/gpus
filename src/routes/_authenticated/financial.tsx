@@ -23,7 +23,9 @@ export const Route = createFileRoute('/_authenticated/financial')({
 
 function FinancialDashboard() {
 	const summary = useQuery(api.asaas.getFinancialSummary, {});
-	const payments = useQuery(api.asaas.listPayments, { limit: 20 });
+	const pendingPayments = useQuery(api.asaas.getPendingPayments);
+	const overduePayments = useQuery(api.asaas.getOverduePayments);
+	const payments = pendingPayments && overduePayments ? [...pendingPayments, ...overduePayments].slice(0, 20) : undefined;
 
 	const getStatusBadge = (status: string) => {
 		const map: Record<string, string> = {
@@ -54,7 +56,7 @@ function FinancialDashboard() {
 						<div className="text-2xl font-bold text-green-600">
 							{summary ? (
 								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.received,
+									summary.revenue.total,
 								)
 							) : (
 								<Loader2 className="h-4 w-4 animate-spin" />
@@ -73,14 +75,14 @@ function FinancialDashboard() {
 						<div className="text-2xl font-bold text-yellow-600">
 							{summary ? (
 								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.pending,
+									summary.charges.pendingAmount,
 								)
 							) : (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							)}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							Cobranças geradas e aguardando pagamento
+							{summary ? `${summary.charges.pending} cobranças pendentes` : 'Cobranças geradas e aguardando pagamento'}
 						</p>
 					</CardContent>
 				</Card>
@@ -94,14 +96,14 @@ function FinancialDashboard() {
 						<div className="text-2xl font-bold text-red-600">
 							{summary ? (
 								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.overdue,
+									summary.charges.overdueAmount,
 								)
 							) : (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							)}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							{summary ? `${summary.overdueCount} cobranças vencidas` : '...'}
+							{summary ? `${summary.charges.overdue} cobranças vencidas` : '...'}
 						</p>
 					</CardContent>
 				</Card>

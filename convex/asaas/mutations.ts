@@ -1,5 +1,6 @@
 import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { dateStringToTimestamp } from "../lib/asaas";
 
 /**
  * Creates a new charge record in the database.
@@ -30,7 +31,7 @@ export const createCharge = internalMutation({
       asaasCustomerId: args.asaasCustomerId,
       asaasPaymentId: args.asaasPaymentId,
       value: args.amount, // Schema uses 'value', input args uses 'amount' to match old code, I'll map it.
-      dueDate: args.dueDate,
+      dueDate: dateStringToTimestamp(args.dueDate),
       status: "PENDING", // Default status
       billingType: args.billingType,
       description: args.description,
