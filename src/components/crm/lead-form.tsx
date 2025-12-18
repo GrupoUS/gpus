@@ -173,30 +173,28 @@ export function LeadForm() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<DialogTrigger asChild>
-					<div className="w-full mb-4 px-1">
-						<FlipButton className="w-full h-12" initial={false}>
-							<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full">
-								<HoverBorderGradient
-									containerClassName="rounded-full w-full h-full"
-									className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
-								>
-									<Plus className="h-4 w-4 mr-2" />
-									Novo Lead
-								</HoverBorderGradient>
-							</FlipButtonFront>
-							<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full">
-								<HoverBorderGradient
-									containerClassName="rounded-full w-full h-full"
-									className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center font-bold tracking-wide"
-									clockwise={false}
-								>
-									Cadastrar
-								</HoverBorderGradient>
-							</FlipButtonBack>
-						</FlipButton>
-					</div>
-				</DialogTrigger>
+				<div className="w-full mb-4 px-1">
+					<FlipButton className="w-full h-12" initial={false}>
+						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full">
+							<HoverBorderGradient
+								containerClassName="rounded-full w-full h-full"
+								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
+							>
+								<Plus className="h-4 w-4 mr-2" />
+								Novo Lead
+							</HoverBorderGradient>
+						</FlipButtonFront>
+						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full">
+							<HoverBorderGradient
+								containerClassName="rounded-full w-full h-full"
+								className="bg-primary text-primary-foreground w-full h-full flex items-center justify-center font-bold tracking-wide"
+								clockwise={false}
+							>
+								Cadastrar
+							</HoverBorderGradient>
+						</FlipButtonBack>
+					</FlipButton>
+				</div>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
 				<DialogHeader>
