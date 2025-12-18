@@ -8,8 +8,10 @@ export function ThemeToggle() {
 	const { setTheme, theme } = useTheme();
 	const { animateThemeChange } = useThemeTransition();
 
+	const isDark = theme === 'dark';
+
 	const toggleTheme = (e: React.MouseEvent) => {
-		const newTheme = theme === 'dark' ? 'light' : 'dark';
+		const newTheme = isDark ? 'light' : 'dark';
 		const position = { x: e.clientX, y: e.clientY };
 		animateThemeChange(newTheme, () => setTheme(newTheme), position);
 	};
@@ -20,10 +22,18 @@ export function ThemeToggle() {
 			size="icon"
 			onClick={toggleTheme}
 			className="relative"
-			aria-label={`Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
+			aria-label={`Alternar para tema ${isDark ? 'claro' : 'escuro'}`}
 		>
-			<Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-			<Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+			<Sun
+				className={`h-[1.2rem] w-[1.2rem] transition-all duration-300 ${
+					isDark ? '-rotate-90 scale-0' : 'rotate-0 scale-100'
+				}`}
+			/>
+			<Moon
+				className={`absolute h-[1.2rem] w-[1.2rem] transition-all duration-300 ${
+					isDark ? 'rotate-0 scale-100' : 'rotate-90 scale-0'
+				}`}
+			/>
 		</Button>
 	);
 }

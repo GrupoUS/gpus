@@ -32,7 +32,16 @@ export function useStudentsViewModel(Route: any) {
 		}
 	}, [navigate]);
 
+	// Use list query for table view and stats (paginated)
 	const students = useQuery(api.students.list, {
+		search: search || undefined,
+		status: status === 'all' ? undefined : status,
+		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
+		product: product === 'all' ? undefined : product,
+	});
+
+	// Use grouped query for grid view (ALL students, grouped by ALL enrollments)
+	const groupedStudentsData = useQuery(api.students.getStudentsGroupedByProducts, {
 		search: search || undefined,
 		status: status === 'all' ? undefined : status,
 		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
@@ -53,16 +62,12 @@ export function useStudentsViewModel(Route: any) {
 		});
 	};
 
-	// Stats
+	// Stats - from the list query for accuracy
 	const totalStudents = students?.length ?? 0;
 	const activeStudents = students?.filter((s) => s && s.status === 'ativo').length ?? 0;
 	const highRiskStudents = students?.filter((s) => s && s.churnRisk === 'alto').length ?? 0;
 
-	// Pagination logic
-	// For 'table' view, we use standard pagination.
-	// For 'grid' view (Product-Centric), we usually want to see all students grouped.
-	// However, to prevent performance issues with large datasets, we keep pagination active.
-	// This means groups might be split across pages.
+	// Pagination logic - only for table view
 	const totalPages = Math.ceil(totalStudents / PAGE_SIZE);
 	const paginatedStudents = (
 		students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? []
@@ -131,24 +136,53 @@ export function useStudentsViewModel(Route: any) {
 		setExpandedSections(allCollapsed);
 	};
 
-	// Group students by mainProduct
-	// We group the *paginated* students to respect the current architecture's performance limits.
-	// If we wanted to group *all* students, we would use `students` instead of `paginatedStudents`,
-	// but that would require disabling pagination for the grid view or implementing client-side pagination per group.
+	// Transform grouped data from Convex into the format expected by the UI
+	// This uses the getStudentsGroupedByProducts query which:
+	// - Groups students by ALL their enrollments (student appears in each product)
+	// - Includes ALL products (even empty ones)
+	// - Applies filters server-side before grouping
 	const groupedStudents = React.useMemo(() => {
-		const groups: Record<string, typeof paginatedStudents> = {};
+		if (!groupedStudentsData) return {};
 
-		// Initialize groups to ensure order or existence if needed,
-		// but dynamic is safer for now.
+		const groups: Record<string, NonNullable<typeof students>> = {};
 
-		paginatedStudents.forEach((student) => {
-			const prod = (student as { mainProduct?: string }).mainProduct ?? 'sem_produto';
-			if (!groups[prod]) groups[prod] = [];
-			groups[prod].push(student);
-		});
+		for (const group of groupedStudentsData) {
+			// Map students to the expected format (with mainProduct for compatibility)
+			groups[group.id] = group.students.map((student) => ({
+				_id: student._id,
+				_creationTime: student._creationTime,
+				name: student.name,
+				email: student.email,
+				phone: student.phone,
+				profession: student.profession,
+				hasClinic: student.hasClinic,
+				clinicName: student.clinicName,
+				clinicCity: student.clinicCity,
+				status: student.status,
+				assignedCS: student.assignedCS,
+				churnRisk: student.churnRisk,
+				lastEngagementAt: student.lastEngagementAt,
+				leadId: student.leadId,
+				createdAt: student.createdAt,
+				updatedAt: student.updatedAt,
+				mainProduct: group.id === 'sem_produto' ? undefined : group.id,
+			}));
+		}
 
 		return groups;
-	}, [paginatedStudents]);
+	}, [groupedStudentsData]);
+
+	// Get the ordered list of product keys from groupedStudentsData
+	const productKeys = React.useMemo(() => {
+		if (!groupedStudentsData) return [];
+		return groupedStudentsData.map((g) => g.id);
+	}, [groupedStudentsData]);
+
+	// Check if any students exist across all groups
+	const hasAnyStudentsInGroups = React.useMemo(() => {
+		if (!groupedStudentsData) return false;
+		return groupedStudentsData.some((g) => g.count > 0);
+	}, [groupedStudentsData]);
 
 	return {
 		search,
@@ -160,6 +194,9 @@ export function useStudentsViewModel(Route: any) {
 		students,
 		paginatedStudents,
 		groupedStudents,
+		groupedStudentsData,
+		productKeys,
+		hasAnyStudentsInGroups,
 		expandedSections,
 		totalStudents,
 		activeStudents,

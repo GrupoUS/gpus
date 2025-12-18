@@ -55,14 +55,29 @@ export const list = query({
 
       const allEnrollments = await ctx.db.query('enrollments').collect()
 
-      // Build map: studentId -> latest enrollment (by createdAt)
-      const enrollmentsByStudent = new Map<string, (typeof allEnrollments)[number]>()
+      // Build maps:
+      // - studentId -> latest enrollment (by createdAt) for display
+      // - studentId -> set of enrolled products for filtering by membership
+      const latestEnrollmentByStudent = new Map<
+        string,
+        (typeof allEnrollments)[number]
+      >()
+      const productsByStudent = new Map<string, Set<string>>()
+
       allEnrollments.sort((a, b) => b.createdAt - a.createdAt)
       for (const enrollment of allEnrollments) {
-        if (!enrollmentsByStudent.has(enrollment.studentId)) {
-          enrollmentsByStudent.set(enrollment.studentId, enrollment)
+        if (!latestEnrollmentByStudent.has(enrollment.studentId)) {
+          latestEnrollmentByStudent.set(enrollment.studentId, enrollment)
+        }
+
+        if (!productsByStudent.has(enrollment.studentId)) {
+          productsByStudent.set(enrollment.studentId, new Set())
+        }
+        if (enrollment.product) {
+          productsByStudent.get(enrollment.studentId)?.add(enrollment.product)
         }
       }
+
 
       const results: Array<{
         _id: (typeof students)[number]['_id']
@@ -85,10 +100,17 @@ export const list = query({
       }> = []
 
       for (const student of students) {
-        const enrollment = enrollmentsByStudent.get(student._id)
+        const latestEnrollment = latestEnrollmentByStudent.get(student._id)
+        const enrolledProducts = productsByStudent.get(student._id)
 
-        if (args.product && enrollment?.product !== args.product) {
-          continue
+        if (args.product) {
+          if (args.product === 'sem_produto') {
+            if (enrolledProducts && enrolledProducts.size > 0) {
+              continue
+            }
+          } else if (!enrolledProducts?.has(args.product)) {
+            continue
+          }
         }
 
         results.push({
@@ -108,7 +130,7 @@ export const list = query({
           leadId: student.leadId,
           createdAt: student.createdAt,
           updatedAt: student.updatedAt,
-          mainProduct: enrollment?.product,
+          mainProduct: latestEnrollment?.product,
         })
       }
 
@@ -223,14 +245,35 @@ export const getStudentsGroupedByProducts = query({
   args: {
     search: v.optional(v.string()),
     status: v.optional(v.string()),
+    churnRisk: v.optional(v.string()),
+    product: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // 1. Fetch all students (base filter)
-    let students = await ctx.db.query('students').order('desc').collect()
+    // 1. Fetch all students (base query with optional indexed filters)
+    const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
+    const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
 
-    // Apply memory filters
-    if (args.status) {
-      students = students.filter((s) => s.status === args.status)
+    let students = status
+      ? await ctx.db
+          .query('students')
+          .withIndex('by_status', (q) => q.eq('status', status))
+          .order('desc')
+          .collect()
+      : churnRisk
+        ? await ctx.db
+            .query('students')
+            .withIndex('by_churn_risk', (q) => q.eq('churnRisk', churnRisk))
+            .order('desc')
+            .collect()
+        : await ctx.db.query('students').order('desc').collect()
+
+    // Apply additional in-memory filters
+    if (status && !students.every((s) => s.status === status)) {
+      students = students.filter((s) => s.status === status)
+    }
+
+    if (churnRisk && !students.every((s) => s.churnRisk === churnRisk)) {
+      students = students.filter((s) => s.churnRisk === churnRisk)
     }
 
     if (args.search) {
@@ -243,10 +286,22 @@ export const getStudentsGroupedByProducts = query({
       )
     }
 
-    // 2. Fetch enrollments to map students to products
+    // 2. Fetch all enrollments
     const enrollments = await ctx.db.query('enrollments').collect()
 
-    // 3. Grouping Logic
+    // 3. Build enrollment map: studentId -> array of products
+    const enrollmentsByStudent = new Map<string, Set<string>>()
+    for (const enrollment of enrollments) {
+      const studentId = enrollment.studentId
+      if (!enrollmentsByStudent.has(studentId)) {
+        enrollmentsByStudent.set(studentId, new Set())
+      }
+      if (enrollment.product) {
+        enrollmentsByStudent.get(studentId)!.add(enrollment.product)
+      }
+    }
+
+    // 4. Define all product groups including sem_produto
     const products = [
       'trintae3',
       'otb',
@@ -254,41 +309,48 @@ export const getStudentsGroupedByProducts = query({
       'comunidade',
       'auriculo',
       'na_mesa_certa',
+      'sem_produto',
     ] as const
 
+    // 5. Initialize groups - ALL products always present (including empty)
     const grouped: Record<string, typeof students> = {}
+    for (const p of products) {
+      grouped[p] = []
+    }
 
-    // Initialize groups
-    products.forEach((p) => (grouped[p] = []))
+    // 6. Group students by ALL their enrollments (student appears in each product they're enrolled in)
+    for (const student of students) {
+      const studentProducts = enrollmentsByStudent.get(student._id)
 
-    // Map of studentId -> Student (filtered)
-    const studentMap = new Map(students.map((s) => [s._id, s]))
-
-    for (const enrollment of enrollments) {
-      // If enrollment belongs to a student in our filtered list
-      const student = studentMap.get(enrollment.studentId)
-
-      if (student && enrollment.product) {
-        // Add to appropriate group
-        // Note: A student can be in multiple groups if they have multiple products
-        if (Array.isArray(grouped[enrollment.product as string])) {
-          // Check if already added to this product group
-          const exists = grouped[enrollment.product as string].find(
-            (s) => s._id === student._id
-          )
-          if (!exists) {
-            grouped[enrollment.product as string].push(student)
+      if (!studentProducts || studentProducts.size === 0) {
+        // Student has no enrollments -> sem_produto
+        grouped['sem_produto'].push(student)
+      } else {
+        // Add student to EACH product they are enrolled in
+        for (const prod of studentProducts) {
+          if (grouped[prod]) {
+            grouped[prod].push(student)
           }
         }
       }
     }
 
-    // Format for frontend
-    return Object.entries(grouped).map(([key, value]) => ({
+    // 7. Apply product filter AFTER grouping (filter which groups to include students from)
+    // If filtering by specific product, only that product's group will have students
+    if (args.product && args.product !== 'all') {
+      for (const key of Object.keys(grouped)) {
+        if (key !== args.product) {
+          grouped[key] = []
+        }
+      }
+    }
+
+    // 8. Format for frontend - always return ALL products (even empty ones for ProductEmptyState)
+    return products.map((key) => ({
       id: key,
       name: key,
-      students: value,
-      count: value.length,
+      students: grouped[key],
+      count: grouped[key].length,
     }))
   },
 })

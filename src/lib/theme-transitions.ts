@@ -9,7 +9,7 @@ export function useThemeTransition() {
 			: false;
 
 	const animateThemeChange = (
-		_newTheme: string,
+		newTheme: string,
 		updateThemeCallback: () => void,
 		position?: { x: number; y: number },
 	) => {
@@ -17,6 +17,9 @@ export function useThemeTransition() {
 			updateThemeCallback();
 			return;
 		}
+
+		// Determine if we're going to dark mode or light mode
+		const isDarkMode = newTheme === 'dark';
 
 		const transition = document.startViewTransition(() => {
 			updateThemeCallback();
@@ -32,18 +35,37 @@ export function useThemeTransition() {
 				Math.max(y, window.innerHeight - y),
 			);
 
-			const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`];
+			// Animation configuration
+			const duration = 400;
+			const easing = 'ease-in-out';
 
-			document.documentElement.animate(
-				{
-					clipPath: clipPath,
-				},
-				{
-					duration: 400,
-					easing: 'ease-in-out',
-					pseudoElement: '::view-transition-new(root)',
-				},
-			);
+			if (isDarkMode) {
+				// Light → Dark: Animate the NEW view (dark) expanding from click point
+				// The dark circle expands to cover the light background
+				document.documentElement.animate(
+					{
+						clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`],
+					},
+					{
+						duration,
+						easing,
+						pseudoElement: '::view-transition-new(root)',
+					},
+				);
+			} else {
+				// Dark → Light: Animate the OLD view (dark) shrinking to click point
+				// The dark circle contracts to reveal the light background
+				document.documentElement.animate(
+					{
+						clipPath: [`circle(${endRadius}px at ${x}px ${y}px)`, `circle(0px at ${x}px ${y}px)`],
+					},
+					{
+						duration,
+						easing,
+						pseudoElement: '::view-transition-old(root)',
+					},
+				);
+			}
 		});
 	};
 

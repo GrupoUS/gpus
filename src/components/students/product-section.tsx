@@ -31,9 +31,8 @@ export function ProductSection({
 	searchTerm,
 	className,
 }: ProductSectionProps) {
-	// Se não houver alunos e não estiver expandido, não renderiza nada
-	// Mas se estiver expandido e vazio, mostra empty state
-	if (count === 0 && !isExpanded) return null;
+	// Always render the section - empty sections show ProductEmptyState
+	// This ensures users can see all product categories even when empty
 
 	return (
 		<Collapsible
@@ -55,20 +54,22 @@ export function ProductSection({
 
 			<CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
 				<div className="p-4 pt-0 border-t bg-muted/5">
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pt-4">
-						{students.length > 0 ? (
-							students.map((student) => (
+					{students.length > 0 ? (
+						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pt-4">
+							{students.map((student) => (
 								<StudentCard
 									key={student._id}
 									student={student}
 									onClick={() => onStudentClick(student._id)}
 									searchTerm={searchTerm}
 								/>
-							))
-						) : (
+							))}
+						</div>
+					) : (
+						<div className="pt-4">
 							<ProductEmptyState />
-						)}
-					</div>
+						</div>
+					)}
 				</div>
 			</CollapsibleContent>
 		</Collapsible>

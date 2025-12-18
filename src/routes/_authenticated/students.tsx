@@ -9,7 +9,6 @@ import { StudentPagination } from '@/components/students/student-pagination';
 import { StudentStats } from '@/components/students/student-stats';
 import { StudentsTable } from '@/components/students/student-table';
 import { useStudentsViewModel } from '@/hooks/use-students-view-model';
-import { productLabels } from '@/lib/constants';
 
 export const Route = createFileRoute('/_authenticated/students')({
 	validateSearch: (search: Record<string, unknown>) => {
@@ -36,6 +35,9 @@ function StudentsPage() {
 		students,
 		paginatedStudents,
 		groupedStudents,
+		groupedStudentsData,
+		productKeys,
+		hasAnyStudentsInGroups,
 		expandedSections,
 		totalStudents,
 		activeStudents,
@@ -51,10 +53,7 @@ function StudentsPage() {
 		PAGE_SIZE,
 	} = useStudentsViewModel(Route);
 
-	const productKeys = [...Object.keys(productLabels), 'sem_produto'];
-
-	// Check if any students exist across all groups when in grid view
-	const hasAnyStudents = students && students.length > 0;
+	// Check if filters are active
 	const isFiltering = search || status !== 'all' || churnRisk !== 'all' || product !== 'all';
 
 	const handlePageChange = (newPage: number) => {
@@ -63,6 +62,15 @@ function StudentsPage() {
 			search: { ...{ search, status, churnRisk, product, view }, page: newPage },
 		});
 	};
+
+	// Determine loading and empty states based on view type
+	const isLoadingGrid = view === 'grid' && !groupedStudentsData;
+	const isLoadingTable = view === 'table' && !students;
+	const isLoading = isLoadingGrid || isLoadingTable;
+
+	// For grid view, check if any students exist in any group
+	// For table view, check the students list directly
+	const hasAnyStudents = view === 'grid' ? hasAnyStudentsInGroups : students && students.length > 0;
 
 	return (
 		<div className="space-y-6 p-6">
@@ -92,28 +100,24 @@ function StudentsPage() {
 			/>
 
 			{/* Students List */}
-			{!students ? (
+			{isLoading ? (
 				<div className="space-y-4">
 					{[1, 2].map((i) => (
 						<ProductSectionSkeleton key={i} />
 					))}
 				</div>
-			) : !hasAnyStudents ? (
-				<StudentListEmptyState isFiltering={!!isFiltering} search={search} />
+			) : !hasAnyStudents && isFiltering ? (
+				<StudentListEmptyState isFiltering={true} search={search} />
 			) : view === 'table' ? (
 				/* Table View */
 				<StudentsTable students={paginatedStudents} onStudentClick={navigateToStudent} />
 			) : (
-				/* Grid View (Product Sections) */
+				/* Grid View (Product Sections) - ALL products rendered, including empty ones */
 				<div className="space-y-2">
 					{productKeys.map((productId) => {
-						const groupStudents = groupedStudents[productId];
-						// Only skip rendering if group is empty AND we are filtering by product
-						// Otherwise we want to show empty sections if they exist in the system (optional design choice,
-						// but here we follow the logic: if no students in group, don't show section unless we want to show empty states for all products)
-						// Current logic: hide empty sections to reduce clutter
-						if (!groupStudents || groupStudents.length === 0) return null;
+						const groupStudents = groupedStudents[productId] ?? [];
 
+						// Always render product sections - empty sections show ProductEmptyState
 						return (
 							<ProductSection
 								key={productId}
@@ -130,7 +134,7 @@ function StudentsPage() {
 				</div>
 			)}
 
-			{/* Pagination - Only show in Table view or if we implement pagination for Grid view (currently Grid shows all by group) */}
+			{/* Pagination - Only show in Table view */}
 			{view === 'table' && students && students.length > PAGE_SIZE && (
 				<StudentPagination
 					page={page}
