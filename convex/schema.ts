@@ -148,7 +148,7 @@ export default defineSchema({
 
     // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
-    email: v.string(),
+    email: v.optional(v.string()),
     phone: v.string(),
     cpf: v.optional(v.string()), // Original format (migration only)
 

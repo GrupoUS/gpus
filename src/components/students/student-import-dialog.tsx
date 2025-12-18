@@ -1287,7 +1287,7 @@ export function StudentImportDialog() {
 	}, [importResults]);
 
 	const previewValidation = validatePreview();
-	const requiredFields = ['name', 'email', 'phone'];
+	const requiredFields = ['name', 'phone'];
 	const missingFields = requiredFields.filter((f) => !Object.values(columnMapping).includes(f));
 	const canProceed = missingFields.length === 0; // All required fields must be mapped
 

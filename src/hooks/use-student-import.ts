@@ -736,7 +736,7 @@ export function useStudentImport(deps: StudentImportDependencies): UseStudentImp
 	// ============================================================================
 
 	const previewValidation = validatePreview();
-	const requiredFields = ['name', 'email', 'phone'];
+	const requiredFields = ['name', 'phone'];
 	const missingFields = requiredFields.filter((f) => !Object.values(columnMapping).includes(f));
 	const canProceed = missingFields.length === 0;
 

@@ -50,13 +50,12 @@ export function ProductHeader({
 
 	return (
 		<CollapsibleTrigger asChild>
-			<div
+			<button
+				type="button"
 				className={cn(
 					'w-full flex items-center justify-between p-4 h-16 group transition-colors duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 					colors.bg,
 				)}
-				role="button"
-				tabIndex={0}
 				aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} seção de ${label}`}
 				aria-expanded={isExpanded}
 			>
@@ -100,7 +99,7 @@ export function ProductHeader({
 						)}
 					</Button>
 				</div>
-			</div>
+			</button>
 		</CollapsibleTrigger>
 	);
 }

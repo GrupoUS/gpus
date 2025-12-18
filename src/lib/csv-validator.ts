@@ -521,13 +521,15 @@ const validateNameField: FieldValidator = (value, rowNumber, errors, _warnings, 
 };
 
 const validateEmailField: FieldValidator = (value, rowNumber, errors, _warnings, data) => {
-	if (!value) {
-		errors.push(`Linha ${rowNumber}: Email é obrigatório`);
-	} else if (!validateEmail(String(value))) {
-		errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
-	} else {
-		data.email = normalizeEmail(String(value));
+	// Email is now optional - only validate format if provided
+	if (value) {
+		if (!validateEmail(String(value))) {
+			errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
+		} else {
+			data.email = normalizeEmail(String(value));
+		}
 	}
+	// If value is empty/undefined, email is simply not set (optional field)
 };
 
 const validatePhoneField: FieldValidator = (value, rowNumber, errors, warnings, data) => {

@@ -60,7 +60,7 @@ const productValidator = v.union(
 const studentImportData = v.object({
 	// Required fields
 	name: v.string(),
-	email: v.string(),
+	email: v.optional(v.string()),
 	phone: v.string(),
 	// Optional fields (profession/hasClinic have defaults applied during import)
 	profession: v.optional(v.string()),
@@ -182,15 +182,19 @@ export const bulkImport = mutation({
 		// Pre-fetch existing students for duplicate checking
 		const existingStudents = await ctx.db.query('students').collect();
 		const emailToStudent = new Map(
-			existingStudents.map((s) => [s.email.toLowerCase(), s])
+			existingStudents.filter((s) => s.email).map((s) => [s.email!.toLowerCase(), s])
 		);
 		const cpfToStudent = new Map(
 			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(/\D/g, ''), s])
 		);
+		const phoneToStudent = new Map(
+			existingStudents.map((s) => [s.phone.replace(/\D/g, ''), s])
+		);
 
-		// Track emails/CPFs processed in this batch
+		// Track emails/CPFs/phones processed in this batch
 		const processedEmails = new Set<string>();
 		const processedCPFs = new Set<string>();
+		const processedPhones = new Set<string>();
 
 		// Process each student
 		for (let i = 0; i < args.students.length; i++) {
@@ -203,19 +207,21 @@ export const bulkImport = mutation({
 				if (!student.name || student.name.trim().length < 2) {
 					throw new Error('Nome é obrigatório e deve ter pelo menos 2 caracteres');
 				}
-				if (!student.email || !student.email.includes('@')) {
-					throw new Error('Email é obrigatório e deve ser válido');
+				// Email is now optional - validate format only if provided
+				if (student.email && !student.email.includes('@')) {
+					throw new Error('Email inválido (deve conter @)');
 				}
-			if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
-				throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-			}
-			// profession and hasClinic are optional - defaults applied below
+				if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
+					throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
+				}
+				// profession and hasClinic are optional - defaults applied below
 
-				// Normalize email
-				const normalizedEmail = student.email.trim().toLowerCase();
+				// Normalize email if provided
+				const normalizedEmail = student.email?.trim().toLowerCase();
+				const normalizedPhone = student.phone.replace(/\D/g, '');
 
 				// Check for duplicate within same batch
-				if (processedEmails.has(normalizedEmail)) {
+				if (normalizedEmail && processedEmails.has(normalizedEmail)) {
 					warnings.push('Email duplicado dentro do mesmo arquivo');
 					results.push({
 						rowNumber,
@@ -228,7 +234,25 @@ export const bulkImport = mutation({
 					skippedCount++;
 					continue;
 				}
-				processedEmails.add(normalizedEmail);
+				if (normalizedEmail) {
+					processedEmails.add(normalizedEmail);
+				}
+
+				// Check for duplicate phone within same batch
+				if (processedPhones.has(normalizedPhone)) {
+					warnings.push('Telefone duplicado dentro do mesmo arquivo');
+					results.push({
+						rowNumber,
+						success: false,
+						action: 'skipped',
+						error: 'Telefone duplicado no arquivo (ignorado)',
+						warnings,
+					});
+					failureCount++;
+					skippedCount++;
+					continue;
+				}
+				processedPhones.add(normalizedPhone);
 
 					// Check for duplicate CPF within same batch
 				if (student.cpf) {
@@ -262,25 +286,37 @@ export const bulkImport = mutation({
 					processedCPFs.add(normalizedCPF);
 				}
 
-				// Find existing student by email
-				const existingStudent = emailToStudent.get(normalizedEmail);
-
-				// Also check by CPF if provided
+				// Find existing student - priority: CPF > Phone > Email
+				let existingStudent = undefined;
 				let existingByCP = undefined;
+				let existingByPhone = undefined;
+
+				// Check by CPF first (most reliable identifier)
 				if (student.cpf) {
 					const normalizedCPF = student.cpf.replace(/\D/g, '');
 					existingByCP = cpfToStudent.get(normalizedCPF);
 				}
 
+				// Check by phone (always available, required field)
+				existingByPhone = phoneToStudent.get(normalizedPhone);
+
+				// Check by email if provided
+				if (normalizedEmail) {
+					existingStudent = emailToStudent.get(normalizedEmail);
+				}
+
+				// Use the first found (priority: CPF > Phone > Email)
+				const existing = existingByCP || existingByPhone || existingStudent;
+
 				// Prepare student data with awaited encrypted fields
-				const encryptedEmailValue = await encrypt(normalizedEmail);
-				const encryptedPhoneValue = await encrypt(student.phone.replace(/\D/g, ''));
+				const encryptedEmailValue = normalizedEmail ? await encrypt(normalizedEmail) : undefined;
+				const encryptedPhoneValue = await encrypt(normalizedPhone);
 				const encryptedCPFValue = student.cpf ? await encryptCPF(student.cpf) : undefined;
 
 				const studentData = {
 				name: student.name.trim(),
 				email: normalizedEmail,
-				phone: student.phone.replace(/\D/g, ''),
+				phone: normalizedPhone,
 				profession: student.profession ?? 'outro',
 				hasClinic: student.hasClinic ?? false,
 				status: student.status || ('ativo' as const),
@@ -321,12 +357,8 @@ export const bulkImport = mutation({
 				let studentId: string;
 				let action: 'created' | 'updated' | 'skipped';
 
-				if (existingStudent || existingByCP) {
+				if (existing) {
 					// Student exists
-					const existing = existingStudent || existingByCP;
-					if (!existing) {
-						throw new Error('Erro interno: student not found');
-					}
 
 					if (upsertMode) {
 						// UPDATE existing student
@@ -354,12 +386,13 @@ export const bulkImport = mutation({
 						warnings.push('Aluno existente atualizado');
 					} else {
 						// Skip duplicate
+						const identifier = existingByCP ? 'CPF' : existingByPhone ? 'Telefone' : 'Email';
 						results.push({
 							rowNumber,
 							success: false,
 							action: 'skipped',
 							studentId: existing._id,
-							error: 'Email já cadastrado (ignorado)',
+							error: `${identifier} já cadastrado (ignorado)`,
 							warnings,
 						});
 						failureCount++;
@@ -377,7 +410,15 @@ export const bulkImport = mutation({
 					createdCount++;
 
 					// Update lookup maps for subsequent rows in same batch
-					emailToStudent.set(normalizedEmail, {
+					if (normalizedEmail) {
+						emailToStudent.set(normalizedEmail, {
+							...studentData,
+							_id: newStudentId,
+							_creationTime: Date.now(),
+							createdAt: Date.now(),
+						} as typeof existingStudents[0]);
+					}
+					phoneToStudent.set(normalizedPhone, {
 						...studentData,
 						_id: newStudentId,
 						_creationTime: Date.now(),
@@ -511,9 +552,14 @@ export const validateImport = mutation({
 
 		// Fetch existing data for duplicate detection
 		const existingStudents = await ctx.db.query('students').collect();
-		const existingEmails = new Set(existingStudents.map((s) => s.email.toLowerCase()));
+		const existingEmails = new Set(
+			existingStudents.filter((s) => s.email).map((s) => s.email!.toLowerCase())
+		);
 		const existingCPFs = new Set(
 			existingStudents.filter((s) => s.cpf).map((s) => s.cpf?.replace(/\D/g, ''))
+		);
+		const existingPhones = new Set(
+			existingStudents.map((s) => s.phone.replace(/\D/g, ''))
 		);
 
 		const errors: Array<{ rowNumber: number; errors: string[] }> = [];
@@ -521,6 +567,7 @@ export const validateImport = mutation({
 		const duplicateCPFs: string[] = [];
 		const seenEmails = new Set<string>();
 		const seenCPFs = new Set<string>();
+		const seenPhones = new Set<string>();
 		let validRows = 0;
 		let invalidRows = 0;
 		let willUpdate = 0;
@@ -535,9 +582,26 @@ export const validateImport = mutation({
 			if (!student.name || student.name.trim().length < 2) {
 				rowErrors.push('Nome é obrigatório e deve ter pelo menos 2 caracteres');
 			}
-			if (!student.email || !student.email.includes('@')) {
-				rowErrors.push('Email é obrigatório e deve ser válido');
-			} else {
+			// Email is now optional - validate format only if provided
+			if (student.email && !student.email.includes('@')) {
+				rowErrors.push('Email inválido (deve conter @)');
+			}
+
+			if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
+				rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
+			}
+
+			const normalizedPhone = student.phone?.replace(/\D/g, '') || '';
+
+			// Check for duplicate phone in same file
+			if (normalizedPhone && seenPhones.has(normalizedPhone)) {
+				rowErrors.push(`Telefone duplicado no arquivo: ${normalizedPhone}`);
+			} else if (normalizedPhone) {
+				seenPhones.add(normalizedPhone);
+			}
+
+			// Check email duplicates if email is provided
+			if (student.email) {
 				const normalizedEmail = student.email.trim().toLowerCase();
 
 				// Check for duplicate in same file
@@ -546,25 +610,45 @@ export const validateImport = mutation({
 					if (!duplicateEmails.includes(normalizedEmail)) {
 						duplicateEmails.push(normalizedEmail);
 					}
-				} else if (existingEmails.has(normalizedEmail)) {
-					// Existing in database
-					if (upsertMode) {
-						willUpdate++;
-					} else {
-						rowErrors.push(`Email já cadastrado: ${normalizedEmail}`);
-						if (!duplicateEmails.includes(normalizedEmail)) {
-							duplicateEmails.push(normalizedEmail);
-						}
-					}
 				} else {
-					willCreate++;
+					seenEmails.add(normalizedEmail);
 				}
-				seenEmails.add(normalizedEmail);
 			}
 
-		if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
-			rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-		}
+			// Determine if student exists (priority: CPF > Phone > Email)
+			let studentExists = false;
+			if (student.cpf) {
+				const normalizedCPF = student.cpf.replace(/\D/g, '');
+				if (existingCPFs.has(normalizedCPF)) {
+					studentExists = true;
+				}
+			}
+			if (!studentExists && normalizedPhone && existingPhones.has(normalizedPhone)) {
+				studentExists = true;
+			}
+			if (!studentExists && student.email) {
+				const normalizedEmail = student.email.trim().toLowerCase();
+				if (existingEmails.has(normalizedEmail)) {
+					studentExists = true;
+				}
+			}
+
+			// Update counters
+			if (studentExists) {
+				if (upsertMode) {
+					willUpdate++;
+				} else {
+					// Only add error if not in upsert mode
+					const identifier = student.cpf && existingCPFs.has(student.cpf.replace(/\D/g, ''))
+						? 'CPF'
+						: normalizedPhone && existingPhones.has(normalizedPhone)
+							? 'Telefone'
+							: 'Email';
+					rowErrors.push(`${identifier} já cadastrado`);
+				}
+			} else {
+				willCreate++;
+			}
 		// profession and hasClinic are optional - defaults applied during import
 
 			// Check CPF duplicates

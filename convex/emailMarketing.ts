@@ -246,7 +246,8 @@ export const syncStudentAsContact = mutation({
 			throw new Error('Aluno não encontrado')
 		}
 		if (!student.email) {
-			throw new Error('Aluno não possui email cadastrado')
+			// Email is optional - cannot sync to email marketing without email
+			return null
 		}
 
 		// Check if contact already exists for this student

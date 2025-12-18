@@ -1,6 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
+import type { FunctionReturnType } from 'convex/server';
 import { Award, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,6 +35,9 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
+type TeamPerformanceMember = FunctionReturnType<typeof api.metrics.getTeamPerformance>[number];
+type User = FunctionReturnType<typeof api.users.list>[number];
+
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
@@ -65,7 +69,7 @@ function TeamReportPage() {
 
 			{/* Top Performers */}
 			<div className="grid gap-4 md:grid-cols-3">
-				{teamPerformance?.slice(0, 3).map((member: any, index: number) => (
+				{teamPerformance?.slice(0, 3).map((member: TeamPerformanceMember, index: number) => (
 					<Card key={member._id} className={index === 0 ? 'border-yellow-500/50' : ''}>
 						<CardHeader className="pb-3">
 							<div className="flex items-center justify-between">
@@ -119,7 +123,7 @@ function TeamReportPage() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{teamPerformance?.map((member: any, index: number) => (
+							{teamPerformance?.map((member: TeamPerformanceMember, index: number) => (
 								<TableRow key={member._id}>
 									<TableCell className="font-medium">{index + 1}</TableCell>
 									<TableCell>
@@ -173,7 +177,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u: any) => u.role === 'sdr').length ?? 0}
+							{allUsers?.filter((u: User) => u.role === 'sdr').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Vendas</p>
 					</CardContent>
@@ -185,7 +189,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u: any) => u.role === 'cs').length ?? 0}
+							{allUsers?.filter((u: User) => u.role === 'cs').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Customer Success</p>
 					</CardContent>

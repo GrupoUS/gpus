@@ -91,12 +91,7 @@ const SheetContent = React.forwardRef<
 		const defaultTransition: Transition = { type: 'spring', stiffness: 150, damping: 22 };
 
 		// Extract motion props to avoid conflicts
-		const {
-			onEscapeKeyDown,
-			onPointerDownOutside,
-			onInteractOutside,
-			...restProps
-		} = props;
+		const { onEscapeKeyDown, onPointerDownOutside, onInteractOutside, ...restProps } = props;
 
 		return (
 			<SheetPortal>
