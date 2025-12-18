@@ -36,21 +36,43 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
 
+// Helper to handle chunk load errors (e.g., after a new deployment)
+const handleChunkError = (error: Error): Promise<any> => {
+	if (
+		error.message?.includes('Failed to fetch dynamically imported module') ||
+		error.message?.includes('Importing a module script failed')
+	) {
+		if (typeof window !== 'undefined' && !sessionStorage.getItem('chunk_retry')) {
+			sessionStorage.setItem('chunk_retry', 'true');
+			window.location.reload();
+			// Return a promise that never resolves to prevent further errors while reloading
+			return new Promise(() => {});
+		}
+	}
+	throw error;
+};
+
 // Lazy loaded tab components for better performance
 const StudentEnrollmentsTab = lazy(() =>
-	import('./tabs/student-enrollments-tab').then((module) => ({
-		default: module.StudentEnrollmentsTab,
-	})),
+	import('./tabs/student-enrollments-tab')
+		.then((module) => ({
+			default: module.StudentEnrollmentsTab,
+		}))
+		.catch(handleChunkError),
 );
 const StudentPaymentsTab = lazy(() =>
-	import('./tabs/student-payments-tab').then((module) => ({
-		default: module.StudentPaymentsTab,
-	})),
+	import('./tabs/student-payments-tab')
+		.then((module) => ({
+			default: module.StudentPaymentsTab,
+		}))
+		.catch(handleChunkError),
 );
 const StudentConversationsTab = lazy(() =>
-	import('./tabs/student-conversations-tab').then((module) => ({
-		default: module.StudentConversationsTab,
-	})),
+	import('./tabs/student-conversations-tab')
+		.then((module) => ({
+			default: module.StudentConversationsTab,
+		}))
+		.catch(handleChunkError),
 );
 
 // Helper to safely render tabs that require a non-null studentId

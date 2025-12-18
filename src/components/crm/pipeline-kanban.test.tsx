@@ -29,6 +29,8 @@ function stripMotionProps<T extends UnknownProps>(props: T): UnknownProps {
 		onDragStart,
 		onDragEnd,
 		onReorder,
+		onHoverStart,
+		onHoverEnd,
 		axis,
 		values,
 		value,

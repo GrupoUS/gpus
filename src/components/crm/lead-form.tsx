@@ -172,11 +172,12 @@ export function LeadForm() {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<div className="w-full mb-4 px-1">
+			<div className="w-full mb-4 px-1">
+				<DialogTrigger asChild>
 					<FlipButton className="w-full h-12" initial={false}>
 						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
 							<HoverBorderGradient
+								as="div"
 								containerClassName="rounded-full w-full h-full"
 								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
 							>
@@ -186,6 +187,7 @@ export function LeadForm() {
 						</FlipButtonFront>
 						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
 							<HoverBorderGradient
+								as="div"
 								containerClassName="rounded-full w-full h-full border-none"
 								className="bg-[#004b5a] text-[#d4af37] w-full h-full flex items-center justify-center font-bold tracking-wide"
 								clockwise={false}
@@ -194,8 +196,8 @@ export function LeadForm() {
 							</HoverBorderGradient>
 						</FlipButtonBack>
 					</FlipButton>
-				</div>
-			</DialogTrigger>
+				</DialogTrigger>
+			</div>
 			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
 				<DialogHeader>
 					<DialogTitle>Novo Lead</DialogTitle>

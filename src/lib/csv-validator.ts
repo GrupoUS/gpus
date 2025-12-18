@@ -3,6 +3,8 @@
  * Validates and normalizes data for student imports
  */
 
+import { getIntelligentMappings } from './import-intelligence';
+
 // CPF Validation - Brazilian Individual Taxpayer Registry
 export function validateCPF(cpf: string): boolean {
 	if (!cpf) return false;
@@ -441,9 +443,25 @@ const HEADER_MAP: Record<string, string> = {
 	crf: 'professionalId',
 };
 
-export function mapCSVHeaders(headers: string[]): Record<string, string> {
+export function mapCSVHeaders(
+	headers: string[],
+	rows: Record<string, unknown>[] = [],
+): Record<string, string> {
 	const mapping: Record<string, string> = {};
 
+	// Use intelligent mapping if rows are provided to analyze patterns
+	if (rows.length > 0) {
+		const intelligentMap = getIntelligentMappings(headers, rows);
+
+		for (const [header, suggestion] of Object.entries(intelligentMap)) {
+			// Only apply if confidence is decent enough to be a default
+			if (suggestion.confidence > 0.5) {
+				mapping[header] = suggestion.schemaField;
+			}
+		}
+	}
+
+	// Fallback/Overwrite with exact dictionary matches (historically trusted)
 	for (const header of headers) {
 		const normalized = header.trim().toLowerCase();
 

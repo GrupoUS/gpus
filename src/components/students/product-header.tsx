@@ -14,7 +14,6 @@ import {
 import type { ElementType } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { CollapsibleTrigger } from '@/components/ui/collapsible';
 import { productColors, productLabels } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -24,7 +23,6 @@ interface ProductHeaderProps {
 	count: number;
 	totalCount?: number;
 	isExpanded: boolean;
-	onToggle: () => void;
 }
 
 const productIcons: Record<string, ElementType> = {
@@ -37,13 +35,7 @@ const productIcons: Record<string, ElementType> = {
 	sem_produto: Package,
 };
 
-export function ProductHeader({
-	productId,
-	count,
-	totalCount,
-	isExpanded,
-	onToggle,
-}: ProductHeaderProps) {
+export function ProductHeader({ productId, count, totalCount, isExpanded }: ProductHeaderProps) {
 	const label = productLabels[productId] || 'Sem Produto';
 	const colors = productColors[productId] || productColors.sem_produto;
 	const Icon = productIcons[productId] || productIcons.sem_produto;
@@ -77,15 +69,7 @@ export function ProductHeader({
 				</div>
 
 				<div className="flex items-center gap-3">
-					<Button
-						variant="outline"
-						size="sm"
-						className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground flex border-muted-foreground/20"
-						onClick={(e) => {
-							e.stopPropagation();
-							onToggle();
-						}}
-					>
+					<div className="h-8 px-2 text-xs text-muted-foreground group-hover:text-foreground flex items-center border border-muted-foreground/20 rounded-md">
 						{isExpanded ? (
 							<>
 								<ChevronUp className="h-3.5 w-3.5 mr-1" />
@@ -97,7 +81,7 @@ export function ProductHeader({
 								Expandir
 							</>
 						)}
-					</Button>
+					</div>
 				</div>
 			</button>
 		</CollapsibleTrigger>

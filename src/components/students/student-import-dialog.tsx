@@ -990,11 +990,11 @@ export function StudentImportDialog() {
 				}
 
 				setParsedData(xlsxResult.data);
-				setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
+				setColumnMapping(mapCSVHeaders(xlsxResult.data.headers, xlsxResult.data.rows));
 			} else {
 				const csvData = await parseCSVFile(uploadedFile);
 				setParsedData(csvData);
-				setColumnMapping(mapCSVHeaders(csvData.headers));
+				setColumnMapping(mapCSVHeaders(csvData.headers, csvData.rows));
 			}
 			setStep('mapping');
 		} catch (error) {
@@ -1042,7 +1042,7 @@ export function StudentImportDialog() {
 			}
 
 			setParsedData(xlsxResult.data);
-			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
+			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers, xlsxResult.data.rows));
 			setStep('mapping');
 		} catch (error) {
 			if (error instanceof XLSXParseError) {
@@ -1062,7 +1062,7 @@ export function StudentImportDialog() {
 		try {
 			const extracted = extractDataWithHeaders(rawXLSXData, selectedHeaderRow);
 			setParsedData({ headers: extracted.headers, rows: extracted.dataRows });
-			setColumnMapping(mapCSVHeaders(extracted.headers));
+			setColumnMapping(mapCSVHeaders(extracted.headers, extracted.dataRows));
 			setStep('mapping');
 		} catch (_error) {
 			toast.error('Erro ao processar cabeçalhos', {
@@ -1094,7 +1094,7 @@ export function StudentImportDialog() {
 			}
 
 			setParsedData(xlsxResult.data);
-			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers));
+			setColumnMapping(mapCSVHeaders(xlsxResult.data.headers, xlsxResult.data.rows));
 			setStep('mapping');
 		} catch (error) {
 			if (error instanceof XLSXParseError) {

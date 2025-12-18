@@ -5,6 +5,8 @@
 
 import * as XLSX from 'xlsx';
 
+import { calculateStringSimilarity, detectColumnType } from './import-intelligence';
+
 // Known header keywords in Portuguese for student imports
 // These are common column names found in Brazilian educational/CRM spreadsheets
 export const HEADER_KEYWORDS = [
@@ -140,8 +142,11 @@ function isLikelyHeaderValue(value: unknown): boolean {
 /**
  * Calculate a score for how likely a row is to be the header row
  * Higher score = more likely to be a header
+ *
+ * @param row The row to analyze
+ * @param nextRow The row immediately following (for data pattern check)
  */
-function calculateRowScore(row: unknown[]): number {
+function calculateRowScore(row: unknown[], nextRow?: unknown[]): number {
 	if (!row || row.length === 0) return 0;
 
 	let score = 0;
@@ -154,14 +159,33 @@ function calculateRowScore(row: unknown[]): number {
 	const textRatio = headerLikeCells.length / Math.max(row.length, 1);
 	score += textRatio * 30; // Max 30 points
 
-	// Factor 2: Number of cells matching known header keywords
-	const keywordMatches = row.filter((cell) => {
-		if (cell === null || cell === undefined) return false;
-		const normalized = String(cell).trim().toLowerCase();
-		return HEADER_KEYWORDS.some((keyword) => normalized.includes(keyword));
+	// Factor 2: Number of cells matching known header keywords (Semantic Analysis)
+	// Improved: Use fuzzy matching instead of strict inclusion
+	let keywordScore = 0;
+	// avoid double counting
+	const detectedHeaders = new Set<string>();
+
+	row.forEach((cell) => {
+		if (cell === null || cell === undefined) return;
+		const cellStr = String(cell).trim();
+		if (detectedHeaders.has(cellStr)) return;
+
+		// Find best match among keywords
+		let bestMatchScore = 0;
+		for (const keyword of HEADER_KEYWORDS) {
+			const similarity = calculateStringSimilarity(cellStr, keyword);
+			if (similarity > bestMatchScore) {
+				bestMatchScore = similarity;
+			}
+		}
+
+		if (bestMatchScore > 0.8) {
+			keywordScore += 10 * bestMatchScore; // Scaled by similarity
+			detectedHeaders.add(cellStr);
+		}
 	});
-	const keywordScore = Math.min(keywordMatches.length * 10, 40); // Max 40 points
-	score += keywordScore;
+
+	score += Math.min(keywordScore, 50); // Max 50 points (increased from 40 for intelligence)
 
 	// Factor 3: Non-empty cell count (headers usually have many filled cells)
 	const fillRatio = nonEmptyCells.length / Math.max(row.length, 1);
@@ -169,7 +193,24 @@ function calculateRowScore(row: unknown[]): number {
 
 	// Factor 4: Bonus for having 3+ columns (typical for data imports)
 	if (nonEmptyCells.length >= 3) {
-		score += 10; // Bonus 10 points
+		score += 10;
+	}
+
+	// Factor 5: Data Pattern Analysis (Look Ahead)
+	// If the next row contains data patterns (email, cpf, etc.), boost confidence dramatically
+	if (nextRow && nextRow.length > 0) {
+		const nextRowTypes = nextRow.map((cell) => detectColumnType([cell]));
+		// Check if any valuable types are detected (ignore generic 'number' which is ambiguous)
+		const hasSpecificDataPatterns = nextRowTypes.some(
+			(t) => t === 'email' || t === 'cpf' || t === 'phone' || t === 'date',
+		);
+
+		if (hasSpecificDataPatterns) {
+			score += 40; // Very Strong indicator
+		} else if (textRatio > 0.8 && nextRow.every((c) => !isLikelyHeaderValue(c))) {
+			// If current row is text and next row is NOT header-like (so likely data), boost
+			score += 20;
+		}
 	}
 
 	return score;
@@ -179,7 +220,7 @@ function calculateRowScore(row: unknown[]): number {
  * Detect which row contains the headers in a spreadsheet
  *
  * @param rows - Array of rows from the spreadsheet (each row is an array of cell values)
- * @param maxRowsToScan - Maximum number of rows to analyze (default: 15)
+ * @param maxRowsToScan - Maximum number of rows to analyze (default: 20)
  * @returns Detection result with the most likely header row
  *
  * @example
@@ -189,7 +230,7 @@ function calculateRowScore(row: unknown[]): number {
  * console.log(`Header found at row ${result.headerRowIndex + 1} with ${result.confidence * 100}% confidence`);
  * ```
  */
-export function detectHeaderRow(rows: unknown[][], maxRowsToScan = 15): HeaderDetectionResult {
+export function detectHeaderRow(rows: unknown[][], maxRowsToScan = 20): HeaderDetectionResult {
 	const candidates: Array<{ rowIndex: number; score: number; headers: string[] }> = [];
 
 	// Scan the first N rows
@@ -199,11 +240,14 @@ export function detectHeaderRow(rows: unknown[][], maxRowsToScan = 15): HeaderDe
 		const row = rows[i];
 		if (!(row && Array.isArray(row))) continue;
 
-		const score = calculateRowScore(row);
+		// Pass next row for context/pattern analysis
+		const nextRow = i + 1 < rows.length ? rows[i + 1] : undefined;
+		const score = calculateRowScore(row, nextRow as unknown[]);
+
 		const headers = row.map((h) => String(h ?? '').trim()).filter(Boolean);
 
-		// Only consider rows with at least 2 potential headers
-		if (headers.length >= 2) {
+		// Only consider rows with at least 1 potential header (relaxed from 2 to allow single column imports)
+		if (headers.length >= 1) {
 			candidates.push({ rowIndex: i, score, headers });
 		}
 	}

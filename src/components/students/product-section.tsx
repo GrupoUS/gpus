@@ -49,7 +49,6 @@ export function ProductSection({
 				count={count}
 				totalCount={totalCount}
 				isExpanded={isExpanded}
-				onToggle={onToggle}
 			/>
 
 			<CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
