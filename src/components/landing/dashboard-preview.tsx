@@ -72,7 +72,7 @@ function DashboardContent() {
 				variants={fadeInUp}
 				initial="hidden"
 				animate="visible"
-				className="mt-4 md:mt-6 h-32 md:h-48 lg:h-56 rounded-lg bg-gradient-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 border border-primary/20 flex items-center justify-center"
+				className="mt-4 md:mt-6 h-32 md:h-48 lg:h-56 rounded-lg bg-linear-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 border border-primary/20 flex items-center justify-center"
 			>
 				<div className="text-center">
 					<BarChart3 className="h-8 w-8 md:h-10 md:w-10 mx-auto mb-2 md:mb-3 text-primary/50" />
@@ -89,7 +89,7 @@ export function DashboardPreview() {
 	return (
 		<section className="py-16 md:py-24 relative overflow-hidden">
 			{/* Background overlay */}
-			<div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
+			<div className="absolute inset-0 bg-linear-to-b from-transparent via-background/50 to-background" />
 
 			<motion.div
 				variants={staggerContainer}

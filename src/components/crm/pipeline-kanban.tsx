@@ -1,23 +1,12 @@
-import {
-	closestCenter,
-	DndContext,
-	type DragEndEvent,
-	DragOverlay,
-	type DragStartEvent,
-	PointerSensor,
-	useDroppable,
-	useSensor,
-	useSensors,
-} from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { AnimatePresence, LayoutGroup, motion, Reorder } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { LeadCard } from './lead-card';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cardVariants, dragTransition, layoutTransition, SPRING_SMOOTH } from '@/lib/motion-config';
 
 const stages = [
 	{ id: 'novo', label: 'Novo', color: 'bg-primary' },
@@ -47,40 +36,83 @@ interface PipelineKanbanProps {
 	onLeadClick?: (leadId: string) => void;
 }
 
-function SortableLeadCard({
+// ============================================================================
+// Draggable Lead Card Component
+// ============================================================================
+
+function DraggableLeadCard({
 	lead,
 	onLeadClick,
+	onDragToColumn,
+	columnRefs,
 }: {
 	lead: Lead;
 	onLeadClick?: (id: string) => void;
+	onDragToColumn: (leadId: string, newStage: string) => void;
+	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
 }) {
-	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-		id: lead._id,
-	});
+	const [isDragging, setIsDragging] = useState(false);
 
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-		opacity: isDragging ? 0.5 : 1,
-	};
+	const handleDragEnd = useCallback(
+		(_event: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number } }) => {
+			setIsDragging(false);
+
+			// Find which column the card was dropped on
+			const columns = columnRefs.current;
+			if (!columns) return;
+
+			for (const [stageId, element] of columns.entries()) {
+				const rect = element.getBoundingClientRect();
+				if (
+					info.point.x >= rect.left &&
+					info.point.x <= rect.right &&
+					info.point.y >= rect.top &&
+					info.point.y <= rect.bottom
+				) {
+					if (stageId !== lead.stage) {
+						onDragToColumn(lead._id, stageId);
+					}
+					break;
+				}
+			}
+		},
+		[columnRefs, lead._id, lead.stage, onDragToColumn],
+	);
 
 	return (
-		<div
-			ref={setNodeRef}
-			style={style}
-			{...attributes}
-			{...listeners}
-			className="rounded-lg touch-none"
+		<Reorder.Item
+			value={lead}
+			id={lead._id}
+			layoutId={lead._id}
+			layout="position"
+			drag
+			dragElastic={0.1}
+			dragTransition={dragTransition}
+			onDragStart={() => setIsDragging(true)}
+			onDragEnd={handleDragEnd}
+			initial="initial"
+			animate="animate"
+			exit="exit"
+			whileDrag={{
+				scale: 1.05,
+				boxShadow: '0 25px 50px -12px hsl(var(--primary) / 0.4)',
+				zIndex: 50,
+				cursor: 'grabbing',
+			}}
+			variants={cardVariants}
+			transition={layoutTransition}
+			className="rounded-lg touch-none will-change-transform"
+			style={{ position: 'relative' }}
 		>
 			<button
 				type="button"
-				onClick={() => onLeadClick?.(lead._id)}
+				onClick={() => !isDragging && onLeadClick?.(lead._id)}
 				className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
 			>
 				<LeadCard lead={lead} />
 			</button>
 			{lead.phone && (
-				<button
+				<motion.button
 					type="button"
 					onClick={(e) => {
 						e.stopPropagation();
@@ -90,33 +122,45 @@ function SortableLeadCard({
 					}}
 					className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium cursor-pointer"
 					onPointerDown={(e) => e.stopPropagation()}
+					whileHover={{ scale: 1.02 }}
+					whileTap={{ scale: 0.98 }}
 				>
 					<MessageSquare className="h-3.5 w-3.5" />
 					WhatsApp
-				</button>
+				</motion.button>
 			)}
-		</div>
+		</Reorder.Item>
 	);
 }
 
-// Droppable Column Component
+// ============================================================================
+// Kanban Column Component
+// ============================================================================
+
 function KanbanColumn({
 	stage,
 	leads,
 	onLeadClick,
+	onReorder,
+	onDragToColumn,
+	columnRefs,
+	registerColumn,
 }: {
 	stage: (typeof stages)[0];
 	leads: Lead[];
 	onLeadClick?: (id: string) => void;
+	onReorder: (stageId: string, newOrder: Lead[]) => void;
+	onDragToColumn: (leadId: string, newStage: string) => void;
+	columnRefs: React.RefObject<Map<string, HTMLDivElement>>;
+	registerColumn: (stageId: string, element: HTMLDivElement | null) => void;
 }) {
-	const { setNodeRef } = useDroppable({
-		id: stage.id,
-	});
-
-	const leadIds = useMemo(() => leads.map((l) => l._id), [leads]);
-
 	return (
-		<div ref={setNodeRef} className="shrink-0 w-[300px] snap-start">
+		<motion.div
+			ref={(el) => registerColumn(stage.id, el)}
+			className="shrink-0 w-[300px] snap-start"
+			layout
+			transition={SPRING_SMOOTH}
+		>
 			<Card
 				variant="glass"
 				className="h-[calc(100vh-200px)] min-h-[400px] flex flex-col kanban-column"
@@ -124,114 +168,138 @@ function KanbanColumn({
 				<CardHeader className="pb-3 shrink-0 kanban-column-header">
 					<div className="flex items-center justify-between">
 						<CardTitle className="text-sm font-medium flex items-center gap-2 font-display">
-							<div className={`h-2 w-2 rounded-full ${stage.color}`} />
+							<motion.div
+								className={`h-2 w-2 rounded-full ${stage.color}`}
+								layoutId={`stage-dot-${stage.id}`}
+							/>
 							{stage.label}
 						</CardTitle>
-						<Badge variant="secondary" className="font-display tabular-nums animate-scale-in">
-							{leads.length}
+						<Badge variant="secondary" className="font-display tabular-nums">
+							<motion.span
+								key={leads.length}
+								initial={{ scale: 1.2 }}
+								animate={{ scale: 1 }}
+								transition={SPRING_SMOOTH}
+							>
+								{leads.length}
+							</motion.span>
 						</Badge>
 					</div>
 				</CardHeader>
 				<CardContent className="flex-1 min-h-0">
 					<ScrollArea className="h-full">
-						<div className="space-y-3 pr-4 pb-4">
-							<SortableContext items={leadIds} strategy={verticalListSortingStrategy}>
+						<Reorder.Group
+							axis="y"
+							values={leads}
+							onReorder={(newOrder) => onReorder(stage.id, newOrder)}
+							layoutScroll
+							className="space-y-3 pr-4 pb-4"
+						>
+							<AnimatePresence mode="popLayout" initial={false}>
 								{leads.map((lead) => (
-									<SortableLeadCard key={lead._id} lead={lead} onLeadClick={onLeadClick} />
+									<DraggableLeadCard
+										key={lead._id}
+										lead={lead}
+										onLeadClick={onLeadClick}
+										onDragToColumn={onDragToColumn}
+										columnRefs={columnRefs}
+									/>
 								))}
-							</SortableContext>
+							</AnimatePresence>
 							{leads.length === 0 && (
-								<div className="h-20 border-2 border-dashed border-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs">
+								<motion.div
+									className="h-20 border-2 border-dashed border-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ delay: 0.2 }}
+								>
 									Arraste para cá
-								</div>
+								</motion.div>
 							)}
-						</div>
+						</Reorder.Group>
 					</ScrollArea>
 				</CardContent>
 			</Card>
-		</div>
+		</motion.div>
 	);
 }
 
-export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanbanProps) {
-	const [activeId, setActiveId] = useState<string | null>(null);
+// ============================================================================
+// Main Kanban Component
+// ============================================================================
 
-	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: {
-				distance: 8,
-			},
-		}),
+export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanbanProps) {
+	// Track column DOM elements for hit detection
+	const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+	// Local state for optimistic reordering within columns
+	const [localLeads, setLocalLeads] = useState<Lead[] | null>(null);
+
+	// Use local leads if we have them (during reorder), otherwise use props
+	const currentLeads = localLeads ?? leads;
+
+	// Group leads by stage
+	const leadsByStage = useMemo(() => {
+		const grouped: Record<string, Lead[]> = {};
+		for (const stage of stages) {
+			grouped[stage.id] = currentLeads.filter((l) => l.stage === stage.id);
+		}
+		return grouped;
+	}, [currentLeads]);
+
+	// Register column element for hit detection
+	const registerColumn = useCallback((stageId: string, element: HTMLDivElement | null) => {
+		if (element) {
+			columnRefs.current.set(stageId, element);
+		} else {
+			columnRefs.current.delete(stageId);
+		}
+	}, []);
+
+	// Handle reorder within the same column
+	const handleReorder = useCallback(
+		(stageId: string, newOrder: Lead[]) => {
+			setLocalLeads((prev) => {
+				const current = prev ?? leads;
+				const otherLeads = current.filter((l) => l.stage !== stageId);
+				return [...otherLeads, ...newOrder];
+			});
+		},
+		[leads],
 	);
 
-	const handleDragStart = (event: DragStartEvent) => {
-		setActiveId(event.active.id as string);
-	};
+	// Handle drag to a different column
+	const handleDragToColumn = useCallback(
+		(leadId: string, newStage: string) => {
+			// Reset local state to let props take over
+			setLocalLeads(null);
+			// Notify parent of stage change
+			onDragEnd(leadId, newStage);
+		},
+		[onDragEnd],
+	);
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-		setActiveId(null);
-
-		if (!over) return;
-
-		const activeId = active.id as string;
-		const overId = over.id as string;
-
-		// If the item dropped on itself active.id === over.id, usually that's a sort.
-		// But we also need to check if the 'over' is a container (Stage) or another Item.
-
-		if (activeId !== overId) {
-			// Check if we dropped on a stage column
-			const isOverStage = stages.some((stage) => stage.id === overId);
-
-			if (isOverStage) {
-				// Dropped on a column, handle stage change
-				onDragEnd(activeId, overId);
-			} else {
-				// Dropped on another item
-				// Find the stage of the over item
-				const overLead = leads.find((l) => l._id === overId);
-				const activeLead = leads.find((l) => l._id === activeId);
-
-				if (overLead && activeLead && overLead.stage !== activeLead.stage) {
-					// Different stage, so it's a stage change
-					onDragEnd(activeId, overLead.stage);
-				}
-				// If same stage, it's just a reorder, which we ignore for backend
-				// (or we could implement reorder callback if needed)
-			}
-		}
-	};
-
-	const activeLead = useMemo(() => leads.find((l) => l._id === activeId), [activeId, leads]);
+	// Sync local leads with props when props change
+	useMemo(() => {
+		setLocalLeads(null);
+	}, []);
 
 	return (
-		<DndContext
-			sensors={sensors}
-			collisionDetection={closestCenter}
-			onDragStart={handleDragStart}
-			onDragEnd={handleDragEnd}
-		>
+		<LayoutGroup>
 			<div className="flex gap-4 overflow-x-auto pb-4 h-full snap-x snap-mandatory scroll-smooth">
-				{stages.map((stage) => {
-					const stageLeads = leads.filter((l) => l.stage === stage.id);
-					return (
-						<KanbanColumn
-							key={stage.id}
-							stage={stage}
-							leads={stageLeads}
-							onLeadClick={onLeadClick}
-						/>
-					);
-				})}
+				{stages.map((stage) => (
+					<KanbanColumn
+						key={stage.id}
+						stage={stage}
+						leads={leadsByStage[stage.id] || []}
+						onLeadClick={onLeadClick}
+						onReorder={handleReorder}
+						onDragToColumn={handleDragToColumn}
+						columnRefs={columnRefs}
+						registerColumn={registerColumn}
+					/>
+				))}
 			</div>
-			<DragOverlay>
-				{activeLead ? (
-					<div className="opacity-80 rotate-2 cursor-grabbing">
-						<LeadCard lead={activeLead} />
-					</div>
-				) : null}
-			</DragOverlay>
-		</DndContext>
+		</LayoutGroup>
 	);
 }
