@@ -12,6 +12,7 @@ export const Route = createFileRoute('/_authenticated/students/$studentId')({
 			product: (search.product as string) || 'all',
 			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
 			page: Math.max(1, Number(search.page) || 1),
+			studentId: (search.studentId as Id<'students'>) || undefined,
 		};
 	},
 	component: StudentDetailPage,

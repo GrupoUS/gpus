@@ -11,7 +11,6 @@
 import type * as activities from "../activities.js";
 import type * as conversations from "../conversations.js";
 import type * as debug_tool from "../debug_tool.js";
-import type * as debug_validation from "../debug_validation.js";
 import type * as emailMarketing from "../emailMarketing.js";
 import type * as enrollments from "../enrollments.js";
 import type * as http from "../http.js";
@@ -46,7 +45,6 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   conversations: typeof conversations;
   debug_tool: typeof debug_tool;
-  debug_validation: typeof debug_validation;
   emailMarketing: typeof emailMarketing;
   enrollments: typeof enrollments;
   http: typeof http;

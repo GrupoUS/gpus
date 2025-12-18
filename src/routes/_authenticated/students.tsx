@@ -132,7 +132,7 @@ function StudentsPage() {
 			) : (
 				/* Grid View (Product Sections) - ALL products rendered, including empty ones */
 				<div className="space-y-2">
-					{productKeys.map((productId) => {
+					{productKeys.map((productId: string) => {
 						const groupStudents = groupedStudents[productId] ?? [];
 
 						// Always render product sections - empty sections show ProductEmptyState

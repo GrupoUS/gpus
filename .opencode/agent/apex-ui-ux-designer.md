@@ -1,7 +1,7 @@
 ---
 description: UI/UX design specialist with accessibility-first approach and shadcn/ui expertise
 mode: subagent
-model: anthropic/claude-opus-4-5
+model: github-copilot/gemini-3-pro-preview
 temperature: 0.5
 tools:
   write: true

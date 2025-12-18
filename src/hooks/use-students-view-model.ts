@@ -1,6 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { useNavigate } from '@tanstack/react-router';
 import { useConvexAuth, useQuery } from 'convex/react';
+import type { FunctionReturnType } from 'convex/server';
 import React, { useEffect } from 'react';
 
 import type { Id } from '../../convex/_generated/dataModel';
@@ -35,12 +36,17 @@ export function useStudentsViewModel(Route: any) {
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	const students = useQuery(isAuthenticated ? api.students.list : 'skip', {
-		search: search || undefined,
-		status: status === 'all' ? undefined : status,
-		churnRisk: churnRisk === 'all' ? undefined : churnRisk,
-		product: product === 'all' ? undefined : product,
-	});
+	const students = useQuery(
+		api.students.list,
+		isAuthenticated
+			? {
+					search: search || undefined,
+					status: status === 'all' ? undefined : status,
+					churnRisk: churnRisk === 'all' ? undefined : churnRisk,
+					product: product === 'all' ? undefined : product,
+				}
+			: 'skip',
+	) as FunctionReturnType<typeof api.students.list> | undefined;
 
 	// Use grouped query for grid view (ALL students, grouped by ALL enrollments)
 	const groupedStudentsData = useQuery(
@@ -68,16 +74,21 @@ export function useStudentsViewModel(Route: any) {
 		});
 	};
 
+	// Define student type for type safety
+	type StudentType = NonNullable<typeof students>[number];
+
 	// Stats - from the list query for accuracy
 	const totalStudents = students?.length ?? 0;
-	const activeStudents = students?.filter((s) => s && s.status === 'ativo').length ?? 0;
-	const highRiskStudents = students?.filter((s) => s && s.churnRisk === 'alto').length ?? 0;
+	const activeStudents =
+		students?.filter((s: StudentType | null) => s && s.status === 'ativo').length ?? 0;
+	const highRiskStudents =
+		students?.filter((s: StudentType | null) => s && s.churnRisk === 'alto').length ?? 0;
 
 	// Pagination logic - only for table view
 	const totalPages = Math.ceil(totalStudents / PAGE_SIZE);
 	const paginatedStudents = (
 		students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? []
-	).filter((s): s is NonNullable<typeof s> => s !== null);
+	).filter((s: StudentType | null): s is StudentType => s !== null);
 
 	// Reset page when filters change
 	const handleFilterChange = (key: string, value: string) => {
@@ -91,10 +102,10 @@ export function useStudentsViewModel(Route: any) {
 		});
 	};
 
-	const navigateToStudent = (studentId: Id<'students'>) => {
+	const navigateToStudent = (studentIdParam: Id<'students'>) => {
 		void navigate({
 			to: '/students/$studentId',
-			params: { studentId },
+			params: { studentId: studentIdParam },
 			search: {
 				page,
 				search,
@@ -102,6 +113,7 @@ export function useStudentsViewModel(Route: any) {
 				churnRisk,
 				product,
 				view,
+				studentId: undefined,
 			},
 		});
 	};
@@ -156,9 +168,9 @@ export function useStudentsViewModel(Route: any) {
 
 		const groups: Record<string, NonNullable<typeof students>> = {};
 
-		for (const group of groupedStudentsData) {
+		for (const group of groupedStudentsData as any[]) {
 			// Map students to the expected format (with mainProduct for compatibility)
-			groups[group.id] = group.students.map((student) => ({
+			groups[group.id] = group.students.map((student: (typeof group.students)[number]) => ({
 				_id: student._id,
 				_creationTime: student._creationTime,
 				name: student.name,
@@ -185,13 +197,13 @@ export function useStudentsViewModel(Route: any) {
 	// Get the ordered list of product keys from groupedStudentsData
 	const productKeys = React.useMemo(() => {
 		if (!groupedStudentsData) return [];
-		return groupedStudentsData.map((g) => g.id);
+		return groupedStudentsData.map((g: any) => g.id);
 	}, [groupedStudentsData]);
 
 	// Check if any students exist across all groups
 	const hasAnyStudentsInGroups = React.useMemo(() => {
 		if (!groupedStudentsData) return false;
-		return groupedStudentsData.some((g) => g.count > 0);
+		return groupedStudentsData.some((g: any) => g.count > 0);
 	}, [groupedStudentsData]);
 
 	return {
