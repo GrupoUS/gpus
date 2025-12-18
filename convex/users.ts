@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { requireAuth } from '@convex/lib/auth'
 import { withQuerySecurity } from './lib/securityMiddleware'
 
 /**

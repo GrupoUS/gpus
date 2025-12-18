@@ -50,8 +50,15 @@ export interface SecurityContext {
  */
 async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<SecurityContext> {
 	try {
-		const identity = await requireAuth(ctx)
-		const clerkId = identity.subject
+		const identity = await ctx.auth.getUserIdentity()
+		// DEBUG: Log presence of identity (not the token itself)
+		if (!identity) {
+			console.log('DEBUG: No identity found in ctx.auth.getUserIdentity()')
+		} else {
+			console.log('DEBUG: Identity found for issuer:', identity.issuer)
+		}
+
+		const clerkId = identity?.subject || 'unknown'
 
 		// Get user role
 		const firstUser = await ctx.db.query('users').first()
@@ -80,9 +87,10 @@ async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<Security
 			ipAddress: 'unknown',
 			userAgent: 'unknown',
 			timestamp: Date.now(),
-			isAuthenticated: true,
+			isAuthenticated: !!identity,
 		}
-	} catch (error) {
+	} catch (error: any) {
+		console.log('DEBUG: Security context failure:', error.message)
 		return {
 			actorId: 'anonymous',
 			actorRole: 'anonymous',

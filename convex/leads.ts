@@ -91,16 +91,16 @@ export const listLeads = query({
     const organizationId = await getOrganizationId(ctx);
 
     let leads;
-    
+
     // Optimization: Use index if filtering by a single stage
-    const singleStage = 
-        (args.stages?.length === 1 ? args.stages[0] : null) ?? 
+    const singleStage =
+        (args.stages?.length === 1 ? args.stages[0] : null) ??
         (args.stage && args.stage !== 'all' ? args.stage : null);
 
     if (singleStage) {
         leads = await ctx.db
             .query('leads')
-            .withIndex('by_organization_stage', q => 
+            .withIndex('by_organization_stage', q =>
                 q.eq('organizationId', organizationId)
                  .eq('stage', singleStage as any)
             )
@@ -139,8 +139,8 @@ export const listLeads = query({
     // Filter by search text
     if (args.search) {
         const search = args.search.toLowerCase()
-        leads = leads.filter(l => 
-            l.name.toLowerCase().includes(search) || 
+        leads = leads.filter(l =>
+            l.name.toLowerCase().includes(search) ||
             l.phone.includes(search) ||
             (l.email && l.email.toLowerCase().includes(search))
         )
@@ -179,7 +179,7 @@ export const createLead = mutation({
           createdAt: Date.now(),
           updatedAt: Date.now(),
       })
-      
+
       // Log activity
       await ctx.db.insert('activities', {
           type: 'lead_criado',
@@ -211,17 +211,17 @@ export const updateLeadStage = mutation({
         // Auth check
         const identity = await requireAuth(ctx)
         const organizationId = await getOrganizationId(ctx)
-        
+
         const lead = await ctx.db.get(args.leadId)
         if (!lead || lead.organizationId !== organizationId) {
              throw new Error("Lead not found or permission denied")
         }
-        
+
         await ctx.db.patch(args.leadId, {
             stage: args.newStage,
             updatedAt: Date.now()
         })
-        
+
         // Activity log
         await ctx.db.insert('activities', {
             type: 'stage_changed',
@@ -256,7 +256,7 @@ export const updateLead = mutation({
              hasClinic: v.optional(v.boolean()),
              clinicName: v.optional(v.string()),
              clinicCity: v.optional(v.string()),
-             
+
              // Professional background
              yearsInAesthetics: v.optional(v.number()),
              currentRevenue: v.optional(v.string()),
@@ -307,7 +307,7 @@ export const updateLead = mutation({
     handler: async (ctx, args) => {
          await requireAuth(ctx)
          const organizationId = await getOrganizationId(ctx)
-         
+
          const lead = await ctx.db.get(args.leadId)
          if (!lead || lead.organizationId !== organizationId) {
              throw new Error("Lead not found or permission denied")
@@ -325,46 +325,33 @@ export const getLead = query({
   handler: async (ctx, args) => {
     // Require authentication and get organization scope
     const organizationId = await getOrganizationId(ctx)
-    
+
     const lead = await ctx.db.get(args.leadId)
-    
+
     // Only return lead if it belongs to the caller's organization
     if (!lead || lead.organizationId !== organizationId) {
       return null
     }
-    
+
     return lead
   }
 })
-
-export const recent = query({
-  args: {
-    limit: v.optional(v.number())
-  },
-  handler: async (ctx, args) => {
-    // recent leads should also be scoped? usually yes.
-    const organizationId = await getOrganizationId(ctx);
-
-    // filtering by created AND organization is tricky without specific index.
-    // Schema has 'by_created'. 'by_organization' exists. 
-    // Ideally we need 'by_organization_created' but 'by_organization' + manual sort might suffice for small sets.
-    // Or we use the by_organization index and sort in memory if not too many.
-    // Let's assume we want to stick to DB sorting. 
-    // Plan didn't specify recent query index updates. 
-    // I added 'by_organization'. 
+    // Let's assume we want to stick to DB sorting.
+    // Plan didn't specify recent query index updates.
+    // I added 'by_organization'.
     // Let's use 'by_organization' and take recent.
-    // Actually typically 'recent' dashboard widgets need efficient latest. 
+    // Actually typically 'recent' dashboard widgets need efficient latest.
     // I'll add 'by_organization_created' index to schema? No, I shouldn't modify schema again if I can avoid it.
     // Let's filter in memory for now or just use standard query if volume is low.
     // BUT we must filter by organization.
-    
+
     return await ctx.db
       .query('leads')
       .withIndex('by_organization', q => q.eq('organizationId', organizationId))
       .order('desc')
-      // .take(args.limit ?? 10) // .take() on query uses the index order. 
-      // by_organization index doesn't guarantee creation order? 
-      // convex indexes are ordered by indexed fields + _creationTime implicitly? 
+      // .take(args.limit ?? 10) // .take() on query uses the index order.
+      // by_organization index doesn't guarantee creation order?
+      // convex indexes are ordered by indexed fields + _creationTime implicitly?
       // Wait, standard index is by fields. If duplicates, then _id.
       // So 'by_organization' order is random for same org? No.
       // Convex docs: "Records with the same values for the indexed fields are ordered by their creation time."

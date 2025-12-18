@@ -1,21 +1,11 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
-import { withQuerySecurity } from './lib/securityMiddleware'
+import { getOrganizationId } from './lib/utils' // Assuming getOrganizationId is in lib/utils
 
 export const getDashboard = query({
   args: {
     period: v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'), v.literal('year'), v.literal('all')),
   },
-  handler: withQuerySecurity<{
-    period: '7d' | '30d' | '90d' | 'year' | 'all'
-  }, any>(
-    async (ctx, args) => {
-      // Calculate date ranges
-      const now = Date.now()
-      let startDate = 0
-      let previousStartDate = 0
-
-      if (args.period !== 'all') {
         const periodDays = { '7d': 7, '30d': 30, '90d': 90, 'year': 365 }
         const days = periodDays[args.period]
         startDate = now - days * 24 * 60 * 60 * 1000

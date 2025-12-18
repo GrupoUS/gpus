@@ -1,7 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
-model: openai/gpt-5.2-medium
+model: openai/gpt-5.2-high
 temperature: 0.2
 tools:
   write: true
