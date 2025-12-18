@@ -15,6 +15,7 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('convex/react', () => ({
 	// biome-ignore lint/suspicious/noExplicitAny: mock arguments
 	useQuery: (...args: any[]) => mockUseQuery(...args),
+	useConvexAuth: () => ({ isAuthenticated: true }),
 }));
 
 // Mock the API object
