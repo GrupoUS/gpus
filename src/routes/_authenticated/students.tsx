@@ -1,13 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 
 import { ProductSection } from '@/components/students/product-section';
 import { ProductSectionSkeleton } from '@/components/students/product-section-skeleton';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentHeader } from '@/components/students/student-header';
+import { StudentListEmptyState } from '@/components/students/student-list-empty-state';
+import { StudentPagination } from '@/components/students/student-pagination';
 import { StudentStats } from '@/components/students/student-stats';
 import { StudentsTable } from '@/components/students/student-table';
-import { Button } from '@/components/ui/button';
 import { useStudentsViewModel } from '@/hooks/use-students-view-model';
 import { productLabels } from '@/lib/constants';
 
@@ -53,6 +53,17 @@ function StudentsPage() {
 
 	const productKeys = [...Object.keys(productLabels), 'sem_produto'];
 
+	// Check if any students exist across all groups when in grid view
+	const hasAnyStudents = students && students.length > 0;
+	const isFiltering = search || status !== 'all' || churnRisk !== 'all' || product !== 'all';
+
+	const handlePageChange = (newPage: number) => {
+		void navigate({
+			to: '/students',
+			search: { ...{ search, status, churnRisk, product, view }, page: newPage },
+		});
+	};
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
@@ -87,12 +98,8 @@ function StudentsPage() {
 						<ProductSectionSkeleton key={i} />
 					))}
 				</div>
-			) : students.length === 0 ? (
-				<div className="text-center py-12 text-muted-foreground">
-					<GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-30" />
-					<h2 className="text-lg font-medium">Nenhum aluno encontrado</h2>
-					<p className="text-sm">Tente ajustar os filtros ou adicione um novo aluno</p>
-				</div>
+			) : !hasAnyStudents ? (
+				<StudentListEmptyState isFiltering={!!isFiltering} search={search} />
 			) : view === 'table' ? (
 				/* Table View */
 				<StudentsTable students={paginatedStudents} onStudentClick={navigateToStudent} />
@@ -101,6 +108,10 @@ function StudentsPage() {
 				<div className="space-y-2">
 					{productKeys.map((productId) => {
 						const groupStudents = groupedStudents[productId];
+						// Only skip rendering if group is empty AND we are filtering by product
+						// Otherwise we want to show empty sections if they exist in the system (optional design choice,
+						// but here we follow the logic: if no students in group, don't show section unless we want to show empty states for all products)
+						// Current logic: hide empty sections to reduce clutter
 						if (!groupStudents || groupStudents.length === 0) return null;
 
 						return (
@@ -119,47 +130,15 @@ function StudentsPage() {
 				</div>
 			)}
 
-			{/* Pagination */}
-			{students && students.length > PAGE_SIZE && (
-				<div className="flex items-center justify-between pt-4 border-t">
-					<p className="text-sm text-muted-foreground">
-						Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalStudents)} de{' '}
-						{totalStudents} alunos
-					</p>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={page === 1}
-							onClick={() => {
-								void navigate({
-									to: '/students',
-									search: { ...{ search, status, churnRisk, product, view }, page: page - 1 },
-								});
-							}}
-						>
-							<ChevronLeft className="h-4 w-4 mr-1" />
-							Anterior
-						</Button>
-						<span className="text-sm text-muted-foreground">
-							{page} / {totalPages}
-						</span>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={page === totalPages}
-							onClick={() => {
-								void navigate({
-									to: '/students',
-									search: { ...{ search, status, churnRisk, product, view }, page: page + 1 },
-								});
-							}}
-						>
-							Próximo
-							<ChevronRight className="h-4 w-4 ml-1" />
-						</Button>
-					</div>
-				</div>
+			{/* Pagination - Only show in Table view or if we implement pagination for Grid view (currently Grid shows all by group) */}
+			{view === 'table' && students && students.length > PAGE_SIZE && (
+				<StudentPagination
+					page={page}
+					totalPages={totalPages}
+					totalStudents={totalStudents}
+					pageSize={PAGE_SIZE}
+					onPageChange={handlePageChange}
+				/>
 			)}
 		</div>
 	);

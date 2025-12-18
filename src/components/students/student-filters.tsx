@@ -105,7 +105,7 @@ export function StudentFilters({
 				<div className="flex items-center gap-1 ml-auto border-l pl-3">
 					{onExpandAll && (
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onClick={onExpandAll}
 							className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
@@ -117,7 +117,7 @@ export function StudentFilters({
 					)}
 					{onCollapseAll && (
 						<Button
-							variant="ghost"
+							variant="outline"
 							size="sm"
 							onClick={onCollapseAll}
 							className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"

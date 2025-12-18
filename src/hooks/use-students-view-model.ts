@@ -58,7 +58,11 @@ export function useStudentsViewModel(Route: any) {
 	const activeStudents = students?.filter((s) => s && s.status === 'ativo').length ?? 0;
 	const highRiskStudents = students?.filter((s) => s && s.churnRisk === 'alto').length ?? 0;
 
-	// Pagination
+	// Pagination logic
+	// For 'table' view, we use standard pagination.
+	// For 'grid' view (Product-Centric), we usually want to see all students grouped.
+	// However, to prevent performance issues with large datasets, we keep pagination active.
+	// This means groups might be split across pages.
 	const totalPages = Math.ceil(totalStudents / PAGE_SIZE);
 	const paginatedStudents = (
 		students?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? []
@@ -88,9 +92,6 @@ export function useStudentsViewModel(Route: any) {
 	};
 
 	// Grouping Logic for Product-Centric View
-	// We use a local state for expansion to avoid URL clutter,
-	// or we could sync it with URL if persistence is needed.
-	// For now, local state is simpler and standard for accordions.
 	const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
 		trintae3: true,
 		otb: true,
@@ -131,20 +132,14 @@ export function useStudentsViewModel(Route: any) {
 	};
 
 	// Group students by mainProduct
-	// Note: 'students' here is the flat list from the query.
-	// We should probably group the *paginated* students if we want pagination to work per page,
-	// OR group *all* students and handle pagination differently.
-	// Given the "Product-Centric Dashboard" usually implies seeing all relevant students grouped,
-	// but we have a PAGE_SIZE.
-	// If we group the *paginated* result, we might get fragmented groups across pages.
-	// Ideally, for a dashboard like this, we might want infinite scroll or per-group pagination.
-	// However, adhering to the current constraints: we will group the *current page's* students
-	// OR (better) group the *filtered* students and maybe disable global pagination for this view
-	// if the list isn't huge, or just accept that pagination cuts across groups.
-	// Let's group the `paginatedStudents` to respect the current architecture's performance limits.
-
+	// We group the *paginated* students to respect the current architecture's performance limits.
+	// If we wanted to group *all* students, we would use `students` instead of `paginatedStudents`,
+	// but that would require disabling pagination for the grid view or implementing client-side pagination per group.
 	const groupedStudents = React.useMemo(() => {
 		const groups: Record<string, typeof paginatedStudents> = {};
+
+		// Initialize groups to ensure order or existence if needed,
+		// but dynamic is safer for now.
 
 		paginatedStudents.forEach((student) => {
 			const prod = (student as { mainProduct?: string }).mainProduct ?? 'sem_produto';

@@ -58,7 +58,7 @@ function Highlight({ text, term }: { text: string; term?: string }) {
 	return (
 		<>
 			{parts.map((part, i) =>
-				part.toLowerCase() === term.toLowerCase() ? (
+				part.toLowerCase() === safeTerm.toLowerCase() ? (
 					<mark
 						key={i}
 						className="bg-yellow-200 dark:bg-yellow-800 rounded-xs px-0.5 text-foreground"

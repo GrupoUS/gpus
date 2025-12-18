@@ -157,6 +157,7 @@ export default defineSchema({
 
     // Dados profissionais
     profession: v.string(),
+    products: v.optional(v.array(v.string())), // Denormalized active products
     professionalId: v.optional(v.string()), // COREN, CRO, etc
     hasClinic: v.boolean(),
     clinicName: v.optional(v.string()),

@@ -168,6 +168,80 @@ export const getChurnAlerts = query({
   },
 })
 
+export const getStudentsGroupedByProducts = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // 1. Fetch all students (base filter)
+    let students = await ctx.db.query('students').order('desc').collect()
+
+    // Apply memory filters
+    if (args.status) {
+      students = students.filter((s) => s.status === args.status)
+    }
+
+    if (args.search) {
+      const searchLower = args.search.toLowerCase()
+      students = students.filter(
+        (s) =>
+          s.name.toLowerCase().includes(searchLower) ||
+          s.email.toLowerCase().includes(searchLower) ||
+          s.phone.includes(searchLower)
+      )
+    }
+
+    // 2. Fetch enrollments to map students to products
+    const enrollments = await ctx.db.query('enrollments').collect()
+
+    // 3. Grouping Logic
+    const products = [
+      'trintae3',
+      'otb',
+      'black_neon',
+      'comunidade',
+      'auriculo',
+      'na_mesa_certa',
+    ] as const
+
+    const grouped: Record<string, typeof students> = {}
+
+    // Initialize groups
+    products.forEach((p) => (grouped[p] = []))
+
+    // Map of studentId -> Student (filtered)
+    const studentMap = new Map(students.map((s) => [s._id, s]))
+
+    for (const enrollment of enrollments) {
+      // If enrollment belongs to a student in our filtered list
+      const student = studentMap.get(enrollment.studentId)
+
+      if (student && enrollment.product) {
+        // Add to appropriate group
+        // Note: A student can be in multiple groups if they have multiple products
+        if (Array.isArray(grouped[enrollment.product as string])) {
+          // Check if already added to this product group
+          const exists = grouped[enrollment.product as string].find(
+            (s) => s._id === student._id
+          )
+          if (!exists) {
+            grouped[enrollment.product as string].push(student)
+          }
+        }
+      }
+    }
+
+    // Format for frontend
+    return Object.entries(grouped).map(([key, value]) => ({
+      id: key,
+      name: key,
+      students: value,
+      count: value.length,
+    }))
+  },
+})
+
 // Mutations
 export const create = mutation({
   args: {
