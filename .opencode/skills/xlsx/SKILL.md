@@ -1,7 +1,35 @@
 ---
 name: xlsx
-description: "Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas"
+description: "Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. Provides intelligent header detection and semantic column mapping for robust data import."
 license: Proprietary. LICENSE.txt has complete terms
+---
+
+# Intelligence Capabilities (New)
+
+When working with imperfect input files (e.g., user uploads, legacy system exports), apply the following intelligent processing strategies.
+
+## 1. Intelligent Header Detection
+**Full Guide**: [header-detection.md](intelligence/header-detection.md)
+
+Never assume the first row is the header. Use the following heuristics:
+- **Semantic Analysis**: Look for row content matching known keywords using Levenshtein distance (e.g., "Telefome" ≈ "Telefone").
+- **Data Pattern Analysis**: The header is typically the last text-heavy row before data-heavy rows (dates, emails, CPFs).
+- **Context**: Headers have high density (few empty cells) and are often below metadata rows (titles, dates).
+
+## 2. Semantic Column Mapping
+**Full Guide**: [column-mapping.md](intelligence/column-mapping.md)
+
+Map source columns to target fields using specific scoring:
+- **Semantic (40%)**: Normalization + Synonyms (e.g., "Zap" -> "Phone").
+- **Pattern (30%)**: Data validation samples (e.g., column has `\d{11}` -> "CPF").
+- **Context (30%)**: Position and frequency of occurrence.
+
+## 3. Real-World Examples
+**See**: [examples.md](intelligence/examples.md) for handling:
+- Metadata headers (Reports with titles)
+- Ambiguous columns (Date formats)
+- Unknown columns
+
 ---
 
 # Requirements for Outputs
@@ -135,7 +163,7 @@ This applies to ALL calculations - totals, percentages, ratios, differences, etc
    ```bash
    python recalc.py output.xlsx
    ```
-6. **Verify and fix any errors**: 
+6. **Verify and fix any errors**:
    - The script returns JSON with error details
    - If `status` is `errors_found`, check `error_summary` for specific error types and locations
    - Fix the identified errors and recalculate again
@@ -232,7 +260,7 @@ Quick checks to ensure formulas work correctly:
 
 ### Common Pitfalls
 - [ ] **NaN handling**: Check for null values with `pd.notna()`
-- [ ] **Far-right columns**: FY data often in columns 50+ 
+- [ ] **Far-right columns**: FY data often in columns 50+
 - [ ] **Multiple matches**: Search all occurrences, not just first
 - [ ] **Division by zero**: Check denominators before using `/` in formulas (#DIV/0!)
 - [ ] **Wrong references**: Verify all cell references point to intended cells (#REF!)
@@ -287,3 +315,527 @@ The script returns JSON with error details:
 - Add comments to cells with complex formulas or important assumptions
 - Document data sources for hardcoded values
 - Include notes for key calculations and model sections
+
+---
+
+# Intelligent Spreadsheet Import and Analysis
+
+## Overview
+
+When importing or analyzing spreadsheets, especially for data import workflows, intelligent detection and mapping capabilities are essential for handling real-world spreadsheets that may have:
+- Non-standard layouts (metadata rows, empty rows, merged cells)
+- Varied column naming (synonyms, abbreviations, typos)
+- Multiple data types requiring pattern recognition
+- Contextual relationships between columns
+
+This section provides advanced techniques for intelligent header detection, column mapping, and data pattern analysis.
+
+---
+
+## Intelligent Header Detection
+
+### Overview
+
+Header detection is the process of identifying which row in a spreadsheet contains the column names. Real-world spreadsheets often have:
+- Title rows or metadata at the top
+- Empty separator rows
+- Multi-line headers (merged cells)
+- Headers that don't start at row 1
+
+### Detection Strategy: Multi-Factor Analysis
+
+Use a combination of semantic analysis, pattern recognition, and contextual clues to identify headers with high confidence.
+
+#### 1. Semantic Analysis
+
+**String Similarity Algorithms**
+
+Use similarity metrics to compare row cells against known header keywords. Implement Levenshtein distance, Jaro-Winkler similarity, and normalization functions to handle:
+- Accent removal (á → a)
+- Case insensitivity
+- Whitespace normalization
+- Synonym matching
+
+**Synonym Recognition**
+
+Maintain a knowledge base of header synonyms and variations in multiple languages (Portuguese, English) and handle:
+- Regional variations ("celular" vs "móvel")
+- Common typos ("E-mail" vs "Email")
+- Abbreviations ("Tel" = "Telefone")
+- Context-dependent names ("Cliente" = "Nome" in CRM context)
+
+#### 2. Pattern-Based Data Type Detection
+
+Analyze sample data values (first 5-10 rows) to infer column types:
+- **CPF**: 11 digits, format XXX.XXX.XXX-XX
+- **Email**: Contains @ and valid domain
+- **Phone**: 10-11 digits, Brazilian formats
+- **Date**: Multiple formats (DD/MM/YYYY, MM/DD/YYYY, Excel serial)
+- **Monetary**: R$, points, commas (Brazilian format)
+- **CEP**: 8 digits, format XXXXX-XXX
+
+Use pattern matching with regex and validation functions to detect types with confidence scores.
+
+#### 3. Contextual Analysis
+
+Consider multiple contextual factors:
+- **Position**: Headers usually in first 5 rows
+- **Density**: Headers have many filled cells
+- **Consistency**: Headers are text, data rows vary in type
+- **Structure**: Headers have similar length/format
+
+### Multi-Factor Scoring
+
+Calculate header likelihood score using:
+- Text ratio (30%): Headers are usually text, not numbers
+- Keyword matches (40%): Match against known header keywords
+- Fill ratio (20%): Headers usually have many filled cells
+- Position bonus (10%): Headers usually in first rows
+
+### Thresholds and Confidence Levels
+
+- **Confidence ≥ 0.8**: High confidence - use automatically
+- **Confidence 0.6-0.8**: Medium confidence - show to user for confirmation
+- **Confidence < 0.6**: Low confidence - require user selection
+
+### Handling Edge Cases
+
+- **Multiple Header Rows**: Detect merged cells spanning multiple rows
+- **Empty Rows**: Skip empty separator rows before data
+- **Metadata Rows**: Identify and skip title/metadata rows at top
+
+---
+
+## Intelligent Column Mapping
+
+### Overview
+
+Column mapping matches spreadsheet column names to system fields. Real-world spreadsheets use varied naming that requires intelligent matching.
+
+### Multi-Factor Scoring System
+
+Use weighted scoring to determine best mapping:
+
+- **Semantic Similarity (40%)**: String similarity and synonym matching
+- **Data Pattern Match (30%)**: Type inferred from actual values
+- **Position Context (15%)**: Expected position of field
+- **Frequency/Common Name (15%)**: Most common names get priority
+
+### Expanded Knowledge Base
+
+Maintain comprehensive synonym mappings including:
+- Portuguese and English variations
+- Regional differences
+- Common typos and abbreviations
+- Context-dependent synonyms
+
+**Example Knowledge Base Structure:**
+
+```python
+# Comprehensive header knowledge base for student/CRM imports
+EXPANDED_HEADER_KNOWLEDGE = {
+    # Name variations (regional, typos, languages)
+    'name': [
+        # Portuguese standard
+        'nome', 'nome completo', 'aluno', 'cliente', 'pessoa',
+        'nome do aluno', 'nome do cliente', 'razao social', 'razão social',
+        # English
+        'name', 'full name', 'client name', 'student name', 'person', 'fullname',
+        # Abbreviations
+        'nm', 'nome compl', 'nome compl.',
+        # Common typos
+        'nme', 'nomee', 'nom', 'nomes',
+        # Context variations
+        'cadastro', 'registro', 'identificação'
+    ],
+    
+    # Email variations
+    'email': [
+        # Portuguese
+        'email', 'e-mail', 'correio eletrônico', 'correio eletronico',
+        'correio', 'endereço de email', 'endereco de email', 'endereço email',
+        # English
+        'mail', 'e-mail address', 'email address', 'mail address',
+        # Abbreviations
+        'e-mail', 'mail addr', 'email addr',
+        # Common typos
+        'emial', 'emal', 'eail', 'emai',
+        # Variations
+        'correio eletrônico', 'correio eletr.'
+    ],
+    
+    # Phone variations
+    'phone': [
+        # Portuguese
+        'telefone', 'celular', 'whatsapp', 'contato', 'telefone celular',
+        'telefone fixo', 'fone', 'tel', 'telefone residencial',
+        # English
+        'phone', 'mobile', 'cell phone', 'telephone', 'contact number',
+        'mobile phone', 'cell',
+        # Regional
+        'móvel', 'movel', 'cel',
+        # Abbreviations
+        'tel', 'fone', 'cel', 'whats', 'wpp',
+        # Common typos
+        'telefne', 'telefonee', 'celularr'
+    ],
+    
+    # CPF variations
+    'cpf': [
+        'cpf', 'documento', 'documento cpf', 'cpf/cnpj', 'cpf cnpj',
+        'identificação', 'identificacao', 'id', 'rg', 'documento de identidade',
+        'doc', 'document', 'identifier', 'cpf cnpj', 'documento único',
+        'documento unico', 'cpf documento', 'número cpf', 'numero cpf'
+    ],
+    
+    # Address variations
+    'address': [
+        'endereço', 'endereco', 'rua', 'logradouro', 'street', 'address',
+        'endereço completo', 'endereco completo', 'full address', 'endereço residencial',
+        'endereco residencial', 'logradouro completo', 'rua endereço'
+    ],
+    
+    'addressNumber': [
+        'número', 'numero', 'nº', 'n°', 'num', 'número do endereço',
+        'numero do endereco', 'address number', 'house number', 'nro'
+    ],
+    
+    'complement': [
+        'complemento', 'complement', 'apto', 'apartamento', 'bloco',
+        'bloco apto', 'andar', 'sala', 'complemento endereço'
+    ],
+    
+    'neighborhood': [
+        'bairro', 'neighborhood', 'distrito', 'bairro residencial',
+        'bairro endereço', 'zona', 'região', 'regiao'
+    ],
+    
+    'city': [
+        'cidade', 'municipio', 'município', 'city', 'municipality',
+        'munic', 'cid', 'município de residência', 'cidade residência'
+    ],
+    
+    'state': [
+        'estado', 'uf', 'state', 'province', 'est', 'uf estado',
+        'estado uf', 'unidade federativa', 'estado brasileiro'
+    ],
+    
+    'zipCode': [
+        'cep', 'código postal', 'codigo postal', 'zip', 'postal code',
+        'cep código', 'postal', 'cep código postal', 'zip code',
+        'código postal cep'
+    ],
+    
+    'country': [
+        'país', 'pais', 'country', 'nacionalidade', 'país de origem',
+        'pais de origem', 'country of origin'
+    ],
+    
+    # Professional fields
+    'profession': [
+        'profissão', 'profissao', 'graduação', 'graduacao', 'formação',
+        'formacao', 'profession', 'graduation', 'formation', 'curso',
+        'área de atuação', 'area de atuacao', 'especialidade', 'especialização'
+    ],
+    
+    'hasClinic': [
+        'tem clínica', 'tem clinica', 'possui clínica', 'possui clinica',
+        'tem estabelecimento', 'has clinic', 'own clinic', 'clinic owner',
+        'clínica própria', 'clinica propria'
+    ],
+    
+    'clinicName': [
+        'nome clínica', 'nome clinica', 'clínica nome', 'clinica nome',
+        'nome estabelecimento', 'nome do estabelecimento', 'clinic name',
+        'estabelecimento', 'nome da clínica'
+    ],
+    
+    'clinicCity': [
+        'cidade clínica', 'cidade clinica', 'cidade estabelecimento',
+        'município clínica', 'municipio clinica', 'clinic city',
+        'cidade da clínica'
+    ],
+    
+    # Status and dates
+    'status': [
+        'status', 'situação', 'situacao', 'estado', 'condição', 'condicao',
+        'status aluno', 'situação aluno', 'status do aluno'
+    ],
+    
+    'birthDate': [
+        'data nasc', 'data de nascimento', 'nascimento', 'data nascimento',
+        'data nasc.', 'birth date', 'date of birth', 'dob', 'data nascimento aluno',
+        'nasc', 'data nascimento aluno'
+    ],
+    
+    'saleDate': [
+        'data da venda', 'data venda', 'data de venda', 'venda data',
+        'data contrato', 'data do contrato', 'sale date', 'contract date',
+        'data assinatura', 'data de assinatura'
+    ],
+    
+    'startDate': [
+        'data início', 'data inicio', 'data_inicio', 'start date',
+        'inicio', 'data de início', 'data de inicio', 'data início curso',
+        'início curso', 'inicio curso'
+    ],
+    
+    # Sales and marketing
+    'salesperson': [
+        'vendedor', 'vendedora', 'vendedor responsável', 'vendedor responsavel',
+        'salesperson', 'seller', 'vendedor da venda', 'responsável venda',
+        'responsavel venda'
+    ],
+    
+    'leadSource': [
+        'origem lead', 'origem', 'fonte', 'lead source', 'source',
+        'origem do lead', 'fonte do lead', 'como conheceu', 'origem cliente',
+        'canal', 'canal de origem', 'fonte de origem'
+    ],
+    
+    'cohort': [
+        'turma', 'cohort', 'turma curso', 'turma do curso', 'grupo',
+        'turma aluno', 'classe', 'batch', 'lote'
+    ],
+    
+    # Financial fields
+    'totalValue': [
+        'valor total', 'valortotal', 'valor_total', 'total', 'amount',
+        'valor', 'preço', 'preco', 'price', 'total value', 'total amount',
+        'valor do curso', 'valor curso', 'valor contrato', 'valor total curso',
+        'montante', 'valor pago', 'valor investido'
+    ],
+    
+    'installments': [
+        'parcelas', 'número de parcelas', 'numero de parcelas',
+        'qtd parcelas', 'quantidade de parcelas', 'installments',
+        'parc', 'qtd parc', 'número parcelas', 'numero parcelas',
+        'total parcelas', 'qtd de parcelas', 'quantidade parcelas'
+    ],
+    
+    'installmentValue': [
+        'valor parcela', 'valor_parcela', 'valorparcela', 'installment value',
+        'valor da parcela', 'valor de parcela', 'parcela valor',
+        'valor mensal', 'mensalidade', 'valor por parcela'
+    ],
+    
+    'paymentStatus': [
+        'status pagamento', 'status_pagamento', 'payment status',
+        'pagamento', 'status de pagamento', 'situação pagamento',
+        'situacao pagamento', 'payment', 'status pag', 'situação pag',
+        'condição pagamento', 'condicao pagamento'
+    ],
+    
+    'paidInstallments': [
+        'parcelas pagas', 'parcelas_pagas', 'paid installments',
+        'parcelas quitadas', 'parcelas pagas total', 'qtd parcelas pagas',
+        'quantidade parcelas pagas', 'parcelas já pagas', 'parcelas ja pagas'
+    ],
+    
+    # Professional ID
+    'professionalId': [
+        'registro', 'registro profissional', 'coren', 'cro', 'crm', 'crf',
+        'número registro', 'numero registro', 'registro número',
+        'professional id', 'professional registration', 'número conselho',
+        'numero conselho', 'conselho profissional', 'registro conselho'
+    ],
+    
+    # Contract status
+    'contractStatus': [
+        'status contrato', 'status do contrato', 'situação contrato',
+        'situacao contrato', 'contract status', 'status do contrato',
+        'condição contrato', 'condicao contrato', 'estado contrato'
+    ]
+}
+
+def find_best_match(column_header: str, knowledge_base: Dict[str, List[str]]) -> List[Tuple[str, float]]:
+    """
+    Find best matching schema fields for a column header.
+    Returns list of (field_name, confidence_score) tuples sorted by score.
+    """
+    normalized_header = normalize_header(column_header)
+    matches = []
+    
+    for field_name, synonyms in knowledge_base.items():
+        best_score = 0.0
+        
+        for synonym in synonyms:
+            normalized_synonym = normalize_header(synonym)
+            
+            # Exact match
+            if normalized_header == normalized_synonym:
+                best_score = 1.0
+                break
+            # Contains match
+            elif normalized_synonym in normalized_header or normalized_header in normalized_synonym:
+                best_score = max(best_score, 0.9)
+            else:
+                # Similarity match
+                similarity = jaro_winkler_similarity(normalized_header, normalized_synonym)
+                if similarity > 0.7:
+                    best_score = max(best_score, similarity * 0.85)
+        
+        if best_score > 0.5:  # Only include reasonable matches
+            matches.append((field_name, best_score))
+    
+    # Sort by score descending
+    matches.sort(key=lambda x: x[1], reverse=True)
+    return matches
+```
+
+### Intelligent Suggestions
+
+When confidence is low (< 70%), provide multiple mapping options:
+- Show top 3-5 suggestions ordered by score
+- Include reasoning for each suggestion
+- Highlight pattern mismatches (e.g., column named "ID" but contains CPF values)
+
+---
+
+## Data Pattern Analysis
+
+### Overview
+
+Pattern analysis identifies data types and formats by examining actual values, not just column names. This is crucial for:
+- Validating mappings
+- Detecting errors
+- Normalizing data formats
+- Providing user feedback
+
+### Pattern Recognition
+
+Define comprehensive patterns for common data types:
+- **CPF**: Brazilian tax ID with validation algorithm
+- **Email**: Standard email format validation
+- **Phone (Brazilian)**: 10-11 digits with formatting
+- **Date**: Multiple format support (DD/MM/YYYY, Excel serial)
+- **Monetary (Brazilian)**: R$ format with comma decimal separator
+- **CEP**: Brazilian postal code (8 digits)
+- **UF**: Brazilian state abbreviations (2 letters)
+
+### Validation and Normalization
+
+For each pattern type:
+- **Regex matching**: Initial pattern detection
+- **Validator function**: Domain-specific validation (e.g., CPF check digits)
+- **Normalizer function**: Convert to standard format
+- **Formatter function**: Display in user-friendly format
+
+### Pattern Detection Process
+
+1. Sample first 10-20 rows of data
+2. Test each value against pattern regexes
+3. Run validator functions for matched patterns
+4. Calculate match ratio and confidence
+5. Return best match with confidence score
+
+---
+
+## Integration with Existing Code
+
+### Integration with xlsx-helper.ts
+
+Enhance `detectHeaderRow()` function in `src/lib/xlsx-helper.ts`:
+- Add multi-factor scoring calculation
+- Include pattern detection in header analysis
+- Return confidence scores and candidate rows
+- Provide fallback when confidence is low
+
+### Integration with csv-validator.ts
+
+Enhance `mapCSVHeaders()` function:
+- Add intelligent mapping with pattern analysis
+- Expand `HEADER_MAP` with all synonyms
+- Use fuzzy matching for typos
+- Return confidence scores for each mapping
+
+### Recommended Enhancements
+
+1. **Add pattern detection**: Create `detectColumnPattern()` function
+2. **Expand knowledge base**: Add all synonyms to header mappings
+3. **Add validation feedback**: Show pattern detection results in UI
+4. **Highlight mismatches**: Alert when header name doesn't match data pattern
+
+---
+
+## Practical Examples
+
+### Example 1: Detecting Header in Spreadsheet with Metadata
+
+**Spreadsheet:**
+```
+Row 1: "Relatório de Alunos - 2024"
+Row 2: (empty)
+Row 3: "Nome" | "E-mail" | "Telefone" | "CPF"
+Row 4: "João Silva" | "joao@email.com" | "11999999999" | "123.456.789-00"
+```
+
+**Result:** Header detected at row 3, confidence 0.85
+
+**Mappings:**
+- "Nome" → `name` (0.95 confidence)
+- "E-mail" → `email` (0.90 confidence)
+- "Telefone" → `phone` (0.92 confidence)
+- "CPF" → `cpf` (0.88 confidence)
+
+### Example 2: Ambiguous Column Name
+
+**Column:** "Contato"
+
+**Analysis:**
+- Semantic: "contato" ≈ "telefone" (0.85)
+- Pattern: Phone numbers detected (0.90)
+- **Result:** Map to `phone` (0.82 total score)
+
+### Example 3: Type Detection by Pattern
+
+**Column:** "ID"  
+**Values:** "123.456.789-00", "987.654.321-00"
+
+**Analysis:**
+- Header suggests numeric ID
+- Pattern detects CPF format (0.95 confidence)
+- **Result:** Map to `cpf`, not numeric `id`
+
+### Example 4: Low Confidence - Multiple Suggestions
+
+**Column:** "Dados"
+
+**Suggestions:**
+1. `name` (0.45) - "Position suggests name field"
+2. `email` (0.35) - "Could be email if pattern matches"
+3. `_skip` (0.30) - "Unclear mapping"
+
+**Action:** Show dropdown with suggestions for user selection
+
+### Example 5: Regional Variations
+
+**Column:** "Móvel" (Portuguese for mobile/phone)
+
+**Analysis:**
+- Semantic: "móvel" = "celular" = "telefone" (0.88)
+- Pattern: Phone numbers (0.92)
+- **Result:** Map to `phone` (0.90 confidence)
+
+---
+
+## Best Practices Summary
+
+1. **Always use multi-factor analysis** - Don't rely on single method
+2. **Sample data for pattern detection** - Use first 10-20 rows, not all data
+3. **Provide fallbacks** - When confidence is low, show suggestions
+4. **Validate patterns** - Use domain-specific validators (CPF, CEP, etc.)
+5. **Normalize early** - Clean and normalize data during detection
+6. **User feedback** - Show confidence scores and reasoning
+7. **Learn from corrections** - Track user corrections to improve future mappings
+8. **Handle edge cases** - Empty rows, merged cells, multiple data blocks
+
+---
+
+## Performance Considerations
+
+- **Limit scanning**: Only scan first 15 rows for headers
+- **Sample data**: Use first 10-20 rows for pattern detection
+- **Cache results**: Store detection results to avoid re-computation
+- **Lazy evaluation**: Only analyze columns that need mapping
+- **Parallel processing**: Analyze multiple columns simultaneously if possible
