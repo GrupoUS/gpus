@@ -171,76 +171,70 @@ export const getChurnAlerts = query({
   args: {},
   handler: withQuerySecurity(
     async (ctx, _args: Record<string, never>, _security) => {
-    // Comment 4: Use churn-specific index and specific business logic
-    const ENGAGEMENT_WINDOW_DAYS = 30
-    const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
-    const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS
+      // Comment 4: Use churn-specific index and specific business logic
+      const ENGAGEMENT_WINDOW_DAYS = 30
+      const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+      const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS
 
-    // Use index for 'alto' and 'medio'
-    const highRiskStudents = await ctx.db
-      .query('students')
-      .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
-      .collect()
-
-    const mediumRiskStudents = await ctx.db
-      .query('students')
-      .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
-      .collect()
-
-    const students = [...highRiskStudents, ...mediumRiskStudents]
-
-    // Sort by lastEngagementAt ascending (most disengaged first) BEFORE limiting
-    // Treat undefined lastEngagementAt as very old (0)
-    students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
-
-    const alerts: Array<{ _id: any, studentName: string, reason: string, risk: 'alto' | 'medio' }> = []
-
-    // Pre-fetch enrollments for late payment check?
-    // To do this strictly per comment "update the query to leverage a churn-specific index... Also sort... before applying limit",
-    // we should process the sorted list.
-    // Limitation: To check payment status efficiently, we ideally batch too,
-    // but the loop below limits to 5 alerts returned, so we might process more candidates.
-
-    for (const student of students) {
-        if (alerts.length >= 5) break // Limit reached
-
-      // Verificar pagamento atrasado
-      // Note: N+1 here is less critical if we stop at 5, but still exists.
-      // Keeping loop logic as per legacy code but on sorted list.
-      const enrollments = await ctx.db
-        .query('enrollments')
-        .withIndex('by_student', q => q.eq('studentId', student._id))
+      // 1. Fetch High/Medium risk students
+      const highRiskStudents = await ctx.db
+        .query('students')
+        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
         .collect()
 
-      const hasLatePayment = enrollments.some(e => e.paymentStatus === 'atrasado')
+      const mediumRiskStudents = await ctx.db
+        .query('students')
+        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
+        .collect()
 
-      // Check logic: High risk if late payment
-      if (hasLatePayment) {
-        alerts.push({
-          _id: student._id,
-          studentName: student.name,
-          reason: 'Pagamento atrasado',
-          risk: 'alto', // Force alto for late payment? Legacy was: (student.churnRisk === 'baixo' ? 'medio' : student.churnRisk)
-          // But here we only iterate alto/medio students.
-          // Let's keep original risk mapping logic or respect current risk?
-          // Comment says "Keep the existing return shape".
-          // If the student is already 'alto', it stays 'alto'.
-        })
-        continue
+      const students = [...highRiskStudents, ...mediumRiskStudents]
+
+      // Sort by lastEngagementAt ascending (most disengaged first)
+      students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
+
+      // 2. Fetch ALL late enrollments (Batch Query)
+      // This avoids the N+1 query problem inside the loop
+      const lateEnrollments = await ctx.db
+        .query('enrollments')
+        .withIndex('by_payment', (q) => q.eq('paymentStatus', 'atrasado'))
+        .collect()
+
+      // Create a Set of student IDs with late payments for O(1) lookups
+      const studentsWithLatePayments = new Set(lateEnrollments.map((e) => e.studentId))
+
+      const alerts: Array<{
+        _id: any
+        studentName: string
+        reason: string
+        risk: 'alto' | 'medio'
+      }> = []
+
+      for (const student of students) {
+        if (alerts.length >= 5) break // Limit reached
+
+        // Check 1: Late Payment (using the pre-fetched Set)
+        if (studentsWithLatePayments.has(student._id)) {
+          alerts.push({
+            _id: student._id,
+            studentName: student.name,
+            reason: 'Pagamento atrasado',
+            risk: 'alto', // Force 'alto' for late payment
+          })
+          continue
+        }
+
+        // Check 2: Engagement (window check)
+        if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
+          alerts.push({
+            _id: student._id,
+            studentName: student.name,
+            reason: 'Sem engajamento',
+            risk: student.churnRisk as 'alto' | 'medio',
+          })
+        }
       }
 
-      // Verificar engajamento (window check)
-      if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
-        alerts.push({
-          _id: student._id,
-          studentName: student.name,
-          reason: 'Sem engajamento',
-          risk: student.churnRisk as 'alto' | 'medio',
-        })
-      }
-    }
-
-    return alerts
+      return alerts
     },
     {
       requireAuth: true,
