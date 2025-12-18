@@ -3,7 +3,7 @@ import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -63,7 +64,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 
 	const isEditMode = !!studentId;
 
-	const form = useForm({
+	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
@@ -79,21 +80,23 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 		},
 	});
 
-	// Load existing student data when editing
-	if (isEditMode && existingStudent && !form.formState.isDirty) {
-		form.reset({
-			name: existingStudent.name,
-			email: existingStudent.email,
-			phone: existingStudent.phone,
-			cpf: existingStudent.cpf || '',
-			profession: existingStudent.profession,
-			professionalId: existingStudent.professionalId || '',
-			hasClinic: existingStudent.hasClinic,
-			clinicName: existingStudent.clinicName || '',
-			clinicCity: existingStudent.clinicCity || '',
-			assignedCS: existingStudent.assignedCS || '',
-		});
-	}
+	// Use useEffect to load data instead of resetting during render to avoid #301 error
+	useEffect(() => {
+		if (isEditMode && existingStudent && !form.formState.isDirty) {
+			form.reset({
+				name: existingStudent.name,
+				email: existingStudent.email,
+				phone: existingStudent.phone,
+				cpf: existingStudent.cpf || '',
+				profession: existingStudent.profession,
+				professionalId: existingStudent.professionalId || '',
+				hasClinic: existingStudent.hasClinic,
+				clinicName: existingStudent.clinicName || '',
+				clinicCity: existingStudent.clinicCity || '',
+				assignedCS: existingStudent.assignedCS || '',
+			});
+		}
+	}, [isEditMode, existingStudent, form]);
 
 	const handleCreate = async (values: z.infer<typeof formSchema>) => {
 		await createStudent({
@@ -159,6 +162,11 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{isEditMode ? 'Editar Aluno' : 'Novo Aluno'}</DialogTitle>
+					<DialogDescription>
+						{isEditMode
+							? 'Atualize os dados cadastrais deste aluno.'
+							: 'Insira os dados para cadastrar um novo aluno no sistema.'}
+					</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>

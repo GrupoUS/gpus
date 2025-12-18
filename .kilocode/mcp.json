@@ -5,8 +5,7 @@
 			"args": ["@upstash/context7-mcp@latest"],
 			"env": {
 				"CONTEXT7_MAX_TOKENS": "10000",
-				"CONTEXT7_TIMEOUT": "15000",
-				"CONTEXT7_API_KEY": "ctx7sk-a19d606d-cbff-4dbf-a37a-c088118805a4"
+			"CONTEXT7_TIMEOUT": "15000"
 			},
 			"type": "stdio",
 			"fromGalleryId": "upstash.context7",
@@ -75,8 +74,7 @@
 			"command": "cmd",
 			"args": ["/c", "bunx", "@mcptools/mcp-tavily@latest"],
 			"env": {
-				"TAVILY_API_KEY": "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",
-				"TAVILY_MAX_RESULTS": "10",
+			"TAVILY_MAX_RESULTS": "10",
 				"TAVILY_SEARCH_DEPTH": "advanced",
 				"TAVILY_TIMEOUT": "30000",
 				"TAVILY_INCLUDE_IMAGES": "false",
