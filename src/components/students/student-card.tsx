@@ -40,8 +40,9 @@ function escapeRegExp(value: string) {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function Highlight({ text, term }: { text: string; term?: string }) {
-	if (!(term && text)) return <>{text}</>;
+function Highlight({ text, term }: { text?: string; term?: string }) {
+	if (!text) return null;
+	if (!term) return <>{text}</>;
 
 	// Defensive: user-controlled term is used for highlighting
 	const safeTerm = escapeRegExp(term.trim().slice(0, 100));
