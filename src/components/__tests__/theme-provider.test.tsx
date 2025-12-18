@@ -40,7 +40,7 @@ describe('ThemeProvider', () => {
 	});
 
 	it('uses stored theme from localStorage', () => {
-		localStorage.setItem('theme', 'light');
+		localStorage.setItem(STORAGE_KEY, 'light');
 		const { result } = renderHook(() => useTheme());
 		expect(result.current.theme).toBe('light');
 	});
@@ -51,11 +51,11 @@ describe('ThemeProvider', () => {
 			result.current.setTheme('dark');
 		});
 		expect(result.current.theme).toBe('dark');
-		expect(localStorage.getItem('theme')).toBe('dark');
+		expect(localStorage.getItem(STORAGE_KEY)).toBe('dark');
 	});
 
 	it('falls back to default theme for invalid stored values', () => {
-		localStorage.setItem('theme', 'invalid-theme');
+		localStorage.setItem(STORAGE_KEY, 'invalid-theme');
 		const { result } = renderHook(() => useTheme());
 		expect(result.current.theme).toBe('system');
 	});
