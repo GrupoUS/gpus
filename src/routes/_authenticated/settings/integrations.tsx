@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
+import { AutoSyncSettings } from '@/components/asaas/auto-sync-settings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -550,6 +551,10 @@ function IntegrationsSettingsPage() {
 								</ul>
 							</div>
 						</div>
+					</div>
+
+					<div className="mt-6 pt-6 border-t">
+						<AutoSyncSettings />
 					</div>
 				</CardContent>
 			</Card>

@@ -5,8 +5,8 @@
  */
 
 import { v } from 'convex/values'
-import { internalMutation, query } from '../_generated/server'
-import { api, internal } from '../_generated/api'
+import { internalMutation, mutation, query } from '../_generated/server'
+import { api } from '../_generated/api'
 import type { Doc } from '../_generated/dataModel'
 
 // ═══════════════════════════════════════════════════════
@@ -175,5 +175,96 @@ export const isSyncRunning = query({
 			.first()
 
 		return runningSync !== null
+	},
+})
+
+// ═══════════════════════════════════════════════════════
+// SYNC CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get auto sync configuration
+ */
+export const getAutoSyncConfig = query({
+	args: {},
+	handler: async (ctx) => {
+		const config = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
+			.first()
+
+		return (
+			config?.value || {
+				enabled: false,
+				intervalHours: 1,
+				updateExisting: true,
+			}
+		)
+	},
+})
+
+/**
+ * Save auto sync configuration (public mutation for frontend)
+ */
+export const saveAutoSyncConfig = mutation({
+	args: {
+		enabled: v.boolean(),
+		intervalHours: v.number(),
+		updateExisting: v.boolean(),
+	},
+	handler: async (ctx, args) => {
+		const existing = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
+			.first()
+
+		const value = {
+			enabled: args.enabled,
+			intervalHours: Math.max(1, args.intervalHours), // Minimum 1 hour
+			updateExisting: args.updateExisting,
+		}
+
+		if (existing) {
+			await ctx.db.patch(existing._id, {
+				value,
+				updatedAt: Date.now(),
+			})
+		} else {
+			await ctx.db.insert('settings', {
+				key: 'asaas_auto_sync_config',
+				value,
+				updatedAt: Date.now(),
+			})
+		}
+
+		return value
+	},
+})
+
+import { internalAction } from '../_generated/server'
+
+/**
+ * Run auto sync (called by cron)
+ */
+export const runAutoSyncCustomersAction = internalAction({
+	args: {},
+	handler: async (ctx) => {
+		// 1. Get config
+		// @ts-expect-error - Type instantiation may be deep due to Convex internals
+		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
+
+		if (!config.enabled) {
+			console.log('Asaas auto-sync is disabled, skipping.')
+			return { skipped: true }
+		}
+
+		console.log('Starting Asaas auto-sync...')
+
+		// 2. Call import action
+		await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
+			initiatedBy: 'system_auto_sync',
+		})
+
+		return { success: true }
 	},
 })

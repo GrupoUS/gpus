@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -30,6 +30,11 @@ export function AutoSyncSettings() {
 	const [updateExisting, setUpdateExisting] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 
+	// Generate unique IDs for form elements
+	const autoSyncId = useId();
+	const intervalId = useId();
+	const updateExistingId = useId();
+
 	// Initialize state from config
 	useEffect(() => {
 		if (config) {
@@ -48,7 +53,7 @@ export function AutoSyncSettings() {
 				updateExisting,
 			});
 			toast.success('Configurações de sincronização salvas');
-		} catch (error) {
+		} catch {
 			toast.error('Erro ao salvar configurações');
 		} finally {
 			setIsSaving(false);
@@ -76,19 +81,19 @@ export function AutoSyncSettings() {
 			</CardHeader>
 			<CardContent className="space-y-6">
 				<div className="flex items-center justify-between space-x-2">
-					<Label htmlFor="auto-sync" className="flex flex-col space-y-1">
+					<Label htmlFor={autoSyncId} className="flex flex-col space-y-1">
 						<span>Habilitar Sincronização Automática</span>
 						<span className="font-normal text-xs text-muted-foreground">
 							O sistema irá buscar novos alunos automaticamente.
 						</span>
 					</Label>
-					<Switch id="auto-sync" checked={enabled} onCheckedChange={setEnabled} />
+					<Switch id={autoSyncId} checked={enabled} onCheckedChange={setEnabled} />
 				</div>
 
 				<div className="grid gap-2">
-					<Label htmlFor="interval">Intervalo (horas)</Label>
+					<Label htmlFor={intervalId}>Intervalo (horas)</Label>
 					<Input
-						id="interval"
+						id={intervalId}
 						type="number"
 						min="1"
 						max="24"
@@ -103,14 +108,14 @@ export function AutoSyncSettings() {
 				</div>
 
 				<div className="flex items-center justify-between space-x-2">
-					<Label htmlFor="update-existing" className="flex flex-col space-y-1">
+					<Label htmlFor={updateExistingId} className="flex flex-col space-y-1">
 						<span>Atualizar Alunos Existentes</span>
 						<span className="font-normal text-xs text-muted-foreground">
 							Se ativado, dados de alunos já cadastrados serão atualizados.
 						</span>
 					</Label>
 					<Switch
-						id="update-existing"
+						id={updateExistingId}
 						checked={updateExisting}
 						onCheckedChange={setUpdateExisting}
 						disabled={!enabled}
