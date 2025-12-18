@@ -249,7 +249,6 @@ import { internalAction } from '../_generated/server'
 export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		// 1. Get config
 		// @ts-expect-error - Type instantiation may be deep due to Convex internals
 		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
 

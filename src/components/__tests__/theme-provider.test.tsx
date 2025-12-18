@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, render, renderHook, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ThemeProvider, useTheme } from '../theme-provider';
 
@@ -20,6 +20,11 @@ const TestComponent = () => {
 };
 
 describe('ThemeProvider', () => {
+	beforeEach(() => {
+		localStorage.clear();
+		document.documentElement.classList.remove('light', 'dark', 'system');
+	});
+
 	it('should use default theme when no storage value exists', () => {
 		const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider });
 		expect(result.current.theme).toBe('system');
@@ -47,7 +52,7 @@ describe('ThemeProvider', () => {
 
 	it('updates theme and storage when setTheme is called', () => {
 		render(
-			<ThemeProvider defaultTheme="light">
+			<ThemeProvider>
 				<TestComponent />
 			</ThemeProvider>,
 		);
@@ -71,16 +76,14 @@ describe('ThemeProvider', () => {
 		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
 	});
 
-	it('falls back to default theme for invalid stored values', () => {
-		// Simulate user with invalid/legacy preference (e.g., old 'system' value)
+	it('falls back to system theme for invalid stored values', () => {
+		// Simulate user with non-standard preference
 		localStorage.setItem(STORAGE_KEY, 'invalid-theme');
 		render(
 			<ThemeProvider>
 				<TestComponent />
 			</ThemeProvider>,
 		);
-		// Should use the stored value as-is (cast to Theme) - TypeScript handles type safety
-		// In practice, the DOM class will be applied regardless
-		expect(screen.getByTestId('theme-value')).toHaveTextContent('invalid-theme');
+		expect(screen.getByTestId('theme-value')).toHaveTextContent('system');
 	});
 });
