@@ -274,7 +274,8 @@ export default defineSchema({
     .index('by_student', ['studentId'])
     .index('by_product', ['product'])
     .index('by_status', ['status'])
-    .index('by_payment', ['paymentStatus']),
+    .index('by_payment', ['paymentStatus'])
+    .index('by_created', ['createdAt']),
 
   // ═══════════════════════════════════════════════════════
   // CONVERSAS (Chat)
@@ -329,7 +330,8 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_department', ['department'])
     .index('by_assigned', ['assignedTo'])
-    .index('by_last_message', ['lastMessageAt']),
+    .index('by_last_message', ['lastMessageAt'])
+    .index('by_created', ['createdAt']),
 
   // ═══════════════════════════════════════════════════════
   // MENSAGENS

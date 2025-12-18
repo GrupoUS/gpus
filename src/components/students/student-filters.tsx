@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -101,37 +101,9 @@ export function StudentFilters({
 					</SelectContent>
 				</Select>
 
-				{/* Expand/Collapse Actions */}
-				<div className="flex items-center gap-1 ml-auto border-l pl-3">
-					{onExpandAll && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={onExpandAll}
-							className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-							title="Expandir todos os grupos"
-						>
-							<ChevronDown className="h-3.5 w-3.5 mr-1" />
-							Expandir
-						</Button>
-					)}
-					{onCollapseAll && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={onCollapseAll}
-							className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-							title="Recolher todos os grupos"
-						>
-							<ChevronUp className="h-3.5 w-3.5 mr-1" />
-							Recolher
-						</Button>
-					)}
-				</div>
-
 				{/* Clear Filters */}
 				{hasFilters && (
-					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1 ml-2">
+					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1 ml-auto">
 						<X className="h-4 w-4" />
 						Limpar
 					</Button>
