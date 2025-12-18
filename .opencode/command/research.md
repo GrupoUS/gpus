@@ -17,6 +17,86 @@ Plan Agent → apresenta plano para aprovação
 Usuário aprova → Act Mode (/implement)
 ```
 
+## Task
+
+Follow this systematic approach to create a new feature: $ARGUMENTS
+
+1. **Feature Planning**
+   - Define the feature requirements and acceptance criteria
+   - Break down the feature into smaller, manageable tasks
+   - Identify affected components and potential impact areas
+   - Plan the API/interface design before implementation
+
+2. **Research and Analysis**
+   - Study existing codebase patterns and conventions
+   - Identify similar features for consistency
+   - Research external dependencies or libraries needed
+   - Review any relevant documentation or specifications
+
+3. **Architecture Design**
+   - Design the feature architecture and data flow
+   - Plan database schema changes if needed
+   - Define API endpoints and contracts
+   - Consider scalability and performance implications
+   - Ensure development environment is up to date
+   - Install any new dependencies required
+
+4. **Implementation Strategy**
+   - Start with core functionality and build incrementally
+   - Follow the project's coding standards and patterns
+   - Implement proper error handling and validation
+   - Use dependency injection and maintain loose coupling
+
+5. **Database Changes (if applicable)**
+   - Create migration scripts for schema changes
+   - Ensure backward compatibility
+   - Plan for rollback scenarios
+   - Test migrations on sample data
+
+6. **API Development**
+   - Implement API endpoints with proper HTTP status codes
+   - Add request/response validation
+   - Implement proper authentication and authorization
+   - Document API contracts and examples
+
+7. **Frontend Implementation (if applicable)**
+   - Create reusable components following project patterns
+   - Implement responsive design and accessibility
+   - Add proper state management
+   - Handle loading and error states
+
+8. **Testing Implementation**
+   - Write unit tests for core business logic
+   - Create integration tests for API endpoints
+   - Add end-to-end tests for user workflows
+   - Test error scenarios and edge cases
+
+9. **Security Considerations**
+    - Implement proper input validation and sanitization
+    - Add authorization checks for sensitive operations
+    - Review for common security vulnerabilities
+    - Ensure data protection and privacy compliance
+
+10. **Performance Optimization**
+    - Optimize database queries and indexes
+    - Implement caching where appropriate
+    - Monitor memory usage and optimize algorithms
+    - Consider lazy loading and pagination
+
+11. **Documentation**
+    - Add inline code documentation and comments
+    - Update API documentation
+    - Create user documentation if needed
+    - Update project README if applicable
+
+12. **Code Review Preparation**
+    - Run all tests and ensure they pass
+    - Run linting and formatting tools
+    - Check for code coverage and quality metrics
+    - Perform self-review of the changes
+
+Remember to maintain code quality, follow project conventions, and prioritize user experience throughout the development process.
+
 ---
 
 ## Step 1: Invocar o subagent de pesquisa

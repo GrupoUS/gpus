@@ -5,6 +5,22 @@ agent: apex-dev
 
 # /implement | /implementar
 
+## Ultra-Think Protocol (UTP)
+
+Use this protocol to reduce risk and avoid unnecessary code/changes:
+
+1. **Re-read the task** and its acceptance criteria.
+2. **Search for existing patterns** before creating anything new.
+3. **Prefer extension over creation** (KISS/YAGNI).
+4. **Define invariants** (what must not change) and **postconditions** (what must be true after).
+5. **Validate early** (lint/build/tests) and rollback on failure.
+
+UTP is mandatory at:
+- **Step 3** (ordering/grouping decisions)
+- **Step 4** (per-task execution decisions)
+
+---
+
 Execute the approved implementation plan from TodoWrite.
 
 ## Trigger
@@ -14,9 +30,63 @@ Execute the approved implementation plan from TodoWrite.
 
 ---
 
+## Input Contract
+
+Required inputs for a correct `/implement` run:
+
+1. **TodoWrite state** created by `/research` (tasks `AT-*` and validations `VT-*`).
+2. **Constitution** at `.opencode/memory/constitution.md`.
+3. **Spec artifacts** (optional but recommended) under `.opencode/specs/[feature-id]/`.
+4. **Repository context**: Bun runtime, TypeScript strict, Biome config, and test runner available.
+
+### Expected TodoWrite format (from `/research`)
+
+TodoWrite items are expected to follow this shape (IDs are examples):
+
+```js
+// Base tasks
+{ id: 'AT-001', content: '[AT-001] Create directory structure | Phase: 1 | Files: src/x.ts', status: 'pending', priority: 'high' }
+
+// Subtasks: immediately after parent
+{ id: 'AT-001-A', content: '  ↳ [AT-001-A] Subtask description', status: 'pending', priority: 'high' }
+
+// Validation tasks: placed at the end
+{ id: 'VT-001', content: '[VT-001] Build validation: bun run build', status: 'pending', priority: 'high' }
+```
+
+If any required input is missing, `/implement` MUST stop and request remediation.
+
+---
+
+## Optimized Architecture
+
+```mermaid
+flowchart LR
+  A[Plan Mode: /research] --> B[TodoWrite: AT-* + VT-*]
+  B --> C[Act Mode: /implement]
+
+  C --> D[@apex-dev: task runner]
+  D --> E{Delegation?}
+  E -->|convex/*| F[@database-specialist]
+  E -->|src/components/*| G[@apex-ui-ux-designer]
+  E -->|security/compliance| H[@code-reviewer]
+  E -->|default| D
+
+  D --> I[Phase checkpoints\n(lint/build/test)]
+  I --> J[Completion report]
+```
+
+---
+
 ## Step 1: Load TodoWrite Tasks
 
 Parse TodoWrite tasks created by `/research`:
+
+### 1.2 Execution Mode
+
+Mode: `one_shot_proactive`
+
+> This mode is optimized for approved, deterministic execution. If required inputs or constitution checks fail, stop early and request remediation.
 
 ```yaml
 todowrite_parsing:
@@ -29,21 +99,58 @@ todowrite_parsing:
     - priority: "high | medium | low"
 
   parse_metadata:
+    # Expected format (created by /research via apex-researcher):
+    # "[AT-001] Title | Phase: 3 | Files: src/x.ts" + optional fields
+    # Subtasks are written as: "  ↳ [AT-001-A] Subtask description"
     from_content: "[ID] Title | Phase: N | Files: paths"
     extract:
       - phase: "[1-5] from Phase: N"
-      - parallel_group: "[A|B|C|null] from parallel group marker"
-      - files_affected: "Array of file paths"
-      - dependencies: "Array of task IDs this depends on"
-      - test_strategy: "unit | integration | e2e | none"
-      - rollback_strategy: "Command to undo changes"
+      - parallel_group: "[A|B|C|null] when present"
+      - files_affected: "Array of file paths (from Files: ...)"
+      - dependencies: "Array of task IDs this depends on (when present)"
+      - test_strategy: "unit | integration | e2e | none (when present)"
+      - rollback_strategy: "How to undo (when present)"
+```
+
+### 1.3 Validate Preconditions
+
+Before doing ANY work (including task ordering), validate preconditions.
+
+**Preconditions**:
+- Bun is available and is the package manager used for this run.
+- Repo is present and readable.
+- TodoWrite contains at least one `pending` task.
+- `.opencode/memory/constitution.md` exists.
+- If the plan references spec artifacts, they exist under `.opencode/specs/[feature-id]/`.
+
+```mermaid
+flowchart TD
+  S([Start /implement]) --> P{Bun available?}
+  P -->|No| X1[Stop: install/configure Bun]
+  P -->|Yes| T{TodoWrite has pending tasks?}
+  T -->|No| X2[Stop: run /research or update TodoWrite]
+  T -->|Yes| C{Constitution exists?}
+  C -->|No| X3[Stop: create/restore constitution.md]
+  C -->|Yes| O{Spec required by plan?}
+  O -->|Yes| S2{Spec artifacts exist?}
+  S2 -->|No| X4[Stop: create/restore spec artifacts]
+  S2 -->|Yes| OK([Proceed])
+  O -->|No| OK
 ```
 
 ---
 
 ## Step 2: Load Context
 
-### 2.1 Load Constitution
+### 2.1 Load Constitution (Active Validation)
+
+Load and validate the execution against `.opencode/memory/constitution.md`.
+
+Rules are not informational — they are **active gates**:
+
+- If a task violates the constitution, `/implement` MUST block that task.
+- If a violation is fixable, add or request a remediation task.
+- If compliance is triggered (LGPD/security/auth), ensure `@code-reviewer` review is executed before completion.
 
 ```yaml
 constitution_context:
@@ -83,6 +190,8 @@ spec_context:
 
 ## Step 3: Order and Group Tasks
 
+Apply **Ultra-Think Protocol (UTP)** here to avoid unnecessary work and to ensure safe ordering.
+
 ### 3.1 Phase-Based Ordering
 
 Group tasks by phase (1→5) and resolve dependencies:
@@ -117,16 +226,42 @@ phase_ordering:
       activities: ["optimization", "cleanup", "docs", "accessibility"]
 ```
 
-### 3.2 Parallel Group Batching
+### 3.2 Parallel Group Batching (`parallel_tool_calling`) + Decision Table
 
-Identify tasks that can run concurrently:
+Safe parallelization is optional and MUST follow UTP + constitution constraints.
+
+**Strategy**: `parallel_tool_calling`
+- Only parallelize tasks that are *provably independent*.
+- Default to sequential if there is any uncertainty.
+
+**Hard limits** (to reduce risk):
+- Max parallel tasks per batch: **2**
+- Never parallelize if *any* task in the batch touches:
+  - auth/security/LGPD surfaces
+  - schema/config files (e.g., `convex/schema.ts`, `vite.config.ts`)
+  - generated files
+
+**Rules**:
+- Tasks with the same `parallel_group` MAY run concurrently.
+- Tasks in the same parallel group MUST NOT modify the same files.
+- `parallel_group = null` is always sequential.
+- Dependencies always override parallelization.
+- If compliance/security is triggered, force sequential + require `@code-reviewer` before completion.
+
+**Decision table**:
+
+| Condition | Example | Can run in parallel? | Notes |
+|---|---|---:|---|
+| Same `parallel_group` AND no shared files AND no unmet dependencies | AT-003 + AT-004 both group A, distinct files | Yes | Preferred case |
+| Same `parallel_group` BUT shared files | both touch `convex/schema.ts` | No | Force sequential |
+| Different `parallel_group` | group A vs B | Only if phases/deps allow | Default: keep sequential |
+| Any unmet dependency | AT-005 depends on AT-004 | No | Wait for dependency |
+| Any constitution gate uncertain (security/auth/LGPD) | auth changes | No | Run sequential + require review |
 
 ```yaml
 parallel_batching:
-  rules:
-    - "Tasks with same parallel_group can run in parallel"
-    - "Tasks in same group MUST NOT modify same files"
-    - "null parallel_group = sequential execution"
+  strategy: "parallel_tool_calling"
+  max_parallel: 2
 
   example:
     batch_A:  # Concurrent execution
@@ -140,6 +275,8 @@ parallel_batching:
 ---
 
 ## Step 4: Invoke @apex-dev with Delegation
+
+Apply **Ultra-Think Protocol (UTP)** before delegating and before implementing each task.
 
 ### 4.1 Delegation Rules
 
@@ -224,6 +361,58 @@ task_execution:
     action: "Run acceptance criteria checks"
     on_pass: "Mark 'completed'"
     on_fail: "Execute rollback, mark 'failed'"
+```
+
+### 4.4 Postconditions (Validation + Commands + Sequence Diagram)
+
+Each task MUST end in a validated postcondition.
+
+**Validation commands (task-level)**:
+- `bun run lint:check` (Biome)
+- `bun run build` (TypeScript + build)
+- `bun run test` (Vitest)
+
+> Note: you may scope validations (e.g., tests only) during development for speed, but **a phase checkpoint MUST run the full required commands**.
+
+**Postconditions**:
+- Task status is one of: `completed` or `failed` (never left `in_progress`).
+- If completed: acceptance criteria satisfied AND constitution gates still pass.
+- If failed: rollback executed AND failure reason recorded.
+- Phase checkpoint is executed at phase boundary.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant R as /implement runner
+  participant TD as TodoWrite
+  participant AD as @apex-dev
+  participant DS as @database-specialist
+  participant UX as @apex-ui-ux-designer
+  participant CR as @code-reviewer
+  participant V as Validation (lint/build/test)
+
+  R->>TD: Read pending tasks
+  R->>AD: Start next task (UTP applied)
+  AD->>TD: Mark in_progress
+
+  alt Delegation needed
+    AD->>DS: Implement Convex task
+    DS-->>AD: Changes ready
+  else UI task
+    AD->>UX: Implement UI task
+    UX-->>AD: Changes ready
+  else Security/compliance validation
+    AD->>CR: Review (read-only)
+    CR-->>AD: Findings / approval
+  end
+
+  AD->>V: Run validations (phase/task scoped)
+  alt Validation PASS
+    AD->>TD: Mark completed
+  else Validation FAIL
+    AD->>AD: Execute rollback strategy
+    AD->>TD: Mark failed + log reason
+  end
 ```
 
 ---
@@ -320,48 +509,29 @@ rollback_execution:
 
 ---
 
-## Step 7: Generate Completion Report
+## Step 7: Completion Report (Simplified)
 
-After all phases complete (or on halt), generate summary:
+After all phases complete (or on halt), output a concise summary:
 
-```yaml
-completion_report:
-  format: |
-    ---
-    ## ✅ Implementation Complete: [Feature Name]
+```md
+---
+## /implement concluído: [Feature Name]
 
-    ### Task Summary
-    | Phase | Total | Completed | Failed | Skipped |
-    |-------|-------|-----------|--------|---------|
-    | 1 Setup | X | Y | Z | W |
-    | 2 Tests | X | Y | Z | W |
-    | 3 Core | X | Y | Z | W |
-    | 4 Integration | X | Y | Z | W |
-    | 5 Polish | X | Y | Z | W |
+### Resultado
+- Build: PASS/FAIL
+- Lint: PASS/FAIL
+- Tests: PASS/FAIL (coverage: opcional)
 
-    ### Validation Results
-    | Check | Status | Details |
-    |-------|--------|---------|
-    | Build | ✅/❌ | [output] |
-    | Lint | ✅/❌ | [output] |
-    | Tests | ✅/❌ | [coverage]% |
+### Execução
+- Tasks: total X | completed Y | failed Z | skipped W
 
-    ### Files Changed
-    - [list of modified files]
+### Mudanças
+- Arquivos alterados: [lista]
+- Rollbacks executados: [lista ou "nenhum"]
 
-    ### Rollbacks Executed
-    - [list of rollbacks if any]
-
-    ### Next Steps
-    - [recommendations based on outcome]
-    ---
-
-  include:
-    - "Task completion counts by phase"
-    - "Validation command outputs"
-    - "Files created/modified"
-    - "Rollbacks executed (if any)"
-    - "Recommendations for next steps"
+### Próximos passos
+- [1-3 bullets]
+---
 ```
 
 ---
@@ -387,34 +557,34 @@ Loading TodoWrite [10 tasks]...
 Loading context [constitution.md, spec.md]...
 
 Phase 1 (Setup): 2 tasks
-  ✓ AT-001: Create directory structure
-  ✓ AT-002: Add dependencies
-  ✓ Checkpoint: bun install && bun run build → PASS
+  - AT-001: Create directory structure
+  - AT-002: Add dependencies
+  - Checkpoint: bun install && bun run build → PASS
 
 Phase 2 (Tests): 3 tasks
-  ✓ AT-003: Write mutation tests (parallel A)
-  ✓ AT-004: Write UI tests (parallel A)
-  ✓ AT-005: Create test fixtures
-  ✓ Checkpoint: bun run test --run → PASS
+  - AT-003: Write mutation tests (parallel A)
+  - AT-004: Write UI tests (parallel A)
+  - AT-005: Create test fixtures
+  - Checkpoint: bun run test --run → PASS
 
 Phase 3 (Core): 3 tasks
-  ✓ AT-006: Implement mutation [@database-specialist]
-  ✓ AT-007: Create component [@apex-ui-ux-designer]
-  ✓ AT-008: Add hook [@apex-dev]
-  ✓ Checkpoint: bun run build && lint && test → PASS
+  - AT-006: Implement mutation [@database-specialist]
+  - AT-007: Create component [@apex-ui-ux-designer]
+  - AT-008: Add hook [@apex-dev]
+  - Checkpoint: bun run build && bun run lint:check && bun run test → PASS
 
 Phase 4 (Integration): 1 task
-  ✓ AT-009: Wire to route [@apex-dev]
-  ✓ Checkpoint: bun run build && lint && test → PASS
+  - AT-009: Wire to route [@apex-dev]
+  - Checkpoint: bun run build && bun run lint:check && bun run test → PASS
 
 Phase 5 (Polish): 1 task
-  ✓ AT-010: Add documentation [@apex-dev]
-  ✓ Checkpoint: bun run build && lint && test:coverage → PASS
+  - AT-010: Add documentation [@apex-dev]
+  - Checkpoint: bun run build && bun run lint:check && bun run test:coverage → PASS
 
 Validation Tasks:
-  ✓ VT-001: Build validation
-  ✓ VT-002: Lint check
-  ✓ VT-003: Test suite
+  - VT-001: Build validation
+  - VT-002: Lint check
+  - VT-003: Test suite
 
-✅ Implementation Complete: 10/10 tasks successful
+Implementation Complete: 10/10 tasks successful
 ```

@@ -1,7 +1,7 @@
 ---
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise
 mode: subagent
-model: github-copilot/gpt-5.2
+model: openai/gpt-5.2-xhigh
 temperature: 0.2
 tools:
   write: true

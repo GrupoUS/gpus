@@ -62,16 +62,6 @@ Use these **only for research** (not implementation):
 | L5–L7 | multi-file feature/pattern | 3–6 | 2–4 each |
 | L8–L10 | LGPD/audit/migration/system-wide | 6–10 | 3–5 each |
 
-## Brazilian compliance auto-activation
-
-If you detect any of these, treat as **LGPD-sensitive** and delegate to `@code-reviewer`:
-
-- `aluno`, `estudante`, `matrícula`, `CPF`, `dados pessoais`, `consentimento`
-- `saúde estética`, `ANVISA`
-- `PIX`, `pagamento`, `cobrança`
-
-Add `VT-004` security review in `validation_tasks` when compliance is triggered.
-
 ## Output Contract (MANDATORY)
 
 Return a single YAML object with this structure:

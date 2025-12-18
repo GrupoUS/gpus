@@ -1,13 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 
-import { StudentCard } from '@/components/students/student-card';
+import { ProductSection } from '@/components/students/product-section';
+import { ProductSectionSkeleton } from '@/components/students/product-section-skeleton';
 import { StudentFilters } from '@/components/students/student-filters';
 import { StudentHeader } from '@/components/students/student-header';
 import { StudentStats } from '@/components/students/student-stats';
 import { StudentsTable } from '@/components/students/student-table';
 import { Button } from '@/components/ui/button';
 import { useStudentsViewModel } from '@/hooks/use-students-view-model';
+import { productLabels } from '@/lib/constants';
 
 export const Route = createFileRoute('/_authenticated/students')({
 	validateSearch: (search: Record<string, unknown>) => {
@@ -33,6 +35,8 @@ function StudentsPage() {
 		page,
 		students,
 		paginatedStudents,
+		groupedStudents,
+		expandedSections,
 		totalStudents,
 		activeStudents,
 		highRiskStudents,
@@ -40,21 +44,19 @@ function StudentsPage() {
 		clearFilters,
 		handleFilterChange,
 		navigateToStudent,
+		toggleSection,
+		expandAll,
+		collapseAll,
 		navigate,
 		PAGE_SIZE,
 	} = useStudentsViewModel(Route);
 
+	const productKeys = [...Object.keys(productLabels), 'sem_produto'];
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
-			<StudentHeader
-				view={view as 'grid' | 'table'}
-				search={search}
-				status={status}
-				churnRisk={churnRisk}
-				product={product}
-				page={page}
-			/>
+			<StudentHeader />
 
 			{/* Stats Cards */}
 			<StudentStats
@@ -74,13 +76,15 @@ function StudentsPage() {
 				product={product || 'all'}
 				onProductChange={(v) => handleFilterChange('product', v)}
 				onClear={clearFilters}
+				onExpandAll={expandAll}
+				onCollapseAll={collapseAll}
 			/>
 
 			{/* Students List */}
 			{!students ? (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{[1, 2, 3, 4, 5, 6].map((i) => (
-						<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+				<div className="space-y-4">
+					{[1, 2].map((i) => (
+						<ProductSectionSkeleton key={i} />
 					))}
 				</div>
 			) : students.length === 0 ? (
@@ -93,21 +97,31 @@ function StudentsPage() {
 				/* Table View */
 				<StudentsTable students={paginatedStudents} onStudentClick={navigateToStudent} />
 			) : (
-				/* Grid View */
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{paginatedStudents.map((student) => (
-						<StudentCard
-							key={student._id}
-							student={student}
-							onClick={() => navigateToStudent(student._id)}
-						/>
-					))}
+				/* Grid View (Product Sections) */
+				<div className="space-y-2">
+					{productKeys.map((productId) => {
+						const groupStudents = groupedStudents[productId];
+						if (!groupStudents || groupStudents.length === 0) return null;
+
+						return (
+							<ProductSection
+								key={productId}
+								productId={productId}
+								count={groupStudents.length}
+								isExpanded={!!expandedSections[productId]}
+								onToggle={() => toggleSection(productId)}
+								students={groupStudents}
+								onStudentClick={navigateToStudent}
+								searchTerm={search}
+							/>
+						);
+					})}
 				</div>
 			)}
 
 			{/* Pagination */}
 			{students && students.length > PAGE_SIZE && (
-				<div className="flex items-center justify-between">
+				<div className="flex items-center justify-between pt-4 border-t">
 					<p className="text-sm text-muted-foreground">
 						Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalStudents)} de{' '}
 						{totalStudents} alunos

@@ -1,7 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
-model: github-copilot/gpt-5.2
+model: openai/gpt-5.2-xhigh
 temperature: 0.2
 tools:
   write: true

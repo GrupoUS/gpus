@@ -1,7 +1,7 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: github-copilot/gpt-5.2
+model: openai/gpt-5.2-xhigh
 temperature: 0.1
 tools:
   write: false
