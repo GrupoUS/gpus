@@ -1,87 +1,10 @@
 {
-	"mcpServers": {
-		"context7": {
-			"command": "bunx",
-			"args": ["@upstash/context7-mcp@latest"],
-			"env": {
-				"CONTEXT7_MAX_TOKENS": "10000",
-			"CONTEXT7_TIMEOUT": "15000"
-			},
-			"type": "stdio",
-			"fromGalleryId": "upstash.context7",
-			"alwaysAllow": ["resolve-library-id"]
-		},
-		"sequential-thinking": {
-			"command": "bunx",
-			"args": ["@modelcontextprotocol/server-sequential-thinking"],
-			"env": {
-				"DISABLE_THOUGHT_LOGGING": "false",
-				"SEQUENTIAL_THINKING_MAX_TOKENS": "16000",
-				"SEQUENTIAL_THINKING_THOUGHTS_TO_KEEP": "10",
-				"SEQUENTIAL_THINKING_TIMEOUT": "15000"
-			},
-			"type": "stdio",
-			"fromGalleryId": "modelcontextprotocol.servers_sequentialthinking",
-			"alwaysAllow": ["sequentialthinking"]
-		},
-		"serena": {
-			"command": "uvx",
-			"args": [
-				"--from",
-				"git+https://github.com/oraios/serena",
-				"serena",
-				"start-mcp-server",
-				"--context",
-				"ide-assistant",
-				"--project",
-				"D:\\\\Coders\\\\aegiswallet"
-			],
-			"type": "stdio",
-			"alwaysAllow": [
-				"list_dir",
-				"find_file",
-				"search_for_pattern",
-				"get_symbols_overview",
-				"find_symbol",
-				"find_referencing_symbols",
-				"replace_symbol_body",
-				"insert_after_symbol",
-				"insert_before_symbol",
-				"write_memory",
-				"read_memory",
-				"list_memories",
-				"think_about_collected_information",
-				"think_about_task_adherence",
-				"think_about_whether_you_are_done",
-				"edit_memory",
-				"check_onboarding_performed",
-				"onboarding",
-				"delete_memory",
-				"initial_instructions"
-			],
-			"disabledTools": [
-				"replace_symbol_body",
-				"insert_after_symbol",
-				"insert_before_symbol",
-				"rename_symbol",
-				"delete_memory",
-				"check_onboarding_performed",
-				"onboarding",
-				"initial_instructions"
-			]
-		},
-		"tavily": {
-			"command": "cmd",
-			"args": ["/c", "bunx", "@mcptools/mcp-tavily@latest"],
-			"env": {
-			"TAVILY_MAX_RESULTS": "10",
-				"TAVILY_SEARCH_DEPTH": "advanced",
-				"TAVILY_TIMEOUT": "30000",
-				"TAVILY_INCLUDE_IMAGES": "false",
-				"TAVILY_INCLUDE_RAW_CONTENT": "true"
-			},
-			"type": "stdio",
-			"alwaysAllow": ["search", "searchContext", "searchQNA", "extract"]
-		}
-	}
+  "mcpServers": {
+    "context7": {
+      "type": "streamable-http",
+      "url": "https://mcp.context7.com/mcp",
+      "alwaysAllow": [],
+      "disabled": false
+    }
+  }
 }

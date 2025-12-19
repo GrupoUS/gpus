@@ -19,6 +19,9 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { AutoSyncSettings } from '@/components/asaas/auto-sync-settings';
+import { SyncControls } from '@/components/asaas/sync-controls';
+import { SyncHistory } from '@/components/asaas/sync-history';
+import { WebhookConfig } from '@/components/asaas/webhook-config';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +42,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useIntegrationSettings } from '@/hooks/useIntegrationSettings';
 
 export const Route = createFileRoute('/_authenticated/settings/integrations')({
@@ -553,8 +557,24 @@ function IntegrationsSettingsPage() {
 						</div>
 					</div>
 
-					<div className="mt-6 pt-6 border-t">
+					<div className="mt-6 pt-6 border-t space-y-6">
+						{/* Manual Sync Controls */}
+						<SyncControls />
+
+						<Separator />
+
+						{/* Webhook Configuration */}
+						<WebhookConfig />
+
+						<Separator />
+
+						{/* Auto Sync Settings */}
 						<AutoSyncSettings />
+
+						<Separator />
+
+						{/* Sync History */}
+						<SyncHistory />
 					</div>
 				</CardContent>
 			</Card>

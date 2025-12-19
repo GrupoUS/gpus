@@ -20,15 +20,21 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const VALID_THEMES: Theme[] = ['dark', 'light', 'system'];
+
 export function ThemeProvider({
 	children,
 	defaultTheme = 'system',
 	storageKey = 'vite-ui-theme',
 	...props
 }: ThemeProviderProps) {
-	const [theme, setTheme] = useState<Theme>(
-		() => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
-	);
+	const [theme, setTheme] = useState<Theme>(() => {
+		const stored = localStorage.getItem(storageKey) as Theme | null;
+		if (stored && VALID_THEMES.includes(stored)) {
+			return stored;
+		}
+		return defaultTheme;
+	});
 
 	useEffect(() => {
 		const root = window.document.documentElement;

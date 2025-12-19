@@ -197,6 +197,157 @@ export const getFinancialSummary = query({
 	},
 })
 
+/**
+ * Get monthly financial summary with breakdown
+ */
+export const getMonthlyFinancialSummary = query({
+	args: {
+		month: v.number(), // 0-11
+		year: v.number(),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const startOfMonth = new Date(args.year, args.month, 1).getTime()
+		const endOfMonth = new Date(args.year, args.month + 1, 0, 23, 59, 59, 999).getTime()
+		const now = Date.now()
+
+		const allPayments = await ctx.db.query('asaasPayments').collect()
+
+		// Pending this month: PENDING + dueDate in current month
+		const pendingThisMonth = allPayments.filter(
+			(p) => p.status === 'PENDING' && p.dueDate >= startOfMonth && p.dueDate <= endOfMonth,
+		)
+
+		// Paid this month: RECEIVED/CONFIRMED + confirmedDate in current month
+		const paidThisMonth = allPayments.filter(
+			(p) =>
+				(p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+				p.confirmedDate &&
+				p.confirmedDate >= startOfMonth &&
+				p.confirmedDate <= endOfMonth,
+		)
+
+		// Overdue: OVERDUE status OR (PENDING + dueDate < now)
+		const overdue = allPayments.filter(
+			(p) => p.status === 'OVERDUE' || (p.status === 'PENDING' && p.dueDate < now),
+		)
+
+		// Future projection: PENDING payments for next 3 months
+		const futureMonths = [1, 2, 3].map((offset) => {
+			const futureStart = new Date(args.year, args.month + offset, 1).getTime()
+			const futureEnd = new Date(args.year, args.month + offset + 1, 0, 23, 59, 59, 999).getTime()
+
+			const monthPayments = allPayments.filter(
+				(p) => p.status === 'PENDING' && p.dueDate >= futureStart && p.dueDate <= futureEnd,
+			)
+
+			const monthDate = new Date(args.year, args.month + offset, 1)
+			return {
+				month: monthDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }),
+				amount: monthPayments.reduce((sum, p) => sum + p.value, 0),
+				count: monthPayments.length,
+			}
+		})
+
+		return {
+			pendingThisMonth: pendingThisMonth.reduce((sum, p) => sum + p.value, 0),
+			pendingCount: pendingThisMonth.length,
+			paidThisMonth: paidThisMonth.reduce((sum, p) => sum + (p.netValue || p.value), 0),
+			paidCount: paidThisMonth.length,
+			overdueTotal: overdue.reduce((sum, p) => sum + p.value, 0),
+			overdueCount: overdue.length,
+			futureProjection: futureMonths,
+		}
+	},
+})
+
+/**
+ * Get payments by date range with optional status filter
+ */
+export const getPaymentsByDateRange = query({
+	args: {
+		startDate: v.number(),
+		endDate: v.number(),
+		status: v.optional(v.string()),
+		limit: v.optional(v.number()),
+		offset: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		let payments = await ctx.db.query('asaasPayments').collect()
+
+		// Filter by date range
+		payments = payments.filter((p) => p.dueDate >= args.startDate && p.dueDate <= args.endDate)
+
+		// Filter by status if provided
+		if (args.status) {
+			payments = payments.filter((p) => p.status === args.status)
+		}
+
+		// Sort by due date ascending
+		payments.sort((a, b) => a.dueDate - b.dueDate)
+
+		// Apply pagination
+		const limit = args.limit || 50
+		const offset = args.offset || 0
+		const paginated = payments.slice(offset, offset + limit)
+
+		return {
+			payments: paginated,
+			total: payments.length,
+			hasMore: offset + limit < payments.length,
+		}
+	},
+})
+
+/**
+ * Get payments grouped by due date for calendar view
+ */
+export const getPaymentsDueDates = query({
+	args: {
+		month: v.number(),
+		year: v.number(),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const startOfMonth = new Date(args.year, args.month, 1).getTime()
+		const endOfMonth = new Date(args.year, args.month + 1, 0, 23, 59, 59, 999).getTime()
+
+		const payments = await ctx.db.query('asaasPayments').collect()
+
+		const monthPayments = payments.filter(
+			(p) => p.dueDate >= startOfMonth && p.dueDate <= endOfMonth,
+		)
+
+		// Group by date
+		const grouped: Record<string, typeof payments> = {}
+		for (const payment of monthPayments) {
+			const dateKey = new Date(payment.dueDate).toISOString().split('T')[0]
+			if (!grouped[dateKey]) grouped[dateKey] = []
+			grouped[dateKey].push(payment)
+		}
+
+		return Object.entries(grouped).map(([date, datePayments]) => ({
+			date,
+			payments: datePayments,
+			totals: {
+				pending: datePayments
+					.filter((p) => p.status === 'PENDING')
+					.reduce((s, p) => s + p.value, 0),
+				paid: datePayments
+					.filter((p) => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+					.reduce((s, p) => s + p.value, 0),
+				overdue: datePayments
+					.filter((p) => p.status === 'OVERDUE')
+					.reduce((s, p) => s + p.value, 0),
+			},
+		}))
+	},
+})
+
 // ═══════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 "use action";
 
 import { action } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAsaasClient } from "../lib/asaas";
 
@@ -243,9 +243,31 @@ export const importCustomersFromAsaas = action({
           try {
             // Check if student exists with this asaasCustomerId
             // @ts-ignore
-            const existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
+            let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
               asaasCustomerId: customer.id,
             });
+
+            // Deduplication Logic: If not found by ID, try to find by Email or CPF
+            if (!existingStudent) {
+              // @ts-ignore
+              const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
+                email: customer.email,
+                cpf: customer.cpfCnpj
+              });
+
+              if (duplicate) {
+               console.log(`Matched existing student ${duplicate._id} by Email/CPF. Linking Asaas ID ${customer.id}`);
+               // Link the found student to this Asaas Customer ID
+               // @ts-ignore
+               await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+                 studentId: duplicate._id,
+                 asaasCustomerId: customer.id,
+               });
+
+               // Use this student for further updates
+               existingStudent = duplicate;
+              }
+            }
 
             if (existingStudent) {
               // Update existing student
@@ -661,5 +683,56 @@ export const syncFinancialDataFromAsaas = action({
 
       throw error;
     }
+  },
+});
+
+// Type for import results
+interface ImportResult {
+  success: boolean;
+  recordsProcessed: number;
+  recordsCreated: number;
+  recordsUpdated: number;
+  recordsFailed: number;
+}
+
+interface CombinedImportResult {
+  success: boolean;
+  customers: ImportResult | null;
+  payments: ImportResult | null;
+}
+
+/**
+ * Import customers AND payments from Asaas (combined operation)
+ */
+export const importAllFromAsaas = action({
+  args: {
+    initiatedBy: v.string(),
+  },
+  handler: async (ctx, args): Promise<CombinedImportResult> => {
+    // Step 1: Import customers
+    // @ts-ignore - TypeScript has issues with deep type inference in Convex actions
+    const customersResult = (await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
+      initiatedBy: args.initiatedBy,
+    })) as ImportResult;
+
+    // Step 2: Import payments (only if customers succeeded)
+    if (customersResult.success) {
+      // @ts-ignore - TypeScript has issues with deep type inference in Convex actions
+      const paymentsResult = (await ctx.runAction(api.asaas.actions.importPaymentsFromAsaas, {
+        initiatedBy: args.initiatedBy,
+      })) as ImportResult;
+
+      return {
+        success: true,
+        customers: customersResult,
+        payments: paymentsResult,
+      };
+    }
+
+    return {
+      success: false,
+      customers: customersResult,
+      payments: null
+    };
   },
 });

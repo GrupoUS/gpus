@@ -104,15 +104,13 @@ function DraggableLeadCard({
 			transition={layoutTransition}
 			className="relative rounded-lg touch-none will-change-transform"
 		>
-			<button
-				type="button"
+			<div
+				role="button"
+				tabIndex={0}
 				aria-label="Abrir lead"
 				onClick={(event) => {
 					// Only prevent if clicking on nested WhatsApp button
-					if (
-						event.target instanceof HTMLElement &&
-						event.target.closest('button') !== event.currentTarget
-					) {
+					if (event.target instanceof HTMLElement && event.target.closest('button')) {
 						return;
 					}
 					if (!isDragging) {
@@ -130,7 +128,7 @@ function DraggableLeadCard({
 				className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg bg-transparent border-none p-0"
 			>
 				<LeadCard lead={lead} />
-			</button>
+			</div>
 			{lead.phone && (
 				<motion.button
 					type="button"

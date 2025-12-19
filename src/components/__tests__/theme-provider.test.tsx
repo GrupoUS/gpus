@@ -41,12 +41,12 @@ describe('ThemeProvider', () => {
 
 	it('uses stored theme from localStorage', () => {
 		localStorage.setItem(STORAGE_KEY, 'light');
-		const { result } = renderHook(() => useTheme());
+		const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider });
 		expect(result.current.theme).toBe('light');
 	});
 
 	it('updates theme and storage when setTheme is called', () => {
-		const { result } = renderHook(() => useTheme());
+		const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider });
 		act(() => {
 			result.current.setTheme('dark');
 		});
@@ -56,7 +56,8 @@ describe('ThemeProvider', () => {
 
 	it('falls back to default theme for invalid stored values', () => {
 		localStorage.setItem(STORAGE_KEY, 'invalid-theme');
-		const { result } = renderHook(() => useTheme());
+		const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider });
+		// ThemeProvider now validates stored values, so it should fallback to default (system)
 		expect(result.current.theme).toBe('system');
 	});
 

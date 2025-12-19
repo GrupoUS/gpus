@@ -7,13 +7,23 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Type for the import result
-interface ImportResult {
+// Type for the combined import result
+interface CombinedImportResult {
 	success: boolean;
-	recordsProcessed: number;
-	recordsCreated: number;
-	recordsUpdated: number;
-	errors?: string[];
+	customers: {
+		success: boolean;
+		recordsProcessed: number;
+		recordsCreated: number;
+		recordsUpdated: number;
+		recordsFailed: number;
+	} | null;
+	payments: {
+		success: boolean;
+		recordsProcessed: number;
+		recordsCreated: number;
+		recordsUpdated: number;
+		recordsFailed: number;
+	} | null;
 }
 
 export function AsaasImportButton() {
@@ -26,13 +36,20 @@ export function AsaasImportButton() {
 			toast.info('Iniciando importação do Asaas...');
 
 			// Use convex.action to avoid deep type instantiation issue with useAction
-			const result = (await convex.action(api.asaas.actions.importCustomersFromAsaas, {
+			const result = (await convex.action(api.asaas.actions.importAllFromAsaas, {
 				initiatedBy: 'manual_import_button',
-			})) as ImportResult | null;
+			})) as CombinedImportResult | null;
 
 			if (result?.success) {
+				const customersMsg = result.customers
+					? `${result.customers.recordsCreated} criados, ${result.customers.recordsUpdated} atualizados`
+					: '0';
+				const paymentsMsg = result.payments
+					? `${result.payments.recordsCreated} importados`
+					: '0 importados';
+
 				toast.success('Importação concluída com sucesso!', {
-					description: `${result.recordsProcessed} processados: ${result.recordsCreated} criados, ${result.recordsUpdated} atualizados.`,
+					description: `Clientes: ${customersMsg} | Pagamentos: ${paymentsMsg}`,
 				});
 			}
 		} catch (error) {

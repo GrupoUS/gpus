@@ -172,6 +172,41 @@ export const getStudentByAsaasId = internalQuery({
 });
 
 /**
+ * Get student by Email or CPF (for deduplication)
+ */
+export const getStudentByEmailOrCpf = internalQuery({
+  args: {
+    email: v.optional(v.string()),
+    cpf: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // 1. Try by Email (Indexed)
+    if (args.email) {
+      const studentByEmail = await ctx.db
+        .query("students")
+        .withIndex("by_email", (q) => q.eq("email", args.email))
+        .first();
+
+      if (studentByEmail) return studentByEmail;
+    }
+
+    // 2. Try by CPF (Filter - slower but necessary)
+    if (args.cpf) {
+      // Clean CPF just in case, though usually stored raw or formatted.
+      // We assume args.cpf is consistent with DB storage.
+      const studentByCpf = await ctx.db
+        .query("students")
+        .filter((q) => q.eq(q.field("cpf"), args.cpf))
+        .first();
+
+      if (studentByCpf) return studentByCpf;
+    }
+
+    return null;
+  },
+});
+
+/**
  * Get payment by Asaas payment ID
  */
 export const getPaymentByAsaasId = internalQuery({

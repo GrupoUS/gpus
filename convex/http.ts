@@ -19,6 +19,9 @@ import {
 	normalizeMessageStatus,
 	validateMessagingWebhookSecret,
 } from './lib/messaging'
+// import { serve } from 'inngest/convex'
+// import { inngest } from './lib/inngest'
+// import { gatherContext, augmentContext } from './inngest'
 
 const http = httpRouter()
 
@@ -233,5 +236,22 @@ http.route({
 		return new Response('OK', { status: 200 })
 	}),
 })
+
+/**
+ * Inngest Serve Handler
+ *
+ * Exposes the Inngest API endpoints for the workflow functions.
+ * This allows Inngest to trigger our context gathering and augmentation functions.
+ *
+ * GET /api/inngest
+ * POST /api/inngest
+ */
+/*
+http.route({
+	path: '/api/inngest',
+	method: 'ANY',
+	handler: serve(inngest, [gatherContext, augmentContext]),
+})
+*/
 
 export default http
