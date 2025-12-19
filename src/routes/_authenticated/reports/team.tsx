@@ -35,8 +35,17 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
-// @ts-expect-error - Deep type instantiation error
-type TeamPerformanceMember = FunctionReturnType<typeof api.metrics.getTeamPerformance>[number];
+interface TeamPerformanceMember {
+	_id: string;
+	name: string;
+	role: string;
+	metric: number;
+	metricLabel: string;
+}
+
+// User type used in other parts if any, or we can leave it if it doesnt error
+// But to be safe and simple, let's use explicit type or keep existing if only line 38 failed.
+// The user error showed specifically line 38.
 type User = FunctionReturnType<typeof api.users.list>[number];
 
 function TeamReportPage() {

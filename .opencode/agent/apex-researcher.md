@@ -2,9 +2,9 @@
 description: Research & planning specialist with multi-source validation. NEVER implements - research and planning only.
 mode: subagent
 model: anthropic/claude-opus-4-5
-temperature: 0.1
+temperature: 0.2
 tools:
-  write: false   # BLOCKED - research only
+  write: true
   edit: false    # BLOCKED - research only
   bash: false    # BLOCKED - no command execution
 permission:
@@ -52,7 +52,7 @@ Research pipeline:
 Use these **only for research** (not implementation):
 
 - `@database-specialist`: Convex schema, queries/mutations, data modeling patterns
-- `@code-reviewer`: OWASP + LGPD compliance implications, security requirements
+- `@code-reviewer`: OWASP + LGPD compliance implications, security requirements, code smell or dead code
 
 ## Complexity rubric
 
@@ -121,7 +121,7 @@ validation_tasks:
     required: true
   - id: "VT-002"
     title: "Lint check"
-    command: "bun run lint:check"
+    command: "bun run lint"
     required: true
   - id: "VT-003"
     title: "Test suite"

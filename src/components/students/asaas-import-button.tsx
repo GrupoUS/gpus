@@ -1,24 +1,34 @@
-import { useAction } from 'convex/react';
+import { api } from '@convex/_generated/api';
+import { useConvex } from 'convex/react';
 import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Type for the import result
+interface ImportResult {
+	success: boolean;
+	recordsProcessed: number;
+	recordsCreated: number;
+	recordsUpdated: number;
+	errors?: string[];
+}
+
 export function AsaasImportButton() {
 	const [isLoading, setIsLoading] = useState(false);
-	const importCustomers = useAction(api.asaas.actions.importCustomersFromAsaas) as any;
+	const convex = useConvex();
 
 	const handleImport = async () => {
 		setIsLoading(true);
 		try {
 			toast.info('Iniciando importação do Asaas...');
 
-			const result = await importCustomers({
+			// Use convex.action to avoid deep type instantiation issue with useAction
+			const result = (await convex.action(api.asaas.actions.importCustomersFromAsaas, {
 				initiatedBy: 'manual_import_button',
-			});
+			})) as ImportResult | null;
 
 			if (result?.success) {
 				toast.success('Importação concluída com sucesso!', {

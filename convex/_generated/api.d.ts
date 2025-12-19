@@ -14,6 +14,7 @@ import type * as asaas_actions from "../asaas/actions.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
 import type * as asaas_sync from "../asaas/sync.js";
 import type * as conversations from "../conversations.js";
+import type * as crons from "../crons.js";
 import type * as debug_access from "../debug_access.js";
 import type * as debug_tool from "../debug_tool.js";
 import type * as debug_users from "../debug_users.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   "asaas/mutations": typeof asaas_mutations;
   "asaas/sync": typeof asaas_sync;
   conversations: typeof conversations;
+  crons: typeof crons;
   debug_access: typeof debug_access;
   debug_tool: typeof debug_tool;
   debug_users: typeof debug_users;
