@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { api } from './_generated/api'
+import { internal } from './_generated/api'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
 import { requirePermission } from './lib/auth'
@@ -275,6 +275,7 @@ export const create = mutation({
     ),
     assignedCS: v.optional(v.id('users')),
     leadId: v.optional(v.id('leads')),
+    lgpdConsent: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
@@ -293,7 +294,7 @@ export const create = mutation({
     const encryptedEmail = await encrypt(args.email)
     const encryptedPhone = await encrypt(args.phone)
 
-    const { email: _email, phone: _phone, cpf: _cpf, ...safeArgs } = args
+    const { email: _email, phone: _phone, cpf: _cpf, lgpdConsent, ...safeArgs } = args
 
     const studentId = await ctx.db.insert('students', {
       ...safeArgs,
@@ -304,6 +305,8 @@ export const create = mutation({
       phone: args.phone,
       email: args.email,
       churnRisk: 'baixo',
+      consentGrantedAt: lgpdConsent ? Date.now() : undefined,
+      consentVersion: lgpdConsent ? 'v1.0' : undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
@@ -311,15 +314,15 @@ export const create = mutation({
 
     await logAudit(ctx, {
       studentId,
-      actionType: 'data_creation',
+      actionType: lgpdConsent ? 'consent_granted' : 'data_creation',
       dataCategory: 'personal_data',
-      description: 'Student profile created',
-      legalBasis: 'contract_execution'
+      description: lgpdConsent ? 'Student profile created with explicit consent' : 'Student profile created',
+      legalBasis: lgpdConsent ? 'consentimento' : 'contract_execution'
     })
 
     // Auto-sync with Asaas (async, don't wait)
     try {
-      await ctx.scheduler.runAfter(0, api.asaas.syncStudentAsCustomer, {
+      await ctx.scheduler.runAfter(0, internal.asaas.syncStudentAsCustomerInternal, {
         studentId,
       })
     } catch (error) {
@@ -387,7 +390,7 @@ export const update = mutation({
     const shouldSync = args.patch.cpf || args.patch.email || args.patch.phone
     if (shouldSync) {
       try {
-        await ctx.scheduler.runAfter(0, api.asaas.syncStudentAsCustomer, {
+        await ctx.scheduler.runAfter(0, internal.asaas.syncStudentAsCustomerInternal, {
           studentId: args.studentId,
         })
       } catch (error) {

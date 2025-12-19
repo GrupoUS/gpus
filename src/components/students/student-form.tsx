@@ -47,6 +47,9 @@ const formSchema = z.object({
 	clinicName: z.string().optional(),
 	clinicCity: z.string().optional(),
 	assignedCS: z.string().optional(),
+	lgpdConsent: z.boolean().refine((val) => val === true, {
+		message: 'Você deve aceitar os termos da LGPD',
+	}),
 });
 
 interface StudentFormProps {
@@ -77,6 +80,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			clinicName: '',
 			clinicCity: '',
 			assignedCS: '',
+			lgpdConsent: false,
 		},
 	});
 
@@ -111,6 +115,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			clinicCity: values.clinicCity || undefined,
 			status: 'ativo',
 			assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+			lgpdConsent: values.lgpdConsent,
 		});
 		toast.success('Aluno criado com sucesso!');
 	};
@@ -338,6 +343,28 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											<Input placeholder="Ex: São Paulo" {...field} />
 										</FormControl>
 										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
+
+						{/* LGPD Consent */}
+						{!isEditMode && (
+							<FormField
+								control={form.control}
+								name="lgpdConsent"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50">
+										<FormControl>
+											<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+										</FormControl>
+										<div className="space-y-1 leading-none">
+											<FormLabel>
+												Estou de acordo com o processamento dos meus dados pessoais para fins
+												acadêmicos e de gestão, conforme a Lei Geral de Proteção de Dados (LGPD).
+											</FormLabel>
+											<FormMessage />
+										</div>
 									</FormItem>
 								)}
 							/>

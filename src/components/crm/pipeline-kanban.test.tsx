@@ -132,7 +132,10 @@ describe('PipelineKanban', () => {
 			<PipelineKanban leads={mockLeads} onDragEnd={mockOnDragEnd} onLeadClick={mockOnLeadClick} />,
 		);
 
-		fireEvent.click(screen.getByText('Lead 1'));
+		// Click the overlay button for the first lead (updated for a11y fix)
+		const openButtons = screen.getAllByLabelText('Abrir lead');
+		fireEvent.click(openButtons[0]);
+
 		expect(mockOnLeadClick).toHaveBeenCalledWith('1');
 	});
 

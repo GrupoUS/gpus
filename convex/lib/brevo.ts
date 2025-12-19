@@ -252,6 +252,48 @@ export interface BrevoApiError {
 }
 
 // ═══════════════════════════════════════════════════════
+// TRANSACTIONAL EMAIL TYPES
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Transactional email recipient
+ */
+export interface BrevoEmailRecipient {
+	email: string
+	name?: string
+}
+
+/**
+ * Transactional email payload for /smtp/email endpoint
+ */
+export interface BrevoTransactionalEmailPayload {
+	sender: { name: string; email: string }
+	to: BrevoEmailRecipient[]
+	cc?: BrevoEmailRecipient[]
+	bcc?: BrevoEmailRecipient[]
+	replyTo?: { email: string; name?: string }
+	subject?: string // Required if no templateId
+	htmlContent?: string // Required if no templateId
+	textContent?: string
+	templateId?: number // Use Brevo template instead of inline content
+	params?: Record<string, unknown> // Variables for template (e.g., {{params.firstName}})
+	tags?: string[]
+	headers?: Record<string, string>
+	attachment?: Array<{
+		name: string
+		content: string // base64 encoded
+		url?: string
+	}>
+}
+
+/**
+ * Transactional email response from Brevo
+ */
+export interface BrevoTransactionalEmailResponse {
+	messageId: string
+}
+
+// ═══════════════════════════════════════════════════════
 // BREVO API CLIENT
 // ═══════════════════════════════════════════════════════
 
@@ -656,6 +698,94 @@ export const brevoTemplates = {
 		return brevoFetch<void>(`/smtp/templates/${templateId}/sendTest`, {
 			method: 'POST',
 			body: { emailTo },
+		})
+	},
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSACTIONAL SMTP API
+// ═══════════════════════════════════════════════════════
+
+export const brevoSmtp = {
+	/**
+	 * Send a transactional email (immediate delivery)
+	 * Use this for welcome emails, confirmations, password resets, etc.
+	 */
+	async send(
+		payload: BrevoTransactionalEmailPayload,
+	): Promise<BrevoTransactionalEmailResponse> {
+		return brevoFetch<BrevoTransactionalEmailResponse>('/smtp/email', {
+			method: 'POST',
+			body: payload,
+		})
+	},
+
+	/**
+	 * Send a transactional email using a Brevo template
+	 * Shorthand for template-based emails with params
+	 *
+	 * @param templateId - The Brevo template ID (from Brevo dashboard)
+	 * @param to - Recipient email and optional name
+	 * @param params - Variables to inject into the template (e.g., { firstName: 'John' })
+	 * @param options - Additional options (sender, tags, replyTo)
+	 */
+	async sendTemplate(
+		templateId: number,
+		to: { email: string; name?: string },
+		params: Record<string, unknown>,
+		options: {
+			sender?: { name: string; email: string }
+			tags?: string[]
+			replyTo?: { email: string; name?: string }
+		} = {},
+	): Promise<BrevoTransactionalEmailResponse> {
+		const defaultSender = {
+			name: process.env.BREVO_SENDER_NAME || 'GRUPOUS',
+			email: process.env.BREVO_SENDER_EMAIL || 'suporte@drasacha.com.br',
+		}
+
+		return brevoFetch<BrevoTransactionalEmailResponse>('/smtp/email', {
+			method: 'POST',
+			body: {
+				templateId,
+				to: [to],
+				params,
+				sender: options.sender || defaultSender,
+				tags: options.tags,
+				replyTo: options.replyTo,
+			},
+		})
+	},
+
+	/**
+	 * Send a simple HTML email (no template)
+	 * Useful for quick one-off emails or when templates aren't configured
+	 */
+	async sendHtml(
+		to: { email: string; name?: string },
+		subject: string,
+		htmlContent: string,
+		options: {
+			sender?: { name: string; email: string }
+			tags?: string[]
+			replyTo?: { email: string; name?: string }
+		} = {},
+	): Promise<BrevoTransactionalEmailResponse> {
+		const defaultSender = {
+			name: process.env.BREVO_SENDER_NAME || 'GRUPOUS',
+			email: process.env.BREVO_SENDER_EMAIL || 'suporte@drasacha.com.br',
+		}
+
+		return brevoFetch<BrevoTransactionalEmailResponse>('/smtp/email', {
+			method: 'POST',
+			body: {
+				to: [to],
+				subject,
+				htmlContent,
+				sender: options.sender || defaultSender,
+				tags: options.tags,
+				replyTo: options.replyTo,
+			},
 		})
 	},
 }

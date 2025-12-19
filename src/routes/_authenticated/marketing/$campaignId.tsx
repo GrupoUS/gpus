@@ -416,6 +416,86 @@ function ActionsCard({
 	);
 }
 
+// --- Event Logs Component ---
+
+interface EventLogsProps {
+	campaignId: Id<'emailCampaigns'>;
+}
+
+function EventLogs({ campaignId }: EventLogsProps) {
+	const events = useQuery(api.emailMarketing.getCampaignEvents, {
+		campaignId,
+		limit: 20,
+	});
+
+	if (events === undefined) {
+		return <Skeleton className="h-[200px] w-full" />;
+	}
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="flex items-center gap-2">
+					<ListChecks className="h-5 w-5" />
+					Logs de Eventos Recentes
+				</CardTitle>
+				<CardDescription>Últimas atividades registradas para esta campanha</CardDescription>
+			</CardHeader>
+			<CardContent>
+				{events.length > 0 ? (
+					<div className="space-y-4">
+						{events.map((event) => (
+							<div
+								key={event._id}
+								className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+							>
+								<div className="flex items-center gap-3">
+									<Badge
+										variant="outline"
+										className={
+											event.eventType === 'delivered'
+												? 'border-green-500 text-green-500'
+												: event.eventType === 'opened'
+													? 'border-blue-500 text-blue-500'
+													: event.eventType === 'clicked'
+														? 'border-yellow-500 text-yellow-500'
+														: event.eventType === 'bounced' || event.eventType === 'spam'
+															? 'border-red-500 text-red-500'
+															: 'border-gray-500 text-gray-500'
+										}
+									>
+										{event.eventType}
+									</Badge>
+									<div className="flex flex-col">
+										<span className="text-sm font-medium">{event.email}</span>
+										<span className="text-xs text-muted-foreground">
+											{formatDateTime(event.timestamp)}
+										</span>
+									</div>
+								</div>
+								{event.link && (
+									<a
+										href={event.link}
+										target="_blank"
+										rel="noreferrer"
+										className="text-xs text-blue-500 hover:underline"
+									>
+										Link clicado
+									</a>
+								)}
+							</div>
+						))}
+					</div>
+				) : (
+					<div className="py-8 text-center text-muted-foreground">
+						<p>Nenhum evento registrado ainda.</p>
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}
+
 // --- Main Component ---
 
 function CampaignDetailPage() {
@@ -665,6 +745,9 @@ function CampaignDetailPage() {
 						templateId={campaign.templateId}
 						htmlContent={campaign.htmlContent}
 					/>
+
+					{/* Event Logs */}
+					{isSent && <EventLogs campaignId={campaign._id} />}
 				</div>
 
 				{/* Sidebar */}

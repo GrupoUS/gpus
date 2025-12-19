@@ -38,7 +38,7 @@ const menuItems = [
 	},
 	{
 		label: 'Marketing',
-		href: '/marketing',
+		href: '/marketing/dashboard',
 		icon: <Megaphone className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{

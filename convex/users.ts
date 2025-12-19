@@ -102,7 +102,7 @@ export const syncUser = internalMutation({
           .query('users')
           .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
           .unique()
-        
+
         if (!caller || caller.role !== 'admin') {
           throw new Error('Only admins can change user roles')
         }
@@ -125,7 +125,7 @@ export const syncUser = internalMutation({
         .query('users')
         .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
         .unique()
-      
+
       if (!caller || caller.role !== 'admin') {
         throw new Error('Only admins can create admin users')
       }
@@ -225,5 +225,47 @@ export const updateProfile = mutation({
       ...(args.preferences ? { preferences: args.preferences } : {}),
       updatedAt: Date.now(),
     })
+  },
+})
+
+/**
+ * Diagnostic query to check synchronization between Clerk and database roles.
+ * SECURITY: Admin only.
+ * Returns users with their DB roles and the caller's JWT role/permissions.
+ */
+export const checkRoleSync = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique()
+
+    if (!user || user.role !== 'admin') {
+      throw new Error('Only admins can access diagnostic role sync data')
+    }
+
+    const organizationId = await getOrganizationId(ctx)
+    if (!organizationId) throw new Error('No organization context found')
+
+    const users = await ctx.db
+      .query('users')
+      .withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+      .collect()
+
+    return {
+      users: users.map((u) => ({
+        clerkId: u.clerkId,
+        dbRole: u.role,
+      })),
+      currentUser: {
+        clerkId: identity.subject,
+        orgRole: identity.org_role,
+        orgPermissions: identity.org_permissions,
+      },
+    }
   },
 })

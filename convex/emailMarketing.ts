@@ -369,6 +369,119 @@ export const updateContactSubscriptionInternal = internalMutation({
 	},
 })
 
+/**
+ * Internal mutation for auto-sync on lead creation
+ * Called via scheduler from leads.ts createLead mutation
+ */
+export const syncLeadAsContactInternal = internalMutation({
+	args: {
+		leadId: v.id('leads'),
+		organizationId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// Get lead data
+		const lead = await ctx.db.get(args.leadId)
+		if (!lead) {
+			console.log(`[EmailMarketing] Lead ${args.leadId} not found for sync`)
+			return null
+		}
+		if (!lead.email) {
+			console.log(`[EmailMarketing] Lead ${args.leadId} has no email, skipping sync`)
+			return null
+		}
+
+		// Check if contact already exists for this lead
+		const existing = await ctx.db
+			.query('emailContacts')
+			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+			.first()
+
+		if (existing) {
+			console.log(`[EmailMarketing] Lead ${args.leadId} already synced as contact ${existing._id}`)
+			return existing._id
+		}
+
+		const now = Date.now()
+		const nameParts = (lead.name || '').split(' ')
+
+		// Create contact
+		const contactId = await ctx.db.insert('emailContacts', {
+			email: lead.email,
+			firstName: nameParts[0] || undefined,
+			lastName: nameParts.slice(1).join(' ') || undefined,
+			sourceType: 'lead',
+			sourceId: args.leadId,
+			leadId: args.leadId,
+			organizationId: args.organizationId,
+			subscriptionStatus: 'pending',
+			createdAt: now,
+			updatedAt: now,
+		})
+
+		console.log(`[EmailMarketing] Auto-synced lead ${args.leadId} as contact ${contactId}`)
+		return contactId
+	},
+})
+
+/**
+ * Internal mutation for auto-sync on student creation
+ * Called via scheduler from students.ts createStudent mutation
+ */
+export const syncStudentAsContactInternal = internalMutation({
+	args: {
+		studentId: v.id('students'),
+		organizationId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		// Get student data
+		const student = await ctx.db.get(args.studentId)
+		if (!student) {
+			console.log(`[EmailMarketing] Student ${args.studentId} not found for sync`)
+			return null
+		}
+		if (!student.email) {
+			console.log(`[EmailMarketing] Student ${args.studentId} has no email, skipping sync`)
+			return null
+		}
+
+		// Check if contact already exists for this student
+		const existing = await ctx.db
+			.query('emailContacts')
+			.withIndex('by_student', (q) => q.eq('studentId', args.studentId))
+			.first()
+
+		if (existing) {
+			console.log(`[EmailMarketing] Student ${args.studentId} already synced as contact ${existing._id}`)
+			return existing._id
+		}
+
+		const now = Date.now()
+		const nameParts = (student.name || '').trim().split(' ')
+		const firstName = nameParts[0] || undefined
+		const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined
+
+		// Use student's organizationId if available, otherwise use provided
+		const organizationId = args.organizationId || 'default'
+
+		// Create contact
+		const contactId = await ctx.db.insert('emailContacts', {
+			email: student.email,
+			firstName,
+			lastName,
+			sourceType: 'student',
+			sourceId: args.studentId,
+			studentId: args.studentId,
+			organizationId,
+			subscriptionStatus: 'pending',
+			createdAt: now,
+			updatedAt: now,
+		})
+
+		console.log(`[EmailMarketing] Auto-synced student ${args.studentId} as contact ${contactId}`)
+		return contactId
+	},
+})
+
 // ─────────────────────────────────────────────────────────
 // Contact Actions (External API Calls)
 // ─────────────────────────────────────────────────────────

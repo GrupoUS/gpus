@@ -7,6 +7,9 @@ tools:
   write: true
   edit: true
   bash: true
+  todowrite: true
+  todoread: true
+
 permission:
   edit: allow
   bash: allow
@@ -31,12 +34,13 @@ When invoked, you receive tasks from TodoWrite. Follow this workflow:
 ### Task Execution Flow
 
 ```
-1. READ    → Get pending tasks from TodoWrite
+1. READ    → Get pending tasks from TodoWrite using `todoread()`
 2. SELECT  → Pick first pending task (respect dependencies)
-3. MARK    → Set task status to `in_progress`
+3. MARK    → Set task status to `in_progress` using `todowrite()`
 4. IMPLEMENT → Execute the task following project patterns
 5. VALIDATE → Run build/lint/test as needed
-6. COMPLETE → Mark task as `completed`
+6. COMPLETE → Mark task as `completed` using `todowrite()`
+
 7. REPORT  → Summarize what was done
 8. REPEAT  → Move to next pending task
 ```

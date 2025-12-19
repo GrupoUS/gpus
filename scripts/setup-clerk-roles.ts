@@ -1,9 +1,17 @@
 /**
  * Script para configurar Roles e Permissões no Clerk
+ * Requer: CLERK_SECRET_KEY configurado no ambiente
  * Executa: bun run scripts/setup-clerk-roles.ts
  */
 
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY || 'sk_test_1AumWLgSK06H6VZmLTeW5OchEauF5s6huaJnzmfrvH';
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+
+if (!CLERK_SECRET_KEY) {
+  console.error('\n❌ ERRO: CLERK_SECRET_KEY não encontrada nas variáveis de ambiente.');
+  console.error('Certifique-se de que a variável CLERK_SECRET_KEY está configurada no seu terminal ou arquivo .env.local\n');
+  process.exit(1);
+}
+
 const CLERK_API_URL = 'https://api.clerk.com/v1';
 
 interface Permission {

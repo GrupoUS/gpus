@@ -1,140 +1,70 @@
-import type { Doc } from '@convex/_generated/dataModel';
-import { createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Mail } from 'lucide-react';
+import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router';
+import { FileCode, LayoutDashboard, Mail, Users } from 'lucide-react';
 
-import { CampaignCard } from '@/components/marketing/campaign-card';
-import { CampaignFilters } from '@/components/marketing/campaign-filters';
-import { CampaignHeader } from '@/components/marketing/campaign-header';
-import { CampaignStats } from '@/components/marketing/campaign-stats';
-import { CampaignTable } from '@/components/marketing/campaign-table';
-import { Button } from '@/components/ui/button';
-import { useCampaignsViewModel } from '@/hooks/use-campaigns-view-model';
+import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/_authenticated/marketing')({
-	validateSearch: (search: Record<string, unknown>) => {
-		return {
-			search: (search.search as string) || '',
-			status: (search.status as string) || 'all',
-			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
-			page: Math.max(1, Number(search.page) || 1),
-		};
-	},
-	component: MarketingPage,
+	component: MarketingLayout,
 });
 
-function MarketingPage() {
-	const {
-		search,
-		status,
-		view,
-		page,
-		campaigns,
-		paginatedCampaigns,
-		totalCampaigns,
-		draftCount,
-		sentCount,
-		avgOpenRate,
-		totalPages,
-		clearFilters,
-		handleFilterChange,
-		navigateToCampaign,
-		navigate,
-		PAGE_SIZE,
-	} = useCampaignsViewModel(Route);
+function MarketingLayout() {
+	const { pathname } = useLocation();
+
+	const navItems = [
+		{
+			label: 'Dashboard',
+			href: '/marketing/dashboard',
+			icon: LayoutDashboard,
+			active: pathname.includes('/marketing/dashboard'),
+		},
+		{
+			label: 'Campanhas',
+			href: '/marketing/campanhas',
+			icon: Mail,
+			active:
+				pathname.includes('/marketing/campanhas') ||
+				pathname.includes('/marketing/nova') ||
+				(pathname.includes('/marketing/') &&
+					!pathname.includes('contatos') &&
+					!pathname.includes('templates') &&
+					!pathname.includes('dashboard')),
+		},
+		{
+			label: 'Contatos',
+			href: '/marketing/contatos',
+			icon: Users,
+			active: pathname.includes('/marketing/contatos'),
+		},
+		{
+			label: 'Templates',
+			href: '/marketing/templates',
+			icon: FileCode,
+			active: pathname.includes('/marketing/templates'),
+		},
+	];
 
 	return (
-		<div className="space-y-6 p-6">
-			{/* Header */}
-			<CampaignHeader view={view as 'grid' | 'table'} search={search} status={status} page={page} />
-
-			{/* Stats Cards */}
-			<CampaignStats
-				totalCampaigns={totalCampaigns}
-				draftCount={draftCount}
-				sentCount={sentCount}
-				avgOpenRate={avgOpenRate}
-			/>
-
-			{/* Filters */}
-			<CampaignFilters
-				search={search || ''}
-				onSearchChange={(v) => handleFilterChange('search', v)}
-				status={status || 'all'}
-				onStatusChange={(v) => handleFilterChange('status', v)}
-				onClear={clearFilters}
-			/>
-
-			{/* Campaigns List */}
-			{!campaigns ? (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{[1, 2, 3, 4, 5, 6].map((i) => (
-						<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+		<div className="flex flex-col h-full bg-background">
+			<div className="border-b">
+				<div className="flex h-12 items-center px-4 gap-6 overflow-x-auto">
+					{navItems.map((item) => (
+						<Link
+							key={item.href}
+							to={item.href}
+							className={cn(
+								'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary whitespace-nowrap py-3 border-b-2 border-transparent',
+								item.active ? 'border-primary text-primary' : 'text-muted-foreground',
+							)}
+						>
+							<item.icon className="h-4 w-4" />
+							{item.label}
+						</Link>
 					))}
 				</div>
-			) : campaigns.length === 0 ? (
-				<div className="text-center py-12 text-muted-foreground">
-					<Mail className="h-16 w-16 mx-auto mb-4 opacity-30" />
-					<h2 className="text-lg font-medium">Nenhuma campanha encontrada</h2>
-					<p className="text-sm">Crie uma nova campanha para começar</p>
-				</div>
-			) : view === 'table' ? (
-				/* Table View */
-				<CampaignTable campaigns={paginatedCampaigns} onCampaignClick={navigateToCampaign} />
-			) : (
-				/* Grid View */
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
-						<CampaignCard
-							key={campaign._id}
-							campaign={campaign}
-							onClick={() => navigateToCampaign(campaign._id)}
-						/>
-					))}
-				</div>
-			)}
-
-			{/* Pagination */}
-			{campaigns && campaigns.length > PAGE_SIZE && (
-				<div className="flex items-center justify-between">
-					<p className="text-sm text-muted-foreground">
-						Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalCampaigns)} de{' '}
-						{totalCampaigns} campanhas
-					</p>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={page === 1}
-							onClick={() => {
-								void navigate({
-									to: '/marketing',
-									search: { search, status, view, page: page - 1 },
-								});
-							}}
-						>
-							<ChevronLeft className="h-4 w-4 mr-1" />
-							Anterior
-						</Button>
-						<span className="text-sm text-muted-foreground">
-							{page} / {totalPages}
-						</span>
-						<Button
-							variant="outline"
-							size="sm"
-							disabled={page === totalPages}
-							onClick={() => {
-								void navigate({
-									to: '/marketing',
-									search: { search, status, view, page: page + 1 },
-								});
-							}}
-						>
-							Próximo
-							<ChevronRight className="h-4 w-4 ml-1" />
-						</Button>
-					</div>
-				</div>
-			)}
+			</div>
+			<div className="flex-1 overflow-auto">
+				<Outlet />
+			</div>
 		</div>
 	);
 }

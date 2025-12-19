@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { internal } from './_generated/api'
 import { getOrganizationId, requirePermission } from './lib/auth'
 import { PERMISSIONS } from './lib/permissions'
 
@@ -191,6 +192,14 @@ export const createLead = mutation({
           performedBy: identity.subject,
           createdAt: Date.now(),
       })
+
+      // Auto-sync to email marketing (if lead has email)
+      if (args.email) {
+          await ctx.scheduler.runAfter(0, internal.emailMarketing.syncLeadAsContactInternal, {
+              leadId,
+              organizationId,
+          })
+      }
 
       return leadId
   }

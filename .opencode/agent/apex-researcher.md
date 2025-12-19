@@ -7,6 +7,8 @@ tools:
   write: true
   edit: false    # BLOCKED - research only
   bash: false    # BLOCKED - no command execution
+  todowrite: true
+  todoread: true
 permission:
   webfetch: allow
 # todowrite is a native OpenCode tool, not a file write operation

@@ -9,7 +9,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export function AsaasImportButton() {
 	const [isLoading, setIsLoading] = useState(false);
-	// @ts-ignore - Deep type instantiation error
 	const importCustomers = useAction(api.asaas.actions.importCustomersFromAsaas);
 
 	const handleImport = async () => {
