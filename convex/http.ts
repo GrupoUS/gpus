@@ -71,7 +71,7 @@ http.route({
 
 		// 5. Find contact by email (if exists)
 		const contact = await ctx.runQuery(
-			internal.emailMarketing.getContactByEmailInternal,
+			internal.emailMarketing.getContactByEmailInternal as any,
 			{
 				email: payload.email,
 			},
@@ -104,11 +104,11 @@ http.route({
 				},
 			)
 			console.log(
-				`Brevo webhook: Updated subscription status to unsubscribed for ${payload.email}`,
+				'Brevo webhook: Updated subscription status to unsubscribed',
 			)
 		}
 
-		console.log(`Brevo webhook: Processed ${payload.event} for ${payload.email}`)
+		console.log(`Brevo webhook: Processed ${payload.event}`)
 		return new Response('OK', { status: 200 })
 	}),
 })

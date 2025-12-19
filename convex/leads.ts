@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { paginationOptsValidator } from 'convex/server'
 import { internal } from './_generated/api'
 import { getOrganizationId, requirePermission } from './lib/auth'
 import { PERMISSIONS } from './lib/permissions'
@@ -81,7 +82,8 @@ const leadArgs = {
 
 export const listLeads = query({
   args: {
-    stage: v.optional(v.string()), // Deprecated, kept for backward compatibility if needed, though we prefer array now
+    paginationOpts: paginationOptsValidator,
+    stage: v.optional(v.string()),
     stages: v.optional(v.array(v.string())),
     search: v.optional(v.string()),
     temperature: v.optional(v.array(v.string())),
@@ -93,63 +95,67 @@ export const listLeads = query({
     await requirePermission(ctx, PERMISSIONS.LEADS_READ)
     const organizationId = await getOrganizationId(ctx);
 
-    let leads;
-
     // Optimization: Use index if filtering by a single stage
     const singleStage =
         (args.stages?.length === 1 ? args.stages[0] : null) ??
         (args.stage && args.stage !== 'all' ? args.stage : null);
 
+    let query;
     if (singleStage) {
-        leads = await ctx.db
+        query = ctx.db
             .query('leads')
             .withIndex('by_organization_stage', q =>
                 q.eq('organizationId', organizationId)
                  .eq('stage', singleStage as any)
             )
-            .order('desc')
-            .collect();
+            .order('desc');
     } else {
-        leads = await ctx.db
+        query = ctx.db
             .query('leads')
             .withIndex('by_organization', q => q.eq('organizationId', organizationId))
-            .order('desc')
-            .collect();
+            .order('desc');
+    }
 
+    const results = await query.paginate(args.paginationOpts);
+
+    // Filter the page in memory (Note: this may result in fewer items than numItems)
+    results.page = results.page.filter(l => {
         // Filter by multiple stages if applicable
         if (args.stages && args.stages.length > 0) {
-            leads = leads.filter(l => args.stages!.includes(l.stage));
+            if (!args.stages.includes(l.stage)) return false;
         } else if (args.stage && args.stage !== 'all') {
-             leads = leads.filter(l => l.stage === args.stage);
+             if (l.stage !== args.stage) return false;
         }
-    }
 
-    // Filter by temperature
-    if (args.temperature && args.temperature.length > 0) {
-        leads = leads.filter(l => args.temperature!.includes(l.temperature))
-    }
+        // Filter by temperature
+        if (args.temperature && args.temperature.length > 0) {
+            if (!args.temperature.includes(l.temperature)) return false;
+        }
 
-    // Filter by product
-    if (args.products && args.products.length > 0) {
-        leads = leads.filter(l => l.interestedProduct ? args.products!.includes(l.interestedProduct) : false)
-    }
+        // Filter by product
+        if (args.products && args.products.length > 0) {
+            if (!l.interestedProduct || !args.products.includes(l.interestedProduct)) return false;
+        }
 
-    // Filter by source
-    if (args.source && args.source.length > 0) {
-         leads = leads.filter(l => args.source!.includes(l.source))
-    }
+        // Filter by source
+        if (args.source && args.source.length > 0) {
+             if (!args.source.includes(l.source)) return false;
+        }
 
-    // Filter by search text
-    if (args.search) {
-        const search = args.search.toLowerCase()
-        leads = leads.filter(l =>
-            l.name.toLowerCase().includes(search) ||
-            l.phone.includes(search) ||
-            (l.email && l.email.toLowerCase().includes(search))
-        )
-    }
+        // Filter by search text
+        if (args.search) {
+            const search = args.search.toLowerCase()
+            const matches = 
+                l.name.toLowerCase().includes(search) ||
+                l.phone.includes(search) ||
+                (l.email && l.email.toLowerCase().includes(search));
+            if (!matches) return false;
+        }
 
-    return leads
+        return true;
+    });
+
+    return results;
   },
 })
 
@@ -195,7 +201,7 @@ export const createLead = mutation({
 
       // Auto-sync to email marketing (if lead has email)
       if (args.email) {
-          await ctx.scheduler.runAfter(0, internal.emailMarketing.syncLeadAsContactInternal, {
+          await ctx.scheduler.runAfter(0, (internal as any).emailMarketing.syncLeadAsContactInternal, {
               leadId,
               organizationId,
           })

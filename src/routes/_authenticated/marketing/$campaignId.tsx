@@ -2,6 +2,7 @@ import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
+import DOMPurify from 'dompurify';
 import {
 	ArrowLeft,
 	CalendarDays,
@@ -237,8 +238,8 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 							<p className="mb-2 text-xs font-medium text-muted-foreground">PRÉVIA DO HTML:</p>
 							<div
 								className="prose prose-sm dark:prose-invert max-w-none"
-								// biome-ignore lint/security/noDangerouslySetInnerHtml: Safe to render HTML preview in admin context
-								dangerouslySetInnerHTML={{ __html: htmlContent }}
+								// biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized with DOMPurify
+								dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
 							/>
 						</div>
 						<details className="group">
@@ -423,10 +424,10 @@ interface EventLogsProps {
 }
 
 function EventLogs({ campaignId }: EventLogsProps) {
-	const events = useQuery(api.emailMarketing.getCampaignEvents, {
+	const events = useQuery(api.emailMarketing.getCampaignEvents as any, {
 		campaignId,
 		limit: 20,
-	});
+	}) as any[];
 
 	if (events === undefined) {
 		return <Skeleton className="h-[200px] w-full" />;
@@ -444,7 +445,7 @@ function EventLogs({ campaignId }: EventLogsProps) {
 			<CardContent>
 				{events.length > 0 ? (
 					<div className="space-y-4">
-						{events.map((event) => (
+						{events.map((event: any) => (
 							<div
 								key={event._id}
 								className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"

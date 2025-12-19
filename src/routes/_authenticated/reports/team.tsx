@@ -53,7 +53,7 @@ type TeamPerformanceMember = {
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 
-	const teamPerformanceData = useQuery(api.metrics.getTeamPerformance, { period });
+	const teamPerformanceData = useQuery(api.metrics.getTeamPerformance, { period } as const);
 	const teamPerformance = teamPerformanceData as TeamPerformanceMember[] | undefined;
 	const allUsersData = useQuery(api.users.list);
 	const allUsers = allUsersData as User[] | undefined;

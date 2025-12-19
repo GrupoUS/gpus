@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1766153272056" clover="3.2.0">
-  <project timestamp="1766153272056" name="All files">
+<coverage generated="1766155058165" clover="3.2.0">
+  <project timestamp="1766155058165" name="All files">
     <metrics statements="721" coveredstatements="403" conditionals="486" coveredconditionals="205" methods="194" coveredmethods="86" elements="1401" coveredelements="694" complexity="0" loc="721" ncloc="721" packages="6" files="27" classes="27"/>
     <package name="convex._generated">
       <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>

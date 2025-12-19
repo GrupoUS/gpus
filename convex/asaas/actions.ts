@@ -23,9 +23,6 @@ async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
     throw new Error("ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.");
   }
 
-  console.log(`[getAsaasClientFromSettings] Using API key: ${apiKey.substring(0, 10)}...`);
-  console.log(`[getAsaasClientFromSettings] Using base URL: ${baseUrl}`);
-
   return createAsaasClient({ apiKey, baseUrl });
 }
 

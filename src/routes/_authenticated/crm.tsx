@@ -29,13 +29,14 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
-	const leads = useQuery(api.leads.listLeads, {
+	const leads = useQuery(api.leads.listLeads as any, {
+		paginationOpts: { numItems: 1000, cursor: null },
 		search: filters.search || undefined,
 		stages: filters.stages.length ? filters.stages : undefined,
 		temperature: filters.temperature.length ? filters.temperature : undefined,
 		products: filters.products.length ? filters.products : undefined,
 		source: filters.source.length ? filters.source : undefined,
-	});
+	}) as any;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -52,7 +53,7 @@ function CRMPage() {
 	};
 
 	const formattedLeads =
-		leads?.map((l: Doc<'leads'>) => ({
+		leads?.page?.map((l: any) => ({
 			...l,
 			stage: l.stage,
 			temperature: l.temperature,
