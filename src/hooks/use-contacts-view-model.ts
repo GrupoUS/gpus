@@ -10,7 +10,7 @@ const PAGE_SIZE = 20;
 export function useContactsViewModel(Route: any) {
 	const navigate = useNavigate();
 	const searchParams = Route.useSearch();
-	const { search, status, sourceType, page } = searchParams;
+	const { search, status, sourceType } = searchParams;
 
 	// Mutations & Actions
 	const syncContact = useAction(api.emailMarketing.syncContactToBrevo);

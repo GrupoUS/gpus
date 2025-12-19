@@ -17,18 +17,34 @@ export interface IntegrationConfig {
 	[key: string]: unknown;
 }
 
+function isMasked(value?: string) {
+	return value && (value.includes('•') || value.startsWith('****'));
+}
+
 function validateAsaasConfig(config: IntegrationConfig) {
+	if (isMasked(config.apiKey))
+		throw new Error(
+			'A chave API parece estar mascarada. Por favor, insira a chave completa para testar.',
+		);
 	if (!(config.apiKey && config.baseUrl)) throw new Error('Configuração incompleta');
 	return { apiKey: config.apiKey, baseUrl: config.baseUrl };
 }
 
 function validateEvolutionConfig(config: IntegrationConfig) {
+	if (isMasked(config.apiKey))
+		throw new Error(
+			'A chave API parece estar mascarada. Por favor, insira a chave completa para testar.',
+		);
 	if (!(config.apiKey && config.url && config.instanceName))
 		throw new Error('Configuração incompleta');
 	return { apiKey: config.apiKey, apiUrl: config.url, instanceName: config.instanceName };
 }
 
 function validateDifyConfig(config: IntegrationConfig) {
+	if (isMasked(config.apiKey))
+		throw new Error(
+			'A chave API parece estar mascarada. Por favor, insira a chave completa para testar.',
+		);
 	if (!(config.apiKey && config.url && config.appId)) throw new Error('Configuração incompleta');
 	return { apiKey: config.apiKey, apiUrl: config.url, appId: config.appId };
 }

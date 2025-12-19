@@ -1,5 +1,5 @@
 import type { Doc } from '@convex/_generated/dataModel';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { z } from 'zod';
 
@@ -26,6 +26,7 @@ export const Route = createFileRoute('/_authenticated/marketing/templates')({
 });
 
 function TemplatesListPage() {
+	const navigate = useNavigate();
 	const {
 		templates,
 		isLoading,
@@ -85,8 +86,12 @@ function TemplatesListPage() {
 						<TemplateCard
 							key={template._id}
 							template={template}
-							onEdit={() => {
-								// TODO: Implement edit functionality
+							onEdit={(id) => {
+								void navigate({
+									to: '/marketing/templates/$templateId',
+									params: { templateId: id },
+									search: { search: '', category: 'all' },
+								});
 							}}
 							onDelete={handleDeleteTemplate}
 							onSync={handleSyncTemplate}

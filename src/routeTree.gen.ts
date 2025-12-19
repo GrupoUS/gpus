@@ -51,6 +51,7 @@ import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_a
 import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
 import { Route as AuthenticatedChatDepartmentIndexRouteImport } from './routes/_authenticated/chat/$department/index'
 import { Route as AuthenticatedMarketingTemplatesNovoRouteImport } from './routes/_authenticated/marketing/templates/novo'
+import { Route as AuthenticatedMarketingTemplatesTemplateIdRouteImport } from './routes/_authenticated/marketing/templates/$templateId'
 import { Route as AuthenticatedMarketingListasNovaRouteImport } from './routes/_authenticated/marketing/listas/nova'
 import { Route as AuthenticatedMarketingListasListIdRouteImport } from './routes/_authenticated/marketing/listas/$listId'
 import { Route as AuthenticatedChatDepartmentIdRouteImport } from './routes/_authenticated/chat/$department/$id'
@@ -289,6 +290,12 @@ const AuthenticatedMarketingTemplatesNovoRoute =
     path: '/novo',
     getParentRoute: () => AuthenticatedMarketingTemplatesRoute,
   } as any)
+const AuthenticatedMarketingTemplatesTemplateIdRoute =
+  AuthenticatedMarketingTemplatesTemplateIdRouteImport.update({
+    id: '/$templateId',
+    path: '/$templateId',
+    getParentRoute: () => AuthenticatedMarketingTemplatesRoute,
+  } as any)
 const AuthenticatedMarketingListasNovaRoute =
   AuthenticatedMarketingListasNovaRouteImport.update({
     id: '/nova',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
   '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -393,6 +401,7 @@ export interface FileRoutesByTo {
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -441,6 +450,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
   '/_authenticated/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/_authenticated/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/_authenticated/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/_authenticated/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
   '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/chat/$department/$id'
     | '/marketing/listas/$listId'
     | '/marketing/listas/nova'
+    | '/marketing/templates/$templateId'
     | '/marketing/templates/novo'
     | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
@@ -531,6 +542,7 @@ export interface FileRouteTypes {
     | '/chat/$department/$id'
     | '/marketing/listas/$listId'
     | '/marketing/listas/nova'
+    | '/marketing/templates/$templateId'
     | '/marketing/templates/novo'
     | '/chat/$department'
   id:
@@ -578,6 +590,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$department/$id'
     | '/_authenticated/marketing/listas/$listId'
     | '/_authenticated/marketing/listas/nova'
+    | '/_authenticated/marketing/templates/$templateId'
     | '/_authenticated/marketing/templates/novo'
     | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
@@ -889,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingTemplatesNovoRouteImport
       parentRoute: typeof AuthenticatedMarketingTemplatesRoute
     }
+    '/_authenticated/marketing/templates/$templateId': {
+      id: '/_authenticated/marketing/templates/$templateId'
+      path: '/$templateId'
+      fullPath: '/marketing/templates/$templateId'
+      preLoaderRoute: typeof AuthenticatedMarketingTemplatesTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedMarketingTemplatesRoute
+    }
     '/_authenticated/marketing/listas/nova': {
       id: '/_authenticated/marketing/listas/nova'
       path: '/nova'
@@ -979,11 +999,14 @@ const AuthenticatedMarketingListasRouteWithChildren =
   )
 
 interface AuthenticatedMarketingTemplatesRouteChildren {
+  AuthenticatedMarketingTemplatesTemplateIdRoute: typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   AuthenticatedMarketingTemplatesNovoRoute: typeof AuthenticatedMarketingTemplatesNovoRoute
 }
 
 const AuthenticatedMarketingTemplatesRouteChildren: AuthenticatedMarketingTemplatesRouteChildren =
   {
+    AuthenticatedMarketingTemplatesTemplateIdRoute:
+      AuthenticatedMarketingTemplatesTemplateIdRoute,
     AuthenticatedMarketingTemplatesNovoRoute:
       AuthenticatedMarketingTemplatesNovoRoute,
   }
