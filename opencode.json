@@ -9,7 +9,7 @@
   "agent": {
     "build": {
           "mode": "primary",
-          "model": "zhipuai-coding-plan/glm-4.6v",
+          "model": "google/gemini-3-flash-preview",
           "prompt": "{file:.opencode/prompts/build.txt}"
         },
         "plan": {

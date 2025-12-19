@@ -104,6 +104,7 @@ function DraggableLeadCard({
 			transition={layoutTransition}
 			className="relative rounded-lg touch-none will-change-transform"
 		>
+			{/* biome-ignore lint/a11y/useSemanticElements: Cannot use button due to nested interactive elements */}
 			<div
 				role="button"
 				tabIndex={0}

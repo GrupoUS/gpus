@@ -1,7 +1,7 @@
 ---
 description: Research & planning specialist with multi-source validation. NEVER implements - research and planning only.
 mode: subagent
-model: anthropic/claude-opus-4-5
+model: google/gemini-3-pro-preview
 temperature: 0.2
 tools:
   write: true

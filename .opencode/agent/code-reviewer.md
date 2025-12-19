@@ -1,7 +1,7 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: zhipuai-coding-plan/glm-4.6v
+model: google/gemini-3-pro-preview
 temperature: 0.1
 tools:
   write: false
