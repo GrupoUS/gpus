@@ -3,9 +3,8 @@ import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
-import { requirePermission } from './lib/auth'
+import { getOrganizationId, requirePermission } from './lib/auth'
 import { PERMISSIONS } from './lib/permissions'
-
 
 // Queries
 export const list = query({
@@ -14,76 +13,37 @@ export const list = query({
     product: v.optional(v.string()),
     status: v.optional(v.string()),
     churnRisk: v.optional(v.string()),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+    const organizationId = await getOrganizationId(ctx)
 
     const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
     const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
 
-    let students = status
-      ? await ctx.db
-          .query('students')
-          .withIndex('by_status', (q) => q.eq('status', status))
-          .order('desc')
-          .collect()
-      : churnRisk
-        ? await ctx.db
-            .query('students')
-            .withIndex('by_churn_risk', (q) => q.eq('churnRisk', churnRisk))
-            .order('desc')
-            .collect()
-        : await ctx.db.query('students').order('desc').collect()
+    let query = ctx.db.query('students')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId));
+
+    if (status) {
+      query = ctx.db.query('students')
+        .withIndex('by_status', q => q.eq('status', status))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    } else if (churnRisk) {
+      query = ctx.db.query('students')
+        .withIndex('by_churn_risk', q => q.eq('churnRisk', churnRisk))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    }
+
+    const students = await query.order('desc').take(args.limit ?? 100);
 
     if (args.search) {
       const searchLower = args.search.toLowerCase()
-      students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
+      // Note: Substring search still filtered in memory for now
+      return students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
     }
 
-    const results = await Promise.all(students.map(async (student) => {
-      const latestEnrollment = await ctx.db
-        .query('enrollments')
-        .withIndex('by_student', (q) => q.eq('studentId', student._id))
-        .order('desc')
-        .first()
-
-      const enrolledProducts = await ctx.db
-        .query('enrollments')
-        .withIndex('by_student', (q) => q.eq('studentId', student._id))
-        .collect()
-
-      const productSet = new Set(enrolledProducts.map(e => e.product))
-
-      if (args.product) {
-        if (args.product === 'sem_produto') {
-          if (productSet.size > 0) return null
-        } else if (!productSet.has(args.product as any)) {
-          return null
-        }
-      }
-
-      return {
-        _id: student._id,
-        _creationTime: student._creationTime,
-        name: student.name,
-        email: student.email,
-        phone: student.phone,
-        profession: student.profession,
-        hasClinic: student.hasClinic,
-        clinicName: student.clinicName,
-        clinicCity: student.clinicCity,
-        status: student.status,
-        assignedCS: student.assignedCS,
-        churnRisk: student.churnRisk,
-        lastEngagementAt: student.lastEngagementAt,
-        leadId: student.leadId,
-        createdAt: student.createdAt,
-        updatedAt: student.updatedAt,
-        mainProduct: latestEnrollment?.product,
-      }
-    }))
-
-    return results.filter((r): r is NonNullable<typeof r> => r !== null)
+    return students;
   },
 })
 
@@ -181,28 +141,26 @@ export const getStudentsGroupedByProducts = query({
   },
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+    const organizationId = await getOrganizationId(ctx)
 
     const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
     const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
 
-    let students = status
-      ? await ctx.db
-          .query('students')
-          .withIndex('by_status', (q) => q.eq('status', status))
-          .order('desc')
-          .collect()
-      : churnRisk
-        ? await ctx.db
-            .query('students')
-            .withIndex('by_churn_risk', (q) => q.eq('churnRisk', churnRisk))
-            .order('desc')
-            .collect()
-        : await ctx.db.query('students').order('desc').collect()
+    let query = ctx.db.query('students')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId));
 
-    if (args.search) {
-      const searchLower = args.search.toLowerCase()
-      students = students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
+    if (status) {
+      query = ctx.db.query('students')
+        .withIndex('by_status', q => q.eq('status', status))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    } else if (churnRisk) {
+      query = ctx.db.query('students')
+        .withIndex('by_churn_risk', q => q.eq('churnRisk', churnRisk))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
     }
+
+    // Safety limit to prevent O(n) memory issues
+    const students = await query.order('desc').take(500);
 
     const products = [
       'trintae3',
@@ -219,24 +177,27 @@ export const getStudentsGroupedByProducts = query({
       grouped[p] = []
     }
 
-    await Promise.all(students.map(async (student) => {
-      const studentEnrollments = await ctx.db
-        .query('enrollments')
-        .withIndex('by_student', (q) => q.eq('studentId', student._id))
-        .collect()
+    for (const student of students) {
+      // Filter by search in memory
+      if (args.search) {
+        const searchLower = args.search.toLowerCase()
+        if (!student.name || !student.name.toLowerCase().includes(searchLower)) {
+          continue
+        }
+      }
 
-      const studentProducts = new Set(studentEnrollments.map(e => e.product))
+      const studentProducts = student.products || []
 
-      if (studentProducts.size === 0) {
+      if (studentProducts.length === 0) {
         grouped['sem_produto'].push(student)
       } else {
         for (const prod of studentProducts) {
-          if (grouped[prod as string]) {
-            grouped[prod as string].push(student)
+          if (grouped[prod]) {
+            grouped[prod].push(student)
           }
         }
       }
-    }))
+    }
 
     if (args.product && args.product !== 'all') {
       for (const key of Object.keys(grouped)) {
@@ -279,6 +240,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
+    const organizationId = await getOrganizationId(ctx)
 
     // Check for existing student with same phone (duplicate prevention)
     const existingStudent = await ctx.db
@@ -298,6 +260,7 @@ export const create = mutation({
 
     const studentId = await ctx.db.insert('students', {
       ...safeArgs,
+      organizationId,
       encryptedCPF,
       encryptedEmail,
       encryptedPhone,

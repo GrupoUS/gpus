@@ -158,13 +158,17 @@ export const createAsaasSubscription = action({
         externalReference: args.externalReference,
       });
 
-      // We should ideally save subscription to DB here if we had a dedicated mutation for it.
-      // The schema now has `asaasSubscriptions`.
-      // Let's call a mutation to save it.
-      // Oops, I didn't create `createSubscription` mutation in mutations.ts?
-      // I only updated `createCharge`.
-      // I should add `createSubscription` mutation to mutations.ts and call it here.
-      // For now, I will return the data and assume I'll fix mutations next.
+      // Save subscription to DB
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.mutations.createSubscriptionFromAsaas, {
+        studentId: args.studentId,
+        asaasSubscriptionId: subscription.id,
+        asaasCustomerId: subscription.customer,
+        value: subscription.value,
+        cycle: subscription.cycle,
+        status: subscription.status,
+        nextDueDate: new Date(subscription.nextDueDate).getTime(),
+      });
 
       return subscription;
     } catch (error: any) {
@@ -224,6 +228,39 @@ export const testAsaasConnection = action({
 // ═══════════════════════════════════════════════════════
 // IMPORT ACTIONS
 // ═══════════════════════════════════════════════════════
+
+/**
+ * Sync all students as Asaas customers (background job)
+ */
+export const syncAllStudents = action({
+	args: {},
+	handler: async (ctx): Promise<{ synced: number; errors: number; total: number }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error('Unauthenticated')
+		}
+
+		// @ts-ignore
+		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents) as any[]
+
+		let synced = 0
+		let errors = 0
+
+		for (const student of students) {
+			try {
+				await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal, {
+					studentId: student._id,
+				})
+				synced++
+			} catch (error) {
+				console.error(`Error syncing student ${student._id}:`, error)
+				errors++
+			}
+		}
+
+		return { synced, errors, total: students.length }
+	},
+})
 
 /**
  * Import customers from Asaas and create/update students

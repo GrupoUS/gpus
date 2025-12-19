@@ -101,6 +101,9 @@ export async function encrypt(data: string): Promise<string> {
 		return bufferToHex(combined.buffer as ArrayBuffer)
 	} catch (error) {
 		console.error('Encryption error:', error)
+		if (error instanceof Error && error.message.includes('ENCRYPTION_KEY')) {
+			throw error
+		}
 		throw new Error('Failed to encrypt sensitive data')
 	}
 }
@@ -135,6 +138,9 @@ export async function decrypt(encryptedData: string): Promise<string> {
 		return decoder.decode(decrypted)
 	} catch (error) {
 		console.error('Decryption error:', error)
+		if (error instanceof Error && error.message.includes('ENCRYPTION_KEY')) {
+			throw error
+		}
 		throw new Error('Failed to decrypt sensitive data')
 	}
 }

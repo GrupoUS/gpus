@@ -18,6 +18,7 @@ import {
 	mutation,
 	query,
 } from './_generated/server'
+import { paginationOptsValidator } from 'convex/server'
 import { internal } from './_generated/api'
 
 // Type assertion helper for internal functions during code generation bootstrap
@@ -84,6 +85,60 @@ export const getContacts = query({
 		}
 
 		return contacts
+	},
+})
+
+/**
+ * List contacts with server-side pagination and filters
+ */
+export const getContactsPaginated = query({
+	args: {
+		paginationOpts: paginationOptsValidator,
+		subscriptionStatus: v.optional(
+			v.union(
+				v.literal('subscribed'),
+				v.literal('unsubscribed'),
+				v.literal('pending'),
+			),
+		),
+		sourceType: v.optional(v.union(v.literal('lead'), v.literal('student'))),
+		search: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const organizationId = await getOrganizationId(ctx)
+
+		let query = ctx.db
+			.query('emailContacts')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+
+		// Apply filters via Convex filter expressions where possible
+		query = query.filter((q) => {
+			const filters = []
+
+			if (args.subscriptionStatus) {
+				filters.push(q.eq(q.field('subscriptionStatus'), args.subscriptionStatus))
+			}
+			if (args.sourceType) {
+				filters.push(q.eq(q.field('sourceType'), args.sourceType))
+			}
+
+			return filters.length > 0 ? q.and(...filters) : true
+		})
+
+		const results = await query.order('desc').paginate(args.paginationOpts)
+
+		// Apply search filter in memory (Convex doesn't support substring matching)
+		if (args.search) {
+			const searchLower = args.search.toLowerCase()
+			results.page = results.page.filter(
+				(c) =>
+					c.email.toLowerCase().includes(searchLower) ||
+					c.firstName?.toLowerCase().includes(searchLower) ||
+					c.lastName?.toLowerCase().includes(searchLower),
+			)
+		}
+
+		return results
 	},
 })
 
@@ -823,10 +878,15 @@ export const previewListContacts = query({
 	},
 	handler: async (ctx, args) => {
 		await requireAuth(ctx)
+		const organizationId = await getOrganizationId(ctx)
+		if (!organizationId) {
+			return { count: 0 }
+		}
 		const contactEmails: Set<string> = new Set()
 
 		// Count students
 		if (args.sourceType === 'students' || args.sourceType === 'both') {
+			// Note: students table doesn't have organizationId - rely on auth check
 			let students = await ctx.db.query('students').collect()
 
 			if (args.filters?.activeOnly) {
@@ -852,7 +912,10 @@ export const previewListContacts = query({
 
 		// Count leads
 		if (args.sourceType === 'leads' || args.sourceType === 'both') {
-			let leads = await ctx.db.query('leads').collect()
+			let leads = await ctx.db
+				.query('leads')
+				.withIndex('by_organization', q => q.eq('organizationId', organizationId))
+				.collect()
 
 			if (args.products.length > 0) {
 				leads = leads.filter(l =>

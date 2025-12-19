@@ -1,172 +1,93 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
-import { AlertCircle, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
+import { useAction } from 'convex/react';
+import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { Badge } from '@/components/ui/badge';
+import { InvoiceList } from '@/components/financial/invoice-list';
+import { MonthlyOverviewCard } from '@/components/financial/monthly-overview-card';
+import { PaymentCalendar } from '@/components/financial/payment-calendar';
+import { RevenueChart } from '@/components/financial/revenue-chart';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
 
 export const Route = createFileRoute('/_authenticated/financial')({
 	component: FinancialDashboard,
 });
 
 function FinancialDashboard() {
-	const summary = useQuery(api.asaas.getFinancialSummary, {});
-	const pendingPayments = useQuery(api.asaas.getPendingPayments);
-	const overduePayments = useQuery(api.asaas.getOverduePayments);
-	const payments =
-		pendingPayments && overduePayments
-			? [...pendingPayments, ...overduePayments].slice(0, 20)
-			: undefined;
+	const [isSyncing, setIsSyncing] = useState(false);
+	const syncPayments = useAction(api.asaas.actions.importPaymentsFromAsaas as any);
 
-	const getStatusBadge = (status: string) => {
-		const map: Record<string, string> = {
-			PENDING: 'bg-yellow-500',
-			RECEIVED: 'bg-green-500',
-			CONFIRMED: 'bg-green-600',
-			OVERDUE: 'bg-red-500',
-			REFUNDED: 'bg-purple-500',
-			DELETED: 'bg-gray-400',
-			CANCELLED: 'bg-gray-500',
-		};
-		return <Badge className={map[status] ?? 'bg-gray-500'}>{status}</Badge>;
+	const handleSync = async () => {
+		setIsSyncing(true);
+		try {
+			toast.info('Sincronizando pagamentos...');
+			const result = await syncPayments({
+				initiatedBy: 'manual_dashboard_sync',
+			});
+
+			if (result?.success) {
+				toast.success('Sincronização concluída!', {
+					description: `${result.recordsCreated} novos, ${result.recordsUpdated} atualizados`,
+				});
+			}
+		} catch (error) {
+			toast.error('Falha na sincronização', {
+				description: error instanceof Error ? error.message : 'Erro desconhecido',
+			});
+		} finally {
+			setIsSyncing(false);
+		}
 	};
 
 	return (
-		<div className="flex-1 space-y-4 p-8 pt-6">
-			<div className="flex items-center justify-between space-y-2">
-				<h2 className="text-3xl font-bold tracking-tight">Financeiro</h2>
+		<div className="flex-1 space-y-6 p-8 pt-6">
+			{/* Header with Quick Actions */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h2 className="text-3xl font-bold tracking-tight">Financeiro</h2>
+					<p className="text-muted-foreground">Acompanhe cobranças, receitas e pagamentos</p>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleSync}
+						disabled={isSyncing}
+						className="gap-2"
+					>
+						<RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+						{isSyncing ? 'Sincronizando...' : 'Sincronizar'}
+					</Button>
+				</div>
 			</div>
 
-			<div className="grid gap-4 md:grid-cols-3">
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Receita Confirmada</CardTitle>
-						<DollarSign className="h-4 w-4 text-green-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
-							{summary ? (
-								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.revenue.total,
-								)
-							) : (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							)}
-						</div>
-						<p className="text-xs text-muted-foreground">Total recebido/confirmado</p>
-					</CardContent>
-				</Card>
+			{/* Monthly Overview Cards */}
+			<MonthlyOverviewCard />
 
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">A Receber (Pendente)</CardTitle>
-						<CheckCircle className="h-4 w-4 text-yellow-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-yellow-600">
-							{summary ? (
-								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.charges.pendingAmount,
-								)
-							) : (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							)}
-						</div>
-						<p className="text-xs text-muted-foreground">
-							{summary
-								? `${summary.charges.pending} cobranças pendentes`
-								: 'Cobranças geradas e aguardando pagamento'}
-						</p>
-					</CardContent>
-				</Card>
+			{/* Charts and Calendar Row */}
+			<div className="grid gap-6 lg:grid-cols-2">
+				{/* Revenue Chart */}
+				<RevenueChart />
 
-				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-						<CardTitle className="text-sm font-medium">Inadimplência</CardTitle>
-						<AlertCircle className="h-4 w-4 text-red-500" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-red-600">
-							{summary ? (
-								new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-									summary.charges.overdueAmount,
-								)
-							) : (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							)}
-						</div>
-						<p className="text-xs text-muted-foreground">
-							{summary ? `${summary.charges.overdue} cobranças vencidas` : '...'}
-						</p>
-					</CardContent>
-				</Card>
+				{/* Payment Calendar */}
+				<PaymentCalendar />
 			</div>
 
-			<div className="grid gap-4 md:grid-cols-1">
-				<Card className="col-span-1">
-					<CardHeader>
-						<CardTitle>Últimos Pagamentos</CardTitle>
-						<CardDescription>Lista das 20 últimas movimentações financeiras.</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Data Criação</TableHead>
-									<TableHead>Vencimento</TableHead>
-									<TableHead>Valor</TableHead>
-									<TableHead>Status</TableHead>
-									<TableHead>Forma</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{payments === undefined ? (
-									<TableRow>
-										<TableCell colSpan={5} className="text-center py-8">
-											<Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-										</TableCell>
-									</TableRow>
-								) : payments.length === 0 ? (
-									<TableRow>
-										<TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-											Nenhum registro encontrado.
-										</TableCell>
-									</TableRow>
-								) : (
-									payments.map((payment: Doc<'asaasPayments'>) => (
-										<TableRow key={payment._id}>
-											<TableCell>{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
-											<TableCell>
-												{payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : '-'}
-											</TableCell>
-											<TableCell>
-												{new Intl.NumberFormat('pt-BR', {
-													style: 'currency',
-													currency: 'BRL',
-												}).format(payment.value)}
-											</TableCell>
-											<TableCell>{getStatusBadge(payment.status)}</TableCell>
-											<TableCell>{payment.billingType}</TableCell>
-										</TableRow>
-									))
-								)}
-							</TableBody>
-						</Table>
-					</CardContent>
-				</Card>
-			</div>
+			{/* Invoice List */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Cobranças do Mês</CardTitle>
+					<CardDescription>Lista de cobranças com filtros por status</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<InvoiceList />
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

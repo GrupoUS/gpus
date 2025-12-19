@@ -67,8 +67,13 @@ export function MonthlyOverviewCard() {
 		},
 		{
 			title: 'Projeção (3 meses)',
-			value: formatCurrency(summary.futureProjection.reduce((sum, m) => sum + m.amount, 0)),
-			count: summary.futureProjection.reduce((sum, m) => sum + m.count, 0),
+			value: formatCurrency(
+				summary.futureProjection.reduce((sum: number, m: { amount: number }) => sum + m.amount, 0),
+			),
+			count: summary.futureProjection.reduce(
+				(sum: number, m: { count: number }) => sum + m.count,
+				0,
+			),
 			icon: TrendingUp,
 			color: 'text-blue-500',
 		},

@@ -6,6 +6,7 @@ export const getDashboard = query({
   args: {
     period: v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'), v.literal('year'), v.literal('all')),
   },
+  returns: v.any(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
@@ -13,7 +14,6 @@ export const getDashboard = query({
     const organizationId = await getOrganizationId(ctx);
     if (!organizationId) return null;
 
-    // Calculate date ranges
     const now = Date.now();
     let startDate = 0;
     let previousStartDate = 0;

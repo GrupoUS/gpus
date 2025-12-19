@@ -9,20 +9,30 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export function AsaasImportButton() {
 	const [isLoading, setIsLoading] = useState(false);
-	const importCustomers = useAction(api.asaas.actions.importCustomersFromAsaas);
+	const importAll = useAction(api.asaas.actions.importAllFromAsaas);
 
 	const handleImport = async () => {
 		setIsLoading(true);
 		try {
 			toast.info('Iniciando importação do Asaas...');
 
-			const result = await importCustomers({
+			const result = await importAll({
 				initiatedBy: 'manual_import_button',
 			});
 
 			if (result?.success) {
+				const customerStats = result.customers;
+				const paymentStats = result.payments;
+
+				const customerMsg = customerStats
+					? `Clientes: ${customerStats.recordsCreated} criados, ${customerStats.recordsUpdated} atualizados`
+					: '';
+				const paymentMsg = paymentStats
+					? `Pagamentos: ${paymentStats.recordsCreated} importados, ${paymentStats.recordsUpdated} atualizados`
+					: '';
+
 				toast.success('Importação concluída com sucesso!', {
-					description: `${result.recordsProcessed} processados: ${result.recordsCreated} criados, ${result.recordsUpdated} atualizados.`,
+					description: [customerMsg, paymentMsg].filter(Boolean).join(' | '),
 				});
 			}
 		} catch (error) {
@@ -56,7 +66,7 @@ export function AsaasImportButton() {
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent>
-					<p>Sincronizar alunos manualmente do Asaas</p>
+					<p>Sincronizar clientes e pagamentos do Asaas</p>
 				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>

@@ -29,7 +29,15 @@ export default defineSchema({
     updatedAt: v.number(),
 
     // User Preferences (Notifications, UI, etc)
-    preferences: v.optional(v.any()), // JSON object for flexibility
+    preferences: v.optional(v.object({
+      notifications: v.optional(v.object({
+        email: v.boolean(),
+        push: v.boolean(),
+        whatsapp: v.boolean(),
+      })),
+      theme: v.optional(v.union(v.literal('light'), v.literal('dark'), v.literal('system'))),
+      sidebarCollapsed: v.optional(v.boolean()),
+    })),
   })
     .index('by_clerk_id', ['clerkId'])
     .index('by_organization', ['organizationId'])
@@ -215,10 +223,14 @@ export default defineSchema({
     minorConsentRequired: v.optional(v.boolean()), // Se consentimento de responsável foi necessário
     minorConsentGranted: v.optional(v.boolean()), // Se consentimento foi obtido
 
+    // Multi-tenant
+    organizationId: v.optional(v.string()),
+
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index('by_organization', ['organizationId'])
     .index('by_email', ['email'])
     .index('by_phone', ['phone'])
     .index('by_status', ['status'])
@@ -463,7 +475,14 @@ export default defineSchema({
 
     // Detalhes
     description: v.string(),
-    metadata: v.optional(v.any()), // Dados extras JSON
+    metadata: v.optional(v.object({
+      from: v.optional(v.string()),
+      to: v.optional(v.string()),
+      amount: v.optional(v.number()),
+      reason: v.optional(v.string()),
+      externalId: v.optional(v.string()),
+      fields: v.optional(v.array(v.string())),
+    })),
 
     // Multi-tenant
     organizationId: v.string(),

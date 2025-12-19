@@ -32,7 +32,7 @@ export function RevenueChart() {
 			received: summary.paidThisMonth,
 			projected: summary.pendingThisMonth,
 		},
-		...summary.futureProjection.map((m) => ({
+		...summary.futureProjection.map((m: { month: string; amount: number }) => ({
 			month: m.month,
 			received: 0,
 			projected: m.amount,

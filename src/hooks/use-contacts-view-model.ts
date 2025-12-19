@@ -1,9 +1,10 @@
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
-import { useMemo } from 'react';
+import { useAction, useMutation, usePaginatedQuery } from 'convex/react';
 import { toast } from 'sonner';
+
+const PAGE_SIZE = 20;
 
 // biome-ignore lint/suspicious/noExplicitAny: generic route typing
 export function useContactsViewModel(Route: any) {
@@ -11,52 +12,30 @@ export function useContactsViewModel(Route: any) {
 	const searchParams = Route.useSearch();
 	const { search, status, sourceType, page } = searchParams;
 
-	const PAGE_SIZE = 20;
-
 	// Mutations & Actions
 	const syncContact = useAction(api.emailMarketing.syncContactToBrevo);
 	const updateSubscription = useMutation(api.emailMarketing.updateContactSubscription);
 
-	// Queries
-	const contacts = useQuery(api.emailMarketing.getContacts, {
-		subscriptionStatus:
-			status === 'all' ? undefined : (status as 'subscribed' | 'unsubscribed' | 'pending'),
-		sourceType: sourceType === 'all' ? undefined : (sourceType as 'lead' | 'student'),
-	});
+	// Use paginated query for server-side pagination
+	const {
+		results: contacts,
+		status: paginationStatus,
+		loadMore,
+		isLoading,
+	} = usePaginatedQuery(
+		api.emailMarketing.getContactsPaginated,
+		{
+			subscriptionStatus:
+				status === 'all' ? undefined : (status as 'subscribed' | 'unsubscribed' | 'pending'),
+			sourceType: sourceType === 'all' ? undefined : (sourceType as 'lead' | 'student'),
+			search: search || undefined,
+		},
+		{ initialNumItems: PAGE_SIZE },
+	);
 
-	// Client-side filtering and pagination
-	const filteredContacts = useMemo(() => {
-		if (!contacts) return undefined;
-
-		let filtered = [...contacts];
-
-		// Filter by search term (email or name)
-		if (search) {
-			const searchLower = search.toLowerCase();
-			filtered = filtered.filter(
-				(c) =>
-					c.email.toLowerCase().includes(searchLower) ||
-					c.firstName?.toLowerCase().includes(searchLower) ||
-					c.lastName?.toLowerCase().includes(searchLower),
-			);
-		}
-
-		return filtered;
-	}, [contacts, search]);
-
-	// Pagination logic
-	const totalContacts = filteredContacts?.length ?? 0;
-	const totalPages = Math.ceil(totalContacts / PAGE_SIZE);
-
-	const paginatedContacts = useMemo(() => {
-		if (!filteredContacts) return [];
-		const start = (page - 1) * PAGE_SIZE;
-		return filteredContacts.slice(start, start + PAGE_SIZE);
-	}, [filteredContacts, page]);
-
-	// Stats
-	const stats = useMemo(() => {
-		if (!contacts) return null;
+	// Stats - computed from all loaded contacts
+	const stats = (() => {
+		if (!contacts || contacts.length === 0) return null;
 		const total = contacts.length;
 		const subscribed = contacts.filter((c) => c.subscriptionStatus === 'subscribed').length;
 		const pending = contacts.filter((c) => c.subscriptionStatus === 'pending').length;
@@ -72,7 +51,7 @@ export function useContactsViewModel(Route: any) {
 			unsubscribed,
 			unsubscribeRate: unsubscribeRate.toFixed(1),
 		};
-	}, [contacts]);
+	})();
 
 	// Handlers
 	const handleSyncContact = async (contactId: Id<'emailContacts'>) => {
@@ -108,11 +87,10 @@ export function useContactsViewModel(Route: any) {
 		});
 	};
 
-	const handlePageChange = (newPage: number) => {
-		void navigate({
-			to: '/marketing/contatos',
-			search: { ...searchParams, page: newPage },
-		});
+	const handleLoadMore = () => {
+		if (paginationStatus === 'CanLoadMore') {
+			loadMore(PAGE_SIZE);
+		}
 	};
 
 	const clearFilters = () => {
@@ -128,12 +106,12 @@ export function useContactsViewModel(Route: any) {
 	};
 
 	return {
-		contacts: paginatedContacts,
+		contacts: contacts ?? [],
 		stats,
-		isLoading: contacts === undefined,
-		totalPages,
-		currentPage: page,
-		totalContacts,
+		isLoading,
+		canLoadMore: paginationStatus === 'CanLoadMore',
+		paginationStatus,
+		totalContacts: contacts?.length ?? 0,
 		filters: {
 			search,
 			status,
@@ -142,7 +120,7 @@ export function useContactsViewModel(Route: any) {
 		handleSyncContact,
 		handleUpdateSubscription,
 		handleFilterChange,
-		handlePageChange,
+		handleLoadMore,
 		clearFilters,
 	};
 }

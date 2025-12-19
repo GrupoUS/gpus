@@ -1,6 +1,530 @@
-import { internalMutation } from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
 import { v } from "convex/values";
-import { dateStringToTimestamp } from "../lib/asaas";
+import { dateStringToTimestamp, timestampToDateString, asaasCustomers, asaasPayments, asaasSubscriptions, type AsaasCustomerPayload, type AsaasPaymentPayload, type AsaasSubscriptionPayload } from "../lib/asaas";
+import { requireAuth } from "../lib/auth";
+import { decryptCPF } from "../lib/encryption";
+
+/**
+ * Sync student as Asaas customer (create or update)
+ */
+export const syncStudentAsCustomer = mutation({
+	args: { studentId: v.id('students') },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const student = await ctx.db.get(args.studentId)
+		if (!student) {
+			throw new Error('Student not found')
+		}
+
+		// Decrypt CPF if needed
+		let cpf: string | undefined
+		if (student.encryptedCPF) {
+			cpf = await decryptCPF(student.encryptedCPF)
+		} else if (student.cpf) {
+			cpf = student.cpf
+		}
+
+		// Prepare customer payload
+		const customerPayload: AsaasCustomerPayload = {
+			name: student.name,
+			email: student.email,
+			phone: student.phone,
+			mobilePhone: student.phone,
+			externalReference: student._id,
+		}
+
+		// Add CPF if available (remove formatting)
+		if (cpf) {
+			customerPayload.cpfCnpj = cpf.replace(/\D/g, '')
+		}
+
+		// Add address if available
+		if (student.address) {
+			customerPayload.address = student.address
+			customerPayload.addressNumber = student.addressNumber
+			customerPayload.complement = student.complement
+			customerPayload.province = student.neighborhood
+			customerPayload.city = student.city
+			customerPayload.state = student.state
+			customerPayload.postalCode = student.zipCode
+			customerPayload.country = student.country || 'Brasil'
+		}
+
+		try {
+			let asaasCustomerId: string
+
+			if (student.asaasCustomerId) {
+				// Update existing customer
+				await asaasCustomers.update(student.asaasCustomerId, customerPayload)
+				asaasCustomerId = student.asaasCustomerId
+			} else {
+				// Create new customer
+				const customer = await asaasCustomers.create(customerPayload)
+				asaasCustomerId = customer.id
+			}
+
+			// Update student record
+			await ctx.db.patch(args.studentId, {
+				asaasCustomerId,
+				asaasCustomerSyncedAt: Date.now(),
+			})
+
+			return { asaasCustomerId }
+		} catch (error) {
+			console.error('Error syncing student as Asaas customer:', error)
+			throw new Error(`Failed to sync student as customer: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+})
+
+/**
+ * Create payment from enrollment
+ */
+export const createPaymentFromEnrollment = mutation({
+	args: {
+		enrollmentId: v.id('enrollments'),
+		billingType: v.union(
+			v.literal('BOLETO'),
+			v.literal('PIX'),
+			v.literal('CREDIT_CARD'),
+			v.literal('DEBIT_CARD'),
+			v.literal('UNDEFINED'),
+		),
+		dueDate: v.optional(v.number()), // Timestamp, defaults to enrollment startDate
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const enrollment = await ctx.db.get(args.enrollmentId)
+		if (!enrollment) {
+			throw new Error('Enrollment not found')
+		}
+
+		const student = await ctx.db.get(enrollment.studentId)
+		if (!student) {
+			throw new Error('Student not found')
+		}
+
+		if (!student.asaasCustomerId) {
+			throw new Error('Student not synced with Asaas. Please sync student first.')
+		}
+
+		// Calculate due date
+		const dueDateTimestamp = args.dueDate || enrollment.startDate || Date.now()
+		const dueDateStr = timestampToDateString(dueDateTimestamp)
+
+		// Prepare payment payload
+		const paymentPayload: AsaasPaymentPayload = {
+			customer: student.asaasCustomerId,
+			billingType: args.billingType,
+			value: enrollment.installmentValue,
+			dueDate: dueDateStr,
+			description: `Matrícula ${enrollment.product} - Parcela ${enrollment.paidInstallments ? enrollment.paidInstallments + 1 : 1}/${enrollment.installments}`,
+			externalReference: enrollment._id,
+			fine: {
+				value: 2.0,
+				type: 'PERCENTAGE',
+			},
+			interest: {
+				value: 1.0,
+				type: 'PERCENTAGE',
+			},
+		}
+
+		try {
+			const payment = await asaasPayments.create(paymentPayload)
+
+			// Save payment to database
+			const paymentId = await ctx.db.insert('asaasPayments', {
+				enrollmentId: enrollment._id,
+				studentId: student._id,
+				asaasPaymentId: payment.id,
+				asaasCustomerId: student.asaasCustomerId,
+				value: payment.value,
+				netValue: payment.netValue,
+				status: payment.status as any,
+				dueDate: dateStringToTimestamp(payment.dueDate),
+				billingType: payment.billingType,
+				boletoUrl: payment.bankSlipUrl,
+				boletoBarcode: payment.identificationField,
+				pixQrCode: payment.pixQrCode,
+				pixQrCodeBase64: payment.pixQrCode,
+				description: payment.description,
+				externalReference: payment.externalReference,
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+			})
+
+			return { paymentId, asaasPaymentId: payment.id }
+		} catch (error) {
+			console.error('Error creating payment:', error)
+			throw new Error(`Failed to create payment: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+})
+
+/**
+ * Create installments from enrollment (multiple payments)
+ */
+export const createInstallmentsFromEnrollment = mutation({
+	args: {
+		enrollmentId: v.id('enrollments'),
+		billingType: v.union(
+			v.literal('BOLETO'),
+			v.literal('PIX'),
+			v.literal('CREDIT_CARD'),
+			v.literal('DEBIT_CARD'),
+			v.literal('UNDEFINED'),
+		),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const enrollment = await ctx.db.get(args.enrollmentId)
+		if (!enrollment) {
+			throw new Error('Enrollment not found')
+		}
+
+		const student = await ctx.db.get(enrollment.studentId)
+		if (!student) {
+			throw new Error('Student not found')
+		}
+
+		if (!student.asaasCustomerId) {
+			throw new Error('Student not synced with Asaas. Please sync student first.')
+		}
+
+		const startDate = enrollment.startDate || Date.now()
+		const paidCount = enrollment.paidInstallments || 0
+		const totalInstallments = enrollment.installments
+
+		// Create payments for remaining installments
+		const paymentIds: string[] = []
+
+		for (let i = paidCount + 1; i <= totalInstallments; i++) {
+			// Calculate due date (monthly installments)
+			const dueDate = new Date(startDate)
+			dueDate.setMonth(dueDate.getMonth() + i - 1)
+			const dueDateStr = timestampToDateString(dueDate.getTime())
+
+			const paymentPayload: AsaasPaymentPayload = {
+				customer: student.asaasCustomerId,
+				billingType: args.billingType,
+				value: enrollment.installmentValue,
+				dueDate: dueDateStr,
+				description: `Matrícula ${enrollment.product} - Parcela ${i}/${totalInstallments}`,
+				externalReference: `${enrollment._id}-${i}`,
+				fine: {
+					value: 2.0,
+					type: 'PERCENTAGE',
+				},
+				interest: {
+					value: 1.0,
+					type: 'PERCENTAGE',
+				},
+			}
+
+			try {
+				const payment = await asaasPayments.create(paymentPayload)
+
+				const paymentId = await ctx.db.insert('asaasPayments', {
+					enrollmentId: enrollment._id,
+					studentId: student._id,
+					asaasPaymentId: payment.id,
+					asaasCustomerId: student.asaasCustomerId,
+					value: payment.value,
+					netValue: payment.netValue,
+					status: payment.status as any,
+					dueDate: dateStringToTimestamp(payment.dueDate),
+					installmentNumber: i,
+					totalInstallments,
+					billingType: payment.billingType,
+					boletoUrl: payment.bankSlipUrl,
+					boletoBarcode: payment.identificationField,
+					pixQrCode: payment.pixQrCode,
+					pixQrCodeBase64: payment.pixQrCode,
+					description: payment.description,
+					externalReference: payment.externalReference,
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+				})
+
+				paymentIds.push(paymentId)
+			} catch (error) {
+				console.error(`Error creating installment ${i}:`, error)
+				// Continue with other installments even if one fails
+			}
+		}
+
+		return { paymentIds, count: paymentIds.length }
+	},
+})
+
+/**
+ * Create subscription from enrollment (recurring payments)
+ */
+export const createSubscriptionFromEnrollment = mutation({
+	args: {
+		enrollmentId: v.id('enrollments'),
+		billingType: v.union(
+			v.literal('BOLETO'),
+			v.literal('PIX'),
+			v.literal('CREDIT_CARD'),
+			v.literal('DEBIT_CARD'),
+			v.literal('UNDEFINED'),
+		),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const enrollment = await ctx.db.get(args.enrollmentId)
+		if (!enrollment) {
+			throw new Error('Enrollment not found')
+		}
+
+		const student = await ctx.db.get(enrollment.studentId)
+		if (!student) {
+			throw new Error('Student not found')
+		}
+
+		if (!student.asaasCustomerId) {
+			throw new Error('Student not synced with Asaas. Please sync student first.')
+		}
+
+		const startDate = enrollment.startDate || Date.now()
+		const nextDueDateStr = timestampToDateString(startDate)
+
+		const subscriptionPayload: AsaasSubscriptionPayload = {
+			customer: student.asaasCustomerId,
+			billingType: args.billingType,
+			value: enrollment.installmentValue,
+			nextDueDate: nextDueDateStr,
+			cycle: 'MONTHLY',
+			description: `Matrícula ${enrollment.product} - Mensalidade`,
+			externalReference: enrollment._id,
+			fine: {
+				value: 2.0,
+				type: 'PERCENTAGE',
+			},
+			interest: {
+				value: 1.0,
+				type: 'PERCENTAGE',
+			},
+		}
+
+		try {
+			const subscription = await asaasSubscriptions.create(subscriptionPayload)
+
+			// Save subscription to database
+			const subscriptionId = await ctx.db.insert('asaasSubscriptions', {
+				enrollmentId: enrollment._id,
+				studentId: student._id,
+				asaasSubscriptionId: subscription.id,
+				asaasCustomerId: student.asaasCustomerId,
+				value: subscription.value,
+				cycle: subscription.cycle,
+				status: subscription.status as any,
+				nextDueDate: dateStringToTimestamp(subscription.nextDueDate),
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+			})
+
+			return { subscriptionId, asaasSubscriptionId: subscription.id }
+		} catch (error) {
+			console.error('Error creating subscription:', error)
+			throw new Error(`Failed to create subscription: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+})
+
+/**
+ * Update payment status (used by webhooks)
+ */
+export const updatePaymentStatus = internalMutation({
+	args: {
+		asaasPaymentId: v.string(),
+		status: v.union(
+			v.literal('PENDING'),
+			v.literal('RECEIVED'),
+			v.literal('CONFIRMED'),
+			v.literal('OVERDUE'),
+			v.literal('REFUNDED'),
+			v.literal('DELETED'),
+			v.literal('DUNNING_REQUESTED'),
+			v.literal('DUNNING_RECEIVED'),
+			v.literal('AWAITING_RISK_ANALYSIS'),
+			v.literal('CANCELLED'),
+		),
+		confirmedDate: v.optional(v.number()),
+		netValue: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const payment = await ctx.db
+			.query('asaasPayments')
+			.withIndex('by_asaas_payment_id', (q) => q.eq('asaasPaymentId', args.asaasPaymentId))
+			.first()
+
+		if (!payment) {
+			throw new Error(`Payment not found: ${args.asaasPaymentId}`)
+		}
+
+		const updates: any = {
+			status: args.status,
+			updatedAt: Date.now(),
+		}
+
+		if (args.confirmedDate) {
+			updates.confirmedDate = args.confirmedDate
+		}
+
+		if (args.netValue !== undefined) {
+			updates.netValue = args.netValue
+		}
+
+		await ctx.db.patch(payment._id, updates)
+
+		// Update enrollment if payment is confirmed
+		if (payment.enrollmentId && (args.status === 'CONFIRMED' || args.status === 'RECEIVED')) {
+			const enrollment = await ctx.db.get(payment.enrollmentId)
+			if (enrollment) {
+				const paidInstallments = (enrollment.paidInstallments || 0) + 1
+				const isFullyPaid = paidInstallments >= enrollment.installments
+
+				await ctx.db.patch(payment.enrollmentId, {
+					paidInstallments,
+					paymentStatus: isFullyPaid ? 'quitado' : 'em_dia',
+					updatedAt: Date.now(),
+				})
+			}
+		}
+
+		return payment._id
+	},
+})
+
+/**
+ * Cancel payment
+ */
+export const cancelPayment = mutation({
+	args: { paymentId: v.id('asaasPayments') },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const payment = await ctx.db.get(args.paymentId)
+		if (!payment) {
+			throw new Error('Payment not found')
+		}
+
+		try {
+			await asaasPayments.delete(payment.asaasPaymentId)
+
+			await ctx.db.patch(args.paymentId, {
+				status: 'CANCELLED',
+				updatedAt: Date.now(),
+			})
+
+			return { success: true }
+		} catch (error) {
+			console.error('Error cancelling payment:', error)
+			throw new Error(`Failed to cancel payment: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+})
+
+/**
+ * Refresh payment status from Asaas API
+ */
+export const refreshPaymentStatus = mutation({
+	args: { paymentId: v.id('asaasPayments') },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const payment = await ctx.db.get(args.paymentId)
+		if (!payment) {
+			throw new Error('Payment not found')
+		}
+
+		try {
+			const asaasPayment = await asaasPayments.get(payment.asaasPaymentId)
+
+			await ctx.db.patch(args.paymentId, {
+				status: asaasPayment.status as any,
+				netValue: asaasPayment.netValue,
+				confirmedDate: asaasPayment.paymentDate
+					? dateStringToTimestamp(asaasPayment.paymentDate)
+					: undefined,
+				updatedAt: Date.now(),
+			})
+
+			return { success: true, status: asaasPayment.status }
+		} catch (error) {
+			console.error('Error refreshing payment status:', error)
+			throw new Error(`Failed to refresh payment status: ${error instanceof Error ? error.message : String(error)}`)
+		}
+	},
+})
+
+/**
+ * Sync student as customer (internal)
+ */
+export const syncStudentAsCustomerInternal = internalMutation({
+	args: { studentId: v.id('students') },
+	handler: async (ctx, args) => {
+		const student = await ctx.db.get(args.studentId)
+		if (!student) {
+			throw new Error('Student not found')
+		}
+
+		// Decrypt CPF if needed
+		let cpf: string | undefined
+		if (student.encryptedCPF) {
+			cpf = await decryptCPF(student.encryptedCPF)
+		} else if (student.cpf) {
+			cpf = student.cpf
+		}
+
+		const customerPayload: AsaasCustomerPayload = {
+			name: student.name,
+			email: student.email,
+			phone: student.phone,
+			mobilePhone: student.phone,
+			externalReference: student._id,
+		}
+
+		if (cpf) {
+			customerPayload.cpfCnpj = cpf.replace(/\D/g, '')
+		}
+
+		if (student.address) {
+			customerPayload.address = student.address
+			customerPayload.addressNumber = student.addressNumber
+			customerPayload.complement = student.complement
+			customerPayload.province = student.neighborhood
+			customerPayload.city = student.city
+			customerPayload.state = student.state
+			customerPayload.postalCode = student.zipCode
+			customerPayload.country = student.country || 'Brasil'
+		}
+
+		let asaasCustomerId: string
+
+		if (student.asaasCustomerId) {
+			await asaasCustomers.update(student.asaasCustomerId, customerPayload)
+			asaasCustomerId = student.asaasCustomerId
+		} else {
+			const customer = await asaasCustomers.create(customerPayload)
+			asaasCustomerId = customer.id
+		}
+
+		await ctx.db.patch(args.studentId, {
+			asaasCustomerId,
+			asaasCustomerSyncedAt: Date.now(),
+		})
+
+		return { asaasCustomerId }
+	},
+})
 
 /**
  * Creates a new charge record in the database.
@@ -422,5 +946,44 @@ export const updateSubscriptionFromAsaas = internalMutation({
     if (updates.nextDueDate !== undefined) patch.nextDueDate = updates.nextDueDate;
 
     await ctx.db.patch(subscriptionId, patch);
+  },
+});
+
+/**
+ * Update subscription status from Asaas ID (used by webhooks)
+ */
+export const updateSubscriptionStatusInternal = internalMutation({
+  args: {
+    asaasSubscriptionId: v.string(),
+    status: v.union(
+      v.literal("ACTIVE"),
+      v.literal("INACTIVE"),
+      v.literal("CANCELLED"),
+      v.literal("EXPIRED")
+    ),
+    nextDueDate: v.optional(v.number()),
+    value: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query("asaasSubscriptions")
+      .withIndex("by_asaas_subscription_id", (q) => q.eq("asaasSubscriptionId", args.asaasSubscriptionId))
+      .first();
+
+    if (!subscription) {
+      console.warn(`Subscription with Asaas ID ${args.asaasSubscriptionId} not found`);
+      return null;
+    }
+
+    const patch: any = {
+      status: args.status,
+      updatedAt: Date.now(),
+    };
+
+    if (args.nextDueDate !== undefined) patch.nextDueDate = args.nextDueDate;
+    if (args.value !== undefined) patch.value = args.value;
+
+    await ctx.db.patch(subscription._id, patch);
+    return subscription._id;
   },
 });

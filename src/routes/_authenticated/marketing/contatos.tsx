@@ -1,18 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
 import { ContactFilters } from '@/components/marketing/contact-filters';
 import { ContactStats } from '@/components/marketing/contact-stats';
 import { ContactTable } from '@/components/marketing/contact-table';
 import { CreateListDialog } from '@/components/marketing/create-list-dialog';
-import {
-	Pagination,
-	PaginationContent,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Button } from '@/components/ui/button';
 import { useContactsViewModel } from '@/hooks/use-contacts-view-model';
 
 const searchSchema = z.object({
@@ -31,12 +25,13 @@ function ContactsPage() {
 	const {
 		contacts,
 		stats,
-		totalPages,
-		currentPage,
+		isLoading,
+		canLoadMore,
+		paginationStatus,
 		filters,
 		handleSyncContact,
 		handleFilterChange,
-		handlePageChange,
+		handleLoadMore,
 		clearFilters,
 	} = useContactsViewModel(Route);
 
@@ -67,41 +62,29 @@ function ContactsPage() {
 
 				<ContactTable contacts={contacts} onSync={handleSyncContact} />
 
-				{totalPages > 1 && (
+				{/* Server-side cursor-based pagination */}
+				{canLoadMore && (
 					<div className="flex justify-center mt-4">
-						<Pagination>
-							<PaginationContent>
-								<PaginationItem>
-									<PaginationPrevious
-										className={
-											currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
-										}
-										onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-									/>
-								</PaginationItem>
-								{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-									<PaginationItem key={page}>
-										<PaginationLink
-											isActive={page === currentPage}
-											onClick={() => handlePageChange(page)}
-											className="cursor-pointer"
-										>
-											{page}
-										</PaginationLink>
-									</PaginationItem>
-								))}
-								<PaginationItem>
-									<PaginationNext
-										className={
-											currentPage === totalPages
-												? 'pointer-events-none opacity-50'
-												: 'cursor-pointer'
-										}
-										onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-									/>
-								</PaginationItem>
-							</PaginationContent>
-						</Pagination>
+						<Button
+							variant="outline"
+							onClick={handleLoadMore}
+							disabled={paginationStatus === 'LoadingMore'}
+						>
+							{paginationStatus === 'LoadingMore' ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Carregando...
+								</>
+							) : (
+								'Carregar mais contatos'
+							)}
+						</Button>
+					</div>
+				)}
+
+				{isLoading && contacts.length === 0 && (
+					<div className="flex justify-center items-center h-32">
+						<Loader2 className="h-8 w-8 animate-spin text-primary" />
 					</div>
 				)}
 			</div>

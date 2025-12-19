@@ -146,6 +146,21 @@ export const getSyncLogs = query({
 })
 
 /**
+ * Get recent sync logs (simplified query for SyncHistory component)
+ */
+export const getRecentSyncLogs = query({
+	args: { limit: v.optional(v.number()) },
+	handler: async (ctx, args) => {
+		const limit = args.limit || 10
+		return await ctx.db
+			.query('asaasSyncLogs')
+			.withIndex('by_created')
+			.order('desc')
+			.take(limit)
+	},
+})
+
+/**
  * Get a specific sync log by ID
  */
 export const getSyncLog = query({

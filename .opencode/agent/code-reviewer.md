@@ -37,7 +37,6 @@ You are the **code-reviewer** subagent. You validate security, architecture, and
 | MCP | Purpose |
 |-----|---------|
 | `serena` | Semantic code analysis, find symbols, trace references |
-| `gh_grep` | Research security patterns and best practices |
 
 ## Process
 

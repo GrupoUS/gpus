@@ -46,7 +46,7 @@ Ou use um gerador online de tokens seguros.
    - Clique em **Save**
 
 **Variáveis a configurar:**
-- `ASAAS_API_KEY` = `$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjYzMzllZThiLWM4ZDUtNDc3Yi04YTBmLWQ5MTdjMWYzZTE5Mzo6JGFhY2hfY2VkNDdiZDctMjUzYi00Y2EzLWJiNzYtZGYwN2Q4MmY4Y2Yy`
+- `ASAAS_API_KEY` = (sua chave API de produção)
 - `ASAAS_BASE_URL` = `https://api.asaas.com/v3`
 - `ASAAS_WEBHOOK_TOKEN` = (gere um token seguro - veja instruções abaixo)
 

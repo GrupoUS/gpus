@@ -1,47 +1,8 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, type MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { api } from './_generated/api'
 import { requireAuth } from './lib/auth'
-
-export const getByStudent = query({
-  args: { studentId: v.id('students') },
-  handler: async (ctx, args) => {
-    await requireAuth(ctx)
-
-    return await ctx.db
-      .query('enrollments')
-      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
-      .order('desc')
-      .collect()
-  },
-})
-
-export const list = query({
-  args: {
-    // Comment 6: Add basic optional filter arguments to avoid returning unbounded list
-    // and valid consumers.
-    studentId: v.optional(v.id('students')),
-    product: v.optional(v.string()),
-    status: v.optional(v.string()),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await requireAuth(ctx)
-
-    // Use filters if provided
-    let q: any = ctx.db.query('enrollments')
-
-    if (args.studentId) {
-        q = q.withIndex('by_student', (q: any) => q.eq('studentId', args.studentId!))
-    } else if (args.product) {
-        q = q.withIndex('by_product', (q: any) => q.eq('product', args.product as any))
-    } else if (args.status) {
-        q = q.withIndex('by_status', (q: any) => q.eq('status', args.status as any))
-    }
-
-    return await q.order('desc').take(args.limit || 100)
-  },
-})
 
 export const create = mutation({
   args: {
@@ -87,9 +48,23 @@ export const create = mutation({
       updatedAt: Date.now(),
     })
 
+    // Update student's denormalized products list
+    await updateStudentProducts(ctx, args.studentId)
+
     return enrollmentId
   },
 })
+
+async function updateStudentProducts(ctx: MutationCtx, studentId: Id<'students'>) {
+  const enrollments = await ctx.db
+    .query('enrollments')
+    .withIndex('by_student', (q) => q.eq('studentId', studentId))
+    .filter((q) => q.eq(q.field('status'), 'ativo'))
+    .collect()
+
+  const products = Array.from(new Set(enrollments.map((e) => e.product)))
+  await ctx.db.patch(studentId, { products: products as any })
+}
 
 export const update = mutation({
   args: {
@@ -131,6 +106,26 @@ export const update = mutation({
       ...args.patch,
       updatedAt: Date.now(),
     })
+
+    if (args.patch.status) {
+      const enrollment = await ctx.db.get(args.enrollmentId)
+      if (enrollment) {
+        await updateStudentProducts(ctx, enrollment.studentId)
+      }
+    }
+  },
+})
+
+export const getByStudent = query({
+  args: { studentId: v.id('students') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+    
+    return await ctx.db
+      .query('enrollments')
+      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
+      .collect()
   },
 })
 
