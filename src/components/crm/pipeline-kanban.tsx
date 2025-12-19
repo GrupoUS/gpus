@@ -104,31 +104,18 @@ function DraggableLeadCard({
 			transition={layoutTransition}
 			className="relative rounded-lg touch-none will-change-transform"
 		>
-			{/* biome-ignore lint/a11y/useSemanticElements: Cannot use button due to nested interactive elements */}
-			<div
-				role="button"
-				tabIndex={0}
-				aria-label="Abrir lead"
-				onClick={(event) => {
-					// Only prevent if clicking on nested WhatsApp button
-					if (event.target instanceof HTMLElement && event.target.closest('button')) {
-						return;
-					}
-					if (!isDragging) {
-						onLeadClick?.(lead._id);
-					}
-				}}
-				onKeyDown={(event) => {
-					if (event.key === 'Enter' || event.key === ' ') {
-						event.preventDefault();
+			<div className="relative w-full">
+				<LeadCard lead={lead} />
+				<button
+					type="button"
+					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg bg-transparent border-none p-0"
+					aria-label="Abrir lead"
+					onClick={() => {
 						if (!isDragging) {
 							onLeadClick?.(lead._id);
 						}
-					}
-				}}
-				className="w-full text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg bg-transparent border-none p-0"
-			>
-				<LeadCard lead={lead} />
+					}}
+				/>
 			</div>
 			{lead.phone && (
 				<motion.button

@@ -113,3 +113,104 @@ export async function requireOrgRole(
 
 	return identity
 }
+
+import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions'
+
+/**
+ * Check if user has a specific permission
+ * @param ctx Context (Query, Mutation, or Action)
+ * @param permission Permission to check (e.g., 'leads:read')
+ * @returns true if user has the permission, false otherwise
+ */
+export async function hasPermission(
+	ctx: Context,
+	permission: string,
+): Promise<boolean> {
+	const identity = await getIdentity(ctx)
+
+	if (!identity) {
+		return false
+	}
+
+	// Admin has all permissions
+	if (identity.org_role === 'org:admin') {
+		return true
+	}
+
+	// Check if permission is in JWT claims
+	if (identity.org_permissions && Array.isArray(identity.org_permissions)) {
+		if (identity.org_permissions.includes(permission)) {
+			return true
+		}
+		// Also check for 'all' permission in the array just in case
+		if (identity.org_permissions.includes(PERMISSIONS.ALL)) {
+			return true
+		}
+	}
+
+	// Fallback: Check DB role if JWT claims are missing or insufficient
+	const permissions = await getUserPermissions(ctx, identity)
+	return permissions.includes(permission) || permissions.includes(PERMISSIONS.ALL)
+}
+
+/**
+ * Require a specific permission - throws if not authorized
+ * @param ctx Context (Query, Mutation, or Action)
+ * @param permission Permission required (e.g., 'leads:write')
+ * @throws Error if user doesn't have the permission
+ */
+export async function requirePermission(
+	ctx: Context,
+	permission: string,
+): Promise<ClerkIdentity> {
+	const identity = await requireAuth(ctx)
+	const isAllowed = await hasPermission(ctx, permission)
+
+	if (!isAllowed) {
+		throw new Error(`Permissão negada. Requer permissão: ${permission}`)
+	}
+
+	return identity
+}
+
+/**
+ * Check if user has any of the specified permissions
+ * @param ctx Context (Query, Mutation, or Action)
+ * @param permissions Array of permissions to check
+ * @returns true if user has at least one permission, false otherwise
+ */
+export async function hasAnyPermission(
+	ctx: Context,
+	permissions: string[],
+): Promise<boolean> {
+	if (permissions.length === 0) return true
+
+	for (const permission of permissions) {
+		if (await hasPermission(ctx, permission)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+/**
+ * Helper to get permissions from DB role fallback
+ */
+async function getUserPermissions(ctx: Context, identity: ClerkIdentity): Promise<string[]> {
+	// Action context doesn't have direct DB access
+	if (!('db' in ctx)) {
+		return []
+	}
+
+	const user = await ctx.db
+		.query('users')
+		.withIndex('by_clerk_id', (q: any) => q.eq('clerkId', identity.subject))
+		.first()
+
+	if (!user || typeof user.role !== 'string') {
+		return []
+	}
+
+	return ROLE_PERMISSIONS[user.role] || []
+}

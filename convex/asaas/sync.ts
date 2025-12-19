@@ -156,24 +156,6 @@ export const getSyncLog = query({
 })
 
 /**
- * Get recent sync logs (for settings page)
- */
-export const getRecentSyncLogs = query({
-	args: { limit: v.optional(v.number()) },
-	handler: async (ctx, args) => {
-		const limit = args.limit || 10
-
-		const logs = await ctx.db
-			.query('asaasSyncLogs')
-			.withIndex('by_created')
-			.order('desc')
-			.take(limit)
-
-		return logs
-	},
-})
-
-/**
  * Check if there's a sync currently running for a type
  */
 export const isSyncRunning = query({

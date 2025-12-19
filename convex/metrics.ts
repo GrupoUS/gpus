@@ -193,6 +193,19 @@ export const getTeamPerformance = query({
   args: {
     period: v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'), v.literal('year')),
   },
+  returns: v.array(v.object({
+    _id: v.id('users'),
+    name: v.string(),
+    role: v.union(
+      v.literal('admin'),
+      v.literal('sdr'),
+      v.literal('cs'),
+      v.literal('support')
+    ),
+    metric: v.number(),
+    metricLabel: v.string(),
+    period: v.string(),
+  })),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];

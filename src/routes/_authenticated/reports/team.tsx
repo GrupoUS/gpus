@@ -1,7 +1,7 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import type { FunctionReturnType } from 'convex/server';
 import { Award, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -35,23 +35,28 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
-interface TeamPerformanceMember {
-	_id: string;
+type User = {
+	_id: Id<'users'>;
+	name: string;
+	role: string;
+};
+
+type TeamPerformanceMember = {
+	_id: Id<'users'>;
 	name: string;
 	role: string;
 	metric: number;
 	metricLabel: string;
-}
-
-// User type used in other parts if any, or we can leave it if it doesnt error
-// But to be safe and simple, let's use explicit type or keep existing if only line 38 failed.
-// The user error showed specifically line 38.
-type User = FunctionReturnType<typeof api.users.list>[number];
+	period: string;
+};
 
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
-	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
-	const allUsers = useQuery(api.users.list);
+	// @ts-expect-error - Deep type instantiation error from Convex inference
+	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period }) as
+		| TeamPerformanceMember[]
+		| undefined;
+	const allUsers = useQuery(api.users.list) as User[] | undefined;
 
 	return (
 		<div className="space-y-6 p-6">

@@ -298,6 +298,8 @@ function validateInputSecurity(input: any): { valid: boolean; threats: string[] 
 	return { valid: threats.length === 0, threats }
 }
 
+import { hasAnyPermission } from './auth'
+
 /**
  * Security middleware wrapper for Convex functions
  */
@@ -306,6 +308,7 @@ export function withSecurity<T, R>(
 	options: {
 		requireAuth?: boolean
 		allowedRoles?: string[]
+		requiredPermissions?: string[]
 		operationType?: 'login' | 'contact' | 'dataExport' | 'passwordReset'
 		validationSchema?: any
 		maxRequestSize?: number
@@ -317,6 +320,7 @@ export function withSecurity<T, R>(
 		const {
 			requireAuth = true,
 			allowedRoles,
+			requiredPermissions,
 			operationType,
 			validationSchema,
 			maxRequestSize = SECURITY_CONFIG.maxRequestSize,
@@ -344,6 +348,15 @@ export function withSecurity<T, R>(
 			if (!allowedRoles.includes(securityContext.actorRole)) {
 				await logSecurityEvent(ctx, 'unauthorized_access', `Role ${securityContext.actorRole} not allowed`, 'medium', [securityContext.actorId])
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
+			}
+		}
+
+		// Permission validation
+		if (requiredPermissions && requiredPermissions.length > 0) {
+			const hasPerm = await hasAnyPermission(ctx, requiredPermissions)
+			if (!hasPerm) {
+				await logSecurityEvent(ctx, 'unauthorized_access', `Missing required permissions: ${requiredPermissions.join(', ')}`, 'medium', [securityContext.actorId])
+				throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`)
 			}
 		}
 
@@ -413,6 +426,7 @@ export function withQuerySecurity<T, R>(
 	options: {
 		requireAuth?: boolean
 		allowedRoles?: string[]
+		requiredPermissions?: string[]
 		validationSchema?: any
 		maxResults?: number
 	} = {}
@@ -421,6 +435,7 @@ export function withQuerySecurity<T, R>(
 		const {
 			requireAuth = true,
 			allowedRoles,
+			requiredPermissions,
 			validationSchema,
 			maxResults = SECURITY_CONFIG.maxQueryResults,
 		} = options
@@ -428,7 +443,6 @@ export function withQuerySecurity<T, R>(
 		// Get security context
 		const securityContext = await getSecurityContext(ctx)
 
-		// Authentication check
 		// Authentication check
 		if (requireAuth && !securityContext.isAuthenticated) {
 			throw new Error('Authentication required')
@@ -438,6 +452,14 @@ export function withQuerySecurity<T, R>(
 		if (allowedRoles && allowedRoles.length > 0) {
 			if (!allowedRoles.includes(securityContext.actorRole)) {
 				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`)
+			}
+		}
+
+		// Permission validation
+		if (requiredPermissions && requiredPermissions.length > 0) {
+			const hasPerm = await hasAnyPermission(ctx, requiredPermissions)
+			if (!hasPerm) {
+				throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`)
 			}
 		}
 

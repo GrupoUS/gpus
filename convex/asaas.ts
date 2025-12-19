@@ -828,7 +828,7 @@ export const syncAllStudents = action({
 			throw new Error('Unauthenticated')
 		}
 
-		const students = await ctx.runQuery(internal.asaas.listAllStudents)
+		const students = await ctx.runQuery(internal.asaas.listAllStudents as any) as any[]
 
 		let synced = 0
 		let errors = 0

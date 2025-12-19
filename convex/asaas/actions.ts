@@ -1,7 +1,7 @@
 "use action";
 
 import { action } from "../_generated/server";
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAsaasClient } from "../lib/asaas";
 
@@ -703,36 +703,285 @@ interface CombinedImportResult {
 
 /**
  * Import customers AND payments from Asaas (combined operation)
+ * NOTE: This action implements the logic directly instead of calling other actions,
+ * because Convex doesn't support ctx.runAction() calls to public actions from within actions.
  */
 export const importAllFromAsaas = action({
   args: {
     initiatedBy: v.string(),
   },
   handler: async (ctx, args): Promise<CombinedImportResult> => {
-    // Step 1: Import customers
-    // @ts-ignore - TypeScript has issues with deep type inference in Convex actions
-    const customersResult = (await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
-      initiatedBy: args.initiatedBy,
-    })) as ImportResult;
+    console.log('[importAllFromAsaas] Starting import...');
+    
+    let client: ReturnType<typeof getAsaasClient>;
+    try {
+      client = getAsaasClient();
+    } catch (error: any) {
+      console.error('[importAllFromAsaas] Failed to initialize Asaas client:', error.message);
+      throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se ASAAS_API_KEY está configurada.`);
+    }
+    
+    const MAX_PAGES = 50;
 
-    // Step 2: Import payments (only if customers succeeded)
-    if (customersResult.success) {
-      // @ts-ignore - TypeScript has issues with deep type inference in Convex actions
-      const paymentsResult = (await ctx.runAction(api.asaas.actions.importPaymentsFromAsaas, {
+    // ═══════════════════════════════════════════════════════
+    // STEP 1: IMPORT CUSTOMERS
+    // ═══════════════════════════════════════════════════════
+    console.log('[importAllFromAsaas] Step 1: Creating customers sync log...');
+    
+    let customersLogId;
+    try {
+      // @ts-ignore
+      customersLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
+        syncType: 'customers' as const,
         initiatedBy: args.initiatedBy,
-      })) as ImportResult;
+      });
+      console.log('[importAllFromAsaas] Customers sync log created:', customersLogId);
+    } catch (error: any) {
+      console.error('[importAllFromAsaas] Failed to create customers sync log:', error.message);
+      throw new Error(`Falha ao criar log de sincronização: ${error.message}`);
+    }
 
+    let customersOffset = 0;
+    const limit = 100;
+    let customersHasMore = true;
+    let customersProcessed = 0;
+    let customersCreated = 0;
+    let customersUpdated = 0;
+    let customersFailed = 0;
+    const customersErrors: string[] = [];
+    let customersPageCount = 0;
+    let customersSuccess = true;
+
+    try {
+      while (customersHasMore && customersPageCount < MAX_PAGES) {
+        customersPageCount++;
+        console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
+        
+        let response;
+        try {
+          response = await client.listAllCustomers({ offset: customersOffset, limit });
+          console.log(`[importAllFromAsaas] Got ${response.data.length} customers, hasMore: ${response.hasMore}`);
+        } catch (apiError: any) {
+          console.error(`[importAllFromAsaas] API error fetching customers:`, apiError.message);
+          throw apiError;
+        }
+
+        for (const customer of response.data) {
+          customersProcessed++;
+          try {
+            // @ts-ignore
+            let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
+              asaasCustomerId: customer.id,
+            });
+
+            if (!existingStudent) {
+              // @ts-ignore
+              const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
+                email: customer.email,
+                cpf: customer.cpfCnpj
+              });
+
+              if (duplicate) {
+                // @ts-ignore
+                await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+                  studentId: duplicate._id,
+                  asaasCustomerId: customer.id,
+                });
+                existingStudent = duplicate;
+              }
+            }
+
+            if (existingStudent) {
+              // @ts-ignore
+              await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
+                studentId: existingStudent._id,
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone || customer.mobilePhone,
+                cpf: customer.cpfCnpj,
+              });
+              customersUpdated++;
+            } else {
+              // @ts-ignore
+              await ctx.runMutation(internal.asaas.mutations.createStudentFromAsaas, {
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone || customer.mobilePhone || '',
+                cpf: customer.cpfCnpj,
+                asaasCustomerId: customer.id,
+              });
+              customersCreated++;
+            }
+          } catch (err: any) {
+            customersFailed++;
+            customersErrors.push(`Customer ${customer.id}: ${err.message}`);
+          }
+        }
+
+        customersHasMore = response.hasMore;
+        customersOffset += limit;
+      }
+
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: customersLogId,
+        status: 'completed' as const,
+        recordsProcessed: customersProcessed,
+        recordsCreated: customersCreated,
+        recordsUpdated: customersUpdated,
+        recordsFailed: customersFailed,
+        errors: customersErrors.length > 0 ? customersErrors.slice(0, 50) : undefined,
+        completedAt: Date.now(),
+      });
+    } catch (error: any) {
+      customersSuccess = false;
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: customersLogId,
+        status: 'failed' as const,
+        recordsProcessed: customersProcessed,
+        recordsCreated: customersCreated,
+        recordsUpdated: customersUpdated,
+        recordsFailed: customersFailed,
+        errors: [error.message, ...customersErrors].slice(0, 50),
+        completedAt: Date.now(),
+      });
+    }
+
+    const customersResult: ImportResult = {
+      success: customersSuccess,
+      recordsProcessed: customersProcessed,
+      recordsCreated: customersCreated,
+      recordsUpdated: customersUpdated,
+      recordsFailed: customersFailed,
+    };
+
+    // If customers import failed completely, don't proceed with payments
+    if (!customersSuccess) {
       return {
-        success: true,
+        success: false,
         customers: customersResult,
-        payments: paymentsResult,
+        payments: null,
       };
     }
 
+    // ═══════════════════════════════════════════════════════
+    // STEP 2: IMPORT PAYMENTS
+    // ═══════════════════════════════════════════════════════
+
+    // @ts-ignore
+    const paymentsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
+      syncType: 'payments' as const,
+      initiatedBy: args.initiatedBy,
+    });
+
+    let paymentsOffset = 0;
+    let paymentsHasMore = true;
+    let paymentsProcessed = 0;
+    let paymentsCreated = 0;
+    let paymentsUpdated = 0;
+    let paymentsFailed = 0;
+    const paymentsErrors: string[] = [];
+    let paymentsPageCount = 0;
+    let paymentsSuccess = true;
+
+    try {
+      while (paymentsHasMore && paymentsPageCount < MAX_PAGES) {
+        paymentsPageCount++;
+        const response = await client.listAllPayments({ offset: paymentsOffset, limit });
+
+        for (const payment of response.data) {
+          paymentsProcessed++;
+          try {
+            // @ts-ignore
+            const existingPayment = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
+              asaasPaymentId: payment.id,
+            });
+
+            if (existingPayment) {
+              // @ts-ignore
+              await ctx.runMutation(internal.asaas.mutations.updatePaymentFromAsaas, {
+                paymentId: existingPayment._id,
+                status: payment.status,
+                netValue: payment.netValue,
+                confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
+              });
+              paymentsUpdated++;
+            } else {
+              // @ts-ignore
+              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
+                asaasCustomerId: payment.customer,
+              });
+
+              if (student) {
+                // @ts-ignore
+                await ctx.runMutation(internal.asaas.mutations.createPaymentFromAsaas, {
+                  studentId: student._id,
+                  asaasPaymentId: payment.id,
+                  asaasCustomerId: payment.customer,
+                  value: payment.value,
+                  netValue: payment.netValue,
+                  status: payment.status,
+                  dueDate: new Date(payment.dueDate).getTime(),
+                  billingType: payment.billingType,
+                  description: payment.description,
+                  boletoUrl: payment.bankSlipUrl,
+                  confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
+                });
+                paymentsCreated++;
+              } else {
+                paymentsErrors.push(`Payment ${payment.id}: Student not found for customer ${payment.customer}`);
+                paymentsFailed++;
+              }
+            }
+          } catch (err: any) {
+            paymentsFailed++;
+            paymentsErrors.push(`Payment ${payment.id}: ${err.message}`);
+          }
+        }
+
+        paymentsHasMore = response.hasMore;
+        paymentsOffset += limit;
+      }
+
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: paymentsLogId,
+        status: 'completed' as const,
+        recordsProcessed: paymentsProcessed,
+        recordsCreated: paymentsCreated,
+        recordsUpdated: paymentsUpdated,
+        recordsFailed: paymentsFailed,
+        errors: paymentsErrors.length > 0 ? paymentsErrors.slice(0, 50) : undefined,
+        completedAt: Date.now(),
+      });
+    } catch (error: any) {
+      paymentsSuccess = false;
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: paymentsLogId,
+        status: 'failed' as const,
+        recordsProcessed: paymentsProcessed,
+        recordsCreated: paymentsCreated,
+        recordsUpdated: paymentsUpdated,
+        recordsFailed: paymentsFailed,
+        errors: [error.message, ...paymentsErrors].slice(0, 50),
+        completedAt: Date.now(),
+      });
+    }
+
+    const paymentsResult: ImportResult = {
+      success: paymentsSuccess,
+      recordsProcessed: paymentsProcessed,
+      recordsCreated: paymentsCreated,
+      recordsUpdated: paymentsUpdated,
+      recordsFailed: paymentsFailed,
+    };
+
     return {
-      success: false,
+      success: customersSuccess && paymentsSuccess,
       customers: customersResult,
-      payments: null
+      payments: paymentsResult,
     };
   },
 });

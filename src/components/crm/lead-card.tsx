@@ -112,7 +112,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 								e.stopPropagation();
 								// Lógica de ligar aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none relative z-10"
 							aria-label="Ligar"
 						>
 							<Phone className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 								e.stopPropagation();
 								// Lógica de mensagem aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none"
+							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none relative z-10"
 							aria-label="Mensagem"
 						>
 							<MessageSquare className="h-4 w-4" />
