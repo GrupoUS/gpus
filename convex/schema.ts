@@ -775,11 +775,33 @@ export default defineSchema({
     // Multi-tenant
     organizationId: v.string(),
 
+    // Source and filtering configuration
+    sourceType: v.optional(v.union(
+      v.literal('students'),
+      v.literal('leads'),
+      v.literal('both')
+    )),
+    products: v.optional(v.array(v.string())), // Product filters applied
+    filters: v.optional(v.object({
+      activeOnly: v.boolean(),
+      qualifiedOnly: v.boolean()
+    })),
+
     // Métricas
     contactCount: v.number(),
 
     // Status
     isActive: v.boolean(),
+
+    // Sync status tracking
+    syncStatus: v.optional(v.union(
+      v.literal('pending'),
+      v.literal('syncing'),
+      v.literal('synced'),
+      v.literal('error')
+    )),
+    lastSyncedAt: v.optional(v.number()),
+    syncError: v.optional(v.string()),
 
     // Timestamps
     createdAt: v.number(),

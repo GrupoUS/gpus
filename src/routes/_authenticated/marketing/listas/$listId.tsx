@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import {
@@ -346,9 +346,10 @@ function ListDetailsPage() {
 	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Convex queries
-	const list = useQuery(api.emailMarketing.getList, {
+	const listData = useQuery(api.emailMarketing.getList, {
 		listId: listId as Id<'emailLists'>,
 	});
+	const list = listData as Doc<'emailLists'> | undefined | null;
 	const allContacts = useQuery(api.emailMarketing.getContacts, {});
 
 	// Convex mutations/actions

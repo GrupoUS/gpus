@@ -433,6 +433,28 @@ export const brevoContacts = {
 			body: { emails },
 		})
 	},
+
+	/**
+	 * Import contacts in bulk
+	 */
+	async import(payload: {
+		fileBody?: string
+		jsonBody?: Array<{
+			email: string
+			attributes?: Record<string, any>
+			sms?: string
+		}>
+		listIds?: number[]
+		emailBlacklist?: boolean
+		smsBlacklist?: boolean
+		updateExistingContacts?: boolean
+		emptyContactsAttributes?: boolean
+	}): Promise<{ processId: number }> {
+		return brevoFetch<{ processId: number }>('/contacts/import', {
+			method: 'POST',
+			body: payload,
+		})
+	},
 }
 
 // ═══════════════════════════════════════════════════════

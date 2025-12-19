@@ -301,6 +301,7 @@ export const create = mutation({
       encryptedCPF,
       encryptedEmail,
       encryptedPhone,
+      lgpdConsent,
       name: args.name,
       phone: args.phone,
       email: args.email,

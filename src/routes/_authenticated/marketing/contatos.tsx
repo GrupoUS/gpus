@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ContactFilters } from '@/components/marketing/contact-filters';
 import { ContactStats } from '@/components/marketing/contact-stats';
 import { ContactTable } from '@/components/marketing/contact-table';
+import { CreateListDialog } from '@/components/marketing/create-list-dialog';
 import {
 	Pagination,
 	PaginationContent,
@@ -47,7 +48,7 @@ function ContactsPage() {
 					<p className="text-muted-foreground">Gerencie seus contatos e sincronize com o Brevo.</p>
 				</div>
 				<div className="flex items-center gap-2">
-					{/* Future: Add "Sync All" button here if needed */}
+					<CreateListDialog />
 				</div>
 			</div>
 
