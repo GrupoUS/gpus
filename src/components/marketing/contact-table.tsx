@@ -1,5 +1,3 @@
-'use client';
-
 import type { Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -29,41 +27,34 @@ interface Contact {
 
 interface ContactTableProps {
 	contacts: Contact[];
-	onSync: (id: Id<'emailContacts'>) => void;
-	onUpdateStatus: (id: Id<'emailContacts'>, status: 'subscribed' | 'unsubscribed') => void;
+	onSync: (contactId: Id<'emailContacts'>) => void;
 }
 
-export function ContactTable({ contacts, onSync, onUpdateStatus }: ContactTableProps) {
-	const getStatusBadge = (status: string) => {
-		switch (status) {
-			case 'subscribed':
-				return <Badge className="bg-green-500 hover:bg-green-600">Inscrito</Badge>;
-			case 'unsubscribed':
-				return <Badge variant="destructive">Cancelado</Badge>;
-			default:
-				return (
-					<Badge
-						variant="secondary"
-						className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20"
-					>
-						Pendente
-					</Badge>
-				);
-		}
-	};
+function getStatusBadge(status: string) {
+	switch (status) {
+		case 'subscribed':
+			return <Badge className="bg-green-500/10 text-green-600">Inscrito</Badge>;
+		case 'unsubscribed':
+			return <Badge variant="destructive">Cancelado</Badge>;
+		case 'pending':
+			return <Badge variant="outline">Pendente</Badge>;
+		default:
+			return <Badge variant="secondary">{status}</Badge>;
+	}
+}
 
-	const getSourceBadge = (type: string) => {
-		return type === 'student' ? (
-			<Badge variant="outline" className="border-blue-500 text-blue-500">
-				Aluno
-			</Badge>
-		) : (
-			<Badge variant="outline" className="border-purple-500 text-purple-500">
-				Lead
-			</Badge>
-		);
-	};
+function getSourceBadge(sourceType: string) {
+	switch (sourceType) {
+		case 'lead':
+			return <Badge variant="outline">Lead</Badge>;
+		case 'student':
+			return <Badge className="bg-blue-500/10 text-blue-600">Aluno</Badge>;
+		default:
+			return <Badge variant="secondary">{sourceType}</Badge>;
+	}
+}
 
+export function ContactTable({ contacts, onSync }: ContactTableProps) {
 	return (
 		<div className="rounded-md border">
 			<Table>

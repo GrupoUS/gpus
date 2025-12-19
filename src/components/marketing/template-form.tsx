@@ -30,15 +30,15 @@ import { Textarea } from '@/components/ui/textarea';
 const templateSchema = z.object({
 	name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
 	subject: z.string().min(2, 'Assunto deve ter pelo menos 2 caracteres'),
-	category: z.string().optional(),
+	category: z.string().min(1, 'Categoria é obrigatória'),
 	htmlContent: z.string().min(10, 'Conteúdo HTML deve ter pelo menos 10 caracteres'),
-	isActive: z.boolean().default(true),
+	isActive: z.boolean(),
 });
 
 type TemplateFormValues = z.infer<typeof templateSchema>;
 
 interface TemplateFormProps {
-	initialData?: TemplateFormValues;
+	initialData?: Partial<TemplateFormValues>;
 	onSubmit: (data: TemplateFormValues) => Promise<void>;
 	isSubmitting?: boolean;
 }
@@ -46,19 +46,24 @@ interface TemplateFormProps {
 export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: TemplateFormProps) {
 	const form = useForm<TemplateFormValues>({
 		resolver: zodResolver(templateSchema),
-		defaultValues: initialData || {
-			name: '',
-			subject: '',
-			category: 'newsletter',
+		defaultValues: {
+			name: initialData?.name ?? '',
+			subject: initialData?.subject ?? '',
+			category: initialData?.category ?? 'newsletter',
 			htmlContent:
+				initialData?.htmlContent ??
 				'<html>\n  <body>\n    <h1>Olá {{contact.FIRSTNAME}}</h1>\n    <p>Escreva seu conteúdo aqui...</p>\n  </body>\n</html>',
-			isActive: true,
+			isActive: initialData?.isActive ?? true,
 		},
 	});
 
+	const handleFormSubmit = async (data: TemplateFormValues) => {
+		await onSubmit(data);
+	};
+
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+			<form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
 				<div className="grid gap-6 md:grid-cols-2">
 					<Card>
 						<CardContent className="pt-6 space-y-4">
@@ -99,7 +104,10 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>Categoria</FormLabel>
-											<Select onValueChange={field.onChange} defaultValue={field.value}>
+											<Select
+												onValueChange={field.onChange}
+												defaultValue={field.value ?? 'newsletter'}
+											>
 												<FormControl>
 													<SelectTrigger>
 														<SelectValue placeholder="Selecione..." />
@@ -124,7 +132,7 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
 											<FormControl>
-												<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+												<Checkbox checked={field.value ?? true} onCheckedChange={field.onChange} />
 											</FormControl>
 											<div className="space-y-1 leading-none">
 												<FormLabel>Ativo</FormLabel>
@@ -138,16 +146,16 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 					</Card>
 
 					<Card className="h-full flex flex-col">
-						<CardContent className="pt-6 flex-grow flex flex-col h-full">
+						<CardContent className="pt-6 grow flex flex-col h-full">
 							<FormField
 								control={form.control}
 								name="htmlContent"
 								render={({ field }) => (
-									<FormItem className="flex-grow flex flex-col h-full">
+									<FormItem className="grow flex flex-col h-full">
 										<FormLabel>Conteúdo HTML</FormLabel>
 										<FormControl>
 											<Textarea
-												className="font-mono text-xs min-h-[250px] flex-grow resize-none bg-muted/50"
+												className="font-mono text-xs min-h-[250px] grow resize-none bg-muted/50"
 												placeholder="<html>...</html>"
 												{...field}
 											/>

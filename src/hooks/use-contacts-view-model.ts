@@ -96,7 +96,7 @@ export function useContactsViewModel(Route: any) {
 				subscriptionStatus: newStatus,
 			});
 			toast.success('Status de inscrição atualizado');
-		} catch (error) {
+		} catch (_error) {
 			toast.error('Falha ao atualizar status de inscrição');
 		}
 	};

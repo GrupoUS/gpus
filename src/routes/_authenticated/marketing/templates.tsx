@@ -1,3 +1,4 @@
+import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { z } from 'zod';
@@ -30,7 +31,6 @@ function TemplatesListPage() {
 		isLoading,
 		filters,
 		handleFilterChange,
-		handleUpdateTemplate,
 		handleDeleteTemplate,
 		handleSyncTemplate,
 	} = useTemplatesViewModel(Route);
@@ -42,7 +42,7 @@ function TemplatesListPage() {
 					<h1 className="text-2xl font-bold tracking-tight">Templates de Email</h1>
 					<p className="text-muted-foreground">Gerencie seus modelos de email reutilizáveis.</p>
 				</div>
-				<Link to="/marketing/templates/novo">
+				<Link to="/marketing/templates/novo" search={{ search: '', category: 'all' }}>
 					<Button>
 						<Plus className="mr-2 h-4 w-4" />
 						Novo Template
@@ -81,11 +81,13 @@ function TemplatesListPage() {
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-					{templates?.map((template) => (
+					{templates?.map((template: Doc<'emailTemplates'>) => (
 						<TemplateCard
 							key={template._id}
 							template={template}
-							onEdit={(id) => {}}
+							onEdit={() => {
+								// TODO: Implement edit functionality
+							}}
 							onDelete={handleDeleteTemplate}
 							onSync={handleSyncTemplate}
 						/>
@@ -98,7 +100,11 @@ function TemplatesListPage() {
 							<p className="text-sm text-muted-foreground mt-2">
 								Crie seu primeiro template para começar.
 							</p>
-							<Link to="/marketing/templates/novo" className="mt-4 inline-block">
+							<Link
+								to="/marketing/templates/novo"
+								search={{ search: '', category: 'all' }}
+								className="mt-4 inline-block"
+							>
 								<Button variant="outline">Criar Template</Button>
 							</Link>
 						</div>

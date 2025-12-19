@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { z } from 'zod'; // Ensure zod is imported
+import { z } from 'zod';
 
 import { ContactFilters } from '@/components/marketing/contact-filters';
 import { ContactStats } from '@/components/marketing/contact-stats';
@@ -34,7 +34,6 @@ function ContactsPage() {
 		currentPage,
 		filters,
 		handleSyncContact,
-		handleUpdateSubscription,
 		handleFilterChange,
 		handlePageChange,
 		clearFilters,
@@ -65,11 +64,7 @@ function ContactsPage() {
 					onClear={clearFilters}
 				/>
 
-				<ContactTable
-					contacts={contacts}
-					onSync={handleSyncContact}
-					onUpdateStatus={handleUpdateSubscription}
-				/>
+				<ContactTable contacts={contacts} onSync={handleSyncContact} />
 
 				{totalPages > 1 && (
 					<div className="flex justify-center mt-4">

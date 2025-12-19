@@ -1,10 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
 
 import { TemplateForm } from '@/components/marketing/template-form';
 import { useTemplatesViewModel } from '@/hooks/use-templates-view-model';
 
+const searchSchema = z.object({
+	search: z.string().catch(''),
+	category: z.string().catch('all'),
+});
+
 export const Route = createFileRoute('/_authenticated/marketing/templates/novo')({
 	component: NewTemplatePage,
+	validateSearch: searchSchema,
 });
 
 function NewTemplatePage() {

@@ -1,35 +1,30 @@
-'use client';
-
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import {
-	Calendar,
-	CheckCircle2,
-	Copy,
-	Edit,
-	FileCode,
-	MoreVertical,
-	Send,
-	Trash,
-	XCircle,
-} from 'lucide-react';
+import { CheckCircle, Edit, FileCode, RefreshCw, Trash2, XCircle } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 
 interface TemplateCardProps {
-	template: Doc<'emailTemplates'>;
+	template: {
+		_id: Id<'emailTemplates'>;
+		name: string;
+		subject: string;
+		category?: string;
+		isActive: boolean;
+		brevoTemplateId?: string | number;
+		updatedAt: number;
+	};
 	onEdit: (id: Id<'emailTemplates'>) => void;
-	onDuplicate?: (id: Id<'emailTemplates'>) => void;
 	onDelete: (id: Id<'emailTemplates'>) => void;
 	onSync: (id: Id<'emailTemplates'>) => void;
 }
@@ -42,111 +37,97 @@ const categoryLabels: Record<string, string> = {
 	outro: 'Outro',
 };
 
-export function TemplateCard({
-	template,
-	onEdit,
-	onDuplicate,
-	onDelete,
-	onSync,
-}: TemplateCardProps) {
+export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCardProps) {
 	return (
-		<Card className="flex flex-col h-full hover:shadow-md transition-shadow">
-			<CardHeader className="p-4 flex flex-row items-start justify-between space-y-0">
-				<div className="flex items-center gap-3">
-					<div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-						<FileCode className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-					</div>
-					<div>
-						<h3 className="font-semibold text-sm line-clamp-1" title={template.name}>
-							{template.name}
-						</h3>
-						<div className="flex items-center gap-2 mt-1">
-							{template.category && (
-								<Badge variant="outline" className="text-[10px] px-1.5 h-5">
-									{categoryLabels[template.category] || template.category}
-								</Badge>
-							)}
-							<span
-								className={cn(
-									'text-[10px] font-medium flex items-center gap-1',
-									template.isActive ? 'text-green-600' : 'text-muted-foreground',
-								)}
-							>
-								{template.isActive ? (
-									<CheckCircle2 className="h-3 w-3" />
-								) : (
-									<XCircle className="h-3 w-3" />
-								)}
-								{template.isActive ? 'Ativo' : 'Inativo'}
-							</span>
+		<Card className="group relative overflow-hidden transition-all hover:shadow-md">
+			<CardHeader className="pb-3">
+				<div className="flex items-start justify-between">
+					<div className="flex items-center gap-3">
+						<div className="p-2 bg-primary/10 rounded-lg shrink-0">
+							<FileCode className="h-5 w-5 text-primary" />
+						</div>
+						<div className="min-w-0">
+							<CardTitle className="text-base truncate">{template.name}</CardTitle>
+							<CardDescription className="text-xs truncate">{template.subject}</CardDescription>
 						</div>
 					</div>
-				</div>
-
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="icon" className="h-8 w-8">
-							<MoreVertical className="h-4 w-4 text-muted-foreground" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={() => onEdit(template._id)}>
-							<Edit className="h-4 w-4 mr-2" />
-							Editar
-						</DropdownMenuItem>
-						{onDuplicate && (
-							<DropdownMenuItem onClick={() => onDuplicate(template._id)}>
-								<Copy className="h-4 w-4 mr-2" />
-								Duplicar
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="icon" className="h-8 w-8">
+								<span className="sr-only">Abrir menu</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									role="img"
+									aria-label="Menu de opções"
+								>
+									<circle cx="12" cy="12" r="1" />
+									<circle cx="12" cy="5" r="1" />
+									<circle cx="12" cy="19" r="1" />
+								</svg>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onClick={() => onEdit(template._id)}>
+								<Edit className="mr-2 h-4 w-4" />
+								Editar
 							</DropdownMenuItem>
-						)}
-						<DropdownMenuItem onClick={() => onSync(template._id)}>
-							<Send className="h-4 w-4 mr-2" />
-							Sincronizar no Brevo
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={() => onDelete(template._id)}
-							className="text-destructive focus:text-destructive"
-						>
-							<Trash className="h-4 w-4 mr-2" />
-							Excluir
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+							<DropdownMenuItem onClick={() => onSync(template._id)}>
+								<RefreshCw className="mr-2 h-4 w-4" />
+								Sincronizar com Brevo
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={() => onDelete(template._id)}
+								className="text-destructive focus:text-destructive"
+							>
+								<Trash2 className="mr-2 h-4 w-4" />
+								Excluir
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
 			</CardHeader>
-
-			<CardContent className="p-4 pt-0 grow">
-				<div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-md font-mono line-clamp-2 min-h-[40px]">
-					Assunto: {template.subject}
-				</div>
-				<div className="mt-4 text-xs text-muted-foreground flex items-center gap-2">
-					<Calendar className="h-3 w-3" />
-					<span>Criado {formatDistanceToNow(template.createdAt, { locale: ptBR })} atrás</span>
-				</div>
-			</CardContent>
-
-			<CardFooter className="p-4 pt-0 border-t bg-muted/10">
-				<div className="w-full pt-3 flex justify-between items-center text-xs">
-					<div className="text-muted-foreground truncate max-w-[150px]">
-						{template.brevoTemplateId ? (
-							<span className="text-green-600 flex items-center gap-1">
-								<CheckCircle2 className="h-3 w-3" />
-								Sincronizado (ID: {template.brevoTemplateId})
-							</span>
-						) : (
-							<span>Não sincronizado</span>
-						)}
-					</div>
-					<Button
-						variant="outline"
-						size="sm"
-						className="h-7 text-xs"
-						onClick={() => onEdit(template._id)}
+			<CardContent className="space-y-3">
+				<div className="flex items-center gap-2 flex-wrap">
+					{template.category && (
+						<Badge variant="secondary" className="text-xs">
+							{categoryLabels[template.category] || template.category}
+						</Badge>
+					)}
+					<Badge
+						variant={template.isActive ? 'default' : 'outline'}
+						className={`text-xs ${template.isActive ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}`}
 					>
-						Editar
-					</Button>
+						{template.isActive ? (
+							<>
+								<CheckCircle className="mr-1 h-3 w-3" />
+								Ativo
+							</>
+						) : (
+							<>
+								<XCircle className="mr-1 h-3 w-3" />
+								Inativo
+							</>
+						)}
+					</Badge>
+					{template.brevoTemplateId && (
+						<Badge variant="outline" className="text-xs text-blue-600 border-blue-300">
+							Brevo
+						</Badge>
+					)}
 				</div>
-			</CardFooter>
+				<p className="text-xs text-muted-foreground">
+					Atualizado {formatDistanceToNow(template.updatedAt, { addSuffix: true, locale: ptBR })}
+				</p>
+			</CardContent>
 		</Card>
 	);
 }

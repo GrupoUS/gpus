@@ -52,7 +52,6 @@ export function useEmailDashboardViewModel() {
 		// Contact growth (last 30 days)
 		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 		const newContacts = contacts.filter((c) => c.createdAt && c.createdAt > thirtyDaysAgo).length;
-		const _contactGrowth = contacts.length > 0 ? (newContacts / contacts.length) * 100 : 0;
 
 		return {
 			totalSent,
