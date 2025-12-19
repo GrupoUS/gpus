@@ -4,7 +4,7 @@ import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -75,6 +75,9 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 			qualifiedOnly: false,
 		},
 	});
+	const studentsId = useId();
+	const leadsId = useId();
+	const bothId = useId();
 
 	const sourceType = form.watch('sourceType');
 	const products = form.watch('products');
@@ -208,16 +211,16 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 											className="flex gap-4"
 										>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="students" id="students" />
-												<Label htmlFor="students">Alunos</Label>
+												<RadioGroupItem value="students" id={studentsId} />
+												<Label htmlFor={studentsId}>Alunos</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="leads" id="leads" />
-												<Label htmlFor="leads">Leads</Label>
+												<RadioGroupItem value="leads" id={leadsId} />
+												<Label htmlFor={leadsId}>Leads</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="both" id="both" />
-												<Label htmlFor="both">Ambos</Label>
+												<RadioGroupItem value="both" id={bothId} />
+												<Label htmlFor={bothId}>Ambos</Label>
 											</div>
 										</RadioGroup>
 									</FormControl>

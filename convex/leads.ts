@@ -94,6 +94,9 @@ export const listLeads = query({
     // 1. Verify Auth & Permissions
     await requirePermission(ctx, PERMISSIONS.LEADS_READ)
     const organizationId = await getOrganizationId(ctx);
+    if (!organizationId) {
+        return { page: [], isDone: true, continueCursor: '' };
+    }
 
     // Optimization: Use index if filtering by a single stage
     const singleStage =
@@ -145,7 +148,7 @@ export const listLeads = query({
         // Filter by search text
         if (args.search) {
             const search = args.search.toLowerCase()
-            const matches = 
+            const matches =
                 l.name.toLowerCase().includes(search) ||
                 l.phone.includes(search) ||
                 (l.email && l.email.toLowerCase().includes(search));
@@ -362,6 +365,9 @@ export const recent = query({
     await requirePermission(ctx, PERMISSIONS.LEADS_READ)
 
     const organizationId = await getOrganizationId(ctx);
+    if (!organizationId) {
+        return [];
+    }
 
     return await ctx.db
       .query('leads')

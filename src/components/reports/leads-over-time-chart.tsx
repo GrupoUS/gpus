@@ -28,7 +28,7 @@ export default function LeadsOverTimeChart({ data }: LeadsOverTimeChartProps) {
 				<CardTitle>Leads ao Longo do Tempo</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={300}>
+				<ResponsiveContainer width="100%" height={300} minWidth={0}>
 					<AreaChart data={data}>
 						<CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 						<XAxis

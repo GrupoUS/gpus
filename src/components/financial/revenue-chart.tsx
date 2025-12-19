@@ -45,7 +45,7 @@ export function RevenueChart() {
 				<CardTitle>Receita: Recebido vs Projetado</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={300}>
+				<ResponsiveContainer width="100%" height={300} minWidth={0}>
 					<LineChart data={chartData}>
 						<CartesianGrid strokeDasharray="3 3" />
 						<XAxis dataKey="month" />

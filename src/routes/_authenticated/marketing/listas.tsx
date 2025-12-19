@@ -2,9 +2,10 @@ import { api } from '@convex/_generated/api';
 import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, List, Plus, Search, Users } from 'lucide-react';
+import { ArrowLeft, Cloud, CloudOff, List, Loader2, Search, Users } from 'lucide-react';
 import { useState } from 'react';
 
+import { CreateListDialog } from '@/components/marketing/create-list-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,7 @@ function LoadingSkeleton() {
 }
 
 // Empty state component
-function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
+function EmptyState() {
 	return (
 		<Card>
 			<CardContent className="flex flex-col items-center justify-center py-12">
@@ -43,13 +44,47 @@ function EmptyState({ onCreateNew }: { onCreateNew: () => void }) {
 				<p className="mt-2 text-center text-sm text-muted-foreground">
 					Crie sua primeira lista de contatos para começar a segmentar seus destinatários.
 				</p>
-				<Button className="mt-6" onClick={onCreateNew}>
-					<Plus className="mr-2 h-4 w-4" />
-					Criar Primeira Lista
-				</Button>
+				<div className="mt-6">
+					<CreateListDialog />
+				</div>
 			</CardContent>
 		</Card>
 	);
+}
+
+// Sync status badge helper
+function SyncStatusBadge({ status }: { status?: string }) {
+	switch (status) {
+		case 'synced':
+			return (
+				<Badge variant="outline" className="gap-1 text-green-600">
+					<Cloud className="h-3 w-3" />
+					Sincronizada
+				</Badge>
+			);
+		case 'syncing':
+			return (
+				<Badge variant="outline" className="gap-1">
+					<Loader2 className="h-3 w-3 animate-spin" />
+					Sincronizando
+				</Badge>
+			);
+		case 'error':
+			return (
+				<Badge variant="destructive" className="gap-1">
+					<CloudOff className="h-3 w-3" />
+					Erro
+				</Badge>
+			);
+		case 'pending':
+			return (
+				<Badge variant="secondary" className="gap-1">
+					Pendente
+				</Badge>
+			);
+		default:
+			return null;
+	}
 }
 
 function ListsPage() {
@@ -71,13 +106,6 @@ function ListsPage() {
 	const handleBack = () => {
 		navigate({
 			to: '/marketing',
-			search: { search: '', status: 'all', view: 'grid', page: 1 },
-		});
-	};
-
-	const handleCreateNew = () => {
-		navigate({
-			to: '/marketing/listas/nova',
 			search: { search: '', status: 'all', view: 'grid', page: 1 },
 		});
 	};
@@ -110,10 +138,7 @@ function ListsPage() {
 						</p>
 					</div>
 				</div>
-				<Button onClick={handleCreateNew}>
-					<Plus className="mr-2 h-4 w-4" />
-					Nova Lista
-				</Button>
+				<CreateListDialog />
 			</div>
 
 			{/* Search */}
@@ -143,7 +168,7 @@ function ListsPage() {
 						</CardContent>
 					</Card>
 				) : (
-					<EmptyState onCreateNew={handleCreateNew} />
+					<EmptyState />
 				)
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -175,11 +200,7 @@ function ListsPage() {
 											{list.contactCount ?? 0} contato{(list.contactCount ?? 0) !== 1 ? 's' : ''}
 										</span>
 									</div>
-									{list.brevoListId && (
-										<Badge variant="outline" className="text-xs">
-											Sincronizada
-										</Badge>
-									)}
+									<SyncStatusBadge status={list.syncStatus} />
 								</div>
 							</CardContent>
 						</Card>

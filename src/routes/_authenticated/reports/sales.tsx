@@ -131,7 +131,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.dailyMetrics && metrics.dailyMetrics.length > 0 ? (
-							<ResponsiveContainer width="100%" height={300}>
+							<ResponsiveContainer width="100%" height={300} minWidth={0}>
 								<LineChart data={metrics.dailyMetrics}>
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis
@@ -169,7 +169,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.leadsByProduct && Object.keys(metrics.leadsByProduct).length > 0 ? (
-							<ResponsiveContainer width="100%" height={300}>
+							<ResponsiveContainer width="100%" height={300} minWidth={0}>
 								<BarChart
 									data={Object.entries(metrics.leadsByProduct).map(([k, v]) => ({
 										name: productLabels[k] || k,
