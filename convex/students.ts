@@ -275,7 +275,6 @@ export const create = mutation({
       updatedAt: Date.now(),
     })
 
-
     await logAudit(ctx, {
       studentId,
       actionType: lgpdConsent ? 'consent_granted' : 'data_creation',
@@ -293,6 +292,21 @@ export const create = mutation({
       // Log but don't fail student creation if Asaas sync fails
       console.error('Failed to schedule Asaas customer sync:', error)
     }
+
+    // Auto-sync to email marketing (if student has email)
+    if (args.email) {
+      try {
+        await ctx.scheduler.runAfter(0, internal.emailMarketing.syncStudentAsContactInternal, {
+          studentId,
+          organizationId,
+        })
+      } catch (error) {
+        // Log but don't fail student creation if email sync fails
+        console.error('Failed to schedule email marketing sync:', error)
+      }
+    }
+
+
 
     return studentId
   },
@@ -330,6 +344,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
 
+    // biome-ignore lint/suspicious/noExplicitAny: dynamic patch object
     const updates: any = { ...args.patch }
 
     if (args.patch.cpf) updates.encryptedCPF = await encryptCPF(args.patch.cpf)
@@ -364,4 +379,3 @@ export const update = mutation({
     }
   },
 })
-

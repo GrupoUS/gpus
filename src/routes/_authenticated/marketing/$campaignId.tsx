@@ -424,10 +424,19 @@ interface EventLogsProps {
 }
 
 function EventLogs({ campaignId }: EventLogsProps) {
+	// biome-ignore lint/suspicious/noExplicitAny: Convex query type inference workaround
 	const events = useQuery(api.emailMarketing.getCampaignEvents as any, {
 		campaignId,
 		limit: 20,
-	}) as any[];
+	}) as
+		| Array<{
+				_id: string;
+				eventType: string;
+				email: string;
+				timestamp: number;
+				link?: string;
+		  }>
+		| undefined;
 
 	if (events === undefined) {
 		return <Skeleton className="h-[200px] w-full" />;
@@ -445,7 +454,7 @@ function EventLogs({ campaignId }: EventLogsProps) {
 			<CardContent>
 				{events.length > 0 ? (
 					<div className="space-y-4">
-						{events.map((event: any) => (
+						{events.map((event) => (
 							<div
 								key={event._id}
 								className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"

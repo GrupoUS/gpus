@@ -14,7 +14,6 @@ export function useTemplatesViewModel(Route?: any) {
 	const search = routeSearch?.search ?? '';
 	const category = routeSearch?.category ?? 'all';
 
-	// @ts-expect-error - Convex type inference is excessively deep
 	const getTemplates = useQuery(api.emailMarketing.getTemplates, {
 		category: category === 'all' ? undefined : category,
 	});

@@ -18,17 +18,26 @@ export const Route = createFileRoute('/_authenticated/financial')({
 	component: FinancialDashboard,
 });
 
+type ImportResult = {
+	success: boolean;
+	recordsProcessed: number;
+	recordsCreated: number;
+	recordsUpdated: number;
+	recordsFailed: number;
+};
+
 function FinancialDashboard() {
 	const [isSyncing, setIsSyncing] = useState(false);
+	// biome-ignore lint/suspicious/noExplicitAny: Convex action type inference workaround
 	const syncPayments = useAction(api.asaas.actions.importPaymentsFromAsaas as any);
 
 	const handleSync = async () => {
 		setIsSyncing(true);
 		try {
 			toast.info('Sincronizando pagamentos...');
-			const result = await syncPayments({
+			const result = (await syncPayments({
 				initiatedBy: 'manual_dashboard_sync',
-			});
+			})) as ImportResult;
 
 			if (result?.success) {
 				toast.success('Sincronização concluída!', {

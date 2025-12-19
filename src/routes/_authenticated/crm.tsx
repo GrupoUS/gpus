@@ -19,6 +19,9 @@ export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
 
+type LeadItem = Doc<'leads'>;
+type ListLeadsResult = { page: LeadItem[]; isDone: boolean; continueCursor: string };
+
 function CRMPage() {
 	const [filters, setFilters] = useState({
 		search: '',
@@ -29,14 +32,14 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
-	const leads = useQuery(api.leads.listLeads as any, {
+	const leads = useQuery(api.leads.listLeads, {
 		paginationOpts: { numItems: 1000, cursor: null },
 		search: filters.search || undefined,
 		stages: filters.stages.length ? filters.stages : undefined,
 		temperature: filters.temperature.length ? filters.temperature : undefined,
 		products: filters.products.length ? filters.products : undefined,
 		source: filters.source.length ? filters.source : undefined,
-	}) as any;
+	}) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -53,7 +56,7 @@ function CRMPage() {
 	};
 
 	const formattedLeads =
-		leads?.page?.map((l: any) => ({
+		leads?.page?.map((l) => ({
 			...l,
 			stage: l.stage,
 			temperature: l.temperature,

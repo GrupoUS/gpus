@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1766155058165" clover="3.2.0">
-  <project timestamp="1766155058165" name="All files">
-    <metrics statements="721" coveredstatements="403" conditionals="486" coveredconditionals="205" methods="194" coveredmethods="86" elements="1401" coveredelements="694" complexity="0" loc="721" ncloc="721" packages="6" files="27" classes="27"/>
+<coverage generated="1766174820554" clover="3.2.0">
+  <project timestamp="1766174820554" name="All files">
+    <metrics statements="802" coveredstatements="460" conditionals="530" coveredconditionals="223" methods="208" coveredmethods="98" elements="1540" coveredelements="781" complexity="0" loc="802" ncloc="802" packages="8" files="29" classes="29"/>
+    <package name="convex">
+      <metrics statements="10" coveredstatements="5" conditionals="10" coveredconditionals="3" methods="2" coveredmethods="1"/>
+      <file name="lgpd.ts" path="D:\Coders\gpus\convex\lgpd.ts">
+        <metrics statements="10" coveredstatements="5" conditionals="10" coveredconditionals="3" methods="2" coveredmethods="1"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="36" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="37" count="2" type="stmt"/>
+        <line num="38" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="41" count="2" type="stmt"/>
+        <line num="66" count="0" type="stmt"/>
+        <line num="67" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="70" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="74" count="0" type="stmt"/>
+      </file>
+    </package>
     <package name="convex._generated">
       <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="api.js" path="D:\Coders\gpus\convex\_generated\api.js">
@@ -9,6 +25,83 @@
         <line num="21" count="1" type="stmt"/>
         <line num="22" count="1" type="stmt"/>
         <line num="23" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="convex.lib">
+      <metrics statements="71" coveredstatements="52" conditionals="34" coveredconditionals="15" methods="12" coveredmethods="11"/>
+      <file name="encryption.ts" path="D:\Coders\gpus\convex\lib\encryption.ts">
+        <metrics statements="71" coveredstatements="52" conditionals="34" coveredconditionals="15" methods="12" coveredmethods="11"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="28" count="8" type="stmt"/>
+        <line num="29" count="300" type="stmt"/>
+        <line num="37" count="5" type="stmt"/>
+        <line num="38" count="5" type="stmt"/>
+        <line num="39" count="202" type="stmt"/>
+        <line num="41" count="5" type="stmt"/>
+        <line num="49" count="12" type="stmt"/>
+        <line num="50" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="51" count="1" type="stmt"/>
+        <line num="55" count="11" type="stmt"/>
+        <line num="56" count="11" type="stmt"/>
+        <line num="59" count="11" type="stmt"/>
+        <line num="69" count="6" type="stmt"/>
+        <line num="79" count="7" type="cond" truecount="1" falsecount="1"/>
+        <line num="81" count="7" type="stmt"/>
+        <line num="82" count="7" type="stmt"/>
+        <line num="83" count="6" type="stmt"/>
+        <line num="84" count="6" type="stmt"/>
+        <line num="86" count="6" type="stmt"/>
+        <line num="97" count="6" type="stmt"/>
+        <line num="98" count="6" type="stmt"/>
+        <line num="99" count="6" type="stmt"/>
+        <line num="101" count="6" type="stmt"/>
+        <line num="103" count="1" type="stmt"/>
+        <line num="104" count="1" type="cond" truecount="3" falsecount="1"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="107" count="0" type="stmt"/>
+        <line num="118" count="5" type="cond" truecount="1" falsecount="1"/>
+        <line num="120" count="5" type="stmt"/>
+        <line num="121" count="5" type="stmt"/>
+        <line num="124" count="5" type="stmt"/>
+        <line num="125" count="5" type="stmt"/>
+        <line num="126" count="5" type="stmt"/>
+        <line num="128" count="5" type="stmt"/>
+        <line num="138" count="5" type="stmt"/>
+        <line num="140" count="0" type="stmt"/>
+        <line num="141" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="142" count="0" type="stmt"/>
+        <line num="144" count="0" type="stmt"/>
+        <line num="153" count="2" type="cond" truecount="4" falsecount="0"/>
+        <line num="154" count="1" type="stmt"/>
+        <line num="158" count="1" type="stmt"/>
+        <line num="159" count="1" type="stmt"/>
+        <line num="167" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="169" count="2" type="stmt"/>
+        <line num="170" count="2" type="stmt"/>
+        <line num="171" count="2" type="stmt"/>
+        <line num="178" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="181" count="2" type="stmt"/>
+        <line num="182" count="2" type="stmt"/>
+        <line num="189" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="191" count="2" type="stmt"/>
+        <line num="194" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="195" count="2" type="stmt"/>
+        <line num="198" count="0" type="stmt"/>
+        <line num="205" count="0" type="stmt"/>
+        <line num="206" count="0" type="stmt"/>
+        <line num="207" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="208" count="0" type="stmt"/>
+        <line num="214" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="215" count="0" type="stmt"/>
+        <line num="222" count="0" type="stmt"/>
+        <line num="223" count="0" type="stmt"/>
+        <line num="224" count="0" type="stmt"/>
+        <line num="226" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="227" count="0" type="stmt"/>
+        <line num="233" count="0" type="stmt"/>
+        <line num="235" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.components">

@@ -67,6 +67,29 @@ You are the **code-reviewer** subagent. You validate security, architecture, and
 - [ ] **Right to Delete**: Data deletion capability
 - [ ] **Data Portability**: Export capability
 
+When invoked:
+1. Capture error message and stack trace
+2. Identify reproduction steps
+3. Isolate the failure location
+4. Implement minimal fix
+5. Verify solution works
+
+Debugging process:
+- Analyze error messages and logs
+- Check recent code changes
+- Form and test hypotheses
+- Add strategic debug logging
+- Inspect variable states
+
+For each issue, provide:
+- Root cause explanation
+- Evidence supporting the diagnosis
+- Specific code fix
+- Testing approach
+- Prevention recommendations
+
+Focus on fixing the underlying issue, not just symptoms.
+
 ## Convex Security Patterns
 
 ```typescript

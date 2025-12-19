@@ -56,7 +56,6 @@ export function useIntegrationSettings(integration: IntegrationType) {
 		message: string;
 	} | null>(null);
 
-	// Load settings
 	const settings = useQuery(api.integrations.getIntegrationConfig, { integration });
 
 	// Mutations and Actions
