@@ -21,7 +21,7 @@ const STATUS_BADGE = {
 };
 
 export function SyncHistory() {
-	const logs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 10 });
+	const logs = useQuery(api.asaas.getRecentSyncLogs, { limit: 10 });
 
 	if (!logs) {
 		return <div>Carregando histórico...</div>;

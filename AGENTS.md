@@ -2,9 +2,9 @@
 
 ## Project Snapshot
 
-**Type:** Single-project React application  
-**Stack:** React 19 + Vite + TanStack Router + shadcn/ui + Convex + Clerk  
-**Purpose:** CRM and student management portal for health aesthetics education business  
+**Type:** Single-project React application
+**Stack:** React 19 + Vite + TanStack Router + shadcn/ui + Convex + Clerk
+**Purpose:** CRM and student management portal for health aesthetics education business
 **Note:** Sub-directories have their own AGENTS.md files with detailed patterns
 
 ---
@@ -85,6 +85,16 @@ bun run format:check      # Check code formatting only
 - **Environment variables:** Use `.env.local` (gitignored)
 - **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`
 - **PII handling:** User data stored in Convex with Clerk auth
+
+## Protocolo de Segurança e RBAC
+
+**Sistema de Permissões:**
+- Roles Definidas: `admin`, `sdr`, `cs`, `support`
+- Controle via: `convex/lib/permissions.ts` e `convex/lib/auth.ts`
+- **MANDATÓRIO**: Use `requirePermission(ctx, PERMISSIONS.X)` em todas as mutations/queries protegidas.
+- **NUNCA** verifique roles diretamente (`if (role === 'admin')`) exceto em `settings.ts`. Use permissões.
+
+**Consulte:** `docs/roles-and-permissions.md` para tabela completa.
 
 ---
 
@@ -201,15 +211,15 @@ graph TD
     B -->|Concept/Semantic meaning| D[mgrep]
     B -->|External patterns| E[gh_grep]
     B -->|Official docs| F[context7]
-    
+
     C --> G{Found?}
     G -->|Yes| H[Use result]
     G -->|No| D
-    
+
     D --> I{Found?}
     I -->|Yes| H
     I -->|No| E
-    
+
     E --> J{Found?}
     J -->|Yes| H
     J -->|No| F
@@ -243,24 +253,24 @@ graph TD
 
 ### 1. Code Exploration Chain
 ```bash
-serena_get_symbols_overview(file) 
-  → serena_find_symbol(pattern) 
+serena_get_symbols_overview(file)
+  → serena_find_symbol(pattern)
   → serena_find_referencing_symbols(symbol)
 ```
 **Use case**: Understanding unfamiliar code structure
 
 ### 2. Refactoring Chain
 ```bash
-serena_find_symbol(target) 
-  → serena_find_referencing_symbols(target) 
+serena_find_symbol(target)
+  → serena_find_referencing_symbols(target)
   → serena_rename_symbol() OR serena_replace_symbol_body()
 ```
 **Use case**: Safe rename or body replacement across codebase
 
 ### 3. Symbol Discovery Chain
 ```bash
-serena_list_dir(path, recursive=true) 
-  → serena_get_symbols_overview(each_file) 
+serena_list_dir(path, recursive=true)
+  → serena_get_symbols_overview(each_file)
   → serena_find_symbol(interesting_patterns)
 ```
 **Use case**: Discovering patterns and conventions across codebase
@@ -287,7 +297,7 @@ mgrep uses embeddings (Mixedbread AI) to find semantically similar code, not jus
 # Find auth-related code
 mgrep search "Clerk authentication user identity"
 
-# Find lead management patterns  
+# Find lead management patterns
 mgrep search "CRM lead stage pipeline kanban"
 
 # Find Convex query patterns

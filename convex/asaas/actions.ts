@@ -3,7 +3,30 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { getAsaasClient } from "../lib/asaas";
+import { createAsaasClient, AsaasClient } from "../lib/asaas";
+
+/**
+ * Helper to get Asaas client from database settings
+ * Falls back to environment variables if database settings not found
+ */
+async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
+  // Try to get settings from database first
+  const config = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+    integrationName: "asaas",
+  });
+
+  const apiKey = config?.api_key || config?.apiKey || process.env.ASAAS_API_KEY;
+  const baseUrl = config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
+
+  if (!apiKey) {
+    throw new Error("ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.");
+  }
+
+  console.log(`[getAsaasClientFromSettings] Using API key: ${apiKey.substring(0, 10)}...`);
+  console.log(`[getAsaasClientFromSettings] Using base URL: ${baseUrl}`);
+
+  return createAsaasClient({ apiKey, baseUrl });
+}
 
 export const createAsaasCustomer = action({
   args: {
@@ -22,7 +45,7 @@ export const createAsaasCustomer = action({
   },
   handler: async (ctx, args) => {
     try {
-      const client = getAsaasClient();
+      const client = await getAsaasClientFromSettings(ctx);
       const customer = await client.createCustomer({
         name: args.name,
         cpfCnpj: args.cpfCnpj.replace(/\D/g, ""),
@@ -67,7 +90,7 @@ export const createAsaasPayment = action({
   },
   handler: async (ctx, args) => {
     try {
-      const client = getAsaasClient();
+      const client = await getAsaasClientFromSettings(ctx);
       const payment = await client.createPayment({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
@@ -124,9 +147,9 @@ export const createAsaasSubscription = action({
     description: v.optional(v.string()),
     externalReference: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     try {
-      const client = getAsaasClient();
+      const client = await getAsaasClientFromSettings(ctx);
       const subscription = await client.createSubscription({
         customer: args.asaasCustomerId,
         billingType: args.billingType,
@@ -212,7 +235,7 @@ export const importCustomersFromAsaas = action({
     initiatedBy: v.string(),
   },
   handler: async (ctx, args) => {
-    const client = getAsaasClient();
+    const client = await getAsaasClientFromSettings(ctx);
     const MAX_PAGES = 50; // Safety limit: 50 pages * 100 items = 5000 items per run
 
     // Create sync log
@@ -352,7 +375,7 @@ export const importPaymentsFromAsaas = action({
     status: v.optional(v.string()),    // PENDING, RECEIVED, etc.
   },
   handler: async (ctx, args) => {
-    const client = getAsaasClient();
+    const client = await getAsaasClientFromSettings(ctx);
 
     // Create sync log
     // @ts-ignore
@@ -498,7 +521,7 @@ export const importSubscriptionsFromAsaas = action({
     )),
   },
   handler: async (ctx, args) => {
-    const client = getAsaasClient();
+    const client = await getAsaasClientFromSettings(ctx);
 
     // Create sync log
     // @ts-ignore
@@ -632,7 +655,7 @@ export const syncFinancialDataFromAsaas = action({
     endDate: v.optional(v.string()),   // YYYY-MM-DD
   },
   handler: async (ctx, args) => {
-    const client = getAsaasClient();
+    const client = await getAsaasClientFromSettings(ctx);
 
     // Create sync log
     // @ts-ignore
@@ -713,12 +736,13 @@ export const importAllFromAsaas = action({
   handler: async (ctx, args): Promise<CombinedImportResult> => {
     console.log('[importAllFromAsaas] Starting import...');
     
-    let client: ReturnType<typeof getAsaasClient>;
+    let client: AsaasClient;
     try {
-      client = getAsaasClient();
+      client = await getAsaasClientFromSettings(ctx);
+      console.log('[importAllFromAsaas] Asaas client initialized successfully');
     } catch (error: any) {
       console.error('[importAllFromAsaas] Failed to initialize Asaas client:', error.message);
-      throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se ASAAS_API_KEY está configurada.`);
+      throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`);
     }
     
     const MAX_PAGES = 50;

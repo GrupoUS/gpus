@@ -1,33 +1,49 @@
+// Define permissions constants
+// Format: resource_action
 export const PERMISSIONS = {
-  LEADS_READ: 'leads:read',
-  LEADS_WRITE: 'leads:write',
-  CONVERSATIONS_READ: 'conversations:read',
-  CONVERSATIONS_WRITE: 'conversations:write',
-  STUDENTS_READ: 'students:read',
-  STUDENTS_WRITE: 'students:write',
-  TICKETS_READ: 'tickets:read',
-  TICKETS_WRITE: 'tickets:write',
-  REPORTS_READ: 'reports:read',
-  ALL: 'all',
+  // Global
+  ALL: 'all', // Super admin permission
+
+  // Leads
+  LEADS_READ: 'leads_read',
+  LEADS_WRITE: 'leads_write',
+
+  // Conversations (Chat/WhatsApp)
+  CONVERSATIONS_READ: 'conversations_read',
+  CONVERSATIONS_WRITE: 'conversations_write',
+
+  // Students
+  STUDENTS_READ: 'students_read',
+  STUDENTS_WRITE: 'students_write',
+
+  // Tickets/Support
+  TICKETS_READ: 'tickets_read',
+  TICKETS_WRITE: 'tickets_write',
+
+  // Reports/Dashboard
+  REPORTS_READ: 'reports_read',
 } as const
 
+// Role to Permissions Mapping
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   'admin': [PERMISSIONS.ALL],
   'org:admin': [PERMISSIONS.ALL],
+
   'sdr': [
     PERMISSIONS.LEADS_READ,
     PERMISSIONS.LEADS_WRITE,
+    PERMISSIONS.STUDENTS_READ,
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,
-    PERMISSIONS.STUDENTS_READ,
   ],
   'org:sdr': [
     PERMISSIONS.LEADS_READ,
     PERMISSIONS.LEADS_WRITE,
+    PERMISSIONS.STUDENTS_READ,
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,
-    PERMISSIONS.STUDENTS_READ,
   ],
+
   'cs': [
     PERMISSIONS.STUDENTS_READ,
     PERMISSIONS.STUDENTS_WRITE,
@@ -42,6 +58,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.CONVERSATIONS_WRITE,
     PERMISSIONS.REPORTS_READ,
   ],
+
   'support': [
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,

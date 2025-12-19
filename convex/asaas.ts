@@ -198,6 +198,22 @@ export const getFinancialSummary = query({
 })
 
 /**
+ * Get recent sync logs
+ */
+export const getRecentSyncLogs = query({
+	args: { limit: v.optional(v.number()) },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+		const limit = args.limit || 10
+		return await ctx.db
+			.query('asaasSyncLogs')
+			.withIndex('by_created')
+			.order('desc')
+			.take(limit)
+	},
+})
+
+/**
  * Get monthly financial summary with breakdown
  */
 export const getMonthlyFinancialSummary = query({
@@ -858,6 +874,7 @@ export const syncAllStudents = action({
  */
 export const listAllStudents = internalQuery({
 	args: {},
+	returns: v.array(v.any()),
 	handler: async (ctx) => {
 		return await ctx.db.query('students').collect()
 	},

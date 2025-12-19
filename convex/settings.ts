@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery } from "./_generated/server";
-import { requireAuth, hasOrgRole } from "./lib/auth";
+import { requireAuth, hasPermission } from "./lib/auth";
 import { encrypt, decrypt, isEncrypted } from "./lib/encryption";
+import { PERMISSIONS } from './lib/permissions'
 
 // Keys that should always be encrypted
 const SENSITIVE_KEYS = [
@@ -22,7 +23,7 @@ export const list = query({
     await requireAuth(ctx);
 
     // Only admins can see all settings
-    if (!await hasOrgRole(ctx, ["admin"])) {
+    if (!await hasPermission(ctx, PERMISSIONS.ALL)) {
       throw new Error("Unauthorized");
     }
 
@@ -35,7 +36,7 @@ export const get = query({
   args: { key: v.string() },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
-    const isAdmin = await hasOrgRole(ctx, ["admin"]);
+    const isAdmin = await hasPermission(ctx, PERMISSIONS.ALL);
 
     const setting = await ctx.db
       .query("settings")
@@ -65,7 +66,7 @@ export const set = mutation({
   handler: async (ctx, args) => {
     await requireAuth(ctx);
 
-    if (!await hasOrgRole(ctx, ["admin"])) {
+    if (!await hasPermission(ctx, PERMISSIONS.ALL)) {
       throw new Error("Unauthorized");
     }
 
@@ -102,7 +103,7 @@ export const getIntegrationConfig = query({
   handler: async (ctx, args) => {
     // Protected query, restricted to admin
     await requireAuth(ctx);
-    if (!await hasOrgRole(ctx, ["admin"])) {
+    if (!await hasPermission(ctx, PERMISSIONS.ALL)) {
       return {
         baseUrl: null,
         apiKey: null,
