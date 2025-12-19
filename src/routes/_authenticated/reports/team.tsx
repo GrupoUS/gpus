@@ -52,7 +52,7 @@ type TeamPerformanceMember = {
 
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
-	// @ts-expect-error - Deep type instantiation error from Convex inference
+
 	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period }) as
 		| TeamPerformanceMember[]
 		| undefined;

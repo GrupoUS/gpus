@@ -11,7 +11,8 @@ import { createAsaasClient, AsaasClient } from "../lib/asaas";
  */
 async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
   // Try to get settings from database first
-  const config = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+  // @ts-ignore - Deep type instantiation error
+  const config = await ctx.runQuery((internal as any).settings.internalGetIntegrationConfig, {
     integrationName: "asaas",
   });
 
@@ -182,9 +183,9 @@ export const createAsaasSubscription = action({
  */
 export const testAsaasConnection = action({
   args: {},
-  handler: async (_ctx) => {
+  handler: async (ctx) => {
     try {
-      const client = getAsaasClient();
+      const client = await getAsaasClientFromSettings(ctx);
 
       // Make a simple API call to validate credentials
       const response = await client.testConnection();
@@ -735,7 +736,7 @@ export const importAllFromAsaas = action({
   },
   handler: async (ctx, args): Promise<CombinedImportResult> => {
     console.log('[importAllFromAsaas] Starting import...');
-    
+
     let client: AsaasClient;
     try {
       client = await getAsaasClientFromSettings(ctx);
@@ -744,14 +745,14 @@ export const importAllFromAsaas = action({
       console.error('[importAllFromAsaas] Failed to initialize Asaas client:', error.message);
       throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`);
     }
-    
+
     const MAX_PAGES = 50;
 
     // ═══════════════════════════════════════════════════════
     // STEP 1: IMPORT CUSTOMERS
     // ═══════════════════════════════════════════════════════
     console.log('[importAllFromAsaas] Step 1: Creating customers sync log...');
-    
+
     let customersLogId;
     try {
       // @ts-ignore
@@ -780,7 +781,7 @@ export const importAllFromAsaas = action({
       while (customersHasMore && customersPageCount < MAX_PAGES) {
         customersPageCount++;
         console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
-        
+
         let response;
         try {
           response = await client.listAllCustomers({ offset: customersOffset, limit });

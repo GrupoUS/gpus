@@ -1,27 +1,27 @@
 // Define permissions constants
-// Format: resource_action
+// Format: resource:action (consistent with Clerk format)
 export const PERMISSIONS = {
   // Global
   ALL: 'all', // Super admin permission
 
   // Leads
-  LEADS_READ: 'leads_read',
-  LEADS_WRITE: 'leads_write',
+  LEADS_READ: 'leads:read',
+  LEADS_WRITE: 'leads:write',
 
   // Conversations (Chat/WhatsApp)
-  CONVERSATIONS_READ: 'conversations_read',
-  CONVERSATIONS_WRITE: 'conversations_write',
+  CONVERSATIONS_READ: 'conversations:read',
+  CONVERSATIONS_WRITE: 'conversations:write',
 
   // Students
-  STUDENTS_READ: 'students_read',
-  STUDENTS_WRITE: 'students_write',
+  STUDENTS_READ: 'students:read',
+  STUDENTS_WRITE: 'students:write',
 
   // Tickets/Support
-  TICKETS_READ: 'tickets_read',
-  TICKETS_WRITE: 'tickets_write',
+  TICKETS_READ: 'tickets:read',
+  TICKETS_WRITE: 'tickets:write',
 
   // Reports/Dashboard
-  REPORTS_READ: 'reports_read',
+  REPORTS_READ: 'reports:read',
 } as const
 
 // Role to Permissions Mapping

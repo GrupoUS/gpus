@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, getOrganizationId, requirePermission } from './lib/auth'
+import { getOrganizationId, requirePermission } from './lib/auth'
 import { PERMISSIONS } from './lib/permissions'
 
 // Common args for lead creation/update

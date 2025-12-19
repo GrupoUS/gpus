@@ -1,7 +1,7 @@
 ---
 description: Full-stack developer with TDD methodology for Bun + Convex + TanStack Router + shadcn/ui stack
 mode: subagent
-model: google/gemini-3-pro-preview
+model: google/gemini-3-flash-preview
 temperature: 0.2
 tools:
   write: true

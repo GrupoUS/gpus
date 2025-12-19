@@ -14,7 +14,7 @@
         },
         "plan": {
           "mode": "primary",
-          "model": "anthropic/claude-opus-4-5",
+          "model": "google/gemini-3-pro-preview",
           "prompt": "{file:.opencode/prompts/plan.txt}"
     },
     "apex-dev": {

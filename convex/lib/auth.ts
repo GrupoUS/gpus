@@ -117,6 +117,22 @@ export async function requireOrgRole(
 import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions'
 
 /**
+ * Convert permission format from code (leads:read) to Clerk format (org:leads_read:leads_read)
+ */
+function toClerkPermissionFormat(permission: string): string {
+	if (permission === PERMISSIONS.ALL) {
+		return PERMISSIONS.ALL
+	}
+	// Convert leads:read -> org:leads_read:leads_read
+	const parts = permission.split(':')
+	if (parts.length === 2) {
+		const [resource, action] = parts
+		return `org:${resource}_${action}:${resource}_${action}`
+	}
+	return permission
+}
+
+/**
  * Check if user has a specific permission
  * @param ctx Context (Query, Mutation, or Action)
  * @param permission Permission to check (e.g., 'leads:read')
@@ -138,8 +154,10 @@ export async function hasPermission(
 	}
 
 	// Check if permission is in JWT claims
+	// Clerk returns permissions in format org:resource_action:resource_action
 	if (identity.org_permissions && Array.isArray(identity.org_permissions)) {
-		if (identity.org_permissions.includes(permission)) {
+		const clerkPermission = toClerkPermissionFormat(permission)
+		if (identity.org_permissions.includes(clerkPermission)) {
 			return true
 		}
 		// Also check for 'all' permission in the array just in case
