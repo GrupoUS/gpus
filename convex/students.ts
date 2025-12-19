@@ -67,9 +67,8 @@ export const getById = query({
 export const getChurnAlerts = query({
   args: {},
   handler: async (ctx) => {
-    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
-
     try {
+      await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
       const ENGAGEMENT_WINDOW_DAYS = 30
       const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
       const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS

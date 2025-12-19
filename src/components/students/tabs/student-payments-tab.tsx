@@ -57,7 +57,8 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	const { toast } = useToast();
 
 	// Fetch student to get Asaas ID
-	const student = useQuery(api.students.getById, { id: studentId });
+	// biome-ignore lint/suspicious/noExplicitAny: Deep type instantiation workaround for Convex
+	const student = useQuery(api.students.getById as any, { id: studentId });
 	const asaasCustomerId =
 		typeof (student as { asaasCustomerId?: unknown } | null)?.asaasCustomerId === 'string'
 			? (student as { asaasCustomerId: string }).asaasCustomerId
