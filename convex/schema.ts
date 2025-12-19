@@ -208,6 +208,7 @@ export default defineSchema({
     cohort: v.optional(v.string()), // Turma (ex: "TURMA 5", "TURMA 6")
 
     // LGPD - Controle de retenção e consentimento
+    lgpdConsent: v.optional(v.boolean()),
     dataRetentionUntil: v.optional(v.number()), // Data para exclusão automática
     consentGrantedAt: v.optional(v.number()), // Quando consentimento foi concedido
     consentVersion: v.optional(v.string()), // Versão da política de privacidade

@@ -1,15 +1,17 @@
 'use client';
 
+import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAction } from 'convex/react';
-import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { Loader2, Plus, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { api } from '../../../convex/_generated/api';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
@@ -28,73 +30,115 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 
+// Available products
+const PRODUCTS = [
+	{ value: 'trintae3', label: 'Trinta e 3' },
+	{ value: 'otb', label: 'OTB' },
+	{ value: 'black_neon', label: 'Black Neon' },
+	{ value: 'comunidade', label: 'Comunidade' },
+	{ value: 'auriculo', label: 'Aurículo' },
+	{ value: 'na_mesa_certa', label: 'Na Mesa Certa' },
+] as const;
+
+// Form schema
 const formSchema = z.object({
 	name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
 	description: z.string().optional(),
-	sourceType: z.enum(['lead', 'student']),
-	product: z.string().optional(),
-	stage: z.string().optional(),
+	sourceType: z.enum(['students', 'leads', 'both']),
+	products: z.array(z.string()),
+	activeOnly: z.boolean(),
+	qualifiedOnly: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateListDialog() {
+interface CreateListDialogProps {
+	onSuccess?: () => void;
+}
+
+export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 	const [open, setOpen] = useState(false);
-	// @ts-expect-error
-	const createList = useAction(api.emailMarketing.createListFromSegment);
+	const createList = useMutation(api.emailMarketing.createListWithContacts);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
 			description: '',
-			sourceType: 'student',
-			product: 'all',
-			stage: 'all',
+			sourceType: 'both',
+			products: [],
+			activeOnly: true,
+			qualifiedOnly: false,
 		},
 	});
 
 	const sourceType = form.watch('sourceType');
+	const products = form.watch('products');
+	const activeOnly = form.watch('activeOnly');
+	const qualifiedOnly = form.watch('qualifiedOnly');
 	const isSubmitting = form.formState.isSubmitting;
+
+	// Preview count query
+	const previewData = useQuery(
+		api.emailMarketing.previewListContacts,
+		open
+			? {
+					sourceType,
+					products,
+					filters: { activeOnly, qualifiedOnly },
+				}
+			: 'skip',
+	);
+
+	const toggleProduct = (product: string) => {
+		const currentProducts = form.getValues('products');
+		if (currentProducts.includes(product)) {
+			form.setValue(
+				'products',
+				currentProducts.filter((p) => p !== product),
+			);
+		} else {
+			form.setValue('products', [...currentProducts, product]);
+		}
+	};
 
 	async function onSubmit(values: FormValues) {
 		try {
-			const filters: Record<string, any> = {};
-
-			if (values.sourceType === 'student') {
-				filters.product = values.product === 'all' ? undefined : values.product;
-				filters.status = 'ativo'; // Default to active students
-			} else {
-				filters.stage = values.stage === 'all' ? undefined : values.stage;
-			}
-
 			const result = await createList({
 				name: values.name,
-				description: values.description,
+				description: values.description || undefined,
 				sourceType: values.sourceType,
-				filters,
+				products: values.products,
+				filters: {
+					activeOnly: values.activeOnly,
+					qualifiedOnly: values.qualifiedOnly,
+				},
 			});
 
-			toast.success(`Lista criada com ${result.count} contatos!`, {
-				description: 'A sincronização com o Brevo foi iniciada.',
+			toast.success(`Lista criada com ${result.contactCount} contatos!`, {
+				description: 'A sincronização com o Brevo será iniciada automaticamente.',
 			});
 
 			setOpen(false);
 			form.reset();
+			onSuccess?.();
 		} catch (error) {
 			toast.error('Erro ao criar lista', {
 				description: error instanceof Error ? error.message : 'Tente novamente.',
 			});
 		}
 	}
+
+	// Reset form when dialog closes
+	useEffect(() => {
+		if (!open) {
+			form.reset();
+		}
+	}, [open, form]);
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -104,114 +148,160 @@ export function CreateListDialog() {
 					Nova Lista
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>Criar Nova Lista</DialogTitle>
 					<DialogDescription>
-						Crie uma lista de contatos baseada em um segmento de alunos ou leads. A lista será
+						Crie uma lista de contatos baseada em filtros de alunos e/ou leads. A lista será
 						sincronizada automaticamente com o Brevo.
 					</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+						{/* Name */}
 						<FormField
 							control={form.control}
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Nome da Lista</FormLabel>
+									<FormLabel>Nome da Lista *</FormLabel>
 									<FormControl>
-										<Input placeholder="Ex: Alunos OTB Ativos" {...field} />
+										<Input placeholder="Ex: Alunos TRINTAE3 Ativos" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
+						{/* Description */}
 						<FormField
 							control={form.control}
-							name="sourceType"
+							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Origem</FormLabel>
-									<Select onValueChange={field.onChange} defaultValue={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="Selecione a origem" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											<SelectItem value="student">Alunos</SelectItem>
-											<SelectItem value="lead">Leads</SelectItem>
-										</SelectContent>
-									</Select>
+									<FormLabel>Descrição (opcional)</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder="Descreva o propósito desta lista..."
+											className="resize-none"
+											rows={2}
+											{...field}
+										/>
+									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						{sourceType === 'student' && (
-							<FormField
-								control={form.control}
-								name="product"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Produto</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="Selecione o produto" />
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												<SelectItem value="all">Todos os Produtos</SelectItem>
-												<SelectItem value="trintae3">Trinta e 3</SelectItem>
-												<SelectItem value="otb">OTB</SelectItem>
-												<SelectItem value="black_neon">Black Neon</SelectItem>
-												<SelectItem value="comunidade">Comunidade</SelectItem>
-												<SelectItem value="auriculo">Aurículo</SelectItem>
-												<SelectItem value="na_mesa_certa">Na Mesa Certa</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						)}
+						{/* Source Type */}
+						<FormField
+							control={form.control}
+							name="sourceType"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Origem dos Contatos</FormLabel>
+									<FormControl>
+										<RadioGroup
+											onValueChange={field.onChange}
+											defaultValue={field.value}
+											className="flex gap-4"
+										>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="students" id="students" />
+												<Label htmlFor="students">Alunos</Label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="leads" id="leads" />
+												<Label htmlFor="leads">Leads</Label>
+											</div>
+											<div className="flex items-center space-x-2">
+												<RadioGroupItem value="both" id="both" />
+												<Label htmlFor="both">Ambos</Label>
+											</div>
+										</RadioGroup>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-						{sourceType === 'lead' && (
-							<FormField
-								control={form.control}
-								name="stage"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Estágio do Funil</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+						{/* Products Multi-Select */}
+						<div className="space-y-2">
+							<Label>Produtos (selecione um ou mais)</Label>
+							<div className="flex flex-wrap gap-2">
+								{PRODUCTS.map((product) => (
+									<Badge
+										key={product.value}
+										variant={products.includes(product.value) ? 'default' : 'outline'}
+										className="cursor-pointer transition-colors hover:bg-primary/80"
+										onClick={() => toggleProduct(product.value)}
+									>
+										{product.label}
+									</Badge>
+								))}
+							</div>
+							<p className="text-xs text-muted-foreground">
+								{products.length === 0
+									? 'Nenhum produto selecionado (todos serão incluídos)'
+									: `${products.length} produto(s) selecionado(s)`}
+							</p>
+						</div>
+
+						{/* Filters */}
+						<div className="space-y-3 rounded-lg border p-3">
+							<Label className="font-semibold">Filtros Adicionais</Label>
+
+							{(sourceType === 'students' || sourceType === 'both') && (
+								<FormField
+									control={form.control}
+									name="activeOnly"
+									render={({ field }) => (
+										<FormItem className="flex items-center gap-2 space-y-0">
 											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="Selecione o estágio" />
-												</SelectTrigger>
+												<Checkbox checked={field.value} onCheckedChange={field.onChange} />
 											</FormControl>
-											<SelectContent>
-												<SelectItem value="all">Todos os Estágios</SelectItem>
-												<SelectItem value="novo">Novo</SelectItem>
-												<SelectItem value="qualificado">Qualificado</SelectItem>
-												<SelectItem value="proposta">Proposta</SelectItem>
-												<SelectItem value="fechado_ganho">Venda Realizada</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormMessage />
-									</FormItem>
+											<FormLabel className="font-normal">Apenas alunos ativos</FormLabel>
+										</FormItem>
+									)}
+								/>
+							)}
+
+							{(sourceType === 'leads' || sourceType === 'both') && (
+								<FormField
+									control={form.control}
+									name="qualifiedOnly"
+									render={({ field }) => (
+										<FormItem className="flex items-center gap-2 space-y-0">
+											<FormControl>
+												<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+											</FormControl>
+											<FormLabel className="font-normal">Apenas leads qualificados</FormLabel>
+										</FormItem>
+									)}
+								/>
+							)}
+						</div>
+
+						{/* Preview Count */}
+						<div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+							<Users className="h-5 w-5 text-muted-foreground" />
+							<span className="text-sm">
+								{previewData === undefined ? (
+									<Loader2 className="inline h-4 w-4 animate-spin" />
+								) : (
+									<>
+										<strong>{previewData.count}</strong> contatos serão adicionados à lista
+									</>
 								)}
-							/>
-						)}
+							</span>
+						</div>
 
 						<DialogFooter>
 							<Button type="button" variant="outline" onClick={() => setOpen(false)}>
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button type="submit" disabled={isSubmitting || previewData?.count === 0}>
 								{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 								Criar Lista
 							</Button>

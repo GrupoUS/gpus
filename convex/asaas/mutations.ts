@@ -256,6 +256,7 @@ export const createStudentFromAsaas = internalMutation({
       cpf: args.cpf,
       asaasCustomerId: args.asaasCustomerId,
       asaasCustomerSyncedAt: now,
+      lgpdConsent: false,
       status: "ativo",
       // Required fields with sensible defaults for Asaas imports
       profession: "Não informado",

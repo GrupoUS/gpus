@@ -1062,7 +1062,47 @@ export const updateListBrevoId = internalMutation({
 // ─────────────────────────────────────────────────────────
 
 /**
- * Sync a list to Brevo
+ * Internal mutation to update list sync status
+ */
+export const updateListSyncStatus = internalMutation({
+	args: {
+		listId: v.id('emailLists'),
+		syncStatus: v.union(
+			v.literal('pending'),
+			v.literal('syncing'),
+			v.literal('synced'),
+			v.literal('error')
+		),
+		syncError: v.optional(v.string()),
+		lastSyncedAt: v.optional(v.number()),
+		brevoListId: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const updates: Record<string, unknown> = {
+			syncStatus: args.syncStatus,
+			updatedAt: Date.now(),
+		}
+		if (args.syncError !== undefined) updates.syncError = args.syncError
+		if (args.lastSyncedAt !== undefined) updates.lastSyncedAt = args.lastSyncedAt
+		if (args.brevoListId !== undefined) updates.brevoListId = args.brevoListId
+
+		await ctx.db.patch(args.listId, updates)
+	},
+})
+
+/**
+ * Internal query to get contacts in a list
+ */
+export const getListContactsInternal = internalQuery({
+	args: { listId: v.id('emailLists') },
+	handler: async (ctx, args) => {
+		const contacts = await ctx.db.query('emailContacts').collect()
+		return contacts.filter(c => c.listIds?.includes(args.listId))
+	},
+})
+
+/**
+ * Sync a list to Brevo with all its contacts
  */
 export const syncListToBrevo = action({
 	args: { listId: v.id('emailLists') },
@@ -1076,24 +1116,82 @@ export const syncListToBrevo = action({
 			throw new Error('Lista não encontrada')
 		}
 
-		// If already has brevoListId, return it
-		if (list.brevoListId) {
-			return { success: true, brevoListId: list.brevoListId }
-		}
-
-		// Create list in Brevo (using folder 1 as default)
-		const result = await brevoLists.create({
-			name: list.name,
-			folderId: 1,
-		})
-
-		// Update DB with brevoListId
-		await ctx.runMutation(internalEmailMarketing.updateListBrevoId, {
+		// Update status to syncing
+		await ctx.runMutation(internalEmailMarketing.updateListSyncStatus, {
 			listId: args.listId,
-			brevoListId: result.id,
+			syncStatus: 'syncing',
 		})
 
-		return { success: true, brevoListId: result.id }
+		try {
+			let brevoListId = list.brevoListId
+
+			// Create list in Brevo if not exists
+			if (!brevoListId) {
+				const result = await brevoLists.create({
+					name: list.name,
+					folderId: 1,
+				})
+				brevoListId = result.id
+			}
+
+			// Get contacts in this list
+			const contacts = await ctx.runQuery(
+				internalEmailMarketing.getListContactsInternal,
+				{ listId: args.listId }
+			)
+
+			// Batch upsert contacts to Brevo (max 1000 per request)
+			const contactEmails: string[] = []
+			for (const contact of contacts) {
+				// Upsert contact in Brevo
+				try {
+					await brevoContacts.upsert({
+						email: contact.email,
+						attributes: {
+							FIRSTNAME: contact.firstName || '',
+							LASTNAME: contact.lastName || '',
+						},
+						updateEnabled: true,
+					})
+					contactEmails.push(contact.email)
+				} catch (error) {
+					console.error(`Failed to sync contact ${contact.email}:`, error)
+				}
+			}
+
+			// Add contacts to list in batches of 150 (Brevo recommendation)
+			const BATCH_SIZE = 150
+			for (let i = 0; i < contactEmails.length; i += BATCH_SIZE) {
+				const batch = contactEmails.slice(i, i + BATCH_SIZE)
+				try {
+					await brevoContacts.addToList(brevoListId, batch)
+				} catch (error) {
+					console.error(`Failed to add batch to list:`, error)
+				}
+			}
+
+			// Update sync status to synced
+			await ctx.runMutation(internalEmailMarketing.updateListSyncStatus, {
+				listId: args.listId,
+				syncStatus: 'synced',
+				lastSyncedAt: Date.now(),
+				brevoListId,
+			})
+
+			return {
+				success: true,
+				brevoListId,
+				syncedContacts: contactEmails.length
+			}
+		} catch (error) {
+			// Update sync status to error
+			await ctx.runMutation(internalEmailMarketing.updateListSyncStatus, {
+				listId: args.listId,
+				syncStatus: 'error',
+				syncError: error instanceof Error ? error.message : 'Unknown error',
+			})
+			throw error
+		}
 	},
 })
 

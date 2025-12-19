@@ -50,7 +50,7 @@ export function FunnelChart({ data }: FunnelChartProps) {
 					</div>
 				) : (
 					<div className="h-[280px]">
-						<ResponsiveContainer width="100%" height="100%">
+						<ResponsiveContainer width="100%" height="100%" minWidth={0}>
 							<BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 20 }}>
 								<XAxis type="number" hide />
 								<YAxis
