@@ -24,7 +24,7 @@ export function MonthlyOverviewCard() {
 	const [month, setMonth] = useState(now.getMonth());
 	const [year, setYear] = useState(now.getFullYear());
 
-	const summary = useQuery(api.asaas.getMonthlyFinancialSummary, { month, year });
+	const summary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, { month, year });
 
 	if (summary === undefined) {
 		return (

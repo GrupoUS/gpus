@@ -38,8 +38,8 @@ function PaymentsPage() {
 
 	// Get all payments (we'll need to create a query for this or use existing ones)
 	// For now, using pending and overdue, but ideally we'd have a comprehensive list query
-	const pendingPayments = useQuery(api.asaas.getPendingPayments);
-	const overduePayments = useQuery(api.asaas.getOverduePayments);
+	const pendingPayments = useQuery(api.asaas.queries.getPendingPayments);
+	const overduePayments = useQuery(api.asaas.queries.getOverduePayments);
 
 	// Combine and filter payments
 	const allPayments = [...(pendingPayments || []), ...(overduePayments || [])].filter((payment) => {

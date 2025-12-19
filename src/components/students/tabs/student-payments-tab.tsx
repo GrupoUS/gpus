@@ -63,7 +63,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 			? (student as { asaasCustomerId: string }).asaasCustomerId
 			: undefined;
 
-	const payments = useQuery(api.asaas.getPaymentsByStudent, {
+	const payments = useQuery(api.asaas.queries.getPaymentsByStudent, {
 		studentId,
 	}) as PaymentRow[] | undefined;
 

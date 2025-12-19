@@ -17,7 +17,7 @@ const formatCurrency = (value: number) =>
 
 export function RevenueChart() {
 	const now = new Date();
-	const summary = useQuery(api.asaas.getMonthlyFinancialSummary, {
+	const summary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, {
 		month: now.getMonth(),
 		year: now.getFullYear(),
 	});

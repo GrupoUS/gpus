@@ -50,7 +50,7 @@ export function PaymentCalendar() {
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-	const dueDates = useQuery(api.asaas.getPaymentsDueDates, { month, year });
+	const dueDates = useQuery(api.asaas.queries.getPaymentsDueDates, { month, year });
 
 	// Create a map of date -> payment data for quick lookup
 	const datePaymentMap = useMemo(() => {

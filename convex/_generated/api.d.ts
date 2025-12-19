@@ -9,10 +9,12 @@
  */
 
 import type * as activities from "../activities.js";
-import type * as asaas from "../asaas.js";
 import type * as asaas_actions from "../asaas/actions.js";
+import type * as asaas_index from "../asaas/index.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
+import type * as asaas_queries from "../asaas/queries.js";
 import type * as asaas_sync from "../asaas/sync.js";
+import type * as asaas_webhooks from "../asaas/webhooks.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
 import type * as debug_access from "../debug_access.js";
@@ -38,16 +40,19 @@ import type * as lib_inngest from "../lib/inngest.js";
 import type * as lib_lgpdCompliance from "../lib/lgpdCompliance.js";
 import type * as lib_lgpdDataRights from "../lib/lgpdDataRights.js";
 import type * as lib_messaging from "../lib/messaging.js";
+import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_securityHealth from "../lib/securityHealth.js";
 import type * as lib_securityMiddleware from "../lib/securityMiddleware.js";
 import type * as lib_validation from "../lib/validation.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
+import type * as migrations from "../migrations.js";
 import type * as settings from "../settings.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
 import type * as templates from "../templates.js";
+import type * as transactionalEmails from "../transactionalEmails.js";
 import type * as users from "../users.js";
 
 import type {
@@ -58,10 +63,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
-  asaas: typeof asaas;
   "asaas/actions": typeof asaas_actions;
+  "asaas/index": typeof asaas_index;
   "asaas/mutations": typeof asaas_mutations;
+  "asaas/queries": typeof asaas_queries;
   "asaas/sync": typeof asaas_sync;
+  "asaas/webhooks": typeof asaas_webhooks;
   conversations: typeof conversations;
   crons: typeof crons;
   debug_access: typeof debug_access;
@@ -87,16 +94,19 @@ declare const fullApi: ApiFromModules<{
   "lib/lgpdCompliance": typeof lib_lgpdCompliance;
   "lib/lgpdDataRights": typeof lib_lgpdDataRights;
   "lib/messaging": typeof lib_messaging;
+  "lib/permissions": typeof lib_permissions;
   "lib/securityHealth": typeof lib_securityHealth;
   "lib/securityMiddleware": typeof lib_securityMiddleware;
   "lib/validation": typeof lib_validation;
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
   metrics: typeof metrics;
+  migrations: typeof migrations;
   settings: typeof settings;
   students: typeof students;
   studentsImport: typeof studentsImport;
   templates: typeof templates;
+  transactionalEmails: typeof transactionalEmails;
   users: typeof users;
 }>;
 

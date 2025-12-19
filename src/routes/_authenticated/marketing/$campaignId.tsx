@@ -424,8 +424,9 @@ interface EventLogsProps {
 }
 
 function EventLogs({ campaignId }: EventLogsProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Convex query type inference workaround
-	const events = useQuery(api.emailMarketing.getCampaignEvents as any, {
+	// Type workaround for deep instantiation issue
+	const getCampaignEventsQuery = api.emailMarketing.getCampaignEvents;
+	const events = useQuery(getCampaignEventsQuery, {
 		campaignId,
 		limit: 20,
 	}) as

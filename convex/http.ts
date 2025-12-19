@@ -223,7 +223,7 @@ http.route({
 
 		// 4. Process webhook asynchronously (don't wait for completion)
 		// This ensures we respond quickly to Asaas to avoid retries
-		ctx.runMutation(internal.asaas.processWebhook, {
+		ctx.runMutation(internal.asaas.webhooks.processWebhook, {
 			event,
 			paymentId: payment.id,
 			payload,

@@ -51,7 +51,7 @@ export function InvoiceList() {
 		999,
 	).getTime();
 
-	const result = useQuery(api.asaas.getPaymentsByDateRange, {
+	const result = useQuery(api.asaas.queries.getPaymentsByDateRange, {
 		startDate: startOfMonth,
 		endDate: endOfMonth,
 		status: statusFilter === 'all' ? undefined : statusFilter,

@@ -285,7 +285,7 @@ export const create = mutation({
 
     // Auto-sync with Asaas (async, don't wait)
     try {
-      await ctx.scheduler.runAfter(0, internal.asaas.syncStudentAsCustomerInternal, {
+      await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
         studentId,
       })
     } catch (error) {
@@ -369,7 +369,7 @@ export const update = mutation({
     const shouldSync = args.patch.cpf || args.patch.email || args.patch.phone
     if (shouldSync) {
       try {
-        await ctx.scheduler.runAfter(0, internal.asaas.syncStudentAsCustomerInternal, {
+        await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
           studentId: args.studentId,
         })
       } catch (error) {
