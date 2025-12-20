@@ -447,6 +447,7 @@ export default defineSchema({
     studentId: v.optional(v.id('students')),
     enrollmentId: v.optional(v.id('enrollments')),
     conversationId: v.optional(v.id('conversations')),
+    userId: v.optional(v.id('users')),
 
     // Tipo
     type: v.union(
@@ -470,7 +471,8 @@ export default defineSchema({
       v.literal('ticket_resolvido'),
       v.literal('nota_adicionada'),
       v.literal('atribuicao_alterada'),
-      v.literal('integracao_configurada')
+      v.literal('integracao_configurada'),
+      v.literal('user_created')
     ),
 
     // Detalhes
@@ -494,6 +496,8 @@ export default defineSchema({
     .index('by_lead', ['leadId'])
     .index('by_organization', ['organizationId'])
     .index('by_student', ['studentId'])
+    .index('by_user', ['userId'])
+    .index('by_type', ['type'])
     .index('by_type', ['type'])
     .index('by_created', ['createdAt']),
 

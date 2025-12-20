@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { getOrganizationId } from './lib/auth'
+import { getOrganizationId, requireAuth } from './lib/auth'
 
 /**
  * Get current user from Clerk auth
@@ -67,6 +67,59 @@ export const listCSUsers = query({
       name: user.name,
       email: user.email,
     }))
+  },
+})
+
+/**
+ * Ensure user exists in Convex (sync from Clerk)
+ * SECURITY: Requires authentication
+ */
+export const ensureUser = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await requireAuth(ctx)
+
+    // Check if user already exists
+    const existing = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique()
+
+    if (existing) {
+      return existing._id
+    }
+
+    // Create new user
+    const organizationId = await getOrganizationId(ctx) || 'default'
+
+    // Default role 'sdr' unless specified in org permissions (logic can be enhanced)
+    // For now, we respect the requirement: role standard 'sdr'
+    const role = 'sdr'
+
+    const userId = await ctx.db.insert('users', {
+      clerkId: identity.subject,
+      name: identity.name || 'Usuário',
+      email: identity.email || '',
+      avatar: identity.pictureUrl || '',
+      organizationId,
+      role,
+      isActive: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+
+    // Log activity
+    await ctx.db.insert('activities', {
+      type: 'user_created',
+      description: `User ${identity.name} created automatically via sync`,
+      userId: userId,
+      metadata: { externalId: identity.subject },
+      organizationId,
+      performedBy: identity.subject,
+      createdAt: Date.now(),
+    })
+
+    return userId
   },
 })
 

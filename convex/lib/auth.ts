@@ -185,7 +185,19 @@ export async function requirePermission(
 	const isAllowed = await hasPermission(ctx, permission)
 
 	if (!isAllowed) {
-		throw new Error(`Permissão negada. Requer permissão: ${permission}`)
+		// Differentiate between "User not found" (sync issue) and "Permission denied" (role issue)
+		// We can check if the user actually exists in DB by calling getUserPermissions internally or checking identity.org_permissions
+		const permissions = await getUserPermissions(ctx, identity)
+
+		if (permissions.length === 0 && !identity.org_permissions) {
+			console.error(`[Auth] User ${identity.subject} has no permissions (User might not exist in DB).`)
+			throw new Error('Usuário não sincronizado. Tente fazer logout e login novamente.')
+		}
+
+		console.error(`[Auth] Permission denied for user ${identity.subject}. Required: ${permission}`)
+		throw new Error(
+			`Permissão negada. Você precisa da permissão "${permission}" para realizar esta ação. Contate o administrador.`,
+		)
 	}
 
 	return identity

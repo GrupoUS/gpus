@@ -332,9 +332,13 @@ export const recent = query({
 
         console.log(`leads:recent: Found ${results.length} leads`);
         return results;
-    } catch (error) {
+    } catch (error: any) {
         console.error("leads:recent: Server Error detected", error);
-        throw error;
+
+        // Return empty array with error info (handled by client or ignored)
+        // This prevents the whole dashboard from crashing if just this query fails
+        console.warn("Returning empty leads list due to error");
+        return [];
     }
   }
 })
