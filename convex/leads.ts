@@ -298,28 +298,20 @@ export const recent = query({
   args: {
     limit: v.optional(v.number())
   },
-  returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    try {
-      // 1. Verify Auth & Permissions using standard helpers
-      await requirePermission(ctx, PERMISSIONS.LEADS_READ)
-      const organizationId = await getOrganizationId(ctx)
-
-      if (!organizationId) {
-        return []
-      }
-
-      // 2. Simple query with index
-      return await ctx.db
-        .query('leads')
-        .withIndex('by_organization', q => q.eq('organizationId', organizationId))
-        .order('desc')
-        .take(args.limit ?? 10)
-    } catch (error) {
-      console.error('leads:recent error:', error)
-      // Return empty array to prevent client crash
-      return []
+    // 1. Verify Auth & Permissions
+    await requirePermission(ctx, PERMISSIONS.LEADS_READ)
+    const organizationId = await getOrganizationId(ctx);
+    if (!organizationId) {
+      return [];
     }
+
+    // 2. Query leads using index
+    return await ctx.db
+      .query('leads')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+      .order('desc')
+      .take(args.limit ?? 10)
   }
 })
 
