@@ -1,6 +1,10 @@
-import { mutation } from "./_generated/server";
+import { mutation, internalMutation } from "./_generated/server";
+import { v } from "convex/values";
 import { getOrganizationId } from "./lib/auth";
 
+/**
+ * Adopt orphaned students - FOR USE FROM FRONTEND (requires auth)
+ */
 export const adoptOrphanedStudents = mutation({
   args: {},
   handler: async (ctx) => {
@@ -14,43 +18,74 @@ export const adoptOrphanedStudents = mutation({
       throw new Error("Organization ID not found for current user.");
     }
 
-    // Find students with no organizationId
-    // Note: We can't index on 'undefined' easily, so we might need to filter.
-    // Ideally we would have an index, but for a repair script, full scan or close to it is acceptable if dataset isn't huge.
-    // Or we can use the 'by_organization' index and look for null? No, sparse index excludes them?
-    // Convex indexes include null/undefined if indexed?
-    // Schema says: .index('by_organization', ['organizationId'])
-    // If organizationId is optional, they should be in the index with value null/undefined.
-    // Let's try to query with organizationId = undefined or null.
-
-    const orphans = await ctx.db
-      .query("students")
-      .filter((q) => q.eq(q.field("organizationId"), undefined))
-      .take(1000); // Process in batches if needed
-
-    let count = 0;
-    for (const student of orphans) {
-      await ctx.db.patch(student._id, { organizationId });
-      count++;
-    }
-
-    // Also adopt payments
-    const orphanedPayments = await ctx.db
-       .query("asaasPayments")
-       .filter((q) => q.eq(q.field("organizationId"), undefined))
-       .take(1000);
-
-    let paymentsCount = 0;
-    for (const payment of orphanedPayments) {
-        await ctx.db.patch(payment._id, { organizationId });
-        paymentsCount++;
-    }
-
-    return {
-      status: "success",
-      message: `Adopted ${count} students and ${paymentsCount} payments into organization ${organizationId}`,
-      orphanedStudentsFound: orphans.length,
-      orphanedPaymentsFound: orphanedPayments.length
-    };
+    return await adoptOrphansInternal(ctx, organizationId);
   },
 });
+
+/**
+ * Adopt orphaned students - FOR USE FROM DASHBOARD
+ * Pass your organization ID (clerkId or org_id) as parameter
+ *
+ * To find your org ID: Check your Clerk user ID (starts with user_xxx)
+ * or your organization ID (starts with org_xxx)
+ */
+export const adoptOrphanedStudentsManual = internalMutation({
+  args: {
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (!args.organizationId) {
+      throw new Error("organizationId is required");
+    }
+    return await adoptOrphansInternal(ctx, args.organizationId);
+  },
+});
+
+/**
+ * Internal helper function to do the actual adoption
+ */
+async function adoptOrphansInternal(ctx: any, organizationId: string) {
+  // Find students with no organizationId
+  const orphans = await ctx.db
+    .query("students")
+    .filter((q: any) => q.eq(q.field("organizationId"), undefined))
+    .take(1000);
+
+  let count = 0;
+  for (const student of orphans) {
+    await ctx.db.patch(student._id, { organizationId });
+    count++;
+  }
+
+  // Also adopt payments
+  const orphanedPayments = await ctx.db
+    .query("asaasPayments")
+    .filter((q: any) => q.eq(q.field("organizationId"), undefined))
+    .take(1000);
+
+  let paymentsCount = 0;
+  for (const payment of orphanedPayments) {
+    await ctx.db.patch(payment._id, { organizationId });
+    paymentsCount++;
+  }
+
+  // Also adopt subscriptions
+  const orphanedSubscriptions = await ctx.db
+    .query("asaasSubscriptions")
+    .filter((q: any) => q.eq(q.field("organizationId"), undefined))
+    .take(1000);
+
+  let subscriptionsCount = 0;
+  for (const sub of orphanedSubscriptions) {
+    await ctx.db.patch(sub._id, { organizationId });
+    subscriptionsCount++;
+  }
+
+  return {
+    status: "success",
+    message: `Adopted ${count} students, ${paymentsCount} payments, and ${subscriptionsCount} subscriptions into organization ${organizationId}`,
+    orphanedStudentsFound: orphans.length,
+    orphanedPaymentsFound: orphanedPayments.length,
+    orphanedSubscriptionsFound: orphanedSubscriptions.length,
+  };
+}
