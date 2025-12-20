@@ -14,7 +14,7 @@ export default {
 		{
 			// Clerk JWT Issuer Domain
 			// Convex auto-fetches JWKS from: {domain}/.well-known/jwks.json
-			domain: process.env.CLERK_ISSUER_URL || 'https://apparent-oryx-57.clerk.accounts.dev',
+			domain: process.env.CLERK_ISSUER_URL || 'https://clerk.grupous.com.br',
 			// 'convex' matches the audience claim in Clerk's JWT Template
 			applicationID: 'convex',
 		},

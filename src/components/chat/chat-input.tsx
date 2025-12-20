@@ -3,7 +3,7 @@
 import { api } from '@convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { Loader2, Paperclip, Search, Send, Smile } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { useChatContext } from '@/routes/_authenticated/chat';
 
 interface MessageTemplate {
 	_id: string;
@@ -34,8 +35,20 @@ export function ChatInput({
 	const [message, setMessage] = useState('');
 	const [isSending, setIsSending] = useState(false);
 	const [templateSearch, setTemplateSearch] = useState('');
+	const { pendingMessage, setPendingMessage } = useChatContext();
+
+	// Listen for pending messages from AI Assistant
+	useEffect(() => {
+		if (pendingMessage) {
+			setMessage((prev) => (prev ? `${prev}\n${pendingMessage}` : pendingMessage));
+			// Clear pending message after picking it up
+			setPendingMessage('');
+		}
+	}, [pendingMessage, setPendingMessage]);
 
 	// Use the specific API endpoint as per plan.
+	// biome-ignore lint/suspicious/noTsIgnore: Convex API type instantiation depth issue
+	// @ts-ignore
 	const conversationTemplates = useQuery(api.messageTemplates.listTemplates, {});
 
 	const handleSubmit = async (e?: React.FormEvent) => {

@@ -17,61 +17,77 @@ interface UseDifyChatReturn {
 export function useDifyChat(): UseDifyChatReturn {
 	const [messages, setMessages] = useState<DifyMessage[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [conversationId, setConversationId] = useState<string | null>(null);
 
-	// TODO: Add environment variables for Dify API
-	// const DIFY_API_URL = process.env.VITE_DIFY_API_URL;
-	// const DIFY_API_KEY = process.env.VITE_DIFY_API_KEY;
+	const DIFY_API_URL = import.meta.env.VITE_DIFY_API_URL;
+	const DIFY_API_KEY = import.meta.env.VITE_DIFY_API_KEY;
 
-	const sendMessage = useCallback(async (content: string): Promise<string | undefined> => {
-		if (!content.trim()) return undefined;
+	const sendMessage = useCallback(
+		async (content: string): Promise<string | undefined> => {
+			if (!content.trim()) return undefined;
 
-		try {
-			setIsLoading(true);
+			if (!(DIFY_API_URL && DIFY_API_KEY)) {
+				toast.error('Configuração do Dify API ausente. Verifique as variáveis de ambiente.');
+				return undefined;
+			}
 
-			// Add user message immediately
-			const userMessage: DifyMessage = {
-				role: 'user',
-				content,
-				timestamp: new Date(),
-			};
+			try {
+				setIsLoading(true);
 
-			setMessages((prev) => [...prev, userMessage]);
+				// Add user message immediately
+				const userMessage: DifyMessage = {
+					role: 'user',
+					content,
+					timestamp: new Date(),
+				};
 
-			// TODO: Implement actual Dify API call here
-			// const response = await fetch(`${DIFY_API_URL}/chat-messages`, {
-			//   method: 'POST',
-			//   headers: {
-			//     'Authorization': `Bearer ${DIFY_API_KEY}`,
-			//     'Content-Type': 'application/json',
-			//   },
-			//   body: JSON.stringify({
-			//     query: content,
-			//     user: 'agent-user',
-			//     inputs: {},
-			//     conversation_id: currentConversationId,
-			//   }),
-			// });
+				setMessages((prev) => [...prev, userMessage]);
 
-			// Simulate API delay and response
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+				const response = await fetch(`${DIFY_API_URL}/chat-messages`, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${DIFY_API_KEY}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						query: content,
+						user: 'agent-user',
+						inputs: {},
+						response_mode: 'blocking',
+						conversation_id: conversationId,
+					}),
+				});
 
-			const assistantMessage: DifyMessage = {
-				role: 'assistant',
-				content: `Esta é uma resposta simulada da IA para: "${content}". \n\nQuando a integração com o Dify estiver completa, aqui aparecerá a resposta real do assistente baseada no contexto da conversa.`,
-				timestamp: new Date(),
-			};
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(errorData.message || `Erro na API: ${response.status}`);
+				}
 
-			setMessages((prev) => [...prev, assistantMessage]);
-			return assistantMessage.content;
-		} catch (error) {
-			toast.error(
-				`Erro ao conectar com o assistente IA: ${error instanceof Error ? error.message : 'Tente novamente.'}`,
-			);
-			return undefined;
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
+				const data = await response.json();
+
+				// Update conversation ID for future messages
+				if (data.conversation_id) {
+					setConversationId(data.conversation_id);
+				}
+
+				const assistantMessage: DifyMessage = {
+					role: 'assistant',
+					content: data.answer || 'Sem resposta da IA.',
+					timestamp: new Date(),
+				};
+
+				setMessages((prev) => [...prev, assistantMessage]);
+				return assistantMessage.content;
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : 'Tente novamente.';
+				toast.error(`Erro ao conectar com o assistente IA: ${errorMessage}`);
+				return undefined;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[conversationId],
+	);
 
 	const clearMessages = useCallback(() => {
 		setMessages([]);

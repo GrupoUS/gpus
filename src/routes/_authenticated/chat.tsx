@@ -23,6 +23,8 @@ interface ChatContextValue {
 	setSearch: (value: string) => void;
 	setStatusFilter: (value: string) => void;
 	portalTargetId: string;
+	pendingMessage: string;
+	setPendingMessage: (value: string) => void;
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -49,6 +51,7 @@ const departments = [
 function ChatPage() {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [search, setSearch] = useState('');
+	const [pendingMessage, setPendingMessage] = useState('');
 	const portalTargetId = useId();
 
 	// Get the current department and conversation id from the route matches
@@ -63,7 +66,15 @@ function ChatPage() {
 
 	return (
 		<ChatContext.Provider
-			value={{ search, statusFilter, setSearch, setStatusFilter, portalTargetId }}
+			value={{
+				search,
+				statusFilter,
+				setSearch,
+				setStatusFilter,
+				portalTargetId,
+				pendingMessage,
+				setPendingMessage,
+			}}
 		>
 			<div className="h-[calc(100vh-64px)] flex flex-col">
 				<div className="flex-1 flex min-h-0">

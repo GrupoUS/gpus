@@ -5,6 +5,17 @@
  * @see https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API
  */
 declare global {
+	interface ImportMetaEnv {
+		readonly VITE_CONVEX_URL: string;
+		readonly VITE_CLERK_PUBLISHABLE_KEY: string;
+		readonly VITE_DIFY_API_URL: string;
+		readonly VITE_DIFY_API_KEY: string;
+	}
+
+	interface ImportMeta {
+		readonly env: ImportMetaEnv;
+	}
+
 	interface ViewTransition {
 		/**
 		 * A Promise that fulfills once the transition animation is finished,

@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDifyChat } from '@/hooks/use-dify-chat';
 import { cn } from '@/lib/utils';
+import { useChatContext } from '@/routes/_authenticated/chat';
 
 interface AIChatWidgetProps {
 	conversationId?: Id<'conversations'> | null; // Allow null to handle "no conversation selected"
@@ -30,6 +31,7 @@ export function AIChatWidget({
 	const [isOpen, setIsOpen] = useState(true);
 	const [inputText, setInputText] = useState('');
 	const { messages, sendMessage, isLoading } = useDifyChat();
+	const { setPendingMessage } = useChatContext();
 
 	const handleSend = async () => {
 		if (!inputText.trim() || isLoading) return;
@@ -37,8 +39,12 @@ export function AIChatWidget({
 		setInputText('');
 		const assistantResponse = await sendMessage(text);
 		// Invoke the callback with the assistant response if available
-		if (assistantResponse && onInsertResponse) {
-			onInsertResponse(assistantResponse);
+		if (assistantResponse) {
+			if (onInsertResponse) {
+				onInsertResponse(assistantResponse);
+			}
+			// Also set pending message in context for ChatInput to pick up
+			setPendingMessage(assistantResponse);
 		}
 	};
 
