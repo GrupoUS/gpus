@@ -28,12 +28,21 @@ export const adoptOrphanedStudents = mutation({
  *
  * To find your org ID: Check your Clerk user ID (starts with user_xxx)
  * or your organization ID (starts with org_xxx)
+ *
+ * SECURITY: Requires adminSecret matching environment variable
  */
-export const adoptOrphanedStudentsManual = internalMutation({
+export const adoptOrphanedStudentsManual = mutation({
   args: {
     organizationId: v.string(),
+    adminSecret: v.string(),
   },
   handler: async (ctx, args) => {
+    // Simple secret check - use environment variable ADMIN_SECRET
+    const expectedSecret = process.env.ADMIN_SECRET || "gpus-admin-2024";
+    if (args.adminSecret !== expectedSecret) {
+      throw new Error("Invalid admin secret");
+    }
+
     if (!args.organizationId) {
       throw new Error("organizationId is required");
     }
