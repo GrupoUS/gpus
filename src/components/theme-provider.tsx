@@ -33,6 +33,11 @@ export function ThemeProvider({
 		if (stored && VALID_THEMES.includes(stored)) {
 			return stored;
 		}
+
+		// Invalid or missing theme: cleanup and fall back to default
+		if (stored) {
+			localStorage.removeItem(storageKey);
+		}
 		return defaultTheme;
 	});
 
@@ -56,8 +61,10 @@ export function ThemeProvider({
 	const value = {
 		theme,
 		setTheme: (theme: Theme) => {
-			localStorage.setItem(storageKey, theme);
-			setTheme(theme);
+			if (VALID_THEMES.includes(theme)) {
+				localStorage.setItem(storageKey, theme);
+				setTheme(theme);
+			}
 		},
 	};
 
