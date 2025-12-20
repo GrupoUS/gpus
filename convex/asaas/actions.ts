@@ -792,6 +792,14 @@ export const importAllFromAsaas = action({
   handler: async (ctx, args): Promise<CombinedImportResult> => {
     console.log('[importAllFromAsaas] Starting import...');
 
+    // CRITICAL: Require authentication before importing
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.error('[importAllFromAsaas] No authenticated user');
+      throw new Error('Você precisa estar logado para importar dados do Asaas.');
+    }
+    console.log('[importAllFromAsaas] User authenticated:', identity.subject);
+
     let client: AsaasClient;
     try {
       client = await getAsaasClientFromSettings(ctx);
@@ -803,12 +811,18 @@ export const importAllFromAsaas = action({
 
     const MAX_PAGES = 50;
 
-    // Get organizationId safely
-    let organizationId: string | undefined;
+    // Get organizationId - REQUIRED for multi-tenant data isolation
+    let organizationId: string;
     try {
-        organizationId = await getOrganizationId(ctx);
-    } catch (e) {
-        console.warn('Could not determine organizationId in importAllFromAsaas', e);
+      organizationId = await getOrganizationId(ctx);
+      console.log('[importAllFromAsaas] Organization ID:', organizationId);
+    } catch (e: any) {
+      console.error('[importAllFromAsaas] Failed to get organizationId:', e.message);
+      throw new Error('Não foi possível determinar sua organização. Por favor, faça logout e login novamente.');
+    }
+
+    if (!organizationId) {
+      throw new Error('Organization ID é obrigatório para importação.');
     }
 
     // ═══════════════════════════════════════════════════════
