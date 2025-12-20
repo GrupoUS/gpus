@@ -89,6 +89,29 @@ export const processWebhook = internalMutation({
 				netValue: payment.netValue,
 			})
 
+			// Schedule notification based on payment status
+			// Get payment record to get studentId
+			const paymentRecord = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_asaas_payment_id', (q) => q.eq('asaasPaymentId', args.paymentId!))
+				.first()
+
+			if (paymentRecord && paymentRecord.studentId) {
+				if (status === 'CONFIRMED' || status === 'RECEIVED') {
+					// @ts-ignore - Deep type instantiation workaround
+					await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentConfirmed, {
+						paymentId: paymentRecord._id,
+						studentId: paymentRecord.studentId,
+					})
+				} else if (status === 'OVERDUE') {
+					// @ts-ignore - Deep type instantiation workaround
+					await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentOverdue, {
+						paymentId: paymentRecord._id,
+						studentId: paymentRecord.studentId,
+					})
+				}
+			}
+
 			// Mark webhook as processed
 			await ctx.db.patch(webhookId, {
 				processed: true,

@@ -498,6 +498,32 @@ export default defineSchema({
     .index('by_created', ['createdAt']),
 
   // ═══════════════════════════════════════════════════════
+  // NOTIFICAÇÕES (Payment notifications, etc.)
+  // ═══════════════════════════════════════════════════════
+  notifications: defineTable({
+    type: v.union(
+      v.literal('payment_confirmed'),
+      v.literal('payment_received'),
+      v.literal('payment_overdue'),
+      v.literal('payment_reminder'),
+      v.literal('enrollment_created'),
+      v.literal('system')
+    ),
+    recipientId: v.id('students'),
+    recipientType: v.union(v.literal('student'), v.literal('lead')),
+    title: v.string(),
+    message: v.string(),
+    channel: v.union(v.literal('email'), v.literal('whatsapp'), v.literal('system')),
+    status: v.union(v.literal('pending'), v.literal('sent'), v.literal('failed')),
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index('by_recipient', ['recipientId'])
+    .index('by_type', ['type'])
+    .index('by_status', ['status'])
+    .index('by_created', ['createdAt']),
+
+  // ═══════════════════════════════════════════════════════
   // CONFIGURAÇÕES E MÉTRICAS
   // ═══════════════════════════════════════════════════════
   settings: defineTable({

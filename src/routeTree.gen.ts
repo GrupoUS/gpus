@@ -46,6 +46,7 @@ import { Route as AuthenticatedMarketingDashboardRouteImport } from './routes/_a
 import { Route as AuthenticatedMarketingContatosRouteImport } from './routes/_authenticated/marketing/contatos'
 import { Route as AuthenticatedMarketingCampanhasRouteImport } from './routes/_authenticated/marketing/campanhas'
 import { Route as AuthenticatedMarketingCampaignIdRouteImport } from './routes/_authenticated/marketing/$campaignId'
+import { Route as AuthenticatedFinancialReportsRouteImport } from './routes/_authenticated/financial/reports'
 import { Route as AuthenticatedFinancialPaymentsRouteImport } from './routes/_authenticated/financial/payments'
 import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_authenticated/financial/dashboard'
 import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
@@ -260,6 +261,12 @@ const AuthenticatedMarketingCampaignIdRoute =
     path: '/$campaignId',
     getParentRoute: () => AuthenticatedMarketingRoute,
   } as any)
+const AuthenticatedFinancialReportsRoute =
+  AuthenticatedFinancialReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedFinancialRoute,
+  } as any)
 const AuthenticatedFinancialPaymentsRoute =
   AuthenticatedFinancialPaymentsRouteImport.update({
     id: '/payments',
@@ -334,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/financial/reports': typeof AuthenticatedFinancialReportsRoute
   '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
   '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
@@ -377,6 +385,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpIndexRoute
   '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/financial/reports': typeof AuthenticatedFinancialReportsRoute
   '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
   '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
@@ -426,6 +435,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
   '/_authenticated/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/_authenticated/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/_authenticated/financial/reports': typeof AuthenticatedFinancialReportsRoute
   '/_authenticated/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
   '/_authenticated/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/_authenticated/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
@@ -475,6 +485,7 @@ export interface FileRouteTypes {
     | '/chat/$department'
     | '/financial/dashboard'
     | '/financial/payments'
+    | '/financial/reports'
     | '/marketing/$campaignId'
     | '/marketing/campanhas'
     | '/marketing/contatos'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/financial/dashboard'
     | '/financial/payments'
+    | '/financial/reports'
     | '/marketing/$campaignId'
     | '/marketing/campanhas'
     | '/marketing/contatos'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$department'
     | '/_authenticated/financial/dashboard'
     | '/_authenticated/financial/payments'
+    | '/_authenticated/financial/reports'
     | '/_authenticated/marketing/$campaignId'
     | '/_authenticated/marketing/campanhas'
     | '/_authenticated/marketing/contatos'
@@ -867,6 +880,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingCampaignIdRouteImport
       parentRoute: typeof AuthenticatedMarketingRoute
     }
+    '/_authenticated/financial/reports': {
+      id: '/_authenticated/financial/reports'
+      path: '/reports'
+      fullPath: '/financial/reports'
+      preLoaderRoute: typeof AuthenticatedFinancialReportsRouteImport
+      parentRoute: typeof AuthenticatedFinancialRoute
+    }
     '/_authenticated/financial/payments': {
       id: '/_authenticated/financial/payments'
       path: '/payments'
@@ -967,12 +987,14 @@ const AuthenticatedChatRouteWithChildren =
 interface AuthenticatedFinancialRouteChildren {
   AuthenticatedFinancialDashboardRoute: typeof AuthenticatedFinancialDashboardRoute
   AuthenticatedFinancialPaymentsRoute: typeof AuthenticatedFinancialPaymentsRoute
+  AuthenticatedFinancialReportsRoute: typeof AuthenticatedFinancialReportsRoute
 }
 
 const AuthenticatedFinancialRouteChildren: AuthenticatedFinancialRouteChildren =
   {
     AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
     AuthenticatedFinancialPaymentsRoute: AuthenticatedFinancialPaymentsRoute,
+    AuthenticatedFinancialReportsRoute: AuthenticatedFinancialReportsRoute,
   }
 
 const AuthenticatedFinancialRouteWithChildren =

@@ -1,7 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useConvex } from 'convex/react';
-import { RefreshCw } from 'lucide-react';
+import { useConvex, useQuery } from 'convex/react';
+import { AlertTriangle, CheckCircle, Clock, DollarSign, RefreshCw, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -9,6 +9,7 @@ import { InvoiceList } from '@/components/financial/invoice-list';
 import { MonthlyOverviewCard } from '@/components/financial/monthly-overview-card';
 import { PaymentCalendar } from '@/components/financial/payment-calendar';
 import { RevenueChart } from '@/components/financial/revenue-chart';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -19,6 +20,16 @@ export const Route = createFileRoute('/_authenticated/financial/dashboard')({
 function FinancialDashboardPage() {
 	const [isSyncing, setIsSyncing] = useState(false);
 	const convex = useConvex();
+
+	// Get sync status for display
+	const syncStatus = useQuery(api.asaas.sync.getLastSyncStatus);
+
+	// Get monthly summary for KPIs
+	const now = new Date();
+	const monthlySummary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, {
+		month: now.getMonth(),
+		year: now.getFullYear(),
+	});
 
 	const handleSync = async () => {
 		setIsSyncing(true);
@@ -37,6 +48,31 @@ function FinancialDashboardPage() {
 		}
 	};
 
+	// Format currency
+	const formatCurrency = (value: number) =>
+		new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL',
+		}).format(value);
+
+	// Format relative time
+	const formatRelativeTime = (timestamp?: number) => {
+		if (!timestamp) return 'Nunca';
+		const diff = Date.now() - timestamp;
+		const minutes = Math.floor(diff / 60000);
+		if (minutes < 60) return `${minutes}m atrás`;
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) return `${hours}h atrás`;
+		const days = Math.floor(hours / 24);
+		return `${days}d atrás`;
+	};
+
+	// Calculate default rate
+	const defaultRate =
+		monthlySummary?.overdueCount && (monthlySummary ? (monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount) : 0)
+			? ((monthlySummary.overdueCount / (monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount)) * 100).toFixed(1)
+			: '0';
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
@@ -51,6 +87,96 @@ function FinancialDashboardPage() {
 						Sincronizar Asaas
 					</Button>
 				</div>
+			</div>
+
+			{/* Sync Status Banner */}
+			{syncStatus && (
+				<Card className="bg-muted/50">
+					<CardContent className="py-3">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-6 text-sm">
+								<span className="font-medium">Última Sincronização:</span>
+								{(['customers', 'payments'] as const).map((type) => {
+									const sync = syncStatus[type];
+									return (
+										<div key={type} className="flex items-center gap-2">
+											{sync?.status === 'completed' ? (
+												<CheckCircle className="h-4 w-4 text-green-500" />
+											) : sync?.status === 'failed' ? (
+												<AlertTriangle className="h-4 w-4 text-red-500" />
+											) : (
+												<Clock className="h-4 w-4 text-muted-foreground" />
+											)}
+											<span className="capitalize">{type}:</span>
+											<Badge variant={sync?.status === 'completed' ? 'secondary' : 'outline'}>
+												{formatRelativeTime(sync?.completedAt)}
+											</Badge>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+			)}
+
+			{/* KPI Cards */}
+			<div className="grid gap-4 md:grid-cols-4">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Faturamento do Mês</CardTitle>
+						<DollarSign className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{monthlySummary ? formatCurrency(monthlySummary.paidThisMonth || 0) : '-'}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{monthlySummary?.paidCount || 0} pagamentos confirmados
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">A Receber</CardTitle>
+						<Clock className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{monthlySummary ? formatCurrency(monthlySummary.pendingThisMonth || 0) : '-'}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{monthlySummary?.pendingCount || 0} cobranças pendentes
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Vencidos</CardTitle>
+						<AlertTriangle className="h-4 w-4 text-red-500" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-red-600">
+							{monthlySummary ? formatCurrency(monthlySummary.overdueTotal || 0) : '-'}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							{monthlySummary?.overdueCount || 0} cobranças atrasadas
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Taxa de Inadimplência</CardTitle>
+						<TrendingUp className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">{defaultRate}%</div>
+						<p className="text-xs text-muted-foreground">Cobranças vencidas vs total</p>
+					</CardContent>
+				</Card>
 			</div>
 
 			{/* Monthly Overview Cards */}
