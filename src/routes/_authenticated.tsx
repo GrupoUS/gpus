@@ -51,7 +51,10 @@ function AuthenticatedLayout() {
 						<Button onClick={() => window.location.reload()}>Tentar novamente</Button>
 						<Button
 							variant="outline"
-							onClick={() => { window.location.href = '/sign-in'; }}>
+							onClick={() => {
+								window.location.href = '/sign-in';
+							}}
+						>
 							Voltar para Login
 						</Button>
 					</div>

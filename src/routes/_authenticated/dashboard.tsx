@@ -185,6 +185,7 @@ function DashboardPage() {
 	);
 }
 
+// biome-ignore lint/style/useReactFunctionComponents: Error Boundaries must be class components
 class DashboardErrorBoundary extends Component<
 	{ children: ReactNode },
 	{ hasError: boolean; error: Error | null }

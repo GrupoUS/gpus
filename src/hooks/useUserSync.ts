@@ -15,6 +15,7 @@ export function useUserSync() {
 	// We use "skip" logic: if not signed in, we don't query
 	const shouldQuery = isAuthLoaded && isSignedIn;
 
+	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast to avoid deep type instantiation error
 	const currentUser = useQuery(api.users.current, shouldQuery ? {} : ('skip' as any));
 	const ensureUser = useMutation(api.users.ensureUser);
 
@@ -47,13 +48,14 @@ export function useUserSync() {
 				await ensureUser();
 				setStatus('synced');
 			} catch (err) {
+				// biome-ignore lint/suspicious/noConsole: Log error for debugging
 				console.error('Failed to sync user:', err);
 				setStatus('error');
 				setError(err instanceof Error ? err : new Error('Unknown sync error'));
 			}
 		};
 
-		sync();
+		void sync();
 	}, [isAuthLoaded, isSignedIn, currentUser, ensureUser]);
 
 	return {
