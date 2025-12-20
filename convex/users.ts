@@ -131,7 +131,7 @@ export const ensureUser = mutation({
         throw error
     }
 
-    return userId
+
   },
 })
 

@@ -3,12 +3,12 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { DollarSign, MessageSquare, TrendingUp, Users, AlertTriangle } from 'lucide-react';
-import { lazy, Suspense, useState, Component, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { AlertTriangle, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import { Component, lazy, type ReactNode, Suspense, useState } from 'react';
 
 // Keep lightweight components as regular imports
 import { StatsCard } from '@/components/dashboard/stats-card';
+import { Button } from '@/components/ui/button';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
 import {
 	Select,

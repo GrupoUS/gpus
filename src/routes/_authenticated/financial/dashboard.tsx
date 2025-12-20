@@ -69,8 +69,17 @@ function FinancialDashboardPage() {
 
 	// Calculate default rate
 	const defaultRate =
-		monthlySummary?.overdueCount && (monthlySummary ? (monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount) : 0)
-			? ((monthlySummary.overdueCount / (monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount)) * 100).toFixed(1)
+		monthlySummary?.overdueCount &&
+		(monthlySummary
+			? monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount
+			: 0)
+			? (
+					(monthlySummary.overdueCount /
+						(monthlySummary.paidCount +
+							monthlySummary.pendingCount +
+							monthlySummary.overdueCount)) *
+					100
+				).toFixed(1)
 			: '0';
 
 	return (
