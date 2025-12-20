@@ -77,9 +77,11 @@ export const listCSUsers = query({
 export const ensureUser = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await requireAuth(ctx)
-
     try {
+        console.log("ensureUser: Starting execution")
+        const identity = await requireAuth(ctx)
+        console.log(`ensureUser: Identity confirmed for ${identity.subject}`)
+
         // Check if user already exists
         const existing = await ctx.db
           .query('users')
@@ -114,7 +116,8 @@ export const ensureUser = mutation({
 
         console.log(`ensureUser: User created ${userId}`)
 
-        // Log activity
+        // Log activity - Temporarily commented out to debug "Could not find" error
+        /*
         await ctx.db.insert('activities', {
           type: 'user_created',
           description: `User ${identity.name} created automatically via sync`,
@@ -124,10 +127,12 @@ export const ensureUser = mutation({
           performedBy: identity.subject,
           createdAt: Date.now(),
         })
+        */
 
         return userId
-    } catch (error) {
-        console.error("ensureUser: Failed", error)
+    } catch (error: any) {
+        console.error("ensureUser: Failed", error.message || error)
+        console.error("ensureUser: Stack", error.stack)
         throw error
     }
 

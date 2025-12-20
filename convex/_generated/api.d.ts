@@ -49,6 +49,7 @@ import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
+import type * as scripts_syncUsers from "../scripts/syncUsers.js";
 import type * as settings from "../settings.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   metrics: typeof metrics;
   migrations: typeof migrations;
   notifications: typeof notifications;
+  "scripts/syncUsers": typeof scripts_syncUsers;
   settings: typeof settings;
   students: typeof students;
   studentsImport: typeof studentsImport;
