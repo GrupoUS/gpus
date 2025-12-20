@@ -299,19 +299,43 @@ export const recent = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    // 1. Verify Auth & Permissions
-    await requirePermission(ctx, PERMISSIONS.LEADS_READ)
-    const organizationId = await getOrganizationId(ctx);
-    if (!organizationId) {
-      return [];
-    }
+    try {
+        console.log("leads:recent: Starting query");
 
-    // 2. Query leads using index
-    return await ctx.db
-      .query('leads')
-      .withIndex('by_organization', q => q.eq('organizationId', organizationId))
-      .order('desc')
-      .take(args.limit ?? 10)
+        // 1. Verify Auth & Permissions
+        try {
+            const identity = await ctx.auth.getUserIdentity();
+            console.log("leads:recent: Identity found:", !!identity, identity?.subject);
+            if (!identity) {
+                console.log("leads:recent: No identity found");
+            }
+        } catch (e) {
+            console.error("leads:recent: Auth check failed", e);
+            throw e;
+        }
+
+        await requirePermission(ctx, PERMISSIONS.LEADS_READ);
+        const organizationId = await getOrganizationId(ctx);
+        console.log("leads:recent: Organization ID:", organizationId);
+
+        if (!organizationId) {
+            console.warn("leads:recent: No organization ID found");
+            return [];
+        }
+
+        // 2. Query leads using index
+        const results = await ctx.db
+          .query('leads')
+          .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+          .order('desc')
+          .take(args.limit ?? 10)
+
+        console.log(`leads:recent: Found ${results.length} leads`);
+        return results;
+    } catch (error) {
+        console.error("leads:recent: Server Error detected", error);
+        throw error;
+    }
   }
 })
 
