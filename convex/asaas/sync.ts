@@ -282,3 +282,27 @@ export const runAutoSyncCustomersAction = internalAction({
 		return { success: true }
 	},
 })
+
+/**
+ * Run auto sync payments (called by cron)
+ */
+export const runAutoSyncPaymentsAction = internalAction({
+	args: {},
+	handler: async (ctx) => {
+		// @ts-ignore - Deep type instantiation error
+		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
+
+		if (!config.enabled) {
+			console.log('Asaas payments auto-sync is disabled, skipping.')
+			return { skipped: true }
+		}
+
+		console.log('Starting Asaas payments auto-sync...')
+
+		await ctx.runAction(api.asaas.actions.importPaymentsFromAsaas, {
+			initiatedBy: 'cron_auto_sync',
+		})
+
+		return { success: true }
+	},
+})

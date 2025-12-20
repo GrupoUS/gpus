@@ -6,6 +6,7 @@
 
 import { v } from 'convex/values'
 import { internalQuery, query } from '../_generated/server'
+import type { Doc } from '../_generated/dataModel'
 import { requireAuth } from '../lib/auth'
 
 /**
@@ -360,3 +361,94 @@ export const getPaymentsDueDates = query({
 		}))
 	},
 })
+
+/**
+ * Get all payments with comprehensive filters and pagination
+ * Supports filtering by status, billingType, studentId, date range
+ */
+export const getAllPayments = query({
+	args: {
+		status: v.optional(v.string()),
+		billingType: v.optional(v.string()),
+		studentId: v.optional(v.id('students')),
+		startDate: v.optional(v.number()),
+		endDate: v.optional(v.number()),
+		limit: v.optional(v.number()),
+		offset: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const limit = args.limit || 50
+		const offset = args.offset || 0
+
+		// Build query using appropriate index
+		let payments: Doc<'asaasPayments'>[]
+
+		if (args.status) {
+			// Use status index when status filter is provided
+			// biome-ignore lint/suspicious/noExplicitAny: Status string needs casting for index query
+			payments = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_status', (q) => q.eq('status', args.status as any))
+				.order('desc')
+				.collect()
+		} else if (args.studentId) {
+			// Use student index when studentId filter is provided
+			payments = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_student', (q) => q.eq('studentId', args.studentId!))
+				.order('desc')
+				.collect()
+		} else if (args.startDate && args.endDate) {
+			// Use due_date index for date range queries
+			payments = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_due_date', (q) =>
+					q.gte('dueDate', args.startDate!).lte('dueDate', args.endDate!)
+				)
+				.order('desc')
+				.collect()
+		} else {
+			// Default: get all payments ordered by due date
+			payments = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_due_date')
+				.order('desc')
+				.collect()
+		}
+
+		// Apply post-index filters for non-indexed fields
+		let filtered = payments
+
+		if (args.billingType) {
+			filtered = filtered.filter((p) => p.billingType === args.billingType)
+		}
+
+		// Apply date filters if not already applied via index
+		if (args.startDate && !args.status && !args.studentId) {
+			// Already applied via index
+		} else if (args.startDate) {
+			filtered = filtered.filter((p) => p.dueDate >= args.startDate!)
+		}
+
+		if (args.endDate && !args.status && !args.studentId) {
+			// Already applied via index
+		} else if (args.endDate) {
+			filtered = filtered.filter((p) => p.dueDate <= args.endDate!)
+		}
+
+		// Get total before pagination
+		const total = filtered.length
+
+		// Apply pagination
+		const paginated = filtered.slice(offset, offset + limit)
+
+		return {
+			payments: paginated,
+			total,
+			hasMore: offset + limit < total,
+		}
+	},
+})
+

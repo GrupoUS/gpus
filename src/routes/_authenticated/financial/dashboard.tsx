@@ -24,7 +24,7 @@ function FinancialDashboardPage() {
 		setIsSyncing(true);
 		try {
 			toast.info('Sincronizando dados do Asaas...');
-			await convex.action(api.asaas.actions.importPaymentsFromAsaas, {
+			await convex.action(api.asaas.actions.importAllFromAsaas, {
 				initiatedBy: 'dashboard_sync',
 			});
 			toast.success('Sincronização concluída!');
