@@ -1,10 +1,9 @@
 "use action";
 
-import { ActionCtx, action, internalMutation, internalQuery } from "../_generated/server";
-import { api, internal } from "../_generated/api";
+import { action } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, AsaasClient, type AsaasCustomerPayload, type AsaasPaymentPayload } from "../lib/asaas";
-import { Id } from "../_generated/dataModel";
+import { createAsaasClient, type AsaasClient } from "../lib/asaas";
 import { getOrganizationId } from "../lib/auth";
 
 /**
