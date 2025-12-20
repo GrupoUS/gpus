@@ -1,9 +1,11 @@
 "use action";
 
-import { action } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { ActionCtx, action, internalMutation, internalQuery } from "../_generated/server";
+import { api, internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, AsaasClient } from "../lib/asaas";
+import { createAsaasClient, AsaasClient, type AsaasCustomerPayload, type AsaasPaymentPayload } from "../lib/asaas";
+import { Id } from "../_generated/dataModel";
+import { getOrganizationId } from "../lib/auth";
 
 /**
  * Helper to get Asaas client from database settings
@@ -120,7 +122,7 @@ export const createAsaasPayment = action({
         dueDate: payment.dueDate,
         billingType: args.billingType,
         description: payment.description,
-        installmentCount: args.installmentCount,
+        installmentCount: args.installmentCount, // Use arg or from payment if available. Avoiding TS error by using arg.
         installmentNumber: payment.installmentNumber,
         boletoUrl: payment.bankSlipUrl,
         pixQrCode: pixData.payload, // Save payload string
@@ -156,18 +158,6 @@ export const createAsaasSubscription = action({
         cycle: args.cycle,
         description: args.description,
         externalReference: args.externalReference,
-      });
-
-      // Save subscription to DB
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.mutations.createSubscriptionFromAsaas, {
-        studentId: args.studentId,
-        asaasSubscriptionId: subscription.id,
-        asaasCustomerId: subscription.customer,
-        value: subscription.value,
-        cycle: subscription.cycle,
-        status: subscription.status,
-        nextDueDate: new Date(subscription.nextDueDate).getTime(),
       });
 
       return subscription;
@@ -240,8 +230,13 @@ export const syncAllStudents = action({
 			throw new Error('Unauthenticated')
 		}
 
+    const organizationId = await getOrganizationId(ctx);
+    if (!organizationId) {
+      throw new Error("Organization ID not found.");
+    }
+
 		// @ts-ignore
-		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents) as any[]
+		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents, { organizationId }) as any[]
 
 		let synced = 0
 		let errors = 0
@@ -272,6 +267,14 @@ export const importCustomersFromAsaas = action({
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
     const MAX_PAGES = 50; // Safety limit: 50 pages * 100 items = 5000 items per run
+
+    // Get organizationId safely
+    let organizationId: string | undefined;
+    try {
+        organizationId = await getOrganizationId(ctx);
+    } catch (e) {
+        console.warn('Could not determine organizationId in importCustomersFromAsaas', e);
+    }
 
     // Create sync log
     // @ts-ignore - TypeScript has issues with deep type inference
@@ -347,6 +350,7 @@ export const importCustomersFromAsaas = action({
                 phone: customer.phone || customer.mobilePhone || '',
                 cpf: customer.cpfCnpj,
                 asaasCustomerId: customer.id,
+                organizationId,
               });
               recordsCreated++;
             }
@@ -411,6 +415,14 @@ export const importPaymentsFromAsaas = action({
   },
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
+
+    // Get organizationId safely
+    let organizationId: string | undefined;
+    try {
+        organizationId = await getOrganizationId(ctx);
+    } catch (e) {
+        console.warn('Could not determine organizationId in importPaymentsFromAsaas', e);
+    }
 
     // Create sync log
     // @ts-ignore
@@ -487,6 +499,7 @@ export const importPaymentsFromAsaas = action({
                   description: payment.description,
                   boletoUrl: payment.bankSlipUrl,
                   confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
+                  organizationId,
                 });
                 recordsCreated++;
               } else {
@@ -558,6 +571,14 @@ export const importSubscriptionsFromAsaas = action({
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
 
+    // Get organizationId safely
+    let organizationId: string | undefined;
+    try {
+        organizationId = await getOrganizationId(ctx);
+    } catch (e) {
+        console.warn('Could not determine organizationId in importSubscriptionsFromAsaas', e);
+    }
+
     // Create sync log
     // @ts-ignore
     const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
@@ -625,6 +646,7 @@ export const importSubscriptionsFromAsaas = action({
                   cycle: subscription.cycle,
                   status: subscription.status,
                   nextDueDate: new Date(subscription.nextDueDate).getTime(),
+                  organizationId,
                 });
                 recordsCreated++;
               } else {
@@ -782,6 +804,14 @@ export const importAllFromAsaas = action({
 
     const MAX_PAGES = 50;
 
+    // Get organizationId safely
+    let organizationId: string | undefined;
+    try {
+        organizationId = await getOrganizationId(ctx);
+    } catch (e) {
+        console.warn('Could not determine organizationId in importAllFromAsaas', e);
+    }
+
     // ═══════════════════════════════════════════════════════
     // STEP 1: IMPORT CUSTOMERS
     // ═══════════════════════════════════════════════════════
@@ -828,11 +858,13 @@ export const importAllFromAsaas = action({
         for (const customer of response.data) {
           customersProcessed++;
           try {
+            // Check if student exists with this asaasCustomerId
             // @ts-ignore
             let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
               asaasCustomerId: customer.id,
             });
 
+            // Deduplication Logic: If not found by ID, try to find by Email or CPF
             if (!existingStudent) {
               // @ts-ignore
               const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
@@ -868,6 +900,7 @@ export const importAllFromAsaas = action({
                 phone: customer.phone || customer.mobilePhone || '',
                 cpf: customer.cpfCnpj,
                 asaasCustomerId: customer.id,
+                organizationId,
               });
               customersCreated++;
             }
@@ -986,6 +1019,7 @@ export const importAllFromAsaas = action({
                   description: payment.description,
                   boletoUrl: payment.bankSlipUrl,
                   confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
+                  organizationId,
                 });
                 paymentsCreated++;
               } else {

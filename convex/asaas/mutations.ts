@@ -139,6 +139,7 @@ export const createPaymentFromEnrollment = mutation({
 			const paymentId = await ctx.db.insert('asaasPayments', {
 				enrollmentId: enrollment._id,
 				studentId: student._id,
+                organizationId: student.organizationId,
 				asaasPaymentId: payment.id,
 				asaasCustomerId: student.asaasCustomerId,
 				value: payment.value,
@@ -231,6 +232,7 @@ export const createInstallmentsFromEnrollment = mutation({
 				const paymentId = await ctx.db.insert('asaasPayments', {
 					enrollmentId: enrollment._id,
 					studentId: student._id,
+                    organizationId: student.organizationId,
 					asaasPaymentId: payment.id,
 					asaasCustomerId: student.asaasCustomerId,
 					value: payment.value,
@@ -320,6 +322,7 @@ export const createSubscriptionFromEnrollment = mutation({
 			const subscriptionId = await ctx.db.insert('asaasSubscriptions', {
 				enrollmentId: enrollment._id,
 				studentId: student._id,
+                organizationId: student.organizationId,
 				asaasSubscriptionId: subscription.id,
 				asaasCustomerId: student.asaasCustomerId,
 				value: subscription.value,
@@ -526,9 +529,7 @@ export const syncStudentAsCustomerInternal = internalMutation({
 	},
 })
 
-/**
- * Creates a new charge record in the database.
- */
+
 export const createCharge = internalMutation({
   args: {
     studentId: v.id("students"),
@@ -548,12 +549,14 @@ export const createCharge = internalMutation({
     installmentNumber: v.optional(v.number()),
     boletoUrl: v.optional(v.string()),
     pixQrCode: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const chargeId = await ctx.db.insert("asaasPayments", {
       studentId: args.studentId,
       asaasCustomerId: args.asaasCustomerId,
       asaasPaymentId: args.asaasPaymentId,
+      organizationId: args.organizationId,
       value: args.amount, // Schema uses 'value', input args uses 'amount' to match old code, I'll map it.
       dueDate: dateStringToTimestamp(args.dueDate),
       status: "PENDING", // Default status
@@ -770,6 +773,7 @@ export const createStudentFromAsaas = internalMutation({
     phone: v.string(),
     cpf: v.optional(v.string()),
     asaasCustomerId: v.string(),
+    organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -779,6 +783,7 @@ export const createStudentFromAsaas = internalMutation({
       phone: args.phone,
       cpf: args.cpf,
       asaasCustomerId: args.asaasCustomerId,
+      organizationId: args.organizationId,
       asaasCustomerSyncedAt: now,
       lgpdConsent: false,
       status: "ativo",
@@ -838,6 +843,7 @@ export const createPaymentFromAsaas = internalMutation({
     description: v.optional(v.string()),
     boletoUrl: v.optional(v.string()),
     confirmedDate: v.optional(v.number()),
+    organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -845,6 +851,7 @@ export const createPaymentFromAsaas = internalMutation({
       studentId: args.studentId,
       asaasPaymentId: args.asaasPaymentId,
       asaasCustomerId: args.asaasCustomerId,
+      organizationId: args.organizationId,
       value: args.value,
       netValue: args.netValue,
       status: args.status as any, // Trust the status from Asaas
@@ -905,6 +912,7 @@ export const createSubscriptionFromAsaas = internalMutation({
       v.literal("EXPIRED")
     ),
     nextDueDate: v.number(),
+    organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -912,6 +920,7 @@ export const createSubscriptionFromAsaas = internalMutation({
       studentId: args.studentId,
       asaasSubscriptionId: args.asaasSubscriptionId,
       asaasCustomerId: args.asaasCustomerId,
+      organizationId: args.organizationId,
       value: args.value,
       cycle: args.cycle,
       status: args.status,

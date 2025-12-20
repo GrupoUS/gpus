@@ -986,6 +986,9 @@ export default defineSchema({
     enrollmentId: v.optional(v.id('enrollments')),
     studentId: v.id('students'),
 
+    // Multi-tenant
+    organizationId: v.optional(v.string()),
+
     // IDs Asaas
     asaasPaymentId: v.string(), // ID único da cobrança no Asaas
     asaasCustomerId: v.string(), // ID do cliente no Asaas
@@ -1037,6 +1040,7 @@ export default defineSchema({
   })
     .index('by_enrollment', ['enrollmentId'])
     .index('by_student', ['studentId'])
+    .index('by_organization', ['organizationId'])
     .index('by_asaas_payment_id', ['asaasPaymentId'])
     .index('by_status', ['status'])
     .index('by_due_date', ['dueDate'])
@@ -1059,6 +1063,10 @@ export default defineSchema({
     studentId: v.id('students'),
     asaasSubscriptionId: v.string(),
     asaasCustomerId: v.string(),
+
+    // Multi-tenant
+    organizationId: v.optional(v.string()),
+
     value: v.number(),
     cycle: v.union(
       v.literal('WEEKLY'),
@@ -1080,6 +1088,7 @@ export default defineSchema({
   })
     .index('by_enrollment', ['enrollmentId'])
     .index('by_student', ['studentId'])
+    .index('by_organization', ['organizationId'])
     .index('by_asaas_subscription_id', ['asaasSubscriptionId']),
 
   // ═══════════════════════════════════════════════════════
