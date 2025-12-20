@@ -79,45 +79,57 @@ export const ensureUser = mutation({
   handler: async (ctx) => {
     const identity = await requireAuth(ctx)
 
-    // Check if user already exists
-    const existing = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .unique()
+    try {
+        // Check if user already exists
+        const existing = await ctx.db
+          .query('users')
+          .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+          .unique()
 
-    if (existing) {
-      return existing._id
+        if (existing) {
+          console.log(`ensureUser: User already exists ${existing._id}`)
+          return existing._id
+        }
+
+        console.log(`ensureUser: Creating new user for ${identity.subject}`)
+
+        // Create new user
+        const organizationId = await getOrganizationId(ctx) || 'default'
+
+        // Default role 'sdr' unless specified in org permissions (logic can be enhanced)
+        // For now, we respect the requirement: role standard 'sdr'
+        const role = 'sdr'
+
+        const userId = await ctx.db.insert('users', {
+          clerkId: identity.subject,
+          name: identity.name || 'Usuário',
+          email: identity.email || '',
+          avatar: identity.pictureUrl || '',
+          organizationId,
+          role,
+          isActive: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+
+        console.log(`ensureUser: User created ${userId}`)
+
+        // Log activity
+        await ctx.db.insert('activities', {
+          type: 'user_created',
+          description: `User ${identity.name} created automatically via sync`,
+          userId: userId,
+          metadata: { externalId: identity.subject },
+          organizationId,
+          performedBy: identity.subject,
+          createdAt: Date.now(),
+        })
+
+        return userId
+    } catch (error) {
+        console.error("ensureUser: Failed", error)
+        throw error
     }
-
-    // Create new user
-    const organizationId = await getOrganizationId(ctx) || 'default'
-
-    // Default role 'sdr' unless specified in org permissions (logic can be enhanced)
-    // For now, we respect the requirement: role standard 'sdr'
-    const role = 'sdr'
-
-    const userId = await ctx.db.insert('users', {
-      clerkId: identity.subject,
-      name: identity.name || 'Usuário',
-      email: identity.email || '',
-      avatar: identity.pictureUrl || '',
-      organizationId,
-      role,
-      isActive: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-
-    // Log activity
-    await ctx.db.insert('activities', {
-      type: 'user_created',
-      description: `User ${identity.name} created automatically via sync`,
-      userId: userId,
-      metadata: { externalId: identity.subject },
-      organizationId,
-      performedBy: identity.subject,
-      createdAt: Date.now(),
-    })
 
     return userId
   },

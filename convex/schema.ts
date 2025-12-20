@@ -498,7 +498,6 @@ export default defineSchema({
     .index('by_student', ['studentId'])
     .index('by_user', ['userId'])
     .index('by_type', ['type'])
-    .index('by_type', ['type'])
     .index('by_created', ['createdAt']),
 
   // ═══════════════════════════════════════════════════════
