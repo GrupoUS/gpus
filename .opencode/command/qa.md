@@ -94,6 +94,8 @@ bun run test:coverage
 
 > **✅ PREREQUISITE**: Phase 1 deve passar completamente
 
+### 2.1 Deploy Status Check
+
 ```bash
 # Railway deployment status
 railway status
@@ -101,6 +103,36 @@ railway status
 # Convex backend deployment
 bunx convex deploy --prod
 ```
+
+### 2.2 Deploy Logs Verification
+
+> **🔍 CRITICAL**: Inspecionar logs para identificar erros de runtime/deploy
+
+```bash
+# Railway: Verificar logs recentes de deploy (últimas 100 linhas)
+railway logs --latest -n 100
+
+# Convex: Verificar logs de produção
+bunx convex logs --prod --success --failure
+```
+
+### 2.3 Deploy Error Analysis
+
+Se erros forem encontrados nos logs:
+
+1. **Railway Errors** - Identificar:
+   - Build failures (dependências, TypeScript, bundling)
+   - Runtime errors (crashes, memory, timeouts)
+   - Environment variable issues
+   - Network/connection problems
+
+2. **Convex Errors** - Identificar:
+   - Function execution errors
+   - Schema validation failures
+   - Authentication/authorization issues
+   - Query/mutation timeouts
+
+3. **Ação**: Agregar todos os erros e prosseguir para Phase 3
 
 ## Phase 3: Error Aggregation & Auto-Research
 
@@ -125,6 +157,8 @@ Após plano aprovado:
 | Tests | `bun run test:coverage` | All tests pass |
 | Deploy | `railway status` | Healthy |
 | Backend | `bunx convex deploy --prod` | Success |
+| Railway Logs | `railway logs --latest -n 100` | No errors in logs |
+| Convex Logs | `bunx convex logs --prod --failure` | No failures |
 
 ## Quick Reference
 

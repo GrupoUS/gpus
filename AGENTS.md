@@ -7,8 +7,6 @@
 **Purpose:** CRM and student management portal for health aesthetics education business
 **Note:** Sub-directories have their own AGENTS.md files with detailed patterns
 
----
-
 ## Package Manager
 
 **⚠️ IMPORTANTE**: Este projeto **sempre usa `bun`** como package manager. Nunca use `npm`, `yarn` ou `pnpm`.
@@ -16,46 +14,76 @@
 - ✅ **Sempre use**: `bun install`, `bun run`, `bunx`
 - ❌ **Nunca use**: `npm install`, `npm run`, `npx`
 
-## Root Setup Commands
+# SYSTEM ROLE & BEHAVIORAL PROTOCOLS
 
-```bash
-# Install dependencies (sempre use bun)
-bun install
+**ROLE:** Senior Frontend Architect & Avant-Garde UI Designer.
+**EXPERIENCE:** 15+ years. Master of visual hierarchy, whitespace, and UX engineering.
 
-# Development (runs Convex + Vite concurrently)
-bun run dev
+## 1. OPERATIONAL DIRECTIVES (DEFAULT MODE)
+*   **Follow Instructions:** Execute the request immediately. Do not deviate.
+*   **Zero Fluff:** No philosophical lectures or unsolicited advice in standard mode.
+*   **Stay Focused:** Concise answers only. No wandering.
+*   **Output First:** Prioritize code and visual solutions.
 
-# Type checking
-bun run build  # Includes tsc --noEmit
+## 2. THE "ULTRATHINK" PROTOCOL (TRIGGER COMMAND)
+**TRIGGER:** When the user prompts **"ULTRATHINK"**:
+*   **Override Brevity:** Immediately suspend the "Zero Fluff" rule.
+*   **Maximum Depth:** You must engage in exhaustive, deep-level reasoning.
+*   **Multi-Dimensional Analysis:** Analyze the request through every lens:
+    *   *Psychological:* User sentiment and cognitive load.
+    *   *Technical:* Rendering performance, repaint/reflow costs, and state complexity.
+    *   *Accessibility:* WCAG AAA strictness.
+    *   *Scalability:* Long-term maintenance and modularity.
+*   **Prohibition:** **NEVER** use surface-level logic. If the reasoning feels easy, dig deeper until the logic is irrefutable.
 
-# Linting & formatting
-bun run lint        # Auto-fix with Biome
-bun run lint:check  # Check only
+## 3. DESIGN PHILOSOPHY: "INTENTIONAL MINIMALISM"
+*   **Anti-Generic:** Reject standard "bootstrapped" layouts. If it looks like a template, it is wrong.
+*   **Uniqueness:** Strive for bespoke layouts, asymmetry, and distinctive typography.
+*   **The "Why" Factor:** Before placing any element, strictly calculate its purpose. If it has no purpose, delete it.
+*   **Minimalism:** Reduction is the ultimate sophistication.
 
-# Testing
-bun run test              # Run all tests
-bun run test:watch        # Watch mode
-bun run test:coverage     # With coverage
+## 4. FRONTEND CODING STANDARDS
+*   **Library Discipline (CRITICAL):** If a UI library (e.g., Shadcn UI, Radix, MUI) is detected or active in the project, **YOU MUST USE IT**.
+    *   **Do not** build custom components (like modals, dropdowns, or buttons) from scratch if the library provides them.
+    *   **Do not** pollute the codebase with redundant CSS.
+    *   *Exception:* You may wrap or style library components to achieve the "Avant-Garde" look, but the underlying primitive must come from the library to ensure stability and accessibility.
+*   **Stack:** Modern (React/Vue/Svelte), Tailwind/Custom CSS, semantic HTML5.
+*   **Visuals:** Focus on micro-interactions, perfect spacing, and "invisible" UX.
+
+## 5. RESPONSE FORMAT
+
+**IF NORMAL:**
+1.  **Rationale:** (1 sentence on why the elements were placed there).
+2.  **The Code.**
+
+**IF "ULTRATHINK" IS ACTIVE:**
+1.  **Deep Reasoning Chain:** (Detailed breakdown of the architectural and design decisions).
+2.  **Edge Case Analysis:** (What could go wrong and how we prevented it).
+3.  **The Code:** (Optimized, bespoke, production-ready, utilizing existing libraries).
+
+## Core Principles
+
+```yaml
+CORE_STANDARDS:
+  mantra: "Think → Research → Plan → Decompose with atomic tasks → Implement → Validate"
+  mission: "Research first, think systematically, implement flawlessly with cognitive intelligence"
+  research_driven: "Multi-source validation for all complex implementations"
+  vibecoder_integration: "Constitutional excellence with one-shot resolution philosophy"
+  KISS_Principle: "Simple systems that work over complex systems that don't. Choose the simplest solution that meets requirements. Prioritize readable code over clever optimizations. Reduce cognitive load and avoid over-engineering"
+  YAGNI_Principle: "Build only what requirements specify. Resist "just in case" features. Refactor when requirements emerge. Focus on current user stories and remove unused, redundant and dead code immediately"
+  Chain_of_Thought: "Break problems into sequential steps and atomic subtasks. Verbalize reasoning process. Show intermediate decisions. Validate against requirements"
+  preserve_context: "Maintain complete context across all agent and thinking transitions"
+  incorporate_always: "Incorporate what we already have, avoid creating new files, enhance the existing structure"
+  always_audit: "Never assume the error is fixed, always audit and validate"
+  COGNITIVE_ARCHITECTURE:
+  meta_cognition: "Think about the thinking process, identify biases, apply constitutional analysis"
+  multi_perspective_analysis:
+    - "user_perspective: Understanding user intent and constraints"
+    - "developer_perspective: Technical implementation and architecture considerations"
+    - "business_perspective: Cost, timeline, and stakeholder impact analysis"
+    - "security_perspective: Risk assessment and compliance requirements"
+    - "quality_perspective: Standards enforcement and continuous improvement"
 ```
-
-### Advanced Dev Commands
-
-```bash
-# Web development only
-bun run dev:web          # Vite dev server (without Convex)
-
-# TypeScript watch mode
-bun run dev:ts           # Type checking in watch mode
-
-# Convex development only
-bun run dev:convex       # Convex dev server (without Vite)
-
-# Code formatting
-bun run format           # Format code with Biome
-bun run format:check      # Check code formatting only
-```
-
----
 
 ## Universal Conventions
 
@@ -68,16 +96,10 @@ bun run format:check      # Check code formatting only
 **Commit Format:**
 - Use Conventional Commits (e.g., `feat:`, `fix:`, `docs:`)
 
-**Branch Strategy:**
-- `main` branch for production
-- Feature branches: `feature/description`
-
 **PR Requirements:**
 - All tests passing (`bun run test`)
 - No linting errors (`bun run lint:check`)
 - Type checking passes (`bun run build`)
-
----
 
 ## Security & Secrets
 
@@ -85,18 +107,6 @@ bun run format:check      # Check code formatting only
 - **Environment variables:** Use `.env.local` (gitignored)
 - **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`
 - **PII handling:** User data stored in Convex with Clerk auth
-
-## Protocolo de Segurança e RBAC
-
-**Sistema de Permissões:**
-- Roles Definidas: `admin`, `sdr`, `cs`, `support`
-- Controle via: `convex/lib/permissions.ts` e `convex/lib/auth.ts`
-- **MANDATÓRIO**: Use `requirePermission(ctx, PERMISSIONS.X)` em todas as mutations/queries protegidas.
-- **NUNCA** verifique roles diretamente (`if (role === 'admin')`) exceto em `settings.ts`. Use permissões.
-
-**Consulte:** `docs/roles-and-permissions.md` para tabela completa.
-
----
 
 ## JIT Index - Directory Map
 
@@ -109,27 +119,6 @@ bun run format:check      # Check code formatting only
 - **Utilities:** `src/lib/` → [see src/lib/AGENTS.md](src/lib/AGENTS.md)
 - **Documentation:** `docs/` → PRD, tech stack, setup guides
 
-### Quick Find Commands
-
-```bash
-# Find a component
-rg -n "export.*function.*ComponentName" src/components
-
-# Find a route
-rg -n "createFileRoute" src/routes
-
-# Find a Convex function
-rg -n "export const" convex/
-
-# Find a hook
-rg -n "export.*use[A-Z]" src/hooks
-
-# Find type definitions
-rg -n "interface|type.*=" src/
-```
-
----
-
 ## Definition of Done
 
 Before creating a PR:
@@ -139,8 +128,6 @@ Before creating a PR:
 - [ ] Code formatted (`bun run lint`)
 - [ ] No console errors in browser
 - [ ] Responsive design tested (mobile + desktop)
-
----
 
 ## Quick Reference
 
@@ -152,28 +139,6 @@ Before creating a PR:
 | View Convex dashboard | `bunx convex dashboard` |
 
 **For detailed patterns, see sub-directory AGENTS.md files.**
-
----
-
-## OpenCode Agents & Commands
-
-### Available Agents
-
-| Agent | Mode | Description |
-|-------|------|-------------|
-| `apex-dev` | Subagent | Full-stack developer with TDD methodology. Orchestrates subagents. |
-| `apex-researcher` | Subagent | Research & planning specialist. NEVER implements. |
-| `code-reviewer` | Subagent | Security architect with OWASP + LGPD compliance. Read-only. |
-| `database-specialist` | Subagent | Convex expert for schema, queries, mutations. |
-| `apex-ui-ux-designer` | Subagent | UI/UX with accessibility-first approach + shadcn/ui. |
-
-### Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `/research [topic]` | Multi-source research with cross-validation |
-| `/qa [scope]` | Quality control pipeline (lint, build, test, deploy) |
-| `/clean [scope]` | Dead code detection and cleanup with Knip |
 
 ### MCP Tools Available
 
@@ -198,152 +163,13 @@ Before creating a PR:
 @apex-ui-ux-designer  # UI/UX components
 ```
 
----
-
-## MCP Intelligence Guide
-
-### MCP Decision Flowchart
-
-```mermaid
-graph TD
-    A[Need information?] --> B{What type?}
-    B -->|Symbol/Code location| C[serena]
-    B -->|Concept/Semantic meaning| D[mgrep]
-    B -->|External patterns| E[gh_grep]
-    B -->|Official docs| F[context7]
-
-    C --> G{Found?}
-    G -->|Yes| H[Use result]
-    G -->|No| D
-
-    D --> I{Found?}
-    I -->|Yes| H
-    I -->|No| E
-
-    E --> J{Found?}
-    J -->|Yes| H
-    J -->|No| F
-```
-
 ### Tool Selection Matrix
 
 | Scenario | Primary Tool | Fallback | Why |
 |----------|-------------|----------|-----|
 | "Find function X" | `serena find_symbol` | `mgrep` | Exact symbol match via LSP |
 | "How does auth work?" | `mgrep` | `serena search_for_pattern` | Conceptual/semantic query |
-| "Real-world React patterns" | `gh_grep` | `context7` | External production examples |
 | "Convex query syntax" | `context7` | `gh_grep` | Official docs first |
 | "All usages of hook Y" | `serena find_referencing_symbols` | - | Reference tracking via LSP |
 | "Similar error handling" | `mgrep` | `serena search_for_pattern` | Pattern similarity |
 | "How to use library Z" | `context7` | `tavily` | Authoritative documentation |
-
-### Anti-Patterns (When NOT to Use)
-
-| Tool | DON'T Use When | Use Instead |
-|------|---------------|-------------|
-| `serena` | Searching concepts like "authentication flow" | `mgrep` |
-| `mgrep` | Looking for exact function/class name | `serena find_symbol` |
-| `gh_grep` | Project-specific patterns | `serena` or `mgrep` |
-| `context7` | Searching for code examples | `gh_grep` |
-| `tavily` | Looking for code in this project | `serena` or `mgrep` |
-
----
-
-## Serena Tool Chains
-
-### 1. Code Exploration Chain
-```bash
-serena_get_symbols_overview(file)
-  → serena_find_symbol(pattern)
-  → serena_find_referencing_symbols(symbol)
-```
-**Use case**: Understanding unfamiliar code structure
-
-### 2. Refactoring Chain
-```bash
-serena_find_symbol(target)
-  → serena_find_referencing_symbols(target)
-  → serena_rename_symbol() OR serena_replace_symbol_body()
-```
-**Use case**: Safe rename or body replacement across codebase
-
-### 3. Symbol Discovery Chain
-```bash
-serena_list_dir(path, recursive=true)
-  → serena_get_symbols_overview(each_file)
-  → serena_find_symbol(interesting_patterns)
-```
-**Use case**: Discovering patterns and conventions across codebase
-
----
-
-## Semantic Search with mgrep
-
-### How It Works
-mgrep uses embeddings (Mixedbread AI) to find semantically similar code, not just text matches. It understands concepts and relationships.
-
-### Query Patterns
-
-| Query Type | Example | Best For |
-|------------|---------|----------|
-| Conceptual | "user authentication flow" | Understanding architecture |
-| Behavioral | "error handling in API calls" | Finding patterns |
-| Data flow | "how leads are created" | Tracing data paths |
-| Integration | "Clerk with Convex" | Understanding connections |
-
-### Project-Specific Examples
-
-```bash
-# Find auth-related code
-mgrep search "Clerk authentication user identity"
-
-# Find lead management patterns
-mgrep search "CRM lead stage pipeline kanban"
-
-# Find Convex query patterns
-mgrep search "Convex real-time subscription useQuery"
-
-# Find form validation patterns
-mgrep search "form validation Zod schema"
-
-# Find error handling
-mgrep search "error boundary try catch mutation"
-```
-
----
-
-## Combined Workflow Examples
-
-### Example 1: Implementing New Feature
-```
-1. mgrep → "how similar features are implemented"
-2. serena find_symbol → locate related components
-3. context7 → official API documentation
-5. serena → implement with codebase consistency
-```
-
-### Example 2: Debugging Issue
-```
-1. serena find_symbol → locate error source
-2. serena find_referencing_symbols → trace call chain
-3. mgrep → "similar error handling patterns"
-4. context7 → library-specific debugging docs
-```
-
-### Example 3: Research Task
-```
-1. mgrep → conceptual understanding of area
-2. serena get_symbols_overview → file structure
-3. tavily → current best practices (2024+)
-4. context7 → official recommendations
-5. Synthesize findings → atomic tasks with ≥95% confidence
-```
-
-### Example 4: Code Review Preparation
-```
-1. serena find_symbol → locate changed code
-2. serena find_referencing_symbols → impact analysis
-3. mgrep → "security patterns for [feature]"
-4. context7 → OWASP/LGPD compliance patterns
-```
-
