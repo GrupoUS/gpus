@@ -1082,6 +1082,7 @@ export default defineSchema({
       v.literal('CANCELLED'),
       v.literal('EXPIRED') // Asaas status
     ),
+    description: v.optional(v.string()), // Added description
     nextDueDate: v.number(), // Timestamp (start of day)
     createdAt: v.number(),
     updatedAt: v.number(),

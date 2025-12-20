@@ -897,37 +897,55 @@ export const createSubscriptionFromAsaas = internalMutation({
     asaasSubscriptionId: v.string(),
     asaasCustomerId: v.string(),
     value: v.number(),
-    cycle: v.union(
-      v.literal("WEEKLY"),
-      v.literal("BIWEEKLY"),
-      v.literal("MONTHLY"),
-      v.literal("QUARTERLY"),
-      v.literal("SEMIANNUALLY"),
-      v.literal("YEARLY")
-    ),
-    status: v.union(
-      v.literal("ACTIVE"),
-      v.literal("INACTIVE"),
-      v.literal("CANCELLED"),
-      v.literal("EXPIRED")
-    ),
+    cycle: v.string(),
+    status: v.string(),
     nextDueDate: v.number(),
+    description: v.optional(v.string()), // Added description
     organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    return await ctx.db.insert("asaasSubscriptions", {
+    const subscriptionId = await ctx.db.insert("asaasSubscriptions", {
       studentId: args.studentId,
       asaasSubscriptionId: args.asaasSubscriptionId,
       asaasCustomerId: args.asaasCustomerId,
       organizationId: args.organizationId,
       value: args.value,
-      cycle: args.cycle,
-      status: args.status,
+      cycle: args.cycle as any,
+      status: args.status as any,
       nextDueDate: args.nextDueDate,
+      description: args.description,
       createdAt: now,
       updatedAt: now,
     });
+
+    // Map description to product and update student
+    if (args.description) {
+        const desc = args.description.toLowerCase();
+        let productKey: string | null = null;
+
+        if (desc.includes("trinta") || desc.includes("30e3")) productKey = "trintae3";
+        else if (desc.includes("otb") || desc.includes("outside")) productKey = "otb";
+        else if (desc.includes("black") || desc.includes("neon")) productKey = "black_neon";
+        else if (desc.includes("comunidade") || desc.includes("club")) productKey = "comunidade";
+        else if (desc.includes("auriculo")) productKey = "auriculo";
+        else if (desc.includes("mesa")) productKey = "na_mesa_certa";
+
+        if (productKey) {
+            const student = await ctx.db.get(args.studentId);
+            if (student) {
+                const currentProducts = student.products || [];
+                if (!currentProducts.includes(productKey)) {
+                    await ctx.db.patch(args.studentId, {
+                        products: [...currentProducts, productKey],
+                        updatedAt: now,
+                    });
+                }
+            }
+        }
+    }
+
+    return subscriptionId;
   },
 });
 

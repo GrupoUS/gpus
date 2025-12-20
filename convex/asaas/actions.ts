@@ -3,7 +3,7 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, type AsaasClient } from "../lib/asaas";
+import { createAsaasClient, type AsaasClient, dateStringToTimestamp } from "../lib/asaas";
 import { getOrganizationId } from "../lib/auth";
 
 /**
@@ -778,6 +778,7 @@ interface CombinedImportResult {
   success: boolean;
   customers: ImportResult | null;
   payments: ImportResult | null;
+  subscriptions: ImportResult | null; // Added
 }
 
 /**
@@ -967,6 +968,7 @@ export const importAllFromAsaas = action({
         success: false,
         customers: customersResult,
         payments: null,
+        subscriptions: null,
       };
     }
 
@@ -1084,10 +1086,122 @@ export const importAllFromAsaas = action({
       recordsFailed: paymentsFailed,
     };
 
+    // ═══════════════════════════════════════════════════════
+    // STEP 3: IMPORT SUBSCRIPTIONS
+    // ═══════════════════════════════════════════════════════
+
+    // @ts-ignore
+    const subscriptionsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
+      syncType: 'subscriptions' as const,
+      initiatedBy: args.initiatedBy,
+    });
+
+    let subscriptionsOffset = 0;
+    let subscriptionsHasMore = true;
+    let subscriptionsProcessed = 0;
+    let subscriptionsCreated = 0;
+    let subscriptionsUpdated = 0;
+    let subscriptionsFailed = 0;
+    const subscriptionsErrors: string[] = [];
+    let subscriptionsPageCount = 0;
+    let subscriptionsSuccess = true;
+
+    try {
+      while (subscriptionsHasMore && subscriptionsPageCount < MAX_PAGES) {
+        subscriptionsPageCount++;
+        const response = await client.listAllSubscriptions({ offset: subscriptionsOffset, limit });
+
+        for (const sub of response.data) {
+          subscriptionsProcessed++;
+          try {
+            // @ts-ignore
+            const existingSubscription = await ctx.runQuery(internal.asaas.mutations.getSubscriptionByAsaasId, {
+              asaasSubscriptionId: sub.id,
+            });
+
+            if (existingSubscription) {
+              // @ts-ignore
+              await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
+                subscriptionId: existingSubscription._id,
+                status: sub.status,
+                nextDueDate: dateStringToTimestamp(sub.nextDueDate),
+                value: sub.value,
+              });
+              subscriptionsUpdated++;
+            } else {
+              // @ts-ignore
+              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
+                asaasCustomerId: sub.customer,
+              });
+
+              if (student) {
+                // @ts-ignore
+                await ctx.runMutation(internal.asaas.mutations.createSubscriptionFromAsaas, {
+                  studentId: student._id,
+                  asaasSubscriptionId: sub.id,
+                  asaasCustomerId: sub.customer,
+                  value: sub.value,
+                  cycle: sub.cycle,
+                  status: sub.status,
+                  nextDueDate: dateStringToTimestamp(sub.nextDueDate),
+                  description: sub.description,
+                  organizationId,
+                });
+                subscriptionsCreated++;
+              } else {
+                subscriptionsErrors.push(`Subscription ${sub.id}: Student not found for customer ${sub.customer}`);
+                subscriptionsFailed++;
+              }
+            }
+          } catch (err: any) {
+            subscriptionsFailed++;
+            subscriptionsErrors.push(`Subscription ${sub.id}: ${err.message}`);
+          }
+        }
+
+        subscriptionsHasMore = response.hasMore;
+        subscriptionsOffset += limit;
+      }
+
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: subscriptionsLogId,
+        status: 'completed' as const,
+        recordsProcessed: subscriptionsProcessed,
+        recordsCreated: subscriptionsCreated,
+        recordsUpdated: subscriptionsUpdated,
+        recordsFailed: subscriptionsFailed,
+        errors: subscriptionsErrors.length > 0 ? subscriptionsErrors.slice(0, 50) : undefined,
+        completedAt: Date.now(),
+      });
+    } catch (error: any) {
+      subscriptionsSuccess = false;
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId: subscriptionsLogId,
+        status: 'failed' as const,
+        recordsProcessed: subscriptionsProcessed,
+        recordsCreated: subscriptionsCreated,
+        recordsUpdated: subscriptionsUpdated,
+        recordsFailed: subscriptionsFailed,
+        errors: [error.message, ...subscriptionsErrors].slice(0, 50),
+        completedAt: Date.now(),
+      });
+    }
+
+    const subscriptionsResult: ImportResult = {
+      success: subscriptionsSuccess,
+      recordsProcessed: subscriptionsProcessed,
+      recordsCreated: subscriptionsCreated,
+      recordsUpdated: subscriptionsUpdated,
+      recordsFailed: subscriptionsFailed,
+    };
+
     return {
-      success: customersSuccess && paymentsSuccess,
+      success: customersSuccess && paymentsSuccess && subscriptionsSuccess,
       customers: customersResult,
       payments: paymentsResult,
+      subscriptions: subscriptionsResult,
     };
   },
 });
