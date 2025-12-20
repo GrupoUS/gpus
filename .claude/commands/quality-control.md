@@ -4,42 +4,26 @@ form: reference
 tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing, cli, logs, debugging]
 ---
 
-# 🔍 Quality Control - Modern Web Stack
+# /qa - Quality Assurance Pipeline
 
-**Complete quality control pipeline for Bun + Vite + Convex + TanStack Router applications with Railway deployment verification.**
+Pipeline integrado: **Verificação → Auto-Research → Auto-Fix**
 
----
+## Fluxo Integrado
 
-## 🏗️ ARCHITECTURAL OVERVIEW
-
-### System Components
+```mermaid
+flowchart LR
+    A[/qa] --> B[Phase 1: Local Checks]
+    B --> C{Erros?}
+    C -->|Não| D[Phase 2: Deploy]
+    D --> E{Erros?}
+    E -->|Não| F[✅ QA PASS]
+    C -->|Sim| G[Agregar Erros]
+    E -->|Sim| G
+    G --> H["/research 'Fix: [errors]'"]
+    H --> I[Plano Aprovado]
+    I --> J[/implement]
+    J --> K[Re-run /qa]
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        DEPLOYMENT ARCHITECTURE                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────┐          ┌─────────────────┐                        │
-│  │   FRONTEND      │          │    BACKEND      │                        │
-│  │                 │          │                 │                        │
-│  │ Railway (Docker)│◄────────►│    Convex       │                        │
-│  │ Vite Build      │  Auth    │ Real-time DB    │                        │
-│  │ Static Hosting  │◄────────►│ + Functions     │                        │
-│  │                 │  Clerk   │                 │                        │
-│  └─────────────────┘          └─────────────────┘                        │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Tech Stack Integration
-- **Runtime**: Bun (package manager + execution)
-- **Frontend**: React 19 + Vite + TanStack Router
-- **Styling**: Tailwind CSS v4 + shadcn/ui
-- **Backend**: Convex (database + real-time functions)
-- **Auth**: Clerk (authentication)
-- **Deploy**: Railway (frontend) + Convex (backend)
-
----
-
 # Code Quality Review
 
 Perform comprehensive code quality review: $ARGUMENTS
@@ -92,271 +76,106 @@ Follow these steps to conduct a thorough code review:
 
 Remember to be constructive and provide specific examples with file paths and line numbers where applicable.
 
-## 📍 PHASE 1: LOCAL QUALITY CHECKS
+## Phase 1: Local Quality Checks
 
-> **⚠️ CRITICAL GATE**: Do NOT proceed to deployment if ANY check fails
+> **⚠️ CRITICAL GATE**: Não prosseguir se qualquer check falhar
 
-### 1.1 Code Quality & Linting
 ```bash
-# Check code formatting and lint rules
+# Code quality & linting
 bun run lint:check
 
-# Expected: 0 errors, 0 warnings
-# If issues found: bun run lint to auto-fix
-```
-
-### 1.2 Type Safety & Build Verification
-```bash
-# Type checking (included in build)
+# Type safety & build verification
 bun run build
 
-# Expected: Clean build with no TypeScript errors
-# This command runs both Vite build and tsc --noEmit
-```
-
-### 1.3 Test Coverage
-```bash
-# Run tests with coverage
+# Test coverage
 bun run test:coverage
-
-# Expected: All tests pass, coverage metrics maintained
-# Coverage report generated in coverage/ directory
 ```
 
-### 1.4 Local Development Validation
+## Phase 2: Deployment Validation
+
+> **✅ PREREQUISITE**: Phase 1 deve passar completamente
+
+### 2.1 Deploy Status Check
+
 ```bash
-# Verify local development setup
-bun run dev
-
-# Expected: Application starts successfully on http://localhost:5173
-# No runtime errors in browser console
-```
-
-### 1.5 MCP-Powered Error Detection & Analysis
-
-> **🔬 INTELLIGENT RESEARCH**: When errors are detected, use MCPs to research authoritative solutions before manual fixes
-
-### Research-Driven Error Resolution
-
-This phase activates automatically when Phase 1 detects errors. MCP tools research solutions from multiple authoritative sources before applying fixes.
-
-#### Research Workflow
-
-```yaml
-MCP_RESEARCH_WORKFLOW:
-  trigger: "Any error detected in Phase 1"
-
-  parallel_research:
-    official_docs:
-      tool: "context7 get-library-docs"
-      libraries: ["typescript", "vite", "react", "convex", "railway"]
-      topics: "Error type or component"
-      confidence: "≥95% (official documentation)"
-
-    current_solutions:
-      tool: "tavily-search"
-      query: "Error message + stack + solution 2024 2025"
-      depth: "advanced"
-      max_results: 10
-      confidence: "≥90% (cross-validated)"
-
-    codebase_analysis:
-      tool: "serena search_for_pattern"
-      pattern: "Error pattern or similar code"
-      context_lines: 10
-      output: "Existing patterns in codebase"
-
-  synthesis:
-    tool: "sequential-thinking"
-    input: "All research results"
-    process: ["Analyze solutions", "Compare approaches", "Select best fix", "Validate confidence"]
-    output: "Recommended solution with ≥95% confidence"
-```
-
-## 📍 PHASE 2: DEPLOYMENT VALIDATION
-
-> **✅ PREREQUISITE**: Phase 1 must pass completely (or Phase 1.5 completed if errors were fixed)
-
-#### Deployment Status Verification
-```bash
-# Check current deployment status
+# Railway deployment status
 railway status
 
-# Expected: Service running, healthy status
-# Note the public URL for validation
-```
-
-#### Trigger Deployment (if needed)
-```bash
-# Push changes to trigger deployment
-git add .
-git commit -m "chore: update deployment"
-git push origin main
-
-# Railway will automatically deploy on push
-```
-
-#### Frontend Health Checks
-```bash
-# Retrieve public URL from Railway dashboard or status command
-PUBLIC_URL=$(railway status | grep -o 'https://[^[:space:]]*\.railway\.app')
-
-# Verify root path loads without errors
-curl -f "$PUBLIC_URL" || echo "❌ Frontend health check failed"
-
-# Open in browser for visual verification
-open "$PUBLIC_URL"
-```
-
-#### 📋 Railway Log Analysis
-```bash
-# Check recent deployment logs (last 50 lines)
-railway logs --lines 50
-
-# Check extended logs for more context
-railway logs --lines 200
-
-# Stream logs in real-time (for monitoring)
-railway logs --follow
-
-# Get logs from a specific service (if multiple)
-railway logs --service <service-name>
-
-# Look for common error patterns:
-# - Build errors ("Error:", "BUILD FAILED")
-# - Runtime errors ("Uncaught", "Exception")
-# - Missing environment variables ("undefined", "VITE_")
-# - Convex connection issues ("convex", "WebSocket")
-# - Docker/container issues ("OOMKilled", "Crashloop")
-```
-
-#### 🔴 Railway Error Detection & Debugging
-```bash
-# Check deployment status with details
-railway status
-
-# Get deployment history
-railway deployments
-
-# Check environment variables are set correctly
-railway variables list
-
-# Filter logs for errors specifically
-railway logs --lines 100 2>&1 | grep -iE "error|failed|exception|warning|undefined"
-
-# Check for build failures
-railway logs --lines 100 2>&1 | grep -iE "build failed|npm err|bun err|exit code"
-
-# Check for container health issues
-railway logs --lines 100 2>&1 | grep -iE "oom|killed|crash|restart"
-```
-
-### Backend Deployment (Convex)
-
-> **🔧 CONVEX CLI INTEGRATION**: Use the Convex CLI for comprehensive deployment verification, log analysis, and error detection.
-
-#### Schema & Function Deployment
-```bash
-# Deploy Convex schema and functions to production
-bun run deploy:convex
-
-# Alternative: Direct Convex CLI deployment
+# Convex backend deployment
 bunx convex deploy --prod
-
-# Expected: Successful deployment confirmation
-# Note the deployment URL/ID
 ```
 
-#### Active Deployment Verification
+### 2.2 Deploy Logs Verification
+
+> **🔍 CRITICAL**: Inspecionar logs para identificar erros de runtime/deploy
+
 ```bash
-# List all Convex deployments with status
-bunx convex deployments list
+# Railway: Verificar logs recentes de deploy (últimas 100 linhas)
+railway logs --latest -n 100
 
-# Get detailed deployment information
-bunx convex deployment info
-
-# Verify current deployment URL
-bunx convex env get CONVEX_URL
-
-# Expected: Your deployment appears as 'Active'
-# Verify CONVEX_DEPLOYMENT in .env.local matches active deployment
+# Convex: Verificar logs de produção
+bunx convex logs --prod --success --failure
 ```
 
-#### 📋 Convex Log Analysis
-```bash
-# View real-time Convex logs
-bunx convex logs
+### 2.3 Deploy Error Analysis
 
-# View logs from production deployment
-bunx convex logs --prod
+Se erros forem encontrados nos logs:
 
-# View logs with more detail (last 100 entries)
-bunx convex logs --prod --limit 100
+1. **Railway Errors** - Identificar:
+   - Build failures (dependências, TypeScript, bundling)
+   - Runtime errors (crashes, memory, timeouts)
+   - Environment variable issues
+   - Network/connection problems
 
-# Stream logs in real-time (for monitoring)
-bunx convex logs --prod --follow
+2. **Convex Errors** - Identificar:
+   - Function execution errors
+   - Schema validation failures
+   - Authentication/authorization issues
+   - Query/mutation timeouts
 
-# Filter logs by function name
-bunx convex logs --prod --function "api.leads.list"
+3. **Ação**: Agregar todos os erros e prosseguir para Phase 3
 
-# Look for error patterns:
-# - "Error:" prefixed lines
-# - "Uncaught" exceptions
-# - "Schema validation failed"
-# - "Function execution failed"
-```
+## Phase 3: Error Aggregation & Auto-Research
 
-#### 🔴 Convex Error Detection
-```bash
-# Check for deployment errors
-bunx convex deploy --prod --dry-run 2>&1 | grep -i "error\|failed\|warning"
+Se erros forem detectados em qualquer fase:
+1. **Aggrega todos os erros** em um resumo
+2. **Invoca automaticamente**: `/research "Fix QA errors: [errors summary]"`
+3. Aguarda plano detalhado do @apex-researcher
 
-# Validate schema before deployment
-bunx convex dev --typecheck-only
+## Phase 4: Auto-Implementation
 
-# Check function exports are valid
-bunx convex codegen
+Após plano aprovado:
+1. **Invoca `/implement`** para executar os fixes
+2. **Re-executa `/qa`** para validação final
+3. Repete até QA PASS
 
-# Common error patterns to look for:
-# - "Invalid schema definition"
-# - "Type mismatch in function"
-# - "Missing required field"
-# - "Function not exported"
-# - "Validator error"
-```
+## Success Metrics
 
-#### Backend Function Validation
-```bash
-# Test key Convex functions are accessible
-bunx convex run --prod api.leads.list
-bunx convex run --prod api.users.list
+| Gate | Command | Expected Result |
+|------|---------|----------------|
+| Lint | `bun run lint:check` | 0 errors |
+| Build | `bun run build` | Clean build |
+| Tests | `bun run test:coverage` | All tests pass |
+| Deploy | `railway status` | Healthy |
+| Backend | `bunx convex deploy --prod` | Success |
+| Railway Logs | `railway logs --latest -n 100` | No errors in logs |
+| Convex Logs | `bunx convex logs --prod --failure` | No failures |
 
-# Test with specific arguments
-bunx convex run --prod api.leads.get --args '{"id": "test-id"}'
+## Quick Reference
 
-# Expected: Functions execute without errors
-# May need authentication for some functions
-```
+| Task | Command |
+|------|---------|
+| Run QA pipeline | `/qa` |
+| Fix errors automatically | `/qa --auto-fix` |
+| Debug specific phase | `/qa --phase=lint` |
 
-## 📊 SUCCESS METRICS
+## Technical Notes
 
-### Quality Gates
-- ✅ **0 lint errors** (`bun run lint:check`)
-- ✅ **0 type errors** (`bun run build`)
-- ✅ **100% tests pass** (`bun run test:coverage`)
-- ✅ **Clean deployment** (Railway status: healthy)
-- ✅ **Backend functions accessible** (Convex CLI tests)
-
-### Performance Benchmarks
-- 🚀 **Page load**: < 3 seconds
-- 🚀 **Route transitions**: < 500ms
-- 🚀 **API responses**: < 1 second
-- 🚀 **Build time**: < 2 minutes
-
-### Reliability Indicators
-- 🟢 **All phases pass without intervention**
-- 🟢 **No manual environment fixes needed**
-- 🟢 **End-to-end workflows functional**
-- 🟢 **No console errors in production**
+- **Auto-research**: Acionado automaticamente quando erros são detectados
+- **Auto-implementation**: Executado após plano aprovado
+- **Re-run automático**: `/qa` re-executa após `/implement` completar
+- **Preserve tasks**: Novas tasks de fix são adicionadas ao TodoWrite existente
 
 ---
+
+**Pipeline completo: `/qa` → detecta erros → `/research` → `/implement` → `/qa` (re-run)**
