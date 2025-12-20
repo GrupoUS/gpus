@@ -119,11 +119,11 @@ export const listLeads = query({
 
     const results = await query.order('desc').paginate(args.paginationOpts);
 
-    // If search is provided, we still need to filter in memory because 
+    // If search is provided, we still need to filter in memory because
     // Convex filters don't support substring matching.
     if (args.search) {
         const searchLower = args.search.toLowerCase();
-        results.page = results.page.filter(l => 
+        results.page = results.page.filter(l =>
             l.name.toLowerCase().includes(searchLower) ||
             l.phone.includes(searchLower) ||
             (l.email && l.email.toLowerCase().includes(searchLower))
@@ -299,18 +299,23 @@ export const recent = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    await requirePermission(ctx, PERMISSIONS.LEADS_READ)
+    try {
+      await requirePermission(ctx, PERMISSIONS.LEADS_READ)
 
-    const organizationId = await getOrganizationId(ctx);
-    if (!organizationId) {
+      const organizationId = await getOrganizationId(ctx);
+      if (!organizationId) {
         return [];
-    }
+      }
 
-    return await ctx.db
-      .query('leads')
-      .withIndex('by_organization', q => q.eq('organizationId', organizationId))
-      .order('desc')
-      .take(args.limit ?? 10)
+      return await ctx.db
+        .query('leads')
+        .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+        .order('desc')
+        .take(args.limit ?? 10)
+    } catch (error) {
+      console.error('leads:recent error:', error);
+      return [];
+    }
   }
 })
 
