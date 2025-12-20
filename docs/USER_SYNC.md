@@ -33,7 +33,11 @@ Para usuários que já existem no Clerk mas não no Convex, existe um script de 
 Execute a action via dashboard do Convex ou CLI (requer `CLERK_SECRET_KEY` configurado no ambiente do Convex):
 
 ```bash
-bunx convex run scripts/syncUsers:sync
+# Modo dry-run (apenas lista o que seria feito)
+bunx convex run migrations/syncExistingClerkUsers:sync --dryRun true
+
+# Executar migração real
+bunx convex run migrations/syncExistingClerkUsers:sync
 ```
 
 Argumentos opcionais:

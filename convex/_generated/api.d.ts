@@ -48,6 +48,7 @@ import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
+import type * as migrations_syncExistingClerkUsers from "../migrations/syncExistingClerkUsers.js";
 import type * as notifications from "../notifications.js";
 import type * as scripts from "../scripts.js";
 import type * as scripts_syncUsers from "../scripts/syncUsers.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   metrics: typeof metrics;
   migrations: typeof migrations;
+  "migrations/syncExistingClerkUsers": typeof migrations_syncExistingClerkUsers;
   notifications: typeof notifications;
   scripts: typeof scripts;
   "scripts/syncUsers": typeof scripts_syncUsers;

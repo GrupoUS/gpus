@@ -116,18 +116,21 @@ export const ensureUser = mutation({
 
         console.log(`ensureUser: User created ${userId}`)
 
-        // Log activity - Temporarily commented out to debug "Could not find" error
-        /*
-        await ctx.db.insert('activities', {
-          type: 'user_created',
-          description: `User ${identity.name} created automatically via sync`,
-          userId: userId,
-          metadata: { externalId: identity.subject },
-          organizationId,
-          performedBy: identity.subject,
-          createdAt: Date.now(),
-        })
-        */
+        // Log activity
+        try {
+          await ctx.db.insert('activities', {
+            type: 'user_created',
+            description: `User ${identity.name || 'Usuário'} created automatically via sync`,
+            userId: userId,
+            metadata: { externalId: identity.subject },
+            organizationId,
+            performedBy: identity.subject,
+            createdAt: Date.now(),
+          })
+        } catch (activityError) {
+          // Log activity creation error but don't fail the user creation
+          console.error('Failed to log user creation activity:', activityError)
+        }
 
         return userId
     } catch (error: any) {
