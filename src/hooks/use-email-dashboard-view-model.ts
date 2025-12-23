@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,7 +52,9 @@ export function useEmailDashboardViewModel() {
 
 		// Contact growth (last 30 days)
 		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-		const newContacts = contacts.filter((c) => c.createdAt && c.createdAt > thirtyDaysAgo).length;
+		const newContacts = contacts.filter(
+			(c: Doc<'emailContacts'>) => c.createdAt && c.createdAt > thirtyDaysAgo,
+		).length;
 
 		return {
 			totalSent,

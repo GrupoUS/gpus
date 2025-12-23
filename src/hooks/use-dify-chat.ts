@@ -1,5 +1,8 @@
+import { useAction } from 'convex/react';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
+
+import { api } from '../../convex/_generated/api';
 
 export interface DifyMessage {
 	role: 'user' | 'assistant';
@@ -19,17 +22,11 @@ export function useDifyChat(): UseDifyChatReturn {
 	const [isLoading, setIsLoading] = useState(false);
 	const [conversationId, setConversationId] = useState<string | null>(null);
 
-	const DIFY_API_URL = import.meta.env.VITE_DIFY_API_URL;
-	const DIFY_API_KEY = import.meta.env.VITE_DIFY_API_KEY;
+	const sendMessageAction = useAction(api.integrations.actions.sendMessageToDify);
 
 	const sendMessage = useCallback(
 		async (content: string): Promise<string | undefined> => {
 			if (!content.trim()) return undefined;
-
-			if (!(DIFY_API_URL && DIFY_API_KEY)) {
-				toast.error('Configuração do Dify API ausente. Verifique as variáveis de ambiente.');
-				return undefined;
-			}
 
 			try {
 				setIsLoading(true);
@@ -43,27 +40,12 @@ export function useDifyChat(): UseDifyChatReturn {
 
 				setMessages((prev) => [...prev, userMessage]);
 
-				const response = await fetch(`${DIFY_API_URL}/chat-messages`, {
-					method: 'POST',
-					headers: {
-						Authorization: `Bearer ${DIFY_API_KEY}`,
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						query: content,
-						user: 'agent-user',
-						inputs: {},
-						response_mode: 'blocking',
-						conversation_id: conversationId,
-					}),
+				// Call backend action
+				const data = await sendMessageAction({
+					query: content,
+					user: 'agent-user', // You might want to pass the actual user ID if available
+					conversationId: conversationId ?? undefined,
 				});
-
-				if (!response.ok) {
-					const errorData = await response.json().catch(() => ({}));
-					throw new Error(errorData.message || `Erro na API: ${response.status}`);
-				}
-
-				const data = await response.json();
 
 				// Update conversation ID for future messages
 				if (data.conversation_id) {
@@ -86,11 +68,12 @@ export function useDifyChat(): UseDifyChatReturn {
 				setIsLoading(false);
 			}
 		},
-		[conversationId],
+		[conversationId, sendMessageAction],
 	);
 
 	const clearMessages = useCallback(() => {
 		setMessages([]);
+		setConversationId(null);
 	}, []);
 
 	return {

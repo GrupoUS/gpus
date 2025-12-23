@@ -77,26 +77,23 @@ export const listCSUsers = query({
 export const ensureUser = mutation({
   args: {},
   handler: async (ctx) => {
-    try {
-        console.log("ensureUser: Starting execution")
-        const identity = await requireAuth(ctx)
-        console.log(`ensureUser: Identity confirmed for ${identity.subject}`)
+        try {
+            const identity = await requireAuth(ctx)
 
         // Check if user already exists
+
         const existing = await ctx.db
           .query('users')
           .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
           .unique()
 
         if (existing) {
-          console.log(`ensureUser: User already exists ${existing._id}`)
           return existing._id
         }
 
-        console.log(`ensureUser: Creating new user for ${identity.subject}`)
-
         // Create new user
         const organizationId = await getOrganizationId(ctx) || 'default'
+
 
         // Default role 'sdr' unless specified in org permissions (logic can be enhanced)
         // For now, we respect the requirement: role standard 'sdr'
@@ -114,10 +111,9 @@ export const ensureUser = mutation({
           updatedAt: Date.now(),
         })
 
-        console.log(`ensureUser: User created ${userId}`)
-
         // Log activity
         try {
+
           await ctx.db.insert('activities', {
             type: 'user_created',
             description: `User ${identity.name || 'Usuário'} created automatically via sync`,

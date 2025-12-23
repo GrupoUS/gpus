@@ -33,7 +33,6 @@ export const sendPaymentConfirmed = internalMutation({
 		}
 
 		if (!student) {
-			console.log('sendPaymentConfirmed: No student linked to payment, skipping notification')
 			return { sent: false, reason: 'No student linked' }
 		}
 
@@ -53,7 +52,6 @@ export const sendPaymentConfirmed = internalMutation({
 					paymentValue: formattedValue,
 					paymentDescription: payment.description || 'Pagamento',
 				})
-				console.log(`sendPaymentConfirmed: Email sent to ${student.email}`)
 			} catch (error) {
 				console.error('sendPaymentConfirmed: Failed to send email', error)
 			}
@@ -105,7 +103,6 @@ export const sendPaymentOverdue = internalMutation({
 		}
 
 		if (!student) {
-			console.log('sendPaymentOverdue: No student linked to payment, skipping notification')
 			return { sent: false, reason: 'No student linked' }
 		}
 
@@ -129,7 +126,6 @@ export const sendPaymentOverdue = internalMutation({
 					paymentValue: formattedValue,
 					dueDate: formattedDueDate,
 				})
-				console.log(`sendPaymentOverdue: Email sent to ${student.email}`)
 			} catch (error) {
 				console.error('sendPaymentOverdue: Failed to send email', error)
 			}

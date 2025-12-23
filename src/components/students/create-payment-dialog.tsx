@@ -2,7 +2,7 @@ import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { useAction, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,11 @@ type BillingType = 'BOLETO' | 'PIX' | 'CREDIT_CARD';
 export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePaymentDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const billingTypeId = useId();
+	const valueId = useId();
+	const installmentsId = useId();
+	const dueDateId = useId();
+	const descriptionId = useId();
 
 	// Form state
 	const [billingType, setBillingType] = useState<BillingType>('PIX');
@@ -64,33 +69,31 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 		setInstallmentCount('1');
 	};
 
-	const handleSubmit = async () => {
-		// Validations
+	const validateForm = (numericValue: number) => {
 		if (!asaasCustomerId) {
 			toast.error('Aluno não sincronizado com Asaas', {
 				description: 'O aluno precisa ter CPF e ser sincronizado antes de criar cobranças.',
 			});
-			return;
+			return false;
 		}
 
 		if (!studentCpf) {
 			toast.error('CPF obrigatório', {
 				description: 'O aluno precisa ter CPF cadastrado para gerar cobranças.',
 			});
-			return;
+			return false;
 		}
 
-		const numericValue = Number.parseFloat(value);
 		if (!numericValue || numericValue <= 0) {
 			toast.error('Valor inválido', {
 				description: 'Informe um valor maior que zero.',
 			});
-			return;
+			return false;
 		}
 
 		if (!dueDate) {
 			toast.error('Data de vencimento obrigatória');
-			return;
+			return false;
 		}
 
 		const dueDateObj = new Date(dueDate);
@@ -101,9 +104,20 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 			toast.error('Data de vencimento inválida', {
 				description: 'A data de vencimento deve ser hoje ou no futuro.',
 			});
+			return false;
+		}
+
+		return true;
+	};
+
+	const handleSubmit = async () => {
+		const numericValue = Number.parseFloat(value);
+
+		if (!(validateForm(numericValue) && asaasCustomerId)) {
 			return;
 		}
 
+		const customerId = asaasCustomerId;
 		setIsSubmitting(true);
 		try {
 			const numInstallments = Number.parseInt(installmentCount, 10);
@@ -111,7 +125,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 			await createPayment({
 				studentId,
-				asaasCustomerId,
+				asaasCustomerId: customerId,
 				billingType,
 				value: numericValue,
 				dueDate,
@@ -169,9 +183,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 					<div className="space-y-4">
 						{/* Billing Type */}
 						<div className="space-y-2">
-							<Label htmlFor="billingType">Forma de Pagamento</Label>
+							<Label htmlFor={billingTypeId}>Forma de Pagamento</Label>
 							<Select value={billingType} onValueChange={(v) => setBillingType(v as BillingType)}>
-								<SelectTrigger>
+								<SelectTrigger id={billingTypeId}>
 									<SelectValue placeholder="Selecione" />
 								</SelectTrigger>
 								<SelectContent>
@@ -184,9 +198,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Value */}
 						<div className="space-y-2">
-							<Label htmlFor="value">Valor Total (R$)</Label>
+							<Label htmlFor={valueId}>Valor Total (R$)</Label>
 							<Input
-								id="value"
+								id={valueId}
 								type="number"
 								min="0.01"
 								step="0.01"
@@ -198,9 +212,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Installments */}
 						<div className="space-y-2">
-							<Label htmlFor="installments">Parcelas</Label>
+							<Label htmlFor={installmentsId}>Parcelas</Label>
 							<Select value={installmentCount} onValueChange={setInstallmentCount}>
-								<SelectTrigger>
+								<SelectTrigger id={installmentsId}>
 									<SelectValue placeholder="Selecione" />
 								</SelectTrigger>
 								<SelectContent>
@@ -218,9 +232,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Due Date */}
 						<div className="space-y-2">
-							<Label htmlFor="dueDate">Data de Vencimento</Label>
+							<Label htmlFor={dueDateId}>Data de Vencimento</Label>
 							<Input
-								id="dueDate"
+								id={dueDateId}
 								type="date"
 								value={dueDate}
 								onChange={(e) => setDueDate(e.target.value)}
@@ -230,9 +244,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Description */}
 						<div className="space-y-2">
-							<Label htmlFor="description">Descrição (opcional)</Label>
+							<Label htmlFor={descriptionId}>Descrição (opcional)</Label>
 							<Textarea
-								id="description"
+								id={descriptionId}
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="Mensalidade, Matrícula, etc."

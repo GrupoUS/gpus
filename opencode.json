@@ -1,28 +1,62 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "skill": {
+      "*": "allow"
+    }
+  },
   "instructions": [
     "AGENTS.md",
     ".cursor/rules/*.mdc",
     ".opencode/agent/*.md",
     ".opencode/command/*.md"
   ],
+  "mcp": {
+    "tavily": {
+      "type": "local",
+      "command": ["bunx", "-y", "tavily-mcp@latest"],
+      "environment": {
+        "TAVILY_API_KEY": "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"
+      },
+      "enabled": true
+    },
+    "serena": {
+      "type": "local",
+      "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide-assistant"],
+      "enabled": true
+    },
+    "sequentialthinking": {
+      "type": "local",
+      "command": ["bunx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-a503f9bf-372c-4a33-9144-40dcbc6a1f80"
+      },
+      "enabled": true
+    }
+  },
   "agent": {
     "build": {
           "mode": "primary",
-          "model": "google/gemini-3-flash-preview",
+          "model": "zhipuai-coding-plan/glm-4.7",
           "prompt": "{file:.opencode/prompts/build.txt}"
         },
         "plan": {
           "mode": "primary",
           "model": "google/gemini-3-pro-preview",
           "prompt": "{file:.opencode/prompts/plan.txt}"
-    },
+        },
     "apex-dev": {
       "tools": {
         "serena_*": true,
         "context7_*": true,
         "sequentialthinking_*": true,
-        "fetch_*": true
+        "fetch_*": true,
+        "tavily_*": true
       }
     },
     "apex-researcher": {
@@ -38,14 +72,16 @@
       "tools": {
         "serena_*": true,
         "sequentialthinking_*": true,
-        "context7_*": true
+        "context7_*": true,
+        "tavily_*": true
       }
     },
     "database-specialist": {
       "tools": {
         "serena_*": true,
         "context7_*": true,
-        "sequentialthinking_*": true
+        "sequentialthinking_*": true,
+        "tavily_*": true
       }
     },
     "apex-ui-ux-designer": {

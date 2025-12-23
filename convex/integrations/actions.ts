@@ -1,13 +1,16 @@
 import { v } from "convex/values";
 import { action } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { createAsaasClient } from "../lib/asaas";
 import axios from "axios";
+
 
 export const testAsaasConnection = action({
   args: {
     apiKey: v.string(),
     baseUrl: v.string()
   },
+  returns: v.any(),
   handler: async (_ctx, args) => {
     try {
       const client = createAsaasClient({
@@ -40,14 +43,66 @@ export const testAsaasConnection = action({
           message = "URL base inalcançável.";
       }
 
-      return {
-        success: false,
-        message,
-        details: error.message
-      };
+        return {
+             success: false,
+             message,
+             details: error.message
+        };
     }
   }
 });
+
+export const sendMessageToDify = action({
+  args: {
+    query: v.string(),
+    conversationId: v.optional(v.string()),
+    user: v.string(),
+  },
+  returns: v.any(),
+  handler: async (ctx, args) => {
+    const config: any = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+      integrationName: "dify",
+    });
+
+    const baseUrl: any = config?.base_url || config?.baseUrl;
+    const apiKey: any = config?.api_key || config?.apiKey;
+
+    if (!baseUrl || !apiKey) {
+      throw new Error("Dify configuration missing in settings.");
+    }
+
+    const sanitizedBaseUrl = baseUrl.replace(/\/$/, "");
+    const url = `${sanitizedBaseUrl}/chat-messages`;
+
+    try {
+      const response: any = await axios.post(
+        url,
+        {
+          query: args.query,
+          user: args.user,
+          inputs: {},
+          response_mode: "blocking",
+          conversation_id: args.conversationId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Dify API error:", error.message);
+      if (error.response) {
+        throw new Error(`Dify API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
+      throw new Error(`Dify Connection Error: ${error.message}`);
+    }
+  },
+});
+
 
 export const testEvolutionConnection = action({
   args: {
@@ -55,6 +110,7 @@ export const testEvolutionConnection = action({
     apiUrl: v.string(),
     instanceName: v.string()
   },
+  returns: v.any(),
   handler: async (_ctx, args) => {
     try {
       // Endpoint: GET /instance/connectionState/{instanceName}
@@ -62,7 +118,7 @@ export const testEvolutionConnection = action({
       let baseUrl = args.apiUrl.replace(/\/$/, "");
       const url = `${baseUrl}/instance/connectionState/${args.instanceName}`;
 
-      const response = await axios.get(url, {
+      const response: any = await axios.get(url, {
         headers: {
             "apikey": args.apiKey
         },
@@ -110,6 +166,7 @@ export const testDifyConnection = action({
     apiUrl: v.string(),
     appId: v.string()
   },
+  returns: v.any(),
   handler: async (_ctx, args) => {
     try {
       // Endpoint: GET /info or /parameters?

@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import {
@@ -10,7 +11,7 @@ import {
 	FileText,
 	XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,9 @@ function FinancialReportsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [startDate, setStartDate] = useState('');
 	const [endDate, setEndDate] = useState('');
+
+	const startDateId = useId();
+	const endDateId = useId();
 
 	// Get payments for report
 	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
@@ -106,11 +110,16 @@ function FinancialReportsPage() {
 
 	// Calculate summary metrics
 	const payments = paymentsResult?.payments || [];
-	const totalValue = payments.reduce((sum, p) => sum + p.value, 0);
-	const paidPayments = payments.filter((p) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
-	const paidValue = paidPayments.reduce((sum, p) => sum + p.value, 0);
-	const overduePayments = payments.filter((p) => p.status === 'OVERDUE');
-	const overdueValue = overduePayments.reduce((sum, p) => sum + p.value, 0);
+	const totalValue = payments.reduce((sum: number, p: Doc<'asaasPayments'>) => sum + p.value, 0);
+	const paidPayments = payments.filter(
+		(p: Doc<'asaasPayments'>) => p.status === 'RECEIVED' || p.status === 'CONFIRMED',
+	);
+	const paidValue = paidPayments.reduce((sum: number, p: Doc<'asaasPayments'>) => sum + p.value, 0);
+	const overduePayments = payments.filter((p: Doc<'asaasPayments'>) => p.status === 'OVERDUE');
+	const overdueValue = overduePayments.reduce(
+		(sum: number, p: Doc<'asaasPayments'>) => sum + p.value,
+		0,
+	);
 
 	return (
 		<div className="space-y-6 p-6">
@@ -158,18 +167,18 @@ function FinancialReportsPage() {
 									</Select>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="startDate">Data Inicial</Label>
+									<Label htmlFor={startDateId}>Data Inicial</Label>
 									<Input
-										id="startDate"
+										id={startDateId}
 										type="date"
 										value={startDate}
 										onChange={(e) => setStartDate(e.target.value)}
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="endDate">Data Final</Label>
+									<Label htmlFor={endDateId}>Data Final</Label>
 									<Input
-										id="endDate"
+										id={endDateId}
 										type="date"
 										value={endDate}
 										onChange={(e) => setEndDate(e.target.value)}
@@ -269,7 +278,7 @@ function FinancialReportsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{payments.map((payment) => (
+									{payments.map((payment: Doc<'asaasPayments'>) => (
 										<TableRow key={payment._id}>
 											<TableCell className="font-medium">
 												{payment.description || 'Sem descrição'}
@@ -319,7 +328,7 @@ function FinancialReportsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{syncLogs?.map((log) => (
+									{syncLogs?.map((log: Doc<'asaasSyncLogs'>) => (
 										<TableRow key={log._id}>
 											<TableCell>{getSyncStatusIcon(log.status)}</TableCell>
 											<TableCell>

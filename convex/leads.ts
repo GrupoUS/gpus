@@ -300,15 +300,9 @@ export const recent = query({
   },
   handler: async (ctx, args) => {
     try {
-        console.log("leads:recent: Starting query");
-
         // 1. Verify Auth & Permissions
         try {
-            const identity = await ctx.auth.getUserIdentity();
-            console.log("leads:recent: Identity found:", !!identity, identity?.subject);
-            if (!identity) {
-                console.log("leads:recent: No identity found");
-            }
+            await ctx.auth.getUserIdentity();
         } catch (e) {
             console.error("leads:recent: Auth check failed", e);
             throw e;
@@ -316,7 +310,6 @@ export const recent = query({
 
         await requirePermission(ctx, PERMISSIONS.LEADS_READ);
         const organizationId = await getOrganizationId(ctx);
-        console.log("leads:recent: Organization ID:", organizationId);
 
         if (!organizationId) {
             console.warn("leads:recent: No organization ID found");
@@ -330,7 +323,6 @@ export const recent = query({
           .order('desc')
           .take(args.limit ?? 10)
 
-        console.log(`leads:recent: Found ${results.length} leads`);
         return results;
     } catch (error: any) {
         console.error("leads:recent: Server Error detected", error);
