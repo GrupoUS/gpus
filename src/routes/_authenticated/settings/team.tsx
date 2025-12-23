@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
@@ -78,8 +78,19 @@ const roleBadgeVariants: Record<string, 'default' | 'secondary' | 'outline'> = {
 
 function TeamSettingsPage() {
 	const users = useQuery(api.users.list);
-	const [_editingUser, _setEditingUserr] = useState<Id<'users'> | null>(null);
+	const deleteUser = useMutation(api.users.deleteUser);
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+	const handleDeactivateUser = async (userId: Id<'users'>, userName: string) => {
+		if (confirm(`Desativar ${userName}?`)) {
+			try {
+				await deleteUser({ userId });
+				toast.success('Membro desativado com sucesso!');
+			} catch (_error) {
+				toast.error('Erro ao desativar membro');
+			}
+		}
+	};
 
 	return (
 		<div className="space-y-6 p-6">
@@ -103,7 +114,13 @@ function TeamSettingsPage() {
 						<DialogHeader>
 							<DialogTitle>Novo Membro</DialogTitle>
 						</DialogHeader>
-						<UserForm onSuccess={() => setIsCreateOpen(false)} />
+						<p className="text-sm text-muted-foreground mb-4">
+							Para adicionar novos membros, convide-os através do painel de organização do Clerk. Os
+							usuários aparecerão aqui após fazer login.
+						</p>
+						<Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+							Entendi
+						</Button>
 					</DialogContent>
 				</Dialog>
 			</div>
@@ -120,7 +137,7 @@ function TeamSettingsPage() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{users?.map((user) => (
+					{users?.map((user: Doc<'users'>) => (
 						<TableRow key={user._id}>
 							<TableCell>
 								<div className="flex items-center gap-3">
@@ -128,7 +145,7 @@ function TeamSettingsPage() {
 										<AvatarFallback className="text-xs bg-primary/10 text-primary">
 											{user.name
 												.split(' ')
-												.map((n) => n[0])
+												.map((n: string) => n[0])
 												.join('')
 												.slice(0, 2)}
 										</AvatarFallback>
@@ -171,11 +188,7 @@ function TeamSettingsPage() {
 										</Dialog>
 										<DropdownMenuItem
 											className="text-destructive"
-											onClick={() => {
-												if (confirm(`Desativar ${user.name}?`)) {
-													// Will be handled by UserForm's delete logic
-												}
-											}}
+											onClick={() => handleDeactivateUser(user._id, user.name)}
 										>
 											<Trash2 className="h-4 w-4 mr-2" />
 											Desativar

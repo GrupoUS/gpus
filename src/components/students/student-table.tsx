@@ -1,8 +1,6 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
 import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp, User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,8 +21,11 @@ import {
 } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
+// Enriched student type including mainProduct from students.list query
+type EnrichedStudent = Doc<'students'> & { mainProduct?: string };
+
 interface StudentsTableProps {
-	students: Doc<'students'>[];
+	students: EnrichedStudent[];
 	onStudentClick: (studentId: Id<'students'>) => void;
 }
 
@@ -38,20 +39,6 @@ interface SortState {
 
 export function StudentsTable({ students, onStudentClick }: StudentsTableProps) {
 	const [sort, setSort] = useState<SortState>({ field: 'name', direction: 'asc' });
-	// Get enrollments for product display
-	const enrollments = useQuery(api.enrollments.list, {});
-
-	// Create a map of studentId to their first enrollment product
-	const studentProducts =
-		enrollments?.reduce(
-			(acc: Record<string, string>, e: Doc<'enrollments'>) => {
-				if (e.studentId && !acc[e.studentId]) {
-					acc[e.studentId] = e.product;
-				}
-				return acc;
-			},
-			{} as Record<string, string>,
-		) ?? {};
 
 	const handleSort = (field: SortField) => {
 		setSort((current) => ({
@@ -146,8 +133,7 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{sortedStudents.map((student: Doc<'students'>) => {
-						const product = studentProducts[student._id];
+					{sortedStudents.map((student) => {
 						return (
 							<TableRow
 								key={student._id}
@@ -175,8 +161,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 									</div>
 								</TableCell>
 								<TableCell>
-									{product ? (
-										<Badge variant="outline">{productLabels[product] || product}</Badge>
+									{student.mainProduct ? (
+										<Badge variant="outline">
+											{productLabels[student.mainProduct] || student.mainProduct}
+										</Badge>
 									) : (
 										<span className="text-muted-foreground text-sm">-</span>
 									)}

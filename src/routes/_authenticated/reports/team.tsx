@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { Award, TrendingUp, Users } from 'lucide-react';
@@ -34,10 +35,28 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
+type User = {
+	_id: Id<'users'>;
+	name: string;
+	role: string;
+};
+
+type TeamPerformanceMember = {
+	_id: Id<'users'>;
+	name: string;
+	role: string;
+	metric: number;
+	metricLabel: string;
+	period: string;
+};
+
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
-	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
-	const allUsers = useQuery(api.users.list);
+
+	const teamPerformanceData = useQuery(api.metrics.getTeamPerformance, { period } as const);
+	const teamPerformance = teamPerformanceData as TeamPerformanceMember[] | undefined;
+	const allUsersData = useQuery(api.users.list);
+	const allUsers = allUsersData as User[] | undefined;
 
 	return (
 		<div className="space-y-6 p-6">
@@ -45,7 +64,7 @@ function TeamReportPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold flex items-center gap-2">
-						<Users className="h-6 w-6 text-indigo-500" />
+						<Users className="h-6 w-6 text-primary" />
 						Performance da Equipe
 					</h1>
 					<p className="text-muted-foreground">Métricas individuais e rankings</p>
@@ -65,7 +84,7 @@ function TeamReportPage() {
 
 			{/* Top Performers */}
 			<div className="grid gap-4 md:grid-cols-3">
-				{teamPerformance?.slice(0, 3).map((member, index) => (
+				{teamPerformance?.slice(0, 3).map((member: TeamPerformanceMember, index: number) => (
 					<Card key={member._id} className={index === 0 ? 'border-yellow-500/50' : ''}>
 						<CardHeader className="pb-3">
 							<div className="flex items-center justify-between">
@@ -83,7 +102,7 @@ function TeamReportPage() {
 									<AvatarFallback className="bg-primary/10 text-primary">
 										{member.name
 											.split(' ')
-											.map((n) => n[0])
+											.map((n: string) => n[0])
 											.join('')
 											.slice(0, 2)}
 									</AvatarFallback>
@@ -119,7 +138,7 @@ function TeamReportPage() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{teamPerformance?.map((member, index) => (
+							{teamPerformance?.map((member: TeamPerformanceMember, index: number) => (
 								<TableRow key={member._id}>
 									<TableCell className="font-medium">{index + 1}</TableCell>
 									<TableCell>
@@ -128,7 +147,7 @@ function TeamReportPage() {
 												<AvatarFallback className="text-xs bg-primary/10 text-primary">
 													{member.name
 														.split(' ')
-														.map((n) => n[0])
+														.map((n: string) => n[0])
 														.join('')
 														.slice(0, 2)}
 												</AvatarFallback>
@@ -173,7 +192,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u) => u.role === 'sdr').length ?? 0}
+							{allUsers?.filter((u: User) => u.role === 'sdr').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Vendas</p>
 					</CardContent>
@@ -185,7 +204,7 @@ function TeamReportPage() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{allUsers?.filter((u) => u.role === 'cs').length ?? 0}
+							{allUsers?.filter((u: User) => u.role === 'cs').length ?? 0}
 						</div>
 						<p className="text-xs text-muted-foreground">Customer Success</p>
 					</CardContent>

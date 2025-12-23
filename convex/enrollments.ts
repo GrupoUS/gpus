@@ -1,23 +1,8 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
-
-export const getByStudent = query({
-  args: { studentId: v.id('students') },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('enrollments')
-      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
-      .order('desc')
-      .collect()
-  },
-})
-
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query('enrollments').order('desc').collect()
-  },
-})
+import { mutation, query, type MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+import { api } from './_generated/api'
+import { requireAuth } from './lib/auth'
 
 export const create = mutation({
   args: {
@@ -62,10 +47,24 @@ export const create = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
-    
+
+    // Update student's denormalized products list
+    await updateStudentProducts(ctx, args.studentId)
+
     return enrollmentId
   },
 })
+
+async function updateStudentProducts(ctx: MutationCtx, studentId: Id<'students'>) {
+  const enrollments = await ctx.db
+    .query('enrollments')
+    .withIndex('by_student', (q) => q.eq('studentId', studentId))
+    .filter((q) => q.eq(q.field('status'), 'ativo'))
+    .collect()
+
+  const products = Array.from(new Set(enrollments.map((e) => e.product)))
+  await ctx.db.patch(studentId, { products: products as any })
+}
 
 export const update = mutation({
   args: {
@@ -107,5 +106,53 @@ export const update = mutation({
       ...args.patch,
       updatedAt: Date.now(),
     })
+
+    if (args.patch.status) {
+      const enrollment = await ctx.db.get(args.enrollmentId)
+      if (enrollment) {
+        await updateStudentProducts(ctx, enrollment.studentId)
+      }
+    }
   },
+})
+
+export const getByStudent = query({
+  args: { studentId: v.id('students') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthenticated')
+    
+    return await ctx.db
+      .query('enrollments')
+      .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
+      .collect()
+  },
+})
+
+/**
+ * Generate Asaas payments for an enrollment
+ * Creates payments (installments) in Asaas for the enrollment
+ */
+export const generateAsaasPayments = mutation({
+	args: {
+		enrollmentId: v.id('enrollments'),
+		billingType: v.union(
+			v.literal('BOLETO'),
+			v.literal('PIX'),
+			v.literal('CREDIT_CARD'),
+			v.literal('DEBIT_CARD'),
+			v.literal('UNDEFINED'),
+		),
+	},
+	handler: async (ctx, args): Promise<{ paymentIds: string[]; count: number }> => {
+		await requireAuth(ctx)
+
+		// Use the existing mutation from asaas.ts
+		// @ts-ignore - TypeScript has issues with deep type inference in Convex mutations
+		const result = (await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
+			enrollmentId: args.enrollmentId,
+			billingType: args.billingType,
+		})) as { paymentIds: string[]; count: number };
+		return result;
+	},
 })

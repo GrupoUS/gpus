@@ -1,10 +1,10 @@
 'use client';
 
 import { Link, useMatchRoute } from '@tanstack/react-router';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
 import type React from 'react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -93,7 +93,7 @@ export const DesktopSidebar = ({
 	return (
 		<motion.div
 			className={cn(
-				'h-full px-4 py-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 shrink-0',
+				'h-full px-4 py-4 hidden md:flex md:flex-col bg-sidebar-background shrink-0',
 				className,
 			)}
 			animate={{
@@ -118,12 +118,12 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
 	return (
 		<div
 			className={cn(
-				'h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full',
+				'h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-sidebar-background w-full',
 			)}
 			{...props}
 		>
 			<div className="flex justify-end z-20 w-full">
-				<Menu className="text-neutral-800 dark:text-neutral-200" onClick={() => setOpen(!open)} />
+				<Menu className="text-sidebar-foreground" onClick={() => setOpen(!open)} />
 			</div>
 			<AnimatePresence>
 				{open && (
@@ -136,12 +136,12 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
 							ease: 'easeInOut',
 						}}
 						className={cn(
-							'fixed h-full w-full inset-0 bg-white dark:bg-neutral-900 p-10 z-100 flex flex-col justify-between',
+							'fixed h-full w-full inset-0 bg-background p-10 z-100 flex flex-col justify-between',
 							className,
 						)}
 					>
 						<button
-							className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200"
+							className="absolute right-10 top-10 z-50 text-foreground"
 							onClick={() => setOpen(!open)}
 							type="button"
 							aria-label="Close sidebar"
@@ -161,103 +161,51 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 	const matchRoute = useMatchRoute();
 	const isActive = matchRoute({ to: link.href, fuzzy: true });
 
+	const mouseX = useMotionValue(Number.POSITIVE_INFINITY);
+	const ref = useRef<HTMLDivElement>(null);
+
+	const distance = useTransform(mouseX, (val) => {
+		const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+		return val - bounds.x - bounds.width / 2;
+	});
+
+	const widthTransform = useTransform(distance, [-150, 0, 150], [0.8, 1.3, 0.8]);
+	const scale = useSpring(widthTransform, {
+		mass: 0.1,
+		stiffness: 150,
+		damping: 12,
+	});
+
 	return (
 		<Link
 			to={link.href}
 			className={cn(
 				'flex items-center justify-start gap-2 group/sidebar py-2.5',
-				isActive && 'bg-neutral-200/50 dark:bg-neutral-700/50 rounded-md px-2',
+				isActive && 'bg-sidebar-accent rounded-md px-2',
 				className,
 			)}
+			onMouseMove={(e) => mouseX.set(e.pageX)}
+			onMouseLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
 			{...props}
 		>
-			{link.icon}
+			<motion.div
+				ref={ref}
+				style={{ scale }}
+				className="will-change-transform origin-center"
+				transition={{ type: 'spring', stiffness: 150, damping: 12 }}
+			>
+				{link.icon}
+			</motion.div>
 
 			<motion.span
 				animate={{
 					display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
 					opacity: animate ? (open ? 1 : 0) : 1,
 				}}
-				className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block p-0! m-0!"
+				className="text-sidebar-foreground text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block p-0! m-0!"
 			>
 				{link.label}
 			</motion.span>
 		</Link>
-	);
-};
-
-export const SidebarLinkWithSubmenu = ({
-	link,
-	className,
-	...props
-}: {
-	link: Links;
-	className?: string;
-}) => {
-	const { open, animate } = useSidebar();
-	const [isExpanded, setIsExpanded] = useState(false);
-	const matchRoute = useMatchRoute();
-
-	// Check if any child route is active
-	const isChildActive = link.children?.some((child) => matchRoute({ to: child.href, fuzzy: true }));
-
-	// Check if parent route is active (if applicable, though usually parent with children is abstract)
-	const isParentActive = matchRoute({ to: link.href, fuzzy: true });
-	const isActive = isParentActive || isChildActive;
-
-	return (
-		<div className="flex flex-col">
-			{/* Parent Link */}
-			<button
-				onClick={() => setIsExpanded(!isExpanded)}
-				className={cn(
-					'flex items-center justify-between gap-2 group/sidebar py-2.5 w-full',
-					isActive && 'bg-neutral-200/50 dark:bg-neutral-700/50 rounded-md',
-					className,
-				)}
-				{...props}
-			>
-				<div className="flex items-center gap-2">
-					{link.icon}
-					<motion.span
-						animate={{
-							display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
-							opacity: animate ? (open ? 1 : 0) : 1,
-						}}
-						className="text-neutral-700 dark:text-neutral-200 text-sm whitespace-pre"
-					>
-						{link.label}
-					</motion.span>
-				</div>
-				{link.children && (
-					<motion.div
-						animate={{
-							display: animate ? (open ? 'block' : 'none') : 'block',
-							opacity: animate ? (open ? 1 : 0) : 1,
-							rotate: isExpanded ? 180 : 0,
-						}}
-					>
-						<ChevronDown className="h-4 w-4 text-neutral-500" />
-					</motion.div>
-				)}
-			</button>
-
-			{/* Submenu */}
-			{link.children && isExpanded && (
-				<motion.div
-					initial={{ height: 0, opacity: 0 }}
-					animate={{
-						height: open ? 'auto' : 0,
-						opacity: open ? 1 : 0,
-					}}
-					exit={{ height: 0, opacity: 0 }}
-					className="ml-6 mt-1 space-y-1 overflow-hidden"
-				>
-					{link.children.map((child, idx) => (
-						<SidebarLink key={idx} link={child} className="py-1.5" />
-					))}
-				</motion.div>
-			)}
-		</div>
 	);
 };

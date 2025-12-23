@@ -40,8 +40,8 @@ const statusVariants: Record<string, 'default' | 'secondary' | 'destructive' | '
 const paymentStatusColors: Record<string, string> = {
 	em_dia: 'text-green-500',
 	atrasado: 'text-red-500',
-	quitado: 'text-blue-500',
-	cancelado: 'text-gray-500',
+	quitado: 'text-primary',
+	cancelado: 'text-muted-foreground',
 };
 
 export function EnrollmentCard({ enrollment, onClick }: EnrollmentCardProps) {

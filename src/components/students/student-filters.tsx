@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { productLabels } from '@/lib/constants';
 
 interface StudentFiltersProps {
 	search: string;
@@ -20,6 +21,8 @@ interface StudentFiltersProps {
 	onStatusChange: (value: string) => void;
 	churnRisk: string;
 	onChurnRiskChange: (value: string) => void;
+	product: string;
+	onProductChange: (value: string) => void;
 	onClear: () => void;
 }
 
@@ -30,9 +33,11 @@ export function StudentFilters({
 	onStatusChange,
 	churnRisk,
 	onChurnRiskChange,
+	product,
+	onProductChange,
 	onClear,
 }: StudentFiltersProps) {
-	const hasFilters = search || status !== 'all' || churnRisk !== 'all';
+	const hasFilters = search || status !== 'all' || churnRisk !== 'all' || product !== 'all';
 
 	return (
 		<div className="space-y-4">
@@ -76,9 +81,25 @@ export function StudentFilters({
 					</SelectContent>
 				</Select>
 
+				{/* Product Filter */}
+				<Select value={product} onValueChange={onProductChange}>
+					<SelectTrigger className="w-[160px]">
+						<SelectValue placeholder="Produto" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Todos Produtos</SelectItem>
+						<SelectItem value="trintae3">TRINTAE3</SelectItem>
+						<SelectItem value="otb">OTB MBA</SelectItem>
+						<SelectItem value="black_neon">Black NEON</SelectItem>
+						<SelectItem value="comunidade">Comunidade US</SelectItem>
+						<SelectItem value="auriculo">Aurículo</SelectItem>
+						<SelectItem value="na_mesa_certa">Na Mesa Certa</SelectItem>
+					</SelectContent>
+				</Select>
+
 				{/* Clear Filters */}
 				{hasFilters && (
-					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1">
+					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1 ml-auto">
 						<X className="h-4 w-4" />
 						Limpar
 					</Button>
@@ -118,6 +139,18 @@ export function StudentFilters({
 							<button
 								type="button"
 								onClick={() => onChurnRiskChange('all')}
+								className="ml-1 hover:text-destructive"
+							>
+								<X className="h-3 w-3" />
+							</button>
+						</Badge>
+					)}
+					{product !== 'all' && (
+						<Badge variant="secondary" className="gap-1">
+							Produto: {productLabels[product] || product}
+							<button
+								type="button"
+								onClick={() => onProductChange('all')}
 								className="ml-1 hover:text-destructive"
 							>
 								<X className="h-3 w-3" />

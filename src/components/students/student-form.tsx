@@ -1,9 +1,9 @@
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
+import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -46,6 +47,9 @@ const formSchema = z.object({
 	clinicName: z.string().optional(),
 	clinicCity: z.string().optional(),
 	assignedCS: z.string().optional(),
+	lgpdConsent: z.boolean().refine((val) => val === true, {
+		message: 'Você deve aceitar os termos da LGPD',
+	}),
 });
 
 interface StudentFormProps {
@@ -59,11 +63,11 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	const createStudent = useMutation(api.students.create);
 	const updateStudent = useMutation(api.students.update);
 	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const users = useQuery(api.users.list, {});
+	const csUsers = useQuery(api.users.listCSUsers);
 
 	const isEditMode = !!studentId;
 
-	const form = useForm({
+	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
@@ -76,24 +80,27 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			clinicName: '',
 			clinicCity: '',
 			assignedCS: '',
+			lgpdConsent: false,
 		},
 	});
 
-	// Load existing student data when editing
-	if (isEditMode && existingStudent && !form.formState.isDirty) {
-		form.reset({
-			name: existingStudent.name,
-			email: existingStudent.email,
-			phone: existingStudent.phone,
-			cpf: existingStudent.cpf || '',
-			profession: existingStudent.profession,
-			professionalId: existingStudent.professionalId || '',
-			hasClinic: existingStudent.hasClinic,
-			clinicName: existingStudent.clinicName || '',
-			clinicCity: existingStudent.clinicCity || '',
-			assignedCS: existingStudent.assignedCS || '',
-		});
-	}
+	// Use useEffect to load data instead of resetting during render to avoid #301 error
+	useEffect(() => {
+		if (isEditMode && existingStudent && !form.formState.isDirty) {
+			form.reset({
+				name: existingStudent.name,
+				email: existingStudent.email,
+				phone: existingStudent.phone,
+				cpf: existingStudent.cpf || '',
+				profession: existingStudent.profession,
+				professionalId: existingStudent.professionalId || '',
+				hasClinic: existingStudent.hasClinic,
+				clinicName: existingStudent.clinicName || '',
+				clinicCity: existingStudent.clinicCity || '',
+				assignedCS: existingStudent.assignedCS || '',
+			});
+		}
+	}, [isEditMode, existingStudent, form]);
 
 	const handleCreate = async (values: z.infer<typeof formSchema>) => {
 		await createStudent({
@@ -108,6 +115,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			clinicCity: values.clinicCity || undefined,
 			status: 'ativo',
 			assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+			lgpdConsent: values.lgpdConsent,
 		});
 		toast.success('Aluno criado com sucesso!');
 	};
@@ -159,6 +167,11 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{isEditMode ? 'Editar Aluno' : 'Novo Aluno'}</DialogTitle>
+					<DialogDescription>
+						{isEditMode
+							? 'Atualize os dados cadastrais deste aluno.'
+							: 'Insira os dados para cadastrar um novo aluno no sistema.'}
+					</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -261,21 +274,22 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>CS Atribuído (Opcional)</FormLabel>
-										<Select onValueChange={field.onChange} value={field.value}>
+										<Select
+											onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+											value={field.value || 'none'}
+										>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione um CS" />
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="">Nenhum</SelectItem>
-												{users
-													?.filter((u: Doc<'users'>) => u.role === 'cs')
-													.map((user: Doc<'users'>) => (
-														<SelectItem key={user._id} value={user._id}>
-															{user.name}
-														</SelectItem>
-													))}
+												<SelectItem value="none">Nenhum</SelectItem>
+												{csUsers?.map((user: { _id: string; name: string }) => (
+													<SelectItem key={user._id} value={user._id}>
+														{user.name}
+													</SelectItem>
+												))}
 											</SelectContent>
 										</Select>
 										<FormMessage />
@@ -329,6 +343,28 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											<Input placeholder="Ex: São Paulo" {...field} />
 										</FormControl>
 										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
+
+						{/* LGPD Consent */}
+						{!isEditMode && (
+							<FormField
+								control={form.control}
+								name="lgpdConsent"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50">
+										<FormControl>
+											<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+										</FormControl>
+										<div className="space-y-1 leading-none">
+											<FormLabel>
+												Estou de acordo com o processamento dos meus dados pessoais para fins
+												acadêmicos e de gestão, conforme a Lei Geral de Proteção de Dados (LGPD).
+											</FormLabel>
+											<FormMessage />
+										</div>
 									</FormItem>
 								)}
 							/>

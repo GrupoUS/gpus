@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const tempConfig = {
 	quente: { icon: Flame, color: 'text-red-500', bg: 'bg-red-500/10' },
 	morno: { icon: Thermometer, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-	frio: { icon: Snowflake, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+	frio: { icon: Snowflake, color: 'text-primary', bg: 'bg-primary/10' },
 } as const;
 
 const productLabels: Record<string, string> = {

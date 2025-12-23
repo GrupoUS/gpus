@@ -1,44 +1,89 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
+// Queries
 export const list = query({
   args: {
-    department: v.optional(v.string()),
+    // Comment 7: Type safety - Explicit unions
+    department: v.optional(v.union(
+      v.literal('vendas'),
+      v.literal('cs'),
+      v.literal('suporte')
+    )),
     search: v.optional(v.string()),
-    status: v.optional(v.string()),
+    status: v.optional(v.union(
+      v.literal('aguardando_atendente'),
+      v.literal('em_atendimento'),
+      v.literal('aguardando_cliente'),
+      v.literal('resolvido'),
+      v.literal('bot_ativo')
+    )),
   },
   handler: async (ctx, args) => {
-    let conversations
+    await requireAuth(ctx)
     
+    let conversations
+
     if (args.department) {
       conversations = await ctx.db
         .query('conversations')
-        // @ts-ignore - Schema defines department literals, but args.department is string. 
-        // We trust the filter logic or could validate strictly if needed.
-        .withIndex('by_department', (q) => q.eq('department', args.department as any))
-        .collect()
+        .withIndex('by_department', (q) => q.eq('department', args.department!))
+        .order('desc')
+        .take(50)
     } else {
-      conversations = await ctx.db.query('conversations').collect()
+      conversations = await ctx.db
+        .query('conversations')
+        .order('desc')
+        .take(50)
     }
+
+    // Comment 3: Limit results (done above with .take(50)) and batch lookups
     
     // Filter by status if provided
     if (args.status) {
       conversations = conversations.filter(c => c.status === args.status)
     }
 
+    // Collect unique IDs for batch lookup
+    const leadIds = new Set<string>()
+    const studentIds = new Set<string>()
+    conversations.forEach(c => {
+        if (c.leadId) leadIds.add(c.leadId)
+        if (c.studentId) studentIds.add(c.studentId)
+    })
+
+    // Batch fetch leads and students
+    const uniqueLeadIds = Array.from(leadIds)
+    const uniqueStudentIds = Array.from(studentIds)
+
+    const leads = await Promise.all(uniqueLeadIds.map(id => ctx.db.get(id as any)))
+    const students = await Promise.all(uniqueStudentIds.map(id => ctx.db.get(id as any)))
+
+    const leadsMap = new Map<string, any>()
+    const studentsMap = new Map<string, any>()
+
+    leads.forEach((l, i) => {
+        if (l) leadsMap.set(uniqueLeadIds[i], l)
+    })
+    students.forEach((s, i) => {
+        if (s) studentsMap.set(uniqueStudentIds[i], s)
+    })
+
     // Enrich with contactName and lastMessage
     const enrichedConversations = await Promise.all(
       conversations.map(async (c) => {
         let contactName = 'Desconhecido'
         if (c.leadId) {
-          const lead = await ctx.db.get(c.leadId)
-          if (lead) contactName = lead.name
+            const lead = leadsMap.get(c.leadId)
+            if (lead) contactName = lead.name
         } else if (c.studentId) {
-          const student = await ctx.db.get(c.studentId)
-          if (student) contactName = student.name
+            const student = studentsMap.get(c.studentId)
+            if (student) contactName = student.name
         }
 
         // Fetch last message content
+        // This is still N queries but limited to 50 max (take(50)).
         const lastMsg = await ctx.db
           .query('messages')
           .withIndex('by_conversation', (q) => q.eq('conversationId', c._id))
@@ -70,6 +115,8 @@ export const list = query({
 export const getById = query({
   args: { id: v.id('conversations') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     const conversation = await ctx.db.get(args.id)
     if (!conversation) return null
 
@@ -97,6 +144,8 @@ export const getById = query({
 export const getByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('conversations')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
@@ -107,6 +156,8 @@ export const getByStudent = query({
 export const getByLead = query({
   args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('conversations')
       .withIndex('by_lead', (q) => q.eq('leadId', args.leadId))

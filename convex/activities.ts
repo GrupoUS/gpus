@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { getOrganizationId, requireAuth } from './lib/auth'
 
 // Common args for activity logging
 const activityArgs = {
@@ -32,6 +33,8 @@ const activityArgs = {
 export const listByLead = query({
   args: { leadId: v.id('leads') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+
     return await ctx.db
       .query('activities')
       .withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
@@ -43,6 +46,8 @@ export const listByLead = query({
 export const listByStudent = query({
   args: { studentId: v.id('students') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+
     return await ctx.db
       .query('activities')
       .withIndex('by_student', (q) => q.eq('studentId', args.studentId))
@@ -60,20 +65,13 @@ export const logActivity = mutation({
     conversationId: v.optional(v.id('conversations')),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthenticated')
-
-    // Find internal user ID based on clerkId? 
-    // For now we might just store the clerkId or rely on frontend to pass it (not secure).
-    // Better: look up user by clerkId in `users` table.
-    const user = await ctx.db
-        .query("users")
-        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-        .first();
+    const identity = await requireAuth(ctx)
+    const organizationId = await getOrganizationId(ctx)
 
     await ctx.db.insert('activities', {
       ...args,
-      userId: user?._id, // If user not found (e.g. admin sync issue), might be undefined or we handle it
+      organizationId,
+      performedBy: identity.subject,
       createdAt: Date.now(),
     })
   },

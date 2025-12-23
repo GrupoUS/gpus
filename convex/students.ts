@@ -1,5 +1,10 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { internal } from './_generated/api'
+import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
+import { logAudit } from './lgpd'
+import { getOrganizationId, requirePermission } from './lib/auth'
+import { PERMISSIONS } from './lib/permissions'
 
 // Queries
 export const list = query({
@@ -8,112 +13,205 @@ export const list = query({
     product: v.optional(v.string()),
     status: v.optional(v.string()),
     churnRisk: v.optional(v.string()),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let students = await ctx.db.query('students').order('desc').collect()
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+    const organizationId = await getOrganizationId(ctx)
 
-    // Apply filters
-    if (args.status) {
-      students = students.filter((s) => s.status === args.status)
+    const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
+    const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
+
+    let query = ctx.db.query('students')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId));
+
+    if (status) {
+      query = ctx.db.query('students')
+        .withIndex('by_status', q => q.eq('status', status))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    } else if (churnRisk) {
+      query = ctx.db.query('students')
+        .withIndex('by_churn_risk', q => q.eq('churnRisk', churnRisk))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
     }
-    if (args.churnRisk) {
-      students = students.filter((s) => s.churnRisk === args.churnRisk)
-    }
+
+    const students = await query.order('desc').take(args.limit ?? 100);
+
     if (args.search) {
       const searchLower = args.search.toLowerCase()
-      students = students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchLower) ||
-          s.email.toLowerCase().includes(searchLower) ||
-          s.phone.includes(searchLower)
-      )
+      // Note: Substring search still filtered in memory for now
+      return students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower))
     }
 
-    // Enrich with mainProduct from enrollments and filter by product if needed
-    const enrichedStudents = await Promise.all(
-      students.map(async (student) => {
-        const enrollment = await ctx.db
-          .query('enrollments')
-          .withIndex('by_student', (q) => q.eq('studentId', student._id))
-          .order('desc')
-          .first()
-
-        // Filter by product if requested
-        if (args.product && enrollment?.product !== args.product) {
-          return null
-        }
-
-        return {
-          ...student,
-          mainProduct: enrollment?.product,
-        }
-      })
-    )
-
-    return enrichedStudents.filter((s) => s !== null)
+    return students;
   },
 })
 
 export const getById = query({
   args: { id: v.id('students') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id)
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+
+    const student = await ctx.db.get(args.id)
+    if (!student) return null
+
+    // Decrypt sensitive fields for authorized view
+    if (student.encryptedCPF) student.cpf = await decryptCPF(student.encryptedCPF)
+    if (student.encryptedEmail) student.email = await decrypt(student.encryptedEmail)
+    if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone)
+
+    return student
   },
 })
 
 export const getChurnAlerts = query({
   args: {},
   handler: async (ctx) => {
-    const students = await ctx.db
-      .query('students')
-      .filter(q => 
-        q.or(
-          q.eq(q.field('churnRisk'), 'alto'),
-          q.eq(q.field('churnRisk'), 'medio')
-        )
-      )
-      .collect()
+    try {
+      await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+      const ENGAGEMENT_WINDOW_DAYS = 30
+      const ENGAGEMENT_WINDOW_MS = ENGAGEMENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+      const thirtyDaysAgo = Date.now() - ENGAGEMENT_WINDOW_MS
 
-    const alerts: Array<{ _id: any, studentName: string, reason: string, risk: 'alto' | 'medio' }> = []
-
-    for (const student of students) {
-      // Verificar pagamento atrasado
-      const enrollments = await ctx.db
-        .query('enrollments')
-        .withIndex('by_student', q => q.eq('studentId', student._id))
+      const highRiskStudents = await ctx.db
+        .query('students')
+        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'alto'))
         .collect()
-      
-      const hasLatePayment = enrollments.some(e => e.paymentStatus === 'atrasado')
-      if (hasLatePayment) {
-        alerts.push({
-          _id: student._id,
-          studentName: student.name,
-          reason: 'Pagamento atrasado',
-          risk: (student.churnRisk === 'baixo' ? 'medio' : student.churnRisk) as 'alto' | 'medio',
-        })
-        continue
+
+      const mediumRiskStudents = await ctx.db
+        .query('students')
+        .withIndex('by_churn_risk', (q) => q.eq('churnRisk', 'medio'))
+        .collect()
+
+      const students = [...highRiskStudents, ...mediumRiskStudents]
+
+      students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0))
+
+      const alerts: Array<{
+        _id: any
+        studentName: string
+        reason: string
+        risk: 'alto' | 'medio'
+      }> = []
+
+      for (const student of students) {
+        if (alerts.length >= 5) break
+
+        const lateEnrollment = await ctx.db
+          .query('enrollments')
+          .withIndex('by_student', (q) => q.eq('studentId', student._id))
+          .filter((q) => q.eq(q.field('paymentStatus'), 'atrasado'))
+          .first()
+
+        if (lateEnrollment) {
+          alerts.push({
+            _id: student._id,
+            studentName: student.name,
+            reason: 'Pagamento atrasado',
+            risk: 'alto',
+          })
+          continue
+        }
+
+        if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
+          alerts.push({
+            _id: student._id,
+            studentName: student.name,
+            reason: 'Sem engajamento',
+            risk: student.churnRisk as 'alto' | 'medio',
+          })
+        }
       }
 
-      // Verificar engajamento (últimos 30 dias)
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
-      if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
-        alerts.push({
-          _id: student._id,
-          studentName: student.name,
-          reason: 'Sem engajamento',
-          risk: (student.churnRisk === 'baixo' ? 'medio' : student.churnRisk) as 'alto' | 'medio',
-        })
+      return alerts
+    } catch (error) {
+      console.error('Error in getChurnAlerts:', error)
+      return []
+    }
+  },
+})
+
+export const getStudentsGroupedByProducts = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(v.string()),
+    churnRisk: v.optional(v.string()),
+    product: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+    const organizationId = await getOrganizationId(ctx)
+
+    const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
+    const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
+
+    let query = ctx.db.query('students')
+      .withIndex('by_organization', q => q.eq('organizationId', organizationId));
+
+    if (status) {
+      query = ctx.db.query('students')
+        .withIndex('by_status', q => q.eq('status', status))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    } else if (churnRisk) {
+      query = ctx.db.query('students')
+        .withIndex('by_churn_risk', q => q.eq('churnRisk', churnRisk))
+        .filter(q => q.eq(q.field('organizationId'), organizationId));
+    }
+
+    // Safety limit to prevent O(n) memory issues
+    const students = await query.order('desc').take(500);
+
+    const products = [
+      'trintae3',
+      'otb',
+      'black_neon',
+      'comunidade',
+      'auriculo',
+      'na_mesa_certa',
+      'sem_produto',
+    ] as const
+
+    const grouped: Record<string, typeof students> = {}
+    for (const p of products) {
+      grouped[p] = []
+    }
+
+    for (const student of students) {
+      // Filter by search in memory
+      if (args.search) {
+        const searchLower = args.search.toLowerCase()
+        if (!student.name || !student.name.toLowerCase().includes(searchLower)) {
+          continue
+        }
+      }
+
+      const studentProducts = student.products || []
+
+      if (studentProducts.length === 0) {
+        grouped['sem_produto'].push(student)
+      } else {
+        for (const prod of studentProducts) {
+          if (grouped[prod]) {
+            grouped[prod].push(student)
+          }
+        }
       }
     }
 
-    // Ordenar por risco (alto primeiro) e limitar a 5
-    return alerts
-      .sort((a, b) => {
-        if (a.risk === 'alto' && b.risk !== 'alto') return -1
-        if (a.risk !== 'alto' && b.risk === 'alto') return 1
-        return 0
-      })
-      .slice(0, 5)
+    if (args.product && args.product !== 'all') {
+      for (const key of Object.keys(grouped)) {
+        if (key !== args.product) {
+          grouped[key] = []
+        }
+      }
+    }
+
+    return products.map((key) => ({
+      id: key,
+      name: key,
+      students: grouped[key],
+      count: grouped[key].length,
+    }))
   },
 })
 
@@ -137,17 +235,78 @@ export const create = mutation({
     ),
     assignedCS: v.optional(v.id('users')),
     leadId: v.optional(v.id('leads')),
+    lgpdConsent: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthenticated')
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
+    const organizationId = await getOrganizationId(ctx)
+
+    // Check for existing student with same phone (duplicate prevention)
+    const existingStudent = await ctx.db
+      .query('students')
+      .withIndex('by_phone', (q) => q.eq('phone', args.phone))
+      .first()
+
+    if (existingStudent) {
+      return existingStudent._id
+    }
+
+    const encryptedCPF = args.cpf ? await encryptCPF(args.cpf) : undefined
+    const encryptedEmail = await encrypt(args.email)
+    const encryptedPhone = await encrypt(args.phone)
+
+    const { email: _email, phone: _phone, cpf: _cpf, lgpdConsent, ...safeArgs } = args
 
     const studentId = await ctx.db.insert('students', {
-      ...args,
+      ...safeArgs,
+      organizationId,
+      encryptedCPF,
+      encryptedEmail,
+      encryptedPhone,
+      lgpdConsent,
+      name: args.name,
+      phone: args.phone,
+      email: args.email,
       churnRisk: 'baixo',
+      consentGrantedAt: lgpdConsent ? Date.now() : undefined,
+      consentVersion: lgpdConsent ? 'v1.0' : undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
+
+    await logAudit(ctx, {
+      studentId,
+      actionType: lgpdConsent ? 'consent_granted' : 'data_creation',
+      dataCategory: 'personal_data',
+      description: lgpdConsent ? 'Student profile created with explicit consent' : 'Student profile created',
+      legalBasis: lgpdConsent ? 'consentimento' : 'contract_execution'
+    })
+
+    // Auto-sync with Asaas (async, don't wait)
+    try {
+      await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
+        studentId,
+      })
+    } catch (error) {
+      // Log but don't fail student creation if Asaas sync fails
+      console.error('Failed to schedule Asaas customer sync:', error)
+    }
+
+    // Auto-sync to email marketing (if student has email)
+    if (args.email) {
+      try {
+        await ctx.scheduler.runAfter(0, internal.emailMarketing.syncStudentAsContactInternal, {
+          studentId,
+          organizationId,
+        })
+      } catch (error) {
+        // Log but don't fail student creation if email sync fails
+        console.error('Failed to schedule email marketing sync:', error)
+      }
+    }
+
+
+
     return studentId
   },
 })
@@ -182,12 +341,40 @@ export const update = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthenticated')
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
+
+    // biome-ignore lint/suspicious/noExplicitAny: dynamic patch object
+    const updates: any = { ...args.patch }
+
+    if (args.patch.cpf) updates.encryptedCPF = await encryptCPF(args.patch.cpf)
+    if (args.patch.email) updates.encryptedEmail = await encrypt(args.patch.email)
+    if (args.patch.phone) updates.encryptedPhone = await encrypt(args.patch.phone)
 
     await ctx.db.patch(args.studentId, {
-      ...args.patch,
+      ...updates,
       updatedAt: Date.now(),
     })
+
+    await logAudit(ctx, {
+      studentId: args.studentId,
+      actionType: 'data_modification',
+      dataCategory: 'personal_data',
+      description: 'Student profile updated',
+      legalBasis: 'contract_execution',
+      metadata: { fields: Object.keys(args.patch) }
+    })
+
+    // Auto-sync with Asaas if CPF/email/phone changed
+    const shouldSync = args.patch.cpf || args.patch.email || args.patch.phone
+    if (shouldSync) {
+      try {
+        await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
+          studentId: args.studentId,
+        })
+      } catch (error) {
+        // Log but don't fail update if Asaas sync fails
+        console.error('Failed to schedule Asaas customer sync:', error)
+      }
+    }
   },
 })

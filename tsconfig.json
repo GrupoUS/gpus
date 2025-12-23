@@ -34,4 +34,4 @@
     "allowJs": true,
     "forceConsistentCasingInFileNames": true
   }
-}
+} // Force TS reload

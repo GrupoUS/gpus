@@ -1,8 +1,6 @@
-import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 export function Hero() {
@@ -76,30 +74,9 @@ export function Hero() {
 					variants={fadeInUp}
 					className="font-sans text-xl text-muted-foreground max-w-2xl mx-auto"
 				>
-					Uma plataforma completa para escalar suas vendas, gerenciar leads e automatizar processos.
-					Tudo isso com a segurança e conformidade que você precisa.
+					A plataforma que escala suas vendas, gerencia o controle de leads e automatiza seus
+					processos, em um só lugar!
 				</motion.p>
-
-				{/* CTAs */}
-				<motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
-					<Button
-						asChild
-						size="lg"
-						className="rounded-full h-12 px-8 text-base shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
-					>
-						<Link to="/sign-in">
-							Começar Agora <ArrowRight className="ml-2 h-4 w-4" />
-						</Link>
-					</Button>
-					<Button
-						asChild
-						variant="outline"
-						size="lg"
-						className="rounded-full h-12 px-8 text-base backdrop-blur-sm bg-background/50 hover:bg-background/70"
-					>
-						<Link to="/sign-in">Agendar Demo</Link>
-					</Button>
-				</motion.div>
 			</motion.div>
 		</section>
 	);

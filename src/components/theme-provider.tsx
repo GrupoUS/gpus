@@ -20,15 +20,26 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const VALID_THEMES: Theme[] = ['dark', 'light', 'system'];
+
 export function ThemeProvider({
 	children,
-	defaultTheme = 'dark',
-	storageKey = 'gpus-ui-theme',
+	defaultTheme = 'system',
+	storageKey = 'vite-ui-theme',
 	...props
 }: ThemeProviderProps) {
-	const [theme, setTheme] = useState<Theme>(
-		() => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
-	);
+	const [theme, setTheme] = useState<Theme>(() => {
+		const stored = localStorage.getItem(storageKey) as Theme | null;
+		if (stored && VALID_THEMES.includes(stored)) {
+			return stored;
+		}
+
+		// Invalid or missing theme: cleanup and fall back to default
+		if (stored) {
+			localStorage.removeItem(storageKey);
+		}
+		return defaultTheme;
+	});
 
 	useEffect(() => {
 		const root = window.document.documentElement;
@@ -50,8 +61,10 @@ export function ThemeProvider({
 	const value = {
 		theme,
 		setTheme: (theme: Theme) => {
-			localStorage.setItem(storageKey, theme);
-			setTheme(theme);
+			if (VALID_THEMES.includes(theme)) {
+				localStorage.setItem(storageKey, theme);
+				setTheme(theme);
+			}
 		},
 	};
 

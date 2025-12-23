@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 
 import { ChatInput } from './chat-input';
 import { MessageBubble } from './message-bubble';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -32,7 +33,9 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	// Scroll to bottom on new messages
 	useEffect(() => {
 		if (scrollRef.current) {
-			const scrollElement = scrollRef.current;
+			const scrollElement =
+				(scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement) ||
+				scrollRef.current;
 			const isNearBottom =
 				scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
 
@@ -44,6 +47,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	}, [messages]);
 
 	const handleSendMessage = async (content: string) => {
+		// Short-circuit if conversation is not loaded or doesn't exist
+		if (conversation === undefined || conversation === null) {
+			return;
+		}
 		await sendMessage({
 			conversationId,
 			content,
@@ -51,7 +58,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 		});
 	};
 
-	if (!conversation) {
+	if (conversation === undefined) {
 		return (
 			<div className="flex items-center justify-center h-full">
 				<div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -59,10 +66,22 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 		);
 	}
 
+	if (conversation === null) {
+		return (
+			<div className="flex items-center justify-center h-full text-muted-foreground">
+				Conversa não encontrada
+			</div>
+		);
+	}
+
+	// Safety check for contactName if existing, else use channel
+	const contactName = conversation.contactName;
+	const displayName = contactName || conversation.channel;
+
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex flex-col h-full bg-background">
 			{/* Header */}
-			<div className="border-b px-4 py-3 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+			<div className="border-b px-4 py-3 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						{onBack && (
@@ -70,13 +89,16 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 								<ArrowLeft className="h-5 w-5" />
 							</Button>
 						)}
-						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
-							<User className="h-5 w-5 text-white" />
+						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white shrink-0">
+							<User className="h-5 w-5" />
 						</div>
 						<div>
-							<h3 className="font-semibold text-sm">
-								{conversation.channel} - {conversation.department}
-							</h3>
+							<div className="flex items-center gap-2">
+								<h3 className="font-semibold text-sm">{displayName}</h3>
+								<Badge variant="secondary" className="text-[10px] h-5 px-1 capitalize">
+									{conversation.department}
+								</Badge>
+							</div>
 							<p className="text-xs text-muted-foreground capitalize">
 								{conversation.status.replace(/_/g, ' ')}
 							</p>
@@ -84,10 +106,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 					</div>
 
 					<div className="flex items-center gap-1">
-						<Button variant="ghost" size="icon">
+						<Button variant="ghost" size="icon" className="hidden sm:inline-flex">
 							<Phone className="h-4 w-4" />
 						</Button>
-						<Button variant="ghost" size="icon">
+						<Button variant="ghost" size="icon" className="hidden sm:inline-flex">
 							<Video className="h-4 w-4" />
 						</Button>
 						<DropdownMenu>
@@ -123,7 +145,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 						<p className="text-sm">Envie uma mensagem para começar</p>
 					</div>
 				) : (
-					<div className="space-y-1">
+					<div className="space-y-1 pb-4">
 						{messages.map((message: Doc<'messages'>) => (
 							<MessageBubble
 								key={message._id}
@@ -136,7 +158,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 			</ScrollArea>
 
 			{/* Input */}
-			<ChatInput onSend={handleSendMessage} />
+			<ChatInput
+				onSend={handleSendMessage}
+				disabled={conversation === undefined || conversation === null}
+			/>
 		</div>
 	);
 }

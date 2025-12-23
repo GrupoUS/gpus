@@ -11,9 +11,6 @@ import { LeadFilters } from '@/components/crm/lead-filters';
 const LeadDetail = lazy(() =>
 	import('@/components/crm/lead-detail').then((module) => ({ default: module.LeadDetail })),
 );
-const LeadForm = lazy(() =>
-	import('@/components/crm/lead-form').then((module) => ({ default: module.LeadForm })),
-);
 const PipelineKanban = lazy(() =>
 	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
 );
@@ -21,6 +18,9 @@ const PipelineKanban = lazy(() =>
 export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
+
+type LeadItem = Doc<'leads'>;
+type ListLeadsResult = { page: LeadItem[]; isDone: boolean; continueCursor: string };
 
 function CRMPage() {
 	const [filters, setFilters] = useState({
@@ -33,12 +33,13 @@ function CRMPage() {
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
 	const leads = useQuery(api.leads.listLeads, {
+		paginationOpts: { numItems: 1000, cursor: null },
 		search: filters.search || undefined,
 		stages: filters.stages.length ? filters.stages : undefined,
 		temperature: filters.temperature.length ? filters.temperature : undefined,
 		products: filters.products.length ? filters.products : undefined,
 		source: filters.source.length ? filters.source : undefined,
-	});
+	}) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -55,7 +56,7 @@ function CRMPage() {
 	};
 
 	const formattedLeads =
-		leads?.map((l: Doc<'leads'>) => ({
+		leads?.page?.map((l) => ({
 			...l,
 			stage: l.stage,
 			temperature: l.temperature,
@@ -72,11 +73,6 @@ function CRMPage() {
 						<p className="font-sans text-base text-muted-foreground">
 							Gerencie seus leads e oportunidades
 						</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<Suspense fallback={<div>Carregando formulário...</div>}>
-							<LeadForm />
-						</Suspense>
 					</div>
 				</div>
 

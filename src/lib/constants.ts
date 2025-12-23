@@ -60,6 +60,17 @@ export const churnRiskColors: Record<string, string> = {
 	alto: 'text-red-500',
 };
 
+// Product colors for UI
+export const productColors: Record<string, { color: string; bg: string }> = {
+	trintae3: { color: 'bg-[#3B82F6]', bg: 'bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20' },
+	otb: { color: 'bg-[#10B981]', bg: 'bg-[#10B981]/10 hover:bg-[#10B981]/20' },
+	black_neon: { color: 'bg-[#F59E0B]', bg: 'bg-[#F59E0B]/10 hover:bg-[#F59E0B]/20' },
+	comunidade: { color: 'bg-[#EF4444]', bg: 'bg-[#EF4444]/10 hover:bg-[#EF4444]/20' },
+	auriculo: { color: 'bg-[#8B5CF6]', bg: 'bg-[#8B5CF6]/10 hover:bg-[#8B5CF6]/20' },
+	na_mesa_certa: { color: 'bg-[#EC4899]', bg: 'bg-[#EC4899]/10 hover:bg-[#EC4899]/20' },
+	sem_produto: { color: 'bg-gray-500', bg: 'bg-gray-500/10 hover:bg-gray-500/20' },
+};
+
 // Currency formatter for BRL
 export const formatCurrency = (value: number): string =>
 	new Intl.NumberFormat('pt-BR', {

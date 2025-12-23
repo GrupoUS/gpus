@@ -1,0 +1,14 @@
+Starting Container
+2025-12-18T16:49:25.169937289Z [INFO] maxprocs: Updating GOMAXPROCS=1: determined from CPU quota ts=1766076564.9262223
+2025-12-18T16:49:25.169941202Z [INFO] GOMEMLIMIT is updated GOMEMLIMIT=460800000 package="github.com/KimMachineGun/automemlimit/memlimit" previous=9223372036854776000 ts=1766076564.9264112
+2025-12-18T16:49:25.169944607Z [INFO] using config from file file="Caddyfile" ts=1766076564.9264638
+2025-12-18T16:49:25.169948469Z [INFO] adapted config to JSON adapter="caddyfile" ts=1766076564.9276135
+2025-12-18T16:49:25.169952658Z [WARN] admin endpoint disabled logger="admin" ts=1766076564.928002
+2025-12-18T16:49:25.169956413Z [INFO] automatic HTTPS is completely disabled for server logger="http.auto_https" server_name="srv0" ts=1766076564.9281392
+2025-12-18T16:49:25.169960438Z [WARN] HTTP/2 skipped because it requires TLS addr=":8080" logger="http" network="tcp" ts=1766076564.9285064
+2025-12-18T16:49:25.169964157Z [WARN] HTTP/3 skipped because it requires TLS addr=":8080" logger="http" network="tcp" ts=1766076564.9285123
+2025-12-18T16:49:25.169968283Z [INFO] server running logger="http.log" name="srv0" protocols=["h1","h2","h3"] ts=1766076564.9285145
+2025-12-18T16:49:25.169972584Z [INFO] serving initial configuration ts=1766076564.9285452
+2025-12-18T16:49:25.169976163Z [INFO] cleaning storage unit logger="tls" storage="FileStorage:/data/caddy" ts=1766076564.9324453
+2025-12-18T16:49:25.169979920Z [INFO] finished cleaning storage units logger="tls" ts=1766076564.933388
+2025-12-18T16:49:25.169983600Z [INFO] started background certificate maintenance cache="0xc000425b80" logger="tls.cache.maintenance" ts=1766076564.9334333

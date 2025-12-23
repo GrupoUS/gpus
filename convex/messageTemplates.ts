@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 export const listTemplates = query({
   args: {
@@ -7,6 +8,8 @@ export const listTemplates = query({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     let templates = await ctx.db
       .query('messageTemplates')
       .order('desc')
@@ -27,6 +30,8 @@ export const listTemplates = query({
 export const getTemplate = query({
   args: { templateId: v.id('messageTemplates') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db.get(args.templateId)
   },
 })

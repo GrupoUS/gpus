@@ -1,20 +1,42 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
+// Comment 7: Type-safety improvements with explicit unions from schema
 export const list = query({
   args: {
-    category: v.optional(v.string()),
-    product: v.optional(v.string()),
+    category: v.optional(v.union(
+      v.literal('abertura'),
+      v.literal('qualificacao'),
+      v.literal('apresentacao'),
+      v.literal('objecao_preco'),
+      v.literal('objecao_tempo'),
+      v.literal('objecao_outros_cursos'),
+      v.literal('follow_up'),
+      v.literal('fechamento'),
+      v.literal('pos_venda'),
+      v.literal('suporte')
+    )),
+    product: v.optional(v.union(
+      v.literal('trintae3'),
+      v.literal('otb'),
+      v.literal('black_neon'),
+      v.literal('comunidade'),
+      v.literal('auriculo'),
+      v.literal('na_mesa_certa'),
+      v.literal('geral')
+    )),
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     let templates
     
     if (args.category) {
       templates = await ctx.db
         .query('messageTemplates')
-        // @ts-ignore - Schema category is union, args is string.
-        .withIndex('by_category', (q) => q.eq('category', args.category as any))
+        .withIndex('by_category', (q) => q.eq('category', args.category!))
         .collect()
     } else {
       templates = await ctx.db.query('messageTemplates').collect()
@@ -48,6 +70,8 @@ export const getByCategory = query({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('messageTemplates')
       .withIndex('by_category', (q) => q.eq('category', args.category))

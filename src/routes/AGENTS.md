@@ -26,12 +26,39 @@ bun run dev
 
 ```
 routes/
-├── __root.tsx          # Root layout (wraps all pages)
-├── index.tsx           # Dashboard (/)
-├── sign-in.tsx         # Sign in page (/sign-in)
-├── sign-up.tsx         # Sign up page (/sign-up)
-└── crm/
-    └── index.tsx       # CRM page (/crm)
+├── __root.tsx              # Root layout (providers, global styles)
+├── index.tsx               # Landing page (/)
+├── sign-in/                # Clerk sign-in
+│   ├── index.tsx           # /sign-in
+│   ├── $.tsx               # Catch-all for Clerk flows
+│   └── sso-callback.tsx    # SSO callback
+├── sign-up/                # Clerk sign-up
+│   ├── index.tsx           # /sign-up
+│   ├── $.tsx               # Catch-all for Clerk flows
+│   └── sso-callback.tsx    # SSO callback
+└── _authenticated/         # ⚠️ PROTECTED LAYOUT (requires auth)
+    ├── _authenticated.tsx  # Layout with sidebar
+    ├── dashboard.tsx       # /dashboard
+    ├── crm.tsx             # /crm (pipeline)
+    ├── students.tsx        # /students (list)
+    ├── students/
+    │   └── $studentId.tsx  # /students/:studentId (detail)
+    ├── chat.tsx            # /chat layout
+    ├── chat/
+    │   ├── index.tsx       # /chat
+    │   ├── $department.tsx # /chat/:department layout
+    │   └── $department/
+    │       ├── index.tsx   # /chat/:department
+    │       └── $id.tsx     # /chat/:department/:id
+    ├── reports.tsx         # /reports layout
+    ├── reports/
+    │   ├── sales.tsx       # /reports/sales
+    │   └── team.tsx        # /reports/team
+    ├── settings.tsx        # /settings layout
+    └── settings/
+        ├── integrations.tsx # /settings/integrations
+        ├── team.tsx        # /settings/team
+        └── templates.tsx   # /settings/templates
 ```
 
 ### Route Definition
@@ -100,24 +127,52 @@ const navigate = useNavigate()
 navigate({ to: '/crm' })
 ```
 
-### Protected Routes
+### Protected Routes (`_authenticated/`)
 
-✅ **DO:** Use Clerk's `<SignedIn>` and `<SignedOut>` components
+The project uses a **pathless layout route** (`_authenticated`) to protect routes:
+
+✅ **DO:** Place protected routes inside `_authenticated/` folder
+```
+routes/_authenticated/dashboard.tsx  → /dashboard (protected)
+routes/_authenticated/crm.tsx        → /crm (protected)
+```
+
+✅ **DO:** Use `beforeLoad` for route-level auth checks
+```tsx
+// src/routes/_authenticated.tsx
+export const Route = createFileRoute('/_authenticated')({
+  beforeLoad: async ({ context }) => {
+    // Auth check happens here - redirects if not authenticated
+  },
+  component: AuthenticatedLayout,
+})
+
+function AuthenticatedLayout() {
+  return (
+    <MainLayout>
+      <Outlet />
+    </MainLayout>
+  )
+}
+```
+
+✅ **DO:** Use Clerk's `<SignedIn>` for component-level checks
 ```tsx
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 
-export const Route = createFileRoute('/crm/')({
-  component: () => (
-    <>
-      <SignedIn>
-        <CRMPage />
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    </>
-  ),
-})
+// In component
+<SignedIn>
+  <ProtectedContent />
+</SignedIn>
+<SignedOut>
+  <RedirectToSignIn />
+</SignedOut>
+```
+
+❌ **DON'T:** Create protected routes outside `_authenticated/`
+```tsx
+// AVOID - routes at root level are public
+routes/dashboard.tsx  // This would be public!
 ```
 
 ---

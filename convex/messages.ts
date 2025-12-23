@@ -1,9 +1,12 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 export const getByConversation = query({
   args: { conversationId: v.id('conversations') },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
+    
     return await ctx.db
       .query('messages')
       .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
@@ -33,21 +36,26 @@ export const send = mutation({
     // Find the user to link as sender logic
     // If authenticated, it's an agent or admin usually.
     // Plan says: "Determinar sender baseado no usuário autenticado (agent/bot/system)"
-    // Usually via UI it's 'agent'.
     
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first()
       
-    // Default to 'agent' if user found, else 'system' or fail?
-    // Plan assumes 'agent' logic.
+    // Comment 5: Adjust sender resolution logic.
+    // Attempt to load the corresponding user, but if no user is found, throw error.
+    if (!user) {
+        throw new Error("User not found for authenticated identity")
+    }
+
+    // Replace hard-coded 'agent' with logic (though currently only 'agent' if user exists)
+    // If logic expanded later for 'system', we'd handle it here.
     const sender = 'agent'
     
     const messageId = await ctx.db.insert('messages', {
       ...args,
       sender: sender,
-      senderId: user?._id,
+      senderId: user._id,
       status: 'enviando',
       createdAt: Date.now(),
     })
@@ -63,7 +71,11 @@ export const send = mutation({
   },
 })
 
-export const updateStatus = mutation({
+/**
+ * Internal mutation for updating message status
+ * Called only by authenticated webhook endpoints - never directly from client
+ */
+export const updateStatusInternal = internalMutation({
   args: {
     messageId: v.id('messages'),
     status: v.union(
@@ -75,7 +87,12 @@ export const updateStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // No auth check required as per plan (webhook usage)
+    const message = await ctx.db.get(args.messageId)
+    if (!message) {
+      console.error(`Message not found: ${args.messageId}`)
+      return
+    }
+    
     await ctx.db.patch(args.messageId, {
       status: args.status,
     })

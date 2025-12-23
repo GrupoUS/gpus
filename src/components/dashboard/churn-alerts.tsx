@@ -1,3 +1,4 @@
+import type { Id } from '@convex/_generated/dataModel';
 import { AlertTriangle } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -5,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ChurnAlert {
-	_id: string;
+	_id: Id<'students'>;
 	studentName: string;
 	reason: string;
-	risk: string;
+	risk: 'alto' | 'medio';
 }
 
 interface ChurnAlertsProps {

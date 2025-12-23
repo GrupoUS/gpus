@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
@@ -97,7 +97,7 @@ function TemplatesSettingsPage() {
 	const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
 	const filteredTemplates = templates?.filter(
-		(t) => categoryFilter === 'all' || t.category === categoryFilter,
+		(t: { category: string }) => categoryFilter === 'all' || t.category === categoryFilter,
 	);
 
 	return (
@@ -155,7 +155,7 @@ function TemplatesSettingsPage() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{filteredTemplates?.map((template) => (
+					{filteredTemplates?.map((template: Doc<'messageTemplates'>) => (
 						<TableRow key={template._id}>
 							<TableCell className="font-medium">{template.name}</TableCell>
 							<TableCell>

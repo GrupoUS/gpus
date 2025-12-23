@@ -7,6 +7,7 @@ import {
 	Sparkles,
 	Wand,
 } from 'lucide-react';
+import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
 
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -16,22 +17,35 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDifyChat } from '@/hooks/use-dify-chat';
 import { cn } from '@/lib/utils';
+import { useChatContext } from '@/routes/_authenticated/chat';
 
 interface AIChatWidgetProps {
 	conversationId?: Id<'conversations'> | null; // Allow null to handle "no conversation selected"
 	onInsertResponse?: (text: string) => void;
 }
 
-export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
+export function AIChatWidget({
+	conversationId: _conversationId,
+	onInsertResponse,
+}: AIChatWidgetProps) {
 	const [isOpen, setIsOpen] = useState(true);
 	const [inputText, setInputText] = useState('');
 	const { messages, sendMessage, isLoading } = useDifyChat();
+	const { setPendingMessage } = useChatContext();
 
 	const handleSend = async () => {
 		if (!inputText.trim() || isLoading) return;
 		const text = inputText;
 		setInputText('');
-		await sendMessage(text);
+		const assistantResponse = await sendMessage(text);
+		// Invoke the callback with the assistant response if available
+		if (assistantResponse) {
+			if (onInsertResponse) {
+				onInsertResponse(assistantResponse);
+			}
+			// Also set pending message in context for ChatInput to pick up
+			setPendingMessage(assistantResponse);
+		}
 	};
 
 	const handleQuickAction = (action: 'generate' | 'summarize' | 'template') => {
@@ -51,32 +65,26 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 		// Focus logic would go here if we had a ref to input
 	};
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
+	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
 			void handleSend();
 		}
 	};
 
-	// Only render if a conversation is active (implied by plan "when a conversation is selected")
-	// But spec says "Widget is only visible when a conversation is selected"
-	// However, I will check inside the component or parent.
-	// The props say conversationId?
-	// I'll render null if no conversationId provided, to be safe.
-	if (!conversationId) return null;
+	// Widget renders regardless of conversationId - parent controls visibility
+	// This allows the widget to be used for general AI assistance
 
 	return (
 		<div className="border-t border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
 			<Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
 				<CollapsibleTrigger asChild>
-					<div className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 bg-linear-to-r from-purple-600/10 to-pink-600/10 border-b border-border/50">
+					<div className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-muted/50 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border/50">
 						<div className="flex items-center gap-2">
-							<div className="p-1 rounded-full bg-linear-to-br from-purple-500 to-pink-500 shadow-sm">
-								<Sparkles className="h-3 w-3 text-white" />
+							<div className="p-1 rounded-full bg-gradient-to-br from-primary to-accent shadow-sm">
+								<Sparkles className="h-3 w-3 text-primary-foreground" />
 							</div>
-							<span className="text-sm font-medium bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-								Assistente IA (Dify)
-							</span>
+							<span className="text-sm font-medium text-foreground">Assistente IA (Dify)</span>
 						</div>
 						{isOpen ? (
 							<ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -109,7 +117,7 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 												className={cn(
 													'px-3 py-2 rounded-lg',
 													msg.role === 'user'
-														? 'bg-linear-to-br from-purple-500 to-pink-500 text-white'
+														? 'bg-gradient-to-br from-primary to-accent text-primary-foreground'
 														: 'bg-muted text-foreground',
 												)}
 											>
@@ -127,9 +135,9 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 								{/* Loading State */}
 								{isLoading && (
 									<div className="flex items-center gap-1.5 p-2 mr-auto">
-										<div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]" />
-										<div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.15s]" />
-										<div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-bounce" />
+										<div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+										<div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+										<div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
 									</div>
 								)}
 							</div>
@@ -140,7 +148,7 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 							<Button
 								variant="outline"
 								size="sm"
-								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-purple-500/50 hover:bg-purple-500/5 hover:text-purple-600 transition-colors"
+								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-colors"
 								onClick={() => handleQuickAction('generate')}
 							>
 								<Wand className="h-3 w-3" />
@@ -149,7 +157,7 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 							<Button
 								variant="outline"
 								size="sm"
-								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-purple-500/50 hover:bg-purple-500/5 hover:text-purple-600 transition-colors"
+								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-colors"
 								onClick={() => handleQuickAction('summarize')}
 							>
 								<FileText className="h-3 w-3" />
@@ -158,7 +166,7 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 							<Button
 								variant="outline"
 								size="sm"
-								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-purple-500/50 hover:bg-purple-500/5 hover:text-purple-600 transition-colors"
+								className="h-7 text-xs gap-1.5 bg-background/50 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-colors"
 								onClick={() => handleQuickAction('template')}
 							>
 								<MessageSquare className="h-3 w-3" />
@@ -173,19 +181,19 @@ export function AIChatWidget({ conversationId }: AIChatWidgetProps) {
 								onChange={(e) => setInputText(e.target.value)}
 								onKeyDown={handleKeyDown}
 								placeholder="Digite sua pergunta para a IA de vendas..."
-								className="flex-1 h-9 text-sm focus-visible:ring-purple-500"
+								className="flex-1 h-9 text-sm focus-visible:ring-primary"
 								disabled={isLoading}
 							/>
 							<Button
 								size="sm"
 								className={cn(
-									'h-9 w-9 p-0 bg-linear-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all',
+									'h-9 w-9 p-0 bg-gradient-to-br from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all',
 									isLoading && 'opacity-50 cursor-not-allowed',
 								)}
 								onClick={handleSend}
 								disabled={isLoading}
 							>
-								<Send className="h-4 w-4 text-white" />
+								<Send className="h-4 w-4 text-primary-foreground" />
 								<span className="sr-only">Enviar</span>
 							</Button>
 						</div>

@@ -86,7 +86,7 @@ function SalesReportPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Conversões</CardTitle>
-						<TrendingUp className="h-4 w-4 text-purple-500" />
+						<TrendingUp className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">{metrics?.funnel?.fechado_ganho ?? 0}</div>
@@ -99,7 +99,7 @@ function SalesReportPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-						<Package className="h-4 w-4 text-blue-500" />
+						<Package className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
@@ -114,7 +114,7 @@ function SalesReportPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
-						<Users className="h-4 w-4 text-indigo-500" />
+						<Users className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">{metrics?.totalLeads ?? 0}</div>
@@ -131,7 +131,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.dailyMetrics && metrics.dailyMetrics.length > 0 ? (
-							<ResponsiveContainer width="100%" height={300}>
+							<ResponsiveContainer width="100%" height={300} minWidth={0}>
 								<LineChart data={metrics.dailyMetrics}>
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis
@@ -149,7 +149,7 @@ function SalesReportPage() {
 									<Line
 										type="monotone"
 										dataKey="conversionValue"
-										stroke="#10b981"
+										stroke="hsl(var(--chart-2))"
 										strokeWidth={2}
 										name="Receita"
 									/>
@@ -169,7 +169,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.leadsByProduct && Object.keys(metrics.leadsByProduct).length > 0 ? (
-							<ResponsiveContainer width="100%" height={300}>
+							<ResponsiveContainer width="100%" height={300} minWidth={0}>
 								<BarChart
 									data={Object.entries(metrics.leadsByProduct).map(([k, v]) => ({
 										name: productLabels[k] || k,
@@ -180,7 +180,7 @@ function SalesReportPage() {
 									<XAxis dataKey="name" />
 									<YAxis />
 									<Tooltip />
-									<Bar dataKey="value" fill="#8b5cf6" name="Leads" />
+									<Bar dataKey="value" fill="hsl(var(--primary))" name="Leads" />
 								</BarChart>
 							</ResponsiveContainer>
 						) : (

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    ".cursor/rules/*.mdc",
+    ".opencode/agent/*.md",
+    ".opencode/command/*.md"
+  ],
+  "agent": {
+    "build": {
+          "mode": "primary",
+          "model": "google/gemini-3-flash-preview",
+          "prompt": "{file:.opencode/prompts/build.txt}"
+        },
+        "plan": {
+          "mode": "primary",
+          "model": "google/gemini-3-pro-preview",
+          "prompt": "{file:.opencode/prompts/plan.txt}"
+    },
+    "apex-dev": {
+      "tools": {
+        "serena_*": true,
+        "context7_*": true,
+        "sequentialthinking_*": true,
+        "fetch_*": true
+      }
+    },
+    "apex-researcher": {
+      "tools": {
+        "context7_*": true,
+        "sequentialthinking_*": true,
+        "serena_*": true,
+        "fetch_*": true,
+        "tavily_*": true
+      }
+    },
+    "code-reviewer": {
+      "tools": {
+        "serena_*": true,
+        "sequentialthinking_*": true,
+        "context7_*": true
+      }
+    },
+    "database-specialist": {
+      "tools": {
+        "serena_*": true,
+        "context7_*": true,
+        "sequentialthinking_*": true
+      }
+    },
+    "apex-ui-ux-designer": {
+      "tools": {
+        "serena_*": true,
+        "sequentialthinking_*": true,
+        "context7_*": true,
+        "tavily_*": true,
+        "fetch_*": true
+      }
+    }
+  }
+}

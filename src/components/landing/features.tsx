@@ -6,7 +6,7 @@ import { BarChart3, BrainCircuit, MessageSquareText, ShieldCheck, Users, Zap } f
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 
-const features = [
+export const features = [
 	{
 		title: 'AI Lead Scoring',
 		description:
@@ -26,8 +26,8 @@ const features = [
 		title: 'Predictive Analytics',
 		description: 'Análises preditivas para antecendar tendências e oportunidades.',
 		icon: BarChart3,
-		color: 'text-blue-dark',
-		bgColor: 'bg-blue-dark/10',
+		color: 'text-primary',
+		bgColor: 'bg-primary/10',
 	},
 	{
 		title: 'Smart Segmentation',

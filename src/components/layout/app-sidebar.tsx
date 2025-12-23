@@ -3,85 +3,53 @@ import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import {
 	BarChart3,
-	FileText,
 	GraduationCap,
-	Kanban,
 	LayoutDashboard,
-	MessageSquare,
-	Plug,
-	Settings,
-	TrendingUp,
-	Users,
+	Megaphone,
+	MessageCircle,
+	Settings2,
+	Users2,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
-import {
-	Sidebar,
-	SidebarBody,
-	SidebarLink,
-	SidebarLinkWithSubmenu,
-} from '@/components/ui/aceternity-sidebar';
+import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/aceternity-sidebar';
 
 const menuItems = [
 	{
-		label: 'Dashboard',
+		label: 'Painel',
 		href: '/dashboard',
-		icon: <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <LayoutDashboard className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'CRM',
 		href: '/crm',
-		icon: <Kanban className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <Users2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Alunos',
 		href: '/students',
-		icon: <GraduationCap className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <GraduationCap className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Chat',
 		href: '/chat',
-		icon: <MessageSquare className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
+		icon: <MessageCircle className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Marketing',
+		href: '/marketing/dashboard',
+		icon: <Megaphone className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Relatórios',
 		href: '/reports',
-		icon: <BarChart3 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
-		children: [
-			{
-				label: 'Vendas',
-				href: '/reports/sales',
-				icon: <TrendingUp className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Equipe',
-				href: '/reports/team',
-				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
-			},
-		],
+		icon: <BarChart3 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Configurações',
 		href: '/settings',
-		icon: <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />,
-		children: [
-			{
-				label: 'Equipe',
-				href: '/settings/team',
-				icon: <Users className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Templates',
-				href: '/settings/templates',
-				icon: <FileText className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
-			},
-			{
-				label: 'Integrações',
-				href: '/settings/integrations',
-				icon: <Plug className="text-neutral-700 dark:text-neutral-200 h-4 w-4 shrink-0" />,
-			},
-		],
+		icon: <Settings2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 ];
 
@@ -97,34 +65,15 @@ export function AppSidebar() {
 					<div className="mt-8">
 						{/* Desktop View */}
 						<div className="hidden md:flex flex-col gap-2">
-							{menuItems.map((item, idx) =>
-								item.children ? (
-									<SidebarLinkWithSubmenu key={idx} link={item} />
-								) : (
-									<SidebarLink key={idx} link={item} />
-								),
-							)}
+							{menuItems.map((item, idx) => (
+								<SidebarLink key={idx} link={item} />
+							))}
 						</div>
 
 						{/* Mobile View */}
 						<div className="md:hidden flex flex-col gap-2">
 							{menuItems.map((item, idx) => (
-								<div key={idx}>
-									{item.children ? (
-										<>
-											<div className="font-medium py-2 px-2 text-neutral-700 dark:text-neutral-200">
-												{item.label}
-											</div>
-											<div className="ml-4 space-y-1">
-												{item.children.map((child, cIdx) => (
-													<SidebarLink key={cIdx} link={child} />
-												))}
-											</div>
-										</>
-									) : (
-										<SidebarLink link={item} />
-									)}
-								</div>
+								<SidebarLink key={idx} link={item} />
 							))}
 						</div>
 					</div>
@@ -135,7 +84,7 @@ export function AppSidebar() {
 							label: user?.fullName || 'Usuário',
 							href: '#',
 							icon: (
-								<div className="h-7 w-7 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center overflow-hidden">
+								<div className="h-7 w-7 shrink-0 rounded-full bg-muted flex items-center justify-center overflow-hidden">
 									<UserButton
 										afterSignOutUrl="/sign-in"
 										appearance={{
@@ -161,13 +110,13 @@ export const Logo = () => {
 	return (
 		<Link
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
 			<motion.span
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
-				className="font-medium text-black dark:text-white whitespace-pre"
+				className="font-medium text-foreground whitespace-pre"
 			>
 				Grupo US
 			</motion.span>
@@ -179,9 +128,9 @@ export const LogoIcon = () => {
 	return (
 		<Link
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
 		</Link>
 	);
 };

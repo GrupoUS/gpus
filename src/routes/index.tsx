@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { DashboardPreview } from '@/components/landing/dashboard-preview';
-import { Features } from '@/components/landing/features';
+import { FeaturesParallax } from '@/components/landing/features-parallax';
 import { Footer } from '@/components/landing/footer';
 import { Hero } from '@/components/landing/hero';
-import { Navbar } from '@/components/landing/navbar';
+import { FloatingNavbar } from '@/components/ui/floating-navbar';
 
 export const Route = createFileRoute('/')({
 	component: LandingPage,
@@ -13,11 +13,11 @@ export const Route = createFileRoute('/')({
 function LandingPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
-			<Navbar />
+			<FloatingNavbar />
 			<main>
 				<Hero />
 				<DashboardPreview />
-				<Features />
+				<FeaturesParallax />
 			</main>
 			<Footer />
 		</div>

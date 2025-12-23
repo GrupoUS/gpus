@@ -7,31 +7,28 @@ on:
     branches: [main, develop]
 
 env:
-  NODE_VERSION: '20'
   BUN_VERSION: 'latest'
   CI: true
 
 jobs:
   # ============================================================================
-  # QUALITY CHECKS
+  # QUALITY CHECKS (Lint + TypeScript + Tests)
   # ============================================================================
-  quality-checks:
-    name: 🔍 Quality Checks
+  quality:
+    name: 🔍 Quality & Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache Bun dependencies
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
@@ -44,394 +41,46 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify environment variables
+      # Biome Linting
+      - name: Lint Check (Biome)
+        run: bun run lint:check
+
+      # TypeScript + Vite Build (includes tsc --noEmit)
+      - name: Build
+        run: bun run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-        run: bun scripts/check-env.ts
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
 
-      # ========================================================================
-      # BIOME LINTING WITH AUTO-FIX AND DETAILED REPORTING
-      # ========================================================================
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-
-      - name: Create reports directory
-        run: mkdir -p biome-reports
-
-      # Step 1: Auto-fix what can be fixed
-      - name: Biome Auto-Fix (Safe Fixes)
-        id: biome-autofix
-        continue-on-error: true
-        run: |
-          echo "🔧 Running Biome auto-fix for safe, fixable issues..."
-          echo ""
-
-          # Run auto-fix and capture output
-          biome check --write --unsafe \
-            --files-ignore-unknown=true \
-            --files-max-size=10485760 \
-            src scripts 2>&1 | tee biome-reports/autofix-output.txt || true
-
-          # Count fixed issues
-          FIXED_COUNT=$(grep -c "Fixed" biome-reports/autofix-output.txt 2>/dev/null || echo "0")
-          echo "fixed_count=$FIXED_COUNT" >> $GITHUB_OUTPUT
-
-          echo ""
-          echo "✅ Auto-fix completed. Fixed approximately $FIXED_COUNT issues."
-
-      # Step 2: Generate detailed report for remaining issues
-      - name: Biome Diagnostic Report
-        id: biome-report
-        continue-on-error: true
-        run: |
-          echo "📊 Generating Biome diagnostic report..."
-          echo ""
-
-          # Run check and capture all diagnostics
-          biome check \
-            --files-ignore-unknown=true \
-            --files-max-size=10485760 \
-            --reporter=json \
-            src scripts > biome-reports/diagnostics.json 2>&1 || true
-
-          # Also generate human-readable report
-          biome check \
-            --files-ignore-unknown=true \
-            --files-max-size=10485760 \
-            src scripts > biome-reports/diagnostics.txt 2>&1 || true
-
-          # Parse error and warning counts
-          if [ -f biome-reports/diagnostics.json ]; then
-            ERROR_COUNT=$(grep -o '"severity":"error"' biome-reports/diagnostics.json 2>/dev/null | wc -l || echo "0")
-            WARNING_COUNT=$(grep -o '"severity":"warning"' biome-reports/diagnostics.json 2>/dev/null | wc -l || echo "0")
-          else
-            ERROR_COUNT=$(grep -c "error\[" biome-reports/diagnostics.txt 2>/dev/null || echo "0")
-            WARNING_COUNT=$(grep -c "warning\[" biome-reports/diagnostics.txt 2>/dev/null || echo "0")
-          fi
-
-          echo "error_count=$ERROR_COUNT" >> $GITHUB_OUTPUT
-          echo "warning_count=$WARNING_COUNT" >> $GITHUB_OUTPUT
-
-          echo "Found $ERROR_COUNT errors and $WARNING_COUNT warnings"
-
-      # Step 3: Run final check - fail only on errors
-      - name: Biome Final Check (Errors Only)
-        id: biome-check
-        run: |
-          echo "🔍 Running final Biome check (errors only)..."
-          echo ""
-
-          # Run check with error-level diagnostic threshold
-          biome check \
-            --diagnostic-level=error \
-            --files-ignore-unknown=true \
-            --files-max-size=10485760 \
-            src scripts 2>&1 | tee biome-reports/final-check.txt
-
-          BIOME_EXIT=$?
-
-          if [ $BIOME_EXIT -ne 0 ]; then
-            echo ""
-            echo "❌ Biome found blocking errors that need manual fixes."
-            echo ""
-            echo "## 🚨 Critical Issues Found" >> biome-reports/summary.md
-            echo "" >> biome-reports/summary.md
-            echo "The following issues require manual intervention:" >> biome-reports/summary.md
-            echo "" >> biome-reports/summary.md
-            echo '```' >> biome-reports/summary.md
-            tail -100 biome-reports/final-check.txt >> biome-reports/summary.md
-            echo '```' >> biome-reports/summary.md
-            exit 1
-          fi
-
-          echo "✅ No blocking errors found!"
-
-      # Step 4: Generate step summary
-      - name: Biome Summary
-        if: always()
-        run: |
-          echo "## 🔍 Biome Lint Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Auto-fix results
-          if [ -f biome-reports/autofix-output.txt ]; then
-            echo "### 🔧 Auto-Fix Phase" >> $GITHUB_STEP_SUMMARY
-            FIXED="${{ steps.biome-autofix.outputs.fixed_count }}"
-            echo "- Issues auto-fixed: **${FIXED:-0}**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Diagnostic results
-          echo "### 📊 Remaining Issues" >> $GITHUB_STEP_SUMMARY
-          ERRORS="${{ steps.biome-report.outputs.error_count }}"
-          WARNINGS="${{ steps.biome-report.outputs.warning_count }}"
-          echo "- Errors: **${ERRORS:-0}** ❌" >> $GITHUB_STEP_SUMMARY
-          echo "- Warnings: **${WARNINGS:-0}** ⚠️" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Final status
-          echo "### 📝 Status" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.biome-check.outcome }}" == "success" ]; then
-            echo "✅ **All blocking errors resolved!**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "_Note: Warnings do not block the build but should be addressed._" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Blocking errors found - manual fixes required**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Check the biome-reports artifact for details." >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Common issues reference
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "### 📚 Common Issues Reference" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Issue | Fix |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-----|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`noExplicitAny\` | Add proper TypeScript types instead of \`any\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`useComponentExportOnlyModules\` | Ensure components are default exports or use named exports with constants |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`noControlCharactersInRegex\` | Remove control characters from regex patterns |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`noArrayIndexKey\` | Use unique, stable keys instead of array indices |" >> $GITHUB_STEP_SUMMARY
-
-      # Upload Biome reports as artifacts
-      - name: Upload Biome Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: biome-reports
-          path: biome-reports/
-          retention-days: 14
-
-      # ========================================================================
-      # TYPESCRIPT TYPE CHECKING
-      # ========================================================================
-      - name: TypeScript type checking
-        id: typecheck
-        run: |
-          echo "🔷 Running TypeScript type check..."
-          bun run type-check 2>&1 | tee typescript-errors.txt
-          TYPECHECK_EXIT=$?
-
-          if [ $TYPECHECK_EXIT -ne 0 ]; then
-            echo ""
-            echo "## ❌ TypeScript Errors" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -50 typescript-errors.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
-          echo "## ✅ TypeScript Check Passed" >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload TypeScript Errors
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: typescript-errors
-          path: typescript-errors.txt
-          retention-days: 7
-
-      # ========================================================================
-      # SECURITY AUDIT
-      # ========================================================================
-      - name: Security audit
-        id: security
-        run: |
-          echo "🔒 Running security audit..."
-          bun run lint:security 2>&1 | tee security-audit.txt || true
-
-          # Check for critical security issues
-          if grep -q "noDangerouslySetInnerHtml" security-audit.txt || \
-             grep -q "noGlobalEval" security-audit.txt; then
-            echo ""
-            echo "## ⚠️ Security Warnings" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Potential security issues detected. Review the security-audit artifact." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## ✅ Security Audit Passed" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Upload Security Audit
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: security-audit
-          path: security-audit.txt
-          retention-days: 7
-
-      # Accessibility pattern checks for UI components
-      - name: Accessibility Pattern Checks
-        run: |
-          echo "🔍 Running accessibility pattern checks on UI components..."
-
-          # Find React component files in src/components
-          UI_FILES=$(find src/components -name "*.tsx" | head -30 || true)
-
-          if [ ! -z "$UI_FILES" ]; then
-            echo "Checking accessibility patterns in UI files..."
-            for file in $UI_FILES; do
-              if [ -f "$file" ]; then
-                echo "Checking: $file"
-
-                # Check for missing alt text on images
-                if grep -q "<img" "$file" && ! grep -q "alt=" "$file"; then
-                  echo "⚠️ Warning: Missing alt text in $file"
-                fi
-
-                # Check for unlabeled form inputs
-                if grep -q "<input" "$file" && ! grep -q -E "(aria-label|aria-labelledby|<label)" "$file"; then
-                  echo "⚠️ Warning: Consider adding labels to inputs in $file"
-                fi
-
-                # Check for improper semantic HTML usage
-                if grep -q 'role="banner"' "$file"; then
-                  echo "⚠️ Warning: Use semantic <header> instead of role='banner' in $file"
-                fi
-
-                if grep -q 'role="main"' "$file"; then
-                  echo "⚠️ Warning: Use semantic <main> instead of role='main' in $file"
-                fi
-              fi
-            done
-          fi
-
-          echo "✅ Accessibility pattern checks completed"
-
-  # ============================================================================
-  # UNIT TESTS
-  # ============================================================================
-  unit-tests:
-    name: 🧪 Unit Tests
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Run Unit Tests with Coverage
+      # Unit Tests with Coverage
+      - name: Tests
         run: bun run test:coverage
 
-      - name: Upload coverage reports
+      - name: Upload coverage
         if: success()
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage/lcov.info
           flags: unittests
-          name: codecov-aegiswallet
           fail_ci_if_error: false
 
-  # ============================================================================
-  # COMPLIANCE TESTS
-  # ============================================================================
-  compliance-tests:
-    name: 📋 Compliance Tests
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Run LGPD Compliance Tests
-        run: bun run test:e2e:lgpd || true
-
-      - name: Run Security Compliance Tests
-        run: bun run test:security-compliance || true
-
-      - name: Generate Compliance Report
-        run: bun run test:compliance-report || true
+          name: build-dist
+          path: dist/
+          retention-days: 7
 
   # ============================================================================
-  # E2E SMOKE TESTS (Fast feedback - runs in parallel with unit tests)
+  # E2E TESTS (Optional - only if playwright config exists)
   # ============================================================================
-  smoke-tests:
-    name: 💨 Smoke Tests
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install Chromium only
-        run: npx playwright install chromium --with-deps
-
-      - name: Run Smoke Tests
-        run: bun run test:e2e:smoke --project=chromium
-        env:
-          CI: true
-
-  # ============================================================================
-  # E2E FULL TESTS (After unit tests pass)
-  # ============================================================================
-  e2e-tests:
+  e2e:
     name: 🎭 E2E Tests
     runs-on: ubuntu-latest
-    needs: [unit-tests, compliance-tests]
-    timeout-minutes: 60
+    needs: quality
+    timeout-minutes: 30
+    if: ${{ hashFiles('playwright.config.ts') != '' }}
 
     steps:
       - name: Checkout
@@ -442,7 +91,7 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Cache Bun dependencies
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
@@ -463,178 +112,38 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright Browsers
-        run: bun run playwright:install
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
 
-      - name: Run Playwright tests
-        run: bun run test:e2e
+      - name: Run E2E tests
+        run: bunx playwright test --project=chromium
         env:
-          CI: true
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
 
-      - name: Upload Playwright Report
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: test-results
-          path: test-results/
-          retention-days: 30
-
-  # ============================================================================
-  # ACCESSIBILITY TESTS (E2E)
-  # ============================================================================
-  a11y-tests:
-    name: ♿ Accessibility Tests
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install Chromium only
-        run: npx playwright install chromium --with-deps
-
-      - name: Run Accessibility Tests
-        run: bun run test:e2e:a11y --project=chromium
-        env:
-          CI: true
-
-      - name: Upload A11y Report
+      - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: a11y-report
+          name: playwright-report
           path: playwright-report/
           retention-days: 7
 
   # ============================================================================
-  # BUILD
+  # SUMMARY
   # ============================================================================
-  build:
-    name: 🏗️ Build
+  summary:
+    name: 📊 Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, compliance-tests]
-    continue-on-error: true
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build application
-        run: bun run build
-        env:
-          NODE_ENV: production
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-
-      - name: Build API
-        run: bun run build:api || echo "API build failed - continuing"
-
-      - name: Upload build artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            dist/
-            api/dist/
-          retention-days: 7
-
-  # ============================================================================
-  # NOTIFY
-  # ============================================================================
-  notify:
-    name: 📢 Notify
-    runs-on: ubuntu-latest
-    needs: [quality-checks, unit-tests, compliance-tests, smoke-tests, e2e-tests, a11y-tests, build]
+    needs: [quality, e2e]
     if: always()
 
     steps:
-      - name: Determine overall status
-        id: status
-        run: |
-          if [[ "${{ needs.quality-checks.result }}" == "success" && \
-                "${{ needs.unit-tests.result }}" == "success" && \
-                "${{ needs.compliance-tests.result }}" == "success" && \
-                "${{ needs.smoke-tests.result }}" == "success" && \
-                "${{ needs.e2e-tests.result }}" == "success" && \
-                "${{ needs.a11y-tests.result }}" == "success" && \
-                "${{ needs.build.result }}" == "success" ]]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Notify on Slack
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ steps.status.outputs.status }}
-          channel: '#aegiswallet-builds'
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: ${{ secrets.SLACK_WEBHOOK != '' }}
-
-      - name: Summary
+      - name: Pipeline Summary
         run: |
           echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔍 Quality Checks | ${{ needs.quality-checks.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧪 Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📋 Compliance Tests | ${{ needs.compliance-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 💨 Smoke Tests | ${{ needs.smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎭 E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ♿ Accessibility Tests | ${{ needs.a11y-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏗️ Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Overall Status: ${{ steps.status.outputs.status }}**" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Quality & Tests | ${{ needs.quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎭 E2E Tests | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY

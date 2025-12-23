@@ -1,18 +1,8 @@
 import { api } from '@convex/_generated/api';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { BarChart3, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
-import {
-	Area,
-	AreaChart,
-	CartesianGrid,
-	Line,
-	LineChart,
-	ResponsiveContainer,
-	XAxis,
-	YAxis,
-} from 'recharts';
+import { lazy, Suspense, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -22,6 +12,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load heavy chart components
+const LeadsOverTimeChart = lazy(() => import('@/components/reports/leads-over-time-chart'));
+const MessagesOverTimeChart = lazy(() => import('@/components/reports/messages-over-time-chart'));
 
 export const Route = createFileRoute('/_authenticated/reports')({
 	component: ReportsPage,
@@ -37,15 +32,12 @@ function ReportsPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold flex items-center gap-2">
-						<BarChart3 className="h-6 w-6 text-purple-500" />
+						<BarChart3 className="h-6 w-6 text-primary" />
 						Relatórios
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
 				</div>
-				<Select
-					value={period}
-					onValueChange={(value: '7d' | '30d' | '90d' | 'year') => setPeriod(value)}
-				>
+				<Select value={period} onValueChange={(value: typeof period) => setPeriod(value)}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
@@ -56,6 +48,36 @@ function ReportsPage() {
 						<SelectItem value="year">Este ano</SelectItem>
 					</SelectContent>
 				</Select>
+			</div>
+
+			{/* Report Navigation Cards */}
+			<div className="grid gap-4 md:grid-cols-2">
+				<Link to="/reports/sales">
+					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-base font-medium">Relatório de Vendas</CardTitle>
+							<DollarSign className="h-5 w-5 text-green-500" />
+						</CardHeader>
+						<CardContent>
+							<p className="text-sm text-muted-foreground">
+								Análise detalhada de receita, conversões e performance de vendas
+							</p>
+						</CardContent>
+					</Card>
+				</Link>
+				<Link to="/reports/team">
+					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
+						<CardHeader className="flex flex-row items-center justify-between pb-2">
+							<CardTitle className="text-base font-medium">Relatório de Equipe</CardTitle>
+							<Users className="h-5 w-5 text-primary" />
+						</CardHeader>
+						<CardContent>
+							<p className="text-sm text-muted-foreground">
+								Performance individual e métricas por membro da equipe
+							</p>
+						</CardContent>
+					</Card>
+				</Link>
 			</div>
 
 			{/* Overview Stats */}
@@ -87,10 +109,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Mensagens</CardTitle>
-						<MessageSquare className="h-4 w-4 text-blue-500" />
+						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">{stats?.totalMessages ?? 0}</div>
+						<div className="text-2xl font-bold text-primary">{stats?.totalMessages ?? 0}</div>
 						<p className="text-xs text-muted-foreground">Total de mensagens</p>
 					</CardContent>
 				</Card>
@@ -98,10 +120,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Conversas</CardTitle>
-						<MessageSquare className="h-4 w-4 text-indigo-500" />
+						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-indigo-600">
+						<div className="text-2xl font-bold text-primary">
 							{Math.round(((stats?.conversionRate ?? 0) * (stats?.totalLeads ?? 1)) / 100)}
 						</div>
 						<p className="text-xs text-muted-foreground">Total de conversas</p>
@@ -111,10 +133,10 @@ function ReportsPage() {
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-						<TrendingUp className="h-4 w-4 text-purple-500" />
+						<TrendingUp className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-purple-600">{stats?.conversionRate ?? 0}%</div>
+						<div className="text-2xl font-bold text-primary">{stats?.conversionRate ?? 0}%</div>
 						<p className="text-xs text-muted-foreground">Lead → Cliente</p>
 					</CardContent>
 				</Card>
@@ -143,7 +165,7 @@ function ReportsPage() {
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
-							<BarChart3 className="h-5 w-5 text-purple-500" />
+							<BarChart3 className="h-5 w-5 text-primary" />
 							Leads por Estágio
 						</CardTitle>
 					</CardHeader>
@@ -166,7 +188,7 @@ function ReportsPage() {
 												</div>
 												<div className="h-2 bg-muted rounded-full overflow-hidden">
 													<div
-														className="p-2 bg-linear-to-r from-blue-500/10 to-indigo-500/10 rounded-lg"
+														className="h-full bg-linear-to-r from-primary to-primary/70 rounded-lg"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>
@@ -179,71 +201,15 @@ function ReportsPage() {
 				</Card>
 			</div>
 
-			{/* Charts Section */}
+			{/* Charts Section - Lazy Loaded */}
 			{stats?.dailyMetrics && stats.dailyMetrics.length > 0 && (
 				<div className="grid gap-4 md:grid-cols-2">
-					<Card>
-						<CardHeader>
-							<CardTitle>Leads ao Longo do Tempo</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<ResponsiveContainer width="100%" height={300}>
-								<AreaChart data={stats.dailyMetrics}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tickFormatter={(value) => {
-											const [, month, day] = value.split('-');
-											return `${day}/${month}`;
-										}}
-									/>
-									<YAxis />
-									<Area
-										type="monotone"
-										dataKey="newLeads"
-										stroke="#8b5cf6"
-										fill="#8b5cf6"
-										fillOpacity={0.2}
-									/>
-								</AreaChart>
-							</ResponsiveContainer>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Mensagens ao Longo do Tempo</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<ResponsiveContainer width="100%" height={300}>
-								<LineChart data={stats.dailyMetrics}>
-									<CartesianGrid strokeDasharray="3 3" />
-									<XAxis
-										dataKey="date"
-										tickFormatter={(value) => {
-											const [, month, day] = value.split('-');
-											return `${day}/${month}`;
-										}}
-									/>
-									<YAxis />
-									<Line
-										type="monotone"
-										dataKey="messagesReceived"
-										stroke="#3b82f6"
-										strokeWidth={2}
-										name="Recebidas"
-									/>
-									<Line
-										type="monotone"
-										dataKey="messagesSent"
-										stroke="#10b981"
-										strokeWidth={2}
-										name="Enviadas"
-									/>
-								</LineChart>
-							</ResponsiveContainer>
-						</CardContent>
-					</Card>
+					<Suspense fallback={<Skeleton className="h-[380px] w-full rounded-lg" />}>
+						<LeadsOverTimeChart data={stats.dailyMetrics} />
+					</Suspense>
+					<Suspense fallback={<Skeleton className="h-[380px] w-full rounded-lg" />}>
+						<MessagesOverTimeChart data={stats.dailyMetrics} />
+					</Suspense>
 				</div>
 			)}
 
@@ -259,7 +225,7 @@ function ReportsPage() {
 								([product, count]) => (
 									<div key={product} className="p-4 border rounded-lg">
 										<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
-										<p className="text-2xl font-bold text-purple-600">{count as number}</p>
+										<p className="text-2xl font-bold text-primary">{count as number}</p>
 										<p className="text-xs text-muted-foreground">leads interessados</p>
 									</div>
 								),

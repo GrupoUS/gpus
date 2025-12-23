@@ -163,3 +163,100 @@ search_for_pattern -s "temperature.*=.*quente" -p "src/components/crm"
 ```bash
 search_for_pattern -s "leads.*defineTable" -p "convex/schema"
 ```
+
+---
+
+## Semantic Search with mgrep
+
+**mgrep** uses AI embeddings (Mixedbread AI) for semantic/conceptual code search, unlike serena's LSP-based exact matching.
+
+### When to Use mgrep vs Serena
+
+| Query Type | Use Tool | Example |
+|------------|----------|---------|
+| Exact symbol name | `find_symbol` | "Find LeadCard component" |
+| Conceptual question | `mgrep` | "How does authentication work?" |
+| Regex pattern in code | `search_for_pattern` | "Find all useState hooks" |
+| Architecture understanding | `mgrep` | "Error handling patterns" |
+| Find all usages | `find_referencing_symbols` | "Where is LeadCard used?" |
+| Similar code patterns | `mgrep` | "Form validation approaches" |
+
+### mgrep Query Patterns
+
+**Effective queries** (conceptual, natural language):
+```bash
+mgrep search "authentication flow with Clerk"
+mgrep search "error handling patterns in mutations"
+mgrep search "form validation with Zod schema"
+mgrep search "real-time updates with Convex useQuery"
+mgrep search "CRM lead pipeline kanban board"
+mgrep search "student enrollment workflow"
+```
+
+**Less effective queries** (too literal - use serena instead):
+```bash
+# DON'T: Exact function names (use find_symbol)
+mgrep search "useAuth"  # ❌
+
+# DON'T: File paths (use read_file or get_symbols_overview)
+mgrep search "src/components/ui/button.tsx"  # ❌
+
+# DON'T: Import statements (use search_for_pattern)
+mgrep search "import { Button } from"  # ❌
+```
+
+### Project-Specific mgrep Examples
+
+```bash
+# Convex patterns
+mgrep search "Convex mutation with authentication check"
+mgrep search "real-time subscription data fetching"
+mgrep search "database index query optimization"
+
+# React patterns
+mgrep search "form component with validation errors"
+mgrep search "loading state skeleton UI"
+mgrep search "modal dialog with confirmation"
+
+# TanStack Router
+mgrep search "protected route authentication guard"
+mgrep search "route loader data fetching"
+
+# Business domain
+mgrep search "lead temperature classification hot warm cold"
+mgrep search "student enrollment status tracking"
+mgrep search "conversation messaging WhatsApp"
+```
+
+### Combined Workflow: mgrep + Serena
+
+1. **Conceptual search** (understand the area):
+   ```bash
+   mgrep search "lead management CRM pipeline"
+   ```
+
+2. **Symbol resolution** (find exact code):
+   ```bash
+   find_symbol -n "LeadCard" -p "src/components/crm"
+   ```
+
+3. **Usage tracking** (see where it's used):
+   ```bash
+   find_referencing_symbols -n "LeadCard" -p "src/components/crm/lead-card.tsx"
+   ```
+
+4. **Pattern search** (find similar patterns):
+   ```bash
+   search_for_pattern -s "temperature.*quente" -p "src/components/crm"
+   ```
+
+### Fallback Strategy
+
+```
+mgrep (conceptual) 
+  → serena find_symbol (exact) 
+  → serena search_for_pattern (regex)
+  → gh_grep (external examples)
+```
+
+Use this order when researching unfamiliar code areas.

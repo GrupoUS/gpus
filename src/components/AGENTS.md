@@ -2,7 +2,7 @@
 
 ## Package Identity
 
-**Purpose:** Reusable React components for UI, CRM, dashboard, and layout  
+**Purpose:** Reusable React components for UI, CRM, dashboard, and layout
 **Tech:** React 19 + shadcn/ui + Tailwind CSS v4
 
 ---
@@ -27,16 +27,56 @@ bunx shadcn@latest add dialog
 
 ```
 components/
-├── ui/              # shadcn/ui base components (Button, Card, etc.)
-├── crm/             # CRM-specific components
-│   ├── lead-card.tsx
-│   ├── pipeline-kanban.tsx
-│   └── lead-form.tsx
-├── dashboard/       # Dashboard widgets
-│   └── stats-card.tsx
-└── layout/          # Layout components
-    ├── app-sidebar.tsx
-    └── main-layout.tsx
+├── ui/                # shadcn/ui base components (Button, Card, Dialog, etc.)
+├── crm/               # CRM pipeline and lead management
+│   ├── lead-card.tsx           # Lead card with temperature indicators
+│   ├── lead-detail.tsx         # Full lead details view
+│   ├── lead-filters.tsx        # Filter controls
+│   ├── lead-form.tsx           # Lead creation/edit form
+│   └── pipeline-kanban.tsx     # Kanban board for pipeline
+├── dashboard/         # Dashboard widgets and charts
+│   ├── stats-card.tsx          # Metric card component
+│   ├── churn-alerts.tsx        # Churn risk alerts
+│   ├── funnel-chart.tsx        # Sales funnel visualization
+│   ├── leads-by-product.tsx    # Product distribution chart
+│   ├── leads-vs-conversions.tsx # Conversion comparison
+│   ├── recent-leads.tsx        # Recent leads list
+│   ├── response-time.tsx       # Response time metrics
+│   └── team-performance.tsx    # Team performance metrics
+├── students/          # Student management components
+│   ├── student-card.tsx        # Student summary card
+│   ├── student-detail.tsx      # Full student profile
+│   ├── student-filters.tsx     # Filter controls
+│   ├── student-form.tsx        # Student creation/edit
+│   ├── student-header.tsx      # Detail page header
+│   ├── student-stats.tsx       # Student statistics
+│   ├── student-table.tsx       # Tabular student list
+│   ├── student-timeline.tsx    # Activity timeline
+│   ├── enrollment-card.tsx     # Enrollment details
+│   └── tabs/                   # Tab components
+│       ├── student-conversations-tab.tsx
+│       ├── student-enrollments-tab.tsx
+│       └── student-payments-tab.tsx
+├── chat/              # Chat and messaging components
+│   ├── ai-chat-widget.tsx      # Dify AI chat integration
+│   ├── chat-input.tsx          # Message input
+│   ├── chat-window.tsx         # Chat conversation view
+│   ├── conversation-list.tsx   # Conversation sidebar
+│   ├── message-bubble.tsx      # Message display
+│   └── template-picker.tsx     # Message template selector
+├── landing/           # Public landing page components
+│   ├── hero.tsx                # Hero section
+│   ├── features.tsx            # Features section
+│   ├── dashboard-preview.tsx   # Preview section
+│   ├── navbar.tsx              # Landing navbar
+│   └── footer.tsx              # Footer
+├── layout/            # Layout components
+│   ├── app-sidebar.tsx         # Main navigation sidebar
+│   └── main-layout.tsx         # Authenticated layout wrapper
+├── theme-provider.tsx  # Dark/light theme context (optimized with useCallback/useMemo)
+├── theme-toggle.tsx  # Animated dropdown theme toggle with View Transition API
+├── debug-auth.tsx      # Auth debugging (dev only)
+└── not-found.tsx       # 404 component
 ```
 
 ### Component Patterns
@@ -192,4 +232,28 @@ bun run lint
 
 # Type check
 bun run build
+```
+
+---
+
+## Theme System
+
+The project uses a custom Theme System with View Transition API support.
+
+### Key Components
+- `theme-provider.tsx`: Context provider. Handles `localStorage` and `matchMedia`.
+- `theme-toggle.tsx`: Dropdown component for user selection.
+- `lib/theme-transitions.ts`: Hook (`useThemeTransition`) for smooth animations.
+
+### Usage
+- Use `useTheme()` hook to get/set theme.
+- Use `ThemeToggle` component in navbars/settings.
+- Ensure colors in `index.css` meet WCAG 2.1 AA (contrast > 4.5:1).
+
+### View Transitions
+To enable the circular reveal animation, use the `useThemeTransition` hook and pass the event coordinates:
+```tsx
+const { animateThemeChange } = useThemeTransition();
+// ...
+animateThemeChange(newTheme, () => setTheme(newTheme), { x: e.clientX, y: e.clientY });
 ```

@@ -20,15 +20,42 @@ import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedMarketingRouteImport } from './routes/_authenticated/marketing'
+import { Route as AuthenticatedFinancialRouteImport } from './routes/_authenticated/financial'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedMarketingIndexRouteImport } from './routes/_authenticated/marketing/index'
+import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat/index'
 import { Route as AuthenticatedStudentsStudentIdRouteImport } from './routes/_authenticated/students/$studentId'
 import { Route as AuthenticatedSettingsTemplatesRouteImport } from './routes/_authenticated/settings/templates'
 import { Route as AuthenticatedSettingsTeamRouteImport } from './routes/_authenticated/settings/team'
+import { Route as AuthenticatedSettingsSecurityRouteImport } from './routes/_authenticated/settings/security'
+import { Route as AuthenticatedSettingsRolesRouteImport } from './routes/_authenticated/settings/roles'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings/integrations'
+import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedReportsTeamRouteImport } from './routes/_authenticated/reports/team'
 import { Route as AuthenticatedReportsSalesRouteImport } from './routes/_authenticated/reports/sales'
+import { Route as AuthenticatedMarketingTemplatesRouteImport } from './routes/_authenticated/marketing/templates'
+import { Route as AuthenticatedMarketingNovaRouteImport } from './routes/_authenticated/marketing/nova'
+import { Route as AuthenticatedMarketingListasRouteImport } from './routes/_authenticated/marketing/listas'
+import { Route as AuthenticatedMarketingDashboardRouteImport } from './routes/_authenticated/marketing/dashboard'
+import { Route as AuthenticatedMarketingContatosRouteImport } from './routes/_authenticated/marketing/contatos'
+import { Route as AuthenticatedMarketingCampanhasRouteImport } from './routes/_authenticated/marketing/campanhas'
+import { Route as AuthenticatedMarketingCampaignIdRouteImport } from './routes/_authenticated/marketing/$campaignId'
+import { Route as AuthenticatedFinancialReportsRouteImport } from './routes/_authenticated/financial/reports'
+import { Route as AuthenticatedFinancialPaymentsRouteImport } from './routes/_authenticated/financial/payments'
+import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_authenticated/financial/dashboard'
+import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
+import { Route as AuthenticatedChatDepartmentIndexRouteImport } from './routes/_authenticated/chat/$department/index'
+import { Route as AuthenticatedMarketingTemplatesNovoRouteImport } from './routes/_authenticated/marketing/templates/novo'
+import { Route as AuthenticatedMarketingTemplatesTemplateIdRouteImport } from './routes/_authenticated/marketing/templates/$templateId'
+import { Route as AuthenticatedMarketingListasNovaRouteImport } from './routes/_authenticated/marketing/listas/nova'
+import { Route as AuthenticatedMarketingListasListIdRouteImport } from './routes/_authenticated/marketing/listas/$listId'
+import { Route as AuthenticatedChatDepartmentIdRouteImport } from './routes/_authenticated/chat/$department/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -84,6 +111,16 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedMarketingRoute = AuthenticatedMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFinancialRoute = AuthenticatedFinancialRouteImport.update({
+  id: '/financial',
+  path: '/financial',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -98,6 +135,23 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedMarketingIndexRoute =
+  AuthenticatedMarketingIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedChatIndexRoute = AuthenticatedChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedChatRoute,
 } as any)
 const AuthenticatedStudentsStudentIdRoute =
   AuthenticatedStudentsStudentIdRouteImport.update({
@@ -117,10 +171,40 @@ const AuthenticatedSettingsTeamRoute =
     path: '/team',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsSecurityRoute =
+  AuthenticatedSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsRolesRoute =
+  AuthenticatedSettingsRolesRouteImport.update({
+    id: '/roles',
+    path: '/roles',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/integrations',
     path: '/integrations',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsAppearanceRoute =
+  AuthenticatedSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
 const AuthenticatedReportsTeamRoute =
@@ -135,12 +219,116 @@ const AuthenticatedReportsSalesRoute =
     path: '/sales',
     getParentRoute: () => AuthenticatedReportsRoute,
   } as any)
+const AuthenticatedMarketingTemplatesRoute =
+  AuthenticatedMarketingTemplatesRouteImport.update({
+    id: '/templates',
+    path: '/templates',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingNovaRoute =
+  AuthenticatedMarketingNovaRouteImport.update({
+    id: '/nova',
+    path: '/nova',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingListasRoute =
+  AuthenticatedMarketingListasRouteImport.update({
+    id: '/listas',
+    path: '/listas',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingDashboardRoute =
+  AuthenticatedMarketingDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingContatosRoute =
+  AuthenticatedMarketingContatosRouteImport.update({
+    id: '/contatos',
+    path: '/contatos',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingCampanhasRoute =
+  AuthenticatedMarketingCampanhasRouteImport.update({
+    id: '/campanhas',
+    path: '/campanhas',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedMarketingCampaignIdRoute =
+  AuthenticatedMarketingCampaignIdRouteImport.update({
+    id: '/$campaignId',
+    path: '/$campaignId',
+    getParentRoute: () => AuthenticatedMarketingRoute,
+  } as any)
+const AuthenticatedFinancialReportsRoute =
+  AuthenticatedFinancialReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedFinancialRoute,
+  } as any)
+const AuthenticatedFinancialPaymentsRoute =
+  AuthenticatedFinancialPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedFinancialRoute,
+  } as any)
+const AuthenticatedFinancialDashboardRoute =
+  AuthenticatedFinancialDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedFinancialRoute,
+  } as any)
+const AuthenticatedChatDepartmentRoute =
+  AuthenticatedChatDepartmentRouteImport.update({
+    id: '/$department',
+    path: '/$department',
+    getParentRoute: () => AuthenticatedChatRoute,
+  } as any)
+const AuthenticatedChatDepartmentIndexRoute =
+  AuthenticatedChatDepartmentIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedChatDepartmentRoute,
+  } as any)
+const AuthenticatedMarketingTemplatesNovoRoute =
+  AuthenticatedMarketingTemplatesNovoRouteImport.update({
+    id: '/novo',
+    path: '/novo',
+    getParentRoute: () => AuthenticatedMarketingTemplatesRoute,
+  } as any)
+const AuthenticatedMarketingTemplatesTemplateIdRoute =
+  AuthenticatedMarketingTemplatesTemplateIdRouteImport.update({
+    id: '/$templateId',
+    path: '/$templateId',
+    getParentRoute: () => AuthenticatedMarketingTemplatesRoute,
+  } as any)
+const AuthenticatedMarketingListasNovaRoute =
+  AuthenticatedMarketingListasNovaRouteImport.update({
+    id: '/nova',
+    path: '/nova',
+    getParentRoute: () => AuthenticatedMarketingListasRoute,
+  } as any)
+const AuthenticatedMarketingListasListIdRoute =
+  AuthenticatedMarketingListasListIdRouteImport.update({
+    id: '/$listId',
+    path: '/$listId',
+    getParentRoute: () => AuthenticatedMarketingListasRoute,
+  } as any)
+const AuthenticatedChatDepartmentIdRoute =
+  AuthenticatedChatDepartmentIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedChatDepartmentRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof AuthenticatedChatRoute
+  '/chat': typeof AuthenticatedChatRouteWithChildren
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/financial': typeof AuthenticatedFinancialRouteWithChildren
+  '/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/reports': typeof AuthenticatedReportsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/students': typeof AuthenticatedStudentsRouteWithChildren
@@ -150,20 +338,44 @@ export interface FileRoutesByFullPath {
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
+  '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/financial/reports': typeof AuthenticatedFinancialReportsRoute
+  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
+  '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
+  '/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
+  '/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
+  '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
+  '/marketing/templates': typeof AuthenticatedMarketingTemplatesRouteWithChildren
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/chat/': typeof AuthenticatedChatIndexRoute
+  '/marketing/': typeof AuthenticatedMarketingIndexRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
+  '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/chat': typeof AuthenticatedChatRoute
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/financial': typeof AuthenticatedFinancialRouteWithChildren
   '/reports': typeof AuthenticatedReportsRouteWithChildren
-  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/students': typeof AuthenticatedStudentsRouteWithChildren
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
@@ -171,20 +383,46 @@ export interface FileRoutesByTo {
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/financial/reports': typeof AuthenticatedFinancialReportsRoute
+  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
+  '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
+  '/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
+  '/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
+  '/marketing/nova': typeof AuthenticatedMarketingNovaRoute
+  '/marketing/templates': typeof AuthenticatedMarketingTemplatesRouteWithChildren
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/chat': typeof AuthenticatedChatIndexRoute
+  '/marketing': typeof AuthenticatedMarketingIndexRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
+  '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/financial': typeof AuthenticatedFinancialRouteWithChildren
+  '/_authenticated/marketing': typeof AuthenticatedMarketingRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/students': typeof AuthenticatedStudentsRouteWithChildren
@@ -194,12 +432,37 @@ export interface FileRoutesById {
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/_authenticated/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
+  '/_authenticated/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
+  '/_authenticated/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
+  '/_authenticated/financial/reports': typeof AuthenticatedFinancialReportsRoute
+  '/_authenticated/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/_authenticated/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
+  '/_authenticated/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
+  '/_authenticated/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
+  '/_authenticated/marketing/listas': typeof AuthenticatedMarketingListasRouteWithChildren
+  '/_authenticated/marketing/nova': typeof AuthenticatedMarketingNovaRoute
+  '/_authenticated/marketing/templates': typeof AuthenticatedMarketingTemplatesRouteWithChildren
   '/_authenticated/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/_authenticated/reports/team': typeof AuthenticatedReportsTeamRoute
+  '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/_authenticated/settings/roles': typeof AuthenticatedSettingsRolesRoute
+  '/_authenticated/settings/security': typeof AuthenticatedSettingsSecurityRoute
   '/_authenticated/settings/team': typeof AuthenticatedSettingsTeamRoute
   '/_authenticated/settings/templates': typeof AuthenticatedSettingsTemplatesRoute
   '/_authenticated/students/$studentId': typeof AuthenticatedStudentsStudentIdRoute
+  '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/_authenticated/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
+  '/_authenticated/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
+  '/_authenticated/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
+  '/_authenticated/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,6 +471,8 @@ export interface FileRouteTypes {
     | '/chat'
     | '/crm'
     | '/dashboard'
+    | '/financial'
+    | '/marketing'
     | '/reports'
     | '/settings'
     | '/students'
@@ -217,20 +482,44 @@ export interface FileRouteTypes {
     | '/sign-up/sso-callback'
     | '/sign-in'
     | '/sign-up'
+    | '/chat/$department'
+    | '/financial/dashboard'
+    | '/financial/payments'
+    | '/financial/reports'
+    | '/marketing/$campaignId'
+    | '/marketing/campanhas'
+    | '/marketing/contatos'
+    | '/marketing/dashboard'
+    | '/marketing/listas'
+    | '/marketing/nova'
+    | '/marketing/templates'
     | '/reports/sales'
     | '/reports/team'
+    | '/settings/appearance'
     | '/settings/integrations'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
+    | '/chat/'
+    | '/marketing/'
+    | '/settings/'
+    | '/chat/$department/$id'
+    | '/marketing/listas/$listId'
+    | '/marketing/listas/nova'
+    | '/marketing/templates/$templateId'
+    | '/marketing/templates/novo'
+    | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/chat'
     | '/crm'
     | '/dashboard'
+    | '/financial'
     | '/reports'
-    | '/settings'
     | '/students'
     | '/sign-in/$'
     | '/sign-in/sso-callback'
@@ -238,12 +527,36 @@ export interface FileRouteTypes {
     | '/sign-up/sso-callback'
     | '/sign-in'
     | '/sign-up'
+    | '/financial/dashboard'
+    | '/financial/payments'
+    | '/financial/reports'
+    | '/marketing/$campaignId'
+    | '/marketing/campanhas'
+    | '/marketing/contatos'
+    | '/marketing/dashboard'
+    | '/marketing/listas'
+    | '/marketing/nova'
+    | '/marketing/templates'
     | '/reports/sales'
     | '/reports/team'
+    | '/settings/appearance'
     | '/settings/integrations'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/settings/team'
     | '/settings/templates'
     | '/students/$studentId'
+    | '/chat'
+    | '/marketing'
+    | '/settings'
+    | '/chat/$department/$id'
+    | '/marketing/listas/$listId'
+    | '/marketing/listas/nova'
+    | '/marketing/templates/$templateId'
+    | '/marketing/templates/novo'
+    | '/chat/$department'
   id:
     | '__root__'
     | '/'
@@ -251,6 +564,8 @@ export interface FileRouteTypes {
     | '/_authenticated/chat'
     | '/_authenticated/crm'
     | '/_authenticated/dashboard'
+    | '/_authenticated/financial'
+    | '/_authenticated/marketing'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/students'
@@ -260,12 +575,37 @@ export interface FileRouteTypes {
     | '/sign-up/sso-callback'
     | '/sign-in/'
     | '/sign-up/'
+    | '/_authenticated/chat/$department'
+    | '/_authenticated/financial/dashboard'
+    | '/_authenticated/financial/payments'
+    | '/_authenticated/financial/reports'
+    | '/_authenticated/marketing/$campaignId'
+    | '/_authenticated/marketing/campanhas'
+    | '/_authenticated/marketing/contatos'
+    | '/_authenticated/marketing/dashboard'
+    | '/_authenticated/marketing/listas'
+    | '/_authenticated/marketing/nova'
+    | '/_authenticated/marketing/templates'
     | '/_authenticated/reports/sales'
     | '/_authenticated/reports/team'
+    | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/settings/notifications'
+    | '/_authenticated/settings/profile'
+    | '/_authenticated/settings/roles'
+    | '/_authenticated/settings/security'
     | '/_authenticated/settings/team'
     | '/_authenticated/settings/templates'
     | '/_authenticated/students/$studentId'
+    | '/_authenticated/chat/'
+    | '/_authenticated/marketing/'
+    | '/_authenticated/settings/'
+    | '/_authenticated/chat/$department/$id'
+    | '/_authenticated/marketing/listas/$listId'
+    | '/_authenticated/marketing/listas/nova'
+    | '/_authenticated/marketing/templates/$templateId'
+    | '/_authenticated/marketing/templates/novo'
+    | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,6 +698,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/marketing': {
+      id: '/_authenticated/marketing'
+      path: '/marketing'
+      fullPath: '/marketing'
+      preLoaderRoute: typeof AuthenticatedMarketingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/financial': {
+      id: '/_authenticated/financial'
+      path: '/financial'
+      fullPath: '/financial'
+      preLoaderRoute: typeof AuthenticatedFinancialRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -378,6 +732,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/marketing/': {
+      id: '/_authenticated/marketing/'
+      path: '/'
+      fullPath: '/marketing/'
+      preLoaderRoute: typeof AuthenticatedMarketingIndexRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/chat/': {
+      id: '/_authenticated/chat/'
+      path: '/'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof AuthenticatedChatIndexRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
     }
     '/_authenticated/students/$studentId': {
       id: '/_authenticated/students/$studentId'
@@ -400,11 +775,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsTeamRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/security': {
+      id: '/_authenticated/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthenticatedSettingsSecurityRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/roles': {
+      id: '/_authenticated/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AuthenticatedSettingsRolesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
       path: '/integrations'
       fullPath: '/settings/integrations'
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/appearance': {
+      id: '/_authenticated/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedSettingsAppearanceRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/reports/team': {
@@ -421,8 +831,243 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsSalesRouteImport
       parentRoute: typeof AuthenticatedReportsRoute
     }
+    '/_authenticated/marketing/templates': {
+      id: '/_authenticated/marketing/templates'
+      path: '/templates'
+      fullPath: '/marketing/templates'
+      preLoaderRoute: typeof AuthenticatedMarketingTemplatesRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/nova': {
+      id: '/_authenticated/marketing/nova'
+      path: '/nova'
+      fullPath: '/marketing/nova'
+      preLoaderRoute: typeof AuthenticatedMarketingNovaRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/listas': {
+      id: '/_authenticated/marketing/listas'
+      path: '/listas'
+      fullPath: '/marketing/listas'
+      preLoaderRoute: typeof AuthenticatedMarketingListasRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/dashboard': {
+      id: '/_authenticated/marketing/dashboard'
+      path: '/dashboard'
+      fullPath: '/marketing/dashboard'
+      preLoaderRoute: typeof AuthenticatedMarketingDashboardRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/contatos': {
+      id: '/_authenticated/marketing/contatos'
+      path: '/contatos'
+      fullPath: '/marketing/contatos'
+      preLoaderRoute: typeof AuthenticatedMarketingContatosRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/campanhas': {
+      id: '/_authenticated/marketing/campanhas'
+      path: '/campanhas'
+      fullPath: '/marketing/campanhas'
+      preLoaderRoute: typeof AuthenticatedMarketingCampanhasRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/marketing/$campaignId': {
+      id: '/_authenticated/marketing/$campaignId'
+      path: '/$campaignId'
+      fullPath: '/marketing/$campaignId'
+      preLoaderRoute: typeof AuthenticatedMarketingCampaignIdRouteImport
+      parentRoute: typeof AuthenticatedMarketingRoute
+    }
+    '/_authenticated/financial/reports': {
+      id: '/_authenticated/financial/reports'
+      path: '/reports'
+      fullPath: '/financial/reports'
+      preLoaderRoute: typeof AuthenticatedFinancialReportsRouteImport
+      parentRoute: typeof AuthenticatedFinancialRoute
+    }
+    '/_authenticated/financial/payments': {
+      id: '/_authenticated/financial/payments'
+      path: '/payments'
+      fullPath: '/financial/payments'
+      preLoaderRoute: typeof AuthenticatedFinancialPaymentsRouteImport
+      parentRoute: typeof AuthenticatedFinancialRoute
+    }
+    '/_authenticated/financial/dashboard': {
+      id: '/_authenticated/financial/dashboard'
+      path: '/dashboard'
+      fullPath: '/financial/dashboard'
+      preLoaderRoute: typeof AuthenticatedFinancialDashboardRouteImport
+      parentRoute: typeof AuthenticatedFinancialRoute
+    }
+    '/_authenticated/chat/$department': {
+      id: '/_authenticated/chat/$department'
+      path: '/$department'
+      fullPath: '/chat/$department'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentRouteImport
+      parentRoute: typeof AuthenticatedChatRoute
+    }
+    '/_authenticated/chat/$department/': {
+      id: '/_authenticated/chat/$department/'
+      path: '/'
+      fullPath: '/chat/$department/'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentIndexRouteImport
+      parentRoute: typeof AuthenticatedChatDepartmentRoute
+    }
+    '/_authenticated/marketing/templates/novo': {
+      id: '/_authenticated/marketing/templates/novo'
+      path: '/novo'
+      fullPath: '/marketing/templates/novo'
+      preLoaderRoute: typeof AuthenticatedMarketingTemplatesNovoRouteImport
+      parentRoute: typeof AuthenticatedMarketingTemplatesRoute
+    }
+    '/_authenticated/marketing/templates/$templateId': {
+      id: '/_authenticated/marketing/templates/$templateId'
+      path: '/$templateId'
+      fullPath: '/marketing/templates/$templateId'
+      preLoaderRoute: typeof AuthenticatedMarketingTemplatesTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedMarketingTemplatesRoute
+    }
+    '/_authenticated/marketing/listas/nova': {
+      id: '/_authenticated/marketing/listas/nova'
+      path: '/nova'
+      fullPath: '/marketing/listas/nova'
+      preLoaderRoute: typeof AuthenticatedMarketingListasNovaRouteImport
+      parentRoute: typeof AuthenticatedMarketingListasRoute
+    }
+    '/_authenticated/marketing/listas/$listId': {
+      id: '/_authenticated/marketing/listas/$listId'
+      path: '/$listId'
+      fullPath: '/marketing/listas/$listId'
+      preLoaderRoute: typeof AuthenticatedMarketingListasListIdRouteImport
+      parentRoute: typeof AuthenticatedMarketingListasRoute
+    }
+    '/_authenticated/chat/$department/$id': {
+      id: '/_authenticated/chat/$department/$id'
+      path: '/$id'
+      fullPath: '/chat/$department/$id'
+      preLoaderRoute: typeof AuthenticatedChatDepartmentIdRouteImport
+      parentRoute: typeof AuthenticatedChatDepartmentRoute
+    }
   }
 }
+
+interface AuthenticatedChatDepartmentRouteChildren {
+  AuthenticatedChatDepartmentIdRoute: typeof AuthenticatedChatDepartmentIdRoute
+  AuthenticatedChatDepartmentIndexRoute: typeof AuthenticatedChatDepartmentIndexRoute
+}
+
+const AuthenticatedChatDepartmentRouteChildren: AuthenticatedChatDepartmentRouteChildren =
+  {
+    AuthenticatedChatDepartmentIdRoute: AuthenticatedChatDepartmentIdRoute,
+    AuthenticatedChatDepartmentIndexRoute:
+      AuthenticatedChatDepartmentIndexRoute,
+  }
+
+const AuthenticatedChatDepartmentRouteWithChildren =
+  AuthenticatedChatDepartmentRoute._addFileChildren(
+    AuthenticatedChatDepartmentRouteChildren,
+  )
+
+interface AuthenticatedChatRouteChildren {
+  AuthenticatedChatDepartmentRoute: typeof AuthenticatedChatDepartmentRouteWithChildren
+  AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
+}
+
+const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
+  AuthenticatedChatDepartmentRoute:
+    AuthenticatedChatDepartmentRouteWithChildren,
+  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+}
+
+const AuthenticatedChatRouteWithChildren =
+  AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
+
+interface AuthenticatedFinancialRouteChildren {
+  AuthenticatedFinancialDashboardRoute: typeof AuthenticatedFinancialDashboardRoute
+  AuthenticatedFinancialPaymentsRoute: typeof AuthenticatedFinancialPaymentsRoute
+  AuthenticatedFinancialReportsRoute: typeof AuthenticatedFinancialReportsRoute
+}
+
+const AuthenticatedFinancialRouteChildren: AuthenticatedFinancialRouteChildren =
+  {
+    AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
+    AuthenticatedFinancialPaymentsRoute: AuthenticatedFinancialPaymentsRoute,
+    AuthenticatedFinancialReportsRoute: AuthenticatedFinancialReportsRoute,
+  }
+
+const AuthenticatedFinancialRouteWithChildren =
+  AuthenticatedFinancialRoute._addFileChildren(
+    AuthenticatedFinancialRouteChildren,
+  )
+
+interface AuthenticatedMarketingListasRouteChildren {
+  AuthenticatedMarketingListasListIdRoute: typeof AuthenticatedMarketingListasListIdRoute
+  AuthenticatedMarketingListasNovaRoute: typeof AuthenticatedMarketingListasNovaRoute
+}
+
+const AuthenticatedMarketingListasRouteChildren: AuthenticatedMarketingListasRouteChildren =
+  {
+    AuthenticatedMarketingListasListIdRoute:
+      AuthenticatedMarketingListasListIdRoute,
+    AuthenticatedMarketingListasNovaRoute:
+      AuthenticatedMarketingListasNovaRoute,
+  }
+
+const AuthenticatedMarketingListasRouteWithChildren =
+  AuthenticatedMarketingListasRoute._addFileChildren(
+    AuthenticatedMarketingListasRouteChildren,
+  )
+
+interface AuthenticatedMarketingTemplatesRouteChildren {
+  AuthenticatedMarketingTemplatesTemplateIdRoute: typeof AuthenticatedMarketingTemplatesTemplateIdRoute
+  AuthenticatedMarketingTemplatesNovoRoute: typeof AuthenticatedMarketingTemplatesNovoRoute
+}
+
+const AuthenticatedMarketingTemplatesRouteChildren: AuthenticatedMarketingTemplatesRouteChildren =
+  {
+    AuthenticatedMarketingTemplatesTemplateIdRoute:
+      AuthenticatedMarketingTemplatesTemplateIdRoute,
+    AuthenticatedMarketingTemplatesNovoRoute:
+      AuthenticatedMarketingTemplatesNovoRoute,
+  }
+
+const AuthenticatedMarketingTemplatesRouteWithChildren =
+  AuthenticatedMarketingTemplatesRoute._addFileChildren(
+    AuthenticatedMarketingTemplatesRouteChildren,
+  )
+
+interface AuthenticatedMarketingRouteChildren {
+  AuthenticatedMarketingCampaignIdRoute: typeof AuthenticatedMarketingCampaignIdRoute
+  AuthenticatedMarketingCampanhasRoute: typeof AuthenticatedMarketingCampanhasRoute
+  AuthenticatedMarketingContatosRoute: typeof AuthenticatedMarketingContatosRoute
+  AuthenticatedMarketingDashboardRoute: typeof AuthenticatedMarketingDashboardRoute
+  AuthenticatedMarketingListasRoute: typeof AuthenticatedMarketingListasRouteWithChildren
+  AuthenticatedMarketingNovaRoute: typeof AuthenticatedMarketingNovaRoute
+  AuthenticatedMarketingTemplatesRoute: typeof AuthenticatedMarketingTemplatesRouteWithChildren
+  AuthenticatedMarketingIndexRoute: typeof AuthenticatedMarketingIndexRoute
+}
+
+const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
+  {
+    AuthenticatedMarketingCampaignIdRoute:
+      AuthenticatedMarketingCampaignIdRoute,
+    AuthenticatedMarketingCampanhasRoute: AuthenticatedMarketingCampanhasRoute,
+    AuthenticatedMarketingContatosRoute: AuthenticatedMarketingContatosRoute,
+    AuthenticatedMarketingDashboardRoute: AuthenticatedMarketingDashboardRoute,
+    AuthenticatedMarketingListasRoute:
+      AuthenticatedMarketingListasRouteWithChildren,
+    AuthenticatedMarketingNovaRoute: AuthenticatedMarketingNovaRoute,
+    AuthenticatedMarketingTemplatesRoute:
+      AuthenticatedMarketingTemplatesRouteWithChildren,
+    AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
+  }
+
+const AuthenticatedMarketingRouteWithChildren =
+  AuthenticatedMarketingRoute._addFileChildren(
+    AuthenticatedMarketingRouteChildren,
+  )
 
 interface AuthenticatedReportsRouteChildren {
   AuthenticatedReportsSalesRoute: typeof AuthenticatedReportsSalesRoute
@@ -438,16 +1083,29 @@ const AuthenticatedReportsRouteWithChildren =
   AuthenticatedReportsRoute._addFileChildren(AuthenticatedReportsRouteChildren)
 
 interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
+  AuthenticatedSettingsRolesRoute: typeof AuthenticatedSettingsRolesRoute
+  AuthenticatedSettingsSecurityRoute: typeof AuthenticatedSettingsSecurityRoute
   AuthenticatedSettingsTeamRoute: typeof AuthenticatedSettingsTeamRoute
   AuthenticatedSettingsTemplatesRoute: typeof AuthenticatedSettingsTemplatesRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsRolesRoute: AuthenticatedSettingsRolesRoute,
+  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
   AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
   AuthenticatedSettingsTemplatesRoute: AuthenticatedSettingsTemplatesRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =
@@ -469,18 +1127,22 @@ const AuthenticatedStudentsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
   AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFinancialRoute: typeof AuthenticatedFinancialRouteWithChildren
+  AuthenticatedMarketingRoute: typeof AuthenticatedMarketingRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
   AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFinancialRoute: AuthenticatedFinancialRouteWithChildren,
+  AuthenticatedMarketingRoute: AuthenticatedMarketingRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,

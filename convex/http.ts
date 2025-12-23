@@ -1,0 +1,258 @@
+/**
+ * Convex HTTP Router - Handles external webhook endpoints
+ *
+ * This file defines HTTP endpoints that can be called by external services.
+ * Currently supports:
+ * - POST /brevo/webhook - Brevo email event webhooks
+ */
+
+import { httpRouter } from 'convex/server'
+import { httpAction } from './_generated/server'
+import { internal } from './_generated/api'
+import {
+	type BrevoWebhookPayload,
+	normalizeEventType,
+	validateWebhookSecret,
+} from './lib/brevo'
+import {
+	type MessagingWebhookPayload,
+	normalizeMessageStatus,
+	validateMessagingWebhookSecret,
+} from './lib/messaging'
+// import { serve } from 'inngest/convex'
+// import { inngest } from './lib/inngest'
+// import { gatherContext, augmentContext } from './inngest'
+
+const http = httpRouter()
+
+/**
+ * Brevo Webhook Endpoint
+ *
+ * Receives email events from Brevo (delivery, opens, clicks, bounces, etc.)
+ * and records them in the emailEvents table.
+ *
+ * POST /brevo/webhook
+ *
+ * Headers:
+ * - X-Brevo-Secret: Webhook secret for authentication
+ *
+ * Body: BrevoWebhookPayload (JSON)
+ */
+http.route({
+	path: '/brevo/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook secret
+		const secret = request.headers.get('X-Brevo-Secret')
+		if (!validateWebhookSecret(secret)) {
+			console.error('Brevo webhook: Invalid secret')
+			return new Response('Unauthorized', { status: 401 })
+		}
+
+		// 2. Parse payload
+		let payload: BrevoWebhookPayload
+		try {
+			payload = (await request.json()) as BrevoWebhookPayload
+		} catch {
+			console.error('Brevo webhook: Invalid JSON payload')
+			return new Response('Bad Request', { status: 400 })
+		}
+
+		// 3. Validate required fields
+		if (!payload.event || !payload.email) {
+			console.error('Brevo webhook: Missing required fields (event, email)')
+			return new Response('Bad Request: Missing required fields', {
+				status: 400,
+			})
+		}
+
+		// 4. Normalize event type to our internal format
+		const eventType = normalizeEventType(payload.event)
+
+		// 5. Find contact by email (if exists)
+		// @ts-ignore - Deep type instantiation workaround for Convex
+		const contact = await ctx.runQuery(
+			internal.emailMarketing.getContactByEmailInternal as any,
+			{
+				email: payload.email,
+			},
+		)
+
+		// 6. Extract timestamp (prefer epoch, fallback to ts, then current time)
+		const timestamp = payload.ts_epoch ?? payload.ts ?? Date.now()
+
+		// 7. Record the event
+		await ctx.runMutation(internal.emailMarketing.recordEmailEvent, {
+			email: payload.email,
+			contactId: contact?._id,
+			campaignId: undefined, // Campaign ID not available in webhook payload
+			eventType,
+			link: payload.link,
+			bounceType: payload.reason,
+			brevoMessageId: payload['message-id'],
+			timestamp,
+			metadata: payload,
+		})
+
+		// 8. Handle unsubscribe and hard bounce events - update subscription status
+		const unsubscribeEvents = ['unsubscribed', 'hard_bounce', 'invalid_email']
+		if (unsubscribeEvents.includes(payload.event)) {
+			await ctx.runMutation(
+				internal.emailMarketing.updateContactSubscriptionInternal,
+				{
+					email: payload.email,
+					subscriptionStatus: 'unsubscribed',
+				},
+			)
+			console.log(
+				'Brevo webhook: Updated subscription status to unsubscribed',
+			)
+		}
+
+		console.log(`Brevo webhook: Processed ${payload.event}`)
+		return new Response('OK', { status: 200 })
+	}),
+})
+
+/**
+ * Messaging Webhook Endpoint
+ *
+ * Receives message status updates from messaging providers (WhatsApp, SMS, etc.)
+ * and updates the message status in the database.
+ *
+ * POST /messaging/webhook
+ *
+ * Headers:
+ * - X-Messaging-Secret: Webhook secret for authentication
+ *
+ * Body: MessagingWebhookPayload (JSON)
+ */
+http.route({
+	path: '/messaging/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook secret
+		const secret = request.headers.get('X-Messaging-Secret')
+		if (!validateMessagingWebhookSecret(secret)) {
+			console.error('Messaging webhook: Invalid secret')
+			return new Response('Unauthorized', { status: 401 })
+		}
+
+		// 2. Parse payload
+		let payload: MessagingWebhookPayload
+		try {
+			payload = (await request.json()) as MessagingWebhookPayload
+		} catch {
+			console.error('Messaging webhook: Invalid JSON payload')
+			return new Response('Bad Request', { status: 400 })
+		}
+
+		// 3. Validate required fields
+		if (!payload.messageId || !payload.status) {
+			console.error(
+				'Messaging webhook: Missing required fields (messageId, status)',
+			)
+			return new Response('Bad Request: Missing required fields', {
+				status: 400,
+			})
+		}
+
+		// 4. Normalize status to internal format
+		const normalizedStatus = normalizeMessageStatus(payload.status)
+
+		// 5. Update message status via internal mutation
+		try {
+			await ctx.runMutation(internal.messages.updateStatusInternal, {
+				messageId: payload.messageId as any, // ID comes from external provider
+				status: normalizedStatus,
+			})
+		} catch (error) {
+			console.error('Messaging webhook: Failed to update message status', error)
+			return new Response('Internal Server Error', { status: 500 })
+		}
+
+		console.log(
+			`Messaging webhook: Updated message ${payload.messageId} to ${normalizedStatus}`,
+		)
+		return new Response('OK', { status: 200 })
+	}),
+})
+
+/**
+ * Asaas Webhook Endpoint
+ *
+ * Receives payment status updates from Asaas (PAYMENT_RECEIVED, PAYMENT_CONFIRMED, etc.)
+ * and processes them asynchronously.
+ *
+ * POST /asaas/webhook
+ *
+ * Headers:
+ * - asaas-access-token: Webhook token for authentication
+ *
+ * Body: Asaas webhook payload with event and payment data
+ */
+http.route({
+	path: '/asaas/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook token
+		const receivedToken = request.headers.get('asaas-access-token')
+		const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
+
+		if (!expectedToken || receivedToken !== expectedToken) {
+			console.error('Asaas webhook: Invalid or missing token')
+			return new Response('Unauthorized', { status: 401 })
+		}
+
+		// 2. Parse payload
+		let payload: any
+		try {
+			payload = await request.json()
+		} catch {
+			console.error('Asaas webhook: Invalid JSON payload')
+			return new Response('Bad Request', { status: 400 })
+		}
+
+		// 3. Validate required fields
+		const { event, payment } = payload
+		if (!event || !payment || !payment.id) {
+			console.error('Asaas webhook: Missing required fields (event, payment.id)')
+			return new Response('Bad Request: Missing required fields', {
+				status: 400,
+			})
+		}
+
+		// 4. Process webhook asynchronously (don't wait for completion)
+		// This ensures we respond quickly to Asaas to avoid retries
+		ctx.runMutation(internal.asaas.webhooks.processWebhook, {
+			event,
+			paymentId: payment.id,
+			payload,
+		}).catch((error) => {
+			console.error(`Asaas webhook: Error processing event ${event} for payment ${payment.id}:`, error)
+		})
+
+		// 5. Return immediate success response
+		console.log(`Asaas webhook: Received ${event} for payment ${payment.id}`)
+		return new Response('OK', { status: 200 })
+	}),
+})
+
+/**
+ * Inngest Serve Handler
+ *
+ * Exposes the Inngest API endpoints for the workflow functions.
+ * This allows Inngest to trigger our context gathering and augmentation functions.
+ *
+ * GET /api/inngest
+ * POST /api/inngest
+ */
+/*
+http.route({
+	path: '/api/inngest',
+	method: 'ANY',
+	handler: serve(inngest, [gatherContext, augmentContext]),
+})
+*/
+
+export default http

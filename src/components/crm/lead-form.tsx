@@ -16,6 +16,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog';
+import { FlipButton, FlipButtonBack, FlipButtonFront } from '@/components/ui/flip-button';
 import {
 	Form,
 	FormControl,
@@ -24,6 +25,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
+import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -88,7 +90,7 @@ const formSchema = z
 		clinicName: z.string().optional(),
 		clinicCity: z.string().optional(),
 		// Professional background
-		yearsInAesthetics: z.coerce.number().min(0).max(50).optional(),
+		yearsInAesthetics: z.string().optional(),
 		currentRevenue: z.enum(['0-5k', '5k-10k', '10k-20k', '20k-50k', '50k+']).optional(),
 		// Diagnosis
 		mainPain: z
@@ -122,7 +124,7 @@ export function LeadForm() {
 			hasClinic: false,
 			clinicName: '',
 			clinicCity: '',
-			yearsInAesthetics: undefined,
+			yearsInAesthetics: '',
 			currentRevenue: undefined,
 			mainPain: undefined,
 			mainDesire: '',
@@ -145,8 +147,10 @@ export function LeadForm() {
 				...(values.hasClinic !== undefined && { hasClinic: values.hasClinic }),
 				...(values.clinicName && { clinicName: values.clinicName }),
 				...(values.clinicCity && { clinicCity: values.clinicCity }),
-				...(values.yearsInAesthetics !== undefined &&
-					values.yearsInAesthetics !== null && { yearsInAesthetics: values.yearsInAesthetics }),
+				...(values.yearsInAesthetics &&
+					!Number.isNaN(Number(values.yearsInAesthetics)) && {
+						yearsInAesthetics: Number(values.yearsInAesthetics),
+					}),
 				...(values.currentRevenue && { currentRevenue: values.currentRevenue }),
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
@@ -168,12 +172,32 @@ export function LeadForm() {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20">
-					<Plus className="h-4 w-4" />
-					Novo Lead
-				</Button>
-			</DialogTrigger>
+			<div className="w-full mb-4 px-1">
+				<DialogTrigger asChild>
+					<FlipButton className="w-full h-12" initial={false}>
+						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
+							<HoverBorderGradient
+								as="div"
+								containerClassName="rounded-full w-full h-full"
+								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
+							>
+								<Plus className="h-4 w-4 mr-2" />
+								Novo Lead
+							</HoverBorderGradient>
+						</FlipButtonFront>
+						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
+							<HoverBorderGradient
+								as="div"
+								containerClassName="rounded-full w-full h-full border-none"
+								className="bg-[#004b5a] text-[#d4af37] w-full h-full flex items-center justify-center font-bold tracking-wide"
+								clockwise={false}
+							>
+								Cadastrar
+							</HoverBorderGradient>
+						</FlipButtonBack>
+					</FlipButton>
+				</DialogTrigger>
+			</div>
 			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
 				<DialogHeader>
 					<DialogTitle>Novo Lead</DialogTitle>
@@ -371,15 +395,7 @@ export function LeadForm() {
 									<FormItem>
 										<FormLabel>Anos na Estética</FormLabel>
 										<FormControl>
-											<Input
-												type="number"
-												placeholder="Ex: 3"
-												onChange={field.onChange}
-												onBlur={field.onBlur}
-												name={field.name}
-												ref={field.ref}
-												value={field.value?.toString() || ''}
-											/>
+											<Input type="number" placeholder="Ex: 3" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -475,7 +491,7 @@ export function LeadForm() {
 												<FormControl>
 													<RadioGroupItem value="frio" />
 												</FormControl>
-												<FormLabel className="font-normal cursor-pointer text-blue-400">
+												<FormLabel className="font-normal cursor-pointer text-primary">
 													❄️ Frio
 												</FormLabel>
 											</FormItem>
