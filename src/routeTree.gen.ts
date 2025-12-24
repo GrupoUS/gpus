@@ -55,6 +55,7 @@ import { Route as AuthenticatedMarketingTemplatesNovoRouteImport } from './route
 import { Route as AuthenticatedMarketingTemplatesTemplateIdRouteImport } from './routes/_authenticated/marketing/templates/$templateId'
 import { Route as AuthenticatedMarketingListasNovaRouteImport } from './routes/_authenticated/marketing/listas/nova'
 import { Route as AuthenticatedMarketingListasListIdRouteImport } from './routes/_authenticated/marketing/listas/$listId'
+import { Route as AuthenticatedMarketingCampaignIdEditRouteImport } from './routes/_authenticated/marketing/$campaignId/edit'
 import { Route as AuthenticatedChatDepartmentIdRouteImport } from './routes/_authenticated/chat/$department/$id'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -315,6 +316,12 @@ const AuthenticatedMarketingListasListIdRoute =
     path: '/$listId',
     getParentRoute: () => AuthenticatedMarketingListasRoute,
   } as any)
+const AuthenticatedMarketingCampaignIdEditRoute =
+  AuthenticatedMarketingCampaignIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthenticatedMarketingCampaignIdRoute,
+  } as any)
 const AuthenticatedChatDepartmentIdRoute =
   AuthenticatedChatDepartmentIdRouteImport.update({
     id: '/$id',
@@ -342,7 +349,7 @@ export interface FileRoutesByFullPath {
   '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
   '/financial/reports': typeof AuthenticatedFinancialReportsRoute
-  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRouteWithChildren
   '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
   '/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
@@ -364,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/$campaignId/edit': typeof AuthenticatedMarketingCampaignIdEditRoute
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
@@ -386,7 +394,7 @@ export interface FileRoutesByTo {
   '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
   '/financial/reports': typeof AuthenticatedFinancialReportsRoute
-  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRouteWithChildren
   '/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
   '/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
@@ -408,6 +416,7 @@ export interface FileRoutesByTo {
   '/marketing': typeof AuthenticatedMarketingIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/marketing/$campaignId/edit': typeof AuthenticatedMarketingCampaignIdEditRoute
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
@@ -436,7 +445,7 @@ export interface FileRoutesById {
   '/_authenticated/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
   '/_authenticated/financial/payments': typeof AuthenticatedFinancialPaymentsRoute
   '/_authenticated/financial/reports': typeof AuthenticatedFinancialReportsRoute
-  '/_authenticated/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRoute
+  '/_authenticated/marketing/$campaignId': typeof AuthenticatedMarketingCampaignIdRouteWithChildren
   '/_authenticated/marketing/campanhas': typeof AuthenticatedMarketingCampanhasRoute
   '/_authenticated/marketing/contatos': typeof AuthenticatedMarketingContatosRoute
   '/_authenticated/marketing/dashboard': typeof AuthenticatedMarketingDashboardRoute
@@ -458,6 +467,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/': typeof AuthenticatedMarketingIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/chat/$department/$id': typeof AuthenticatedChatDepartmentIdRoute
+  '/_authenticated/marketing/$campaignId/edit': typeof AuthenticatedMarketingCampaignIdEditRoute
   '/_authenticated/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/_authenticated/marketing/listas/nova': typeof AuthenticatedMarketingListasNovaRoute
   '/_authenticated/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
@@ -508,6 +518,7 @@ export interface FileRouteTypes {
     | '/marketing/'
     | '/settings/'
     | '/chat/$department/$id'
+    | '/marketing/$campaignId/edit'
     | '/marketing/listas/$listId'
     | '/marketing/listas/nova'
     | '/marketing/templates/$templateId'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/marketing'
     | '/settings'
     | '/chat/$department/$id'
+    | '/marketing/$campaignId/edit'
     | '/marketing/listas/$listId'
     | '/marketing/listas/nova'
     | '/marketing/templates/$templateId'
@@ -601,6 +613,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/'
     | '/_authenticated/settings/'
     | '/_authenticated/chat/$department/$id'
+    | '/_authenticated/marketing/$campaignId/edit'
     | '/_authenticated/marketing/listas/$listId'
     | '/_authenticated/marketing/listas/nova'
     | '/_authenticated/marketing/templates/$templateId'
@@ -943,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketingListasListIdRouteImport
       parentRoute: typeof AuthenticatedMarketingListasRoute
     }
+    '/_authenticated/marketing/$campaignId/edit': {
+      id: '/_authenticated/marketing/$campaignId/edit'
+      path: '/edit'
+      fullPath: '/marketing/$campaignId/edit'
+      preLoaderRoute: typeof AuthenticatedMarketingCampaignIdEditRouteImport
+      parentRoute: typeof AuthenticatedMarketingCampaignIdRoute
+    }
     '/_authenticated/chat/$department/$id': {
       id: '/_authenticated/chat/$department/$id'
       path: '/$id'
@@ -1002,6 +1022,21 @@ const AuthenticatedFinancialRouteWithChildren =
     AuthenticatedFinancialRouteChildren,
   )
 
+interface AuthenticatedMarketingCampaignIdRouteChildren {
+  AuthenticatedMarketingCampaignIdEditRoute: typeof AuthenticatedMarketingCampaignIdEditRoute
+}
+
+const AuthenticatedMarketingCampaignIdRouteChildren: AuthenticatedMarketingCampaignIdRouteChildren =
+  {
+    AuthenticatedMarketingCampaignIdEditRoute:
+      AuthenticatedMarketingCampaignIdEditRoute,
+  }
+
+const AuthenticatedMarketingCampaignIdRouteWithChildren =
+  AuthenticatedMarketingCampaignIdRoute._addFileChildren(
+    AuthenticatedMarketingCampaignIdRouteChildren,
+  )
+
 interface AuthenticatedMarketingListasRouteChildren {
   AuthenticatedMarketingListasListIdRoute: typeof AuthenticatedMarketingListasListIdRoute
   AuthenticatedMarketingListasNovaRoute: typeof AuthenticatedMarketingListasNovaRoute
@@ -1039,7 +1074,7 @@ const AuthenticatedMarketingTemplatesRouteWithChildren =
   )
 
 interface AuthenticatedMarketingRouteChildren {
-  AuthenticatedMarketingCampaignIdRoute: typeof AuthenticatedMarketingCampaignIdRoute
+  AuthenticatedMarketingCampaignIdRoute: typeof AuthenticatedMarketingCampaignIdRouteWithChildren
   AuthenticatedMarketingCampanhasRoute: typeof AuthenticatedMarketingCampanhasRoute
   AuthenticatedMarketingContatosRoute: typeof AuthenticatedMarketingContatosRoute
   AuthenticatedMarketingDashboardRoute: typeof AuthenticatedMarketingDashboardRoute
@@ -1052,7 +1087,7 @@ interface AuthenticatedMarketingRouteChildren {
 const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
     AuthenticatedMarketingCampaignIdRoute:
-      AuthenticatedMarketingCampaignIdRoute,
+      AuthenticatedMarketingCampaignIdRouteWithChildren,
     AuthenticatedMarketingCampanhasRoute: AuthenticatedMarketingCampanhasRoute,
     AuthenticatedMarketingContatosRoute: AuthenticatedMarketingContatosRoute,
     AuthenticatedMarketingDashboardRoute: AuthenticatedMarketingDashboardRoute,
