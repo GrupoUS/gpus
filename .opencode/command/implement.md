@@ -1,6 +1,7 @@
 ---
 description: Execute approved plan from /research via @apex-dev in 5 phases
 agent: apex-dev
+subtask: true
 ---
 
 # /implement | /implementar

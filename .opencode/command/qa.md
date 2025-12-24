@@ -1,6 +1,7 @@
 ---
 description: Pipeline QA integrado com auto-research e auto-fix
 agent: code-reviewer
+subtask: true
 ---
 
 # /qa - Quality Assurance Pipeline

@@ -3,6 +3,8 @@ name: architect-reviewer
 description: Expert architecture reviewer specializing in system design validation, architectural patterns, and technical decision assessment. Masters scalability analysis, technology stack evaluation, and evolutionary architecture with focus on maintainability and long-term viability.
 mode: subagent
 model: google/gemini-3-pro-preview
+reasoningEffort: high
+textVerbosity: high
 temperature: 0.1
 tools:
   write: false

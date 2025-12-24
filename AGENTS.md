@@ -159,7 +159,6 @@ Before creating a PR:
 ```bash
 # Invoke primary agents
 @apex-dev      # For implementation tasks
-@apex-researcher  # For research/planning tasks
 
 # Invoke subagents (from apex-dev)
 @code-reviewer        # Security/compliance review

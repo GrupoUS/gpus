@@ -1,5 +1,6 @@
 ---
 description: Pesquisa multi-fonte com validação cruzada e geração de atomic tasks (>=95% accuracy)
+agent: apex-researcher
 subtask: true
 ---
 
