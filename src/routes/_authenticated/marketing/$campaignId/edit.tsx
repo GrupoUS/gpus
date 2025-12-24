@@ -1,15 +1,16 @@
 import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import type { Id } from '@convex/_generated/dataModel';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
 
@@ -26,32 +27,22 @@ export const Route = createFileRoute('/_authenticated/marketing/$campaignId/edit
 });
 
 function EditCampaignPage() {
+	const id = useId();
+	const [isPending, setIsPending] = useState(false);
 	const navigate = useNavigate();
 	const { campaignId } = Route.useParams();
 
 	// Fetch existing campaign data
-	const { data: campaign, isLoading } = useQuery(api.campaigns.getById, {
-		id: campaignId as Id<'campaigns'>,
+	const campaign = useQuery(api.emailMarketing.getCampaign, {
+		campaignId: campaignId as Id<'emailCampaigns'>,
 	});
+	const isLoading = campaign === undefined;
 
 	// Fetch available email lists
-	const { data: lists } = useQuery(api.emailLists.list, {});
+	const lists = useQuery(api.emailMarketing.getLists, {});
 
 	// Update campaign mutation
-	const updateCampaign = useMutation(api.campaigns.update, {
-		onSuccess: () => {
-			toast.success('Campanha atualizada com sucesso!', {
-				description: 'As alterações foram salvas.',
-			});
-			navigate({ to: '/marketing', search: { search: '', status: 'all', view: 'grid', page: 1 } });
-		},
-		onError: (error) => {
-			toast.error('Erro ao atualizar campanha', {
-				description:
-					error instanceof Error ? error.message : 'Ocorreu um erro inesperado. Tente novamente.',
-			});
-		},
-	});
+	const updateCampaign = useMutation(api.emailMarketing.updateCampaign);
 
 	// Form state
 	const [formData, setFormData] = useState<CampaignFormData>({
@@ -62,7 +53,7 @@ function EditCampaignPage() {
 	});
 
 	// Initialize form when campaign data is loaded
-	useState(() => {
+	useEffect(() => {
 		if (campaign) {
 			setFormData({
 				name: campaign.name,
@@ -78,13 +69,28 @@ function EditCampaignPage() {
 
 		if (!campaign) return;
 
+		setIsPending(true);
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { status: _status, ...updateData } = formData;
 			await updateCampaign({
-				id: campaign._id,
-				...formData,
+				campaignId: campaign._id,
+				...updateData,
+			});
+			toast.success('Campanha atualizada com sucesso!', {
+				description: 'As alterações foram salvas.',
+			});
+			void navigate({
+				to: '/marketing',
+				search: { search: '', status: 'all', view: 'grid', page: 1 },
 			});
 		} catch (error) {
-			console.error('Error updating campaign:', error);
+			toast.error('Erro ao atualizar campanha', {
+				description:
+					error instanceof Error ? error.message : 'Ocorreu um erro inesperado. Tente novamente.',
+			});
+		} finally {
+			setIsPending(false);
 		}
 	};
 
@@ -143,9 +149,9 @@ function EditCampaignPage() {
 					<form onSubmit={handleSubmit} className="space-y-6">
 						{/* Name */}
 						<div className="space-y-2">
-							<Label htmlFor="name">Nome da Campanha</Label>
+							<Label htmlFor={`${id}-name`}>Nome da Campanha</Label>
 							<Input
-								id="name"
+								id={`${id}-name`}
 								type="text"
 								value={formData.name}
 								onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -156,9 +162,9 @@ function EditCampaignPage() {
 
 						{/* Subject */}
 						<div className="space-y-2">
-							<Label htmlFor="subject">Assunto</Label>
+							<Label htmlFor={`${id}-subject`}>Assunto</Label>
 							<Input
-								id="subject"
+								id={`${id}-subject`}
 								type="text"
 								value={formData.subject}
 								onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
@@ -169,9 +175,9 @@ function EditCampaignPage() {
 
 						{/* Status */}
 						<div className="space-y-2">
-							<Label htmlFor="status">Status</Label>
+							<Label htmlFor={`${id}-status`}>Status</Label>
 							<select
-								id="status"
+								id={`${id}-status`}
 								value={formData.status}
 								onChange={(e) =>
 									setFormData({ ...formData, status: e.target.value as CampaignStatus })
@@ -225,8 +231,8 @@ function EditCampaignPage() {
 							>
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={updateCampaign.isPending}>
-								{updateCampaign.isPending ? (
+							<Button type="submit" disabled={isPending}>
+								{isPending ? (
 									<div className="flex items-center gap-2">
 										<Loader2 className="h-4 w-4 animate-spin" />
 										Salvando...
