@@ -61,7 +61,7 @@ describe('ThemeProvider', () => {
 		expect(result.current.theme).toBe('system');
 	});
 
-	it('updates theme and storage when setTheme is called', () => {
+	it('updates theme and storage when setTheme is called (render)', () => {
 		render(
 			<ThemeProvider>
 				<TestComponent />
@@ -87,7 +87,7 @@ describe('ThemeProvider', () => {
 		expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
 	});
 
-	it('falls back to system theme for invalid stored values', () => {
+	it('falls back to system theme for invalid stored values (render)', () => {
 		// Simulate user with non-standard preference
 		localStorage.setItem(STORAGE_KEY, 'invalid-theme');
 		render(

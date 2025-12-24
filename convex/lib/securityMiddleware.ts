@@ -60,7 +60,7 @@ async function getSecurityContext(ctx: MutationCtx | QueryCtx): Promise<Security
 				.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
 				.first()
 
-			const dbRole = user?.role
+			const dbRole = user?.role as string | undefined
 			const orgRole = typeof identity.org_role === 'string' ? identity.org_role : undefined
 			role = dbRole ?? orgRole ?? 'unknown'
 		}
