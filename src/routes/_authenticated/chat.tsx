@@ -151,9 +151,7 @@ function ChatPage() {
 					<AIChatWidget
 						conversationId={selectedConversationId as Id<'conversations'>}
 						onInsertResponse={(text) => {
-							// TODO: Implement insert into chat input - should set the chat input value
-							// biome-ignore lint/suspicious/noConsole: TODO - Remove when chat input integration is implemented
-							console.log('Insert response:', text);
+							setPendingMessage(text);
 						}}
 					/>
 				)}

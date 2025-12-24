@@ -227,7 +227,6 @@ function calculateRowScore(row: unknown[], nextRow?: unknown[]): number {
  * ```typescript
  * const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
  * const result = detectHeaderRow(jsonData as unknown[][]);
- * console.log(`Header found at row ${result.headerRowIndex + 1} with ${result.confidence * 100}% confidence`);
  * ```
  */
 export function detectHeaderRow(rows: unknown[][], maxRowsToScan = 20): HeaderDetectionResult {

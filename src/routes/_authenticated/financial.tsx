@@ -28,8 +28,7 @@ type ImportResult = {
 
 function FinancialDashboard() {
 	const [isSyncing, setIsSyncing] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: Convex action type inference workaround
-	const syncPayments = useAction(api.asaas.actions.importPaymentsFromAsaas as any);
+	const syncPayments = useAction(api.asaas.actions.importPaymentsFromAsaas);
 
 	const handleSync = async () => {
 		setIsSyncing(true);

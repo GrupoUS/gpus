@@ -51,8 +51,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	const [installmentCount, setInstallmentCount] = useState('1');
 
 	// Get student data to check if synced with Asaas
-	// biome-ignore lint/suspicious/noExplicitAny: Deep type instantiation workaround for Convex
-	const student = useQuery(api.students.getById as any, { id: studentId });
+	const student = useQuery(api.students.getById, { id: studentId });
 
 	// Create payment action
 	const createPayment = useAction(api.asaas.actions.createAsaasPayment);

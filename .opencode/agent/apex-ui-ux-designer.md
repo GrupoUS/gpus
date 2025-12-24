@@ -8,7 +8,7 @@ temperature: 0.5
 tools:
   write: true
   edit: true
-  bash: false
+  bash: true
   todowrite: true
   todoread: true
 

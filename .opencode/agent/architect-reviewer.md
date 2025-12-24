@@ -7,9 +7,9 @@ reasoningEffort: high
 textVerbosity: high
 temperature: 0.1
 tools:
-  write: false
-  edit: false
-  bash: false
+  write: true
+  edit: true
+  bash: true
   todowrite: true
   todoread: true
 permission:

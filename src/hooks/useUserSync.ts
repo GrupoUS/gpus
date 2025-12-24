@@ -15,8 +15,7 @@ export function useUserSync() {
 	// We use "skip" logic: if not signed in, we don't query
 	const shouldQuery = isAuthLoaded && isSignedIn;
 
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast to avoid deep type instantiation error
-	const currentUser = useQuery(api.users.current, shouldQuery ? {} : ('skip' as any));
+	const currentUser = useQuery(api.users.current, shouldQuery ? {} : 'skip');
 	const ensureUser = useMutation(api.users.ensureUser);
 
 	useEffect(() => {
