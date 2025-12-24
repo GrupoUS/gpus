@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeadForm } from './lead-form';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { LeadForm } from './lead-form';
 
 // Mock dependencies
 vi.mock('convex/react', () => ({
@@ -22,7 +23,7 @@ vi.mock('@/components/ui/flip-button', async () => {
 	const React = await import('react');
 	return {
 		FlipButton: React.forwardRef(({ children, className, initial, ...props }: any, ref: any) => (
-			<div ref={ref} className={className} {...props} role="button">
+			<div ref={ref} className={className} {...props} role="button" tabIndex={0}>
 				{children}
 			</div>
 		)),

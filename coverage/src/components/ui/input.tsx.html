@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">72.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/22</span>
+                <span class='fraction'>16/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">58.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>7/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>3/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.09% </span>
+                <span class="strong">72.72% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/22</span>
+                <span class='fraction'>16/22</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -147,39 +147,39 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-yes">221x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-yes">220x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">220x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">221x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -212,7 +212,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import * as React from 'react';
@@ -224,41 +224,41 @@ interface InputProps extends React.ComponentProps&lt;'input'&gt; {
 }
 &nbsp;
 const Input = React.forwardRef&lt;HTMLInputElement, InputProps&gt;(
-<span class="fstat-no" title="function not covered" >	({</span> className, type, label, ...props }, ref) =&gt; {
-		const [isFocused, setIsFocused] = <span class="cstat-no" title="statement not covered" >React.useState(false);</span>
-		const [hasValue, setHasValue] = <span class="cstat-no" title="statement not covered" >React.useState(false);</span>
-		const inputRef = <span class="cstat-no" title="statement not covered" >React.useRef&lt;HTMLInputElement&gt;(null);</span>
-		const inputId = <span class="cstat-no" title="statement not covered" >React.useId();</span>
+	({ className, type, label, ...props }, ref) =&gt; {
+		const [isFocused, setIsFocused] = React.useState(false);
+		const [hasValue, setHasValue] = React.useState(false);
+		const inputRef = React.useRef&lt;HTMLInputElement&gt;(null);
+		const inputId = React.useId();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >		React.useImperativeHandle(ref, <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >			if (!inputRef.current) {</span>
+		React.useImperativeHandle(ref, () =&gt; {
+			<span class="missing-if-branch" title="if path not taken" >I</span>if (!inputRef.current) {
 <span class="cstat-no" title="statement not covered" >				throw new Error('Input ref is not available');</span>
 			}
-<span class="cstat-no" title="statement not covered" >			return inputRef.current;</span>
+			return inputRef.current;
 		});
 &nbsp;
-		const handleFocus = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.FocusEvent&lt;HTMLInputElement&gt;) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >			setIsFocused(true);</span>
-<span class="cstat-no" title="statement not covered" >			props.onFocus?.(e);</span>
+		const handleFocus = (e: React.FocusEvent&lt;HTMLInputElement&gt;) =&gt; {
+			setIsFocused(true);
+			props.onFocus?.(e);
 		};
 &nbsp;
-		const handleBlur = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.FocusEvent&lt;HTMLInputElement&gt;) =&gt; {</span>
+		const handleBlur = <span class="fstat-no" title="function not covered" >(e</span>: React.FocusEvent&lt;HTMLInputElement&gt;) =&gt; {
 <span class="cstat-no" title="statement not covered" >			setIsFocused(false);</span>
 <span class="cstat-no" title="statement not covered" >			setHasValue(e.target.value !== '');</span>
 <span class="cstat-no" title="statement not covered" >			props.onBlur?.(e);</span>
 		};
 &nbsp;
-		const handleChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {</span>
+		const handleChange = <span class="fstat-no" title="function not covered" >(e</span>: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
 <span class="cstat-no" title="statement not covered" >			setHasValue(e.target.value !== '');</span>
 <span class="cstat-no" title="statement not covered" >			props.onChange?.(e);</span>
 		};
 &nbsp;
-		const shouldFloat = <span class="cstat-no" title="statement not covered" >isFocused || hasValue || props.value || props.defaultValue;</span>
+		const shouldFloat = isFocused || hasValue || props.value || props.defaultValue;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >		return (</span>
+		return (
 			&lt;div className="input-wrapper relative"&gt;
 				{label &amp;&amp; (
-					&lt;label
+<span class="branch-1 cbranch-no" title="branch not covered" >					&lt;label</span>
 						htmlFor={inputId}
 						className={cn(
 							'input-label absolute left-3 pointer-events-none transition-all duration-200 ease-out text-muted-foreground',
@@ -275,7 +275,7 @@ const Input = React.forwardRef&lt;HTMLInputElement, InputProps&gt;(
 					type={type}
 					className={cn(
 						'input-field flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-						label &amp;&amp; 'pt-3',
+						label &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >'pt-3',</span>
 						className,
 					)}
 					ref={inputRef}
@@ -298,7 +298,7 @@ export { Input };
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-24T11:02:16.463Z
+                at 2025-12-24T11:34:08.764Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

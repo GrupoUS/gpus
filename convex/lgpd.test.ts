@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { logAudit } from './lgpd'
-import type { MutationCtx } from './_generated/server'
+import { checkProcessingBasis, logAudit } from './lgpd'
+import type { MutationCtx, QueryCtx } from './_generated/server'
 
 describe('LGPD Audit Logging', () => {
   it('should insert audit record with correct parameters', async () => {
@@ -60,5 +60,55 @@ describe('LGPD Audit Logging', () => {
     expect(mockInsert).toHaveBeenCalledWith('lgpdAudit', expect.objectContaining({
       actorId: 'system',
     }))
+  })
+})
+
+describe('LGPD Processing Basis', () => {
+  it('should return false if student does not exist', async () => {
+    const mockGet = vi.fn().mockResolvedValue(null)
+    const mockCtx = {
+      db: {
+        get: mockGet,
+      },
+    } as unknown as QueryCtx
+
+    const result = await checkProcessingBasis(mockCtx, 'student_123' as any, 'academic_processing')
+    expect(result).toBe(false)
+  })
+
+  it('should return true for active students processing academic data', async () => {
+    const mockGet = vi.fn().mockResolvedValue({ status: 'ativo' })
+    const mockCtx = {
+      db: {
+        get: mockGet,
+      },
+    } as unknown as QueryCtx
+
+    const result = await checkProcessingBasis(mockCtx, 'student_123' as any, 'academic_processing')
+    expect(result).toBe(true)
+  })
+
+  it('should return false for inactive students', async () => {
+    const mockGet = vi.fn().mockResolvedValue({ status: 'inativo' })
+    const mockCtx = {
+      db: {
+        get: mockGet,
+      },
+    } as unknown as QueryCtx
+
+    const result = await checkProcessingBasis(mockCtx, 'student_123' as any, 'academic_processing')
+    expect(result).toBe(false)
+  })
+
+  it('should return false for non-academic purposes', async () => {
+    const mockGet = vi.fn().mockResolvedValue({ status: 'ativo' })
+    const mockCtx = {
+      db: {
+        get: mockGet,
+      },
+    } as unknown as QueryCtx
+
+    const result = await checkProcessingBasis(mockCtx, 'student_123' as any, 'marketing_campaign')
+    expect(result).toBe(false)
   })
 })
