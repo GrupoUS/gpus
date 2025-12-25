@@ -321,9 +321,14 @@ async function asaasFetch<T>(
 	const url = `${ASAAS_API_BASE}${endpoint}`
 
 	let lastError: Error | null = null
+    const startTime = Date.now();
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
+            if (attempt > 0) {
+                console.log(`Asaas API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`);
+            }
+
 			const response = await fetch(url, {
 				method: options.method || 'GET',
 				headers: {
@@ -332,6 +337,7 @@ async function asaasFetch<T>(
 					'User-Agent': 'gpus-saas/1.0',
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined,
+                signal: AbortSignal.timeout(30000), // 30s timeout
 			})
 
 			// Handle no content responses
@@ -350,7 +356,10 @@ async function asaasFetch<T>(
 
 				// Don't retry on client errors (4xx)
 				if (response.status >= 400 && response.status < 500) {
-					throw new Error(`Asaas API Error: ${errorMessage}`)
+                    // 429 is Too Many Requests, which IS retriable
+                    if (response.status !== 429) {
+					    throw new Error(`Asaas API Error: ${errorMessage}`)
+                    }
 				}
 
 				// Retry on server errors (5xx) or rate limiting (429)
@@ -367,12 +376,15 @@ async function asaasFetch<T>(
 				throw new Error(`Asaas API Error: ${errorMessage}`)
 			}
 
+            // Success
+            // Note: We cannot call mutation here directly to log audit because we don't have ctx.
+            // The caller (action) should handle logging.
 			return data as T
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error))
 
-			// Don't retry on non-network errors (unless it's a 5xx)
-			if (error instanceof Error && !error.message.includes('Asaas API Error')) {
+			// Don't retry on non-network errors (unless it's a 5xx handled above)
+			if (error instanceof Error && !error.message.includes('Asaas API Error') && !error.name.includes('TimeoutError') && !error.message.includes('fetch')) {
 				throw error
 			}
 

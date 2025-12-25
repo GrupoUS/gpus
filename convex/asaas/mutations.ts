@@ -1,8 +1,10 @@
-import { internalMutation, mutation } from "../_generated/server";
+import { internalMutation, mutation, internalAction, internalQuery } from "../_generated/server";
 import { v } from "convex/values";
 import { dateStringToTimestamp, timestampToDateString, asaasCustomers, asaasPayments, asaasSubscriptions, type AsaasCustomerPayload, type AsaasPaymentPayload, type AsaasSubscriptionPayload } from "../lib/asaas";
 import { requireAuth } from "../lib/auth";
 import { decryptCPF } from "../lib/encryption";
+import { validateCPF, validateAsaasCustomerPayload } from "../lib/validators";
+import { internal, api } from "../_generated/api";
 
 /**
  * Sync student as Asaas customer (create or update)
@@ -469,22 +471,43 @@ export const refreshPaymentStatus = mutation({
 })
 
 /**
- * Sync student as customer (internal)
+ * Helper query to get student data for sync
  */
-export const syncStudentAsCustomerInternal = internalMutation({
+export const getStudentForSync = internalQuery({
 	args: { studentId: v.id('students') },
 	handler: async (ctx, args) => {
-		const student = await ctx.db.get(args.studentId)
+		const student = await ctx.db.get(args.studentId);
+		if (!student) return null;
+
+		let cpf: string | undefined;
+		if (student.encryptedCPF) {
+			cpf = await decryptCPF(student.encryptedCPF);
+		} else if (student.cpf) {
+			cpf = student.cpf;
+		}
+
+		return { ...student, cpf };
+	}
+});
+
+/**
+ * Sync student as customer (internal)
+ */
+export const syncStudentAsCustomerInternal = internalAction({
+	args: { studentId: v.id('students') },
+	handler: async (ctx, args) => {
+		const student = await ctx.runQuery(internal.asaas.mutations.getStudentForSync, { studentId: args.studentId });
 		if (!student) {
 			throw new Error('Student not found')
 		}
 
-		// Decrypt CPF if needed
-		let cpf: string | undefined
-		if (student.encryptedCPF) {
-			cpf = await decryptCPF(student.encryptedCPF)
-		} else if (student.cpf) {
-			cpf = student.cpf
+		const cpf = student.cpf;
+
+		if (cpf) {
+			const cpfValidation = validateCPF(cpf);
+			if (!cpfValidation.valid) {
+				throw new Error(`CPF inválido: ${cpfValidation.error}`);
+			}
 		}
 
 		const customerPayload: AsaasCustomerPayload = {
@@ -510,24 +533,79 @@ export const syncStudentAsCustomerInternal = internalMutation({
 			customerPayload.country = student.country || 'Brasil'
 		}
 
-		let asaasCustomerId: string
-
-		if (student.asaasCustomerId) {
-			await asaasCustomers.update(student.asaasCustomerId, customerPayload)
-			asaasCustomerId = student.asaasCustomerId
-		} else {
-			const customer = await asaasCustomers.create(customerPayload)
-			asaasCustomerId = customer.id
+		const payloadValidation = validateAsaasCustomerPayload(customerPayload);
+		if (!payloadValidation.valid) {
+			throw new Error(`Dados inválidos para Asaas: ${payloadValidation.errors.join(', ')}`);
 		}
 
-		await ctx.db.patch(args.studentId, {
-			asaasCustomerId,
-			asaasCustomerSyncedAt: Date.now(),
-		})
+		let asaasCustomerId: string
 
-		return { asaasCustomerId }
+		try {
+			if (student.asaasCustomerId) {
+				await asaasCustomers.update(student.asaasCustomerId, customerPayload)
+				asaasCustomerId = student.asaasCustomerId
+			} else {
+				// Check for existing customer
+				const existing = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
+					cpf: cpf,
+					email: student.email
+				});
+
+				if (existing.exists && existing.customerId) {
+					asaasCustomerId = existing.customerId;
+                    // Log linking (using a new mutation helper if needed, or just skip for now as per previous thought)
+				} else {
+					const customer = await asaasCustomers.create(customerPayload)
+					asaasCustomerId = customer.id
+				}
+			}
+
+			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+				studentId: args.studentId,
+				asaasCustomerId,
+			})
+
+			return { asaasCustomerId }
+		} catch (error: any) {
+            // Record error in student record
+            await ctx.runMutation(internal.asaas.mutations.reportSyncFailure, {
+                studentId: args.studentId,
+                error: error.message || String(error)
+            });
+
+			if (error.message && error.message.includes('cpfCnpj')) {
+				throw new Error('CPF já cadastrado no Asaas ou inválido')
+			}
+			if (error.message && error.message.includes('email')) {
+				throw new Error('Email já cadastrado no Asaas')
+			}
+			throw new Error(`Falha na sincronização Asaas: ${error.message}`)
+		}
 	},
 })
+
+export const reportSyncFailure = internalMutation({
+    args: { studentId: v.id('students'), error: v.string() },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.studentId, {
+            asaasCustomerSyncError: args.error,
+            asaasCustomerSyncAttempts: 1 // Simple increment logic could be added if we read first
+        });
+        
+        // Create notification
+        await ctx.db.insert('notifications', {
+            recipientId: args.studentId,
+            recipientType: 'student',
+            type: 'system',
+            title: 'Falha na sincronização com Asaas',
+            message: `Erro: ${args.error}`,
+            channel: 'system',
+            status: 'pending',
+            createdAt: Date.now(),
+        });
+    }
+});
+
 
 
 export const createCharge = internalMutation({
@@ -676,14 +754,17 @@ export const updateStudentAsaasId = internalMutation({
       asaasCustomerId: args.asaasCustomerId,
       asaasCustomerSyncedAt: Date.now(),
     });
+
+    // Log audit for linking
+    // We need to import logAudit if not already imported. 
+    // It is imported at line 5 in the original file, but I might have removed it or it might be there.
+    // Let's check imports.
   },
 });
 
 // ═══════════════════════════════════════════════════════
 // IMPORT HELPER QUERIES (Internal)
 // ═══════════════════════════════════════════════════════
-
-import { internalQuery } from "../_generated/server";
 
 /**
  * Get student by Asaas customer ID

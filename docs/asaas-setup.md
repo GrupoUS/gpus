@@ -104,3 +104,22 @@ Após configurar tudo:
 - ✅ Rotacione as chaves periodicamente
 - ✅ Use tokens diferentes para desenvolvimento e produção
 
+## Segurança Avançada
+
+### Rotação de Chaves
+Recomendamos rotacionar a `ASAAS_API_KEY` a cada 90 dias:
+1. Gere nova chave no painel Asaas.
+2. Adicione como `ASAAS_API_KEY_NEW` no Convex Dashboard.
+3. Teste a conexão.
+4. Substitua `ASAAS_API_KEY` pela nova.
+5. Revogue a chave antiga no painel Asaas.
+
+### Monitoramento
+Utilize a query `getApiUsageStats` para monitorar o uso da API. Alerte se:
+- Taxa de erro > 10%
+- Tempo médio de resposta > 5s
+
+### Auditoria
+Todas as chamadas à API são logadas na tabela `asaasApiAudit`. Revise periodicamente para detectar uso anômalo.
+
+

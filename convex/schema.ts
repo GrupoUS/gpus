@@ -158,6 +158,8 @@ export default defineSchema({
     leadId: v.optional(v.id('leads')),
     asaasCustomerId: v.optional(v.string()),
     asaasCustomerSyncedAt: v.optional(v.number()),
+    asaasCustomerSyncError: v.optional(v.string()),
+    asaasCustomerSyncAttempts: v.optional(v.number()),
 
     // Dados pessoais (parcialmente criptografados para LGPD)
     name: v.string(),
@@ -1142,4 +1144,17 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_created', ['createdAt'])
     .index('by_initiated_by', ['initiatedBy']),
+
+  asaasApiAudit: defineTable({
+    endpoint: v.string(),
+    method: v.string(),
+    statusCode: v.number(),
+    responseTime: v.number(),
+    userId: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    timestamp: v.number(),
+  })
+    .index('by_timestamp', ['timestamp'])
+    .index('by_endpoint', ['endpoint', 'timestamp']),
 })
+

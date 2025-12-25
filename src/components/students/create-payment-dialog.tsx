@@ -1,6 +1,6 @@
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
-import { useAction, useQuery } from 'convex/react';
+import { useAction, useQuery, useMutation } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -55,10 +55,23 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 	// Create payment action
 	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
+	const syncStudent = useMutation(api.asaas.mutations.syncStudentAsCustomer);
 
 	const asaasCustomerId = (student as { asaasCustomerId?: string } | null)?.asaasCustomerId;
+	const syncError = (student as { asaasCustomerSyncError?: string } | null)?.asaasCustomerSyncError;
 	const studentName = (student as { name?: string } | null)?.name || 'Aluno';
 	const studentCpf = (student as { cpf?: string } | null)?.cpf;
+
+	const handleManualSync = async () => {
+		try {
+			await syncStudent({ studentId });
+			toast.success('Aluno sincronizado com sucesso!');
+		} catch (error: any) {
+			toast.error('Falha na sincronização', {
+				description: error.message,
+			});
+		}
+	};
 
 	const resetForm = () => {
 		setBillingType('PIX');
@@ -175,8 +188,15 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 						<p className="text-xs">
 							{!studentCpf
 								? 'Cadastre o CPF do aluno primeiro.'
-								: 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.'}
+								: syncError
+									? `Erro na sincronização: ${syncError}. Clique em "Sincronizar" para tentar novamente.`
+									: 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.'}
 						</p>
+						{syncError && (
+							<Button size="sm" variant="outline" className="mt-2" onClick={handleManualSync}>
+								Sincronizar Agora
+							</Button>
+						)}
 					</div>
 				) : (
 					<div className="space-y-4">

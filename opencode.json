@@ -12,14 +12,6 @@
     ".opencode/command/*.md"
   ],
   "mcp": {
-    "tavily": {
-      "type": "local",
-      "command": ["bunx", "-y", "tavily-mcp@latest"],
-      "environment": {
-        "TAVILY_API_KEY": "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"
-      },
-      "enabled": true
-    },
     "serena": {
       "type": "local",
       "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide-assistant"],
@@ -44,7 +36,7 @@
         },
         "plan": {
           "mode": "primary",
-          "model": "anthropic/claude-opus-4-5-20251101",
+          "model": "zhipuai-coding-plan/glm-4.7",
           "prompt": "{file:.opencode/prompts/plan.txt}"
         }
   }

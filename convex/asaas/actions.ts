@@ -7,6 +7,44 @@ import { createAsaasClient, type AsaasClient, dateStringToTimestamp } from "../l
 import { getOrganizationId } from "../lib/auth";
 
 /**
+ * Check if a customer already exists in Asaas by CPF or Email
+ */
+export const checkExistingAsaasCustomer = action({
+  args: {
+    cpf: v.optional(v.string()),
+    email: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const client = await getAsaasClientFromSettings(ctx);
+    
+    // Buscar por CPF
+    if (args.cpf) {
+      const cleanCpf = args.cpf.replace(/\D/g, '');
+      const response = await client.listAllCustomers({ 
+        cpfCnpj: cleanCpf, 
+        limit: 1 
+      });
+      if (response.data.length > 0) {
+        return { exists: true, customerId: response.data[0].id };
+      }
+    }
+    
+    // Buscar por email
+    if (args.email) {
+      const response = await client.listAllCustomers({ 
+        email: args.email, 
+        limit: 1 
+      });
+      if (response.data.length > 0) {
+        return { exists: true, customerId: response.data[0].id };
+      }
+    }
+    
+    return { exists: false };
+  }
+});
+
+/**
  * Helper to get Asaas client from database settings
  * Falls back to environment variables if database settings not found
  */
@@ -43,6 +81,7 @@ export const createAsaasCustomer = action({
     externalReference: v.string(),
   },
   handler: async (ctx, args) => {
+    const startTime = Date.now();
     try {
       const client = await getAsaasClientFromSettings(ctx);
       const customer = await client.createCustomer({
@@ -67,8 +106,24 @@ export const createAsaasCustomer = action({
         asaasCustomerId: customer.id,
       });
 
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/customers',
+        method: 'POST',
+        statusCode: 200,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+      });
+
       return customer;
     } catch (error: any) {
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/customers',
+        method: 'POST',
+        statusCode: error.response?.status || 500,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+        errorMessage: error.message,
+      });
       console.error("Asaas createCustomer error:", error.response?.data || error.message);
       throw new Error(`Failed to create Asaas customer: ${JSON.stringify(error.response?.data || error.message)}`);
     }

@@ -315,6 +315,20 @@ export const bulkImport = mutation({
 				// Use the first found (priority: CPF > Phone > Email)
 				const existing = existingByCP || existingByPhone || existingStudent;
 
+				if (existing && existing.organizationId !== organizationId) {
+					// Ensure candidate belongs to current org
+					results.push({
+						rowNumber,
+						success: false,
+						action: 'skipped',
+						error: 'Conflito de organização: aluno pertence a outra organização',
+						warnings,
+					});
+					failureCount++;
+					skippedCount++;
+					continue;
+				}
+
 				// Prepare student data with awaited encrypted fields
 				const encryptedEmailValue = normalizedEmail ? await encrypt(normalizedEmail) : undefined;
 				const encryptedPhoneValue = await encrypt(normalizedPhone);

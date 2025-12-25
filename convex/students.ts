@@ -291,9 +291,27 @@ export const create = mutation({
       await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal as any, {
         studentId,
       })
-    } catch (error) {
-      // Log but don't fail student creation if Asaas sync fails
-      console.error('Failed to schedule Asaas customer sync:', error)
+    } catch (error: any) {
+      // Criar notificação para o usuário
+      await ctx.db.insert('notifications', {
+        recipientId: studentId,
+        recipientType: 'student',
+        type: 'system', // Using 'system' as 'error' is not in schema union
+        title: 'Falha na sincronização com Asaas',
+        message: `Não foi possível sincronizar ${args.name} com Asaas. Motivo: ${error.message}`,
+        channel: 'system',
+        status: 'pending',
+        // read: false, // Removed as it's not in schema
+        createdAt: Date.now(),
+      });
+      
+      // Update student with error
+      await ctx.db.patch(studentId, {
+        asaasCustomerSyncError: error.message,
+        asaasCustomerSyncAttempts: 1,
+      });
+
+      console.error('Asaas sync failed:', { studentId, error: error.message });
     }
 
     // Auto-sync to email marketing (if student has email)
@@ -375,9 +393,54 @@ export const update = mutation({
         await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal as any, {
           studentId: args.studentId,
         })
-      } catch (error) {
-        // Log but don't fail update if Asaas sync fails
-        console.error('Failed to schedule Asaas customer sync:', error)
+      } catch (error: any) {
+         // Criar notificação para o usuário
+         await ctx.db.insert('notifications', {
+            recipientId: args.studentId,
+            recipientType: 'student',
+            type: 'system',
+            title: 'Falha na sincronização com Asaas',
+            message: `Não foi possível sincronizar o aluno com Asaas. Motivo: ${error.message}`,
+            channel: 'system',
+            status: 'pending',
+            createdAt: Date.now(),
+          });
+          
+          // Update student with error
+          await ctx.db.patch(args.studentId, {
+            asaasCustomerSyncError: error.message,
+            // Increment attempts if exists, else 1
+            // We can't easily increment atomically without reading, but this is inside mutation so we can read?
+            // But we are in the catch block of scheduling?
+            // No, scheduling `runAfter` rarely fails unless the function doesn't exist.
+            // The ERROR happens inside the scheduled function usually.
+            // BUT `runAfter` validates arguments.
+            // If `syncStudentAsCustomerInternal` throws, `runAfter` doesn't catch it here, it fails asynchronously.
+            // The `try-catch` here only catches scheduling errors.
+            // TO HANDLE ASYNC FAILURES, we need to handle them INSIDE `syncStudentAsCustomerInternal`.
+            // The plan says: "Modificar mutation create ... Substituir try-catch silencioso".
+            // But `runAfter` is non-blocking. The error won't be caught here if it happens during execution.
+            // It will only be caught here if scheduling fails.
+            // However, `syncStudentAsCustomerInternal` (now an action) can catch its own errors and update the student/notify.
+            // I already added try-catch inside `syncStudentAsCustomerInternal` in `convex/asaas/mutations.ts`.
+            // So I should probably rely on that?
+            // But the plan explicitly says to modify `convex/students.ts`.
+            // Maybe the plan assumes `await syncStudentAsCustomerInternal` is awaited directly?
+            // But it uses `ctx.scheduler.runAfter`.
+            // If I want to notify on failure, `syncStudentAsCustomerInternal` must do it.
+            // I will update `syncStudentAsCustomerInternal` to handle the error recording and notification.
+            // And here I will just keep the scheduling safe.
+            // Wait, if I change `syncStudentAsCustomerInternal` to handle errors, I don't need to change `students.ts` much,
+            // except maybe to ensure we are passing the right args.
+            // Let's look at `syncStudentAsCustomerInternal` again.
+            // I added a try-catch block there.
+            // I should add the DB update (syncError) and notification THERE.
+            // Because `runAfter` returns immediately.
+            // So the changes in `students.ts` proposed by the plan ("Substituir try-catch silencioso") might be based on a misunderstanding of `runAfter`,
+            // OR the plan implies we should await it? No, "await ctx.scheduler.runAfter" just awaits the scheduling ID.
+            // I will implement the error handling INSIDE `syncStudentAsCustomerInternal` (which I converted to an action).
+            // But since it's an action, it needs to call a mutation to update the DB/notify.
+            // I'll create `reportSyncFailure` mutation.
       }
     }
   },
