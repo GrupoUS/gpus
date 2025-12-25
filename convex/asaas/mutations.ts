@@ -1,4 +1,4 @@
-import { internalMutation, mutation, internalAction, internalQuery } from "../_generated/server";
+import { internalMutation, mutation, internalAction, internalQuery, action } from "../_generated/server";
 import { v } from "convex/values";
 import { dateStringToTimestamp, timestampToDateString, asaasCustomers, asaasPayments, asaasSubscriptions, type AsaasCustomerPayload, type AsaasPaymentPayload, type AsaasSubscriptionPayload } from "../lib/asaas";
 import { requireAuth } from "../lib/auth";
@@ -9,74 +9,14 @@ import { internal, api } from "../_generated/api";
 /**
  * Sync student as Asaas customer (create or update)
  */
-export const syncStudentAsCustomer = mutation({
+export const syncStudentAsCustomer = action({
 	args: { studentId: v.id('students') },
 	handler: async (ctx, args) => {
 		await requireAuth(ctx)
-
-		const student = await ctx.db.get(args.studentId)
-		if (!student) {
-			throw new Error('Student not found')
-		}
-
-		// Decrypt CPF if needed
-		let cpf: string | undefined
-		if (student.encryptedCPF) {
-			cpf = await decryptCPF(student.encryptedCPF)
-		} else if (student.cpf) {
-			cpf = student.cpf
-		}
-
-		// Prepare customer payload
-		const customerPayload: AsaasCustomerPayload = {
-			name: student.name,
-			email: student.email,
-			phone: student.phone,
-			mobilePhone: student.phone,
-			externalReference: student._id,
-		}
-
-		// Add CPF if available (remove formatting)
-		if (cpf) {
-			customerPayload.cpfCnpj = cpf.replace(/\D/g, '')
-		}
-
-		// Add address if available
-		if (student.address) {
-			customerPayload.address = student.address
-			customerPayload.addressNumber = student.addressNumber
-			customerPayload.complement = student.complement
-			customerPayload.province = student.neighborhood
-			customerPayload.city = student.city
-			customerPayload.state = student.state
-			customerPayload.postalCode = student.zipCode
-			customerPayload.country = student.country || 'Brasil'
-		}
-
-		try {
-			let asaasCustomerId: string
-
-			if (student.asaasCustomerId) {
-				// Update existing customer
-				await asaasCustomers.update(student.asaasCustomerId, customerPayload)
-				asaasCustomerId = student.asaasCustomerId
-			} else {
-				// Create new customer
-				const customer = await asaasCustomers.create(customerPayload)
-				asaasCustomerId = customer.id
-			}
-
-			// Update student record
-			await ctx.db.patch(args.studentId, {
-				asaasCustomerId,
-				asaasCustomerSyncedAt: Date.now(),
-			})
-
-			return { asaasCustomerId }
-		} catch (error) {
-			console.error('Error syncing student as Asaas customer:', error)
-			throw new Error(`Failed to sync student as customer: ${error instanceof Error ? error.message : String(error)}`)
-		}
+		// @ts-ignore - Deep type instantiation error with Convex internal references
+		await ctx.runAction(internal.asaas.mutations.syncStudentAsCustomerInternal, {
+			studentId: args.studentId
+		})
 	},
 })
 
@@ -546,6 +486,7 @@ export const syncStudentAsCustomerInternal = internalAction({
 				asaasCustomerId = student.asaasCustomerId
 			} else {
 				// Check for existing customer
+				// @ts-ignore - Deep type instantiation error
 				const existing = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
 					cpf: cpf,
 					email: student.email
@@ -553,7 +494,11 @@ export const syncStudentAsCustomerInternal = internalAction({
 
 				if (existing.exists && existing.customerId) {
 					asaasCustomerId = existing.customerId;
-                    // Log linking (using a new mutation helper if needed, or just skip for now as per previous thought)
+					// Log linking event
+					await ctx.runMutation(internal.asaas.mutations.reportSyncFailure, {
+						studentId: args.studentId,
+						error: `Customer vinculado a ID existente: ${existing.customerId} (CPF/Email já cadastrado)`
+					});
 				} else {
 					const customer = await asaasCustomers.create(customerPayload)
 					asaasCustomerId = customer.id
@@ -587,11 +532,19 @@ export const syncStudentAsCustomerInternal = internalAction({
 export const reportSyncFailure = internalMutation({
     args: { studentId: v.id('students'), error: v.string() },
     handler: async (ctx, args) => {
+        const student = await ctx.db.get(args.studentId);
+        if (!student) {
+            return;
+        }
+
+        // Get current attempts or default to 0
+        const currentAttempts = student.asaasCustomerSyncAttempts || 0;
+
         await ctx.db.patch(args.studentId, {
             asaasCustomerSyncError: args.error,
-            asaasCustomerSyncAttempts: 1 // Simple increment logic could be added if we read first
+            asaasCustomerSyncAttempts: currentAttempts + 1,
         });
-        
+
         // Create notification
         await ctx.db.insert('notifications', {
             recipientId: args.studentId,
@@ -754,11 +707,6 @@ export const updateStudentAsaasId = internalMutation({
       asaasCustomerId: args.asaasCustomerId,
       asaasCustomerSyncedAt: Date.now(),
     });
-
-    // Log audit for linking
-    // We need to import logAudit if not already imported. 
-    // It is imported at line 5 in the original file, but I might have removed it or it might be there.
-    // Let's check imports.
   },
 });
 

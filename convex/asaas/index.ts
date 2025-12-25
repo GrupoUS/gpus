@@ -8,5 +8,9 @@
 export * from './queries'
 export * from './mutations'
 export * from './actions'
+export * from './audit'
 export * from './sync'
 export * from './webhooks'
+
+// Type regeneration trigger
+export { logApiUsage } from './audit'

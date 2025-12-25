@@ -10,10 +10,15 @@
 
 import type * as activities from "../activities.js";
 import type * as asaas_actions from "../asaas/actions.js";
+import type * as asaas_audit from "../asaas/audit.js";
+import type * as asaas_client from "../asaas/client.js";
+import type * as asaas_errors from "../asaas/errors.js";
 import type * as asaas_index from "../asaas/index.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
 import type * as asaas_queries from "../asaas/queries.js";
+import type * as asaas_retry from "../asaas/retry.js";
 import type * as asaas_sync from "../asaas/sync.js";
+import type * as asaas_validation from "../asaas/validation.js";
 import type * as asaas_webhooks from "../asaas/webhooks.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
@@ -44,6 +49,7 @@ import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_securityHealth from "../lib/securityHealth.js";
 import type * as lib_securityMiddleware from "../lib/securityMiddleware.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as lib_validators from "../lib/validators.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
@@ -69,10 +75,15 @@ import type {
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   "asaas/actions": typeof asaas_actions;
+  "asaas/audit": typeof asaas_audit;
+  "asaas/client": typeof asaas_client;
+  "asaas/errors": typeof asaas_errors;
   "asaas/index": typeof asaas_index;
   "asaas/mutations": typeof asaas_mutations;
   "asaas/queries": typeof asaas_queries;
+  "asaas/retry": typeof asaas_retry;
   "asaas/sync": typeof asaas_sync;
+  "asaas/validation": typeof asaas_validation;
   "asaas/webhooks": typeof asaas_webhooks;
   conversations: typeof conversations;
   crons: typeof crons;
@@ -103,6 +114,7 @@ declare const fullApi: ApiFromModules<{
   "lib/securityHealth": typeof lib_securityHealth;
   "lib/securityMiddleware": typeof lib_securityMiddleware;
   "lib/validation": typeof lib_validation;
+  "lib/validators": typeof lib_validators;
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
   metrics: typeof metrics;

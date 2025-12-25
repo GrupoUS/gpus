@@ -16,30 +16,30 @@ export const checkExistingAsaasCustomer = action({
   },
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
-    
+
     // Buscar por CPF
     if (args.cpf) {
       const cleanCpf = args.cpf.replace(/\D/g, '');
-      const response = await client.listAllCustomers({ 
-        cpfCnpj: cleanCpf, 
-        limit: 1 
+      const response = await client.listAllCustomers({
+        cpfCnpj: cleanCpf,
+        limit: 1
       });
       if (response.data.length > 0) {
         return { exists: true, customerId: response.data[0].id };
       }
     }
-    
+
     // Buscar por email
     if (args.email) {
-      const response = await client.listAllCustomers({ 
-        email: args.email, 
-        limit: 1 
+      const response = await client.listAllCustomers({
+        email: args.email,
+        limit: 1
       });
       if (response.data.length > 0) {
         return { exists: true, customerId: response.data[0].id };
       }
     }
-    
+
     return { exists: false };
   }
 });
@@ -106,6 +106,7 @@ export const createAsaasCustomer = action({
         asaasCustomerId: customer.id,
       });
 
+      // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
         endpoint: '/customers',
         method: 'POST',
@@ -116,6 +117,7 @@ export const createAsaasCustomer = action({
 
       return customer;
     } catch (error: any) {
+      // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
         endpoint: '/customers',
         method: 'POST',
@@ -297,7 +299,7 @@ export const syncAllStudents = action({
 
 		for (const student of students) {
 			try {
-				await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal, {
+				await ctx.runAction(internal.asaas.mutations.syncStudentAsCustomerInternal, {
 					studentId: student._id,
 				})
 				synced++

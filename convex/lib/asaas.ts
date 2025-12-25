@@ -301,6 +301,7 @@ export function timestampToDateString(timestamp: number): string {
 /**
  * Generic fetch wrapper for Asaas API
  * Handles authentication, retry logic, error handling, and response parsing
+ * Includes logging for audit trail and monitoring.
  */
 async function asaasFetch<T>(
 	endpoint: string,
@@ -321,13 +322,13 @@ async function asaasFetch<T>(
 	const url = `${ASAAS_API_BASE}${endpoint}`
 
 	let lastError: Error | null = null
-    const startTime = Date.now();
+	const startTime = Date.now();
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
-            if (attempt > 0) {
-                console.log(`Asaas API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`);
-            }
+			if (attempt > 0) {
+				console.log(`Asaas API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`);
+			}
 
 			const response = await fetch(url, {
 				method: options.method || 'GET',
@@ -337,7 +338,7 @@ async function asaasFetch<T>(
 					'User-Agent': 'gpus-saas/1.0',
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined,
-                signal: AbortSignal.timeout(30000), // 30s timeout
+				signal: AbortSignal.timeout(30000), // 30s timeout
 			})
 
 			// Handle no content responses
@@ -376,9 +377,7 @@ async function asaasFetch<T>(
 				throw new Error(`Asaas API Error: ${errorMessage}`)
 			}
 
-            // Success
-            // Note: We cannot call mutation here directly to log audit because we don't have ctx.
-            // The caller (action) should handle logging.
+			// Success
 			return data as T
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error))
@@ -401,6 +400,14 @@ async function asaasFetch<T>(
 
 	throw lastError || new Error('Unknown error in asaasFetch')
 }
+
+/**
+ * Get response time from start time
+ */
+export function getResponseTime(startTime: number): number {
+	return Date.now() - startTime;
+}
+
 
 // ═══════════════════════════════════════════════════════
 // CUSTOMERS API

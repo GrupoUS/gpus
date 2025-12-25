@@ -1,4 +1,4 @@
-import { AsaasCustomerPayload } from './asaas';
+import type { AsaasCustomerPayload } from './asaas';
 
 /**
  * Validates a CPF string.

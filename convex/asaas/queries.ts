@@ -452,3 +452,73 @@ export const getAllPayments = query({
 	},
 })
 
+/**
+ * Get API usage statistics for security monitoring and auditing
+ * Provides metrics on Asaas API usage including error rates and response times
+ */
+export const getApiUsageStats = query({
+	args: { hours: v.number() },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx)
+
+		const since = Date.now() - (args.hours * 60 * 60 * 1000)
+		const logs = await ctx.db
+			.query('asaasApiAudit')
+			.withIndex('by_timestamp', (q) => q.gte('timestamp', since))
+			.collect()
+
+		if (logs.length === 0) {
+			return {
+				totalRequests: 0,
+				errorRate: 0,
+				avgResponseTime: 0,
+				topEndpoints: [],
+				errorsByEndpoint: [],
+			}
+		}
+
+		const errorLogs = logs.filter((l) => l.statusCode >= 400)
+		const avgResponseTime = logs.reduce((sum, l) => sum + l.responseTime, 0) / logs.length
+
+		// Aggregate by endpoint
+		const endpointStats: Record<string, { count: number; errors: number; totalTime: number }> = {}
+		for (const log of logs) {
+			if (!endpointStats[log.endpoint]) {
+				endpointStats[log.endpoint] = { count: 0, errors: 0, totalTime: 0 }
+			}
+			endpointStats[log.endpoint].count++
+			endpointStats[log.endpoint].totalTime += log.responseTime
+			if (log.statusCode >= 400) {
+				endpointStats[log.endpoint].errors++
+			}
+		}
+
+		const topEndpoints = Object.entries(endpointStats)
+			.map(([endpoint, stats]) => ({
+				endpoint,
+				count: stats.count,
+				avgTime: Math.round(stats.totalTime / stats.count),
+				errorRate: Math.round((stats.errors / stats.count) * 100),
+			}))
+			.sort((a, b) => b.count - a.count)
+			.slice(0, 10)
+
+		const errorsByEndpoint = Object.entries(endpointStats)
+			.filter(([, stats]) => stats.errors > 0)
+			.map(([endpoint, stats]) => ({
+				endpoint,
+				errors: stats.errors,
+				errorRate: Math.round((stats.errors / stats.count) * 100),
+			}))
+			.sort((a, b) => b.errors - a.errors)
+
+		return {
+			totalRequests: logs.length,
+			errorRate: Math.round((errorLogs.length / logs.length) * 100),
+			avgResponseTime: Math.round(avgResponseTime),
+			topEndpoints,
+			errorsByEndpoint,
+		}
+	},
+})
+

@@ -114,6 +114,31 @@ export async function requireOrgRole(
 	return identity
 }
 
+/**
+ * Require authenticated user and return their user ID
+ * Use this when you need to know who is making the request for audit purposes
+ */
+export async function requireAuthAsUser(ctx: Context): Promise<ClerkIdentity> {
+	const identity = await requireAuth(ctx)
+
+	// Verify it's actually a user (not a system account)
+	// In Clerk, we can check metadata or just assume if they have a subject they are a user.
+	// But we also check if they exist in our DB.
+	if (!('db' in ctx)) {
+		// Action context doesn't have db access directly, so we can't verify against DB here easily
+		// unless we run a query. But actions shouldn't verify DB existence usually, mutations do.
+		// If this is used in mutation/query:
+		return identity
+	}
+
+	const user = await ctx.db.get(identity.subject as any)
+	if (!user) {
+		throw new Error('User not found in database')
+	}
+
+	return identity
+}
+
 import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions'
 
 /**
