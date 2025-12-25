@@ -23,19 +23,17 @@ vi.mock('@/components/ui/flip-button', async () => {
 	return {
 		FlipButton: React.forwardRef(
 			(
-				{ children, className, initial, ...props }: React.ComponentProps<'div'> & { initial?: any },
-				ref: React.Ref<HTMLDivElement>,
+				{
+					children,
+					className,
+					initial,
+					...props
+				}: React.ComponentProps<'button'> & { initial?: unknown },
+				ref: React.Ref<HTMLButtonElement>,
 			) => (
-				<div
-					ref={ref}
-					className={className}
-					{...props}
-					role="button"
-					tabIndex={0}
-					onKeyDown={() => {}}
-				>
+				<button ref={ref} className={className} {...props} type="button">
 					{children}
-				</div>
+				</button>
 			),
 		),
 		FlipButtonFront: ({ children, className }: React.ComponentProps<'div'>) => (
