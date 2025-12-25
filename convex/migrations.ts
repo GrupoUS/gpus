@@ -26,7 +26,11 @@ export const initializeUserRoles = internalMutation({
 // This fixes the bug where XLSX import didn't set organizationId
 export const migrateStudentOrganizationId = internalMutation({
   args: { organizationId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    migrated: number;
+    organizationId: string | null;
+    message: string;
+  }> => {
     // Get organizationId from args or determine from first user
     let orgId = args.organizationId
     if (!orgId) {

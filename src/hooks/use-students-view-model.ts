@@ -1,7 +1,6 @@
 import { api } from '@convex/_generated/api';
 import { useNavigate } from '@tanstack/react-router';
 import { useConvexAuth, useQuery } from 'convex/react';
-import type { FunctionReturnType } from 'convex/server';
 import React, { useEffect } from 'react';
 
 import type { Id } from '../../convex/_generated/dataModel';
@@ -36,8 +35,8 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	const students = useQuery(
-		api.students.list,
+	const students = (useQuery as any)(
+		(api as any).students.list,
 		isAuthenticated
 			? {
 					search: search || undefined,
@@ -46,13 +45,13 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 					product: product === 'all' ? undefined : product,
 				}
 			: 'skip',
-	) as FunctionReturnType<typeof api.students.list> | undefined;
+	);
 
 	// Use grouped query for grid view (ALL students, grouped by ALL enrollments)
 	const groupedStudentsData = useQuery(
 		api.students.getStudentsGroupedByProducts,
 		isAuthenticated ? {} : 'skip',
-	) as FunctionReturnType<typeof api.students.getStudentsGroupedByProducts> | undefined;
+	);
 
 	const clearFilters = () => {
 		void navigate({
@@ -70,7 +69,8 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	};
 
 	// Define student type for type safety
-	type StudentType = NonNullable<typeof students>[number];
+	// biome-ignore lint/suspicious/noExplicitAny: avoid excessively deep type instantiation
+	type StudentType = any;
 
 	// Stats - from the list query for accuracy
 	const totalStudents = students?.length ?? 0;

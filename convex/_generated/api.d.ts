@@ -47,6 +47,7 @@ import type * as lib_validation from "../lib/validation.js";
 import type * as messageTemplates from "../messageTemplates.js";
 import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
+import type * as migrationTrigger from "../migrationTrigger.js";
 import type * as migrations from "../migrations.js";
 import type * as migrations_syncExistingClerkUsers from "../migrations/syncExistingClerkUsers.js";
 import type * as notifications from "../notifications.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   messageTemplates: typeof messageTemplates;
   messages: typeof messages;
   metrics: typeof metrics;
+  migrationTrigger: typeof migrationTrigger;
   migrations: typeof migrations;
   "migrations/syncExistingClerkUsers": typeof migrations_syncExistingClerkUsers;
   notifications: typeof notifications;

@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
+import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
@@ -287,8 +287,9 @@ export const create = mutation({
     })
 
     // Auto-sync with Asaas (async, don't wait)
+    const syncMutation: any = internal.asaas.mutations.syncStudentAsCustomerInternal
     try {
-      await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
+      await ctx.scheduler.runAfter(0, syncMutation, {
         studentId,
       })
     } catch (error) {
