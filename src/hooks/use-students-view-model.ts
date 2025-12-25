@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import React, { useEffect } from 'react';
 
-import type { Id } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
 
 const PAGE_SIZE = 12;
 
@@ -35,8 +35,9 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	const students = (useQuery as any)(
-		(api as any).students.list,
+	const listQuery = api.students.list;
+	const students = useQuery(
+		listQuery,
 		isAuthenticated
 			? {
 					search: search || undefined,
@@ -69,8 +70,7 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	};
 
 	// Define student type for type safety
-	// biome-ignore lint/suspicious/noExplicitAny: avoid excessively deep type instantiation
-	type StudentType = any;
+	type StudentType = Doc<'students'>;
 
 	// Stats - from the list query for accuracy
 	const totalStudents = students?.length ?? 0;

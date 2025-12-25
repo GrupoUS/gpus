@@ -287,9 +287,8 @@ export const create = mutation({
     })
 
     // Auto-sync with Asaas (async, don't wait)
-    const syncMutation: any = internal.asaas.mutations.syncStudentAsCustomerInternal
     try {
-      await ctx.scheduler.runAfter(0, syncMutation, {
+      await ctx.scheduler.runAfter(0, internal.asaas.mutations.syncStudentAsCustomerInternal, {
         studentId,
       })
     } catch (error) {
