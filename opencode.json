@@ -44,7 +44,7 @@
         },
         "plan": {
           "mode": "primary",
-          "model": "google/gemini-3-pro-preview",
+          "model": "anthropic/claude-opus-4-5-20251101",
           "prompt": "{file:.opencode/prompts/plan.txt}"
         }
   }

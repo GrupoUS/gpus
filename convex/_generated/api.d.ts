@@ -54,6 +54,7 @@ import type * as notifications from "../notifications.js";
 import type * as scripts from "../scripts.js";
 import type * as scripts_syncUsers from "../scripts/syncUsers.js";
 import type * as settings from "../settings.js";
+import type * as simpleMigration from "../simpleMigration.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
 import type * as templates from "../templates.js";
@@ -113,6 +114,7 @@ declare const fullApi: ApiFromModules<{
   scripts: typeof scripts;
   "scripts/syncUsers": typeof scripts_syncUsers;
   settings: typeof settings;
+  simpleMigration: typeof simpleMigration;
   students: typeof students;
   studentsImport: typeof studentsImport;
   templates: typeof templates;
