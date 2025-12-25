@@ -35,9 +35,8 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	const listQuery = api.students.list;
 	const students = useQuery(
-		listQuery,
+		api.students.list,
 		isAuthenticated
 			? {
 					search: search || undefined,

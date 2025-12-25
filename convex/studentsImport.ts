@@ -184,7 +184,10 @@ export const bulkImport = mutation({
 		let skippedCount = 0;
 
 		// Pre-fetch existing students for duplicate checking
-		const existingStudents = await ctx.db.query('students').collect();
+		const existingStudents = await ctx.db
+			.query('students')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
 		const emailToStudent = new Map(
 			existingStudents.filter((s) => s.email).map((s) => [s.email!.toLowerCase(), s])
 		);
@@ -318,7 +321,8 @@ export const bulkImport = mutation({
 				const encryptedCPFValue = student.cpf ? await encryptCPF(student.cpf) : undefined;
 
 				const studentData = {
-				name: student.name.trim(),
+					organizationId,
+					name: student.name.trim(),
 				email: normalizedEmail,
 				phone: normalizedPhone,
 				profession: student.profession ?? 'outro',
@@ -553,10 +557,16 @@ export const validateImport = mutation({
 			throw new Error('Não autenticado');
 		}
 
+		// Capture organizationId from authenticated user
+		const organizationId = await getOrganizationId(ctx);
+
 		const upsertMode = args.upsertMode !== false;
 
 		// Fetch existing data for duplicate detection
-		const existingStudents = await ctx.db.query('students').collect();
+		const existingStudents = await ctx.db
+			.query('students')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
 		const existingEmails = new Set(
 			existingStudents.filter((s) => s.email).map((s) => s.email!.toLowerCase())
 		);
