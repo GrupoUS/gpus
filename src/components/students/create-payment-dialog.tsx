@@ -66,9 +66,10 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 		try {
 			await syncStudent({ studentId });
 			toast.success('Aluno sincronizado com sucesso!');
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
 			toast.error('Falha na sincronização', {
-				description: error.message,
+				description: errorMessage,
 			});
 		}
 	};

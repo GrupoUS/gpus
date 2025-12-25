@@ -6,12 +6,11 @@
  */
 
 import {
-	AsaasError,
 	classifyError,
 	sanitizeErrorForLogging,
 	AsaasConfigurationError,
 } from './errors'
-import { withRetry, withTimeoutAndRetry, createCircuitBreaker } from './retry'
+import { withTimeoutAndRetry, createCircuitBreaker } from './retry'
 
 // ═══════════════════════════════════════════════════════
 // TYPES - Asaas API Request/Response Payloads
@@ -337,7 +336,7 @@ export class AsaasClient {
 	 */
 	public async testConnection(): Promise<{ status: number; success: boolean }> {
 		try {
-			const response = await this.fetch<{ object: string; totalCount: number }>('/customers?limit=1')
+			await this.fetch<{ object: string; totalCount: number }>('/customers?limit=1')
 			return { status: 200, success: true }
 		} catch (error) {
 			const classified = classifyError(error)

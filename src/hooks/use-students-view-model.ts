@@ -35,16 +35,15 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	}, [navigate]);
 
 	// Use list query for table view and stats (paginated)
-	// biome-ignore lint/suspicious/noExplicitAny: Complex type inference causes TypeScript recursion
 	const students = useQuery(
 		api.students.list,
 		isAuthenticated
-			? ({
+			? {
 					search: search || undefined,
 					status: status === 'all' ? undefined : status,
 					churnRisk: churnRisk === 'all' ? undefined : churnRisk,
 					product: product === 'all' ? undefined : product,
-				} as any)
+				}
 			: 'skip',
 	);
 

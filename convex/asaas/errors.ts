@@ -250,7 +250,7 @@ export function sanitizeErrorForLogging(error: unknown): string {
 	const json = classified.toJSON()
 
 	// Remove any potential API keys or tokens
-	return JSON.stringify(json, (key, value) => {
+	return JSON.stringify(json, (_key, value) => {
 		if (typeof value === 'string' && value.length > 32 && /^[a-zA-Z0-9]+$/.test(value)) {
 			return '[REDACTED]'
 		}

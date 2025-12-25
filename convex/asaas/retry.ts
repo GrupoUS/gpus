@@ -4,7 +4,7 @@
  * Exponential backoff with jitter and circuit breaker pattern for Asaas API calls.
  */
 
-import { isRetryableError, isTransientError } from './errors'
+import { isRetryableError } from './errors'
 
 // ═══════════════════════════════════════════════════════
 // CONFIGURATION

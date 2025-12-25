@@ -322,7 +322,6 @@ async function asaasFetch<T>(
 	const url = `${ASAAS_API_BASE}${endpoint}`
 
 	let lastError: Error | null = null
-	const startTime = Date.now();
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
