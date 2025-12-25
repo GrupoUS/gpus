@@ -21,17 +21,29 @@ vi.mock('sonner', () => ({
 vi.mock('@/components/ui/flip-button', async () => {
 	const React = await import('react');
 	return {
-		FlipButton: React.forwardRef(({ children, className, initial, ...props }: any, ref: any) => (
-			<div ref={ref} className={className} {...props} role="button" tabIndex={0}>
-				{children}
-			</div>
-		)),
-		FlipButtonFront: ({ children, className }: any) => (
+		FlipButton: React.forwardRef(
+			(
+				{ children, className, initial, ...props }: React.ComponentProps<'div'> & { initial?: any },
+				ref: React.Ref<HTMLDivElement>,
+			) => (
+				<div
+					ref={ref}
+					className={className}
+					{...props}
+					role="button"
+					tabIndex={0}
+					onKeyDown={() => {}}
+				>
+					{children}
+				</div>
+			),
+		),
+		FlipButtonFront: ({ children, className }: React.ComponentProps<'div'>) => (
 			<div className={className} data-testid="flip-front">
 				{children}
 			</div>
 		),
-		FlipButtonBack: ({ children, className }: any) => (
+		FlipButtonBack: ({ children, className }: React.ComponentProps<'div'>) => (
 			<div className={className} data-testid="flip-back">
 				{children}
 			</div>
@@ -41,7 +53,13 @@ vi.mock('@/components/ui/flip-button', async () => {
 
 // Mock HoverBorderGradient
 vi.mock('@/components/ui/hover-border-gradient', () => ({
-	HoverBorderGradient: ({ children, className, containerClassName, clockwise, ...props }: any) => (
+	HoverBorderGradient: ({
+		children,
+		className,
+		containerClassName,
+		clockwise,
+		...props
+	}: React.ComponentProps<'div'> & { containerClassName?: string; clockwise?: boolean }) => (
 		<div className={className} {...props}>
 			{children}
 		</div>
@@ -78,7 +96,7 @@ describe('LeadForm', () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		const { useMutation } = await import('convex/react');
-		(useMutation as any).mockReturnValue(mockCreateLead);
+		(useMutation as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockCreateLead);
 	});
 
 	it('renders the trigger button correctly', () => {

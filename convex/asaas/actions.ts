@@ -145,6 +145,7 @@ export const createAsaasPayment = action({
     externalReference: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const startTime = Date.now();
     try {
       const client = await getAsaasClientFromSettings(ctx);
       const payment = await client.createPayment({
@@ -184,8 +185,26 @@ export const createAsaasPayment = action({
         pixQrCode: pixData.payload, // Save payload string
       });
 
+      // @ts-ignore - audit module types not yet generated
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/payments',
+        method: 'POST',
+        statusCode: 200,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+      });
+
       return { ...payment, pixQrCode: pixData.encodedImage, pixQrCodePayload: pixData.payload };
     } catch (error: any) {
+      // @ts-ignore - audit module types not yet generated
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/payments',
+        method: 'POST',
+        statusCode: error.response?.status || 500,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+        errorMessage: error.message,
+      });
       console.error("Asaas createPayment error:", error.response?.data || error.message);
       throw new Error(`Failed to create Asaas payment: ${JSON.stringify(error.response?.data || error.message)}`);
     }
@@ -204,6 +223,7 @@ export const createAsaasSubscription = action({
     externalReference: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const startTime = Date.now();
     try {
       const client = await getAsaasClientFromSettings(ctx);
       const subscription = await client.createSubscription({
@@ -216,8 +236,26 @@ export const createAsaasSubscription = action({
         externalReference: args.externalReference,
       });
 
+      // @ts-ignore - audit module types not yet generated
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/subscriptions',
+        method: 'POST',
+        statusCode: 200,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+      });
+
       return subscription;
     } catch (error: any) {
+      // @ts-ignore - audit module types not yet generated
+      await ctx.runMutation(internal.asaas.audit.logApiUsage, {
+        endpoint: '/subscriptions',
+        method: 'POST',
+        statusCode: error.response?.status || 500,
+        responseTime: Date.now() - startTime,
+        userId: (await ctx.auth.getUserIdentity())?.subject,
+        errorMessage: error.message,
+      });
       console.error("Asaas createSubscription error:", error.response?.data || error.message);
       throw new Error(`Failed to create Asaas subscription: ${JSON.stringify(error.response?.data || error.message)}`);
     }
@@ -1181,8 +1219,8 @@ export const importAllFromAsaas = action({
               await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
                 subscriptionId: existingSubscription._id,
                 status: sub.status,
-                nextDueDate: dateStringToTimestamp(sub.nextDueDate),
                 value: sub.value,
+                nextDueDate: dateStringToTimestamp(sub.nextDueDate),
               });
               subscriptionsUpdated++;
             } else {

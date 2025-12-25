@@ -494,11 +494,6 @@ export const syncStudentAsCustomerInternal = internalAction({
 
 				if (existing.exists && existing.customerId) {
 					asaasCustomerId = existing.customerId;
-					// Log linking event
-					await ctx.runMutation(internal.asaas.mutations.reportSyncFailure, {
-						studentId: args.studentId,
-						error: `Customer vinculado a ID existente: ${existing.customerId} (CPF/Email já cadastrado)`
-					});
 				} else {
 					const customer = await asaasCustomers.create(customerPayload)
 					asaasCustomerId = customer.id
@@ -706,6 +701,8 @@ export const updateStudentAsaasId = internalMutation({
     await ctx.db.patch(args.studentId, {
       asaasCustomerId: args.asaasCustomerId,
       asaasCustomerSyncedAt: Date.now(),
+      asaasCustomerSyncError: undefined,
+      asaasCustomerSyncAttempts: 0,
     });
   },
 });

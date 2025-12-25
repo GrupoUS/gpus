@@ -24,7 +24,7 @@ const formSchema = z.object({
 	}),
 });
 
-function TestForm({ onSubmit }: { onSubmit: (values: any) => void }) {
+function TestForm({ onSubmit }: { onSubmit: (values: z.infer<typeof formSchema>) => void }) {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
