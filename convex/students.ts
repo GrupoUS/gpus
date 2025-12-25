@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption'
 import { logAudit } from './lgpd'
@@ -61,6 +61,36 @@ export const getById = query({
     if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone)
 
     return student
+  },
+})
+
+// Diagnostic query for fixing organizationId bug
+export const diagnoseOrganizationId = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+    const organizationId = await getOrganizationId(ctx)
+
+    // Count students without organizationId
+    const allStudents = await ctx.db.query('students').collect()
+    const studentsWithoutOrg = allStudents.filter((s) => !s.organizationId)
+
+    // Count students matching current user's organizationId
+    const studentsMatchingOrg = allStudents.filter((s) => s.organizationId === organizationId)
+
+    return {
+      currentOrganizationId: organizationId,
+      totalStudents: allStudents.length,
+      studentsWithoutOrganizationId: studentsWithoutOrg.length,
+      studentsMatchingCurrentOrg: studentsMatchingOrg.length,
+      sampleStudentsWithoutOrg: studentsWithoutOrg.slice(0, 5).map((s) => ({
+        _id: s._id,
+        name: s.name,
+        email: s.email,
+        phone: s.phone,
+        organizationId: s.organizationId,
+      })),
+    }
   },
 })
 
@@ -132,87 +162,61 @@ export const getChurnAlerts = query({
 })
 
 export const getStudentsGroupedByProducts = query({
-  args: {
-    search: v.optional(v.string()),
-    status: v.optional(v.string()),
-    churnRisk: v.optional(v.string()),
-    product: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
-    const organizationId = await getOrganizationId(ctx)
+	args: {},
+	handler: async (ctx) => {
+		await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
+		const organizationId = await getOrganizationId(ctx)
 
-    const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined
-    const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined
+		// Get students with organization filter
+		const studentsQuery = ctx.db.query('students')
+			.withIndex('by_organization', q => q.eq('organizationId', organizationId))
 
-    let query = ctx.db.query('students')
-      .withIndex('by_organization', q => q.eq('organizationId', organizationId));
+		const students = await studentsQuery.collect()
 
-    if (status) {
-      query = ctx.db.query('students')
-        .withIndex('by_status', q => q.eq('status', status))
-        .filter(q => q.eq(q.field('organizationId'), organizationId));
-    } else if (churnRisk) {
-      query = ctx.db.query('students')
-        .withIndex('by_churn_risk', q => q.eq('churnRisk', churnRisk))
-        .filter(q => q.eq(q.field('organizationId'), organizationId));
-    }
+		// Get all enrollments for these students to determine their products
+		const enrollments = await ctx.db.query('enrollments').collect()
+		const studentEnrollments = new Map<string, string[]>()
 
-    // Safety limit to prevent O(n) memory issues
-    const students = await query.order('desc').take(500);
+		for (const enrollment of enrollments) {
+			const studentId = String(enrollment.studentId)
+			const products = studentEnrollments.get(studentId) || []
+			products.push(enrollment.product)
+			studentEnrollments.set(studentId, products)
+		}
 
-    const products = [
-      'trintae3',
-      'otb',
-      'black_neon',
-      'comunidade',
-      'auriculo',
-      'na_mesa_certa',
-      'sem_produto',
-    ] as const
+		// Define all product types
+		const allProducts = ['trintae3', 'otb', 'black_neon', 'comunidade', 'auriculo', 'na_mesa_certa', 'sem_produto'] as const
+		type ProductType = typeof allProducts[number]
 
-    const grouped: Record<string, typeof students> = {}
-    for (const p of products) {
-      grouped[p] = []
-    }
+		// Group students by their products (a student can appear in multiple groups)
+		const groups: Array<{ id: ProductType; count: number; students: typeof students }> = allProducts.map(productId => ({
+			id: productId,
+			count: 0,
+			students: [] as typeof students,
+		}))
 
-    for (const student of students) {
-      // Filter by search in memory
-      if (args.search) {
-        const searchLower = args.search.toLowerCase()
-        if (!student.name || !student.name.toLowerCase().includes(searchLower)) {
-          continue
-        }
-      }
+		for (const student of students) {
+			const studentProducts = studentEnrollments.get(String(student._id)) || []
 
-      const studentProducts = student.products || []
+			if (studentProducts.length === 0) {
+				// Student has no enrollments - add to 'sem_produto'
+				const noProductGroup = groups.find(g => g.id === 'sem_produto')!
+				noProductGroup.count++
+				noProductGroup.students.push(student)
+			} else {
+				// Add student to each product group they're enrolled in
+				for (const productId of studentProducts) {
+					const group = groups.find(g => g.id === productId)
+					if (group) {
+						group.count++
+						group.students.push(student)
+					}
+				}
+			}
+		}
 
-      if (studentProducts.length === 0) {
-        grouped['sem_produto'].push(student)
-      } else {
-        for (const prod of studentProducts) {
-          if (grouped[prod]) {
-            grouped[prod].push(student)
-          }
-        }
-      }
-    }
-
-    if (args.product && args.product !== 'all') {
-      for (const key of Object.keys(grouped)) {
-        if (key !== args.product) {
-          grouped[key] = []
-        }
-      }
-    }
-
-    return products.map((key) => ({
-      id: key,
-      name: key,
-      students: grouped[key],
-      count: grouped[key].length,
-    }))
-  },
+		return groups
+	},
 })
 
 // Mutations
@@ -375,6 +379,44 @@ export const update = mutation({
         // Log but don't fail update if Asaas sync fails
         console.error('Failed to schedule Asaas customer sync:', error)
       }
+    }
+  },
+})
+
+/**
+ * Fix students without organizationId (retroactive fix)
+ * This mutation can be run from the Convex Dashboard to fix students
+ * that were imported before the organizationId bug was fixed.
+ */
+export const fixOrganizationId = mutation({
+  args: {
+    targetOrganizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE)
+
+    // Buscar todos os alunos sem organizationId
+    const studentsWithoutOrg = await ctx.db
+      .query('students')
+      .filter((q) => q.eq(q.field('organizationId'), undefined))
+      .collect()
+
+    // Atualizar cada aluno com o organizationId fornecido
+    const updates = []
+    for (const student of studentsWithoutOrg) {
+      updates.push(
+        ctx.db.patch(student._id, {
+          organizationId: args.targetOrganizationId,
+          updatedAt: Date.now(),
+        })
+      )
+    }
+
+    await Promise.all(updates)
+
+    return {
+      updatedCount: studentsWithoutOrg.length,
+      organizationId: args.targetOrganizationId,
     }
   },
 })

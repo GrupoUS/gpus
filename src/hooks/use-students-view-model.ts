@@ -51,14 +51,7 @@ export function useStudentsViewModel<RouteType extends { useSearch: () => any }>
 	// Use grouped query for grid view (ALL students, grouped by ALL enrollments)
 	const groupedStudentsData = useQuery(
 		api.students.getStudentsGroupedByProducts,
-		isAuthenticated
-			? {
-					search: search || undefined,
-					status: status === 'all' ? undefined : status,
-					churnRisk: churnRisk === 'all' ? undefined : churnRisk,
-					product: product === 'all' ? undefined : product,
-				}
-			: 'skip',
+		isAuthenticated ? {} : 'skip',
 	) as FunctionReturnType<typeof api.students.getStudentsGroupedByProducts> | undefined;
 
 	const clearFilters = () => {

@@ -8,6 +8,7 @@ import { v } from 'convex/values';
 import { mutation } from './_generated/server';
 import { encrypt, encryptCPF } from './lib/encryption';
 import { logAudit } from './lgpd';
+import { getOrganizationId } from './lib/auth';
 
 /**
  * Validate Brazilian CPF using the official algorithm
@@ -169,6 +170,9 @@ export const bulkImport = mutation({
 		if (!identity) {
 			throw new Error('Não autenticado');
 		}
+
+		// Capture organizationId from authenticated user
+		const organizationId = await getOrganizationId(ctx);
 
 		const upsertMode = args.upsertMode !== false; // Default to true
 
@@ -403,6 +407,7 @@ export const bulkImport = mutation({
 					// CREATE new student
 					const newStudentId = await ctx.db.insert('students', {
 						...studentData,
+						organizationId, // Include organizationId from authenticated user
 						createdAt: Date.now(),
 					});
 					studentId = newStudentId;
