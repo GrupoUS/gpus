@@ -126,7 +126,15 @@ export const getDashboard = query({
         ? ((conversionRate - previousConversionRate) / previousConversionRate) * 100
         : 0;
 
-    // 2. Revenue (from Enrollments)
+    // 2. Revenue & Financial Summary
+    const financialMetrics = await ctx.db
+      .query('financialMetrics')
+      .withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+      .first();
+
+    const revenue = financialMetrics?.totalReceived || 0;
+
+    // Use currentEnrollments for trend calculation until financialMetrics supports history
     const currentEnrollments = await (args.period === 'all'
       ? ctx.db.query('enrollments')
       : ctx.db.query('enrollments').withIndex('by_created', (q) => q.gte('createdAt', startDate))
@@ -142,12 +150,12 @@ export const getDashboard = query({
             )
             .collect();
 
-    const revenue = currentEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
+    const currentEnrollmentRevenue = currentEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
     const previousRevenue = previousEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
 
     const revenueTrend =
       args.period !== 'all' && previousRevenue > 0
-        ? ((revenue - previousRevenue) / previousRevenue) * 100
+        ? ((currentEnrollmentRevenue - previousRevenue) / previousRevenue) * 100
         : 0;
 
     // 3. Messages & Response Time
@@ -228,6 +236,13 @@ export const getDashboard = query({
       conversionTrend: roundTrend(conversionTrend),
       revenue,
       revenueTrend: roundTrend(revenueTrend),
+      financialSummary: financialMetrics ? {
+        totalReceived: financialMetrics.totalReceived,
+        totalPending: financialMetrics.totalPending,
+        totalOverdue: financialMetrics.totalOverdue,
+        totalValue: financialMetrics.totalValue,
+        lastSync: financialMetrics.updatedAt,
+      } : null,
       totalMessages,
       conversationsCount,
       avgResponseTime,

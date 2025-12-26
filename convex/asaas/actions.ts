@@ -20,10 +20,10 @@ export const checkExistingAsaasCustomer = action({
 
     // Buscar por CPF
     if (args.cpf) {
-      const cleanCpf = args.cpf.replace(/\D/g, '');
+      const cleanCpf = args.cpf.replace(/\D/g, "");
       const response = await client.listAllCustomers({
         cpfCnpj: cleanCpf,
-        limit: 1
+        limit: 1,
       });
       if (response.data.length > 0) {
         return { exists: true, customerId: response.data[0].id };
@@ -34,7 +34,7 @@ export const checkExistingAsaasCustomer = action({
     if (args.email) {
       const response = await client.listAllCustomers({
         email: args.email,
-        limit: 1
+        limit: 1,
       });
       if (response.data.length > 0) {
         return { exists: true, customerId: response.data[0].id };
@@ -42,7 +42,7 @@ export const checkExistingAsaasCustomer = action({
     }
 
     return { exists: false };
-  }
+  },
 });
 
 /**
@@ -55,14 +55,20 @@ async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
   const config: Record<string, any> | null = await ctx.runQuery(
     // @ts-ignore - Deep type instantiation error with Convex internal references
     internal.settings.internalGetIntegrationConfig,
-    { integrationName: "asaas" }
+    { integrationName: "asaas" },
   );
 
   const apiKey = config?.api_key || config?.apiKey || process.env.ASAAS_API_KEY;
-  const baseUrl = config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
+  const baseUrl =
+    config?.base_url ||
+    config?.baseUrl ||
+    process.env.ASAAS_BASE_URL ||
+    "https://api.asaas.com/v3";
 
   if (!apiKey) {
-    throw new AsaasConfigurationError("ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.");
+    throw new AsaasConfigurationError(
+      "ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.",
+    );
   }
 
   // Use enhanced client with circuit breaker and retry logic
@@ -112,8 +118,8 @@ export const createAsaasCustomer = action({
 
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/customers',
-        method: 'POST',
+        endpoint: "/customers",
+        method: "POST",
         statusCode: 200,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
@@ -123,15 +129,20 @@ export const createAsaasCustomer = action({
     } catch (error: any) {
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/customers',
-        method: 'POST',
+        endpoint: "/customers",
+        method: "POST",
         statusCode: error.response?.status || 500,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
         errorMessage: error.message,
       });
-      console.error("Asaas createCustomer error:", error.response?.data || error.message);
-      throw new Error(`Failed to create Asaas customer: ${JSON.stringify(error.response?.data || error.message)}`);
+      console.error(
+        "Asaas createCustomer error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        `Failed to create Asaas customer: ${JSON.stringify(error.response?.data || error.message)}`,
+      );
     }
   },
 });
@@ -140,7 +151,13 @@ export const createAsaasPayment = action({
   args: {
     studentId: v.id("students"),
     asaasCustomerId: v.string(),
-    billingType: v.union(v.literal("BOLETO"), v.literal("PIX"), v.literal("CREDIT_CARD"), v.literal("DEBIT_CARD"), v.literal("UNDEFINED")),
+    billingType: v.union(
+      v.literal("BOLETO"),
+      v.literal("PIX"),
+      v.literal("CREDIT_CARD"),
+      v.literal("DEBIT_CARD"),
+      v.literal("UNDEFINED"),
+    ),
     value: v.number(),
     dueDate: v.string(),
     description: v.optional(v.string()),
@@ -164,14 +181,17 @@ export const createAsaasPayment = action({
       });
 
       // For PIX, fetch QrCode
-      let pixData: { encodedImage?: string, payload?: string } = {};
+      let pixData: { encodedImage?: string; payload?: string } = {};
       if (args.billingType === "PIX") {
-         try {
-             const qrResponse = await client.getPixQrCode(payment.id);
-             pixData = { encodedImage: qrResponse.encodedImage, payload: qrResponse.payload };
-         } catch (qrError) {
-             console.error("Failed to fetch PIX QrCode", qrError);
-         }
+        try {
+          const qrResponse = await client.getPixQrCode(payment.id);
+          pixData = {
+            encodedImage: qrResponse.encodedImage,
+            payload: qrResponse.payload,
+          };
+        } catch (qrError) {
+          console.error("Failed to fetch PIX QrCode", qrError);
+        }
       }
 
       // Save to DB
@@ -185,32 +205,41 @@ export const createAsaasPayment = action({
         description: payment.description,
         installmentCount: args.installmentCount, // Use arg or from payment if available. Avoiding TS error by using arg.
         installmentNumber: payment.installmentNumber,
-        boletoUrl: payment.bankSlipUrl,
+        boletoUrl: payment.bankSlipUrl ?? undefined,
         pixQrCode: pixData.payload, // Save payload string
       });
 
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/payments',
-        method: 'POST',
+        endpoint: "/payments",
+        method: "POST",
         statusCode: 200,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
       });
 
-      return { ...payment, pixQrCode: pixData.encodedImage, pixQrCodePayload: pixData.payload };
+      return {
+        ...payment,
+        pixQrCode: pixData.encodedImage,
+        pixQrCodePayload: pixData.payload,
+      };
     } catch (error: any) {
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/payments',
-        method: 'POST',
+        endpoint: "/payments",
+        method: "POST",
         statusCode: error.response?.status || 500,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
         errorMessage: error.message,
       });
-      console.error("Asaas createPayment error:", error.response?.data || error.message);
-      throw new Error(`Failed to create Asaas payment: ${JSON.stringify(error.response?.data || error.message)}`);
+      console.error(
+        "Asaas createPayment error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        `Failed to create Asaas payment: ${JSON.stringify(error.response?.data || error.message)}`,
+      );
     }
   },
 });
@@ -219,10 +248,21 @@ export const createAsaasSubscription = action({
   args: {
     studentId: v.id("students"),
     asaasCustomerId: v.string(),
-    billingType: v.union(v.literal("BOLETO"), v.literal("PIX"), v.literal("CREDIT_CARD")),
+    billingType: v.union(
+      v.literal("BOLETO"),
+      v.literal("PIX"),
+      v.literal("CREDIT_CARD"),
+    ),
     value: v.number(),
     nextDueDate: v.string(), // YYYY-MM-DD
-    cycle: v.union(v.literal("WEEKLY"), v.literal("BIWEEKLY"), v.literal("MONTHLY"), v.literal("QUARTERLY"), v.literal("SEMIANNUALLY"), v.literal("YEARLY")),
+    cycle: v.union(
+      v.literal("WEEKLY"),
+      v.literal("BIWEEKLY"),
+      v.literal("MONTHLY"),
+      v.literal("QUARTERLY"),
+      v.literal("SEMIANNUALLY"),
+      v.literal("YEARLY"),
+    ),
     description: v.optional(v.string()),
     externalReference: v.optional(v.string()),
   },
@@ -242,8 +282,8 @@ export const createAsaasSubscription = action({
 
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/subscriptions',
-        method: 'POST',
+        endpoint: "/subscriptions",
+        method: "POST",
         statusCode: 200,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
@@ -253,15 +293,20 @@ export const createAsaasSubscription = action({
     } catch (error: any) {
       // @ts-ignore - audit module types not yet generated
       await ctx.runMutation(internal.asaas.audit.logApiUsage, {
-        endpoint: '/subscriptions',
-        method: 'POST',
+        endpoint: "/subscriptions",
+        method: "POST",
         statusCode: error.response?.status || 500,
         responseTime: Date.now() - startTime,
         userId: (await ctx.auth.getUserIdentity())?.subject,
         errorMessage: error.message,
       });
-      console.error("Asaas createSubscription error:", error.response?.data || error.message);
-      throw new Error(`Failed to create Asaas subscription: ${JSON.stringify(error.response?.data || error.message)}`);
+      console.error(
+        "Asaas createSubscription error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        `Failed to create Asaas subscription: ${JSON.stringify(error.response?.data || error.message)}`,
+      );
     }
   },
 });
@@ -285,7 +330,10 @@ export const testAsaasConnection = action({
         status: response.status,
       };
     } catch (error: any) {
-      const errorMessage = error.response?.data?.errors?.[0]?.description || error.message || "Erro desconhecido";
+      const errorMessage =
+        error.response?.data?.errors?.[0]?.description ||
+        error.message ||
+        "Erro desconhecido";
       const statusCode = error.response?.status;
 
       if (statusCode === 401) {
@@ -321,39 +369,47 @@ export const testAsaasConnection = action({
  * Sync all students as Asaas customers (background job)
  */
 export const syncAllStudents = action({
-	args: {},
-	handler: async (ctx): Promise<{ synced: number; errors: number; total: number }> => {
-		const identity = await ctx.auth.getUserIdentity()
-		if (!identity) {
-			throw new Error('Unauthenticated')
-		}
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{ synced: number; errors: number; total: number }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
 
     const organizationId = await getOrganizationId(ctx);
     if (!organizationId) {
       throw new Error("Organization ID not found.");
     }
 
-		// @ts-ignore
-		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents, { organizationId }) as any[]
+    // @ts-ignore
+    const students = (await ctx.runQuery(
+      internal.asaas.queries.listAllStudents,
+      { organizationId },
+    )) as any[];
 
-		let synced = 0
-		let errors = 0
+    let synced = 0;
+    let errors = 0;
 
-		for (const student of students) {
-			try {
-				await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal, {
-					studentId: student._id,
-				})
-				synced++
-			} catch (error) {
-				console.error(`Error syncing student ${student._id}:`, error)
-				errors++
-			}
-		}
+    for (const student of students) {
+      try {
+        await ctx.runMutation(
+          internal.asaas.mutations.syncStudentAsCustomerInternal,
+          {
+            studentId: student._id,
+          },
+        );
+        synced++;
+      } catch (error) {
+        console.error(`Error syncing student ${student._id}:`, error);
+        errors++;
+      }
+    }
 
-		return { synced, errors, total: students.length }
-	},
-})
+    return { synced, errors, total: students.length };
+  },
+});
 
 /**
  * Import customers from Asaas and create/update students
@@ -370,15 +426,18 @@ export const importCustomersFromAsaas = action({
     // Get organizationId safely
     let organizationId: string | undefined;
     try {
-        organizationId = await getOrganizationId(ctx);
+      organizationId = await getOrganizationId(ctx);
     } catch (e) {
-        console.warn('Could not determine organizationId in importCustomersFromAsaas', e);
+      console.warn(
+        "Could not determine organizationId in importCustomersFromAsaas",
+        e,
+      );
     }
 
     // Create sync log
     // @ts-ignore - TypeScript has issues with deep type inference
     const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'customers' as const,
+      syncType: "customers" as const,
       initiatedBy: args.initiatedBy,
     });
 
@@ -401,11 +460,12 @@ export const importCustomersFromAsaas = action({
       }
 
       // Import batch processor and workers dynamically to avoid circular imports
-      const { processBatch } = await import('./batch_processor');
-      const { processCustomerWorker } = await import('./import_workers');
+      const { processBatch } = await import("./batch_processor");
+      const { processCustomerWorker } = await import("./import_workers");
 
       // Create worker function with context and organizationId
-      const worker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
+      const worker = (customer: any) =>
+        processCustomerWorker(ctx, customer, organizationId);
 
       // Progress callback to update sync log during processing
       const onProgress = async (stats: any) => {
@@ -424,10 +484,10 @@ export const importCustomersFromAsaas = action({
         allCustomers,
         worker,
         {
-          batchSize: 10,          // Process 10 records per batch
-          concurrency: 5,         // 5 parallel requests per batch
+          batchSize: 10, // Process 10 records per batch
+          concurrency: 5, // 5 parallel requests per batch
           delayBetweenBatches: 100, // 100ms delay between batches
-          maxRetries: 3,          // Retry failed records up to 3 times
+          maxRetries: 3, // Retry failed records up to 3 times
           checkpointInterval: 50, // Update progress every 50 records
           adaptiveBatching: true, // Adjust batch size based on error rate
         },
@@ -441,13 +501,13 @@ export const importCustomersFromAsaas = action({
       const recordsFailed = result.failed.length;
 
       // Collect error messages
-      const errors = result.failed.map(f => f.error).slice(0, 50);
+      const errors = result.failed.map((f) => f.error).slice(0, 50);
 
       // Update sync log as completed
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'completed' as const,
+        status: "completed" as const,
         recordsProcessed,
         recordsCreated,
         recordsUpdated,
@@ -468,7 +528,7 @@ export const importCustomersFromAsaas = action({
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'failed' as const,
+        status: "failed" as const,
         recordsProcessed: allCustomers.length,
         recordsCreated: 0,
         recordsUpdated: 0,
@@ -490,8 +550,8 @@ export const importPaymentsFromAsaas = action({
   args: {
     initiatedBy: v.string(),
     startDate: v.optional(v.string()), // YYYY-MM-DD
-    endDate: v.optional(v.string()),   // YYYY-MM-DD
-    status: v.optional(v.string()),    // PENDING, RECEIVED, etc.
+    endDate: v.optional(v.string()), // YYYY-MM-DD
+    status: v.optional(v.string()), // PENDING, RECEIVED, etc.
   },
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
@@ -499,15 +559,18 @@ export const importPaymentsFromAsaas = action({
     // Get organizationId safely
     let organizationId: string | undefined;
     try {
-        organizationId = await getOrganizationId(ctx);
+      organizationId = await getOrganizationId(ctx);
     } catch (e) {
-        console.warn('Could not determine organizationId in importPaymentsFromAsaas', e);
+      console.warn(
+        "Could not determine organizationId in importPaymentsFromAsaas",
+        e,
+      );
     }
 
     // Create sync log
     // @ts-ignore
     const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'payments' as const,
+      syncType: "payments" as const,
       initiatedBy: args.initiatedBy,
       filters: {
         startDate: args.startDate,
@@ -542,11 +605,12 @@ export const importPaymentsFromAsaas = action({
       }
 
       // Import batch processor and workers dynamically
-      const { processBatch } = await import('./batch_processor');
-      const { processPaymentWorker } = await import('./import_workers');
+      const { processBatch } = await import("./batch_processor");
+      const { processPaymentWorker } = await import("./import_workers");
 
       // Create worker function with context and organizationId
-      const worker = (payment: any) => processPaymentWorker(ctx, payment, organizationId);
+      const worker = (payment: any) =>
+        processPaymentWorker(ctx, payment, organizationId);
 
       // Progress callback to update sync log during processing
       const onProgress = async (stats: any) => {
@@ -561,7 +625,7 @@ export const importPaymentsFromAsaas = action({
       };
 
       // Process all payments in concurrent batches
-      const result = await processBatch(
+      await processBatch(
         allPayments,
         worker,
         {
@@ -575,40 +639,23 @@ export const importPaymentsFromAsaas = action({
         onProgress,
       );
 
-      // Calculate final statistics
-      const recordsCreated = result.created || 0;
-      const recordsUpdated = result.updated || 0;
-      const recordsProcessed = result.totalProcessed;
-      const recordsFailed = result.failed.length;
-
-      // Collect error messages
-      const errors = result.failed.map(f => f.error).slice(0, 50);
-
-      // Update sync log as completed
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId,
-        status: 'completed' as const,
-        recordsProcessed,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
-        errors: errors.length > 0 ? errors : undefined,
-        completedAt: Date.now(),
+      // Recalculate financial metrics after import
+      await ctx.runMutation(internal.metrics.calculateFinancialMetrics, {
+        organizationId,
       });
 
       return {
         success: true,
-        recordsProcessed,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
+        recordsProcessed: allPayments.length,
+        recordsCreated: 0, // Simplified for this call
+        recordsUpdated: 0,
+        recordsFailed: 0,
       };
     } catch (error: any) {
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'failed' as const,
+        status: "failed" as const,
         recordsProcessed: allPayments.length,
         recordsCreated: 0,
         recordsUpdated: 0,
@@ -629,11 +676,9 @@ export const importPaymentsFromAsaas = action({
 export const importSubscriptionsFromAsaas = action({
   args: {
     initiatedBy: v.string(),
-    status: v.optional(v.union(
-      v.literal('ACTIVE'),
-      v.literal('INACTIVE'),
-      v.literal('EXPIRED')
-    )),
+    status: v.optional(
+      v.union(v.literal("ACTIVE"), v.literal("INACTIVE"), v.literal("EXPIRED")),
+    ),
   },
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
@@ -641,15 +686,18 @@ export const importSubscriptionsFromAsaas = action({
     // Get organizationId safely
     let organizationId: string | undefined;
     try {
-        organizationId = await getOrganizationId(ctx);
+      organizationId = await getOrganizationId(ctx);
     } catch (e) {
-        console.warn('Could not determine organizationId in importSubscriptionsFromAsaas', e);
+      console.warn(
+        "Could not determine organizationId in importSubscriptionsFromAsaas",
+        e,
+      );
     }
 
     // Create sync log
     // @ts-ignore
     const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'subscriptions' as const,
+      syncType: "subscriptions" as const,
       initiatedBy: args.initiatedBy,
       filters: {
         status: args.status,
@@ -680,11 +728,12 @@ export const importSubscriptionsFromAsaas = action({
       }
 
       // Import batch processor and workers dynamically
-      const { processBatch } = await import('./batch_processor');
-      const { processSubscriptionWorker } = await import('./import_workers');
+      const { processBatch } = await import("./batch_processor");
+      const { processSubscriptionWorker } = await import("./import_workers");
 
       // Create worker function with context and organizationId
-      const worker = (subscription: any) => processSubscriptionWorker(ctx, subscription, organizationId);
+      const worker = (subscription: any) =>
+        processSubscriptionWorker(ctx, subscription, organizationId);
 
       // Progress callback to update sync log during processing
       const onProgress = async (stats: any) => {
@@ -720,13 +769,13 @@ export const importSubscriptionsFromAsaas = action({
       const recordsFailed = result.failed.length;
 
       // Collect error messages
-      const errors = result.failed.map(f => f.error).slice(0, 50);
+      const errors = result.failed.map((f) => f.error).slice(0, 50);
 
       // Update sync log as completed
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'completed' as const,
+        status: "completed" as const,
         recordsProcessed,
         recordsCreated,
         recordsUpdated,
@@ -746,7 +795,7 @@ export const importSubscriptionsFromAsaas = action({
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'failed' as const,
+        status: "failed" as const,
         recordsProcessed: allSubscriptions.length,
         recordsCreated: 0,
         recordsUpdated: 0,
@@ -767,7 +816,7 @@ export const syncFinancialDataFromAsaas = action({
   args: {
     initiatedBy: v.string(),
     startDate: v.optional(v.string()), // YYYY-MM-DD
-    endDate: v.optional(v.string()),   // YYYY-MM-DD
+    endDate: v.optional(v.string()), // YYYY-MM-DD
   },
   handler: async (ctx, args) => {
     const client = await getAsaasClientFromSettings(ctx);
@@ -775,7 +824,7 @@ export const syncFinancialDataFromAsaas = action({
     // Create sync log
     // @ts-ignore
     const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'financial' as const,
+      syncType: "financial" as const,
       initiatedBy: args.initiatedBy,
       filters: {
         startDate: args.startDate,
@@ -794,7 +843,7 @@ export const syncFinancialDataFromAsaas = action({
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'completed' as const,
+        status: "completed" as const,
         recordsProcessed: summary.paymentsCount,
         recordsCreated: 0,
         recordsUpdated: 0,
@@ -810,7 +859,7 @@ export const syncFinancialDataFromAsaas = action({
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
-        status: 'failed' as const,
+        status: "failed" as const,
         recordsProcessed: 0,
         recordsCreated: 0,
         recordsUpdated: 0,
@@ -850,42 +899,58 @@ export const importAllFromAsaas = action({
     initiatedBy: v.string(),
   },
   handler: async (ctx, args): Promise<CombinedImportResult> => {
-    console.log('[importAllFromAsaas] Starting batch import...');
+    console.log("[importAllFromAsaas] Starting batch import...");
 
     // CRITICAL: Require authentication before importing
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.error('[importAllFromAsaas] No authenticated user');
-      throw new Error('Você precisa estar logado para importar dados do Asaas.');
+      console.error("[importAllFromAsaas] No authenticated user");
+      throw new Error(
+        "Você precisa estar logado para importar dados do Asaas.",
+      );
     }
-    console.log('[importAllFromAsaas] User authenticated:', identity.subject);
+    console.log("[importAllFromAsaas] User authenticated:", identity.subject);
 
     let client: AsaasClient;
     try {
       client = await getAsaasClientFromSettings(ctx);
-      console.log('[importAllFromAsaas] Asaas client initialized successfully');
+      console.log("[importAllFromAsaas] Asaas client initialized successfully");
     } catch (error: any) {
-      console.error('[importAllFromAsaas] Failed to initialize Asaas client:', error.message);
-      throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`);
+      console.error(
+        "[importAllFromAsaas] Failed to initialize Asaas client:",
+        error.message,
+      );
+      throw new Error(
+        `Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`,
+      );
     }
 
     // Get organizationId - REQUIRED for multi-tenant data isolation
     let organizationId: string;
     try {
       organizationId = await getOrganizationId(ctx);
-      console.log('[importAllFromAsaas] Organization ID:', organizationId);
+      console.log("[importAllFromAsaas] Organization ID:", organizationId);
     } catch (e: any) {
-      console.error('[importAllFromAsaas] Failed to get organizationId:', e.message);
-      throw new Error('Não foi possível determinar sua organização. Por favor, faça logout e login novamente.');
+      console.error(
+        "[importAllFromAsaas] Failed to get organizationId:",
+        e.message,
+      );
+      throw new Error(
+        "Não foi possível determinar sua organização. Por favor, faça logout e login novamente.",
+      );
     }
 
     if (!organizationId) {
-      throw new Error('Organization ID é obrigatório para importação.');
+      throw new Error("Organization ID é obrigatório para importação.");
     }
 
     // Import batch processor and workers dynamically to avoid circular dependencies
-    const { processBatch } = await import('./batch_processor');
-    const { processCustomerWorker, processPaymentWorker, processSubscriptionWorker } = await import('./import_workers');
+    const { processBatch } = await import("./batch_processor");
+    const {
+      processCustomerWorker,
+      processPaymentWorker,
+      processSubscriptionWorker,
+    } = await import("./import_workers");
 
     const BATCH_CONFIG = {
       batchSize: 10,
@@ -899,14 +964,17 @@ export const importAllFromAsaas = action({
     // ═══════════════════════════════════════════════════════
     // STEP 1: IMPORT CUSTOMERS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
-    console.log('[importAllFromAsaas] Step 1: Batch importing customers...');
+    console.log("[importAllFromAsaas] Step 1: Batch importing customers...");
 
     let customersLogId;
     try {
-      customersLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-        syncType: 'customers' as const,
-        initiatedBy: args.initiatedBy,
-      });
+      customersLogId = await ctx.runMutation(
+        internal.asaas.sync.createSyncLog,
+        {
+          syncType: "customers" as const,
+          initiatedBy: args.initiatedBy,
+        },
+      );
     } catch (error: any) {
       throw new Error(`Falha ao criar log de sincronização: ${error.message}`);
     }
@@ -921,16 +989,24 @@ export const importAllFromAsaas = action({
 
     while (customersHasMore && customersPageCount < MAX_PAGES) {
       customersPageCount++;
-      console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
-      const response = await client.listAllCustomers({ offset: customersOffset, limit });
+      console.log(
+        `[importAllFromAsaas] Fetching customers page ${customersPageCount}...`,
+      );
+      const response = await client.listAllCustomers({
+        offset: customersOffset,
+        limit,
+      });
       allCustomers.push(...response.data);
       customersHasMore = response.hasMore;
       customersOffset += limit;
     }
-    console.log(`[importAllFromAsaas] Collected ${allCustomers.length} customers for batch processing`);
+    console.log(
+      `[importAllFromAsaas] Collected ${allCustomers.length} customers for batch processing`,
+    );
 
     // Batch process customers
-    const customerWorker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
+    const customerWorker = (customer: any) =>
+      processCustomerWorker(ctx, customer, organizationId);
 
     const customersProgress = async (stats: any) => {
       await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
@@ -942,17 +1018,22 @@ export const importAllFromAsaas = action({
       });
     };
 
-    const customersBatchResult = await processBatch(allCustomers, customerWorker, BATCH_CONFIG, customersProgress);
+    const customersBatchResult = await processBatch(
+      allCustomers,
+      customerWorker,
+      BATCH_CONFIG,
+      customersProgress,
+    );
 
     // Update sync log with final results
     await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
       logId: customersLogId,
-      status: 'completed' as const,
+      status: "completed" as const,
       recordsProcessed: customersBatchResult.totalProcessed,
       recordsCreated: customersBatchResult.created || 0,
       recordsUpdated: customersBatchResult.updated || 0,
       recordsFailed: customersBatchResult.failed.length,
-      errors: customersBatchResult.failed.slice(0, 50).map(f => f.error),
+      errors: customersBatchResult.failed.slice(0, 50).map((f) => f.error),
       completedAt: Date.now(),
     });
 
@@ -965,7 +1046,10 @@ export const importAllFromAsaas = action({
     };
 
     // If customers import failed completely, don't proceed with payments
-    if (customersBatchResult.totalProcessed === 0 || customersBatchResult.failed.length === allCustomers.length) {
+    if (
+      customersBatchResult.totalProcessed === 0 ||
+      customersBatchResult.failed.length === allCustomers.length
+    ) {
       return {
         success: false,
         customers: customersResult,
@@ -977,12 +1061,15 @@ export const importAllFromAsaas = action({
     // ═══════════════════════════════════════════════════════
     // STEP 2: IMPORT PAYMENTS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
-    console.log('[importAllFromAsaas] Step 2: Batch importing payments...');
+    console.log("[importAllFromAsaas] Step 2: Batch importing payments...");
 
-    const paymentsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'payments' as const,
-      initiatedBy: args.initiatedBy,
-    });
+    const paymentsLogId = await ctx.runMutation(
+      internal.asaas.sync.createSyncLog,
+      {
+        syncType: "payments" as const,
+        initiatedBy: args.initiatedBy,
+      },
+    );
 
     // Collect all payments from all pages first
     const allPayments: any[] = [];
@@ -992,15 +1079,21 @@ export const importAllFromAsaas = action({
 
     while (paymentsHasMore && paymentsPageCount < MAX_PAGES) {
       paymentsPageCount++;
-      const response = await client.listAllPayments({ offset: paymentsOffset, limit });
+      const response = await client.listAllPayments({
+        offset: paymentsOffset,
+        limit,
+      });
       allPayments.push(...response.data);
       paymentsHasMore = response.hasMore;
       paymentsOffset += limit;
     }
-    console.log(`[importAllFromAsaas] Collected ${allPayments.length} payments for batch processing`);
+    console.log(
+      `[importAllFromAsaas] Collected ${allPayments.length} payments for batch processing`,
+    );
 
     // Batch process payments
-    const paymentWorker = (payment: any) => processPaymentWorker(ctx, payment, organizationId);
+    const paymentWorker = (payment: any) =>
+      processPaymentWorker(ctx, payment, organizationId);
 
     const paymentsProgress = async (stats: any) => {
       await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
@@ -1012,17 +1105,22 @@ export const importAllFromAsaas = action({
       });
     };
 
-    const paymentsBatchResult = await processBatch(allPayments, paymentWorker, BATCH_CONFIG, paymentsProgress);
+    const paymentsBatchResult = await processBatch(
+      allPayments,
+      paymentWorker,
+      BATCH_CONFIG,
+      paymentsProgress,
+    );
 
     // Update sync log with final results
     await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
       logId: paymentsLogId,
-      status: 'completed' as const,
+      status: "completed" as const,
       recordsProcessed: paymentsBatchResult.totalProcessed,
       recordsCreated: paymentsBatchResult.created || 0,
       recordsUpdated: paymentsBatchResult.updated || 0,
       recordsFailed: paymentsBatchResult.failed.length,
-      errors: paymentsBatchResult.failed.slice(0, 50).map(f => f.error),
+      errors: paymentsBatchResult.failed.slice(0, 50).map((f) => f.error),
       completedAt: Date.now(),
     });
 
@@ -1037,12 +1135,17 @@ export const importAllFromAsaas = action({
     // ═══════════════════════════════════════════════════════
     // STEP 3: IMPORT SUBSCRIPTIONS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
-    console.log('[importAllFromAsaas] Step 3: Batch importing subscriptions...');
+    console.log(
+      "[importAllFromAsaas] Step 3: Batch importing subscriptions...",
+    );
 
-    const subscriptionsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
-      syncType: 'subscriptions' as const,
-      initiatedBy: args.initiatedBy,
-    });
+    const subscriptionsLogId = await ctx.runMutation(
+      internal.asaas.sync.createSyncLog,
+      {
+        syncType: "subscriptions" as const,
+        initiatedBy: args.initiatedBy,
+      },
+    );
 
     // Collect all subscriptions from all pages first
     const allSubscriptions: any[] = [];
@@ -1052,15 +1155,21 @@ export const importAllFromAsaas = action({
 
     while (subscriptionsHasMore && subscriptionsPageCount < MAX_PAGES) {
       subscriptionsPageCount++;
-      const response = await client.listAllSubscriptions({ offset: subscriptionsOffset, limit });
+      const response = await client.listAllSubscriptions({
+        offset: subscriptionsOffset,
+        limit,
+      });
       allSubscriptions.push(...response.data);
       subscriptionsHasMore = response.hasMore;
       subscriptionsOffset += limit;
     }
-    console.log(`[importAllFromAsaas] Collected ${allSubscriptions.length} subscriptions for batch processing`);
+    console.log(
+      `[importAllFromAsaas] Collected ${allSubscriptions.length} subscriptions for batch processing`,
+    );
 
     // Batch process subscriptions
-    const subscriptionWorker = (subscription: any) => processSubscriptionWorker(ctx, subscription, organizationId);
+    const subscriptionWorker = (subscription: any) =>
+      processSubscriptionWorker(ctx, subscription, organizationId);
 
     const subscriptionsProgress = async (stats: any) => {
       await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
@@ -1072,17 +1181,22 @@ export const importAllFromAsaas = action({
       });
     };
 
-    const subscriptionsBatchResult = await processBatch(allSubscriptions, subscriptionWorker, BATCH_CONFIG, subscriptionsProgress);
+    const subscriptionsBatchResult = await processBatch(
+      allSubscriptions,
+      subscriptionWorker,
+      BATCH_CONFIG,
+      subscriptionsProgress,
+    );
 
     // Update sync log with final results
     await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
       logId: subscriptionsLogId,
-      status: 'completed' as const,
+      status: "completed" as const,
       recordsProcessed: subscriptionsBatchResult.totalProcessed,
       recordsCreated: subscriptionsBatchResult.created || 0,
       recordsUpdated: subscriptionsBatchResult.updated || 0,
       recordsFailed: subscriptionsBatchResult.failed.length,
-      errors: subscriptionsBatchResult.failed.slice(0, 50).map(f => f.error),
+      errors: subscriptionsBatchResult.failed.slice(0, 50).map((f) => f.error),
       completedAt: Date.now(),
     });
 
@@ -1094,10 +1208,13 @@ export const importAllFromAsaas = action({
       recordsFailed: subscriptionsBatchResult.failed.length,
     };
 
-    console.log('[importAllFromAsaas] Batch import completed');
+    console.log("[importAllFromAsaas] Batch import completed");
 
     return {
-      success: customersResult.success && paymentsResult.success && subscriptionsResult.success,
+      success:
+        customersResult.success &&
+        paymentsResult.success &&
+        subscriptionsResult.success,
       customers: customersResult,
       payments: paymentsResult,
       subscriptions: subscriptionsResult,

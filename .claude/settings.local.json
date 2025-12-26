@@ -38,7 +38,8 @@
       "Bash(cd:*)",
       "Bash(bun run dev:*)",
       "Bash(timeout:*)",
-      "Bash(exit:*)"
+      "Bash(exit:*)",
+      "Bash(start http://localhost:3000)"
     ]
   },
   "enableAllProjectMcpServers": true,
