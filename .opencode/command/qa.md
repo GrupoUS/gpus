@@ -118,7 +118,7 @@ Se houver mudanças estruturais (schema, API, boundaries):
 railway status
 
 # Convex backend deployment
-bunx convex deploy --prod
+bunx convex deploy --yes
 ```
 
 ### 2.2 Deploy Logs Verification
@@ -127,10 +127,10 @@ bunx convex deploy --prod
 
 ```bash
 # Railway: Verificar logs recentes de deploy (últimas 100 linhas)
-railway logs --latest -n 100
+railway logs --lines 100
 
 # Convex: Verificar logs de produção
-bunx convex logs --prod --success --failure
+bunx convex logs --prod --history 100
 ```
 
 ### 2.3 Deploy Error Analysis
@@ -173,9 +173,9 @@ Após plano aprovado:
 | Build | `bun run build` | Clean build |
 | Tests | `bun run test:coverage` | All tests pass |
 | Deploy | `railway status` | Healthy |
-| Backend | `bunx convex deploy --prod` | Success |
-| Railway Logs | `railway logs --latest -n 100` | No errors in logs |
-| Convex Logs | `bunx convex logs --prod --failure` | No failures |
+| Backend | `bunx convex deploy --yes` | Success |
+| Railway Logs | `railway logs --lines 100` | No errors in logs |
+| Convex Logs | `bunx convex logs --prod --history 100` | No failures |
 
 ## Quick Reference
 
