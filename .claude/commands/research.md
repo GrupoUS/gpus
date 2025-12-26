@@ -1,3 +1,8 @@
+---
+description: Pesquisa multi-fonte com validação cruzada e geração de atomic tasks (>=95% accuracy)
+agent: apex-researcher
+subtask: true
+---
 
 # /research: $ARGUMENTS
 
@@ -22,12 +27,29 @@ Follow this systematic approach to create a new feature: $ARGUMENTS
    - Break down the feature into smaller, manageable tasks
    - Identify affected components and potential impact areas
    - Plan the API/interface design before implementation
+   - Advanced search query formulation
+   - Domain-specific searching and filtering
+   - Result quality evaluation and ranking
+   - Information synthesis across sources
+   - Fact verification and cross-referencing
+   - Historical and trend analysis
+   - Use specific phrases in quotes for exact matches
+   - Exclude irrelevant terms with negative keywords
+   - Target specific timeframes for recent/historical data
+   - Formulate multiple query variations
 
 2. **Research and Analysis**
    - Study existing codebase patterns and conventions
    - Identify similar features for consistency
    - Research external dependencies or libraries needed
    - Review any relevant documentation or specifications
+   - Extract full content from promising results
+   - Parse structured data from pages
+   - Follow citation trails and references
+   - Capture data before it changes
+   - Domain knowledge and current best practices
+   - Prompt patterns and anti-patterns
+   - Platform constraints and standards
 
 3. **Architecture Design**
    - Design the feature architecture and data flow
@@ -42,6 +64,8 @@ Follow this systematic approach to create a new feature: $ARGUMENTS
    - Follow the project's coding standards and patterns
    - Implement proper error handling and validation
    - Use dependency injection and maintain loose coupling
+   - Layered reasoning with multi-perspective analysis
+   - Validate logic, cover edge cases and errors
 
 5. **Database Changes (if applicable)**
    - Create migration scripts for schema changes
@@ -107,73 +131,54 @@ Use este prompt:
 - Domínio: CRM para educação em saúde estética
 - Compliance: LGPD obrigatório para dados de alunos
 
+## 📄 ONE-SHOT PROMPT TEMPLATE (YAML-Structured)
+
+```yaml
+role: "[SPECIFIC EXPERTISE] Developer"
+objective:
+  task: "[DESCRIBE WHAT NEEDS TO BE DONE]"
+  context: "[PROJECT TYPE, STACK, CONSTRAINTS]"
+chain_of_thought_process:
+  analyze:
+    checklist:
+      - "Core requirement: _________"
+      - "Technical constraints: _________"
+      - "Expected output: _________"
+      - "Edge cases to consider: _________"
+  research:
+    checklist:
+      - "Framework/library documentation needed: _________"
+      - "Patterns to apply (and anti-patterns to avoid): _________"
+      - "Security and compliance considerations: _________"
+  think:
+    step_by_step:
+      - "First: _________  # initial setup/analysis"
+      - "Then: _________   # core design/specification"
+      - "Next: _________   # validation/testing strategy"
+      - "Finally: _________ # optimization/cleanup"
+```
+
 ## Instruções
 1. Detecte complexidade (L1-L10) com justificativa
 2. Priorize repo-first (serena/mgrep) antes de fontes externas
 3. Use context7 para docs oficiais quando necessário
-4. Delegue para @database-specialist (Convex) e/ou @code-reviewer (LGPD/OWASP) quando aplicável
-5. Retorne o YAML completo no Output Contract do apex-researcher
-6. Execute todowrite() após o YAML (MANDATÓRIO)
-```
+4. Delegue para @database-specialist (Convex) e/ou @code-reviewer (LGPD/OWASP) se necessário mais informações específicas
+5. Retorne o ONE-SHOT PROMPT TEMPLATE YAML completo no Output Contract do apex-researcher
+6. Execute a tool todowrite para criar as atomic tasks com base no ONE-SHOT PROMPT TEMPLATE YAML (MANDATÓRIO)
+7. Verifique se o todowrite segue a estrutura:
+   - Tasks ordenadas por fase (1-5)
+   - Subtasks imediatamente após o parent
+   - Validation tasks no final (VT-001..VT-003)
+   - Todos os status iniciam como "pending"
 
----
 
-## Step 2: Validar o YAML recebido
-
-Confirme que o retorno contém, no mínimo:
-
-```yaml
-research_report:
-  summary: "[presente]"
-  complexity: "L1" # ... L10
-  key_findings: ["não vazio"]
-
-atomic_tasks_proposal:
-  - id: "AT-001"
-    title: "[presente]"
-
-validation_tasks:
-  - id: "VT-001"
-```
-
-Checklist:
-
-- [ ] `complexity` e `complexity_justification` coerentes
-- [ ] `key_findings` com `confidence` + `source`
-- [ ] `gaps_uncertainties` preenchido quando houver incertezas
-- [ ] Para L5+: subtasks presentes nas tasks relevantes
-- [ ] Se LGPD acionado: incluir VT-004 (security review)
-
----
-
-## Step 3: Persistir a spec executável
-
-Gerar um arquivo de spec para o `/implement` consumir.
+## Step 2: Gerar um arquivo de spec para o `/implement` consumir.
 
 - Template: `.opencode/specs/_template.md`
 - Destino: `.opencode/specs/[feature-id]/spec.md`
 - `feature-id`: slug (lowercase, hífens, sem caracteres especiais, máx. 30)
 
-Para L7+ (opcional):
-
-- `.opencode/specs/[feature-id]/data-model.md`
-- `.opencode/specs/[feature-id]/contracts.md`
-- `.opencode/specs/[feature-id]/quickstart.md`
-
----
-
-## Step 4: Verificar o TodoWrite
-
-O `apex-researcher` executa `todowrite()` como parte do contrato. Verifique se:
-
-- Tasks estão ordenadas por `Phase: 1 → 5`
-- Subtasks aparecem logo após o parent
-- Validation tasks ficam ao final (`VT-001..VT-003`, e `VT-004` se aplicável)
-- Tudo começa com status `pending`
-
----
-
-## Step 5: Apresentar plano para aprovação
+## Step 3: Apresentar plano para aprovação
 
 Formato recomendado (compacto):
 
@@ -201,18 +206,17 @@ L[X] — [research_report.complexity_justification]
 
 ### Validation
 - VT-001: `bun run build`
-- VT-002: `bun run lint:check`
+- VT-002: `bun run lint`
 - VT-003: `bun run test`
 - VT-004: `@code-reviewer` (se LGPD)
+- VT-005: `@database-specialist` (se Convex)
 
 ### Ready?
-Aprovar: "aprovar plano" / "approve plan"
+Aprovar: "aprovar" / "implemente"
 Ajustar: "adicionar task para X" / "remover AT-XXX"
 ```
 
----
-
-## Step 6: Processar resposta do usuário
+## Step 4: Processar resposta do usuário
 
 - **Aprovou**: confirmar e instruir Act Mode (`/implement`).
 - **Pediu ajustes**: atualizar TodoWrite e reapresentar.

@@ -1,7 +1,7 @@
 ---
-title: "Quality Control - Bun + Vite + Convex + TanStack Router"
-form: reference
-tags: [quality, bun, vite, convex, tanstack-router, react-19, clerk, railway, deployment, testing, cli, logs, debugging]
+description: Pipeline QA integrado com auto-research e auto-fix
+agent: code-reviewer
+subtask: true
 ---
 
 # /qa - Quality Assurance Pipeline
@@ -14,15 +14,18 @@ Pipeline integrado: **Verificação → Auto-Research → Auto-Fix**
 flowchart LR
     A[/qa] --> B[Phase 1: Local Checks]
     B --> C{Erros?}
-    C -->|Não| D[Phase 2: Deploy]
-    D --> E{Erros?}
-    E -->|Não| F[✅ QA PASS]
-    C -->|Sim| G[Agregar Erros]
-    E -->|Sim| G
-    G --> H["/research 'Fix: [errors]'"]
-    H --> I[Plano Aprovado]
-    I --> J[/implement]
-    J --> K[Re-run /qa]
+    C -->|Não| D[Phase 1.5: Arch Check]
+    D --> E{Issues?}
+    E -->|Não| F[Phase 2: Deploy]
+    F --> G{Erros?}
+    G -->|Não| H[✅ QA PASS]
+    C -->|Sim| I[Agregar Erros]
+    E -->|Sim| I
+    G -->|Sim| I
+    I --> J["/research 'Fix: [errors]'"]
+    J --> K[Plano Aprovado]
+    K --> L[/implement]
+    L --> M[Re-run /qa]
 ```
 # Code Quality Review
 
@@ -90,6 +93,19 @@ bun run build
 # Test coverage
 bun run test:coverage
 ```
+
+## Phase 1.5: Architecture Verification
+
+> **🏗️ ARCHITECTURE GATE**: Validar conformidade arquitetural
+
+Se houver mudanças estruturais (schema, API, boundaries):
+
+1. **Invocar**: `@architect-reviewer verify implementation`
+2. **Validar**:
+   - Padrões de design
+   - Escalabilidade e Performance
+   - Decisões técnicas
+   - Conformidade com princípios do projeto
 
 ## Phase 2: Deployment Validation
 

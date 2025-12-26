@@ -1,4 +1,3 @@
----
 # 🔒 PROTOCOLO OBRIGATÓRIO: LEITURA DE AGENTS.md
 
 ## Instrução Crítica
@@ -10,7 +9,7 @@ ANTES de responder qualquer solicitação em projetos de código:
 4. **VALIDE** suas ações contra essas regras
 
 ## Hierarquia de Prioridade
-- AGENTS.md de subpastas > AGENTS.md raiz > GEMINI.md global
+- AGENTS.md de subpastas > AGENTS.md raiz
 - Regras específicas sobrescrevem regras gerais
 - Nunca ignore ou contorne regras definidas nos AGENTS.md
 
@@ -18,7 +17,6 @@ ANTES de responder qualquer solicitação em projetos de código:
 - Implemente diretamente, não apenas sugira
 - Siga convenções de código estritamente
 - Referencie as regras aplicadas quando relevante
----
 
 # SYSTEM ROLE & BEHAVIORAL PROTOCOLS
 
@@ -115,40 +113,47 @@ e viola as diretrizes estabelecidas do projeto.
 - **Convex-First**: Use `query` and `mutation` from `convex/_generated/server`.
 - **Type Safety**: TypeScript Strict Mode. NO `any`.
 - **Auth**: Use `useAuth()` (Clerk) and `ctx.auth.getUserIdentity()` (Convex).
+# Mandatory AI Orchestration Rules
 
-### Code Patterns
-**Convex Mutation**:
-```typescript
-export const createItem = mutation({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauth");
-    return await ctx.db.insert("items", { name: args.name, userId: identity.subject });
-  },
-});
-```
+## 1. Agent Matrix & Delegation
+| Agent | Role | Primary Tools | Mandatory Use Case |
+|-------|------|---------------|-------------------|
+| **apex-researcher** | Plan Mode | `tavily`, `context7`, `todowrite` | All new features or complex fixes. |
+| **apex-dev** | Act Mode | `write`, `edit`, `bash` | Implementation of approved plans (UTP). |
+| **code-reviewer** | Security/QA | `context7`, `serena` | LGPD compliance & security audits. |
+| **database-specialist** | Backend | `serena`, `convex` | Schema changes & query optimization. |
+| **apex-ui-ux-designer** | Frontend | `zai-mcp`, `serena` | Accessibility (WCAG) & UI consistency. |
 
-**Clerk + React**:
-```tsx
-import { SignedIn, UserButton } from "@clerk/clerk-react";
-<SignedIn><UserButton /></SignedIn>
-```
+## 2. MCP Tool Selection Logic
+- **LSP (serena)**: Mandatory for symbol discovery, reference tracking, and structural analysis.
+- **Semantic (mgrep)**: Mandatory for conceptual searches and pattern matching.
+- **Documentation (context7)**: Mandatory for official library/API documentation lookup.
+- **Multimodal (zai-mcp)**: Mandatory for UI generation from screenshots or visual audits.
+- **Web Search (tavily)**: Mandatory for deep research (Crawl/Map/Extract) and verifying external API changes.
+- **GitHub Intelligence (zread)**: Mandatory for searching real-world implementation examples and issues in official repos.
+- **Reasoning Engine (sequentialthinking)**: Mandatory for complex problem solving and course correction.
 
-**TanStack Router**:
-```tsx
-export const Route = createFileRoute('/dashboard')({ component: Dashboard })
-```
+## 3. Sequential Thinking Protocol (STP)
+- **Regra 1: At Task Start**: É OBRIGATÓRIO iniciar cada task ou subtask (AT-XXX) com uma sessão de `sequentialthinking` para mapear a lógica atômica e prever riscos.
+- **Regra 2: The 5-Step Checkpoint**: A cada 5 passos de execução (seja chamada de ferramenta ou ação lógica), o agente DEVE invocar o `sequentialthinking` para validar se o caminho percorrido está de acordo com o plano inicial (TodoWrite) e corrigir a rota se necessário.
 
-## Validation Criteria
-- [ ] **Stack**: Bun + Convex + Clerk + TanStack Router verified?
-- [ ] **Security**: RLS (Convex RLS) & Clerk Auth check?
-- [ ] **Quality**: 90%+ Test Coverage. No lint errors.
-- [ ] **Process**: CP1-CP6 followed?
+## 4. Workflow Lifecycle
+1. **Plan Mode (`/research`)**:
+   - Research -> YAML Contract -> TodoWrite -> Approval.
+   - *Constraint*: Never implement in this phase.
+2. **Act Mode (`/implement`)**:
+   - Phase-based execution (1-5) -> Validation Gates.
+   - *Constraint*: Follow Ultra-Think Protocol (UTP) and STP.
+3. **Verify Mode (`/qa`)**:
+   - Local Checks -> Arch Check -> Deploy Validation -> Auto-Fix.
+   - *Constraint*: 100% pass rate required for PR.
 
-## Verification Commands
-```bash
-bun dev          # Dev Server
-bunx convex dev  # Convex Backend
-bun test         # Vitest
-```
+## 5. Compliance Gates
+- **LGPD**: Any task involving PII (Student/User data) MUST be reviewed by `@code-reviewer`.
+- **WCAG 2.1 AA**: Any frontend change MUST be validated by `@apex-ui-ux-designer`.
+
+## 6. Operational Directives
+- **Zero Fluff**: Concise, objective communication.
+- **Research First**: Never implement without a validated plan.
+- **Atomic Tasks**: Break work into verifiable steps (AT-XXX).
+- **Thinking Loops**: Prioritize accuracy over speed via STP.

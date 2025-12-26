@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__web-reader__webReader",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(claude mcp list:*)",
+      "mcp__web-search-prime__webSearchPrime",
+      "Bash(cmd /c \"dir /b C:\\\\Users\\\\Mauri\\\\.claude* 2>nul\")",
+      "Bash(powershell:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "zread",
+    "web-reader",
+    "web-search-prime",
+    "zai-mcp-server",
+    "tavily",
+    "sequential-thinking"
+  ],
+  "enableAllProjectMcpServers": true
+}
