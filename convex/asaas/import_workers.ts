@@ -10,7 +10,7 @@
 
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import type { WorkerResult } from "./batch-processor";
+import type { WorkerResult } from "./batch_processor";
 import type {
 	AsaasCustomerResponse,
 	AsaasPaymentResponse,

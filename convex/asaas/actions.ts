@@ -3,7 +3,7 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, type AsaasClient, dateStringToTimestamp } from "./client";
+import { createAsaasClient, type AsaasClient } from "./client";
 import { AsaasConfigurationError } from "./errors";
 import { getOrganizationId } from "../lib/auth";
 
@@ -401,8 +401,8 @@ export const importCustomersFromAsaas = action({
       }
 
       // Import batch processor and workers dynamically to avoid circular imports
-      const { processBatch } = await import('./batch-processor');
-      const { processCustomerWorker } = await import('./import-workers');
+      const { processBatch } = await import('./batch_processor');
+      const { processCustomerWorker } = await import('./import_workers');
 
       // Create worker function with context and organizationId
       const worker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
@@ -484,6 +484,7 @@ export const importCustomersFromAsaas = action({
 
 /**
  * Import payments from Asaas
+ * Refactored to use batch processor for concurrent execution with error isolation
  */
 export const importPaymentsFromAsaas = action({
   args: {
@@ -519,14 +520,13 @@ export const importPaymentsFromAsaas = action({
     const limit = 100;
     const MAX_PAGES = 50; // Safety limit
     let hasMore = true;
-    let recordsProcessed = 0;
-    let recordsCreated = 0;
-    let recordsUpdated = 0;
-    let recordsFailed = 0;
-    const errors: string[] = [];
     let pageCount = 0;
 
+    // Collect all payments from all pages
+    const allPayments: any[] = [];
+
     try {
+      // First pass: Collect all payments (pagination)
       while (hasMore && pageCount < MAX_PAGES) {
         pageCount++;
         const response = await client.listAllPayments({
@@ -536,66 +536,53 @@ export const importPaymentsFromAsaas = action({
           offset,
           limit,
         });
-
-        for (const payment of response.data) {
-          recordsProcessed++;
-          try {
-            // Check if payment exists
-            // @ts-ignore
-            const existingPayment = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
-              asaasPaymentId: payment.id,
-            });
-
-            if (existingPayment) {
-              // Update existing payment
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updatePaymentFromAsaas, {
-                paymentId: existingPayment._id,
-                status: payment.status,
-                netValue: payment.netValue,
-                confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
-              });
-              recordsUpdated++;
-            } else {
-              // Try to find student by asaasCustomerId
-              // @ts-ignore
-              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-                asaasCustomerId: payment.customer,
-              });
-
-              if (student) {
-                // Create new payment record
-                // @ts-ignore
-                await ctx.runMutation(internal.asaas.mutations.createPaymentFromAsaas, {
-                  studentId: student._id,
-                  asaasPaymentId: payment.id,
-                  asaasCustomerId: payment.customer,
-                  value: payment.value,
-                  netValue: payment.netValue,
-                  status: payment.status,
-                  dueDate: new Date(payment.dueDate).getTime(),
-                  billingType: payment.billingType,
-                  description: payment.description,
-                  boletoUrl: payment.bankSlipUrl,
-                  confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
-                  organizationId,
-                });
-                recordsCreated++;
-              } else {
-                // Student not found, skip but log
-                errors.push(`Payment ${payment.id}: Student not found for customer ${payment.customer}`);
-                recordsFailed++;
-              }
-            }
-          } catch (err: any) {
-            recordsFailed++;
-            errors.push(`Payment ${payment.id}: ${err.message}`);
-          }
-        }
-
+        allPayments.push(...response.data);
         hasMore = response.hasMore;
         offset += limit;
       }
+
+      // Import batch processor and workers dynamically
+      const { processBatch } = await import('./batch_processor');
+      const { processPaymentWorker } = await import('./import_workers');
+
+      // Create worker function with context and organizationId
+      const worker = (payment: any) => processPaymentWorker(ctx, payment, organizationId);
+
+      // Progress callback to update sync log during processing
+      const onProgress = async (stats: any) => {
+        // @ts-ignore - Deep type instantiation
+        await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+          logId,
+          recordsProcessed: stats.totalProcessed,
+          recordsCreated: stats.created,
+          recordsUpdated: stats.updated,
+          recordsFailed: stats.failed,
+        });
+      };
+
+      // Process all payments in concurrent batches
+      const result = await processBatch(
+        allPayments,
+        worker,
+        {
+          batchSize: 10,
+          concurrency: 5,
+          delayBetweenBatches: 100,
+          maxRetries: 3,
+          checkpointInterval: 50,
+          adaptiveBatching: true,
+        },
+        onProgress,
+      );
+
+      // Calculate final statistics
+      const recordsCreated = result.created || 0;
+      const recordsUpdated = result.updated || 0;
+      const recordsProcessed = result.totalProcessed;
+      const recordsFailed = result.failed.length;
+
+      // Collect error messages
+      const errors = result.failed.map(f => f.error).slice(0, 50);
 
       // Update sync log as completed
       // @ts-ignore
@@ -606,7 +593,7 @@ export const importPaymentsFromAsaas = action({
         recordsCreated,
         recordsUpdated,
         recordsFailed,
-        errors: errors.length > 0 ? errors.slice(0, 50) : undefined,
+        errors: errors.length > 0 ? errors : undefined,
         completedAt: Date.now(),
       });
 
@@ -622,11 +609,11 @@ export const importPaymentsFromAsaas = action({
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
         status: 'failed' as const,
-        recordsProcessed,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
-        errors: [error.message, ...errors].slice(0, 50),
+        recordsProcessed: allPayments.length,
+        recordsCreated: 0,
+        recordsUpdated: 0,
+        recordsFailed: allPayments.length,
+        errors: [error.message],
         completedAt: Date.now(),
       });
 
@@ -637,6 +624,7 @@ export const importPaymentsFromAsaas = action({
 
 /**
  * Import subscriptions from Asaas
+ * Refactored to use batch processor for concurrent execution with error isolation
  */
 export const importSubscriptionsFromAsaas = action({
   args: {
@@ -672,14 +660,13 @@ export const importSubscriptionsFromAsaas = action({
     const limit = 100;
     const MAX_PAGES = 50; // Safety limit
     let hasMore = true;
-    let recordsProcessed = 0;
-    let recordsCreated = 0;
-    let recordsUpdated = 0;
-    let recordsFailed = 0;
-    const errors: string[] = [];
     let pageCount = 0;
 
+    // Collect all subscriptions from all pages
+    const allSubscriptions: any[] = [];
+
     try {
+      // First pass: Collect all subscriptions (pagination)
       while (hasMore && pageCount < MAX_PAGES) {
         pageCount++;
         const response = await client.listAllSubscriptions({
@@ -687,61 +674,53 @@ export const importSubscriptionsFromAsaas = action({
           offset,
           limit,
         });
-
-        for (const subscription of response.data) {
-          recordsProcessed++;
-          try {
-            // Check if subscription exists
-            // @ts-ignore
-            const existingSubscription = await ctx.runQuery(internal.asaas.mutations.getSubscriptionByAsaasId, {
-              asaasSubscriptionId: subscription.id,
-            });
-
-            if (existingSubscription) {
-              // Update existing subscription
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
-                subscriptionId: existingSubscription._id,
-                status: subscription.status,
-                value: subscription.value,
-                nextDueDate: new Date(subscription.nextDueDate).getTime(),
-              });
-              recordsUpdated++;
-            } else {
-              // Try to find student by asaasCustomerId
-              // @ts-ignore
-              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-                asaasCustomerId: subscription.customer,
-              });
-
-              if (student) {
-                // Create new subscription record
-                // @ts-ignore
-                await ctx.runMutation(internal.asaas.mutations.createSubscriptionFromAsaas, {
-                  studentId: student._id,
-                  asaasSubscriptionId: subscription.id,
-                  asaasCustomerId: subscription.customer,
-                  value: subscription.value,
-                  cycle: subscription.cycle,
-                  status: subscription.status,
-                  nextDueDate: new Date(subscription.nextDueDate).getTime(),
-                  organizationId,
-                });
-                recordsCreated++;
-              } else {
-                errors.push(`Subscription ${subscription.id}: Student not found for customer ${subscription.customer}`);
-                recordsFailed++;
-              }
-            }
-          } catch (err: any) {
-            recordsFailed++;
-            errors.push(`Subscription ${subscription.id}: ${err.message}`);
-          }
-        }
-
+        allSubscriptions.push(...response.data);
         hasMore = response.hasMore;
         offset += limit;
       }
+
+      // Import batch processor and workers dynamically
+      const { processBatch } = await import('./batch_processor');
+      const { processSubscriptionWorker } = await import('./import_workers');
+
+      // Create worker function with context and organizationId
+      const worker = (subscription: any) => processSubscriptionWorker(ctx, subscription, organizationId);
+
+      // Progress callback to update sync log during processing
+      const onProgress = async (stats: any) => {
+        // @ts-ignore - Deep type instantiation
+        await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+          logId,
+          recordsProcessed: stats.totalProcessed,
+          recordsCreated: stats.created,
+          recordsUpdated: stats.updated,
+          recordsFailed: stats.failed,
+        });
+      };
+
+      // Process all subscriptions in concurrent batches
+      const result = await processBatch(
+        allSubscriptions,
+        worker,
+        {
+          batchSize: 10,
+          concurrency: 5,
+          delayBetweenBatches: 100,
+          maxRetries: 3,
+          checkpointInterval: 50,
+          adaptiveBatching: true,
+        },
+        onProgress,
+      );
+
+      // Calculate final statistics
+      const recordsCreated = result.created || 0;
+      const recordsUpdated = result.updated || 0;
+      const recordsProcessed = result.totalProcessed;
+      const recordsFailed = result.failed.length;
+
+      // Collect error messages
+      const errors = result.failed.map(f => f.error).slice(0, 50);
 
       // Update sync log as completed
       // @ts-ignore
@@ -752,7 +731,7 @@ export const importSubscriptionsFromAsaas = action({
         recordsCreated,
         recordsUpdated,
         recordsFailed,
-        errors: errors.length > 0 ? errors.slice(0, 50) : undefined,
+        errors: errors.length > 0 ? errors : undefined,
         completedAt: Date.now(),
       });
 
@@ -768,11 +747,11 @@ export const importSubscriptionsFromAsaas = action({
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
         status: 'failed' as const,
-        recordsProcessed,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
-        errors: [error.message, ...errors].slice(0, 50),
+        recordsProcessed: allSubscriptions.length,
+        recordsCreated: 0,
+        recordsUpdated: 0,
+        recordsFailed: allSubscriptions.length,
+        errors: [error.message],
         completedAt: Date.now(),
       });
 
@@ -871,7 +850,7 @@ export const importAllFromAsaas = action({
     initiatedBy: v.string(),
   },
   handler: async (ctx, args): Promise<CombinedImportResult> => {
-    console.log('[importAllFromAsaas] Starting import...');
+    console.log('[importAllFromAsaas] Starting batch import...');
 
     // CRITICAL: Require authentication before importing
     const identity = await ctx.auth.getUserIdentity();
@@ -890,8 +869,6 @@ export const importAllFromAsaas = action({
       throw new Error(`Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`);
     }
 
-    const MAX_PAGES = 50;
-
     // Get organizationId - REQUIRED for multi-tenant data isolation
     let organizationId: string;
     try {
@@ -906,144 +883,89 @@ export const importAllFromAsaas = action({
       throw new Error('Organization ID é obrigatório para importação.');
     }
 
+    // Import batch processor and workers dynamically to avoid circular dependencies
+    const { processBatch } = await import('./batch_processor');
+    const { processCustomerWorker, processPaymentWorker, processSubscriptionWorker } = await import('./import_workers');
+
+    const BATCH_CONFIG = {
+      batchSize: 10,
+      concurrency: 5,
+      delayBetweenBatches: 100,
+      maxRetries: 3,
+      checkpointInterval: 50,
+      adaptiveBatching: true,
+    };
+
     // ═══════════════════════════════════════════════════════
-    // STEP 1: IMPORT CUSTOMERS
+    // STEP 1: IMPORT CUSTOMERS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
-    console.log('[importAllFromAsaas] Step 1: Creating customers sync log...');
+    console.log('[importAllFromAsaas] Step 1: Batch importing customers...');
 
     let customersLogId;
     try {
-      // @ts-ignore
       customersLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
         syncType: 'customers' as const,
         initiatedBy: args.initiatedBy,
       });
-      console.log('[importAllFromAsaas] Customers sync log created:', customersLogId);
     } catch (error: any) {
-      console.error('[importAllFromAsaas] Failed to create customers sync log:', error.message);
       throw new Error(`Falha ao criar log de sincronização: ${error.message}`);
     }
 
+    // Collect all customers from all pages first
+    const allCustomers: any[] = [];
     let customersOffset = 0;
     const limit = 100;
     let customersHasMore = true;
-    let customersProcessed = 0;
-    let customersCreated = 0;
-    let customersUpdated = 0;
-    let customersFailed = 0;
-    const customersErrors: string[] = [];
+    const MAX_PAGES = 50;
     let customersPageCount = 0;
-    let customersSuccess = true;
 
-    try {
-      while (customersHasMore && customersPageCount < MAX_PAGES) {
-        customersPageCount++;
-        console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
-
-        let response;
-        try {
-          response = await client.listAllCustomers({ offset: customersOffset, limit });
-          console.log(`[importAllFromAsaas] Got ${response.data.length} customers, hasMore: ${response.hasMore}`);
-        } catch (apiError: any) {
-          console.error(`[importAllFromAsaas] API error fetching customers:`, apiError.message);
-          throw apiError;
-        }
-
-        for (const customer of response.data) {
-          customersProcessed++;
-          try {
-            // Check if student exists with this asaasCustomerId
-            // @ts-ignore
-            let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-              asaasCustomerId: customer.id,
-            });
-
-            // Deduplication Logic: If not found by ID, try to find by Email or CPF
-            if (!existingStudent) {
-              // @ts-ignore
-              const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
-                email: customer.email,
-                cpf: customer.cpfCnpj
-              });
-
-              if (duplicate) {
-                // @ts-ignore
-                await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
-                  studentId: duplicate._id,
-                  asaasCustomerId: customer.id,
-                });
-                existingStudent = duplicate;
-              }
-            }
-
-            if (existingStudent) {
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
-                studentId: existingStudent._id,
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone || customer.mobilePhone,
-                cpf: customer.cpfCnpj,
-              });
-              customersUpdated++;
-            } else {
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.createStudentFromAsaas, {
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone || customer.mobilePhone || '',
-                cpf: customer.cpfCnpj,
-                asaasCustomerId: customer.id,
-                organizationId,
-              });
-              customersCreated++;
-            }
-          } catch (err: any) {
-            customersFailed++;
-            customersErrors.push(`Customer ${customer.id}: ${err.message}`);
-          }
-        }
-
-        customersHasMore = response.hasMore;
-        customersOffset += limit;
-      }
-
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: customersLogId,
-        status: 'completed' as const,
-        recordsProcessed: customersProcessed,
-        recordsCreated: customersCreated,
-        recordsUpdated: customersUpdated,
-        recordsFailed: customersFailed,
-        errors: customersErrors.length > 0 ? customersErrors.slice(0, 50) : undefined,
-        completedAt: Date.now(),
-      });
-    } catch (error: any) {
-      customersSuccess = false;
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: customersLogId,
-        status: 'failed' as const,
-        recordsProcessed: customersProcessed,
-        recordsCreated: customersCreated,
-        recordsUpdated: customersUpdated,
-        recordsFailed: customersFailed,
-        errors: [error.message, ...customersErrors].slice(0, 50),
-        completedAt: Date.now(),
-      });
+    while (customersHasMore && customersPageCount < MAX_PAGES) {
+      customersPageCount++;
+      console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
+      const response = await client.listAllCustomers({ offset: customersOffset, limit });
+      allCustomers.push(...response.data);
+      customersHasMore = response.hasMore;
+      customersOffset += limit;
     }
+    console.log(`[importAllFromAsaas] Collected ${allCustomers.length} customers for batch processing`);
+
+    // Batch process customers
+    const customerWorker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
+
+    const customersProgress = async (stats: any) => {
+      await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+        logId: customersLogId,
+        recordsProcessed: stats.totalProcessed,
+        recordsCreated: stats.created,
+        recordsUpdated: stats.updated,
+        recordsFailed: stats.failed.length,
+      });
+    };
+
+    const customersBatchResult = await processBatch(allCustomers, customerWorker, BATCH_CONFIG, customersProgress);
+
+    // Update sync log with final results
+    await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+      logId: customersLogId,
+      status: 'completed' as const,
+      recordsProcessed: customersBatchResult.totalProcessed,
+      recordsCreated: customersBatchResult.created || 0,
+      recordsUpdated: customersBatchResult.updated || 0,
+      recordsFailed: customersBatchResult.failed.length,
+      errors: customersBatchResult.failed.slice(0, 50).map(f => f.error),
+      completedAt: Date.now(),
+    });
 
     const customersResult: ImportResult = {
-      success: customersSuccess,
-      recordsProcessed: customersProcessed,
-      recordsCreated: customersCreated,
-      recordsUpdated: customersUpdated,
-      recordsFailed: customersFailed,
+      success: customersBatchResult.failed.length < allCustomers.length,
+      recordsProcessed: customersBatchResult.totalProcessed,
+      recordsCreated: customersBatchResult.created || 0,
+      recordsUpdated: customersBatchResult.updated || 0,
+      recordsFailed: customersBatchResult.failed.length,
     };
 
     // If customers import failed completely, don't proceed with payments
-    if (!customersSuccess) {
+    if (customersBatchResult.totalProcessed === 0 || customersBatchResult.failed.length === allCustomers.length) {
       return {
         success: false,
         customers: customersResult,
@@ -1053,232 +975,129 @@ export const importAllFromAsaas = action({
     }
 
     // ═══════════════════════════════════════════════════════
-    // STEP 2: IMPORT PAYMENTS
+    // STEP 2: IMPORT PAYMENTS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
+    console.log('[importAllFromAsaas] Step 2: Batch importing payments...');
 
-    // @ts-ignore
     const paymentsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
       syncType: 'payments' as const,
       initiatedBy: args.initiatedBy,
     });
 
+    // Collect all payments from all pages first
+    const allPayments: any[] = [];
     let paymentsOffset = 0;
     let paymentsHasMore = true;
-    let paymentsProcessed = 0;
-    let paymentsCreated = 0;
-    let paymentsUpdated = 0;
-    let paymentsFailed = 0;
-    const paymentsErrors: string[] = [];
     let paymentsPageCount = 0;
-    let paymentsSuccess = true;
 
-    try {
-      while (paymentsHasMore && paymentsPageCount < MAX_PAGES) {
-        paymentsPageCount++;
-        const response = await client.listAllPayments({ offset: paymentsOffset, limit });
-
-        for (const payment of response.data) {
-          paymentsProcessed++;
-          try {
-            // @ts-ignore
-            const existingPayment = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
-              asaasPaymentId: payment.id,
-            });
-
-            if (existingPayment) {
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updatePaymentFromAsaas, {
-                paymentId: existingPayment._id,
-                status: payment.status,
-                netValue: payment.netValue,
-                confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
-              });
-              paymentsUpdated++;
-            } else {
-              // @ts-ignore
-              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-                asaasCustomerId: payment.customer,
-              });
-
-              if (student) {
-                // @ts-ignore
-                await ctx.runMutation(internal.asaas.mutations.createPaymentFromAsaas, {
-                  studentId: student._id,
-                  asaasPaymentId: payment.id,
-                  asaasCustomerId: payment.customer,
-                  value: payment.value,
-                  netValue: payment.netValue,
-                  status: payment.status,
-                  dueDate: new Date(payment.dueDate).getTime(),
-                  billingType: payment.billingType,
-                  description: payment.description,
-                  boletoUrl: payment.bankSlipUrl,
-                  confirmedDate: payment.paymentDate ? new Date(payment.paymentDate).getTime() : undefined,
-                  organizationId,
-                });
-                paymentsCreated++;
-              } else {
-                paymentsErrors.push(`Payment ${payment.id}: Student not found for customer ${payment.customer}`);
-                paymentsFailed++;
-              }
-            }
-          } catch (err: any) {
-            paymentsFailed++;
-            paymentsErrors.push(`Payment ${payment.id}: ${err.message}`);
-          }
-        }
-
-        paymentsHasMore = response.hasMore;
-        paymentsOffset += limit;
-      }
-
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: paymentsLogId,
-        status: 'completed' as const,
-        recordsProcessed: paymentsProcessed,
-        recordsCreated: paymentsCreated,
-        recordsUpdated: paymentsUpdated,
-        recordsFailed: paymentsFailed,
-        errors: paymentsErrors.length > 0 ? paymentsErrors.slice(0, 50) : undefined,
-        completedAt: Date.now(),
-      });
-    } catch (error: any) {
-      paymentsSuccess = false;
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: paymentsLogId,
-        status: 'failed' as const,
-        recordsProcessed: paymentsProcessed,
-        recordsCreated: paymentsCreated,
-        recordsUpdated: paymentsUpdated,
-        recordsFailed: paymentsFailed,
-        errors: [error.message, ...paymentsErrors].slice(0, 50),
-        completedAt: Date.now(),
-      });
+    while (paymentsHasMore && paymentsPageCount < MAX_PAGES) {
+      paymentsPageCount++;
+      const response = await client.listAllPayments({ offset: paymentsOffset, limit });
+      allPayments.push(...response.data);
+      paymentsHasMore = response.hasMore;
+      paymentsOffset += limit;
     }
+    console.log(`[importAllFromAsaas] Collected ${allPayments.length} payments for batch processing`);
+
+    // Batch process payments
+    const paymentWorker = (payment: any) => processPaymentWorker(ctx, payment, organizationId);
+
+    const paymentsProgress = async (stats: any) => {
+      await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+        logId: paymentsLogId,
+        recordsProcessed: stats.totalProcessed,
+        recordsCreated: stats.created,
+        recordsUpdated: stats.updated,
+        recordsFailed: stats.failed.length,
+      });
+    };
+
+    const paymentsBatchResult = await processBatch(allPayments, paymentWorker, BATCH_CONFIG, paymentsProgress);
+
+    // Update sync log with final results
+    await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+      logId: paymentsLogId,
+      status: 'completed' as const,
+      recordsProcessed: paymentsBatchResult.totalProcessed,
+      recordsCreated: paymentsBatchResult.created || 0,
+      recordsUpdated: paymentsBatchResult.updated || 0,
+      recordsFailed: paymentsBatchResult.failed.length,
+      errors: paymentsBatchResult.failed.slice(0, 50).map(f => f.error),
+      completedAt: Date.now(),
+    });
 
     const paymentsResult: ImportResult = {
-      success: paymentsSuccess,
-      recordsProcessed: paymentsProcessed,
-      recordsCreated: paymentsCreated,
-      recordsUpdated: paymentsUpdated,
-      recordsFailed: paymentsFailed,
+      success: paymentsBatchResult.failed.length < allPayments.length,
+      recordsProcessed: paymentsBatchResult.totalProcessed,
+      recordsCreated: paymentsBatchResult.created || 0,
+      recordsUpdated: paymentsBatchResult.updated || 0,
+      recordsFailed: paymentsBatchResult.failed.length,
     };
 
     // ═══════════════════════════════════════════════════════
-    // STEP 3: IMPORT SUBSCRIPTIONS
+    // STEP 3: IMPORT SUBSCRIPTIONS (BATCH PROCESSING)
     // ═══════════════════════════════════════════════════════
+    console.log('[importAllFromAsaas] Step 3: Batch importing subscriptions...');
 
-    // @ts-ignore
     const subscriptionsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
       syncType: 'subscriptions' as const,
       initiatedBy: args.initiatedBy,
     });
 
+    // Collect all subscriptions from all pages first
+    const allSubscriptions: any[] = [];
     let subscriptionsOffset = 0;
     let subscriptionsHasMore = true;
-    let subscriptionsProcessed = 0;
-    let subscriptionsCreated = 0;
-    let subscriptionsUpdated = 0;
-    let subscriptionsFailed = 0;
-    const subscriptionsErrors: string[] = [];
     let subscriptionsPageCount = 0;
-    let subscriptionsSuccess = true;
 
-    try {
-      while (subscriptionsHasMore && subscriptionsPageCount < MAX_PAGES) {
-        subscriptionsPageCount++;
-        const response = await client.listAllSubscriptions({ offset: subscriptionsOffset, limit });
-
-        for (const sub of response.data) {
-          subscriptionsProcessed++;
-          try {
-            // @ts-ignore
-            const existingSubscription = await ctx.runQuery(internal.asaas.mutations.getSubscriptionByAsaasId, {
-              asaasSubscriptionId: sub.id,
-            });
-
-            if (existingSubscription) {
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
-                subscriptionId: existingSubscription._id,
-                status: sub.status,
-                value: sub.value,
-                nextDueDate: dateStringToTimestamp(sub.nextDueDate),
-              });
-              subscriptionsUpdated++;
-            } else {
-              // @ts-ignore
-              const student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-                asaasCustomerId: sub.customer,
-              });
-
-              if (student) {
-                // @ts-ignore
-                await ctx.runMutation(internal.asaas.mutations.createSubscriptionFromAsaas, {
-                  studentId: student._id,
-                  asaasSubscriptionId: sub.id,
-                  asaasCustomerId: sub.customer,
-                  value: sub.value,
-                  cycle: sub.cycle,
-                  status: sub.status,
-                  nextDueDate: dateStringToTimestamp(sub.nextDueDate),
-                  description: sub.description,
-                  organizationId,
-                });
-                subscriptionsCreated++;
-              } else {
-                subscriptionsErrors.push(`Subscription ${sub.id}: Student not found for customer ${sub.customer}`);
-                subscriptionsFailed++;
-              }
-            }
-          } catch (err: any) {
-            subscriptionsFailed++;
-            subscriptionsErrors.push(`Subscription ${sub.id}: ${err.message}`);
-          }
-        }
-
-        subscriptionsHasMore = response.hasMore;
-        subscriptionsOffset += limit;
-      }
-
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: subscriptionsLogId,
-        status: 'completed' as const,
-        recordsProcessed: subscriptionsProcessed,
-        recordsCreated: subscriptionsCreated,
-        recordsUpdated: subscriptionsUpdated,
-        recordsFailed: subscriptionsFailed,
-        errors: subscriptionsErrors.length > 0 ? subscriptionsErrors.slice(0, 50) : undefined,
-        completedAt: Date.now(),
-      });
-    } catch (error: any) {
-      subscriptionsSuccess = false;
-      // @ts-ignore
-      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
-        logId: subscriptionsLogId,
-        status: 'failed' as const,
-        recordsProcessed: subscriptionsProcessed,
-        recordsCreated: subscriptionsCreated,
-        recordsUpdated: subscriptionsUpdated,
-        recordsFailed: subscriptionsFailed,
-        errors: [error.message, ...subscriptionsErrors].slice(0, 50),
-        completedAt: Date.now(),
-      });
+    while (subscriptionsHasMore && subscriptionsPageCount < MAX_PAGES) {
+      subscriptionsPageCount++;
+      const response = await client.listAllSubscriptions({ offset: subscriptionsOffset, limit });
+      allSubscriptions.push(...response.data);
+      subscriptionsHasMore = response.hasMore;
+      subscriptionsOffset += limit;
     }
+    console.log(`[importAllFromAsaas] Collected ${allSubscriptions.length} subscriptions for batch processing`);
 
-    const subscriptionsResult: ImportResult = {
-      success: subscriptionsSuccess,
-      recordsProcessed: subscriptionsProcessed,
-      recordsCreated: subscriptionsCreated,
-      recordsUpdated: subscriptionsUpdated,
-      recordsFailed: subscriptionsFailed,
+    // Batch process subscriptions
+    const subscriptionWorker = (subscription: any) => processSubscriptionWorker(ctx, subscription, organizationId);
+
+    const subscriptionsProgress = async (stats: any) => {
+      await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+        logId: subscriptionsLogId,
+        recordsProcessed: stats.totalProcessed,
+        recordsCreated: stats.created,
+        recordsUpdated: stats.updated,
+        recordsFailed: stats.failed.length,
+      });
     };
 
+    const subscriptionsBatchResult = await processBatch(allSubscriptions, subscriptionWorker, BATCH_CONFIG, subscriptionsProgress);
+
+    // Update sync log with final results
+    await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+      logId: subscriptionsLogId,
+      status: 'completed' as const,
+      recordsProcessed: subscriptionsBatchResult.totalProcessed,
+      recordsCreated: subscriptionsBatchResult.created || 0,
+      recordsUpdated: subscriptionsBatchResult.updated || 0,
+      recordsFailed: subscriptionsBatchResult.failed.length,
+      errors: subscriptionsBatchResult.failed.slice(0, 50).map(f => f.error),
+      completedAt: Date.now(),
+    });
+
+    const subscriptionsResult: ImportResult = {
+      success: subscriptionsBatchResult.failed.length < allSubscriptions.length,
+      recordsProcessed: subscriptionsBatchResult.totalProcessed,
+      recordsCreated: subscriptionsBatchResult.created || 0,
+      recordsUpdated: subscriptionsBatchResult.updated || 0,
+      recordsFailed: subscriptionsBatchResult.failed.length,
+    };
+
+    console.log('[importAllFromAsaas] Batch import completed');
+
     return {
-      success: customersSuccess && paymentsSuccess && subscriptionsSuccess,
+      success: customersResult.success && paymentsResult.success && subscriptionsResult.success,
       customers: customersResult,
       payments: paymentsResult,
       subscriptions: subscriptionsResult,
