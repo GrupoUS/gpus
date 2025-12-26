@@ -166,9 +166,22 @@ export function isEncrypted(data: string): boolean {
 export async function hashSensitiveData(data: string): Promise<string> {
 	if (!data) return ''
 
-	const encoded = encoder.encode(data)
+	// Ensure normalization (trim and lowercase)
+	const normalized = data.trim().toLowerCase()
+	const encoded = encoder.encode(normalized)
 	const hashBuffer = await crypto.subtle.digest('SHA-256', encoded)
 	return bufferToHex(hashBuffer)
+}
+
+/**
+ * Normalizes and hashes CPF for blind indexing
+ */
+export async function hashCPF(cpf: string): Promise<string> {
+	if (!cpf) return ''
+
+	// Strict normalization: only digits
+	const cleanCPF = cpf.replace(/[^\d]/g, '')
+	return hashSensitiveData(cleanCPF)
 }
 
 /**

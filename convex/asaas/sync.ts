@@ -86,6 +86,28 @@ export const updateSyncLog = internalMutation({
 	},
 })
 
+/**
+ * Update sync log with progress (for checkpointing during batch processing)
+ * This is a simplified version of updateSyncLog specifically for progress updates
+ */
+export const updateSyncLogProgress = internalMutation({
+	args: {
+		logId: v.id('asaasSyncLogs'),
+		recordsProcessed: v.number(),
+		recordsCreated: v.optional(v.number()),
+		recordsUpdated: v.optional(v.number()),
+		recordsFailed: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const { logId, ...updates } = args
+		const existing = await ctx.db.get(logId)
+		if (!existing) throw new Error('Sync log not found')
+
+		// Patch with the provided updates
+		await ctx.db.patch(logId, updates)
+	},
+})
+
 // ═══════════════════════════════════════════════════════
 // QUERIES
 // ═══════════════════════════════════════════════════════

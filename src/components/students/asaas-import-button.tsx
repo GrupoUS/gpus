@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export function AsaasImportButton() {
 	const [isLoading, setIsLoading] = useState(false);
-	const importAll = useAction(api.asaas.actions.importAllFromAsaas);
+	const importAll = useAction(api.asaas.actions.importAllFromAsaas) as any;
 
 	const handleImport = async () => {
 		setIsLoading(true);

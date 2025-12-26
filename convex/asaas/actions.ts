@@ -3,7 +3,8 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, type AsaasClient, dateStringToTimestamp } from "../lib/asaas";
+import { createAsaasClient, type AsaasClient, dateStringToTimestamp } from "./client";
+import { AsaasConfigurationError } from "./errors";
 import { getOrganizationId } from "../lib/auth";
 
 /**
@@ -47,21 +48,24 @@ export const checkExistingAsaasCustomer = action({
 /**
  * Helper to get Asaas client from database settings
  * Falls back to environment variables if database settings not found
+ * Uses enhanced client with circuit breaker and retry logic
  */
 async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
   // Try to get settings from database first
-  // @ts-ignore - Deep type instantiation error
-  const config = await ctx.runQuery((internal as any).settings.internalGetIntegrationConfig, {
-    integrationName: "asaas",
-  });
+  const config: Record<string, any> | null = await ctx.runQuery(
+    // @ts-ignore - Deep type instantiation error with Convex internal references
+    internal.settings.internalGetIntegrationConfig,
+    { integrationName: "asaas" }
+  );
 
   const apiKey = config?.api_key || config?.apiKey || process.env.ASAAS_API_KEY;
   const baseUrl = config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
 
   if (!apiKey) {
-    throw new Error("ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.");
+    throw new AsaasConfigurationError("ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.");
   }
 
+  // Use enhanced client with circuit breaker and retry logic
   return createAsaasClient({ apiKey, baseUrl });
 }
 
@@ -337,7 +341,7 @@ export const syncAllStudents = action({
 
 		for (const student of students) {
 			try {
-				await ctx.runAction(internal.asaas.mutations.syncStudentAsCustomerInternal, {
+				await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal, {
 					studentId: student._id,
 				})
 				synced++
@@ -353,6 +357,7 @@ export const syncAllStudents = action({
 
 /**
  * Import customers from Asaas and create/update students
+ * Refactored to use batch processor for concurrent execution with error isolation
  */
 export const importCustomersFromAsaas = action({
   args: {
@@ -380,83 +385,63 @@ export const importCustomersFromAsaas = action({
     let offset = 0;
     const limit = 100;
     let hasMore = true;
-    let recordsProcessed = 0;
-    let recordsCreated = 0;
-    let recordsUpdated = 0;
-    let recordsFailed = 0;
-    const errors: string[] = [];
-
     let pageCount = 0;
 
+    // Collect all customers from all pages
+    const allCustomers: any[] = [];
+
     try {
+      // First pass: Collect all customers (pagination)
       while (hasMore && pageCount < MAX_PAGES) {
         pageCount++;
         const response = await client.listAllCustomers({ offset, limit });
-
-        for (const customer of response.data) {
-          recordsProcessed++;
-          try {
-            // Check if student exists with this asaasCustomerId
-            // @ts-ignore
-            let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
-              asaasCustomerId: customer.id,
-            });
-
-            // Deduplication Logic: If not found by ID, try to find by Email or CPF
-            if (!existingStudent) {
-              // @ts-ignore
-              const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
-                email: customer.email,
-                cpf: customer.cpfCnpj
-              });
-
-              if (duplicate) {
-               console.log(`Matched existing student ${duplicate._id} by Email/CPF. Linking Asaas ID ${customer.id}`);
-               // Link the found student to this Asaas Customer ID
-               // @ts-ignore
-               await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
-                 studentId: duplicate._id,
-                 asaasCustomerId: customer.id,
-               });
-
-               // Use this student for further updates
-               existingStudent = duplicate;
-              }
-            }
-
-            if (existingStudent) {
-              // Update existing student
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
-                studentId: existingStudent._id,
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone || customer.mobilePhone,
-                cpf: customer.cpfCnpj,
-              });
-              recordsUpdated++;
-            } else {
-              // Create new student
-              // @ts-ignore
-              await ctx.runMutation(internal.asaas.mutations.createStudentFromAsaas, {
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone || customer.mobilePhone || '',
-                cpf: customer.cpfCnpj,
-                asaasCustomerId: customer.id,
-                organizationId,
-              });
-              recordsCreated++;
-            }
-          } catch (err: any) {
-            recordsFailed++;
-            errors.push(`Customer ${customer.id}: ${err.message}`);
-          }
-        }
-
+        allCustomers.push(...response.data);
         hasMore = response.hasMore;
         offset += limit;
       }
+
+      // Import batch processor and workers dynamically to avoid circular imports
+      const { processBatch } = await import('./batch-processor');
+      const { processCustomerWorker } = await import('./import-workers');
+
+      // Create worker function with context and organizationId
+      const worker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
+
+      // Progress callback to update sync log during processing
+      const onProgress = async (stats: any) => {
+        // @ts-ignore - Deep type instantiation
+        await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
+          logId,
+          recordsProcessed: stats.totalProcessed,
+          recordsCreated: stats.created,
+          recordsUpdated: stats.updated,
+          recordsFailed: stats.failed,
+        });
+      };
+
+      // Process all customers in concurrent batches
+      const result = await processBatch(
+        allCustomers,
+        worker,
+        {
+          batchSize: 10,          // Process 10 records per batch
+          concurrency: 5,         // 5 parallel requests per batch
+          delayBetweenBatches: 100, // 100ms delay between batches
+          maxRetries: 3,          // Retry failed records up to 3 times
+          checkpointInterval: 50, // Update progress every 50 records
+          adaptiveBatching: true, // Adjust batch size based on error rate
+        },
+        onProgress,
+      );
+
+      // Calculate final statistics (created/updated are tracked by batch processor)
+      const recordsCreated = result.created || 0;
+      const recordsUpdated = result.updated || 0;
+      const recordsProcessed = result.totalProcessed;
+      const recordsFailed = result.failed.length;
+
+      // Collect error messages
+      const errors = result.failed.map(f => f.error).slice(0, 50);
 
       // Update sync log as completed
       // @ts-ignore
@@ -467,7 +452,7 @@ export const importCustomersFromAsaas = action({
         recordsCreated,
         recordsUpdated,
         recordsFailed,
-        errors: errors.length > 0 ? errors.slice(0, 50) : undefined,
+        errors: errors.length > 0 ? errors : undefined,
         completedAt: Date.now(),
       });
 
@@ -484,11 +469,11 @@ export const importCustomersFromAsaas = action({
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
         status: 'failed' as const,
-        recordsProcessed,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
-        errors: [error.message, ...errors].slice(0, 50),
+        recordsProcessed: allCustomers.length,
+        recordsCreated: 0,
+        recordsUpdated: 0,
+        recordsFailed: allCustomers.length,
+        errors: [error.message],
         completedAt: Date.now(),
       });
 

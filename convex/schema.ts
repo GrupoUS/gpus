@@ -168,6 +168,7 @@ export default defineSchema({
     cpf: v.optional(v.string()), // Original format (migration only)
 
     // LGPD - Campos criptografados (AES-256-GCM)
+    cpfHash: v.optional(v.string()), // Blind index para busca de CPF
     encryptedCPF: v.optional(v.string()), // CPF criptografado
     encryptedEmail: v.optional(v.string()), // Email criptografado (backup)
     encryptedPhone: v.optional(v.string()), // Telefone criptografado (backup)
@@ -233,6 +234,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_organization', ['organizationId'])
+    .index('by_cpf_hash', ['cpfHash'])
     .index('by_email', ['email'])
     .index('by_phone', ['phone'])
     .index('by_status', ['status'])
@@ -1050,9 +1052,9 @@ export default defineSchema({
     .index('by_due_date_status', ['dueDate', 'status']), // Para encontrar cobranças vencidas
 
   asaasWebhooks: defineTable({
-    event: v.string(), // PAYMENT_RECEIVED, etc.
-    paymentId: v.optional(v.string()), // ID do pagamento no Asaas
-    payload: v.any(), // Payload completo
+    event: v.string(),
+    paymentId: v.optional(v.string()),
+    payload: v.any(),
     processed: v.boolean(),
     error: v.optional(v.string()),
     createdAt: v.number(),
@@ -1156,5 +1158,17 @@ export default defineSchema({
   })
     .index('by_timestamp', ['timestamp'])
     .index('by_endpoint', ['endpoint', 'timestamp']),
-})
 
+  financialMetrics: defineTable({
+    organizationId: v.optional(v.string()),
+    totalReceived: v.number(),
+    totalPending: v.number(),
+    totalOverdue: v.number(),
+    totalValue: v.number(),
+    paymentsCount: v.number(),
+    periodStart: v.optional(v.string()), // YYYY-MM-DD
+    periodEnd: v.optional(v.string()),   // YYYY-MM-DD
+    updatedAt: v.number(),
+  })
+    .index('by_organization', ['organizationId']),
+})

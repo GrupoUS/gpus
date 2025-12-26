@@ -608,12 +608,17 @@ export class AsaasClient {
 		}
 	}
 
-    public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+	public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+        // Strict CPF normalization before sending to Asaas
+        if (payload.cpfCnpj) {
+            payload.cpfCnpj = payload.cpfCnpj.replace(/\D/g, '');
+        }
 		return this.fetch<AsaasCustomerResponse>('/customers', {
 			method: 'POST',
 			body: payload,
 		})
 	}
+
 
     public async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
 		return this.fetch<AsaasPaymentResponse>('/payments', {

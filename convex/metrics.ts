@@ -1,6 +1,58 @@
 import { v } from 'convex/values'
-import { query } from './_generated/server'
+import { query, internalMutation } from './_generated/server'
 import { getOrganizationId } from './lib/auth'
+
+/**
+ * Aggregates financial data from Asaas payments and updates the financialMetrics table.
+ */
+export const calculateFinancialMetrics = internalMutation({
+	args: { organizationId: v.optional(v.string()) },
+	handler: async (ctx, args) => {
+		const now = Date.now()
+
+		// Aggregation logic using indexed queries where possible
+		const allPayments = await ctx.db
+			.query('asaasPayments')
+			.collect()
+
+		const totalReceived = allPayments
+			.filter((p) => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+			.reduce((sum, p) => sum + p.value, 0)
+
+		const totalPending = allPayments
+			.filter((p) => p.status === 'PENDING')
+			.reduce((sum, p) => sum + p.value, 0)
+
+		const totalOverdue = allPayments
+			.filter((p) => p.status === 'OVERDUE')
+			.reduce((sum, p) => sum + p.value, 0)
+
+		const totalValue = totalReceived + totalPending + totalOverdue
+
+		const data = {
+			totalReceived,
+			totalPending,
+			totalOverdue,
+			totalValue,
+			paymentsCount: allPayments.length,
+			organizationId: args.organizationId,
+			updatedAt: now,
+		}
+
+		const existing = await ctx.db
+			.query('financialMetrics')
+			.withIndex('by_organization', (q) => q.eq('organizationId', args.organizationId))
+			.first()
+
+		if (existing) {
+			await ctx.db.patch(existing._id, data)
+		} else {
+			await ctx.db.insert('financialMetrics', data)
+		}
+
+		return data
+	},
+})
 
 export const getDashboard = query({
   args: {

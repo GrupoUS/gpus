@@ -33,7 +33,9 @@
       "Bash(bunx convex logs:*)",
       "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" pr list --state open --limit 10)",
       "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" repo view --json name,owner)",
-      "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\":*)"
+      "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\":*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(cd:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

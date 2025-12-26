@@ -51,7 +51,7 @@ ANTES de responder qualquer solicitação em projetos de código:
     *   **Do not** build custom components (like modals, dropdowns, or buttons) from scratch if the library provides them.
     *   **Do not** pollute the codebase with redundant CSS.
     *   *Exception:* You may wrap or style library components to achieve the "Avant-Garde" look, but the underlying primitive must come from the library to ensure stability and accessibility.
-*   **Stack:** Modern (React/Vue/Svelte), Tailwind/Custom CSS, semantic HTML5.
+*   **Stack:** Modern (Vite), Tailwind/Custom CSS, semantic HTML5.
 *   **Visuals:** Focus on micro-interactions, perfect spacing, and "invisible" UX.
 
 ## 5. RESPONSE FORMAT

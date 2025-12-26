@@ -8,21 +8,17 @@ import { requireAuth } from './lib/auth';
  * This calls internal.migrations.migrateStudentOrganizationId
  */
 export const triggerStudentMigration = mutation({
-  args: { organizationId: v.optional(v.string()) },
+  args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<{
-    migrated: number;
-    organizationId: string | null;
-    message: string;
+    processed: number;
+    updated: number;
+    remaining: number;
   }> => {
     // Only authenticated users can execute migration
     const identity = await requireAuth(ctx);
 
     // Call internal mutation
-    const result: {
-      migrated: number;
-      organizationId: string | null;
-      message: string;
-    } = await ctx.runMutation(
+    const result = await ctx.runMutation(
       internal.migrations.migrateStudentOrganizationId,
       args
     );
@@ -32,3 +28,25 @@ export const triggerStudentMigration = mutation({
     return result;
   },
 });
+
+/**
+ * Temporary public mutation to trigger backfill of CPF hashes for blind indexing
+ */
+export const triggerBackfillCpfHash = mutation({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<{
+    processed: number;
+    updated: number;
+    remaining: number;
+  }> => {
+    await requireAuth(ctx);
+
+    const result = await ctx.runMutation(
+      internal.migrations.backfillCpfHash,
+      args
+    );
+
+    return result;
+  },
+});
+
