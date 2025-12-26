@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1766717310858" clover="3.2.0">
-  <project timestamp="1766717310858" name="All files">
-    <metrics statements="839" coveredstatements="573" conditionals="562" coveredconditionals="296" methods="210" coveredmethods="140" elements="1611" coveredelements="1009" complexity="0" loc="839" ncloc="839" packages="8" files="30" classes="30"/>
+<coverage generated="1766780645987" clover="3.2.0">
+  <project timestamp="1766780645987" name="All files">
+    <metrics statements="843" coveredstatements="574" conditionals="564" coveredconditionals="296" methods="211" coveredmethods="140" elements="1618" coveredelements="1010" complexity="0" loc="843" ncloc="843" packages="8" files="30" classes="30"/>
     <package name="convex">
       <metrics statements="10" coveredstatements="10" conditionals="10" coveredconditionals="9" methods="2" coveredmethods="2"/>
       <file name="lgpd.ts" path="D:/gpus/convex/lgpd.ts">
@@ -28,9 +28,9 @@
       </file>
     </package>
     <package name="convex.lib">
-      <metrics statements="105" coveredstatements="83" conditionals="70" coveredconditionals="43" methods="14" coveredmethods="13"/>
+      <metrics statements="109" coveredstatements="84" conditionals="72" coveredconditionals="43" methods="15" coveredmethods="13"/>
       <file name="encryption.ts" path="D:/gpus/convex/lib/encryption.ts">
-        <metrics statements="71" coveredstatements="52" conditionals="34" coveredconditionals="15" methods="12" coveredmethods="11"/>
+        <metrics statements="75" coveredstatements="53" conditionals="36" coveredconditionals="15" methods="13" coveredmethods="11"/>
         <line num="11" count="1" type="stmt"/>
         <line num="12" count="1" type="stmt"/>
         <line num="17" count="1" type="stmt"/>
@@ -78,30 +78,34 @@
         <line num="158" count="1" type="stmt"/>
         <line num="159" count="1" type="stmt"/>
         <line num="167" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="169" count="2" type="stmt"/>
         <line num="170" count="2" type="stmt"/>
         <line num="171" count="2" type="stmt"/>
-        <line num="178" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="181" count="2" type="stmt"/>
-        <line num="182" count="2" type="stmt"/>
-        <line num="189" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="191" count="2" type="stmt"/>
-        <line num="194" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="172" count="2" type="stmt"/>
+        <line num="173" count="2" type="stmt"/>
+        <line num="180" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="183" count="0" type="stmt"/>
+        <line num="184" count="0" type="stmt"/>
+        <line num="191" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="194" count="2" type="stmt"/>
         <line num="195" count="2" type="stmt"/>
-        <line num="198" count="0" type="stmt"/>
-        <line num="205" count="0" type="stmt"/>
-        <line num="206" count="0" type="stmt"/>
-        <line num="207" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="208" count="0" type="stmt"/>
-        <line num="214" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="215" count="0" type="stmt"/>
-        <line num="222" count="0" type="stmt"/>
-        <line num="223" count="0" type="stmt"/>
-        <line num="224" count="0" type="stmt"/>
-        <line num="226" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="227" count="0" type="stmt"/>
-        <line num="233" count="0" type="stmt"/>
+        <line num="202" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="204" count="2" type="stmt"/>
+        <line num="207" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="208" count="2" type="stmt"/>
+        <line num="211" count="0" type="stmt"/>
+        <line num="218" count="0" type="stmt"/>
+        <line num="219" count="0" type="stmt"/>
+        <line num="220" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="221" count="0" type="stmt"/>
+        <line num="227" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="228" count="0" type="stmt"/>
         <line num="235" count="0" type="stmt"/>
+        <line num="236" count="0" type="stmt"/>
+        <line num="237" count="0" type="stmt"/>
+        <line num="239" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="240" count="0" type="stmt"/>
+        <line num="246" count="0" type="stmt"/>
+        <line num="248" count="0" type="stmt"/>
       </file>
       <file name="validators.ts" path="D:/gpus/convex/lib/validators.ts">
         <metrics statements="34" coveredstatements="31" conditionals="36" coveredconditionals="28" methods="2" coveredmethods="2"/>

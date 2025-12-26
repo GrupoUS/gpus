@@ -36,7 +36,9 @@
       "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\":*)",
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(cd:*)",
-      "Bash(bun run dev:*)"
+      "Bash(bun run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(exit:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
