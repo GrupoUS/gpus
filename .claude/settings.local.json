@@ -8,9 +8,14 @@
       "Bash(claude mcp list:*)",
       "mcp__web-search-prime__webSearchPrime",
       "Bash(cmd /c \"dir /b C:\\\\Users\\\\Mauri\\\\.claude* 2>nul\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "mcp__plugin_serena_serena__find_file",
+      "mcp__plugin_serena_serena__activate_project",
+      "mcp__plugin_serena_serena__list_dir",
+      "Skill(glm-plan-usage:usage-query-skill)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "zread",
     "web-reader",
@@ -18,6 +23,5 @@
     "zai-mcp-server",
     "tavily",
     "sequential-thinking"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
