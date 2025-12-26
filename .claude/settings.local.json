@@ -35,7 +35,8 @@
       "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" repo view --json name,owner)",
       "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\":*)",
       "mcp__sequential-thinking__sequentialthinking",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(bun run dev:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
