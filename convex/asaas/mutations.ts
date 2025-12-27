@@ -5,10 +5,59 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { v } from "convex/values";
-import { dateStringToTimestamp } from "../lib/asaas";
-import { requireAuth } from "../lib/auth";
-import { hashCPF } from "../lib/encryption";
+import { getOrganizationId, requireAuth } from "../lib/auth";
+import { hashCPF, encryptCPF } from "../lib/encryption";
 import { internal } from "../_generated/api";
+import { dateStringToTimestamp } from "./client";
+
+/**
+ * Validation constants for payment operations
+ */
+const PAYMENT_VALIDATION = {
+  MIN_AMOUNT: 0.01, // Minimum payment amount (1 cent)
+  MAX_AMOUNT: 1000000, // Maximum payment amount (1 million BRL)
+  MAX_INSTALLMENTS: 120, // Maximum number of installments (10 years)
+} as const;
+
+/**
+ * Validates payment amount according to business rules
+ * @throws Error if amount is invalid
+ */
+function validatePaymentAmount(amount: number): void {
+  if (typeof amount !== "number" || isNaN(amount)) {
+    throw new Error("Invalid payment amount: must be a number");
+  }
+
+  if (amount < PAYMENT_VALIDATION.MIN_AMOUNT) {
+    throw new Error(
+      `Payment amount must be at least R$ ${PAYMENT_VALIDATION.MIN_AMOUNT.toFixed(2)}`,
+    );
+  }
+
+  if (amount > PAYMENT_VALIDATION.MAX_AMOUNT) {
+    throw new Error(
+      `Payment amount cannot exceed R$ ${PAYMENT_VALIDATION.MAX_AMOUNT.toLocaleString("pt-BR")}`,
+    );
+  }
+}
+
+/**
+ * Validates installment count
+ * @throws Error if count is invalid
+ */
+function validateInstallmentCount(count: number | undefined): void {
+  if (count !== undefined) {
+    if (!Number.isInteger(count) || count < 1) {
+      throw new Error("Installment count must be a positive integer");
+    }
+
+    if (count > PAYMENT_VALIDATION.MAX_INSTALLMENTS) {
+      throw new Error(
+        `Installment count cannot exceed ${PAYMENT_VALIDATION.MAX_INSTALLMENTS}`,
+      );
+    }
+  }
+}
 
 /**
  * Sync student as Asaas customer (create or update)
@@ -16,14 +65,14 @@ import { internal } from "../_generated/api";
 export const syncStudentAsCustomer = action({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
-      await requireAuth(ctx);
-      await ctx.runMutation(
-        internal.asaas.mutations.syncStudentAsCustomerInternal as any,
-        {
-          studentId: args.studentId,
-        },
-      );
-    },
+    await requireAuth(ctx);
+    await ctx.runMutation(
+      internal.asaas.mutations.syncStudentAsCustomerInternal as any,
+      {
+        studentId: args.studentId,
+      },
+    );
+  },
 });
 
 /**
@@ -72,6 +121,12 @@ export const createCharge = internalMutation({
     organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Validate payment amount
+    validatePaymentAmount(args.amount);
+
+    // Validate installment count if provided
+    validateInstallmentCount(args.installmentCount);
+
     const now = Date.now();
     const chargeId = await ctx.db.insert("asaasPayments", {
       studentId: args.studentId,
@@ -118,9 +173,24 @@ export const createPaymentFromEnrollment = mutation({
     installmentNumber: v.optional(v.number()),
     boletoUrl: v.optional(v.string()),
     pixQrCode: v.optional(v.string()),
-    organizationId: v.optional(v.string()),
+    // OrganizationId removed from args to enforcing backend check
+    organizationId: v.optional(v.string()), // Kept as optional but ignored in handler favouring auth context
   },
   handler: async (ctx, args) => {
+    // Auth check - throws if not authenticated
+    void requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
+
+    if (!orgId) {
+      throw new Error("Organization ID is required for this operation");
+    }
+
+    // Validate payment amount
+    validatePaymentAmount(args.amount);
+
+    // Validate installment count if provided
+    validateInstallmentCount(args.installmentCount);
+
     // 1. Tentar encontrar enrollmentId se não for fornecido
     let enrollmentId = args.enrollmentId;
     if (!enrollmentId) {
@@ -141,7 +211,7 @@ export const createPaymentFromEnrollment = mutation({
       enrollmentId,
       asaasCustomerId: args.asaasCustomerId,
       asaasPaymentId: args.asaasPaymentId,
-      organizationId: args.organizationId,
+      organizationId: orgId, // Force organization from auth context
       value: args.amount,
       dueDate: dateStringToTimestamp(args.dueDate),
       status: "PENDING",
@@ -193,7 +263,8 @@ export const updateChargeStatus = internalMutation({
       .first();
 
     if (!charge) {
-      throw new Error(`Charge with Asaas ID ${args.asaasPaymentId} not found`);
+      // SECURITY: Don't expose internal Asaas payment ID in error messages
+      throw new Error("Charge not found");
     }
 
     await ctx.db.patch(charge._id, {
@@ -377,6 +448,7 @@ export const createStudentFromAsaas = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const cpfHash = args.cpf ? await hashCPF(args.cpf) : undefined;
+    const encryptedCPF = args.cpf ? await encryptCPF(args.cpf) : undefined;
 
     return await ctx.db.insert("students", {
       name: args.name,
@@ -384,6 +456,7 @@ export const createStudentFromAsaas = internalMutation({
       phone: args.phone,
       cpf: args.cpf,
       cpfHash,
+      encryptedCPF,
       asaasCustomerId: args.asaasCustomerId,
       organizationId: args.organizationId,
       asaasCustomerSyncedAt: now,
@@ -420,6 +493,7 @@ export const updateStudentFromAsaas = internalMutation({
     if (updates.cpf !== undefined) {
       patch.cpf = updates.cpf;
       patch.cpfHash = await hashCPF(updates.cpf);
+      patch.encryptedCPF = await encryptCPF(updates.cpf);
     }
 
     await ctx.db.patch(studentId, patch);

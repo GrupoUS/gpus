@@ -4,8 +4,8 @@
  * Tests for adaptive batching, checkpoint progress, and error isolation
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { processBatch, WorkerResult, calculateETR, formatProgress } from '../../../convex/asaas/batch_processor'
+import { describe, it, expect, vi } from 'vitest'
+import { processBatch, calculateETR, formatProgress } from '../../../convex/asaas/batch_processor'
 
 describe('BatchProcessor', () => {
 	describe('Adaptive Batching', () => {

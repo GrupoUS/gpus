@@ -4,7 +4,8 @@
  * Utility functions for creating test data and mocking Convex context
  */
 
-import { Id } from '../../../convex/_generated/dataModel'
+import { vi } from 'vitest'
+import type { Id } from '../../convex/_generated/dataModel'
 
 /**
  * Create a test student object
@@ -138,22 +139,22 @@ export function createMockDb() {
 
 	return {
 		get: vi.fn((id: string) => db.get(id)),
-		insert: vi.fn((table: string, doc: any) => {
-			const id = `${table}_${Date.now()}`
+		insert: vi.fn((_table: string, doc: any) => {
+			const id = `table_${Date.now()}`
 			db.set(id, { _id: id, ...doc })
 			return id
 		}),
-		patch: vi.fn((id: string, updates: any) => {
+		patch: vi.fn((id: string, _updates: any) => {
 			const existing = db.get(id)
 			if (existing) {
-				db.set(id, { ...existing, ...updates })
+				db.set(id, { ...existing, ..._updates })
 			}
 		}),
 		delete: vi.fn((id: string) => {
 			db.delete(id)
 		}),
-		query: vi.fn((table: string) => ({
-			withIndex: vi.fn((index: string, fn: any) => ({
+		query: vi.fn((_table: string) => ({
+			withIndex: vi.fn((_index: string, _fn: any) => ({
 				first: vi.fn(() => null),
 				collect: vi.fn(() => []),
 			})),

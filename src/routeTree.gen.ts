@@ -51,6 +51,7 @@ import { Route as AuthenticatedFinancialPaymentsRouteImport } from './routes/_au
 import { Route as AuthenticatedFinancialDashboardRouteImport } from './routes/_authenticated/financial/dashboard'
 import { Route as AuthenticatedChatDepartmentRouteImport } from './routes/_authenticated/chat/$department'
 import { Route as AuthenticatedChatDepartmentIndexRouteImport } from './routes/_authenticated/chat/$department/index'
+import { Route as AuthenticatedAdminAsaasIndexRouteImport } from './routes/_authenticated/admin/asaas/index'
 import { Route as AuthenticatedMarketingTemplatesNovoRouteImport } from './routes/_authenticated/marketing/templates/novo'
 import { Route as AuthenticatedMarketingTemplatesTemplateIdRouteImport } from './routes/_authenticated/marketing/templates/$templateId'
 import { Route as AuthenticatedMarketingListasListIdRouteImport } from './routes/_authenticated/marketing/listas/$listId'
@@ -291,6 +292,12 @@ const AuthenticatedChatDepartmentIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedChatDepartmentRoute,
   } as any)
+const AuthenticatedAdminAsaasIndexRoute =
+  AuthenticatedAdminAsaasIndexRouteImport.update({
+    id: '/admin/asaas/',
+    path: '/admin/asaas/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMarketingTemplatesNovoRoute =
   AuthenticatedMarketingTemplatesNovoRouteImport.update({
     id: '/novo',
@@ -368,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/admin/asaas': typeof AuthenticatedAdminAsaasIndexRoute
   '/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesByTo {
@@ -412,6 +420,7 @@ export interface FileRoutesByTo {
   '/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/admin/asaas': typeof AuthenticatedAdminAsaasIndexRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRoutesById {
@@ -462,6 +471,7 @@ export interface FileRoutesById {
   '/_authenticated/marketing/listas/$listId': typeof AuthenticatedMarketingListasListIdRoute
   '/_authenticated/marketing/templates/$templateId': typeof AuthenticatedMarketingTemplatesTemplateIdRoute
   '/_authenticated/marketing/templates/novo': typeof AuthenticatedMarketingTemplatesNovoRoute
+  '/_authenticated/admin/asaas/': typeof AuthenticatedAdminAsaasIndexRoute
   '/_authenticated/chat/$department/': typeof AuthenticatedChatDepartmentIndexRoute
 }
 export interface FileRouteTypes {
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/marketing/listas/$listId'
     | '/marketing/templates/$templateId'
     | '/marketing/templates/novo'
+    | '/admin/asaas'
     | '/chat/$department/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/marketing/listas/$listId'
     | '/marketing/templates/$templateId'
     | '/marketing/templates/novo'
+    | '/admin/asaas'
     | '/chat/$department'
   id:
     | '__root__'
@@ -605,6 +617,7 @@ export interface FileRouteTypes {
     | '/_authenticated/marketing/listas/$listId'
     | '/_authenticated/marketing/templates/$templateId'
     | '/_authenticated/marketing/templates/novo'
+    | '/_authenticated/admin/asaas/'
     | '/_authenticated/chat/$department/'
   fileRoutesById: FileRoutesById
 }
@@ -915,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatDepartmentIndexRouteImport
       parentRoute: typeof AuthenticatedChatDepartmentRoute
     }
+    '/_authenticated/admin/asaas/': {
+      id: '/_authenticated/admin/asaas/'
+      path: '/admin/asaas'
+      fullPath: '/admin/asaas'
+      preLoaderRoute: typeof AuthenticatedAdminAsaasIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/marketing/templates/novo': {
       id: '/_authenticated/marketing/templates/novo'
       path: '/novo'
@@ -1147,6 +1167,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRouteWithChildren
+  AuthenticatedAdminAsaasIndexRoute: typeof AuthenticatedAdminAsaasIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1158,6 +1179,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
+  AuthenticatedAdminAsaasIndexRoute: AuthenticatedAdminAsaasIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

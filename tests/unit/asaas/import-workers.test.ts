@@ -14,7 +14,6 @@ import {
 	createSubscriptionBatchProcessor,
 } from '../../../convex/asaas/import_workers'
 import type { Id } from '../../../convex/_generated/dataModel'
-import type { WorkerResult } from '../../../convex/asaas/batch_processor'
 
 // Mock data
 const mockCustomer = {
@@ -24,6 +23,8 @@ const mockCustomer = {
 	phone: '11999999999',
 	cpfCnpj: '52998224725',
 	notificationDisabled: false,
+	dateCreated: '2025-01-15',
+	personType: 'FISICA' as const,
 }
 
 const mockPayment = {
@@ -38,6 +39,8 @@ const mockPayment = {
 	description: 'Test payment',
 	bankSlipUrl: 'https://asaas.com/boleto/123',
 	installmentNumber: 1,
+	dateCreated: '2025-01-15',
+	originalDueDate: '2025-01-15',
 }
 
 const mockSubscription = {
@@ -48,6 +51,8 @@ const mockSubscription = {
 	status: 'ACTIVE' as const,
 	nextDueDate: '2025-02-15',
 	description: 'Test subscription',
+	dateCreated: '2025-01-15',
+	billingType: 'BOLETO' as const,
 }
 
 const mockStudent: Id<'students'> = 'student_id' as Id<'students'>

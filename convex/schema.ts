@@ -1087,18 +1087,27 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_due_date", ["dueDate"])
     .index("by_student_status", ["studentId", "status"])
-    .index("by_due_date_status", ["dueDate", "status"]), // Para encontrar cobranças vencidas
+    .index("by_due_date_status", ["dueDate", "status"]) // Para encontrar cobranças vencidas
+    .index("by_organization_status", ["organizationId", "status"])
+    .index("by_organization_due_date", ["organizationId", "dueDate"])
+    .index("by_organization_student", ["organizationId", "studentId"])
+    .index("by_organization_enrollment", ["organizationId", "enrollmentId"]),
 
   asaasWebhooks: defineTable({
     event: v.string(),
     paymentId: v.optional(v.string()),
-    payload: v.any(),
+    // LGPD: Encrypted payload to protect PII (name, email, CPF, phone, address)
+    // Webhook payloads contain sensitive customer data from Asaas
+    payload: v.optional(v.string()), // Stores encrypted JSON string
     processed: v.boolean(),
     error: v.optional(v.string()),
     createdAt: v.number(),
+    // LGPD: Automatic retention policy (90 days as per ANPD guidelines)
+    retentionUntil: v.number(), // Auto-delete timestamp (90 days from creation)
   })
     .index("by_payment_id", ["paymentId"])
-    .index("by_processed", ["processed"]),
+    .index("by_processed", ["processed"])
+    .index("by_retention_until", ["retentionUntil"]), // For cleanup queries
 
   // Webhook deduplication table to prevent duplicate processing
   asaasWebhookDeduplication: defineTable({
@@ -1219,4 +1228,123 @@ export default defineSchema({
     periodEnd: v.optional(v.string()), // YYYY-MM-DD
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
+
+  // ═══════════════════════════════════════════════════════
+  // ASAAS CONFLICT RESOLUTION
+  // ═══════════════════════════════════════════════════════
+  asaasConflicts: defineTable({
+    // Type of conflict
+    conflictType: v.union(
+      v.literal("duplicate_customer"),
+      v.literal("payment_mismatch"),
+      v.literal("subscription_mismatch"),
+      v.literal("data_inconsistency"),
+    ),
+
+    // Status
+    status: v.union(
+      v.literal("pending"),
+      v.literal("resolving"),
+      v.literal("resolved"),
+      v.literal("ignored"),
+    ),
+
+    // Entity references
+    studentId: v.optional(v.id("students")),
+    asaasCustomerId: v.optional(v.string()),
+    asaasPaymentId: v.optional(v.string()),
+    asaasSubscriptionId: v.optional(v.string()),
+
+    // Conflict details
+    localData: v.optional(v.any()), // Local data that caused conflict
+    remoteData: v.optional(v.any()), // Remote data from Asaas
+    field: v.optional(v.string()), // Field that has the conflict
+
+    // Resolution tracking
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.string()), // User who resolved
+    resolutionNote: v.optional(v.string()),
+
+    // Multi-tenant
+    organizationId: v.optional(v.string()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_type", ["conflictType"])
+    .index("by_organization", ["organizationId"])
+    .index("by_student", ["studentId"])
+    .index("by_asaas_customer", ["asaasCustomerId"])
+    .index("by_created", ["createdAt"]),
+
+  // ═══════════════════════════════════════════════════════
+  // ASAAS ALERTS & MONITORING
+  // ═══════════════════════════════════════════════════════
+  asaasAlerts: defineTable({
+    // Alert type
+    alertType: v.union(
+      v.literal("api_error"),
+      v.literal("sync_failure"),
+      v.literal("rate_limit"),
+      v.literal("webhook_timeout"),
+      v.literal("duplicate_detection"),
+      v.literal("data_integrity"),
+    ),
+
+    // Severity
+    severity: v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("critical"),
+    ),
+
+    // Status
+    status: v.union(
+      v.literal("active"),
+      v.literal("acknowledged"),
+      v.literal("resolved"),
+      v.literal("suppressed"),
+    ),
+
+    // Alert details
+    title: v.string(),
+    message: v.string(),
+    details: v.optional(v.any()), // Additional context
+
+    // Entity references (if applicable)
+    studentId: v.optional(v.id("students")),
+    paymentId: v.optional(v.id("asaasPayments")),
+    subscriptionId: v.optional(v.id("asaasSubscriptions")),
+    syncLogId: v.optional(v.id("asaasSyncLogs")),
+
+    // Count for repeated alerts
+    count: v.number(), // Number of times this alert has occurred
+
+    // Resolution tracking
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.string()),
+    resolutionNote: v.optional(v.string()),
+
+    // Suppression
+    suppressedUntil: v.optional(v.number()), // Suppress alerts until this timestamp
+
+    // Multi-tenant
+    organizationId: v.optional(v.string()),
+
+    // Timestamps
+    firstSeenAt: v.number(), // First time this alert was seen
+    lastSeenAt: v.number(), // Last time this alert was seen
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_severity", ["severity"])
+    .index("by_type", ["alertType"])
+    .index("by_organization", ["organizationId"])
+    .index("by_active", ["status", "severity"])
+    .index("by_last_seen", ["lastSeenAt"])
+    .index("by_suppressed", ["suppressedUntil"]),
 });

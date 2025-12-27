@@ -38,6 +38,7 @@ function createMockContext() {
 			insert: vi.fn(),
 			query: vi.fn(),
 			patch: vi.fn(),
+			delete: vi.fn(),
 		},
 		runMutation: vi.fn(),
 		scheduler: {
@@ -165,12 +166,6 @@ describe('Webhooks - Payment Processing', () => {
 				}),
 			}),
 		})
-
-		// Simulate payment record found
-		const mockPaymentRecord = {
-			_id: 'payment_id' as Id<'asaasPayments'>,
-			studentId: 'student_id' as Id<'students'>,
-		}
 
 		// Verify webhook payload structure
 		expect(mockPaymentPayload.payment).toBeDefined()
