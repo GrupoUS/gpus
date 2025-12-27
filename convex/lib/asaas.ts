@@ -308,6 +308,111 @@ export function timestampToDateString(timestamp: number): string {
 }
 
 // ═══════════════════════════════════════════════════════
+// CIRCUIT BREAKER
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Circuit breaker states
+ */
+type CircuitState = "closed" | "open" | "half-open";
+
+interface CircuitBreakerState {
+  state: CircuitState;
+  failureCount: number;
+  lastFailureTime: number;
+  nextAttemptTime: number;
+  halfOpenTestCalls: number; // Number of test calls in half-open state
+}
+
+const CIRCUIT_CONFIG = {
+  failureThreshold: 5, // Open circuit after 5 consecutive failures
+  resetTimeoutMs: 60000, // Wait 60s before attempting recovery
+  halfOpenMaxTestCalls: 3, // Allow 3 test calls in half-open state
+};
+
+let circuitState: CircuitBreakerState = {
+  state: "closed",
+  failureCount: 0,
+  lastFailureTime: 0,
+  nextAttemptTime: 0,
+  halfOpenTestCalls: 0,
+};
+
+/**
+ * Check if circuit breaker allows requests
+ */
+function canProceed(): boolean {
+  const now = Date.now();
+
+  if (circuitState.state === "closed") {
+    return true;
+  }
+
+  if (circuitState.state === "open") {
+    // Check if we can transition to half-open
+    if (now >= circuitState.nextAttemptTime) {
+      circuitState.state = "half-open";
+      circuitState.halfOpenTestCalls = 0;
+      console.log("[CircuitBreaker] Transitioning to half-open state");
+      return true;
+    }
+    return false;
+  }
+
+  if (circuitState.state === "half-open") {
+    // Allow test calls up to the limit
+    return circuitState.halfOpenTestCalls < CIRCUIT_CONFIG.halfOpenMaxTestCalls;
+  }
+
+  return false;
+}
+
+/**
+ * Record a successful API call
+ */
+function recordSuccess(): void {
+  if (circuitState.state === "half-open") {
+    circuitState.halfOpenTestCalls++;
+    // If all test calls succeeded, close the circuit
+    if (circuitState.halfOpenTestCalls >= CIRCUIT_CONFIG.halfOpenMaxTestCalls) {
+      circuitState.state = "closed";
+      circuitState.failureCount = 0;
+      circuitState.halfOpenTestCalls = 0;
+      console.log("[CircuitBreaker] Circuit closed after successful test calls");
+    }
+  } else if (circuitState.state === "closed") {
+    circuitState.failureCount = 0;
+  }
+}
+
+/**
+ * Record a failed API call
+ */
+function recordFailure(): void {
+  circuitState.failureCount++;
+  circuitState.lastFailureTime = Date.now();
+
+  if (circuitState.state === "half-open") {
+    // Half-open test failed, open the circuit again
+    circuitState.state = "open";
+    circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
+    console.log("[CircuitBreaker] Half-open test failed, opening circuit");
+  } else if (circuitState.failureCount >= CIRCUIT_CONFIG.failureThreshold) {
+    // Threshold reached, open the circuit
+    circuitState.state = "open";
+    circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
+    console.error(`[CircuitBreaker] Circuit opened after ${circuitState.failureCount} failures`);
+  }
+}
+
+/**
+ * Get current circuit breaker state (for monitoring)
+ */
+export function getCircuitBreakerState(): CircuitBreakerState {
+  return { ...circuitState };
+}
+
+// ═══════════════════════════════════════════════════════
 // ASAAS API CLIENT
 // ═══════════════════════════════════════════════════════
 
@@ -330,6 +435,14 @@ async function asaasFetch<T>(
 
   if (!apiKey) {
     throw new Error("ASAAS_API_KEY environment variable is not set");
+  }
+
+  // Check circuit breaker
+  if (!canProceed()) {
+    const waitTimeMs = circuitState.nextAttemptTime - Date.now();
+    throw new Error(
+      `Circuit breaker is ${circuitState.state}. API requests are blocked. Retry in ${Math.ceil(waitTimeMs / 1000)}s`
+    );
   }
 
   const url = `${ASAAS_API_BASE}${endpoint}`;
@@ -380,6 +493,7 @@ async function asaasFetch<T>(
         // Retry on server errors (5xx) or rate limiting (429)
         if (response.status >= 500 || response.status === 429) {
           lastError = new Error(`Asaas API Error: ${errorMessage}`);
+          recordFailure(); // Circuit breaker: record server error
           if (attempt < retries) {
             const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
             await sleep(delay);
@@ -388,13 +502,24 @@ async function asaasFetch<T>(
           throw lastError;
         }
 
+        // Client error (non-retriable 4xx)
+        recordFailure(); // Circuit breaker: record client error
         throw new Error(`Asaas API Error: ${errorMessage}`);
       }
 
       // Success
+      recordSuccess(); // Circuit breaker: record success
       return data as T;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Circuit breaker: record network/timeout errors
+      if (
+        error instanceof Error &&
+        (error.name.includes("TimeoutError") || error.message.includes("fetch"))
+      ) {
+        recordFailure();
+      }
 
       // Don't retry on non-network errors (unless it's a 5xx handled above)
       if (

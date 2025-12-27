@@ -127,7 +127,11 @@ export async function processBatch<T, R>(
 	let currentBatchSize = fullConfig.batchSize
 	let consecutiveErrors = 0
 
-	// Process items in batches
+	// Track active promises for cleanup
+	const activePromises = new Set<Promise<WorkerResult<R>>>()
+
+	try {
+		// Process items in batches
 	for (let i = 0; i < items.length; i += currentBatchSize) {
 		currentBatch++
 		const batch = items.slice(i, i + currentBatchSize)
@@ -213,6 +217,13 @@ export async function processBatch<T, R>(
 		duration: Date.now() - startTime,
 		created: createdCount,
 		updated: updatedCount,
+	}
+	} finally {
+		// Ensure all promises settle and clear tracking set
+		if (activePromises.size > 0) {
+			await Promise.allSettled(Array.from(activePromises))
+			activePromises.clear()
+		}
 	}
 }
 

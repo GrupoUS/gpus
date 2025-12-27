@@ -11,7 +11,7 @@ Transformar o plano do **Roadmap** (persistente) ou `todowrite` (sessão) em có
 
 O Roadmap Plugin fornece persistência cross-session e coordenação de subagentes.
 
-### REGRA CRÍTICA: Sempre usar `readroadmap` ANTES de qualquer trabalho
+### REGRA CRÍTICA: Sempre usar `readroadmap` ANTES de qualquer trabalho e só parar quando terminar de executar todas as actions
 
 ```yaml
 roadmap_workflow:
@@ -31,7 +31,8 @@ roadmap_workflow:
     1: "Verificar trabalho do subagente"
     2: "updateroadmap → marcar completed + nota"
     3: "Identificar próxima action pending"
-    4: "Repetir ciclo"
+    4: "Executar próxima action (task)"
+    5: "Repetir ciclo"
 
   status_flow:
     pending: "Disponível para trabalho"

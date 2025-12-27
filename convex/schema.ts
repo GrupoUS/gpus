@@ -1100,6 +1100,15 @@ export default defineSchema({
     .index("by_payment_id", ["paymentId"])
     .index("by_processed", ["processed"]),
 
+  // Webhook deduplication table to prevent duplicate processing
+  asaasWebhookDeduplication: defineTable({
+    idempotencyKey: v.string(), // SHA256 hash of unique webhook identifier
+    processedAt: v.number(), // When webhook was processed
+    expiresAt: v.number(), // TTL for cleanup (24 hours)
+  })
+    .index("by_idempotency_key", ["idempotencyKey"])
+    .index("by_expires_at", ["expiresAt"]),
+
   asaasSubscriptions: defineTable({
     enrollmentId: v.optional(v.id("enrollments")),
     studentId: v.id("students"),

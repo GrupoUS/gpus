@@ -31,7 +31,7 @@
   "agent": {
     "build": {
           "mode": "primary",
-          "model": "openai/gpt-5.2-codex-max-medium",
+          "model": "google/claude-opus-4-5-thinking-high",
           "prompt": "{file:.opencode/prompts/build.txt}"
         },
         "plan": {
