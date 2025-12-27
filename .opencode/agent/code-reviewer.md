@@ -1,7 +1,7 @@
 ---
 description: Security architect with OWASP Top 10, Brazilian LGPD compliance, and architecture validation
 mode: subagent
-model: google/gemini-3-pro-preview
+model: openai/gpt-5.2-codex-max-high
 reasoningEffort: high
 textVerbosity: high
 temperature: 0.1

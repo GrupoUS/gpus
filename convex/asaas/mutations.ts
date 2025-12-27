@@ -1,4 +1,9 @@
-import { internalMutation, mutation, action, internalQuery } from "../_generated/server";
+import {
+  internalMutation,
+  mutation,
+  action,
+  internalQuery,
+} from "../_generated/server";
 import { v } from "convex/values";
 import { dateStringToTimestamp } from "../lib/asaas";
 import { requireAuth } from "../lib/auth";
@@ -9,110 +14,112 @@ import { internal } from "../_generated/api";
  * Sync student as Asaas customer (create or update)
  */
 export const syncStudentAsCustomer = action({
-	args: { studentId: v.id('students') },
-	handler: async (ctx, args) => {
-		await requireAuth(ctx)
-		// @ts-ignore - Deep type instantiation error with Convex internal references
-		await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal, {
-			studentId: args.studentId
-		})
-	},
-})
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+      await requireAuth(ctx);
+      await ctx.runMutation(
+        internal.asaas.mutations.syncStudentAsCustomerInternal as any,
+        {
+          studentId: args.studentId,
+        },
+      );
+    },
+});
 
 /**
  * Internal mutation to sync student as Asaas customer
  * This is called by actions and other mutations
  */
 export const syncStudentAsCustomerInternal = internalMutation({
-	args: { studentId: v.id('students') },
-	handler: async (ctx, args) => {
-		const student = await ctx.db.get(args.studentId)
-		if (!student) throw new Error('Student not found')
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) throw new Error("Student not found");
 
-		// Logic to determine if we create or update in Asaas is in the action
-		// This mutation just updates the local student record with Asaas data
-		// Wait, the error said this was missing from 'internal.asaas.mutations'
-		// But usually we call actions for Asaas sync.
-		// However, some places might need a direct mutation to update the ID.
-		// I'll keep it simple for now.
-	},
-})
+    // Logic to determine if we create or update in Asaas is in the action
+    // This mutation just updates the local student record with Asaas data
+    // Wait, the error said this was missing from 'internal.asaas.mutations'
+    // But usually we call actions for Asaas sync.
+    // However, some places might need a direct mutation to update the ID.
+    // I'll keep it simple for now.
+  },
+});
 
 /**
  * Internal mutation to create a charge record
  * This replaces the missing 'createCharge' being called in actions.ts
  */
 export const createCharge = internalMutation({
-	args: {
-		studentId: v.id('students'),
-		enrollmentId: v.optional(v.id('enrollments')),
-		asaasCustomerId: v.string(),
-		asaasPaymentId: v.string(),
-		amount: v.number(),
-		dueDate: v.string(),
-		billingType: v.union(
-			v.literal('BOLETO'),
-			v.literal('CREDIT_CARD'),
-			v.literal('PIX'),
-			v.literal('DEBIT_CARD'),
-			v.literal('UNDEFINED'),
-		),
-		description: v.optional(v.string()),
-		installmentCount: v.optional(v.number()),
-		installmentNumber: v.optional(v.number()),
-		boletoUrl: v.optional(v.string()),
-		pixQrCode: v.optional(v.string()),
-		organizationId: v.optional(v.string()),
-	},
-	handler: async (ctx, args) => {
-		const now = Date.now()
-		const chargeId = await ctx.db.insert('asaasPayments', {
-			studentId: args.studentId,
-			enrollmentId: args.enrollmentId,
-			asaasCustomerId: args.asaasCustomerId,
-			asaasPaymentId: args.asaasPaymentId,
-			organizationId: args.organizationId,
-			value: args.amount,
-			dueDate: dateStringToTimestamp(args.dueDate),
-			status: 'PENDING',
-			billingType: args.billingType,
-			description: args.description,
-			totalInstallments: args.installmentCount,
-			installmentNumber: args.installmentNumber,
-			boletoUrl: args.boletoUrl,
-			pixQrCode: args.pixQrCode,
-			createdAt: now,
-			updatedAt: now,
-		})
-		return chargeId
-	},
-})
+  args: {
+    studentId: v.id("students"),
+    enrollmentId: v.optional(v.id("enrollments")),
+    asaasCustomerId: v.string(),
+    asaasPaymentId: v.string(),
+    amount: v.number(),
+    dueDate: v.string(),
+    billingType: v.union(
+      v.literal("BOLETO"),
+      v.literal("CREDIT_CARD"),
+      v.literal("PIX"),
+      v.literal("DEBIT_CARD"),
+      v.literal("UNDEFINED"),
+    ),
+    description: v.optional(v.string()),
+    installmentCount: v.optional(v.number()),
+    installmentNumber: v.optional(v.number()),
+    boletoUrl: v.optional(v.string()),
+    pixQrCode: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const chargeId = await ctx.db.insert("asaasPayments", {
+      studentId: args.studentId,
+      enrollmentId: args.enrollmentId,
+      asaasCustomerId: args.asaasCustomerId,
+      asaasPaymentId: args.asaasPaymentId,
+      organizationId: args.organizationId,
+      value: args.amount,
+      dueDate: dateStringToTimestamp(args.dueDate),
+      status: "PENDING",
+      billingType: args.billingType,
+      description: args.description,
+      totalInstallments: args.installmentCount,
+      installmentNumber: args.installmentNumber,
+      boletoUrl: args.boletoUrl,
+      pixQrCode: args.pixQrCode,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return chargeId;
+  },
+});
 
 /**
  * Create payment from enrollment
  */
 export const createPaymentFromEnrollment = mutation({
-	args: {
-		studentId: v.id('students'),
-		enrollmentId: v.optional(v.id('enrollments')),
-		asaasCustomerId: v.string(),
-		asaasPaymentId: v.string(),
-		amount: v.number(),
-		dueDate: v.string(),
-		billingType: v.union(
-			v.literal('BOLETO'),
-			v.literal('CREDIT_CARD'),
-			v.literal('PIX'),
-			v.literal('DEBIT_CARD'),
-			v.literal('UNDEFINED'),
-		),
-		description: v.optional(v.string()),
-		installmentCount: v.optional(v.number()),
-		installmentNumber: v.optional(v.number()),
-		boletoUrl: v.optional(v.string()),
-		pixQrCode: v.optional(v.string()),
-		organizationId: v.optional(v.string()),
-	},
+  args: {
+    studentId: v.id("students"),
+    enrollmentId: v.optional(v.id("enrollments")),
+    asaasCustomerId: v.string(),
+    asaasPaymentId: v.string(),
+    amount: v.number(),
+    dueDate: v.string(),
+    billingType: v.union(
+      v.literal("BOLETO"),
+      v.literal("CREDIT_CARD"),
+      v.literal("PIX"),
+      v.literal("DEBIT_CARD"),
+      v.literal("UNDEFINED"),
+    ),
+    description: v.optional(v.string()),
+    installmentCount: v.optional(v.number()),
+    installmentNumber: v.optional(v.number()),
+    boletoUrl: v.optional(v.string()),
+    pixQrCode: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     // 1. Tentar encontrar enrollmentId se não for fornecido
     let enrollmentId = args.enrollmentId;
@@ -163,17 +170,26 @@ export const updateChargeStatus = internalMutation({
       v.literal("CONFIRMED"),
       v.literal("OVERDUE"),
       v.literal("REFUNDED"),
+      v.literal("RECEIVED_IN_CASH"),
+      v.literal("RECEIVED_IN_CASH_UNDONE"),
+      v.literal("CHARGEBACK_REQUESTED"),
+      v.literal("CHARGEBACK_DISPUTE"),
+      v.literal("AWAITING_CHARGEBACK_REVERSAL"),
+      v.literal("APPROVED_BY_RISK_ANALYSIS"),
+      v.literal("REJECTED_BY_RISK_ANALYSIS"),
       v.literal("DELETED"),
       v.literal("DUNNING_REQUESTED"),
       v.literal("DUNNING_RECEIVED"),
       v.literal("AWAITING_RISK_ANALYSIS"),
-      v.literal("CANCELLED")
+      v.literal("CANCELLED"),
     ),
   },
   handler: async (ctx, args) => {
     const charge = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_asaas_payment_id", (q) => q.eq("asaasPaymentId", args.asaasPaymentId))
+      .withIndex("by_asaas_payment_id", (q) =>
+        q.eq("asaasPaymentId", args.asaasPaymentId),
+      )
       .first();
 
     if (!charge) {
@@ -228,18 +244,20 @@ export const logPaymentEvent = internalMutation({
     // I should update it to take netValue and paidAt if provided.
 
     if (args.paidAt || args.netValue) {
-       const charge = await ctx.db
+      const charge = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_asaas_payment_id", (q) => q.eq("asaasPaymentId", args.asaasPaymentId))
+        .withIndex("by_asaas_payment_id", (q) =>
+          q.eq("asaasPaymentId", args.asaasPaymentId),
+        )
         .first();
 
-       if (charge) {
-         await ctx.db.patch(charge._id, {
-           confirmedDate: args.paidAt,
-           netValue: args.netValue,
-           updatedAt: Date.now()
-         });
-       }
+      if (charge) {
+        await ctx.db.patch(charge._id, {
+          confirmedDate: args.paidAt,
+          netValue: args.netValue,
+          updatedAt: Date.now(),
+        });
+      }
     }
   },
 });
@@ -296,17 +314,15 @@ export const getStudentByEmailOrCpf = internalQuery({
     }
 
     // 2. Try by CPF (Indexed lookup using Blind Index)
-		if (args.cpf) {
-			const cpfHash = await hashCPF(args.cpf)
-			const studentByCpf = await ctx.db
-				.query('students')
-				.withIndex('by_cpf_hash', (q) => q.eq('cpfHash', cpfHash))
-				.first()
+    if (args.cpf) {
+      const cpfHash = await hashCPF(args.cpf);
+      const studentByCpf = await ctx.db
+        .query("students")
+        .withIndex("by_cpf_hash", (q) => q.eq("cpfHash", cpfHash))
+        .first();
 
-			if (studentByCpf) return studentByCpf
-		}
-
-
+      if (studentByCpf) return studentByCpf;
+    }
 
     return null;
   },
@@ -320,7 +336,9 @@ export const getPaymentByAsaasId = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("asaasPayments")
-      .withIndex("by_asaas_payment_id", (q) => q.eq("asaasPaymentId", args.asaasPaymentId))
+      .withIndex("by_asaas_payment_id", (q) =>
+        q.eq("asaasPaymentId", args.asaasPaymentId),
+      )
       .first();
   },
 });
@@ -333,7 +351,9 @@ export const getSubscriptionByAsaasId = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("asaasSubscriptions")
-      .withIndex("by_asaas_subscription_id", (q) => q.eq("asaasSubscriptionId", args.asaasSubscriptionId))
+      .withIndex("by_asaas_subscription_id", (q) =>
+        q.eq("asaasSubscriptionId", args.asaasSubscriptionId),
+      )
       .first();
   },
 });
@@ -357,7 +377,7 @@ export const createStudentFromAsaas = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const cpfHash = args.cpf ? await hashCPF(args.cpf) : undefined;
-    
+
     return await ctx.db.insert("students", {
       name: args.name,
       email: args.email,
@@ -423,7 +443,7 @@ export const createPaymentFromAsaas = internalMutation({
       v.literal("PIX"),
       v.literal("CREDIT_CARD"),
       v.literal("DEBIT_CARD"),
-      v.literal("UNDEFINED")
+      v.literal("UNDEFINED"),
     ),
     description: v.optional(v.string()),
     boletoUrl: v.optional(v.string()),
@@ -433,34 +453,34 @@ export const createPaymentFromAsaas = internalMutation({
     totalInstallments: v.optional(v.number()),
     enrollmentId: v.optional(v.id("enrollments")),
   },
-	handler: async (ctx, args) => {
-		const now = Date.now()
+  handler: async (ctx, args) => {
+    const now = Date.now();
 
-		// SMART LINK: Try to find a matching enrollment if none provided
-		let enrollmentId = args.enrollmentId
-		if (!enrollmentId) {
-			const activeEnrollments = await ctx.db
-				.query('enrollments')
-				.withIndex('by_student', (q) => q.eq('studentId', args.studentId))
-				.filter((q) => q.neq(q.field('status'), 'cancelado'))
-				.collect()
+    // SMART LINK: Try to find a matching enrollment if none provided
+    let enrollmentId = args.enrollmentId;
+    if (!enrollmentId) {
+      const activeEnrollments = await ctx.db
+        .query("enrollments")
+        .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+        .filter((q) => q.neq(q.field("status"), "cancelado"))
+        .collect();
 
-			if (activeEnrollments.length > 0) {
-				// Try to match by description/product if possible
-				const description = args.description?.toLowerCase() || ''
-				const matched = activeEnrollments.find((e) => {
-					const product = e.product.toLowerCase()
-					return description.includes(product) || product.includes(description)
-				})
+      if (activeEnrollments.length > 0) {
+        // Try to match by description/product if possible
+        const description = args.description?.toLowerCase() || "";
+        const matched = activeEnrollments.find((e) => {
+          const product = e.product.toLowerCase();
+          return description.includes(product) || product.includes(description);
+        });
 
-				enrollmentId = matched?._id || activeEnrollments[0]._id
-			}
-		}
+        enrollmentId = matched?._id || activeEnrollments[0]._id;
+      }
+    }
 
-		return await ctx.db.insert('asaasPayments', {
-			studentId: args.studentId,
-			enrollmentId,
-			asaasPaymentId: args.asaasPaymentId,
+    return await ctx.db.insert("asaasPayments", {
+      studentId: args.studentId,
+      enrollmentId,
+      asaasPaymentId: args.asaasPaymentId,
 
       asaasCustomerId: args.asaasCustomerId,
       organizationId: args.organizationId,
@@ -496,7 +516,8 @@ export const updatePaymentFromAsaas = internalMutation({
 
     if (updates.status !== undefined) patch.status = updates.status;
     if (updates.netValue !== undefined) patch.netValue = updates.netValue;
-    if (updates.confirmedDate !== undefined) patch.confirmedDate = updates.confirmedDate;
+    if (updates.confirmedDate !== undefined)
+      patch.confirmedDate = updates.confirmedDate;
 
     await ctx.db.patch(paymentId, patch);
   },
@@ -535,28 +556,32 @@ export const createSubscriptionFromAsaas = internalMutation({
 
     // Map description to product and update student
     if (args.description) {
-        const desc = args.description.toLowerCase();
-        let productKey: string | null = null;
+      const desc = args.description.toLowerCase();
+      let productKey: string | null = null;
 
-        if (desc.includes("trinta") || desc.includes("30e3")) productKey = "trintae3";
-        else if (desc.includes("otb") || desc.includes("outside")) productKey = "otb";
-        else if (desc.includes("black") || desc.includes("neon")) productKey = "black_neon";
-        else if (desc.includes("comunidade") || desc.includes("club")) productKey = "comunidade";
-        else if (desc.includes("auriculo")) productKey = "auriculo";
-        else if (desc.includes("mesa")) productKey = "na_mesa_certa";
+      if (desc.includes("trinta") || desc.includes("30e3"))
+        productKey = "trintae3";
+      else if (desc.includes("otb") || desc.includes("outside"))
+        productKey = "otb";
+      else if (desc.includes("black") || desc.includes("neon"))
+        productKey = "black_neon";
+      else if (desc.includes("comunidade") || desc.includes("club"))
+        productKey = "comunidade";
+      else if (desc.includes("auriculo")) productKey = "auriculo";
+      else if (desc.includes("mesa")) productKey = "na_mesa_certa";
 
-        if (productKey) {
-            const student = await ctx.db.get(args.studentId);
-            if (student) {
-                const currentProducts = student.products || [];
-                if (!currentProducts.includes(productKey)) {
-                    await ctx.db.patch(args.studentId, {
-                        products: [...currentProducts, productKey],
-                        updatedAt: now,
-                    });
-                }
-            }
+      if (productKey) {
+        const student = await ctx.db.get(args.studentId);
+        if (student) {
+          const currentProducts = student.products || [];
+          if (!currentProducts.includes(productKey)) {
+            await ctx.db.patch(args.studentId, {
+              products: [...currentProducts, productKey],
+              updatedAt: now,
+            });
+          }
         }
+      }
     }
 
     return subscriptionId;
@@ -569,12 +594,14 @@ export const createSubscriptionFromAsaas = internalMutation({
 export const updateSubscriptionFromAsaas = internalMutation({
   args: {
     subscriptionId: v.id("asaasSubscriptions"),
-    status: v.optional(v.union(
-      v.literal("ACTIVE"),
-      v.literal("INACTIVE"),
-      v.literal("CANCELLED"),
-      v.literal("EXPIRED")
-    )),
+    status: v.optional(
+      v.union(
+        v.literal("ACTIVE"),
+        v.literal("INACTIVE"),
+        v.literal("CANCELLED"),
+        v.literal("EXPIRED"),
+      ),
+    ),
     value: v.optional(v.number()),
     nextDueDate: v.optional(v.number()),
   },
@@ -584,7 +611,8 @@ export const updateSubscriptionFromAsaas = internalMutation({
 
     if (updates.status !== undefined) patch.status = updates.status;
     if (updates.value !== undefined) patch.value = updates.value;
-    if (updates.nextDueDate !== undefined) patch.nextDueDate = updates.nextDueDate;
+    if (updates.nextDueDate !== undefined)
+      patch.nextDueDate = updates.nextDueDate;
 
     await ctx.db.patch(subscriptionId, patch);
   },
@@ -600,7 +628,7 @@ export const updateSubscriptionStatusInternal = internalMutation({
       v.literal("ACTIVE"),
       v.literal("INACTIVE"),
       v.literal("CANCELLED"),
-      v.literal("EXPIRED")
+      v.literal("EXPIRED"),
     ),
     nextDueDate: v.optional(v.number()),
     value: v.optional(v.number()),
@@ -608,11 +636,15 @@ export const updateSubscriptionStatusInternal = internalMutation({
   handler: async (ctx, args) => {
     const subscription = await ctx.db
       .query("asaasSubscriptions")
-      .withIndex("by_asaas_subscription_id", (q) => q.eq("asaasSubscriptionId", args.asaasSubscriptionId))
+      .withIndex("by_asaas_subscription_id", (q) =>
+        q.eq("asaasSubscriptionId", args.asaasSubscriptionId),
+      )
       .first();
 
     if (!subscription) {
-      console.warn(`Subscription with Asaas ID ${args.asaasSubscriptionId} not found`);
+      console.warn(
+        `Subscription with Asaas ID ${args.asaasSubscriptionId} not found`,
+      );
       return null;
     }
 

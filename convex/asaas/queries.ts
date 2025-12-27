@@ -154,7 +154,12 @@ export const getFinancialSummary = query({
 
     // Calculate entradas (received/confirmed payments)
     const entradas = filteredPayments
-      .filter((p) => p.status === "RECEIVED" || p.status === "CONFIRMED")
+      .filter(
+        (p) =>
+          p.status === "RECEIVED" ||
+          p.status === "CONFIRMED" ||
+          p.status === "RECEIVED_IN_CASH",
+      )
       .reduce((sum, p) => sum + (p.netValue || p.value), 0);
 
     // Calculate saídas (refunded payments)
@@ -251,8 +256,16 @@ export const getMonthlyFinancialSummary = query({
       .query("asaasPayments")
       .withIndex("by_status", (q) => q.eq("status", "CONFIRMED"))
       .collect();
+    const cashPayments = await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_status", (q) => q.eq("status", "RECEIVED_IN_CASH"))
+      .collect();
 
-    const paidThisMonth = [...paidPayments, ...confirmedPayments].filter(
+    const paidThisMonth = [
+      ...paidPayments,
+      ...confirmedPayments,
+      ...cashPayments,
+    ].filter(
       (p) =>
         p.confirmedDate &&
         p.confirmedDate >= startOfMonth &&
