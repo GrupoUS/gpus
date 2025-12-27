@@ -21,5 +21,15 @@ crons.interval(
   {}
 );
 
+// Verificação de alertas a cada 5 minutos
+// Checks API health, sync failures, rate limits, webhook issues, and conflicts
+// @ts-ignore - Deep type instantiation workaround
+crons.interval(
+  "asaas-alert-check",
+  { minutes: 5 },
+  internal.asaas.alerts.checkAndCreateAlerts,
+  {}
+);
+
 export default crons;
 

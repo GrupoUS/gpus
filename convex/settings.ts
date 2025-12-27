@@ -248,7 +248,4 @@ export const setUserSetting = mutation({
   },
 });
 
-// Alias for compatibility
-export const getSetting = get;
-export const setSetting = set;
-export const getAllSettings = list;
+// NOTE: Use original export names: get, set, list, getIntegrationConfig

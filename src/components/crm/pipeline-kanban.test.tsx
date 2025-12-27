@@ -139,6 +139,29 @@ describe('PipelineKanban', () => {
 		expect(mockOnLeadClick).toHaveBeenCalledWith('1');
 	});
 
+	it('shows empty placeholders for columns without leads', () => {
+		render(<PipelineKanban leads={[]} onDragEnd={mockOnDragEnd} onLeadClick={mockOnLeadClick} />);
+
+		const placeholders = screen.getAllByText('Arraste para cá');
+		expect(placeholders).toHaveLength(6);
+	});
+
+	it('opens WhatsApp without triggering lead click', () => {
+		const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+		render(
+			<PipelineKanban leads={mockLeads} onDragEnd={mockOnDragEnd} onLeadClick={mockOnLeadClick} />,
+		);
+
+		const whatsappButtons = screen.getAllByRole('button', { name: 'WhatsApp' });
+		fireEvent.click(whatsappButtons[0]);
+
+		expect(openSpy).toHaveBeenCalledWith('https://wa.me/123456789', '_blank');
+		expect(mockOnLeadClick).not.toHaveBeenCalled();
+
+		openSpy.mockRestore();
+	});
+
 	// Note: Testing actual drag and drop with Framer Motion in JSDOM is difficult
 	// without extensive mocking of pointer events and layout system.
 	// We verify the component structure and interactions instead.

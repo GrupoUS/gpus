@@ -1,5 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
-import { encrypt, decrypt, hashSensitiveData, encryptCPF, decryptCPF, isEncrypted } from './encryption'
+import {
+	decrypt,
+	decryptCPF,
+	encrypt,
+	encryptCPF,
+	hashCPF,
+	hashSensitiveData,
+	isEncrypted,
+	validateEncryptionConfig,
+} from './encryption'
+
 
 // Mock environment variable
 vi.stubEnv('ENCRYPTION_KEY', 'test-encryption-key-at-least-16-chars')
@@ -64,4 +74,45 @@ describe('Encryption Utilities (LGPD Compliance)', () => {
     await expect(encrypt('data')).rejects.toThrow('ENCRYPTION_KEY environment variable is required')
     vi.stubEnv('ENCRYPTION_KEY', 'test-encryption-key-at-least-16-chars')
   })
+
+  it('should return input for empty data', async () => {
+    await expect(encrypt('')).resolves.toBe('')
+    await expect(decrypt('')).resolves.toBe('')
+  })
+
+  it('should hash CPF consistently regardless of formatting', async () => {
+    const rawCPF = '12345678900'
+    const formattedCPF = '123.456.789-00'
+
+    const hashRaw = await hashCPF(rawCPF)
+    const hashFormatted = await hashCPF(formattedCPF)
+
+    expect(hashRaw).toBe(hashFormatted)
+    expect(hashRaw).toHaveLength(64)
+  })
+
+  it('should fail decryption for tampered ciphertext', async () => {
+    const encrypted = await encrypt('tamper me')
+    const tampered = `${encrypted.slice(0, -1)}0`
+
+    await expect(decrypt(tampered)).rejects.toThrow('Failed to decrypt sensitive data')
+  })
+
+  it('should validate encryption config with clear errors', async () => {
+    vi.stubEnv('ENCRYPTION_KEY', '')
+    await expect(validateEncryptionConfig()).resolves.toEqual({
+      valid: false,
+      message: 'ENCRYPTION_KEY environment variable is required for LGPD compliance',
+    })
+
+    vi.stubEnv('ENCRYPTION_KEY', 'short-key')
+    await expect(validateEncryptionConfig()).resolves.toEqual({
+      valid: false,
+      message: 'ENCRYPTION_KEY must be at least 16 characters long',
+    })
+
+    vi.stubEnv('ENCRYPTION_KEY', 'test-encryption-key-at-least-16-chars')
+    await expect(validateEncryptionConfig()).resolves.toEqual({ valid: true })
+  })
 })
+

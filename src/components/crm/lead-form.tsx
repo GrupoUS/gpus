@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -201,6 +202,9 @@ export function LeadForm() {
 			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
 				<DialogHeader>
 					<DialogTitle>Novo Lead</DialogTitle>
+					<DialogDescription>
+						Preencha os dados para criar um novo lead no sistema.
+					</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>

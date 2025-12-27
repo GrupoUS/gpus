@@ -1,6 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getOrganizationId } from "./lib/auth";
+import { getOrganizationId, requireOrgRole } from "./lib/auth";
 
 /**
  * Adopt orphaned students - FOR USE FROM FRONTEND (requires auth)
@@ -8,10 +8,8 @@ import { getOrganizationId } from "./lib/auth";
 export const adoptOrphanedStudents = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized: Please login to run this script.");
-    }
+    // Security: Require admin role
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
 
     const organizationId = await getOrganizationId(ctx);
     if (!organizationId) {
@@ -28,20 +26,14 @@ export const adoptOrphanedStudents = mutation({
  *
  * To find your org ID: Check your Clerk user ID (starts with user_xxx)
  * or your organization ID (starts with org_xxx)
- *
- * SECURITY: Requires adminSecret matching environment variable
  */
 export const adoptOrphanedStudentsManual = mutation({
   args: {
     organizationId: v.string(),
-    adminSecret: v.string(),
   },
   handler: async (ctx, args) => {
-    // Simple secret check - use environment variable ADMIN_SECRET
-    const expectedSecret = process.env.ADMIN_SECRET || "gpus-admin-2024";
-    if (args.adminSecret !== expectedSecret) {
-      throw new Error("Invalid admin secret");
-    }
+    // Security: Require admin role
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
 
     if (!args.organizationId) {
       throw new Error("organizationId is required");
