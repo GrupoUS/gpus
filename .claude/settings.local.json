@@ -46,7 +46,10 @@
       "Bash(py:*)",
       "Bash(bun run test import-workers.test.ts)",
       "Bash(bun run test:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(npx convex dev:*)",
+      "Bash(npx convex typegen:*)",
+      "Bash(npx convex codegen:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
