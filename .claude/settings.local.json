@@ -61,5 +61,19 @@
     "zai-mcp-server",
     "tavily",
     "sequential-thinking"
-  ]
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import json, sys, os; agents_content = open('AGENTS.md', 'r').read() if os.path.exists('AGENTS.md') else ''; output = {'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': agents_content}}; print(json.dumps(output))\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
 }
