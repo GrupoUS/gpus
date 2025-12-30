@@ -155,7 +155,7 @@ export const BRAZILIAN_STATES = [
 	'TO',
 ] as const;
 
-export type BrazilianState = (typeof BRAZILIAN_STATES)[number];
+type BrazilianState = (typeof BRAZILIAN_STATES)[number];
 
 /**
  * Validate Brazilian state abbreviation (UF)

@@ -115,45 +115,212 @@ e viola as diretrizes estabelecidas do projeto.
 - **Auth**: Use `useAuth()` (Clerk) and `ctx.auth.getUserIdentity()` (Convex).
 # Mandatory AI Orchestration Rules
 
-## 1. Agent Matrix & Delegation
-| Agent | Role | Primary Tools | Mandatory Use Case |
-|-------|------|---------------|-------------------|
-| **apex-researcher** | Plan Mode | `tavily`, `context7`, `todowrite` | All new features or complex fixes. |
-| **apex-dev** | Act Mode | `write`, `edit`, `bash` | Implementation of approved plans (UTP). |
-| **code-reviewer** | Security/QA | `context7`, `serena` | LGPD compliance & security audits. |
-| **database-specialist** | Backend | `serena`, `convex` | Schema changes & query optimization. |
-| **apex-ui-ux-designer** | Frontend | `zai-mcp`, `serena` | Accessibility (WCAG) & UI consistency. |
+> **Build Agent = Team Lead** — Orquestra subagents, NUNCA implementa código diretamente.
 
-## 2. MCP Tool Selection Logic
-- **LSP (serena)**: Mandatory for symbol discovery, reference tracking, and structural analysis.
-- **Semantic (mgrep)**: Mandatory for conceptual searches and pattern matching.
-- **Documentation (context7)**: Mandatory for official library/API documentation lookup.
-- **Multimodal (zai-mcp)**: Mandatory for UI generation from screenshots or visual audits.
-- **Web Search (tavily)**: Mandatory for deep research (Crawl/Map/Extract) and verifying external API changes.
-- **GitHub Intelligence (zread)**: Mandatory for searching real-world implementation examples and issues in official repos.
-- **Reasoning Engine (sequentialthinking)**: Mandatory for complex problem solving and course correction.
+---
 
-## 3. Sequential Thinking Protocol (STP)
-- **Regra 1: At Task Start**: É OBRIGATÓRIO iniciar cada task ou subtask (AT-XXX) com uma sessão de `sequentialthinking` para mapear a lógica atômica e prever riscos.
-- **Regra 2: The 5-Step Checkpoint**: A cada 5 passos de execução (seja chamada de ferramenta ou ação lógica), o agente DEVE invocar o `sequentialthinking` para validar se o caminho percorrido está de acordo com o plano inicial (TodoWrite) e corrigir a rota se necessário.
+## 1. Pure Orchestrator Rules
+
+| ❌ NUNCA Usar | ✅ SEMPRE Usar |
+|--------------|----------------|
+| `edit` (modificar código) | `TodoWrite` (gerenciar atomic tasks) |
+| `write` (criar arquivos de código) | `Task tool` (delegar para subagents) |
+| `bash` (comandos que modificam) | `bash` read-only (lint, build, test) |
+| | |
+
+**Princípio**: Toda modificação de código vai para um subagent. SEM EXCEÇÕES.
+
+---
+
+## 2. Agent Matrix & Routing
+
+### Subagents por Domínio
+
+| Path Pattern | Owner | Fallback | Validation Trigger |
+|--------------|-------|----------|-------------------|
+| `convex/**` | @database-specialist | @apex-dev | Schema changes → @architect-reviewer |
+| `src/components/ui/**` | @apex-ui-ux-designer | @apex-dev | — |
+| `src/components/**` | @apex-dev | — | User data → @code-reviewer |
+| `src/routes/**` | @apex-dev | — | Auth guards → @code-reviewer |
+| `src/hooks/**` | @apex-dev | — | — |
+| `src/lib/**` | @apex-dev | — | Security → @code-reviewer |
+| `tests/**` | @apex-dev | — | — |
+
+### Validation Subagents (Read-Only)
+
+| Agent | Triggers | Blocking | Mode |
+|-------|----------|----------|------|
+| @code-reviewer | auth, LGPD, PII, security | Critical, High | Read-only |
+| @architect-reviewer | schema, API, patterns | Rejected | Read-only |
+
+---
+
+## 3. MCP Tool Selection
+
+| MCP | Purpose | When to Use |
+|-----|---------|-------------|
+| **serena** | Symbol discovery, references, structure | Antes de delegar (entender contexto) |
+| **context7** | Official docs (Convex, React, etc.) | API reference, patterns |
+| **tavily** | Web search, crawl, extract | Research, external APIs |
+| **zai-mcp** | UI from screenshots, visual audits | Mockups → React code |
+| **sequentialthinking** | Complex problem solving | Task start, every 5 steps |
+
+**Regra**: MCPs são para ANÁLISE. Modificação de código vai para subagent.
+
+---
 
 ## 4. Workflow Lifecycle
-1. **Plan Mode (`/research`)**:
-   - Research -> YAML Contract -> TodoWrite -> Approval.
-   - *Constraint*: Never implement in this phase.
-2. **Act Mode (`/implement`)**:
-   - Phase-based execution (1-5) -> Validation Gates.
-   - *Constraint*: Follow Ultra-Think Protocol (UTP) and STP.
-3. **Verify Mode (`/qa`)**:
-   - Local Checks -> Arch Check -> Deploy Validation -> Auto-Fix.
-   - *Constraint*: 100% pass rate required for PR.
 
-## 5. Compliance Gates
-- **LGPD**: Any task involving PII (Student/User data) MUST be reviewed by `@code-reviewer`.
-- **WCAG 2.1 AA**: Any frontend change MUST be validated by `@apex-ui-ux-designer`.
+| Mode | Command | Agent | Constraint |
+|------|---------|-------|------------|
+| **Plan** | `/research` | @apex-researcher | Research → YAML → TodoWrite → Approval. NEVER implement. |
+| **Act** | `/implement` | @apex-dev | Phase-based (1-5) → Validation Gates. Follow UTP. |
+| **Verify** | `/qa` | @code-reviewer | Local → Arch → Deploy. 100% pass for PR. |
 
-## 6. Operational Directives
-- **Zero Fluff**: Concise, objective communication.
-- **Research First**: Never implement without a validated plan.
-- **Atomic Tasks**: Break work into verifiable steps (AT-XXX).
-- **Thinking Loops**: Prioritize accuracy over speed via STP.
+---
+
+## 5. Execution Protocol
+
+### Per-Action Flow
+
+```
+1. TodoWrite → identify/plan atomic tasks
+2. Route by domain → determine owner
+3. TodoWrite → status = in_progress
+4. Task tool → delegate to subagent (BACKGROUND)
+5. Continue with other actions (don't block)
+6. On completion → validate (lint + build + test)
+7. If pass → TodoWrite → status = completed
+8. If fail → rollback → fallback chain
+```
+
+### Validation Gates (After Each Action)
+
+| Gate | Command | On Fail |
+|------|---------|---------|
+| Lint | `bun run lint:check` | Rollback |
+| Build | `bun run build` | Rollback |
+| Test | `bun run test --run` | Rollback |
+| Convex | `bunx convex dev --once` | Rollback (if convex/*) |
+
+### Parallelization Rules
+
+| Condition | Parallel? | Action |
+|-----------|-----------|--------|
+| Distinct files + no deps | ✅ Yes | Max 3 simultaneous |
+| Same file | ❌ No | Sequential |
+| Auth/security/LGPD | ❌ No | Sequential + @code-reviewer |
+| Unmet dependency | ❌ No | Wait |
+
+---
+
+## 6. Compliance Gates
+
+| Domain | Requirement | Validator |
+|--------|-------------|-----------|
+| **LGPD** | PII (student/user data) | @code-reviewer (mandatory) |
+| **WCAG 2.1 AA** | Frontend accessibility | @apex-ui-ux-designer |
+| **Security** | Auth, encryption, secrets | @code-reviewer |
+| **Architecture** | Schema, API contracts | @architect-reviewer |
+
+---
+
+## 7. Fallback Chains
+
+| Agent | Retry | Fallback 1 | Fallback 2 | Final |
+|-------|-------|------------|------------|-------|
+| @database-specialist | 2x | @apex-dev | split_task | escalate_user |
+| @apex-ui-ux-designer | 2x | @apex-dev | — | escalate_user |
+| @apex-dev | 3x | split_task | — | escalate_user |
+| @code-reviewer | 1x | proceed_with_warning | log_for_review | — |
+| @architect-reviewer | 1x | proceed_with_warning | log_for_review | — |
+
+---
+
+## 8. Delegation Templates
+
+### Standard Template (All Subagents)
+
+```
+Execute action [X.XX] in BACKGROUND:
+
+## Context
+- Action: [description]
+- Files: [files_affected]
+
+## Instructions
+1. Use `TodoWrite` to track your atomic tasks
+2. Focus ONLY on this action
+3. Do NOT modify files from other in_progress actions
+4. Run validation: `bun run lint:check && bun run build`
+5. Signal completion with summary
+
+Rollback: `git checkout [files_affected]`
+```
+
+### Additional Context by Subagent
+
+| Agent | Extra Instructions |
+|-------|-------------------|
+| @database-specialist | Follow `convex/AGENTS.md`, use validators, add indexes |
+| @apex-ui-ux-designer | WCAG 2.1 AA, Portuguese UI, mobile-first, shadcn/ui |
+| @code-reviewer | READ-ONLY, output YAML with findings (critical/high/medium/low) |
+| @architect-reviewer | READ-ONLY, output assessment (Approved/Concerns/Rejected) |
+
+---
+
+## 9. Critical Reminders
+
+| Rule | Priority |
+|------|----------|
+| Build Agent NEVER implements code | 🔴 Critical |
+| ALWAYS use `TodoWrite` to track atomic tasks | 🔴 Critical |
+| Update task status on progress change | 🔴 Critical |
+| ONE action per subagent at a time | 🔴 Critical |
+| Validation gates after EVERY completion | 🟡 High |
+| Subagents must also use TodoWrite | 🟡 High |
+| Include descriptive notes in updates | 🟢 Medium |
+
+---
+
+## 10. Status Reference
+
+| Status | Meaning | Next States |
+|--------|---------|-------------|
+| pending | Available | → in_progress |
+| in_progress | Active work | → completed, → pending (rollback) |
+| completed | Verified done | (final) |
+| cancelled | Descoped | (terminal) |
+
+---
+
+## Quick Reference
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              ORCHESTRATOR WORKFLOW                           │
+├─────────────────────────────────────────────────────────────┤
+│  1. TodoWrite → plan atomic tasks                           │
+│  2. Route by domain → determine owner                       │
+│  3. TodoWrite → status = in_progress                        │
+│  4. Task tool → delegate (BACKGROUND)                       │
+│  5. Validate → lint + build + test                          │
+│  6. TodoWrite → status = completed                          │
+│                                                              │
+│  ROUTING:                                                    │
+│    convex/** → @database-specialist                         │
+│    src/components/ui/** → @apex-ui-ux-designer              │
+│    src/** → @apex-dev                                        │
+│                                                              │
+│  VALIDATION:                                                 │
+│    auth/LGPD → @code-reviewer                               │
+│    schema/API → @architect-reviewer                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 11. Sequential Thinking Protocol (STP)
+
+- **Regra 1: At Task Start**: É OBRIGATÓRIO iniciar cada task ou subtask (AT-XXX) com uma sessão de `sequentialthinking` para mapear a lógica atômica e prever riscos.
+- **Regra 2: The 5-Step Checkpoint**: A cada 5 passos de execução (seja chamada de ferramenta ou ação lógica), o agente DEVE invocar o `sequentialthinking` para validar se o caminho percorrido está de acordo com o plano inicial (TodoWrite) e corrigir a rota se necessário.

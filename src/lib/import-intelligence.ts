@@ -132,7 +132,7 @@ export function detectColumnType(values: unknown[]): string | null {
 // Intelligent Mapping Logic
 // ============================================================================
 
-export interface MappingSuggestion {
+interface MappingSuggestion {
 	schemaField: string;
 	confidence: number; // 0 to 1
 	reason: 'exact' | 'synonym' | 'pattern' | 'semantic' | 'manual';
