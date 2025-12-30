@@ -186,25 +186,83 @@ export const getPaymentsByStudent = query({
 });
 
 /**
- * Get pending payments
+ * Get sync statistics for all sync types (Internal)
  */
-export const getPendingPayments = query({
+export const getSyncStatisticsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await calculateSyncStatistics(ctx);
+  },
+});
+
+/**
+ * Get sync statistics for all sync types (Public)
+ */
+export const getSyncStatistics = query({
   args: {},
   handler: async (ctx) => {
     await requireAuth(ctx);
-    const orgId = await getOrganizationId(ctx);
-
-    const payments = await ctx.db
-      .query("asaasPayments")
-      .withIndex("by_organization_status", (q) =>
-        q.eq("organizationId", orgId).eq("status", "PENDING"),
-      )
-      .order("asc")
-      .collect();
-
-    return payments;
+    return await calculateSyncStatistics(ctx);
   },
 });
+
+async function calculateSyncStatistics(ctx: any) {
+    // Get all sync logs
+    const logs = await ctx.db
+      .query("asaasSyncLogs")
+      .withIndex("by_created")
+      .order("desc")
+      .take(100);
+
+    // Group by sync type
+    const byType: Record<string, Doc<"asaasSyncLogs">[]> = {};
+    for (const log of logs) {
+      if (!byType[log.syncType]) {
+        byType[log.syncType] = [];
+      }
+      byType[log.syncType].push(log);
+    }
+
+    // Calculate statistics per type
+    const stats: Record<
+      string,
+      {
+        lastSync?: Doc<"asaasSyncLogs">;
+        totalSyncs: number;
+        successful: number;
+        failed: number;
+        running: number;
+        totalRecordsProcessed: number;
+        avgRecordsPerSync: number;
+      }
+    > = {};
+
+    const syncTypes = ["customers", "payments", "subscriptions", "financial"] as const;
+
+    for (const syncType of syncTypes) {
+      const typeLogs = byType[syncType] || [];
+      const successful = typeLogs.filter((l: any) => l.status === "completed");
+      const failed = typeLogs.filter((l: any) => l.status === "failed");
+      const running = typeLogs.filter((l: any) => l.status === "running");
+      const totalRecords = typeLogs.reduce((sum: number, l: any) => sum + l.recordsProcessed, 0);
+      const avgRecords =
+        typeLogs.length > 0
+          ? totalRecords / typeLogs.length
+          : 0;
+
+      stats[syncType] = {
+        lastSync: typeLogs[0],
+        totalSyncs: typeLogs.length,
+        successful: successful.length,
+        failed: failed.length,
+        running: running.length,
+        totalRecordsProcessed: totalRecords,
+        avgRecordsPerSync: Math.round(avgRecords),
+      };
+    }
+
+    return stats;
+}
 
 /**
  * Get overdue payments

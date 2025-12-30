@@ -50,7 +50,9 @@
       "Bash(npx convex dev:*)",
       "Bash(npx convex typegen:*)",
       "Bash(npx convex codegen:*)",
-      "Bash(bun run lint:check:*)"
+      "Bash(bun run lint:check:*)",
+      "Bash(bun run lint:fix:*)",
+      "Bash(bun run format:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

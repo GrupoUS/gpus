@@ -20,6 +20,54 @@ const PAYMENT_VALIDATION = {
   MAX_INSTALLMENTS: 120, // Maximum number of installments (10 years)
 } as const;
 
+// ═══════════════════════════════════════════════════════
+// SHARED SCHEMAS (reduce type instantiation depth)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Billing type for payments
+ */
+const billingTypeSchema = v.union(
+  v.literal("BOLETO"),
+  v.literal("CREDIT_CARD"),
+  v.literal("PIX"),
+  v.literal("DEBIT_CARD"),
+  v.literal("UNDEFINED"),
+);
+
+/**
+ * Payment status from Asaas
+ */
+const paymentStatusSchema = v.union(
+  v.literal("PENDING"),
+  v.literal("RECEIVED"),
+  v.literal("CONFIRMED"),
+  v.literal("OVERDUE"),
+  v.literal("REFUNDED"),
+  v.literal("RECEIVED_IN_CASH"),
+  v.literal("RECEIVED_IN_CASH_UNDONE"),
+  v.literal("CHARGEBACK_REQUESTED"),
+  v.literal("CHARGEBACK_DISPUTE"),
+  v.literal("AWAITING_CHARGEBACK_REVERSAL"),
+  v.literal("APPROVED_BY_RISK_ANALYSIS"),
+  v.literal("REJECTED_BY_RISK_ANALYSIS"),
+  v.literal("DELETED"),
+  v.literal("DUNNING_REQUESTED"),
+  v.literal("DUNNING_RECEIVED"),
+  v.literal("AWAITING_RISK_ANALYSIS"),
+  v.literal("CANCELLED"),
+);
+
+/**
+ * Subscription status from Asaas
+ */
+const subscriptionStatusSchema = v.union(
+  v.literal("ACTIVE"),
+  v.literal("INACTIVE"),
+  v.literal("CANCELLED"),
+  v.literal("EXPIRED"),
+);
+
 /**
  * Validates payment amount according to business rules
  * @throws Error if amount is invalid
@@ -107,13 +155,7 @@ export const createCharge = internalMutation({
     asaasPaymentId: v.string(),
     amount: v.number(),
     dueDate: v.string(),
-    billingType: v.union(
-      v.literal("BOLETO"),
-      v.literal("CREDIT_CARD"),
-      v.literal("PIX"),
-      v.literal("DEBIT_CARD"),
-      v.literal("UNDEFINED"),
-    ),
+    billingType: billingTypeSchema,
     description: v.optional(v.string()),
     installmentCount: v.optional(v.number()),
     installmentNumber: v.optional(v.number()),
@@ -162,13 +204,7 @@ export const createPaymentFromEnrollment = mutation({
     asaasPaymentId: v.string(),
     amount: v.number(),
     dueDate: v.string(),
-    billingType: v.union(
-      v.literal("BOLETO"),
-      v.literal("CREDIT_CARD"),
-      v.literal("PIX"),
-      v.literal("DEBIT_CARD"),
-      v.literal("UNDEFINED"),
-    ),
+    billingType: billingTypeSchema,
     description: v.optional(v.string()),
     installmentCount: v.optional(v.number()),
     installmentNumber: v.optional(v.number()),
@@ -228,25 +264,7 @@ export const createPaymentFromEnrollment = mutation({
 export const updateChargeStatus = internalMutation({
   args: {
     asaasPaymentId: v.string(),
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("RECEIVED"),
-      v.literal("CONFIRMED"),
-      v.literal("OVERDUE"),
-      v.literal("REFUNDED"),
-      v.literal("RECEIVED_IN_CASH"),
-      v.literal("RECEIVED_IN_CASH_UNDONE"),
-      v.literal("CHARGEBACK_REQUESTED"),
-      v.literal("CHARGEBACK_DISPUTE"),
-      v.literal("AWAITING_CHARGEBACK_REVERSAL"),
-      v.literal("APPROVED_BY_RISK_ANALYSIS"),
-      v.literal("REJECTED_BY_RISK_ANALYSIS"),
-      v.literal("DELETED"),
-      v.literal("DUNNING_REQUESTED"),
-      v.literal("DUNNING_RECEIVED"),
-      v.literal("AWAITING_RISK_ANALYSIS"),
-      v.literal("CANCELLED"),
-    ),
+    status: paymentStatusSchema,
   },
   handler: async (ctx, args) => {
     const charge = await ctx.db
@@ -511,13 +529,7 @@ export const createPaymentFromAsaas = internalMutation({
     netValue: v.optional(v.number()),
     status: v.string(),
     dueDate: v.number(),
-    billingType: v.union(
-      v.literal("BOLETO"),
-      v.literal("PIX"),
-      v.literal("CREDIT_CARD"),
-      v.literal("DEBIT_CARD"),
-      v.literal("UNDEFINED"),
-    ),
+    billingType: billingTypeSchema,
     description: v.optional(v.string()),
     boletoUrl: v.optional(v.string()),
     confirmedDate: v.optional(v.number()),
@@ -654,14 +666,7 @@ export const createSubscriptionFromAsaas = internalMutation({
 export const updateSubscriptionFromAsaas = internalMutation({
   args: {
     subscriptionId: v.id("asaasSubscriptions"),
-    status: v.optional(
-      v.union(
-        v.literal("ACTIVE"),
-        v.literal("INACTIVE"),
-        v.literal("CANCELLED"),
-        v.literal("EXPIRED"),
-      ),
-    ),
+    status: v.optional(subscriptionStatusSchema),
     value: v.optional(v.number()),
     nextDueDate: v.optional(v.number()),
   },
@@ -684,12 +689,7 @@ export const updateSubscriptionFromAsaas = internalMutation({
 export const updateSubscriptionStatusInternal = internalMutation({
   args: {
     asaasSubscriptionId: v.string(),
-    status: v.union(
-      v.literal("ACTIVE"),
-      v.literal("INACTIVE"),
-      v.literal("CANCELLED"),
-      v.literal("EXPIRED"),
-    ),
+    status: subscriptionStatusSchema,
     nextDueDate: v.optional(v.number()),
     value: v.optional(v.number()),
   },

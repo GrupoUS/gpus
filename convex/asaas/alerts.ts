@@ -345,7 +345,7 @@ async function checkApiErrorRate(ctx: any): Promise<{
   totalRequests: number;
 }> {
   // @ts-ignore - Deep type instantiation
-  const logs = await ctx.runQuery(internal.asaas.monitoring.getApiHealthMetrics, {
+  const logs = await ctx.runQuery(internal.asaas.monitoring.getApiHealthMetricsInternal, {
     hours: 1,
   });
 
@@ -374,7 +374,7 @@ async function checkRecentSyncFailures(ctx: any): Promise<{
   failedCount: number;
 }> {
   // @ts-ignore - Deep type instantiation
-  const stats = await ctx.runQuery(internal.asaas.monitoring.getSyncStatistics, {});
+  const stats = await ctx.runQuery(internal.asaas.queries.getSyncStatisticsInternal, {});
 
   const totalFailed =
     (stats.customers?.failed || 0) +
@@ -501,7 +501,7 @@ async function findExistingAlert(
 
   // Get active alerts of this type
   // @ts-ignore - Deep type instantiation
-  const alerts = await ctx.runQuery(internal.asaas.monitoring.getAlertsByType, {
+  const alerts = await ctx.runQuery(internal.asaas.monitoring.getAlertsByTypeInternal, {
     alertType: args.alertType,
     organizationId: args.organizationId,
     limit: 100,
