@@ -134,12 +134,13 @@ export const syncStudentAsCustomerInternal = internalMutation({
     const student = await ctx.db.get(args.studentId);
     if (!student) throw new Error("Student not found");
 
-    // Logic to determine if we create or update in Asaas is in the action
-    // This mutation just updates the local student record with Asaas data
-    // Wait, the error said this was missing from 'internal.asaas.mutations'
-    // But usually we call actions for Asaas sync.
-    // However, some places might need a direct mutation to update the ID.
-    // I'll keep it simple for now.
+    // TODO: Implement Asaas customer sync logic
+    // This mutation is a placeholder for syncing student data with Asaas.
+    // The actual API call should be done in an action, and this mutation
+    // should only update the local student record with the Asaas customer ID.
+    // For now, this is called by the action wrapper but the actual sync
+    // happens via updateStudentAsaasId after the action completes.
+    return { studentId: args.studentId, synced: false };
   },
 });
 

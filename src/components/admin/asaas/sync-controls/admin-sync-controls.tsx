@@ -45,9 +45,20 @@ export function AdminSyncControls() {
 		syncTypes: [] as Array<'customers' | 'payments' | 'subscriptions'>,
 	});
 
-	// Get current sync status
-	const syncStatusResult = useQuery(api.asaas.sync.getLastSyncStatus, {});
-	const syncStatus = syncStatusResult?.data;
+	// Get current sync status - use most recent sync log
+	// biome-ignore lint/suspicious/noExplicitAny: Break type instantiation depth - Convex runtime validation ensures correctness
+	const recentSyncs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 1 }) as any;
+	const syncStatus = recentSyncs?.[0] as
+		| {
+				status: string;
+				syncType: string;
+				startedAt: number;
+				recordsProcessed: number;
+				recordsCreated: number;
+				recordsUpdated: number;
+				recordsFailed: number;
+		  }
+		| undefined;
 
 	// Get auto-sync settings (would need to be implemented)
 	// const settings = useQuery(api.asaas.settings.getAutoSyncSettings, {});

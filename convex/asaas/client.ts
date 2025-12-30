@@ -328,6 +328,7 @@ export class AsaasClient {
 
   /**
    * Sanitize request body to remove sensitive data
+   * Only redacts values where the key name indicates a secret
    */
   private sanitizeBody(body: unknown): unknown {
     if (!body || typeof body !== "object") {
@@ -336,13 +337,15 @@ export class AsaasClient {
 
     const sanitized = { ...(body as Record<string, unknown>) };
 
-    // Remove potential API keys or tokens
+    // Pattern to match sensitive key names
+    const sensitiveKeyPattern = /^(api[_-]?key|access[_-]?token|secret|password|credential|auth[_-]?token|bearer|private[_-]?key)$/i;
+
+    // Only redact values where key name indicates a secret
     Object.keys(sanitized).forEach((key) => {
       const value = sanitized[key];
       if (
         typeof value === "string" &&
-        value.length > 32 &&
-        /^[a-zA-Z0-9]+$/.test(value)
+        sensitiveKeyPattern.test(key)
       ) {
         sanitized[key] = "[REDACTED]";
       }

@@ -36,7 +36,7 @@ async function generateIdempotencyKey(
   event: string,
   paymentId: string | undefined,
 ): Promise<string> {
-  const data = `${event}:${paymentId || "no-payment"}:${Math.floor(Date.now() / 60000)}`; // 1-minute window
+  const data = `${event}:${paymentId || "no-payment"}:${Math.floor(Date.now() / 600000)}`; // 10-minute window (Asaas retries at 3.5+ minutes)
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(data);
   const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
@@ -91,7 +91,8 @@ export const processWebhookIdempotent = internalMutation({
       expiresAt: now + 86400000, // 24 hours
     });
 
-    return { processed: true, ...result };
+    // Return the result directly to avoid overriding its processed field
+    return result;
   },
 });
 
@@ -182,6 +183,8 @@ export const processWebhook = internalMutation({
         REFUNDED: "REFUNDED",
         DELETED: "DELETED",
         CANCELLED: "CANCELLED",
+        RECEIVED_IN_CASH: "RECEIVED_IN_CASH",
+        RECEIVED_IN_CASH_UNDONE: "RECEIVED_IN_CASH_UNDONE",
       };
 
       const status = statusMap[payment.status] || "PENDING";

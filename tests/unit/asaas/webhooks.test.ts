@@ -4,7 +4,7 @@
  * Tests for webhook processing, idempotency, and deduplication
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 // Type alias for Id to avoid import issues in tests
 type Id<T> = string & { __brand: T }
@@ -152,10 +152,6 @@ describe('Webhooks - Idempotency', () => {
 })
 
 describe('Webhooks - Payment Processing', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
 	it('should process PAYMENT_CONFIRMED event', async () => {
 		const ctx = createMockContext()
 		ctx.db.insert = vi.fn().mockResolvedValue('webhook-id')
@@ -222,10 +218,6 @@ describe('Webhooks - Payment Processing', () => {
 })
 
 describe('Webhooks - Subscription Processing', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
 	it('should process SUBSCRIPTION_ACTIVE event', () => {
 		const payload = {
 			subscription: {

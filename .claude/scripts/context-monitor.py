@@ -98,6 +98,7 @@ def get_git_info(workspace_dir):
             branch = result.stdout.strip()
             return branch
     except (subprocess.TimeoutExpired, FileNotFoundError):
+        # Git command may timeout on slow networks or fail if git is not installed
         pass
     return None
 
@@ -154,8 +155,7 @@ def get_context_display(context_info):
 
     for i in range(segments):
         if i < filled:
-            # Gradient from green to red based on position
-            intensity = i / segments
+            # Color based on overall percent (gradient effect)
             if percent < 50:
                 # Green to yellow
                 bar_color = "\033[32m"
@@ -300,9 +300,6 @@ def main():
         # Git branch detection
         git_branch = get_git_info(workspace_dir)
         git_display = get_git_display(git_branch)
-
-        # Timestamp
-        timestamp = get_timestamp()
 
         # Model display with context-aware coloring
         if context_info:
