@@ -31,31 +31,49 @@ export const getStudentById = internalQuery({
  */
 export const getPendingExportPayments = internalQuery({
   args: {
-    organizationId: v.optional(v.string()),
+    organizationId: v.string(),
     startDate: v.optional(v.number()), // Timestamp
     endDate: v.optional(v.number()), // Timestamp
   },
   handler: async (ctx, args) => {
+    return await getPendingExportPaymentsLogic(ctx, args.organizationId, args);
+  },
+});
+
+/**
+ * Get pending export payments (Public for Admin UI)
+ */
+export const getPendingExportPaymentsPublic = query({
+  args: {
+    startDate: v.optional(v.number()), // Timestamp
+    endDate: v.optional(v.number()), // Timestamp
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
+    return await getPendingExportPaymentsLogic(ctx, orgId, args);
+  },
+});
+
+async function getPendingExportPaymentsLogic(ctx: any, orgId: string, args: any) {
     // Get all payments
-    let payments = await ctx.db.query("asaasPayments").order("desc").take(1000);
+    let payments = await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
+      .order("desc")
+      .take(1000);
 
     // Post-index filters
-    if (args.organizationId) {
-      payments = payments.filter(
-        (p) => p.organizationId === args.organizationId,
-      );
-    }
     if (args.startDate !== undefined) {
-      payments = payments.filter((p) => p.dueDate >= args.startDate!);
+      payments = payments.filter((p: any) => p.dueDate >= args.startDate!);
     }
     if (args.endDate !== undefined) {
-      payments = payments.filter((p) => p.dueDate <= args.endDate!);
+      payments = payments.filter((p: any) => p.dueDate <= args.endDate!);
     }
 
     // Filter for payments without Asaas payment ID
-    return payments.filter((p) => !p.asaasPaymentId);
-  },
-});
+    return payments.filter((p: any) => !p.asaasPaymentId);
+}
 
 /**
  * Get a payment by ID (internal query for export workers)

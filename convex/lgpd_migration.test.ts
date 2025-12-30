@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 // Set encryption key BEFORE any imports that use it
-vi.stubEnv("ENCRYPTION_KEY", "test-encryption-key-at-least-16-chars");
+process.env.ENCRYPTION_KEY = "test-encryption-key-at-least-16-chars";
 
 import { createStudentFromAsaas } from "./asaas/mutations";
 import { encryptLegacyCpfs } from "./migrations";

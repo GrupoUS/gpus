@@ -46,19 +46,8 @@ export function AdminSyncControls() {
 	});
 
 	// Get current sync status - use most recent sync log
-	// biome-ignore lint/suspicious/noExplicitAny: Break type instantiation depth - Convex runtime validation ensures correctness
-	const recentSyncs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 1 }) as any;
-	const syncStatus = recentSyncs?.[0] as
-		| {
-				status: string;
-				syncType: string;
-				startedAt: number;
-				recordsProcessed: number;
-				recordsCreated: number;
-				recordsUpdated: number;
-				recordsFailed: number;
-		  }
-		| undefined;
+	const recentSyncs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 1 });
+	const syncStatus = recentSyncs?.[0];
 
 	// Get auto-sync settings (would need to be implemented)
 	// const settings = useQuery(api.asaas.settings.getAutoSyncSettings, {});

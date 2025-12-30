@@ -15,6 +15,7 @@ export const list = query({
     churnRisk: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
+  returns: v.array(v.any()),
   handler: async (ctx, args) => {
     await requirePermission(ctx, PERMISSIONS.STUDENTS_READ)
     const organizationId = await getOrganizationId(ctx)

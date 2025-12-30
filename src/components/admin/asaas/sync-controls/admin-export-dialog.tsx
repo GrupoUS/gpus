@@ -57,8 +57,9 @@ export function AdminExportDialog() {
 	// Get count of students/payments that need export
 	// biome-ignore lint/suspicious/noExplicitAny: Break type instantiation depth - Convex runtime validation ensures correctness
 	const studentsToExport = useQuery(api.students.list, {}) as any;
-	// Note: Pending payments count - placeholder until public query is available
-	const pendingPaymentsCount = 0;
+
+	const pendingPayments = useQuery(api.asaas.queries.getPendingExportPaymentsPublic, {});
+	const pendingPaymentsCount = pendingPayments?.length || 0;
 
 	// Actions for export - will be used in future implementation
 	// Currently commented out to get build passing - export actions exist in convex/asaas/export.ts
