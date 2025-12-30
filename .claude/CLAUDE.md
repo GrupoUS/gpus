@@ -123,10 +123,10 @@ e viola as diretrizes estabelecidas do projeto.
 
 | ❌ NUNCA Usar | ✅ SEMPRE Usar |
 |--------------|----------------|
-| `edit` (modificar código) | `readroadmap` (ler estado) |
-| `write` (criar arquivos de código) | `updateroadmap` (atualizar status) |
-| `bash` (comandos que modificam) | `Task tool` (delegar para subagents) |
-| | `bash` read-only (lint, build, test) |
+| `edit` (modificar código) | `TodoWrite` (gerenciar atomic tasks) |
+| `write` (criar arquivos de código) | `Task tool` (delegar para subagents) |
+| `bash` (comandos que modificam) | `bash` read-only (lint, build, test) |
+| | |
 
 **Princípio**: Toda modificação de código vai para um subagent. SEM EXCEÇÕES.
 
@@ -184,13 +184,13 @@ e viola as diretrizes estabelecidas do projeto.
 ### Per-Action Flow
 
 ```
-1. readroadmap → identify pending action
+1. TodoWrite → identify/plan atomic tasks
 2. Route by domain → determine owner
-3. updateroadmap → status = in_progress
+3. TodoWrite → status = in_progress
 4. Task tool → delegate to subagent (BACKGROUND)
 5. Continue with other actions (don't block)
 6. On completion → validate (lint + build + test)
-7. If pass → updateroadmap → completed
+7. If pass → TodoWrite → status = completed
 8. If fail → rollback → fallback chain
 ```
 
@@ -249,7 +249,7 @@ Execute action [X.XX] in BACKGROUND:
 - Files: [files_affected]
 
 ## Instructions
-1. Use `readroadmap` first
+1. Use `TodoWrite` to track your atomic tasks
 2. Focus ONLY on this action
 3. Do NOT modify files from other in_progress actions
 4. Run validation: `bun run lint:check && bun run build`
@@ -274,11 +274,11 @@ Rollback: `git checkout [files_affected]`
 | Rule | Priority |
 |------|----------|
 | Build Agent NEVER implements code | 🔴 Critical |
-| ALWAYS `readroadmap` before ANY work | 🔴 Critical |
-| ALWAYS `updateroadmap` on status change | 🔴 Critical |
+| ALWAYS use `TodoWrite` to track atomic tasks | 🔴 Critical |
+| Update task status on progress change | 🔴 Critical |
 | ONE action per subagent at a time | 🔴 Critical |
 | Validation gates after EVERY completion | 🟡 High |
-| Subagents must also use roadmap tools | 🟡 High |
+| Subagents must also use TodoWrite | 🟡 High |
 | Include descriptive notes in updates | 🟢 Medium |
 
 ---
@@ -300,12 +300,12 @@ Rollback: `git checkout [files_affected]`
 ┌─────────────────────────────────────────────────────────────┐
 │              ORCHESTRATOR WORKFLOW                           │
 ├─────────────────────────────────────────────────────────────┤
-│  1. readroadmap → identify pending                          │
+│  1. TodoWrite → plan atomic tasks                           │
 │  2. Route by domain → determine owner                       │
-│  3. updateroadmap → in_progress                             │
+│  3. TodoWrite → status = in_progress                        │
 │  4. Task tool → delegate (BACKGROUND)                       │
 │  5. Validate → lint + build + test                          │
-│  6. updateroadmap → completed                               │
+│  6. TodoWrite → status = completed                          │
 │                                                              │
 │  ROUTING:                                                    │
 │    convex/** → @database-specialist                         │
