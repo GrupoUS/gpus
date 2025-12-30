@@ -55,8 +55,7 @@ export function AdminExportDialog() {
 	const manualId = useId();
 
 	// Get count of students/payments that need export
-	// biome-ignore lint/suspicious/noExplicitAny: Break type instantiation depth - Convex runtime validation ensures correctness
-	const studentsToExport = useQuery(api.students.list, {}) as any;
+	const studentsToExport = useQuery(api.students.list, {});
 
 	const pendingPayments = useQuery(api.asaas.queries.getPendingExportPaymentsPublic, {});
 	const pendingPaymentsCount = pendingPayments?.length || 0;
