@@ -106,7 +106,7 @@ export function AppSidebar() {
 	);
 }
 
-export const Logo = () => {
+const Logo = () => {
 	return (
 		<Link
 			to="/dashboard"
@@ -124,7 +124,7 @@ export const Logo = () => {
 	);
 };
 
-export const LogoIcon = () => {
+const LogoIcon = () => {
 	return (
 		<Link
 			to="/dashboard"
