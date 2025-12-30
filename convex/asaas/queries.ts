@@ -7,7 +7,120 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getOrganizationId } from "../lib/auth";
+
+// ═══════════════════════════════════════════════════════
+// INTERNAL QUERIES (for workers and actions)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get a student by ID (internal query for export workers)
+ */
+export const getStudentById = internalQuery({
+  args: {
+    studentId: v.id("students"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.studentId);
+  },
+});
+
+/**
+ * Get pending export payments (payments without Asaas payment ID)
+ * Internal query for export workers
+ */
+export const getPendingExportPayments = internalQuery({
+  args: {
+    organizationId: v.string(),
+    startDate: v.optional(v.number()), // Timestamp
+    endDate: v.optional(v.number()), // Timestamp
+  },
+  handler: async (ctx, args) => {
+    return await getPendingExportPaymentsLogic(ctx, args.organizationId, args);
+  },
+});
+
+/**
+ * Get pending export payments (Public for Admin UI)
+ */
+export const getPendingExportPaymentsPublic = query({
+  args: {
+    startDate: v.optional(v.number()), // Timestamp
+    endDate: v.optional(v.number()), // Timestamp
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
+    return await getPendingExportPaymentsLogic(ctx, orgId, args);
+  },
+});
+
+async function getPendingExportPaymentsLogic(ctx: any, orgId: string, args: any) {
+    // Get all payments
+    let payments = await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
+      .order("desc")
+      .take(1000);
+
+    // Post-index filters
+    if (args.startDate !== undefined) {
+      payments = payments.filter((p: any) => p.dueDate >= args.startDate!);
+    }
+    if (args.endDate !== undefined) {
+      payments = payments.filter((p: any) => p.dueDate <= args.endDate!);
+    }
+
+    // Filter for payments without Asaas payment ID
+    return payments.filter((p: any) => !p.asaasPaymentId);
+}
+
+/**
+ * Get a payment by ID (internal query for export workers)
+ */
+export const getPaymentById = internalQuery({
+  args: {
+    paymentId: v.id("asaasPayments"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.paymentId);
+  },
+});
+
+/**
+ * Get stale webhooks (unprocessed webhooks older than threshold)
+ * Internal query for alert checking
+ */
+export const getStaleWebhooks = internalQuery({
+  args: {
+    olderThan: v.number(), // Timestamp
+  },
+  handler: async (ctx, args) => {
+    let webhooks = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_processed", (q) => q.eq("processed", false))
+      .collect();
+
+    // Filter by age
+    return webhooks.filter((w) => w.createdAt < args.olderThan);
+  },
+});
+
+/**
+ * Get recent audit logs (for alert checking)
+ */
+export const getRecentAuditLogs = internalQuery({
+  args: {
+    since: v.number(), // Timestamp
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("asaasApiAudit")
+      .withIndex("by_timestamp", (q) => q.gte("timestamp", args.since))
+      .order("desc")
+      .take(1000);
+  },
+});
 
 /**
  * List all students (internal)
@@ -55,11 +168,12 @@ export const getPaymentsByEnrollment = query({
   args: { enrollmentId: v.id("enrollments") },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_enrollment", (q) =>
-        q.eq("enrollmentId", args.enrollmentId),
+      .withIndex("by_organization_enrollment", (q) =>
+        q.eq("organizationId", orgId).eq("enrollmentId", args.enrollmentId),
       )
       .order("desc")
       .collect();
@@ -75,10 +189,13 @@ export const getPaymentsByStudent = query({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .withIndex("by_organization_student", (q) =>
+        q.eq("organizationId", orgId).eq("studentId", args.studentId),
+      )
       .order("desc")
       .collect();
 
@@ -87,22 +204,83 @@ export const getPaymentsByStudent = query({
 });
 
 /**
- * Get pending payments
+ * Get sync statistics for all sync types (Internal)
  */
-export const getPendingPayments = query({
+export const getSyncStatisticsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await calculateSyncStatistics(ctx);
+  },
+});
+
+/**
+ * Get sync statistics for all sync types (Public)
+ */
+export const getSyncStatistics = query({
   args: {},
   handler: async (ctx) => {
     await requireAuth(ctx);
-
-    const payments = await ctx.db
-      .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "PENDING"))
-      .order("asc")
-      .collect();
-
-    return payments;
+    return await calculateSyncStatistics(ctx);
   },
 });
+
+async function calculateSyncStatistics(ctx: any) {
+    // Get all sync logs
+    const logs = await ctx.db
+      .query("asaasSyncLogs")
+      .withIndex("by_created")
+      .order("desc")
+      .take(100);
+
+    // Group by sync type
+    const byType: Record<string, Doc<"asaasSyncLogs">[]> = {};
+    for (const log of logs) {
+      if (!byType[log.syncType]) {
+        byType[log.syncType] = [];
+      }
+      byType[log.syncType].push(log);
+    }
+
+    // Calculate statistics per type
+    const stats: Record<
+      string,
+      {
+        lastSync?: Doc<"asaasSyncLogs">;
+        totalSyncs: number;
+        successful: number;
+        failed: number;
+        running: number;
+        totalRecordsProcessed: number;
+        avgRecordsPerSync: number;
+      }
+    > = {};
+
+    const syncTypes = ["customers", "payments", "subscriptions", "financial"] as const;
+
+    for (const syncType of syncTypes) {
+      const typeLogs = byType[syncType] || [];
+      const successful = typeLogs.filter((l: any) => l.status === "completed");
+      const failed = typeLogs.filter((l: any) => l.status === "failed");
+      const running = typeLogs.filter((l: any) => l.status === "running");
+      const totalRecords = typeLogs.reduce((sum: number, l: any) => sum + l.recordsProcessed, 0);
+      const avgRecords =
+        typeLogs.length > 0
+          ? totalRecords / typeLogs.length
+          : 0;
+
+      stats[syncType] = {
+        lastSync: typeLogs[0],
+        totalSyncs: typeLogs.length,
+        successful: successful.length,
+        failed: failed.length,
+        running: running.length,
+        totalRecordsProcessed: totalRecords,
+        avgRecordsPerSync: Math.round(avgRecords),
+      };
+    }
+
+    return stats;
+}
 
 /**
  * Get overdue payments
@@ -111,17 +289,24 @@ export const getOverduePayments = query({
   args: {},
   handler: async (ctx) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const now = Date.now();
+
+    // Get overdue by status
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "OVERDUE"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "OVERDUE"),
+      )
       .collect();
 
     // Also check for PENDING payments past due date
     const pendingPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "PENDING"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
+      )
       .collect();
 
     const overduePending = pendingPayments.filter((p) => p.dueDate < now);
@@ -140,12 +325,16 @@ export const getFinancialSummary = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const startDate = args.startDate || 0;
     const endDate = args.endDate || Date.now();
 
-    // Get all payments in date range
-    const allPayments = await ctx.db.query("asaasPayments").collect();
+    // Get all payments for organization (optimized with index)
+    const allPayments = await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+      .collect();
 
     const filteredPayments = allPayments.filter((p) => {
       const paymentDate = p.confirmedDate || p.createdAt;
@@ -154,7 +343,12 @@ export const getFinancialSummary = query({
 
     // Calculate entradas (received/confirmed payments)
     const entradas = filteredPayments
-      .filter((p) => p.status === "RECEIVED" || p.status === "CONFIRMED")
+      .filter(
+        (p) =>
+          p.status === "RECEIVED" ||
+          p.status === "CONFIRMED" ||
+          p.status === "RECEIVED_IN_CASH",
+      )
       .reduce((sum, p) => sum + (p.netValue || p.value), 0);
 
     // Calculate saídas (refunded payments)
@@ -162,18 +356,22 @@ export const getFinancialSummary = query({
       .filter((p) => p.status === "REFUNDED")
       .reduce((sum, p) => sum + (p.netValue || p.value), 0);
 
-    // Get pending payments
+    // Get pending payments for org
     const pendingPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "PENDING"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
+      )
       .collect();
 
     const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.value, 0);
 
-    // Get overdue payments
+    // Get overdue payments for org
     const overduePayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "OVERDUE"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "OVERDUE"),
+      )
       .collect();
 
     const overdueAmount = overduePayments.reduce((sum, p) => sum + p.value, 0);
@@ -216,6 +414,7 @@ export const getMonthlyFinancialSummary = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const startOfMonth = new Date(args.year, args.month, 1).getTime();
     const endOfMonth = new Date(
@@ -229,11 +428,14 @@ export const getMonthlyFinancialSummary = query({
     ).getTime();
     const now = Date.now();
 
-    // Use indexed query for payments in date range
+    // Use indexed query for payments in date range filtered by organization
     const monthPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_due_date", (q) =>
-        q.gte("dueDate", startOfMonth).lte("dueDate", endOfMonth),
+      .withIndex("by_organization_due_date", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .gte("dueDate", startOfMonth)
+          .lte("dueDate", endOfMonth),
       )
       .collect();
 
@@ -245,14 +447,28 @@ export const getMonthlyFinancialSummary = query({
     // Use status index for paid payments, then filter by confirmedDate
     const paidPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "RECEIVED"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "RECEIVED"),
+      )
       .collect();
     const confirmedPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "CONFIRMED"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "CONFIRMED"),
+      )
+      .collect();
+    const cashPayments = await ctx.db
+      .query("asaasPayments")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "RECEIVED_IN_CASH"),
+      )
       .collect();
 
-    const paidThisMonth = [...paidPayments, ...confirmedPayments].filter(
+    const paidThisMonth = [
+      ...paidPayments,
+      ...confirmedPayments,
+      ...cashPayments,
+    ].filter(
       (p) =>
         p.confirmedDate &&
         p.confirmedDate >= startOfMonth &&
@@ -262,11 +478,15 @@ export const getMonthlyFinancialSummary = query({
     // Overdue: OVERDUE status OR (PENDING + dueDate < now)
     const overdueByStatus = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "OVERDUE"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "OVERDUE"),
+      )
       .collect();
     const pendingPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_status", (q) => q.eq("status", "PENDING"))
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
+      )
       .collect();
     const overduePending = pendingPayments.filter((p) => p.dueDate < now);
     const overdue = [...overdueByStatus, ...overduePending];
@@ -291,8 +511,11 @@ export const getMonthlyFinancialSummary = query({
 
         const futurePayments = await ctx.db
           .query("asaasPayments")
-          .withIndex("by_due_date", (q) =>
-            q.gte("dueDate", futureStart).lte("dueDate", futureEnd),
+          .withIndex("by_organization_due_date", (q) =>
+            q
+              .eq("organizationId", orgId)
+              .gte("dueDate", futureStart)
+              .lte("dueDate", futureEnd),
           )
           .collect();
 
@@ -341,12 +564,16 @@ export const getPaymentsByDateRange = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
-    // Use indexed query bounded by date range
+    // Use indexed query bounded by date range and organization
     let payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_due_date", (q) =>
-        q.gte("dueDate", args.startDate).lte("dueDate", args.endDate),
+      .withIndex("by_organization_due_date", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .gte("dueDate", args.startDate)
+          .lte("dueDate", args.endDate),
       )
       .order("asc")
       .collect();
@@ -380,6 +607,7 @@ export const getPaymentsDueDates = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const startOfMonth = new Date(args.year, args.month, 1).getTime();
     const endOfMonth = new Date(
@@ -392,11 +620,14 @@ export const getPaymentsDueDates = query({
       999,
     ).getTime();
 
-    // Use indexed query bounded by date range
+    // Use indexed query bounded by date range and organization
     const monthPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_due_date", (q) =>
-        q.gte("dueDate", startOfMonth).lte("dueDate", endOfMonth),
+      .withIndex("by_organization_due_date", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .gte("dueDate", startOfMonth)
+          .lte("dueDate", endOfMonth),
       )
       .collect();
 
@@ -442,6 +673,7 @@ export const getAllPayments = query({
   },
   handler: async (ctx, args) => {
     await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
 
     const limit = args.limit || 50;
     const offset = args.offset || 0;
@@ -450,34 +682,41 @@ export const getAllPayments = query({
     let payments: Doc<"asaasPayments">[];
 
     if (args.status) {
-      // Use status index when status filter is provided
+      // Use organization_status index
       // biome-ignore lint/suspicious/noExplicitAny: Status string needs casting for index query
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_status", (q) => q.eq("status", args.status as any))
+        .withIndex("by_organization_status", (q) =>
+          q.eq("organizationId", orgId).eq("status", args.status as any),
+        )
         .order("desc")
         .collect();
     } else if (args.studentId) {
-      // Use student index when studentId filter is provided
+      // Use organization_student index
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_student", (q) => q.eq("studentId", args.studentId!))
+        .withIndex("by_organization_student", (q) =>
+          q.eq("organizationId", orgId).eq("studentId", args.studentId!),
+        )
         .order("desc")
         .collect();
     } else if (args.startDate && args.endDate) {
-      // Use due_date index for date range queries
+      // Use organization_due_date index for date range queries
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_due_date", (q) =>
-          q.gte("dueDate", args.startDate!).lte("dueDate", args.endDate!),
+        .withIndex("by_organization_due_date", (q) =>
+          q
+            .eq("organizationId", orgId)
+            .gte("dueDate", args.startDate!)
+            .lte("dueDate", args.endDate!),
         )
         .order("desc")
         .collect();
     } else {
-      // Default: get all payments ordered by due date
+      // Default: get all payments for organization
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_due_date")
+        .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
         .order("desc")
         .collect();
     }

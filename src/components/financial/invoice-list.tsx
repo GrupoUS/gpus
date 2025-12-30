@@ -25,6 +25,10 @@ const STATUS_CONFIG = {
 	PENDING: { label: 'Pendente', variant: 'secondary' as const },
 	RECEIVED: { label: 'Recebido', variant: 'default' as const },
 	CONFIRMED: { label: 'Confirmado', variant: 'default' as const },
+	RECEIVED_IN_CASH: {
+		label: 'Recebido em Dinheiro',
+		variant: 'default' as const,
+	},
 	OVERDUE: { label: 'Vencido', variant: 'destructive' as const },
 	REFUNDED: { label: 'Reembolsado', variant: 'outline' as const },
 	CANCELLED: { label: 'Cancelado', variant: 'outline' as const },
@@ -51,13 +55,17 @@ export function InvoiceList() {
 		999,
 	).getTime();
 
-	const result = useQuery(api.asaas.queries.getPaymentsByDateRange, {
+	// biome-ignore lint/suspicious/noExplicitAny: Convex deep type instantiation workaround.
+	const apiAny: any = api;
+	// biome-ignore lint/suspicious/noExplicitAny: Convex deep type instantiation workaround.
+	const useQueryAny: any = useQuery;
+	const result = useQueryAny(apiAny.asaas.queries.getPaymentsByDateRange, {
 		startDate: startOfMonth,
 		endDate: endOfMonth,
 		status: statusFilter === 'all' ? undefined : statusFilter,
 		limit: pageSize,
 		offset: page * pageSize,
-	});
+	}) as { payments: Doc<'asaasPayments'>[]; total: number; hasMore: boolean } | undefined;
 
 	if (!result) {
 		return <div>Carregando...</div>;
@@ -67,13 +75,14 @@ export function InvoiceList() {
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
 				<Select value={statusFilter} onValueChange={setStatusFilter}>
-					<SelectTrigger className="w-[180px]">
+					<SelectTrigger className="w-45">
 						<SelectValue placeholder="Filtrar por status" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all">Todos</SelectItem>
 						<SelectItem value="PENDING">Pendente</SelectItem>
 						<SelectItem value="RECEIVED">Recebido</SelectItem>
+						<SelectItem value="RECEIVED_IN_CASH">Recebido em Dinheiro</SelectItem>
 						<SelectItem value="OVERDUE">Vencido</SelectItem>
 					</SelectContent>
 				</Select>

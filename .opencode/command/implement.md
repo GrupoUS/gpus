@@ -26,7 +26,7 @@ ultra_think_protocol:
     - "Identify technical debt or gaps introduced"
 ```
 
-Execute the approved implementation plan from TodoWrite.
+Execute the approved implementation plan from TodoWrite. **ALWAYS** use `readroadmap` to execute the entire roadmap. If the roadmap is not found, use `createroadmap` to initiate a new roadmap.
 
 ## Trigger
 

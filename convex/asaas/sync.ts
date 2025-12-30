@@ -172,7 +172,7 @@ export const getSyncLogs = query({
  */
 export const getRecentSyncLogs = query({
 	args: { limit: v.optional(v.number()) },
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<Doc<'asaasSyncLogs'>[]> => {
 		const limit = args.limit || 10
 		return await ctx.db
 			.query('asaasSyncLogs')

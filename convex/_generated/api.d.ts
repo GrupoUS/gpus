@@ -9,14 +9,21 @@
  */
 
 import type * as activities from "../activities.js";
+import type * as asaas from "../asaas.js";
 import type * as asaas_actions from "../asaas/actions.js";
+import type * as asaas_alerts from "../asaas/alerts.js";
 import type * as asaas_audit from "../asaas/audit.js";
 import type * as asaas_batch_processor from "../asaas/batch_processor.js";
 import type * as asaas_client from "../asaas/client.js";
+import type * as asaas_conflict_resolution from "../asaas/conflict_resolution.js";
 import type * as asaas_errors from "../asaas/errors.js";
+import type * as asaas_export from "../asaas/export.js";
+import type * as asaas_export_workers from "../asaas/export_workers.js";
+import type * as asaas_helpers from "../asaas/helpers.js";
 import type * as asaas_idempotency from "../asaas/idempotency.js";
 import type * as asaas_import_workers from "../asaas/import_workers.js";
 import type * as asaas_index from "../asaas/index.js";
+import type * as asaas_monitoring from "../asaas/monitoring.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
 import type * as asaas_queries from "../asaas/queries.js";
 import type * as asaas_retry from "../asaas/retry.js";
@@ -67,6 +74,7 @@ import type * as settings from "../settings.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
 import type * as templates from "../templates.js";
+import type * as test_helpers from "../test/helpers.js";
 import type * as transactionalEmails from "../transactionalEmails.js";
 import type * as users from "../users.js";
 
@@ -78,14 +86,21 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
+  asaas: typeof asaas;
   "asaas/actions": typeof asaas_actions;
+  "asaas/alerts": typeof asaas_alerts;
   "asaas/audit": typeof asaas_audit;
   "asaas/batch_processor": typeof asaas_batch_processor;
   "asaas/client": typeof asaas_client;
+  "asaas/conflict_resolution": typeof asaas_conflict_resolution;
   "asaas/errors": typeof asaas_errors;
+  "asaas/export": typeof asaas_export;
+  "asaas/export_workers": typeof asaas_export_workers;
+  "asaas/helpers": typeof asaas_helpers;
   "asaas/idempotency": typeof asaas_idempotency;
   "asaas/import_workers": typeof asaas_import_workers;
   "asaas/index": typeof asaas_index;
+  "asaas/monitoring": typeof asaas_monitoring;
   "asaas/mutations": typeof asaas_mutations;
   "asaas/queries": typeof asaas_queries;
   "asaas/retry": typeof asaas_retry;
@@ -136,6 +151,7 @@ declare const fullApi: ApiFromModules<{
   students: typeof students;
   studentsImport: typeof studentsImport;
   templates: typeof templates;
+  "test/helpers": typeof test_helpers;
   transactionalEmails: typeof transactionalEmails;
   users: typeof users;
 }>;

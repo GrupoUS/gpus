@@ -1,7 +1,7 @@
 ---
 description: Research & planning specialist. NEVER implements - research and planning only. Expert search specialist mastering advanced information retrieval, query optimization, and knowledge discovery. Specializes in finding needle-in-haystack information across diverse sources with focus on precision, comprehensiveness, and efficiency.
 mode: subagent
-model: google/gemini-3-flash-preview
+model: gemini-2.5-pro
 reasoningEffort: high
 textVerbosity: high
 temperature: 0.3

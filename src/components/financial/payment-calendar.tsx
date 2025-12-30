@@ -32,6 +32,7 @@ const STATUS_CONFIG = {
 	PENDING: { label: 'Pendente', color: 'bg-yellow-500' },
 	RECEIVED: { label: 'Recebido', color: 'bg-green-500' },
 	CONFIRMED: { label: 'Confirmado', color: 'bg-green-500' },
+	RECEIVED_IN_CASH: { label: 'Recebido em Dinheiro', color: 'bg-green-500' },
 	OVERDUE: { label: 'Vencido', color: 'bg-red-500' },
 	REFUNDED: { label: 'Reembolsado', color: 'bg-purple-500' },
 	CANCELLED: { label: 'Cancelado', color: 'bg-gray-500' },
@@ -50,7 +51,10 @@ export function PaymentCalendar() {
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-	const dueDates = useQuery(api.asaas.queries.getPaymentsDueDates, { month, year });
+	const dueDates = useQuery(api.asaas.queries.getPaymentsDueDates, {
+		month,
+		year,
+	});
 
 	// Create a map of date -> payment data for quick lookup
 	const datePaymentMap = useMemo(() => {
@@ -129,7 +133,7 @@ export function PaymentCalendar() {
 					<CardTitle>Calendário de Pagamentos</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<Skeleton className="h-[300px] w-full" />
+					<Skeleton className="h-75 w-full" />
 				</CardContent>
 			</Card>
 		);
@@ -144,8 +148,11 @@ export function PaymentCalendar() {
 						<Button variant="outline" size="icon" onClick={goToPreviousMonth}>
 							<ChevronLeft className="h-4 w-4" />
 						</Button>
-						<span className="min-w-[140px] text-center font-medium">
-							{displayedMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+						<span className="min-w-35 text-center font-medium">
+							{displayedMonth.toLocaleDateString('pt-BR', {
+								month: 'long',
+								year: 'numeric',
+							})}
 						</span>
 						<Button variant="outline" size="icon" onClick={goToNextMonth}>
 							<ChevronRight className="h-4 w-4" />
@@ -268,7 +275,7 @@ export function PaymentCalendar() {
 								<TableBody>
 									{selectedPayments.payments.map((payment) => (
 										<TableRow key={payment._id}>
-											<TableCell className="max-w-[150px] truncate">
+											<TableCell className="max-w-37.5 truncate">
 												{payment.description || 'Cobrança'}
 											</TableCell>
 											<TableCell className="text-right">{formatCurrency(payment.value)}</TableCell>

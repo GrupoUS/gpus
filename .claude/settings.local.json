@@ -39,14 +39,25 @@
       "Bash(bun run dev:*)",
       "Bash(timeout:*)",
       "Bash(exit:*)",
-      "Bash(start http://localhost:3000)"
+      "Bash(start http://localhost:3000)",
+      "Bash(bun run test tests/unit/asaas/ tests/helpers/)",
+      "Bash(bun run test)",
+      "Bash(python:*)",
+      "Bash(py:*)",
+      "Bash(bun run test import-workers.test.ts)",
+      "Bash(bun run test:*)",
+      "Bash(git branch:*)",
+      "Bash(npx convex dev:*)",
+      "Bash(npx convex typegen:*)",
+      "Bash(npx convex codegen:*)",
+      "Bash(bun run lint:check:*)",
+      "Bash(bun run lint:fix:*)",
+      "Bash(bun run format:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "zread",
     "web-reader",
-    "web-search-prime",
     "zai-mcp-server",
     "tavily",
     "sequential-thinking"

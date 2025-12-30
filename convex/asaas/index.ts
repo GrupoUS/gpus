@@ -11,6 +11,10 @@ export * from './actions'
 export * from './audit'
 export * from './sync'
 export * from './webhooks'
+export * from './conflict_resolution'
+export * from './export'
+export * from './monitoring'
+export * from './alerts'
 
 // Type regeneration trigger
 export { logApiUsage } from './audit'

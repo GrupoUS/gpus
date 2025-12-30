@@ -127,7 +127,8 @@ export async function processBatch<T, R>(
 	let currentBatchSize = fullConfig.batchSize
 	let consecutiveErrors = 0
 
-	// Process items in batches
+	try {
+		// Process items in batches
 	for (let i = 0; i < items.length; i += currentBatchSize) {
 		currentBatch++
 		const batch = items.slice(i, i + currentBatchSize)
@@ -213,6 +214,10 @@ export async function processBatch<T, R>(
 		duration: Date.now() - startTime,
 		created: createdCount,
 		updated: updatedCount,
+	}
+	} catch (error) {
+		// Re-throw any errors that occur during batch processing
+		throw error
 	}
 }
 

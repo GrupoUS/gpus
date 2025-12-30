@@ -8,6 +8,11 @@ import json
 import sys
 import os
 import re
+import subprocess
+
+# Configure UTF-8 output for Windows
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def parse_context_from_transcript(transcript_path):
     """Parse context usage from transcript file."""
@@ -77,14 +82,55 @@ def parse_context_from_transcript(transcript_path):
     except (FileNotFoundError, PermissionError):
         return None
 
+def get_git_info(workspace_dir):
+    """Get git branch and status."""
+    if not workspace_dir:
+        return None
+    try:
+        result = subprocess.run(
+            ['git', 'branch', '--show-current'],
+            cwd=workspace_dir,
+            capture_output=True,
+            text=True,
+            timeout=1
+        )
+        if result.returncode == 0:
+            branch = result.stdout.strip()
+            return branch
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        # Git command may timeout on slow networks or fail if git is not installed
+        pass
+    return None
+
+def get_git_display(branch):
+    """Get git branch display with color coding."""
+    if not branch:
+        return ""
+    if branch in ['main', 'master']:
+        color = "\033[34m"  # Blue
+    elif branch in ['dev', 'develop']:
+        color = "\033[32m"  # Green
+    elif branch.startswith('feature/'):
+        color = "\033[93m"  # Yellow
+    else:
+        color = "\033[90m"  # Gray
+    return f" {color}⑂ {branch}\033[0m"
+
+def get_timestamp():
+    """Get current timestamp display."""
+    from datetime import datetime
+    now = datetime.now()
+    time_str = now.strftime("%H:%M")
+    return f"\033[90m🕐 {time_str}\033[0m"
+
 def get_context_display(context_info):
-    """Generate context display with visual indicators."""
+    """Generate context display with visual indicators and gradient colors."""
     if not context_info:
         return "🔵 ???"
-    
+
     percent = context_info.get('percent', 0)
     warning = context_info.get('warning')
-    
+
     # Color and icon based on usage level
     if percent >= 95:
         icon, color = "🚨", "\033[31;1m"  # Blinking red
@@ -101,22 +147,41 @@ def get_context_display(context_info):
     else:
         icon, color = "🟢", "\033[32m"   # Green
         alert = ""
-    
-    # Create progress bar
+
+    # Create gradient progress bar
     segments = 8
     filled = int((percent / 100) * segments)
-    bar = "█" * filled + "▁" * (segments - filled)
-    
+    bar = ""
+
+    for i in range(segments):
+        if i < filled:
+            # Color based on overall percent (gradient effect)
+            if percent < 50:
+                # Green to yellow
+                bar_color = "\033[32m"
+            elif percent < 75:
+                # Yellow to orange
+                bar_color = "\033[33m"
+            elif percent < 90:
+                # Orange to red
+                bar_color = "\033[91m"
+            else:
+                # Red (critical)
+                bar_color = "\033[31m"
+            bar += f"{bar_color}█"
+        else:
+            bar += "\033[90m▁"
+
     # Special warnings
     if warning == 'auto-compact':
         alert = "AUTO-COMPACT!"
     elif warning == 'low':
         alert = "LOW!"
-    
+
     reset = "\033[0m"
     alert_str = f" {alert}" if alert else ""
-    
-    return f"{icon}{color}{bar}{reset} {percent:.0f}%{alert_str}"
+
+    return f"{icon}{bar}{reset} {percent:.0f}%{alert_str}"
 
 def get_directory_display(workspace_data):
     """Get directory display name."""
@@ -190,25 +255,52 @@ def get_session_metrics(cost_data):
     
     return f" \033[90m|\033[0m {' '.join(metrics)}" if metrics else ""
 
+def get_duration_only(cost_data):
+    """Get session duration display only (no cost or lines)."""
+    if not cost_data:
+        return ""
+
+    duration_ms = cost_data.get('total_duration_ms', 0)
+    if duration_ms == 0:
+        return ""
+
+    minutes = duration_ms / 60000
+    if minutes >= 30:
+        duration_color = "\033[33m"  # Yellow for long sessions
+    else:
+        duration_color = "\033[32m"  # Green
+
+    if minutes < 1:
+        duration_str = f"{duration_ms//1000}s"
+    else:
+        duration_str = f"{minutes:.0f}m"
+
+    return f" \033[90m|\033[0m {duration_color}⏱ {duration_str}\033[0m"
+
 def main():
     try:
         # Read JSON input from Claude Code
         data = json.load(sys.stdin)
-        
+
         # Extract information
         model_name = data.get('model', {}).get('display_name', 'Claude')
         workspace = data.get('workspace', {})
         transcript_path = data.get('transcript_path', '')
         cost_data = data.get('cost', {})
-        
+        workspace_dir = workspace.get('project_dir', '')
+
         # Parse context usage
         context_info = parse_context_from_transcript(transcript_path)
-        
+
         # Build status components
         context_display = get_context_display(context_info)
         directory = get_directory_display(workspace)
         session_metrics = get_session_metrics(cost_data)
-        
+
+        # Git branch detection
+        git_branch = get_git_info(workspace_dir)
+        git_display = get_git_display(git_branch)
+
         # Model display with context-aware coloring
         if context_info:
             percent = context_info.get('percent', 0)
@@ -218,16 +310,17 @@ def main():
                 model_color = "\033[33m"  # Yellow
             else:
                 model_color = "\033[32m"  # Green
-            
+
             model_display = f"{model_color}[{model_name}]\033[0m"
         else:
             model_display = f"\033[94m[{model_name}]\033[0m"
-        
-        # Combine all components
-        status_line = f"{model_display} \033[93m📁 {directory}\033[0m 🧠 {context_display}{session_metrics}"
-        
+
+        # Combine all components (keep duration only)
+        duration_only_metrics = get_duration_only(cost_data)
+        status_line = f"{model_display} \033[93m📁 {directory}\033[0m{git_display} 🧠 {context_display}{duration_only_metrics}"
+
         print(status_line)
-        
+
     except Exception as e:
         # Fallback display on any error
         print(f"\033[94m[Claude]\033[0m \033[93m📁 {os.path.basename(os.getcwd())}\033[0m 🧠 \033[31m[Error: {str(e)[:20]}]\033[0m")

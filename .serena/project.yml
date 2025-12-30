@@ -28,7 +28,27 @@ ignore_all_files_in_gitignore: true
 # same syntax as gitignore, so you can use * and **
 # Was previously called `ignored_dirs`, please update your config if you are using that.
 # Added (renamed) on 2025-04-07
-ignored_paths: []
+ignored_paths:
+  - "node_modules/**"
+  - "dist/**"
+  - ".turbo/**"
+  - "coverage/**"
+  - ".cache/**"
+  - ".output/**"
+  - ".tanstack/**"
+  - ".vercel/**"
+  - ".nitro/**"
+  - "convex/_generated/**"
+  - "src/routeTree.gen.ts"
+  - "build_output.*"
+  - "*.log"
+  - "ts-errors.txt"
+  - "lint-errors.txt"
+  - "test-results.json"
+  - "railway_*.txt"
+  - "playwright-report/**"
+  - "playwright/.cache/**"
+  - "blob-report/**"
 
 # whether the project is in read-only mode
 # If set to true, all editing tools will be disabled and attempts to use them will result in an error
@@ -77,7 +97,7 @@ read_only: false
 excluded_tools: []
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
-# (contrary to the memories, which are loaded on demand).
+# (contrary to memories, which are loaded on demand).
 initial_prompt: ""
 
 project_name: "gpus"
