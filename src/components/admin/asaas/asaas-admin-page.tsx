@@ -24,7 +24,7 @@ interface AsaasAdminPageProps {
 
 type TabValue = 'dashboard' | 'sync' | 'export' | 'history';
 
-export function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
+function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 	const [activeTab, setActiveTab] = React.useState<TabValue>('dashboard');
 
 	// Get most recent sync from all types (prioritize customers)

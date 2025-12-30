@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { api } from '../../convex/_generated/api';
 
-export type SyncStatus = 'loading' | 'synced' | 'error';
+type SyncStatus = 'loading' | 'synced' | 'error';
 
 export function useUserSync() {
 	const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
