@@ -1,6 +1,7 @@
 ---
 feature: TypeScript Fixes
-spec: Fix all TypeScript errors, linting issues, and test failures to ensure a clean build for PR #1.
+spec: |
+  Fix all TypeScript errors, linting issues, and test failures to ensure a clean build for PR #1.
 ---
 
 # Feature 1: TypeScript Fixes
