@@ -37,24 +37,35 @@ export const getPendingExportPayments = internalQuery({
   },
   handler: async (ctx, args) => {
     // Get all payments
-    let payments = await ctx.db
-      .query("asaasPayments")
-      .order("desc")
-      .take(1000);
+    let payments = await ctx.db.query("asaasPayments").order("desc").take(1000);
 
     // Post-index filters
     if (args.organizationId) {
-      payments = payments.filter((p) => p.organizationId === args.organizationId);
+      payments = payments.filter(
+        (p) => p.organizationId === args.organizationId,
+      );
     }
-    if (args.startDate) {
-      payments = payments.filter((p) => p.dueDate >= args.startDate);
+    if (args.startDate !== undefined) {
+      payments = payments.filter((p) => p.dueDate >= args.startDate!);
     }
-    if (args.endDate) {
-      payments = payments.filter((p) => p.dueDate <= args.endDate);
+    if (args.endDate !== undefined) {
+      payments = payments.filter((p) => p.dueDate <= args.endDate!);
     }
 
     // Filter for payments without Asaas payment ID
     return payments.filter((p) => !p.asaasPaymentId);
+  },
+});
+
+/**
+ * Get a payment by ID (internal query for export workers)
+ */
+export const getPaymentById = internalQuery({
+  args: {
+    paymentId: v.id("asaasPayments"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.paymentId);
   },
 });
 
@@ -164,8 +175,8 @@ export const getPaymentsByStudent = query({
 
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_student", (q) => 
-        q.eq("organizationId", orgId).eq("studentId", args.studentId)
+      .withIndex("by_organization_student", (q) =>
+        q.eq("organizationId", orgId).eq("studentId", args.studentId),
       )
       .order("desc")
       .collect();
@@ -185,8 +196,8 @@ export const getPendingPayments = query({
 
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_status", (q) => 
-        q.eq("organizationId", orgId).eq("status", "PENDING")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
       )
       .order("asc")
       .collect();
@@ -205,20 +216,20 @@ export const getOverduePayments = query({
     const orgId = await getOrganizationId(ctx);
 
     const now = Date.now();
-    
+
     // Get overdue by status
     const payments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_status", (q) => 
-        q.eq("organizationId", orgId).eq("status", "OVERDUE")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "OVERDUE"),
       )
       .collect();
 
     // Also check for PENDING payments past due date
     const pendingPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_status", (q) => 
-        q.eq("organizationId", orgId).eq("status", "PENDING")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
       )
       .collect();
 
@@ -272,8 +283,8 @@ export const getFinancialSummary = query({
     // Get pending payments for org
     const pendingPayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_status", (q) => 
-        q.eq("organizationId", orgId).eq("status", "PENDING")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "PENDING"),
       )
       .collect();
 
@@ -282,8 +293,8 @@ export const getFinancialSummary = query({
     // Get overdue payments for org
     const overduePayments = await ctx.db
       .query("asaasPayments")
-      .withIndex("by_organization_status", (q) => 
-        q.eq("organizationId", orgId).eq("status", "OVERDUE")
+      .withIndex("by_organization_status", (q) =>
+        q.eq("organizationId", orgId).eq("status", "OVERDUE"),
       )
       .collect();
 
@@ -599,8 +610,8 @@ export const getAllPayments = query({
       // biome-ignore lint/suspicious/noExplicitAny: Status string needs casting for index query
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_organization_status", (q) => 
-          q.eq("organizationId", orgId).eq("status", args.status as any)
+        .withIndex("by_organization_status", (q) =>
+          q.eq("organizationId", orgId).eq("status", args.status as any),
         )
         .order("desc")
         .collect();
@@ -608,8 +619,8 @@ export const getAllPayments = query({
       // Use organization_student index
       payments = await ctx.db
         .query("asaasPayments")
-        .withIndex("by_organization_student", (q) => 
-          q.eq("organizationId", orgId).eq("studentId", args.studentId!)
+        .withIndex("by_organization_student", (q) =>
+          q.eq("organizationId", orgId).eq("studentId", args.studentId!),
         )
         .order("desc")
         .collect();
@@ -618,7 +629,10 @@ export const getAllPayments = query({
       payments = await ctx.db
         .query("asaasPayments")
         .withIndex("by_organization_due_date", (q) =>
-          q.eq("organizationId", orgId).gte("dueDate", args.startDate!).lte("dueDate", args.endDate!),
+          q
+            .eq("organizationId", orgId)
+            .gte("dueDate", args.startDate!)
+            .lte("dueDate", args.endDate!),
         )
         .order("desc")
         .collect();

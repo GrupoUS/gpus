@@ -1,0 +1,408 @@
+/**
+ * Asaas Monitoring Queries
+ *
+ * Queries for API health metrics, sync statistics, and alert monitoring.
+ * Provides real-time visibility into Asaas integration status.
+ */
+
+import { v } from "convex/values";
+import { query } from "../_generated/server";
+import { getOrganizationId, requireAuth } from "../lib/auth";
+import type { Doc } from "../_generated/dataModel";
+
+// ═══════════════════════════════════════════════════════
+// API HEALTH METRICS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get API health metrics for the specified time period
+ * Returns error rate, average response time, and endpoint statistics
+ */
+export const getApiHealthMetrics = query({
+  args: {
+    hours: v.optional(v.number()), // Default: 24 hours
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+
+    const hours = args.hours ?? 24;
+    const since = Date.now() - hours * 60 * 60 * 1000;
+
+    // Get API audit logs
+    const logs = await ctx.db
+      .query("asaasApiAudit")
+      .withIndex("by_timestamp", (q) => q.gte("timestamp", since))
+      .collect();
+
+    if (logs.length === 0) {
+      return {
+        totalRequests: 0,
+        errorRate: 0,
+        avgResponseTime: 0,
+        successRate: 100,
+        endpoints: {},
+        errors: [],
+      };
+    }
+
+    // Calculate metrics
+    const errorLogs = logs.filter((l) => l.statusCode >= 400);
+
+    const errorRate = logs.length > 0 ? (errorLogs.length / logs.length) * 100 : 0;
+    const successRate = 100 - errorRate;
+
+    const totalResponseTime = logs.reduce((sum, l) => sum + l.responseTime, 0);
+    const avgResponseTime = logs.length > 0 ? totalResponseTime / logs.length : 0;
+
+    // Aggregate by endpoint
+    const endpointStats: Record<
+      string,
+      {
+        count: number;
+        errors: number;
+        avgTime: number;
+      }
+    > = {};
+
+    for (const log of logs) {
+      if (!endpointStats[log.endpoint]) {
+        endpointStats[log.endpoint] = { count: 0, errors: 0, avgTime: 0 };
+      }
+      endpointStats[log.endpoint].count++;
+      endpointStats[log.endpoint].avgTime += log.responseTime;
+      if (log.statusCode >= 400) {
+        endpointStats[log.endpoint].errors++;
+      }
+    }
+
+    // Calculate average time per endpoint
+    const endpoints: Record<
+      string,
+      { count: number; errorRate: number; avgTime: number }
+    > = {};
+
+    for (const [endpoint, stats] of Object.entries(endpointStats)) {
+      endpoints[endpoint] = {
+        count: stats.count,
+        errorRate: stats.count > 0 ? (stats.errors / stats.count) * 100 : 0,
+        avgTime: Math.round(stats.avgTime / stats.count),
+      };
+    }
+
+    // Get unique errors
+    const uniqueErrors = Array.from(
+      new Set(errorLogs.map((l) => l.errorMessage).filter(Boolean)),
+    ).slice(0, 10);
+
+    return {
+      totalRequests: logs.length,
+      errorRate: Math.round(errorRate * 10) / 10,
+      successRate: Math.round(successRate * 10) / 10,
+      avgResponseTime: Math.round(avgResponseTime),
+      endpoints,
+      errors: uniqueErrors,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════
+// SYNC STATISTICS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get sync statistics for all sync types
+ */
+export const getSyncStatistics = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+
+    // Get all sync logs
+    const logs = await ctx.db
+      .query("asaasSyncLogs")
+      .withIndex("by_created")
+      .order("desc")
+      .take(100);
+
+    // Group by sync type
+    const byType: Record<string, Doc<"asaasSyncLogs">[]> = {};
+    for (const log of logs) {
+      if (!byType[log.syncType]) {
+        byType[log.syncType] = [];
+      }
+      byType[log.syncType].push(log);
+    }
+
+    // Calculate statistics per type
+    const stats: Record<
+      string,
+      {
+        lastSync?: Doc<"asaasSyncLogs">;
+        totalSyncs: number;
+        successful: number;
+        failed: number;
+        running: number;
+        totalRecordsProcessed: number;
+        avgRecordsPerSync: number;
+      }
+    > = {};
+
+    const syncTypes = ["customers", "payments", "subscriptions", "financial"] as const;
+
+    for (const syncType of syncTypes) {
+      const typeLogs = byType[syncType] || [];
+      const successful = typeLogs.filter((l) => l.status === "completed");
+      const failed = typeLogs.filter((l) => l.status === "failed");
+      const running = typeLogs.filter((l) => l.status === "running");
+      const totalRecords = typeLogs.reduce((sum, l) => sum + l.recordsProcessed, 0);
+      const avgRecords =
+        typeLogs.length > 0
+          ? totalRecords / typeLogs.length
+          : 0;
+
+      stats[syncType] = {
+        lastSync: typeLogs[0],
+        totalSyncs: typeLogs.length,
+        successful: successful.length,
+        failed: failed.length,
+        running: running.length,
+        totalRecordsProcessed: totalRecords,
+        avgRecordsPerSync: Math.round(avgRecords),
+      };
+    }
+
+    return stats;
+  },
+});
+
+// ═══════════════════════════════════════════════════════
+// ALERT QUERIES
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get active alerts for an organization
+ */
+export const getActiveAlerts = query({
+  args: {
+    organizationId: v.optional(v.string()),
+    severity: v.optional(
+      v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    ),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+
+    const orgId = args.organizationId ?? (await getOrganizationId(ctx));
+    const limit = args.limit ?? 50;
+
+    // Get active alerts (not suppressed)
+    const now = Date.now();
+    let alerts = await ctx.db
+      .query("asaasAlerts")
+      .withIndex("by_active", (q) => q.eq("status", "active"))
+      .order("desc")
+      .take(limit * 2); // Get more initially to filter
+
+    // Filter out suppressed alerts
+    alerts = alerts.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
+
+    // Post-index filters
+    if (orgId) {
+      alerts = alerts.filter((a) => a.organizationId === orgId);
+    }
+    if (args.severity) {
+      alerts = alerts.filter((a) => a.severity === args.severity);
+    }
+
+    // Sort by severity priority (critical > high > medium > low) and last seen
+    const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+    alerts.sort((a, b) => {
+      const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
+      if (severityDiff !== 0) return severityDiff;
+      return b.lastSeenAt - a.lastSeenAt;
+    });
+
+    return alerts.slice(0, limit);
+  },
+});
+
+/**
+ * Get alert statistics for an organization
+ */
+export const getAlertStatistics = query({
+  args: {
+    organizationId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+
+    const orgId = args.organizationId ?? (await getOrganizationId(ctx));
+    const now = Date.now();
+
+    // Get all alerts for organization
+    let alerts = await ctx.db
+      .query("asaasAlerts")
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+      .collect();
+
+    // Filter out suppressed alerts
+    alerts = alerts.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
+
+    // Group by status
+    const byStatus: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+
+    for (const alert of alerts) {
+      byStatus[alert.status] = (byStatus[alert.status] || 0) + 1;
+      bySeverity[alert.severity] = (bySeverity[alert.severity] || 0) + 1;
+      byType[alert.alertType] = (byType[alert.alertType] || 0) + 1;
+    }
+
+    // Get recent alerts (last 24 hours)
+    const dayAgo = now - 24 * 60 * 60 * 1000;
+    const recentAlerts = alerts.filter((a) => a.createdAt >= dayAgo);
+
+    // Get most common alert types
+    const topAlertTypes = Object.entries(byType)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([type, count]) => ({ type, count }));
+
+    return {
+      total: alerts.length,
+      active: byStatus.active || 0,
+      acknowledged: byStatus.acknowledged || 0,
+      resolved: byStatus.resolved || 0,
+      critical: bySeverity.critical || 0,
+      high: bySeverity.high || 0,
+      medium: bySeverity.medium || 0,
+      low: bySeverity.low || 0,
+      recent24h: recentAlerts.length,
+      topAlertTypes,
+    };
+  },
+});
+
+/**
+ * Get alerts by type
+ */
+export const getAlertsByType = query({
+  args: {
+    alertType: v.union(
+      v.literal("api_error"),
+      v.literal("sync_failure"),
+      v.literal("rate_limit"),
+      v.literal("webhook_timeout"),
+      v.literal("duplicate_detection"),
+      v.literal("data_integrity"),
+    ),
+    organizationId: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+
+    const orgId = args.organizationId ?? (await getOrganizationId(ctx));
+    const limit = args.limit ?? 50;
+
+    // Use index for type lookup
+    let alerts = await ctx.db
+      .query("asaasAlerts")
+      .withIndex("by_type", (q) => q.eq("alertType", args.alertType))
+      .order("desc")
+      .take(limit * 2);
+
+    // Post-index filters
+    if (orgId) {
+      alerts = alerts.filter((a) => a.organizationId === orgId);
+    }
+
+    return alerts.slice(0, limit);
+  },
+});
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD SUMMARY
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get dashboard summary for Asaas integration
+ * Combines sync stats, alerts, and API health into one query
+ */
+export const getDashboardSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+    const orgId = await getOrganizationId(ctx);
+    const now = Date.now();
+
+    // Get sync statistics
+    const recentSyncLogs = await ctx.db
+      .query("asaasSyncLogs")
+      .withIndex("by_created")
+      .order("desc")
+      .take(10);
+
+    // Get active alerts count
+    const activeAlerts = await ctx.db
+      .query("asaasAlerts")
+      .withIndex("by_active", (q) => q.eq("status", "active"))
+      .collect();
+
+    const orgActiveAlerts = orgId
+      ? activeAlerts.filter(
+          (a) => a.organizationId === orgId && (!a.suppressedUntil || a.suppressedUntil < now),
+        )
+      : activeAlerts.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
+
+    // Get API metrics (last hour)
+    const hourAgo = now - 60 * 60 * 1000;
+    const recentApiLogs = await ctx.db
+      .query("asaasApiAudit")
+      .withIndex("by_timestamp", (q) => q.gte("timestamp", hourAgo))
+      .collect();
+
+    const apiErrors = recentApiLogs.filter((l) => l.statusCode >= 400);
+    const apiErrorRate = recentApiLogs.length > 0 ? (apiErrors.length / recentApiLogs.length) * 100 : 0;
+
+    // Count conflicts
+    const pendingConflicts = await ctx.db
+      .query("asaasConflicts")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    const orgConflicts = orgId
+      ? pendingConflicts.filter((c) => c.organizationId === orgId)
+      : pendingConflicts;
+
+    return {
+      sync: {
+        lastSync: recentSyncLogs[0] || null,
+        totalSyncs: recentSyncLogs.length,
+        successful: recentSyncLogs.filter((l) => l.status === "completed").length,
+        failed: recentSyncLogs.filter((l) => l.status === "failed").length,
+      },
+      alerts: {
+        activeCount: orgActiveAlerts.length,
+        criticalCount: orgActiveAlerts.filter((a) => a.severity === "critical").length,
+        highCount: orgActiveAlerts.filter((a) => a.severity === "high").length,
+      },
+      api: {
+        errorRate: Math.round(apiErrorRate * 10) / 10,
+        totalRequests: recentApiLogs.length,
+        avgResponseTime:
+          recentApiLogs.length > 0
+            ? Math.round(
+                recentApiLogs.reduce((sum, l) => sum + l.responseTime, 0) /
+                  recentApiLogs.length,
+              )
+            : 0,
+      },
+      conflicts: {
+        pendingCount: orgConflicts.length,
+      },
+    };
+  },
+});

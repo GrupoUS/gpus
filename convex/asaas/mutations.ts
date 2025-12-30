@@ -9,6 +9,7 @@ import { getOrganizationId, requireAuth } from "../lib/auth";
 import { hashCPF, encryptCPF } from "../lib/encryption";
 import { internal } from "../_generated/api";
 import { dateStringToTimestamp } from "./client";
+import { getEnrollmentIdOrDefault } from "./helpers";
 
 /**
  * Validation constants for payment operations
@@ -191,20 +192,13 @@ export const createPaymentFromEnrollment = mutation({
     // Validate installment count if provided
     validateInstallmentCount(args.installmentCount);
 
-    // 1. Tentar encontrar enrollmentId se não for fornecido
-    let enrollmentId = args.enrollmentId;
-    if (!enrollmentId) {
-      // Lógica para encontrar enrollment baseado no studentId e valor/data
-      const activeEnrollments = await ctx.db
-        .query("enrollments")
-        .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
-        .filter((q) => q.eq(q.field("status"), "ativo"))
-        .collect();
-
-      if (activeEnrollments.length === 1) {
-        enrollmentId = activeEnrollments[0]._id;
-      }
-    }
+    // Find best matching enrollment (uses helper to eliminate duplicate logic)
+    const enrollmentId = await getEnrollmentIdOrDefault(
+      ctx,
+      args.studentId,
+      args.enrollmentId,
+      args.description,
+    );
 
     const chargeId = await ctx.db.insert("asaasPayments", {
       studentId: args.studentId,
@@ -293,6 +287,10 @@ export const logPaymentEvent = internalMutation({
     // asaasWebhooks: defineTable({ ... paymentId: v.optional(v.string()), ... })
     // So we don't need to look up the internal ID to insert into asaasWebhooks.
 
+    // LGPD: Add retention policy (90 days)
+    const now = Date.now();
+    const retentionUntil = now + 90 * 24 * 60 * 60 * 1000;
+
     await ctx.db.insert("asaasWebhooks", {
       event: args.eventType,
       paymentId: args.asaasPaymentId,
@@ -305,7 +303,8 @@ export const logPaymentEvent = internalMutation({
       // But here we are logging "Payment Event".
       // I'll stick to: 'processed: true' because we are doing it.
 
-      createdAt: Date.now(),
+      retentionUntil,
+      createdAt: now,
       // error?
     });
 
@@ -530,26 +529,13 @@ export const createPaymentFromAsaas = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // SMART LINK: Try to find a matching enrollment if none provided
-    let enrollmentId = args.enrollmentId;
-    if (!enrollmentId) {
-      const activeEnrollments = await ctx.db
-        .query("enrollments")
-        .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
-        .filter((q) => q.neq(q.field("status"), "cancelado"))
-        .collect();
-
-      if (activeEnrollments.length > 0) {
-        // Try to match by description/product if possible
-        const description = args.description?.toLowerCase() || "";
-        const matched = activeEnrollments.find((e) => {
-          const product = e.product.toLowerCase();
-          return description.includes(product) || product.includes(description);
-        });
-
-        enrollmentId = matched?._id || activeEnrollments[0]._id;
-      }
-    }
+    // Use shared helper to find matching enrollment (eliminates duplicate logic)
+    const enrollmentId = await getEnrollmentIdOrDefault(
+      ctx,
+      args.studentId,
+      args.enrollmentId,
+      args.description,
+    );
 
     return await ctx.db.insert("asaasPayments", {
       studentId: args.studentId,
@@ -732,5 +718,21 @@ export const updateSubscriptionStatusInternal = internalMutation({
 
     await ctx.db.patch(subscription._id, patch);
     return subscription._id;
+  },
+});
+
+/**
+ * Update payment with Asaas payment ID (used by export workers)
+ */
+export const updatePaymentAsaasId = internalMutation({
+  args: {
+    paymentId: v.id("asaasPayments"),
+    asaasPaymentId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.paymentId, {
+      asaasPaymentId: args.asaasPaymentId,
+      updatedAt: Date.now(),
+    });
   },
 });
