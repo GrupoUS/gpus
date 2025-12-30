@@ -156,8 +156,9 @@ export async function processCustomerWorker(
         // @ts-ignore - Deep type instantiation
         internal.asaas.mutations.getStudentByEmailOrCpf,
         {
-          email: customer.email,
-          cpf: customer.cpfCnpj,
+          // Convert null to undefined (Asaas API may return null, but Convex validators expect undefined)
+          email: customer.email ?? undefined,
+          cpf: customer.cpfCnpj ?? undefined,
         },
       );
 
@@ -182,9 +183,9 @@ export async function processCustomerWorker(
       await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
         studentId: existingStudent._id,
         name: customer.name,
-        email: customer.email,
+        email: customer.email ?? undefined,
         phone: phone || "",
-        cpf: customer.cpfCnpj,
+        cpf: customer.cpfCnpj ?? undefined,
       });
 
       return {
@@ -200,9 +201,9 @@ export async function processCustomerWorker(
       internal.asaas.mutations.createStudentFromAsaas,
       {
         name: customer.name,
-        email: customer.email,
+        email: customer.email ?? undefined,
         phone: phone || "",
-        cpf: customer.cpfCnpj,
+        cpf: customer.cpfCnpj ?? undefined,
         asaasCustomerId: customer.id,
         organizationId,
       },
@@ -213,9 +214,9 @@ export async function processCustomerWorker(
       data: {
         _id: studentId as Id<"students">,
         name: customer.name,
-        email: customer.email,
+        email: customer.email ?? undefined,
         phone: phone || "",
-        cpf: customer.cpfCnpj,
+        cpf: customer.cpfCnpj ?? undefined,
         asaasCustomerId: customer.id,
         organizationId,
       },
