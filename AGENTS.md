@@ -202,3 +202,69 @@ Before creating a PR:
 | "Generate UI from mockup" | `zai-mcp-server_ui_to_artifact` | - | Screenshot → React code |
 | "Web page content" | `web-reader_webReader` | `tavily_tavily-extract` | HTML → markdown |
 | "Deep reasoning" | `sequential_thinking` | - | Multi-step analysis (Plan only) |
+
+### MCP Activation Protocol (MANDATORY)
+
+> **Regra**: MCPs devem ser usados AUTOMATICAMENTE quando as condições abaixo forem satisfeitas.
+
+#### Sequential Thinking - Raciocínio Estruturado
+
+| Trigger | Ação |
+|---------|------|
+| Início de tarefa L4+ (complexidade média-alta) | `sequentialthinking` para quebrar em passos |
+| Após qualquer erro de build/deploy/runtime | `sequentialthinking` para analisar causa raiz |
+| A cada 5 passos de implementação | `sequentialthinking` para verificar progresso |
+| Múltiplas abordagens possíveis | `sequentialthinking` para comparar trade-offs |
+| Decisões arquiteturais | `sequentialthinking` antes de implementar |
+
+#### Context7 - Documentação Oficial
+
+| Trigger | Ação |
+|---------|------|
+| Código com Convex (queries, mutations, schema) | `context7 resolve-library-id` → `query-docs` |
+| Código com Clerk (auth, users, sessions) | `context7 resolve-library-id` → `query-docs` |
+| Código com TanStack Router (routes, loaders) | `context7 resolve-library-id` → `query-docs` |
+| Código com shadcn/ui (components) | `context7 resolve-library-id` → `query-docs` |
+| Código com Recharts (charts, visualization) | `context7 resolve-library-id` → `query-docs` |
+| Qualquer API/biblioteca npm desconhecida | `context7 resolve-library-id` → `query-docs` |
+| Configuração de Vite, Biome, TypeScript | `context7 resolve-library-id` → `query-docs` |
+
+#### Tavily - Pesquisa Web
+
+| Trigger | Ação |
+|---------|------|
+| context7 não retorna informação suficiente | `tavily-search` com query específica |
+| Erro de deploy/runtime sem solução clara | `tavily-search` → `tavily-extract` se URL promissor |
+| Best practices ou padrões modernos (2024+) | `tavily-search` para tendências atuais |
+| Integrações não documentadas oficialmente | `tavily-search` → `tavily-crawl` se necessário |
+
+#### Serena - Análise de Codebase
+
+| Trigger | Ação |
+|---------|------|
+| Antes de modificar qualquer arquivo | `serena find_symbol` ou `get_symbols_overview` |
+| Entender estrutura existente | `serena list_dir` → `get_symbols_overview` |
+| Encontrar padrões similares | `serena search_for_pattern` |
+| Rastrear uso de função/componente | `serena find_referencing_symbols` |
+
+### Research Cascade Protocol
+
+Ordem obrigatória de pesquisa para problemas desconhecidos:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  RESEARCH CASCADE (seguir em ordem)                         │
+├─────────────────────────────────────────────────────────────┤
+│  1. SERENA (codebase local)                                 │
+│     └─→ find_symbol, search_for_pattern, get_symbols_overview│
+│                                                              │
+│  2. CONTEXT7 (docs oficiais)                                │
+│     └─→ resolve-library-id → query-docs                     │
+│                                                              │
+│  3. TAVILY (web search) - apenas se 1 e 2 insuficientes    │
+│     └─→ tavily-search → tavily-extract                      │
+│                                                              │
+│  4. SEQUENTIAL THINKING (síntese)                           │
+│     └─→ Combinar informações e definir solução              │
+└─────────────────────────────────────────────────────────────┘
+```

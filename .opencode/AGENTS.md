@@ -40,7 +40,9 @@
 
 ---
 
-## 3. MCP Tool Selection
+## 3. MCP Tool Selection & Activation Protocol
+
+### MCP Overview
 
 | MCP | Purpose | When to Use |
 |-----|---------|-------------|
@@ -48,9 +50,64 @@
 | **context7** | Official docs (Convex, React, etc.) | API reference, patterns |
 | **tavily** | Web search, crawl, extract | Research, external APIs |
 | **zai-mcp** | UI from screenshots, visual audits | Mockups → React code |
-| **sequentialthinking** | Complex problem solving | Task start, every 5 steps |
+| **sequentialthinking** | Complex problem solving | Task start, every 5 steps, after errors |
 
 **Regra**: MCPs são para ANÁLISE. Modificação de código vai para subagent.
+
+### MCP Activation Triggers (AUTOMÁTICO)
+
+#### Sequential Thinking - OBRIGATÓRIO
+
+| Situação | Ação |
+|----------|------|
+| Início de qualquer tarefa L4+ | `sequentialthinking` para decompor problema |
+| Após QUALQUER erro (build/deploy/runtime) | `sequentialthinking` para root cause analysis |
+| A cada 5 passos de implementação | `sequentialthinking` para checkpoint de progresso |
+| Múltiplas soluções possíveis | `sequentialthinking` para comparar trade-offs |
+| Antes de decisões arquiteturais | `sequentialthinking` para validar abordagem |
+
+#### Context7 - Documentação Oficial
+
+| Trigger | Ação |
+|---------|------|
+| Código com Convex | `context7 resolve-library-id("convex")` → `query-docs` |
+| Código com Clerk | `context7 resolve-library-id("clerk")` → `query-docs` |
+| Código com TanStack Router | `context7 resolve-library-id("tanstack router")` → `query-docs` |
+| Código com shadcn/ui | `context7 resolve-library-id("shadcn ui")` → `query-docs` |
+| Código com Recharts | `context7 resolve-library-id("recharts")` → `query-docs` |
+| Qualquer biblioteca npm | `context7 resolve-library-id` → `query-docs` |
+
+#### Tavily - Pesquisa Web
+
+| Trigger | Ação |
+|---------|------|
+| context7 retorna vazio ou insuficiente | `tavily-search` com query específica |
+| Erro sem solução em docs oficiais | `tavily-search` → `tavily-extract` |
+| Padrões/best practices 2024+ | `tavily-search` para tendências |
+| APIs externas não documentadas | `tavily-search` → `tavily-crawl` |
+
+#### Serena - Análise de Codebase
+
+| Trigger | Ação |
+|---------|------|
+| Antes de QUALQUER modificação | `serena find_symbol` ou `get_symbols_overview` |
+| Entender estrutura de arquivo | `serena list_dir` + `get_symbols_overview` |
+| Encontrar padrões existentes | `serena search_for_pattern` |
+| Rastrear uso de função | `serena find_referencing_symbols` |
+
+### Research Cascade (Ordem Obrigatória)
+
+Para problemas desconhecidos, seguir esta cascata:
+
+```
+1. SERENA (local)     → find_symbol, search_for_pattern
+         ↓
+2. CONTEXT7 (docs)    → resolve-library-id → query-docs
+         ↓
+3. TAVILY (web)       → tavily-search → tavily-extract
+         ↓
+4. SEQUENTIAL THINKING → Sintetizar e decidir
+```
 
 ---
 
@@ -66,18 +123,32 @@
 
 ## 5. Execution Protocol
 
-### Per-Action Flow
+### Per-Action Flow (COM MCP Integration)
 
 ```
+0. sequentialthinking → analisar complexidade da tarefa
 1. readroadmap → identify pending action
-2. Route by domain → determine owner
-3. updateroadmap → status = in_progress
-4. Task tool → delegate to subagent (BACKGROUND)
-5. Continue with other actions (don't block)
-6. On completion → validate (lint + build + test)
-7. If pass → updateroadmap → completed
-8. If fail → rollback → fallback chain
+2. serena → entender contexto (find_symbol, get_symbols_overview)
+3. context7 → buscar docs se API externa envolvida
+4. Route by domain → determine owner
+5. updateroadmap → status = in_progress
+6. Task tool → delegate to subagent (BACKGROUND)
+7. Continue with other actions (don't block)
+8. On completion → validate (lint + build + test)
+9. If pass → updateroadmap → completed
+10. If fail → sequentialthinking → analyze error → rollback → retry/fallback
 ```
+
+### MCP Checkpoints no Workflow
+
+| Fase | MCP Obrigatório | Quando |
+|------|-----------------|--------|
+| **Início** | `sequentialthinking` | Sempre para L4+, opcional para L1-L3 |
+| **Análise** | `serena` | Antes de qualquer modificação |
+| **Pesquisa** | `context7` | Se envolve Convex/Clerk/React/shadcn |
+| **Fallback** | `tavily` | Se context7 insuficiente |
+| **Erro** | `sequentialthinking` | Após qualquer falha |
+| **Checkpoint** | `sequentialthinking` | A cada 5 ações completadas |
 
 ### Validation Gates (After Each Action)
 
@@ -183,19 +254,29 @@ Rollback: `git checkout [files_affected]`
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              ORCHESTRATOR WORKFLOW                           │
+│              ORCHESTRATOR WORKFLOW + MCP                     │
 ├─────────────────────────────────────────────────────────────┤
+│  0. sequentialthinking → analisar tarefa (L4+)              │
 │  1. readroadmap → identify pending                          │
-│  2. Route by domain → determine owner                       │
-│  3. updateroadmap → in_progress                             │
-│  4. Task tool → delegate (BACKGROUND)                       │
-│  5. Validate → lint + build + test                          │
-│  6. updateroadmap → completed                               │
+│  2. serena → entender contexto                              │
+│  3. context7 → docs se API externa                          │
+│  4. Route by domain → determine owner                       │
+│  5. updateroadmap → in_progress                             │
+│  6. Task tool → delegate (BACKGROUND)                       │
+│  7. Validate → lint + build + test                          │
+│  8. updateroadmap → completed                               │
+│  9. Se erro → sequentialthinking → analyze → retry          │
 │                                                              │
 │  ROUTING:                                                    │
 │    convex/** → @database-specialist                         │
 │    src/components/ui/** → @apex-ui-ux-designer              │
 │    src/** → @apex-dev                                        │
+│                                                              │
+│  MCP TRIGGERS:                                               │
+│    L4+ task → sequentialthinking                            │
+│    Convex/Clerk/React → context7                            │
+│    Error/unknown → tavily                                   │
+│    Before edit → serena                                     │
 │                                                              │
 │  VALIDATION:                                                 │
 │    auth/LGPD → @code-reviewer                               │

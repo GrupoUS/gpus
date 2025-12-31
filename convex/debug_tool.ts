@@ -1,4 +1,31 @@
-import { mutation } from './_generated/server'
+import { mutation, query } from './_generated/server'
+
+/**
+ * DEBUG: Investigate encrypted data in students table
+ * Returns info about encrypted fields without attempting decryption
+ */
+export const debugEncryptedData = query({
+	args: {},
+	handler: async (ctx) => {
+		const students = await ctx.db.query('students').take(5)
+
+		return students.map((s) => ({
+			id: s._id,
+			name: s.name,
+			hasEncryptedCPF: !!s.encryptedCPF,
+			encryptedCPFLength: s.encryptedCPF?.length || 0,
+			encryptedCPFSample: s.encryptedCPF?.substring(0, 50) || null,
+			hasEncryptedEmail: !!s.encryptedEmail,
+			encryptedEmailLength: s.encryptedEmail?.length || 0,
+			hasEncryptedPhone: !!s.encryptedPhone,
+			encryptedPhoneLength: s.encryptedPhone?.length || 0,
+			// Check for plain text fields
+			hasCpf: !!s.cpf,
+			hasEmail: !!s.email,
+			hasPhone: !!s.phone,
+		}))
+	},
+})
 
 /**
  * Verify authentication configuration
