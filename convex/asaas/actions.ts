@@ -1,7 +1,7 @@
 "use action";
 
 import { action } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { internal, api } from "../_generated/api";
 import { v } from "convex/values";
 import { createAsaasClient, type AsaasClient } from "./client";
 import { AsaasConfigurationError } from "./errors";
@@ -362,11 +362,108 @@ export const testAsaasConnection = action({
 });
 
 // ═══════════════════════════════════════════════════════
+// SYNC ACTIONS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Unified action to sync a single student to Asaas
+ * This action handles the full sync flow:
+ * 1. Checks if customer already exists in Asaas (by CPF or email)
+ * 2. Creates new customer if not exists
+ * 3. Updates local student record with Asaas customer ID
+ */
+export const syncStudentToAsaas = action({
+  args: { studentId: v.id("students") },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    studentId: string;
+    asaasCustomerId: string;
+    synced: boolean;
+  }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Get student data
+    // @ts-ignore - Deep type instantiation error
+    const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
+      id: args.studentId,
+    });
+
+    if (!student) {
+      throw new Error("Student not found");
+    }
+
+    const client = await getAsaasClientFromSettings(ctx);
+
+    // Check if customer already exists in Asaas (inline logic to avoid circular reference)
+    let asaasCustomerId: string | undefined;
+    if (student.cpf || student.email) {
+      // Search by CPF
+      if (student.cpf) {
+        const cleanCpf = student.cpf.replace(/\D/g, "");
+        const response = await client.listAllCustomers({
+          cpfCnpj: cleanCpf,
+          limit: 1,
+        });
+        if (response.data.length > 0) {
+          asaasCustomerId = response.data[0].id;
+        }
+      }
+
+      // Search by email if not found by CPF
+      if (!asaasCustomerId && student.email) {
+        const response = await client.listAllCustomers({
+          email: student.email,
+          limit: 1,
+        });
+        if (response.data.length > 0) {
+          asaasCustomerId = response.data[0].id;
+        }
+      }
+    }
+
+    // If not exists, create new customer in Asaas
+    if (!asaasCustomerId) {
+      const customer = await client.createCustomer({
+        name: student.name,
+        cpfCnpj: student.cpf || "",
+        email: student.email,
+        phone: student.phone,
+        mobilePhone: student.mobilePhone,
+        externalReference: args.studentId,
+        notificationDisabled: false,
+      });
+      asaasCustomerId = customer.id;
+    }
+
+    // Update student record with Asaas customer ID
+    await ctx.runMutation(
+      internal.asaas.mutations.syncStudentAsCustomerInternal,
+      {
+        studentId: args.studentId,
+        asaasCustomerId,
+      },
+    );
+
+    return {
+      studentId: args.studentId,
+      asaasCustomerId,
+      synced: true,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════
 // IMPORT ACTIONS
 // ═══════════════════════════════════════════════════════
 
 /**
  * Sync all students as Asaas customers (background job)
+ * This inlines the sync logic to avoid circular reference
  */
 export const syncAllStudents = action({
   args: {},
@@ -389,17 +486,61 @@ export const syncAllStudents = action({
       { organizationId },
     )) as any[];
 
+    const client = await getAsaasClientFromSettings(ctx);
+
     let synced = 0;
     let errors = 0;
 
     for (const student of students) {
       try {
+        // Check if customer already exists in Asaas
+        let asaasCustomerId: string | undefined;
+        if (student.cpf || student.email) {
+          // Inline check to avoid type issues
+          if (student.cpf) {
+            const cleanCpf = student.cpf.replace(/\D/g, "");
+            const response = await client.listAllCustomers({
+              cpfCnpj: cleanCpf,
+              limit: 1,
+            });
+            if (response.data.length > 0) {
+              asaasCustomerId = response.data[0].id;
+            }
+          }
+          if (!asaasCustomerId && student.email) {
+            const response = await client.listAllCustomers({
+              email: student.email,
+              limit: 1,
+            });
+            if (response.data.length > 0) {
+              asaasCustomerId = response.data[0].id;
+            }
+          }
+        }
+
+        // If not exists, create new customer in Asaas
+        if (!asaasCustomerId) {
+          const customer = await client.createCustomer({
+            name: student.name,
+            cpfCnpj: student.cpf || "",
+            email: student.email,
+            phone: student.phone,
+            mobilePhone: student.mobilePhone,
+            externalReference: student._id,
+            notificationDisabled: false,
+          });
+          asaasCustomerId = customer.id;
+        }
+
+        // Update student record with Asaas customer ID
         await ctx.runMutation(
           internal.asaas.mutations.syncStudentAsCustomerInternal,
           {
             studentId: student._id,
+            asaasCustomerId,
           },
         );
+
         synced++;
       } catch (error) {
         console.error(`Error syncing student ${student._id}:`, error);

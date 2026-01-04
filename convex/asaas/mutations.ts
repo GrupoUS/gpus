@@ -126,20 +126,29 @@ export const syncStudentAsCustomer = action({
 
 /**
  * Internal mutation to sync student as Asaas customer
- * This is called by actions and other mutations
+ * This is called by actions after the Asaas API call completes.
+ * Only updates the local student record with the Asaas customer ID.
  */
 export const syncStudentAsCustomerInternal = internalMutation({
-  args: { studentId: v.id("students") },
+  args: {
+    studentId: v.id("students"),
+    asaasCustomerId: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const student = await ctx.db.get(args.studentId);
     if (!student) throw new Error("Student not found");
 
-    // TODO: Implement Asaas customer sync logic
-    // This mutation is a placeholder for syncing student data with Asaas.
-    // The actual API call should be done in an action, and this mutation
-    // should only update the local student record with the Asaas customer ID.
-    // For now, this is called by the action wrapper but the actual sync
-    // happens via updateStudentAsaasId after the action completes.
+    // Update the local record with Asaas customer ID
+    if (args.asaasCustomerId) {
+      await ctx.db.patch(args.studentId, {
+        asaasCustomerId: args.asaasCustomerId,
+        asaasCustomerSyncedAt: Date.now(),
+        asaasCustomerSyncError: undefined,
+        asaasCustomerSyncAttempts: 0,
+      });
+      return { studentId: args.studentId, synced: true };
+    }
+
     return { studentId: args.studentId, synced: false };
   },
 });

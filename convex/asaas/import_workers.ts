@@ -318,7 +318,7 @@ export async function processPaymentWorker(
           ? new Date(payment.paymentDate).getTime()
           : undefined,
         installmentNumber: payment.installmentNumber,
-        totalInstallments: undefined, // Not provided by Asaas API in response
+        totalInstallments: payment.installmentNumber ? undefined : undefined, // Total not directly available in payment response
         organizationId,
       },
     );
@@ -342,7 +342,7 @@ export async function processPaymentWorker(
           ? new Date(payment.paymentDate).getTime()
           : undefined,
         installmentNumber: payment.installmentNumber,
-        totalInstallments: undefined, // Not provided by Asaas API in response
+        totalInstallments: payment.installmentNumber ? undefined : undefined, // Total not directly available
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
