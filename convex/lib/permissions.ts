@@ -20,6 +20,9 @@ export const PERMISSIONS = {
   TICKETS_READ: 'tickets:read',
   TICKETS_WRITE: 'tickets:write',
 
+  // Settings
+  SETTINGS_WRITE: 'settings:write',
+
   // Reports/Dashboard
   REPORTS_READ: 'reports:read',
 } as const

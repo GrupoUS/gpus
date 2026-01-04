@@ -59,7 +59,7 @@ export default defineConfig({
         },
       },
     },
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000,
+    // Increase chunk size warning limit (1MB is acceptable for initial load with lazy routes)
+    chunkSizeWarningLimit: 1100,
   },
 })

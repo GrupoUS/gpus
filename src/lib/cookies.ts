@@ -39,6 +39,7 @@ export function setSecureCookie(name: string, value: string, options: CookieOpti
 		cookieParts.push('secure');
 	}
 
+	// biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support; document.cookie is the standard fallback for sidebar state persistence
 	document.cookie = cookieParts.join('; ');
 }
 
@@ -71,5 +72,6 @@ export function getCookie(name: string): string | null {
  * @param path - Caminho do cookie (default: '/')
  */
 export function deleteCookie(name: string, path = '/'): void {
+	// biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support; document.cookie is the standard fallback for sidebar state persistence
 	document.cookie = `${encodeURIComponent(name)}=; max-age=0; path=${path}`;
 }
