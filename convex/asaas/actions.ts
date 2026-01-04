@@ -390,7 +390,7 @@ export const syncStudentToAsaas = action({
     // Get student data
     // @ts-ignore - Deep type instantiation error
     const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
-      id: args.studentId,
+      studentId: args.studentId,
     });
 
     if (!student) {
@@ -433,7 +433,7 @@ export const syncStudentToAsaas = action({
         cpfCnpj: student.cpf || "",
         email: student.email,
         phone: student.phone,
-        mobilePhone: student.mobilePhone,
+        mobilePhone: student.phone, // students use phone field for mobile
         externalReference: args.studentId,
         notificationDisabled: false,
       });
