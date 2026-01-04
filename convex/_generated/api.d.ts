@@ -25,6 +25,7 @@ import type * as asaas_import_workers from "../asaas/import_workers.js";
 import type * as asaas_index from "../asaas/index.js";
 import type * as asaas_monitoring from "../asaas/monitoring.js";
 import type * as asaas_mutations from "../asaas/mutations.js";
+import type * as asaas_organization_keys from "../asaas/organization_keys.js";
 import type * as asaas_queries from "../asaas/queries.js";
 import type * as asaas_retry from "../asaas/retry.js";
 import type * as asaas_sync from "../asaas/sync.js";
@@ -102,6 +103,7 @@ declare const fullApi: ApiFromModules<{
   "asaas/index": typeof asaas_index;
   "asaas/monitoring": typeof asaas_monitoring;
   "asaas/mutations": typeof asaas_mutations;
+  "asaas/organization_keys": typeof asaas_organization_keys;
   "asaas/queries": typeof asaas_queries;
   "asaas/retry": typeof asaas_retry;
   "asaas/sync": typeof asaas_sync;

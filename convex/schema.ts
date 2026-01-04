@@ -1347,4 +1347,36 @@ export default defineSchema({
     .index("by_active", ["status", "severity"])
     .index("by_last_seen", ["lastSeenAt"])
     .index("by_suppressed", ["suppressedUntil"]),
+
+  // ═══════════════════════════════════════════════════════
+  // ORGANIZATION ASAAS API KEYS (Multi-tenant)
+  // ═══════════════════════════════════════════════════════
+  organizationAsaasApiKeys: defineTable({
+    // Multi-tenant: required
+    organizationId: v.string(),
+
+    // API Configuration
+    encryptedApiKey: v.string(), // AES-256-GCM encrypted
+    baseUrl: v.string(), // https://api.asaas.com/v3 or sandbox
+    environment: v.union(v.literal("production"), v.literal("sandbox")),
+
+    // Webhook configuration
+    encryptedWebhookSecret: v.optional(v.string()),
+
+    // Status
+    isActive: v.boolean(),
+
+    // Testing/validation tracking
+    lastTestedAt: v.optional(v.number()),
+    lastTestResult: v.optional(v.boolean()),
+    lastTestMessage: v.optional(v.string()),
+
+    // Audit
+    createdBy: v.string(), // Clerk user ID
+    updatedBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_active", ["organizationId", "isActive"]),
 });

@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "web-reader": {
+      "type": "http",
+      "url": "https://api.z.ai/api/mcp/web_reader/mcp",
+      "headers": {
+        "Authorization": "Bearer 8075b5198a43429e8d66d73237953dbc.efil2SmP36XMHoJY"
+      },
+      "disabled": true
+    },
+    "zai-mcp-server": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["@z_ai/mcp-server"],
+      "env": {
+        "Z_AI_API_KEY": "8075b5198a43429e8d66d73237953dbc.efil2SmP36XMHoJY",
+        "Z_AI_MODE": "ZAI"
+      },
+      "disabled": true
+    },
+    "tavily": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.tavily.com/mcp/?tavilyApiKey=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"
+      ],
+      "disabled": true
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "disabled": true
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "disabled": true
+    }
+  }
+}

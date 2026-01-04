@@ -14,13 +14,15 @@
   "mcp": {
     "serena": {
       "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide-assistant"],
-      "enabled": true
+      "command": ["uvx", "--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "ide", "--project-from-cwd", "--enable-web-dashboard", "false"],
+      "enabled": true,
+      "timeout": 60000
     },
     "sequentialthinking": {
       "type": "local",
       "command": ["bunx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
-      "enabled": true
+      "enabled": true,
+      "timeout": 30000
     },
     "context7": {
       "type": "remote",
@@ -31,12 +33,12 @@
   "agent": {
     "build": {
           "mode": "primary",
-          "model": "google/claude-opus-4-5-thinking-high",
+          "model": "zhipuai-coding-plan/glm-4.7",
           "prompt": "{file:.opencode/prompts/build.txt}"
         },
         "plan": {
           "mode": "primary",
-          "model": "anthropic/claude-opus-4-5",
+          "model": "zhipuai-coding-plan/glm-4.7",
           "prompt": "{file:.opencode/prompts/plan.txt}"
         }
   }

@@ -2,7 +2,7 @@
 name: architect-reviewer
 description: Expert architecture reviewer specializing in system design validation, architectural patterns, and technical decision assessment. Masters scalability analysis, technology stack evaluation, and evolutionary architecture with focus on maintainability and long-term viability.
 mode: subagent
-model: openai/gpt-5.2-codex-max-high
+model: openai/gpt-5.2-codex-high
 reasoningEffort: high
 textVerbosity: high
 temperature: 0.1
