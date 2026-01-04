@@ -1,7 +1,7 @@
 "use action";
 
 import { action } from "../_generated/server";
-import { internal, api } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { createAsaasClient, type AsaasClient } from "./client";
 import { AsaasConfigurationError } from "./errors";
