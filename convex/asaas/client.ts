@@ -10,7 +10,14 @@ import {
   sanitizeErrorForLogging,
   AsaasConfigurationError,
 } from "./errors";
-import { withTimeoutAndRetry, createCircuitBreaker } from "./retry";
+import { withTimeoutAndRetry } from "./retry";
+import {
+  checkCircuitBreaker,
+  recordSuccess,
+  recordFailure,
+  getCircuitBreakerState,
+  resetCircuitBreaker
+} from "../lib/asaas";
 
 // ═══════════════════════════════════════════════════════
 // TYPES - Asaas API Request/Response Payloads
@@ -247,7 +254,6 @@ const DEFAULT_MAX_RETRIES = 3;
 
 export class AsaasClient {
   private config: { apiKey: string; baseUrl: string };
-  private circuitBreaker: ReturnType<typeof createCircuitBreaker>;
 
   constructor(config: { apiKey: string; baseUrl?: string }) {
     if (!config.apiKey || config.apiKey.trim() === "") {
@@ -261,13 +267,6 @@ export class AsaasClient {
         process.env.ASAAS_BASE_URL ||
         "https://api.asaas.com/v3",
     };
-
-    // Create circuit breaker for this client instance
-    this.circuitBreaker = createCircuitBreaker({
-      failureThreshold: 5,
-      resetTimeoutMs: 60000, // 1 minute
-      halfOpenMaxCalls: 3,
-    });
   }
 
   /**
@@ -287,9 +286,14 @@ export class AsaasClient {
     // Sanitize body to remove sensitive data
     const sanitizedBody = this.sanitizeBody(options.body);
 
-    // Execute with retry logic and circuit breaker
+    // Execute with retry logic and shared circuit breaker
     return withTimeoutAndRetry(
       async () => {
+        // Check shared circuit breaker before request
+        if (!checkCircuitBreaker()) {
+           throw new Error("Circuit breaker is OPEN. Requests blocked.");
+        }
+
         const response = await fetch(url, {
           method: options.method || "GET",
           headers: {
@@ -302,12 +306,18 @@ export class AsaasClient {
 
         // Handle no content responses
         if (response.status === 204) {
+          recordSuccess(); // Record success on 204
           return undefined as T;
         }
 
         const data = await response.json();
 
         if (!response.ok) {
+          // Record failure on 5xx or 429
+          if (response.status >= 500 || response.status === 429) {
+             recordFailure();
+          }
+
           const error = {
             response: {
               status: response.status,
@@ -317,12 +327,13 @@ export class AsaasClient {
           throw error;
         }
 
+        recordSuccess(); // Record success on 200
         return data as T;
       },
       timeoutMs,
       {
         maxRetries: DEFAULT_MAX_RETRIES,
-        circuitBreaker: this.circuitBreaker,
+        // No local circuit breaker check in retry wrapper, we handled it above and in hook
       },
     );
   }
@@ -685,15 +696,14 @@ export class AsaasClient {
    * Get circuit breaker state (for monitoring)
    */
   public getCircuitBreakerState(): string {
-    return this.circuitBreaker.getState();
+    return getCircuitBreakerState().state;
   }
 
   /**
    * Reset circuit breaker (for recovery)
    */
   public resetCircuitBreaker(): void {
-    console.log(`[${new Date().toISOString()}] [AsaasClient] Circuit breaker manually reset`);
-    this.circuitBreaker.reset();
+    resetCircuitBreaker();
   }
 }
 

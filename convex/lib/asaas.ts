@@ -340,8 +340,13 @@ let circuitState: CircuitBreakerState = {
 
 /**
  * Check if circuit breaker allows requests
+ * Exposed for shared use by AsaasClient
  */
-function canProceed(): boolean {
+/**
+ * Check if circuit breaker allows requests
+ * Exposed for shared use by AsaasClient
+ */
+export function checkCircuitBreaker(): boolean {
   const now = Date.now();
 
   if (circuitState.state === "closed") {
@@ -369,8 +374,9 @@ function canProceed(): boolean {
 
 /**
  * Record a successful API call
+ * Exposed for shared use by AsaasClient
  */
-function recordSuccess(): void {
+export function recordSuccess(): void {
   if (circuitState.state === "half-open") {
     circuitState.halfOpenTestCalls++;
     // If all test calls succeeded, close the circuit
@@ -387,8 +393,9 @@ function recordSuccess(): void {
 
 /**
  * Record a failed API call
+ * Exposed for shared use by AsaasClient
  */
-function recordFailure(): void {
+export function recordFailure(): void {
   circuitState.failureCount++;
   circuitState.lastFailureTime = Date.now();
 
@@ -458,7 +465,7 @@ async function asaasFetch<T>(
   }
 
   // Check circuit breaker
-  if (!canProceed()) {
+  if (!checkCircuitBreaker()) {
     const waitTimeMs = circuitState.nextAttemptTime - Date.now();
     throw new Error(
       `Circuit breaker is ${circuitState.state}. API requests are blocked. Retry in ${Math.ceil(waitTimeMs / 1000)}s`
@@ -792,7 +799,7 @@ export class AsaasClient {
     }
 
     // Check circuit breaker
-    if (!canProceed()) {
+    if (!checkCircuitBreaker()) {
       const waitTimeMs = circuitState.nextAttemptTime - Date.now();
       throw new Error(
         `Circuit breaker is ${circuitState.state}. API requests are blocked. Retry in ${Math.ceil(waitTimeMs / 1000)}s`

@@ -8,6 +8,8 @@ import { v } from 'convex/values'
 import { internalMutation, mutation, query } from '../_generated/server'
 import { api } from '../_generated/api'
 import type { Doc } from '../_generated/dataModel'
+import { requirePermission } from '../lib/auth'
+import { PERMISSIONS } from '../lib/permissions'
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL MUTATIONS (Called by actions)
@@ -259,6 +261,9 @@ export const getFailedSyncDetails = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
+		// Require admin/reports permission for viewing failed sync details
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+
 		const limit = args.limit ?? 10
 
 		let failedSyncs = await ctx.db
@@ -334,6 +339,9 @@ export const getCircuitBreakerStatus = query({
 export const getAutoSyncConfig = query({
 	args: {},
 	handler: async (ctx) => {
+		// Require auth to view config
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+
 		const config = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
@@ -359,6 +367,9 @@ export const saveAutoSyncConfig = mutation({
 		updateExisting: v.boolean(),
 	},
 	handler: async (ctx, args) => {
+		// Require settings write permission to change config
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+
 		const existing = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))

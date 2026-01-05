@@ -602,11 +602,11 @@ export const importCustomersFromAsaas = action({
 
       // Import batch processor and workers dynamically to avoid circular imports
       const { processBatch } = await import("./batch_processor");
-      const { processCustomerWorker } = await import("./import_workers");
+      const { createCustomerBatchProcessor } = await import("./import_workers");
 
       // Create worker function with context and organizationId
-      const worker = (customer: any) =>
-        processCustomerWorker(ctx, customer, organizationId);
+      // createCustomerBatchProcessor wraps the worker with timeout and try/catch logic
+      const worker = createCustomerBatchProcessor(ctx, organizationId);
 
       // Progress callback to update sync log during processing
       const onProgress = async (stats: any) => {
