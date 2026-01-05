@@ -8,10 +8,7 @@ import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireAuth, getOrganizationId, requireOrgRole } from "../lib/auth";
-import {
-  getConfigurationStatus,
-  validateAsaasApiKey,
-} from "./config";
+import { getConfigurationStatus } from "./config";
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL QUERIES (for workers and actions)
@@ -59,24 +56,28 @@ export const getPendingExportPaymentsPublic = query({
   },
 });
 
-async function getPendingExportPaymentsLogic(ctx: any, orgId: string, args: any) {
-    // Get all payments
-    let payments = await ctx.db
-      .query("asaasPayments")
-      .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
-      .order("desc")
-      .take(1000);
+async function getPendingExportPaymentsLogic(
+  ctx: any,
+  orgId: string,
+  args: any,
+) {
+  // Get all payments
+  let payments = await ctx.db
+    .query("asaasPayments")
+    .withIndex("by_organization", (q: any) => q.eq("organizationId", orgId))
+    .order("desc")
+    .take(1000);
 
-    // Post-index filters
-    if (args.startDate !== undefined) {
-      payments = payments.filter((p: any) => p.dueDate >= args.startDate!);
-    }
-    if (args.endDate !== undefined) {
-      payments = payments.filter((p: any) => p.dueDate <= args.endDate!);
-    }
+  // Post-index filters
+  if (args.startDate !== undefined) {
+    payments = payments.filter((p: any) => p.dueDate >= args.startDate!);
+  }
+  if (args.endDate !== undefined) {
+    payments = payments.filter((p: any) => p.dueDate <= args.endDate!);
+  }
 
-    // Filter for payments without Asaas payment ID
-    return payments.filter((p: any) => !p.asaasPaymentId);
+  // Filter for payments without Asaas payment ID
+  return payments.filter((p: any) => !p.asaasPaymentId);
 }
 
 /**
@@ -345,61 +346,66 @@ export const getSyncStatistics = query({
 });
 
 async function calculateSyncStatistics(ctx: any) {
-    // Get all sync logs
-    const logs = await ctx.db
-      .query("asaasSyncLogs")
-      .withIndex("by_created")
-      .order("desc")
-      .take(100);
+  // Get all sync logs
+  const logs = await ctx.db
+    .query("asaasSyncLogs")
+    .withIndex("by_created")
+    .order("desc")
+    .take(100);
 
-    // Group by sync type
-    const byType: Record<string, Doc<"asaasSyncLogs">[]> = {};
-    for (const log of logs) {
-      if (!byType[log.syncType]) {
-        byType[log.syncType] = [];
-      }
-      byType[log.syncType].push(log);
+  // Group by sync type
+  const byType: Record<string, Doc<"asaasSyncLogs">[]> = {};
+  for (const log of logs) {
+    if (!byType[log.syncType]) {
+      byType[log.syncType] = [];
     }
+    byType[log.syncType].push(log);
+  }
 
-    // Calculate statistics per type
-    const stats: Record<
-      string,
-      {
-        lastSync?: Doc<"asaasSyncLogs">;
-        totalSyncs: number;
-        successful: number;
-        failed: number;
-        running: number;
-        totalRecordsProcessed: number;
-        avgRecordsPerSync: number;
-      }
-    > = {};
-
-    const syncTypes = ["customers", "payments", "subscriptions", "financial"] as const;
-
-    for (const syncType of syncTypes) {
-      const typeLogs = byType[syncType] || [];
-      const successful = typeLogs.filter((l: any) => l.status === "completed");
-      const failed = typeLogs.filter((l: any) => l.status === "failed");
-      const running = typeLogs.filter((l: any) => l.status === "running");
-      const totalRecords = typeLogs.reduce((sum: number, l: any) => sum + l.recordsProcessed, 0);
-      const avgRecords =
-        typeLogs.length > 0
-          ? totalRecords / typeLogs.length
-          : 0;
-
-      stats[syncType] = {
-        lastSync: typeLogs[0],
-        totalSyncs: typeLogs.length,
-        successful: successful.length,
-        failed: failed.length,
-        running: running.length,
-        totalRecordsProcessed: totalRecords,
-        avgRecordsPerSync: Math.round(avgRecords),
-      };
+  // Calculate statistics per type
+  const stats: Record<
+    string,
+    {
+      lastSync?: Doc<"asaasSyncLogs">;
+      totalSyncs: number;
+      successful: number;
+      failed: number;
+      running: number;
+      totalRecordsProcessed: number;
+      avgRecordsPerSync: number;
     }
+  > = {};
 
-    return stats;
+  const syncTypes = [
+    "customers",
+    "payments",
+    "subscriptions",
+    "financial",
+  ] as const;
+
+  for (const syncType of syncTypes) {
+    const typeLogs = byType[syncType] || [];
+    const successful = typeLogs.filter((l: any) => l.status === "completed");
+    const failed = typeLogs.filter((l: any) => l.status === "failed");
+    const running = typeLogs.filter((l: any) => l.status === "running");
+    const totalRecords = typeLogs.reduce(
+      (sum: number, l: any) => sum + l.recordsProcessed,
+      0,
+    );
+    const avgRecords = typeLogs.length > 0 ? totalRecords / typeLogs.length : 0;
+
+    stats[syncType] = {
+      lastSync: typeLogs[0],
+      totalSyncs: typeLogs.length,
+      successful: successful.length,
+      failed: failed.length,
+      running: running.length,
+      totalRecordsProcessed: totalRecords,
+      avgRecordsPerSync: Math.round(avgRecords),
+    };
+  }
+
+  return stats;
 }
 
 /**

@@ -35,7 +35,7 @@ export class CircuitBreaker {
 
 	constructor(
 		private config: CircuitBreakerConfig = {
-			failureThreshold: 5,
+			failureThreshold: 3, // Reduced from 5 for faster detection
 			resetTimeoutMs: 60000, // 1 minute
 			halfOpenMaxCalls: 3,
 		},
@@ -196,7 +196,7 @@ export async function withRetry<T>(
  */
 export function createCircuitBreaker(config?: Partial<CircuitBreakerConfig>): CircuitBreaker {
 	return new CircuitBreaker({
-		failureThreshold: config?.failureThreshold ?? 5,
+		failureThreshold: config?.failureThreshold ?? 3, // Reduced from 5 for faster detection
 		resetTimeoutMs: config?.resetTimeoutMs ?? 60000,
 		halfOpenMaxCalls: config?.halfOpenMaxCalls ?? 3,
 	})

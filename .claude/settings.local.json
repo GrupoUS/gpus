@@ -52,7 +52,10 @@
       "Bash(npx convex codegen:*)",
       "Bash(bun run lint:check:*)",
       "Bash(bun run lint:fix:*)",
-      "Bash(bun run format:*)"
+      "Bash(bun run format:*)",
+      "Bash(bun pm:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(claude:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

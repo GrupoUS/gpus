@@ -665,7 +665,16 @@ export const importCustomersFromAsaas = action({
         recordsFailed,
       };
     } catch (error: any) {
-      // Update sync log as failed
+      // Build detailed error object with stack trace
+      const errorDetails = {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        code: error.code,
+        name: error.name,
+      };
+
+      // Update sync log as failed with detailed error
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
@@ -675,8 +684,15 @@ export const importCustomersFromAsaas = action({
         recordsUpdated: 0,
         recordsFailed: allCustomers.length,
         errors: [error.message],
+        lastError: JSON.stringify(errorDetails),
         completedAt: Date.now(),
       });
+
+      console.error(
+        `[${new Date().toISOString()}] [importCustomersFromAsaas] Sync failed:`,
+        error.message,
+        error.stack,
+      );
 
       throw error;
     }

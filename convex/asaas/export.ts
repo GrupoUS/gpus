@@ -8,7 +8,6 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import type { AsaasClient } from "./client";
 import { getOrganizationId } from "../lib/auth";
 import type { BatchResult } from "./batch_processor";
 import { getAsaasClientFromSettings } from "./config";

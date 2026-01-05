@@ -28,3 +28,6 @@ coverage
 
 app.config.timestamp_*.js
 docs/Aura-Connect/
+
+# Auto Claude data directory
+.auto-claude/

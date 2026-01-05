@@ -1202,6 +1202,9 @@ export default defineSchema({
     // Erros (se houver)
     errors: v.optional(v.array(v.string())),
 
+    // Último erro detalhado (com stack trace)
+    lastError: v.optional(v.string()), // JSON stringified error details
+
     // Filtros usados (opcional)
     filters: v.optional(
       v.object({

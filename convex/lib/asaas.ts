@@ -325,7 +325,7 @@ interface CircuitBreakerState {
 }
 
 const CIRCUIT_CONFIG = {
-  failureThreshold: 5, // Open circuit after 5 consecutive failures
+  failureThreshold: 3, // Open circuit after 3 consecutive failures (reduced from 5 for faster detection)
   resetTimeoutMs: 60000, // Wait 60s before attempting recovery
   halfOpenMaxTestCalls: 3, // Allow 3 test calls in half-open state
 };
@@ -353,7 +353,7 @@ function canProceed(): boolean {
     if (now >= circuitState.nextAttemptTime) {
       circuitState.state = "half-open";
       circuitState.halfOpenTestCalls = 0;
-      console.log("[CircuitBreaker] Transitioning to half-open state");
+      console.log(`[${new Date().toISOString()}] [CircuitBreaker] Transitioning to HALF-OPEN state after ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s reset timeout`);
       return true;
     }
     return false;
@@ -378,7 +378,7 @@ function recordSuccess(): void {
       circuitState.state = "closed";
       circuitState.failureCount = 0;
       circuitState.halfOpenTestCalls = 0;
-      console.log("[CircuitBreaker] Circuit closed after successful test calls");
+      console.log(`[${new Date().toISOString()}] [CircuitBreaker] Circuit CLOSED after ${CIRCUIT_CONFIG.halfOpenMaxTestCalls} successful test calls`);
     }
   } else if (circuitState.state === "closed") {
     circuitState.failureCount = 0;
@@ -410,6 +410,26 @@ function recordFailure(): void {
  */
 export function getCircuitBreakerState(): CircuitBreakerState {
   return { ...circuitState };
+}
+
+/**
+ * Reset circuit breaker manually (for recovery)
+ */
+export function resetCircuitBreaker(): void {
+  circuitState.state = 'closed';
+  circuitState.failureCount = 0;
+  circuitState.lastFailureTime = 0;
+  circuitState.nextAttemptTime = 0;
+  circuitState.halfOpenTestCalls = 0;
+  console.log(`[${new Date().toISOString()}] [CircuitBreaker] Manually reset to CLOSED state`);
+}
+
+/**
+ * Add jitter to delay to prevent thundering herd
+ */
+function addJitter(delayMs: number): number {
+  const jitter = Math.random() * 1000; // 0-1000ms jitter
+  return delayMs + jitter;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -495,7 +515,7 @@ async function asaasFetch<T>(
           lastError = new Error(`Asaas API Error: ${errorMessage}`);
           recordFailure(); // Circuit breaker: record server error
           if (attempt < retries) {
-            const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+            const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
             await sleep(delay);
             continue;
           }
@@ -533,7 +553,7 @@ async function asaasFetch<T>(
 
       // Retry on network errors or server errors
       if (attempt < retries) {
-        const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+        const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
         await sleep(delay);
         continue;
       }
@@ -829,7 +849,7 @@ export class AsaasClient {
             lastError = new Error(`Asaas API Error: ${errorMessage}`);
             recordFailure(); // Circuit breaker: record server error
             if (attempt < retries) {
-              const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+              const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
               await sleep(delay);
               continue;
             }
@@ -867,7 +887,7 @@ export class AsaasClient {
 
         // Retry on network errors or server errors
         if (attempt < retries) {
-          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+          const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
           await sleep(delay);
           continue;
         }

@@ -237,7 +237,8 @@ export interface AsaasFinancialSummaryResponse {
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════
 
-const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
+const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds for normal operations
+const SYNC_TIMEOUT_MS = 60000; // 60 seconds for sync operations (larger data sets)
 const DEFAULT_MAX_RETRIES = 3;
 
 // ═══════════════════════════════════════════════════════
@@ -446,6 +447,7 @@ export class AsaasClient {
     cpfCnpj?: string;
     offset?: number;
     limit?: number;
+    timeoutMs?: number; // Optional timeout override for sync operations
   }): Promise<AsaasCustomerListResponse> {
     try {
       const queryParams = new URLSearchParams();
@@ -460,6 +462,7 @@ export class AsaasClient {
       const query = queryParams.toString();
       return await this.fetch<AsaasCustomerListResponse>(
         `/customers${query ? `?${query}` : ""}`,
+        { timeoutMs: params?.timeoutMs ?? SYNC_TIMEOUT_MS },
       );
     } catch (error) {
       const classified = classifyError(error);
@@ -547,6 +550,7 @@ export class AsaasClient {
     paymentDateLe?: string;
     offset?: number;
     limit?: number;
+    timeoutMs?: number; // Optional timeout override for sync operations
   }): Promise<AsaasPaymentListResponse> {
     try {
       const queryParams = new URLSearchParams();
@@ -570,6 +574,7 @@ export class AsaasClient {
       const query = queryParams.toString();
       return await this.fetch<AsaasPaymentListResponse>(
         `/payments${query ? `?${query}` : ""}`,
+        { timeoutMs: params?.timeoutMs ?? SYNC_TIMEOUT_MS },
       );
     } catch (error) {
       const classified = classifyError(error);
@@ -589,6 +594,7 @@ export class AsaasClient {
     status?: "ACTIVE" | "INACTIVE" | "EXPIRED";
     offset?: number;
     limit?: number;
+    timeoutMs?: number; // Optional timeout override for sync operations
   }): Promise<AsaasSubscriptionListResponse> {
     try {
       const queryParams = new URLSearchParams();
@@ -602,6 +608,7 @@ export class AsaasClient {
       const query = queryParams.toString();
       return await this.fetch<AsaasSubscriptionListResponse>(
         `/subscriptions${query ? `?${query}` : ""}`,
+        { timeoutMs: params?.timeoutMs ?? SYNC_TIMEOUT_MS },
       );
     } catch (error) {
       const classified = classifyError(error);
@@ -685,6 +692,7 @@ export class AsaasClient {
    * Reset circuit breaker (for recovery)
    */
   public resetCircuitBreaker(): void {
+    console.log(`[${new Date().toISOString()}] [AsaasClient] Circuit breaker manually reset`);
     this.circuitBreaker.reset();
   }
 }

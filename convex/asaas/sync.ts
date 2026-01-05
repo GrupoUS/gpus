@@ -65,6 +65,7 @@ export const updateSyncLog = internalMutation({
 		recordsUpdated: v.optional(v.number()),
 		recordsFailed: v.optional(v.number()),
 		errors: v.optional(v.array(v.string())),
+		lastError: v.optional(v.string()), // JSON stringified error details with stack trace
 		completedAt: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
@@ -80,6 +81,7 @@ export const updateSyncLog = internalMutation({
 		if (updates.recordsUpdated !== undefined) patch.recordsUpdated = updates.recordsUpdated
 		if (updates.recordsFailed !== undefined) patch.recordsFailed = updates.recordsFailed
 		if (updates.errors !== undefined) patch.errors = updates.errors
+		if (updates.lastError !== undefined) patch.lastError = updates.lastError
 		if (updates.completedAt !== undefined) patch.completedAt = updates.completedAt
 
 		await ctx.db.patch(logId, patch)
@@ -240,6 +242,85 @@ export const isSyncRunning = query({
 			.first()
 
 		return runningSync !== null
+	},
+})
+
+/**
+ * Get detailed information about failed syncs for debugging
+ */
+export const getFailedSyncDetails = query({
+	args: {
+		syncType: v.optional(v.union(
+			v.literal('customers'),
+			v.literal('payments'),
+			v.literal('subscriptions'),
+			v.literal('financial')
+		)),
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const limit = args.limit ?? 10
+
+		let failedSyncs = await ctx.db
+			.query('asaasSyncLogs')
+			.withIndex('by_status', (q) => q.eq('status', 'failed'))
+			.order('desc')
+			.take(limit * 2) // Get more to filter
+
+		// Filter by syncType if specified
+		if (args.syncType) {
+			failedSyncs = failedSyncs.filter((sync) => sync.syncType === args.syncType)
+		}
+
+		// Take only the requested limit
+		failedSyncs = failedSyncs.slice(0, limit)
+
+		return failedSyncs.map((sync) => {
+			let parsedLastError = null
+			if (sync.lastError) {
+				try {
+					parsedLastError = JSON.parse(sync.lastError)
+				} catch {
+					parsedLastError = { message: sync.lastError }
+				}
+			}
+
+			return {
+				_id: sync._id,
+				syncType: sync.syncType,
+				startedAt: sync.startedAt,
+				completedAt: sync.completedAt,
+				duration: sync.completedAt ? sync.completedAt - sync.startedAt : null,
+				recordsProcessed: sync.recordsProcessed,
+				recordsFailed: sync.recordsFailed,
+				errors: sync.errors,
+				lastError: parsedLastError,
+				initiatedBy: sync.initiatedBy,
+				filters: sync.filters,
+			}
+		})
+	},
+})
+
+/**
+ * Get circuit breaker state for monitoring (public query)
+ */
+export const getCircuitBreakerStatus = query({
+	args: {},
+	handler: async () => {
+		const { getCircuitBreakerState } = await import('../lib/asaas')
+		const state = getCircuitBreakerState()
+
+		return {
+			state: state.state,
+			failureCount: state.failureCount,
+			lastFailureTime: state.lastFailureTime,
+			nextAttemptTime: state.nextAttemptTime,
+			isBlocking: state.state === 'open',
+			timeUntilRetry: state.state === 'open'
+				? Math.max(0, state.nextAttemptTime - Date.now())
+				: 0,
+		}
 	},
 })
 

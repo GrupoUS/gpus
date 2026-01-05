@@ -22,6 +22,31 @@ import type {
 } from "./types";
 
 // ═══════════════════════════════════════════════════════
+// WORKER TIMEOUT CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+const WORKER_TIMEOUT_MS = 10000; // 10 seconds per item
+
+/**
+ * Execute function with timeout for individual worker items
+ */
+async function withItemTimeout<T>(
+  fn: () => Promise<T>,
+  timeoutMs: number,
+  itemId: string,
+): Promise<T> {
+  return Promise.race([
+    fn(),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Worker timeout after ${timeoutMs}ms for item ${itemId}`)),
+        timeoutMs,
+      ),
+    ),
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════
 // VALIDATION HELPERS
 // ═══════════════════════════════════════════════════════
 
@@ -225,7 +250,7 @@ export async function processCustomerWorker(
     };
   } catch (error: any) {
     console.error(
-      `[CustomerWorker] Failed to process customer ${customer.id}:`,
+      `[${new Date().toISOString()}] [CustomerWorker] Failed to process customer ${customer.id}:`,
       sanitizeForLog({ cpf: customer.cpfCnpj, phone: customer.phone }),
       error.message,
     );
@@ -372,7 +397,7 @@ export async function processPaymentWorker(
     };
   } catch (error: any) {
     console.error(
-      `[PaymentWorker] Failed to process payment ${payment.id}:`,
+      `[${new Date().toISOString()}] [PaymentWorker] Failed to process payment ${payment.id}:`,
       error.message,
     );
     return {
@@ -507,7 +532,7 @@ export async function processSubscriptionWorker(
     };
   } catch (error: any) {
     console.error(
-      `[SubscriptionWorker] Failed to process subscription ${subscription.id}:`,
+      `[${new Date().toISOString()}] [SubscriptionWorker] Failed to process subscription ${subscription.id}:`,
       error.message,
     );
     return {
@@ -523,6 +548,7 @@ export async function processSubscriptionWorker(
 
 /**
  * Create a batch processing function for customers
+ * Wraps worker with 10s timeout to prevent blocking
  */
 export function createCustomerBatchProcessor(
   ctx: any,
@@ -531,23 +557,53 @@ export function createCustomerBatchProcessor(
   return async (
     customer: AsaasCustomerResponse,
   ): Promise<WorkerResult<StudentWithAsaas>> => {
-    return processCustomerWorker(ctx, customer, organizationId);
+    try {
+      return await withItemTimeout(
+        () => processCustomerWorker(ctx, customer, organizationId),
+        WORKER_TIMEOUT_MS,
+        customer.id,
+      );
+    } catch (error: any) {
+      console.error(
+        `[${new Date().toISOString()}] [CustomerWorker] Timeout exceeded for customer ${customer.id}`,
+      );
+      return {
+        success: false,
+        error: error.message || "Worker timeout",
+      };
+    }
   };
 }
 
 /**
  * Create a batch processing function for payments
+ * Wraps worker with 10s timeout to prevent blocking
  */
 export function createPaymentBatchProcessor(ctx: any, organizationId?: string) {
   return async (
     payment: AsaasPaymentResponse,
   ): Promise<WorkerResult<PaymentDoc>> => {
-    return processPaymentWorker(ctx, payment, organizationId);
+    try {
+      return await withItemTimeout(
+        () => processPaymentWorker(ctx, payment, organizationId),
+        WORKER_TIMEOUT_MS,
+        payment.id,
+      );
+    } catch (error: any) {
+      console.error(
+        `[${new Date().toISOString()}] [PaymentWorker] Timeout exceeded for payment ${payment.id}`,
+      );
+      return {
+        success: false,
+        error: error.message || "Worker timeout",
+      };
+    }
   };
 }
 
 /**
  * Create a batch processing function for subscriptions
+ * Wraps worker with 10s timeout to prevent blocking
  */
 export function createSubscriptionBatchProcessor(
   ctx: any,
@@ -556,6 +612,20 @@ export function createSubscriptionBatchProcessor(
   return async (
     subscription: AsaasSubscriptionResponse,
   ): Promise<WorkerResult<SubscriptionDoc>> => {
-    return processSubscriptionWorker(ctx, subscription, organizationId);
+    try {
+      return await withItemTimeout(
+        () => processSubscriptionWorker(ctx, subscription, organizationId),
+        WORKER_TIMEOUT_MS,
+        subscription.id,
+      );
+    } catch (error: any) {
+      console.error(
+        `[${new Date().toISOString()}] [SubscriptionWorker] Timeout exceeded for subscription ${subscription.id}`,
+      );
+      return {
+        success: false,
+        error: error.message || "Worker timeout",
+      };
+    }
   };
 }
