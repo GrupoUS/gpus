@@ -31,5 +31,14 @@ crons.interval(
   {}
 );
 
+// Retry failed Asaas webhooks every 5 minutes
+// @ts-ignore - Deep type instantiation workaround
+crons.interval(
+  "asaas-webhook-retry",
+  { minutes: 5 },
+  internal.asaas.webhooks.retryFailedWebhooks,
+  {}
+);
+
 export default crons;
 

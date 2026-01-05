@@ -11,6 +11,7 @@
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { WorkerResult } from "./batch_processor";
+import { isId } from "./types";
 import type {
   AsaasCustomerResponse,
   AsaasPaymentResponse,
@@ -205,7 +206,7 @@ export async function processCustomerWorker(
         phone: phone || "",
         cpf: customer.cpfCnpj ?? undefined,
         asaasCustomerId: customer.id,
-        organizationId,
+        organizationId: organizationId,
       },
     );
 
@@ -284,12 +285,31 @@ export async function processPaymentWorker(
 
     // Find student by asaasCustomerId
     // @ts-ignore - Deep type instantiation
-    const student = await ctx.runQuery(
+    let student = await ctx.runQuery(
       internal.asaas.mutations.getStudentByAsaasId,
       {
         asaasCustomerId: payment.customer,
       },
     );
+
+    if (!student && payment.externalReference) {
+      const externalReference = payment.externalReference.trim();
+      if (isId(externalReference)) {
+        student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
+          studentId: externalReference as Id<"students">,
+        });
+      }
+
+      if (!student && externalReference.includes("@")) {
+        student = await ctx.runQuery(
+          internal.asaas.mutations.getStudentByEmailOrCpf,
+          {
+            email: externalReference,
+            cpf: undefined,
+          },
+        );
+      }
+    }
 
     if (!student) {
       return {
@@ -298,6 +318,8 @@ export async function processPaymentWorker(
         reason: `Student not found for asaasCustomerId: ${payment.customer}`,
       };
     }
+
+    const resolvedOrganizationId = organizationId ?? student.organizationId;
 
     // Create new payment
     // @ts-ignore - Deep type instantiation
@@ -330,7 +352,7 @@ export async function processPaymentWorker(
         studentId: student._id,
         asaasPaymentId: payment.id,
         asaasCustomerId: payment.customer,
-        organizationId,
+        organizationId: resolvedOrganizationId,
         value: payment.value,
         netValue: payment.netValue,
         status: payment.status,
@@ -412,12 +434,31 @@ export async function processSubscriptionWorker(
 
     // Find student by asaasCustomerId
     // @ts-ignore - Deep type instantiation
-    const student = await ctx.runQuery(
+    let student = await ctx.runQuery(
       internal.asaas.mutations.getStudentByAsaasId,
       {
         asaasCustomerId: subscription.customer,
       },
     );
+
+    if (!student && subscription.externalReference) {
+      const externalReference = subscription.externalReference.trim();
+      if (isId(externalReference)) {
+        student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
+          studentId: externalReference as Id<"students">,
+        });
+      }
+
+      if (!student && externalReference.includes("@")) {
+        student = await ctx.runQuery(
+          internal.asaas.mutations.getStudentByEmailOrCpf,
+          {
+            email: externalReference,
+            cpf: undefined,
+          },
+        );
+      }
+    }
 
     if (!student) {
       return {
@@ -426,6 +467,8 @@ export async function processSubscriptionWorker(
         reason: `Student not found for asaasCustomerId: ${subscription.customer}`,
       };
     }
+
+    const resolvedOrganizationId = organizationId ?? student.organizationId;
 
     // Create new subscription
     // @ts-ignore - Deep type instantiation
@@ -440,7 +483,7 @@ export async function processSubscriptionWorker(
         status: subscription.status,
         nextDueDate: new Date(subscription.nextDueDate).getTime(),
         description: subscription.description,
-        organizationId,
+        organizationId: resolvedOrganizationId,
       },
     );
 
@@ -451,7 +494,7 @@ export async function processSubscriptionWorker(
         studentId: student._id,
         asaasSubscriptionId: subscription.id,
         asaasCustomerId: subscription.customer,
-        organizationId,
+        organizationId: resolvedOrganizationId,
         value: subscription.value,
         cycle: subscription.cycle,
         status: subscription.status,

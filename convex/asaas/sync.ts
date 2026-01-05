@@ -147,11 +147,38 @@ export const getSyncLogs = query({
 			v.literal('subscriptions'),
 			v.literal('financial')
 		)),
+		status: v.optional(v.union(
+			v.literal('pending'),
+			v.literal('running'),
+			v.literal('completed'),
+			v.literal('failed')
+		)),
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		const limit = args.limit ?? 20
 
+		// If both syncType and status are specified
+		if (args.syncType && args.status) {
+			// Use by_sync_type index with filter for status
+			return await ctx.db
+				.query('asaasSyncLogs')
+				.withIndex('by_sync_type', (q) => q.eq('syncType', args.syncType!))
+				.filter((q) => q.eq(q.field('status'), args.status!))
+				.order('desc')
+				.take(limit)
+		}
+
+		// If only status is specified, use the by_status index
+		if (args.status) {
+			return await ctx.db
+				.query('asaasSyncLogs')
+				.withIndex('by_status', (q) => q.eq('status', args.status!))
+				.order('desc')
+				.take(limit)
+		}
+
+		// If only syncType is specified (existing behavior)
 		if (args.syncType) {
 			return await ctx.db
 				.query('asaasSyncLogs')
@@ -160,6 +187,7 @@ export const getSyncLogs = query({
 				.take(limit)
 		}
 
+		// No filters, return all ordered by creation time
 		return await ctx.db
 			.query('asaasSyncLogs')
 			.order('desc')
@@ -278,7 +306,18 @@ export const saveAutoSyncConfig = mutation({
 	},
 })
 
-import { internalAction } from '../_generated/server'
+import { internalAction, internalQuery } from '../_generated/server'
+
+/**
+ * Get circuit breaker state for operational diagnostics
+ */
+export const getCircuitBreakerState = internalQuery({
+	args: {},
+	handler: async () => {
+		const { getCircuitBreakerState } = await import('../lib/asaas')
+		return getCircuitBreakerState()
+	},
+})
 
 /**
  * Run auto sync (called by cron)

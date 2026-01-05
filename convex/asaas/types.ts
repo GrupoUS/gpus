@@ -8,9 +8,9 @@
 import type { Id } from '../_generated/dataModel'
 import type { ActionCtx } from '../_generated/server'
 
-// ═══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // WRAPPER TYPES FOR INTERNAL FUNCTIONS
-// ═══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 
 /**
  * Wrapped internal mutation return type
@@ -28,9 +28,9 @@ export type WrappedQuery<T> = Promise<T>
  */
 export type WrappedAction<T> = Promise<T>
 
-// ═══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // ASAAS API TYPES (re-exported from client.ts)
-// ═══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════
 
 export type {
 	AsaasCustomerPayload,
@@ -41,6 +41,88 @@ export type {
 	AsaasSubscriptionResponse,
 	AsaasFinancialSummaryResponse,
 } from './client'
+
+// ═══════════════════════════════════════════════════════════════════════
+// ASAAS WEBHOOK EVENT TYPES
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Complete set of Asaas webhook event types
+ *
+ * Payment Events:
+ * - PAYMENT_CREATED: New charge generated
+ * - PAYMENT_CONFIRMED: Payment confirmed (balance not yet available)
+ * - PAYMENT_RECEIVED: Payment received (balance available)
+ * - PAYMENT_OVERDUE: Payment past due date
+ * - PAYMENT_REFUNDED: Payment refunded
+ * - PAYMENT_DELETED: Payment deleted
+ * - PAYMENT_UPDATED: Due date or amount changed
+ *
+ * Subscription Events:
+ * - SUBSCRIPTION_CREATED: New subscription created
+ * - SUBSCRIPTION_UPDATED: Subscription details updated
+ * - SUBSCRIPTION_INACTIVATED: Subscription inactivated
+ * - SUBSCRIPTION_DELETED: Subscription deleted
+ */
+export type AsaasEventType =
+	| 'PAYMENT_CREATED'
+	| 'PAYMENT_CONFIRMED'
+	| 'PAYMENT_RECEIVED'
+	| 'PAYMENT_OVERDUE'
+	| 'PAYMENT_REFUNDED'
+	| 'PAYMENT_DELETED'
+	| 'PAYMENT_UPDATED'
+	| 'SUBSCRIPTION_CREATED'
+	| 'SUBSCRIPTION_UPDATED'
+	| 'SUBSCRIPTION_INACTIVATED'
+	| 'SUBSCRIPTION_DELETED';
+
+/**
+ * Complete Asaas webhook payload structure
+ *
+ * Matches Asaas API v3 webhook format
+ */
+export interface AsaasWebhookPayload {
+	id: string;
+	event: AsaasEventType;
+	payment?: AsaasPaymentData;
+	subscription?: AsaasSubscriptionData;
+	[key: string]: any; // Additional fields
+}
+
+/**
+ * Asaas payment data from webhook payload
+ */
+export interface AsaasPaymentData {
+	id: string; // pay_080225913252
+	customer: string; // cus_000000008773
+	subscription?: string; // sub_m5gdy1upm25fbwgx
+	value: number;
+	netValue: number;
+	status: string;
+	billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD';
+	dueDate: string;
+	paymentDate?: string;
+	invoiceUrl?: string;
+	bankSlipUrl?: string;
+	externalReference?: string;
+	description?: string;
+	// ... more fields
+}
+
+/**
+ * Asaas subscription data from webhook payload
+ */
+export interface AsaasSubscriptionData {
+	id: string; // sub_...
+	customer: string;
+	value: number;
+	cycle: 'MONTHLY' | 'WEEKLY' | 'BIWEEKLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
+	status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+	nextDueDate?: string;
+	description?: string;
+	// ... more fields
+}
 
 // ═══════════════════════════════════════════════════════
 // DATABASE DOCUMENT TYPES

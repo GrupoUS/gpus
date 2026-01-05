@@ -79,22 +79,102 @@ Após configurar tudo:
 4. Verifique se as cobranças aparecem no painel Asaas
 5. Simule um pagamento no Asaas e verifique se o webhook atualiza o status
 
-## Troubleshooting
+## 🔧 Troubleshooting Avançado
 
-### Erro: "ASAAS_API_KEY environment variable is not set"
-- Verifique se a variável foi configurada no Convex Dashboard
-- Certifique-se de que o nome está exatamente como `ASAAS_API_KEY` (case-sensitive)
-- Faça o deploy novamente após adicionar a variável
+### Problema: "ASAAS_API_KEY não configurada"
 
-### Webhook não está recebendo eventos
+**Diagnóstico:**
+1. Acesse: Admin > Integrações > Asaas > Status da Configuração
+2. Verifique qual fonte está sendo usada (database vs environment)
+3. Execute o teste de conexão
+
+**Soluções:**
+
+#### Opção 1: Configurar via Convex Dashboard (Recomendado para Produção)
+1. Acesse [Convex Dashboard](https://dashboard.convex.dev)
+2. Selecione seu projeto
+3. Vá em **Settings** > **Environment Variables**
+4. Adicione:
+   - Nome: `ASAAS_API_KEY`
+   - Valor: Sua chave API do Asaas (começa com `$aact_`)
+5. Clique em **Save**
+6. Aguarde 30 segundos para propagação
+7. Teste a conexão novamente
+
+#### Opção 2: Configurar via UI Admin (Recomendado para Desenvolvimento)
+1. Acesse: Admin > Configurações > Integrações > Asaas
+2. Cole a API key no campo "API Key"
+3. Clique em "Salvar"
+4. A key será criptografada automaticamente no database
+5. Teste a conexão
+
+**Verificação:**
+```bash
+# No Convex Dashboard, vá em Logs e procure por:
+[AsaasConfig] API Key source: database
+[AsaasConfig] API Key validation: PASSED
+```
+
+---
+
+### Problema: "API Key inválida ou expirada"
+
+**Diagnóstico:**
+1. Verifique se a key foi copiada completamente (sem espaços ou quebras)
+2. Confirme que a key começa com `$aact_` (produção) ou `$aact_YTU5YTE0M2` (sandbox)
+3. Verifique no painel Asaas se a key ainda está ativa
+
+**Soluções:**
+1. Gere nova API key no painel Asaas:
+   - Acesse: https://www.asaas.com
+   - Vá em: Integrações > API > Gerar nova chave
+2. Atualize a configuração (via Dashboard ou UI Admin)
+3. Teste a conexão
+
+---
+
+### Problema: Sincronização falha silenciosamente
+
+**Diagnóstico:**
+1. Verifique logs de sync via query `getSyncLogs`
+2. Verifique circuit breaker via query `getCircuitBreakerState`
+3. Verifique API usage stats via query `getApiUsageStats`
+
+**Soluções:**
+- Se circuit breaker está `open`: Aguarde 60 segundos ou reset manual
+- Se error rate > 10%: Verifique API key e rate limits
+- Se timeout: Aumente timeout em `convex/asaas/client.ts`
+
+---
+
+### Problema: Webhook não está recebendo eventos
+
 - Verifique se a URL do webhook está correta no painel Asaas
 - Verifique se o token configurado no Asaas corresponde ao `ASAAS_WEBHOOK_TOKEN`
 - Verifique os logs do Convex para erros de autenticação
 
-### Aluno não sincroniza como cliente
+### Problema: Aluno não sincroniza como cliente
+
 - Verifique se o aluno tem CPF cadastrado (necessário para criar cliente no Asaas)
 - Verifique os logs do Convex para erros na API Asaas
 - Tente sincronizar manualmente usando a mutation `syncStudentAsCustomer`
+
+---
+
+### Logs de Debug Esperados
+
+Logs esperados em uma sincronização bem-sucedida:
+```
+[AsaasConfig] Checking database settings...
+[AsaasConfig] Database config keys: api_key, base_url
+[AsaasConfig] API Key source: database
+[AsaasConfig] API Key validation: PASSED
+[AsaasClient] Making request to /customers?limit=100&offset=0
+[AsaasClient] Response: 200 OK (234ms)
+[SyncLog] Processed 50 customers (0 errors)
+```
+
+---
 
 ## Segurança
 
@@ -122,4 +202,12 @@ Utilize a query `getApiUsageStats` para monitorar o uso da API. Alerte se:
 ### Auditoria
 Todas as chamadas à API são logadas na tabela `asaasApiAudit`. Revise periodicamente para detectar uso anômalo.
 
+## Tabela de Verificação de Status
 
+| Verificação | Query/Action | Resultado Esperado |
+|-------------|--------------|-------------------|
+| **Config Status** | `api.asaas.queries.getConfigStatus` | `{ isConfigured: true, isValid: true }` |
+| **Test Connection** | `api.asaas.actions.testAsaasConnection` | `{ success: true, status: 200 }` |
+| **Sync Logs** | `api.asaas.sync.getSyncLogs` | Logs com `status: 'completed'` |
+| **Circuit Breaker** | `api.asaas.sync.getCircuitBreakerState` | `{ state: 'closed' }` |
+| **API Usage** | `api.asaas.queries.getApiUsageStats` | `{ errorRate: < 10% }` |

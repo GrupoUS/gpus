@@ -3,9 +3,10 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient, type AsaasClient } from "./client";
+import { type AsaasClient } from "./client";
 import { AsaasConfigurationError } from "./errors";
 import { getOrganizationId } from "../lib/auth";
+import { getAsaasClientFromSettings } from "./config";
 
 /**
  * Check if a customer already exists in Asaas by CPF or Email
@@ -45,35 +46,6 @@ export const checkExistingAsaasCustomer = action({
   },
 });
 
-/**
- * Helper to get Asaas client from database settings
- * Falls back to environment variables if database settings not found
- * Uses enhanced client with circuit breaker and retry logic
- */
-async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
-  // Try to get settings from database first
-  const config: Record<string, any> | null = await ctx.runQuery(
-    // @ts-ignore - Deep type instantiation error with Convex internal references
-    internal.settings.internalGetIntegrationConfig,
-    { integrationName: "asaas" },
-  );
-
-  const apiKey = config?.api_key || config?.apiKey || process.env.ASAAS_API_KEY;
-  const baseUrl =
-    config?.base_url ||
-    config?.baseUrl ||
-    process.env.ASAAS_BASE_URL ||
-    "https://api.asaas.com/v3";
-
-  if (!apiKey) {
-    throw new AsaasConfigurationError(
-      "ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.",
-    );
-  }
-
-  // Use enhanced client with circuit breaker and retry logic
-  return createAsaasClient({ apiKey, baseUrl });
-}
 
 export const createAsaasCustomer = action({
   args: {
@@ -319,28 +291,52 @@ export const testAsaasConnection = action({
   args: {},
   handler: async (ctx) => {
     try {
+      // Log configuration status
+      console.log("[AsaasTest] Testing connection...");
+
       const client = await getAsaasClientFromSettings(ctx);
+
+      console.log("[AsaasTest] Client created successfully");
+      console.log("[AsaasTest] Making test API call...");
 
       // Make a simple API call to validate credentials
       const response = await client.testConnection();
+
+      console.log("[AsaasTest] Connection successful");
 
       return {
         success: true,
         message: "Conexão com Asaas validada com sucesso",
         status: response.status,
+        timestamp: Date.now(),
       };
     } catch (error: any) {
+      console.error("[AsaasTest] Connection failed:", error);
+
       const errorMessage =
         error.response?.data?.errors?.[0]?.description ||
         error.message ||
         "Erro desconhecido";
       const statusCode = error.response?.status;
 
+      // Detailed error responses
+      if (error instanceof AsaasConfigurationError) {
+        return {
+          success: false,
+          message: "Configuração incompleta",
+          error: error.message,
+          recommendation:
+            "Configure a API key via Convex Dashboard ou UI Admin",
+        };
+      }
+
       if (statusCode === 401) {
         return {
           success: false,
           message: "API Key inválida ou expirada",
           error: errorMessage,
+          recommendation:
+            "Verifique a API key no painel Asaas e atualize a configuração",
         };
       }
 
@@ -349,6 +345,8 @@ export const testAsaasConnection = action({
           success: false,
           message: "URL base inválida ou endpoint não encontrado",
           error: errorMessage,
+          recommendation:
+            "Verifique se ASAAS_BASE_URL está configurada corretamente",
         };
       }
 
@@ -356,6 +354,8 @@ export const testAsaasConnection = action({
         success: false,
         message: "Erro ao conectar com Asaas",
         error: errorMessage,
+        statusCode,
+        recommendation: "Verifique os logs do Convex para mais detalhes",
       };
     }
   },

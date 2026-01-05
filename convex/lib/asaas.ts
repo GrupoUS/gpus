@@ -756,12 +756,127 @@ export class AsaasClient {
     };
   }
 
-  private async fetch<T>(endpoint: string, options: any = {}): Promise<T> {
-    // Use the internal fetch implementation but force this client's key
-    return asaasFetch<T>(endpoint, {
-      ...options,
-      apiKey: this.config.apiKey,
-    });
+  private async fetch<T>(
+    endpoint: string,
+    options: {
+      method?: "GET" | "POST" | "PUT" | "DELETE";
+      body?: unknown;
+      retries?: number;
+    } = {}
+  ): Promise<T> {
+    const apiKey = this.config.apiKey;
+    const retries = options.retries ?? MAX_RETRIES;
+
+    if (!apiKey) {
+      throw new Error("ASAAS_API_KEY is not configured for this client");
+    }
+
+    // Check circuit breaker
+    if (!canProceed()) {
+      const waitTimeMs = circuitState.nextAttemptTime - Date.now();
+      throw new Error(
+        `Circuit breaker is ${circuitState.state}. API requests are blocked. Retry in ${Math.ceil(waitTimeMs / 1000)}s`
+      );
+    }
+
+    const url = `${this.config.baseUrl}${endpoint}`;
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(
+            `AsaasClient API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`,
+          );
+        }
+
+        const response = await fetch(url, {
+          method: options.method || "GET",
+          headers: {
+            access_token: apiKey,
+            "Content-Type": "application/json",
+            "User-Agent": "gpus-saas/1.0",
+          },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+          signal: AbortSignal.timeout(30000), // 30s timeout
+        });
+
+        // Handle no content responses
+        if (response.status === 204) {
+          return undefined as T;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const error = data as AsaasApiError;
+          const errorMessage =
+            error.errors?.map((e) => `${e.code}: ${e.description}`).join(", ") ||
+            error.message ||
+            `HTTP ${response.status}`;
+
+          // Don't retry on client errors (4xx)
+          if (response.status >= 400 && response.status < 500) {
+            // 429 is Too Many Requests, which IS retriable
+            if (response.status !== 429) {
+              throw new Error(`Asaas API Error: ${errorMessage}`);
+            }
+          }
+
+          // Retry on server errors (5xx) or rate limiting (429)
+          if (response.status >= 500 || response.status === 429) {
+            lastError = new Error(`Asaas API Error: ${errorMessage}`);
+            recordFailure(); // Circuit breaker: record server error
+            if (attempt < retries) {
+              const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+              await sleep(delay);
+              continue;
+            }
+            throw lastError;
+          }
+
+          // Client error (non-retriable 4xx)
+          recordFailure(); // Circuit breaker: record client error
+          throw new Error(`Asaas API Error: ${errorMessage}`);
+        }
+
+        // Success
+        recordSuccess(); // Circuit breaker: record success
+        return data as T;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Circuit breaker: record network/timeout errors
+        if (
+          error instanceof Error &&
+          (error.name.includes("TimeoutError") || error.message.includes("fetch"))
+        ) {
+          recordFailure();
+        }
+
+        // Don't retry on non-network errors (unless it's a 5xx handled above)
+        if (
+          error instanceof Error &&
+          !error.message.includes("Asaas API Error") &&
+          !error.name.includes("TimeoutError") &&
+          !error.message.includes("fetch")
+        ) {
+          throw error;
+        }
+
+        // Retry on network errors or server errors
+        if (attempt < retries) {
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+          await sleep(delay);
+          continue;
+        }
+
+        throw lastError;
+      }
+    }
+
+    throw lastError || new Error("Unknown error in AsaasClient.fetch");
   }
 
   public async testConnection(): Promise<any> {

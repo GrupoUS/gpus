@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "google/claude-opus-4-5-thinking-high",
   "permission": {
     "skill": {
       "*": "allow"

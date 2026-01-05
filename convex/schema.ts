@@ -1094,17 +1094,34 @@ export default defineSchema({
     .index("by_organization_enrollment", ["organizationId", "enrollmentId"]),
 
   asaasWebhooks: defineTable({
+    eventId: v.optional(v.string()), // Asaas event ID (evt_...)
     event: v.string(),
     paymentId: v.optional(v.string()),
+    subscriptionId: v.optional(v.string()),
+    customerId: v.optional(v.string()),
     // LGPD: Encrypted payload to protect PII (name, email, CPF, phone, address)
     // Webhook payloads contain sensitive customer data from Asaas
     payload: v.optional(v.string()), // Stores encrypted JSON string
     processed: v.boolean(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("processing"),
+        v.literal("done"),
+        v.literal("failed"),
+      ),
+    ),
+    retryCount: v.optional(v.number()),
+    lastAttemptAt: v.optional(v.number()),
+    processedAt: v.optional(v.number()),
     error: v.optional(v.string()),
     createdAt: v.number(),
     // LGPD: Automatic retention policy (90 days as per ANPD guidelines)
     retentionUntil: v.number(), // Auto-delete timestamp (90 days from creation)
   })
+    .index("by_event_id", ["eventId"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"])
     .index("by_payment_id", ["paymentId"])
     .index("by_processed", ["processed"])
     .index("by_retention_until", ["retentionUntil"]), // For cleanup queries

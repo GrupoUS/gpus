@@ -8,10 +8,10 @@
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
-import { createAsaasClient } from "./client";
 import type { AsaasClient } from "./client";
 import { getOrganizationId } from "../lib/auth";
 import type { BatchResult } from "./batch_processor";
+import { getAsaasClientFromSettings } from "./config";
 
 // ═══════════════════════════════════════════════════════
 // EXPORT ACTIONS
@@ -332,33 +332,4 @@ export const bulkExportPayments = action({
   },
 });
 
-// ═══════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════
-
-/**
- * Helper to get Asaas client from database settings
- */
-async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
-  // Try to get settings from database first
-  const config: Record<string, any> | null = await ctx.runQuery(
-    // @ts-ignore - Deep type instantiation error with Convex internal references
-    internal.settings.internalGetIntegrationConfig,
-    { integrationName: "asaas" },
-  );
-
-  const apiKey = config?.api_key || config?.apiKey || process.env.ASAAS_API_KEY;
-  const baseUrl =
-    config?.base_url ||
-    config?.baseUrl ||
-    process.env.ASAAS_BASE_URL ||
-    "https://api.asaas.com/v3";
-
-  if (!apiKey) {
-    throw new Error(
-      "ASAAS_API_KEY não configurada. Configure em Configurações > Integrações > Asaas.",
-    );
-  }
-
-  return createAsaasClient({ apiKey, baseUrl });
-}
+// Note: getAsaasClientFromSettings is now imported from ./config.ts

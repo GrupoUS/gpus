@@ -7,7 +7,11 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireAuth, getOrganizationId } from "../lib/auth";
+import { requireAuth, getOrganizationId, requireOrgRole } from "../lib/auth";
+import {
+  getConfigurationStatus,
+  validateAsaasApiKey,
+} from "./config";
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL QUERIES (for workers and actions)
@@ -103,6 +107,122 @@ export const getStaleWebhooks = internalQuery({
 
     // Filter by age
     return webhooks.filter((w) => w.createdAt < args.olderThan);
+  },
+});
+
+/**
+ * Get pending webhook events (admin only)
+ */
+export const getPendingWebhookEvents = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
+    const limit = args.limit ?? 50;
+    return await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+/**
+ * Get failed webhook events (admin only)
+ */
+export const getFailedWebhookEvents = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
+    const limit = args.limit ?? 50;
+    return await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "failed"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+/**
+ * Get webhook health metrics (admin only)
+ */
+export const getWebhookHealth = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
+    const limit = args.limit ?? 200;
+
+    const recent = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_created")
+      .order("desc")
+      .take(limit);
+
+    const stats = {
+      total: recent.length,
+      pending: 0,
+      processing: 0,
+      done: 0,
+      failed: 0,
+      unknown: 0,
+      oldestPendingAt: undefined as number | undefined,
+      oldestProcessingAt: undefined as number | undefined,
+    };
+
+    for (const webhook of recent) {
+      switch (webhook.status) {
+        case "pending":
+          stats.pending++;
+          stats.oldestPendingAt =
+            stats.oldestPendingAt === undefined
+              ? webhook.createdAt
+              : Math.min(stats.oldestPendingAt, webhook.createdAt);
+          break;
+        case "processing":
+          stats.processing++;
+          stats.oldestProcessingAt =
+            stats.oldestProcessingAt === undefined
+              ? webhook.createdAt
+              : Math.min(stats.oldestProcessingAt, webhook.createdAt);
+          break;
+        case "done":
+          stats.done++;
+          break;
+        case "failed":
+          stats.failed++;
+          break;
+        default:
+          stats.unknown++;
+          break;
+      }
+    }
+
+    return stats;
+  },
+});
+
+/**
+ * Get current webhook queue depth (admin only)
+ */
+export const getQueueDepth = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireOrgRole(ctx, ["org:admin", "admin"]);
+
+    const pending = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    const processing = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "processing"))
+      .collect();
+
+    return {
+      pending: pending.length,
+      processing: processing.length,
+      total: pending.length + processing.length,
+    };
   },
 });
 
@@ -826,5 +946,22 @@ export const getApiUsageStats = query({
       topEndpoints,
       errorsByEndpoint,
     };
+  },
+});
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION STATUS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get Asaas configuration status for diagnostics
+ * Returns detailed information about API key sources and validation
+ */
+export const getConfigStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+
+    return await getConfigurationStatus(ctx);
   },
 });

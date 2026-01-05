@@ -302,10 +302,48 @@ const webhookRateLimiter = new WebhookRateLimiter(100, 60000);
 // Cleanup rate limiter every 5 minutes
 setInterval(() => webhookRateLimiter.cleanup(), 5 * 60 * 1000);
 
+type AsaasWebhookPayload = {
+  id?: string;
+  event?: string;
+  payment?: {
+    id?: string;
+    customer?: string;
+  };
+  subscription?: {
+    id?: string;
+    customer?: string;
+  };
+  customer?: {
+    id?: string;
+  };
+};
+
+function getOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function extractAsaasWebhookMeta(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  const data = payload as AsaasWebhookPayload;
+  return {
+    eventId: getOptionalString(data.id),
+    eventType: getOptionalString(data.event),
+    paymentId: getOptionalString(data.payment?.id),
+    subscriptionId: getOptionalString(data.subscription?.id),
+    customerId:
+      getOptionalString(data.payment?.customer) ||
+      getOptionalString(data.subscription?.customer) ||
+      getOptionalString(data.customer?.id),
+  };
+}
+
 /**
  * Asaas Webhook Endpoint
  *
- * Receives payment status updates from Asaas (PAYMENT_RECEIVED, PAYMENT_CONFIRMED, etc.)
+ * Receives payment, subscription, and customer events from Asaas.
  * and processes them asynchronously.
  *
  * POST /asaas/webhook
@@ -371,7 +409,7 @@ http.route({
     }
 
     // 5. Parse payload
-    let payload: any;
+    let payload: unknown;
     try {
       payload = JSON.parse(rawPayload);
     } catch {
@@ -380,34 +418,91 @@ http.route({
     }
 
     // 6. Validate required fields
-    const { event, payment } = payload;
-    if (!event || !payment || !payment.id) {
+    const { eventId, eventType, paymentId, subscriptionId, customerId } =
+      extractAsaasWebhookMeta(payload);
+
+    if (!eventId || !eventType) {
       console.error(
-        "Asaas webhook: Missing required fields (event, payment.id)",
+        "Asaas webhook: Missing required fields (id, event)",
       );
       return new Response("Bad Request: Missing required fields", {
         status: 400,
       });
     }
 
-    // 7. Process webhook asynchronously (don't wait for completion)
-    // This ensures we respond quickly to Asaas to avoid retries
-    ctx
-      .runMutation(internal.asaas.webhooks.processWebhook, {
-        event,
-        paymentId: payment.id,
-        payload,
-      })
-      .catch((error) => {
-        console.error(
-          `Asaas webhook: Error processing event ${event} for payment ${payment.id}:`,
-          error,
-        );
+    if (!paymentId && !subscriptionId && !customerId) {
+      console.error(
+        "Asaas webhook: Missing required entity data (payment, subscription, customer)",
+      );
+      return new Response("Bad Request: Missing required data", {
+        status: 400,
       });
+    }
+
+    // 7. Log + enqueue processing (idempotent)
+    try {
+      await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
+        eventId,
+        eventType,
+        paymentId,
+        subscriptionId,
+        customerId,
+        payload,
+      });
+    } catch (error) {
+      console.error(
+        `Asaas webhook: Failed to enqueue event ${eventType} (${eventId})`,
+        error,
+      );
+      return new Response("Internal Server Error", { status: 500 });
+    }
 
     // 8. Return immediate success response
-    console.log(`Asaas webhook: Received ${event} for payment ${payment.id}`);
+    console.log(`Asaas webhook: Received ${eventType} (${eventId})`);
     return new Response("OK", { status: 200 });
+  }),
+});
+
+/**
+ * Asaas Webhook Test Endpoint (dev only)
+ *
+ * POST /asaas/webhook/test
+ */
+http.route({
+  path: "/asaas/webhook/test",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (process.env.NODE_ENV === "production") {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return new Response("Bad Request", { status: 400 });
+    }
+
+    const meta = extractAsaasWebhookMeta(payload);
+    const eventId = meta.eventId || `test_${Date.now()}`;
+    const eventType = meta.eventType || "PAYMENT_CREATED";
+
+    await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
+      eventId,
+      eventType,
+      paymentId: meta.paymentId,
+      subscriptionId: meta.subscriptionId,
+      customerId: meta.customerId,
+      payload,
+    });
+
+    return new Response(
+      JSON.stringify({ received: true, eventId, eventType }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }),
 });
 
