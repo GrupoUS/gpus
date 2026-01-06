@@ -316,15 +316,36 @@ export const getCircuitBreakerStatus = query({
 		const { getCircuitBreakerState } = await import('../lib/asaas')
 		const state = getCircuitBreakerState()
 
+		const now = Date.now()
+		const timeUntilRetry = state.state === 'open'
+			? Math.max(0, state.nextAttemptTime - now)
+			: 0
+
 		return {
 			state: state.state,
 			failureCount: state.failureCount,
 			lastFailureTime: state.lastFailureTime,
+			lastFailureTimeFormatted: state.lastFailureTime
+				? new Date(state.lastFailureTime).toISOString()
+				: null,
 			nextAttemptTime: state.nextAttemptTime,
+			nextAttemptTimeFormatted: state.nextAttemptTime
+				? new Date(state.nextAttemptTime).toISOString()
+				: null,
 			isBlocking: state.state === 'open',
-			timeUntilRetry: state.state === 'open'
-				? Math.max(0, state.nextAttemptTime - Date.now())
-				: 0,
+			isHealthy: state.state === 'closed',
+			isTesting: state.state === 'half-open',
+			timeUntilRetryMs: timeUntilRetry,
+			timeUntilRetryFormatted: timeUntilRetry > 0
+				? `${Math.ceil(timeUntilRetry / 1000)}s`
+				: 'N/A',
+			halfOpenTestCalls: state.halfOpenTestCalls,
+			// Add actionable recommendations
+			recommendation: state.state === 'open'
+				? `Circuit breaker está ABERTO. Aguarde ${Math.ceil(timeUntilRetry / 1000)}s antes de tentar novamente.`
+				: state.state === 'half-open'
+				? `Circuit breaker está em TESTE. ${state.halfOpenTestCalls} chamadas de teste realizadas.`
+				: 'Circuit breaker está SAUDÁVEL. Todas as requisições estão sendo processadas normalmente.',
 		}
 	},
 })
@@ -395,6 +416,32 @@ export const saveAutoSyncConfig = mutation({
 		}
 
 		return value
+	},
+})
+
+/**
+ * Reset circuit breaker manually (admin only)
+ * Use this to force recovery after resolving external issues
+ */
+export const resetCircuitBreakerManual = mutation({
+	args: {},
+	handler: async (ctx) => {
+		// Require admin permission
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+
+		const { resetCircuitBreaker } = await import('../lib/asaas')
+		resetCircuitBreaker()
+
+		const identity = await ctx.auth.getUserIdentity()
+		console.log(
+			`[${new Date().toISOString()}] [CircuitBreaker] Manual reset triggered by admin`,
+			`| User: ${identity?.email || 'unknown'}`
+		)
+
+		return {
+			success: true,
+			message: 'Circuit breaker foi resetado manualmente. Todas as requisições serão processadas normalmente.',
+		}
 	},
 })
 

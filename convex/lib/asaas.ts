@@ -314,9 +314,9 @@ export function timestampToDateString(timestamp: number): string {
 /**
  * Circuit breaker states
  */
-type CircuitState = "closed" | "open" | "half-open";
+export type CircuitState = "closed" | "open" | "half-open";
 
-interface CircuitBreakerState {
+export interface CircuitBreakerState {
   state: CircuitState;
   failureCount: number;
   lastFailureTime: number;
@@ -358,7 +358,12 @@ export function checkCircuitBreaker(): boolean {
     if (now >= circuitState.nextAttemptTime) {
       circuitState.state = "half-open";
       circuitState.halfOpenTestCalls = 0;
-      console.log(`[${new Date().toISOString()}] [CircuitBreaker] Transitioning to HALF-OPEN state after ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s reset timeout`);
+      console.log(
+        `[${new Date().toISOString()}] [CircuitBreaker] State transition: OPEN → HALF-OPEN`,
+        `| Reason: Reset timeout elapsed (${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s)`,
+        `| Failure count: ${circuitState.failureCount}`,
+        `| Test calls allowed: ${CIRCUIT_CONFIG.halfOpenMaxTestCalls}`
+      );
       return true;
     }
     return false;
@@ -384,7 +389,11 @@ export function recordSuccess(): void {
       circuitState.state = "closed";
       circuitState.failureCount = 0;
       circuitState.halfOpenTestCalls = 0;
-      console.log(`[${new Date().toISOString()}] [CircuitBreaker] Circuit CLOSED after ${CIRCUIT_CONFIG.halfOpenMaxTestCalls} successful test calls`);
+      console.log(
+        `[${new Date().toISOString()}] [CircuitBreaker] State transition: HALF-OPEN → CLOSED`,
+        `| Reason: All test calls succeeded (${CIRCUIT_CONFIG.halfOpenMaxTestCalls}/${CIRCUIT_CONFIG.halfOpenMaxTestCalls})`,
+        `| Circuit is now healthy`
+      );
     }
   } else if (circuitState.state === "closed") {
     circuitState.failureCount = 0;
@@ -403,12 +412,20 @@ export function recordFailure(): void {
     // Half-open test failed, open the circuit again
     circuitState.state = "open";
     circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
-    console.log("[CircuitBreaker] Half-open test failed, opening circuit");
+    console.error(
+      `[${new Date().toISOString()}] [CircuitBreaker] State transition: HALF-OPEN → OPEN`,
+      `| Reason: Test call failed`,
+      `| Next retry in: ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s`
+    );
   } else if (circuitState.failureCount >= CIRCUIT_CONFIG.failureThreshold) {
     // Threshold reached, open the circuit
     circuitState.state = "open";
     circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
-    console.error(`[CircuitBreaker] Circuit opened after ${circuitState.failureCount} failures`);
+    console.error(
+      `[${new Date().toISOString()}] [CircuitBreaker] State transition: CLOSED → OPEN`,
+      `| Reason: Failure threshold reached (${circuitState.failureCount}/${CIRCUIT_CONFIG.failureThreshold})`,
+      `| Next retry in: ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s`
+    );
   }
 }
 

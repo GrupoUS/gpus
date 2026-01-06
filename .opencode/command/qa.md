@@ -32,80 +32,101 @@ flowchart LR
 
 Perform comprehensive code quality review. Follow the pipeline steps for automated quality assurance.
 
-## Phase 1: Local Quality Checks
+## Phase 0: System Snapshot
 
-> **⚠️ CRITICAL GATE**: Não prosseguir se qualquer check falhar
+Antes de iniciar as revisões, captura o estado atual para os subagents.
+- `git status`
+- `git diff`
+- `git log -n 5`
 
-```bash
-# Code quality & linting (Biome)
-bun run lint:check
+## Phase 1: Parallel Local Verification
 
-# Type safety & build verification
-bun run build
-
-# Test coverage (Vitest)
-bun run test:coverage
-```
-
-## Phase 1.5: Architecture Verification
-
-> **🏗️ ARCHITECTURE GATE**: Validar conformidade arquitetural
-
-Se houver mudanças estruturais (schema, API, boundaries):
-
-1. **Invocar**: `@architect-reviewer verify implementation`
-2. **Validar**:
-   - Padrões de design (LEVER framework)
-   - Escalabilidade e Performance
-   - Conformidade com princípios do projeto
-
-## Phase 2: Deployment Validation
-
-> **✅ PREREQUISITE**: Phase 1 deve passar completamente
-
-### 2.1 Deploy Status Check
-
-```bash
-# Railway deployment status
-railway status
-
-# Convex backend deployment
-bunx convex deploy --yes
-```
-
-### 2.2 Deploy Logs Verification
-
-> **🔍 CRITICAL**: Inspecionar logs para identificar erros de runtime/deploy
-
-```bash
-# Railway: Verificar logs recentes de deploy (últimas 100 linhas)
-railway logs --lines 100
-
-# Convex: Verificar logs de produção
-bunx convex logs --prod --history 100
-```
-
-## Agent Coordination & Background Tasks
-
-Use background tasks for parallel verification if applicable:
+> **⚠️ CRITICAL GATE**: Não prosseguir se qualquer check de bloqueio falhar.
 
 ```yaml
 orchestration:
-  parallel_checks:
-    - task: "Linting & Formatting"
-      command: "bun run lint:check"
-    - task: "Unit Tests"
-      command: "bun run test"
-  
-  auto_fix_flow:
-    - research: "@apex-researcher for error analysis"
-    - implementation: "@apex-dev for automated fixes"
+  limits:
+    max_concurrent: 4
+  phases:
+    - id: "P1"
+      name: "Local Checks & Reviews"
+      parallel: true
+      tasks:
+        - id: "LINT-1"
+          kind: "command"
+          command: "bun run lint:check"
+          gate: "blocking"
+        - id: "BUILD-1"
+          kind: "command"
+          command: "bun run build"
+          gate: "blocking"
+        - id: "TEST-1"
+          kind: "command"
+          command: "bun run test --run"
+          gate: "blocking"
+        - id: "SEC-1"
+          kind: "agent"
+          agent: "code-reviewer"
+          prompt: "Verify auth, LGPD, and security risks in the current diff. Analyze if any sensitive data handling or auth patterns are compromised."
+          gate: "blocking"
+        - id: "ARCH-1"
+          kind: "agent"
+          agent: "architect-reviewer"
+          prompt: "Validate architecture boundaries and API patterns in the diff."
+          gate: "informational"
+      barrier: { require_done: ["LINT-1", "BUILD-1", "TEST-1", "SEC-1"] }
+
+    - id: "P2"
+      name: "Deep Validation"
+      parallel: true
+      tasks:
+        - id: "DB-1"
+          kind: "agent"
+          agent: "database-specialist"
+          prompt: "Validate Convex schema and mutations if convex/ directory was modified."
+          gate: "informational"
+        - id: "A11Y-1"
+          kind: "agent"
+          agent: "apex-ui-ux-designer"
+          prompt: "Check WCAG compliance and Portuguese UI in changed components."
+          gate: "informational"
+```
+
+## Phase 2: Deployment Validation
+
+> **✅ PREREQUISITE**: Phase 1 deve passar completamente.
+
+```yaml
+orchestration:
+  phases:
+    - id: "P3"
+      name: "Deploy & Logs"
+      parallel: true
+      tasks:
+        - id: "DEP-RAILWAY"
+          kind: "command"
+          command: "railway status"
+        - id: "DEP-CONVEX"
+          kind: "command"
+          command: "bunx convex deploy --yes"
+      barrier: { require_done: ["DEP-RAILWAY", "DEP-CONVEX"] }
+
+    - id: "P4"
+      name: "Runtime Verification"
+      parallel: true
+      tasks:
+        - id: "LOG-RAILWAY"
+          kind: "command"
+          command: "railway logs --lines 100"
+        - id: "LOG-CONVEX"
+          kind: "command"
+          command: "bunx convex logs --prod --history 100"
 ```
 
 ## Phase 3: Error Aggregation & Auto-Research
 
 Se erros forem detectados em qualquer fase:
-1. **Aggrega todos os erros** em um resumo estruturado.
+1. **Sisyphus agrega todos os erros** em um resumo estruturado.
 2. **Invoca automaticamente**: `/research "Fix QA errors: [errors summary]"`
 3. Aguarda plano detalhado do `@apex-researcher`.
 
@@ -122,7 +143,8 @@ Após plano aprovado:
 |------|---------|----------------|
 | Lint | `bun run lint:check` | 0 errors |
 | Build | `bun run build` | Clean build |
-| Tests | `bun run test:coverage` | All tests pass |
+| Tests | `bun run test --run` | All tests pass |
+| Security | `@code-reviewer` | No Critical/High |
 | Deploy | `railway status` | Healthy |
 | Backend | `bunx convex deploy --yes` | Success |
 | Production Logs | `railway logs` | No crashes |

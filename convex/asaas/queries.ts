@@ -971,3 +971,162 @@ export const getConfigStatus = query({
     return await getConfigurationStatus(ctx);
   },
 });
+
+/**
+ * Get comprehensive validation report
+ *
+ * Aggregates:
+ * - Sync statistics (last sync, success rate)
+ * - API usage stats (error rate, response time)
+ * - Webhook health (pending, failed, queue depth)
+ * - Circuit breaker status
+ * - Recent alerts
+ *
+ * Returns health score (0-100) and recommendations
+ */
+export const getValidationReport = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+
+    // 1. Sync Statistics
+    const syncStats = await calculateSyncStatistics(ctx);
+
+    // 2. API Usage (last 24h) - inline calculation to avoid circular type
+    const since = Date.now() - 24 * 60 * 60 * 1000;
+    const logs = await ctx.db
+      .query("asaasApiAudit")
+      .withIndex("by_timestamp", (q) => q.gte("timestamp", since))
+      .collect();
+
+    const errorLogs = logs.filter((l) => l.statusCode >= 400);
+    const apiUsage = {
+      totalRequests: logs.length,
+      errorRate: logs.length > 0 ? Math.round((errorLogs.length / logs.length) * 100) : 0,
+      avgResponseTime: logs.length > 0
+        ? Math.round(logs.reduce((sum, l) => sum + l.responseTime, 0) / logs.length)
+        : 0,
+    };
+
+    // 3. Webhook Health - inline calculation to avoid circular type
+    const recentWebhooks = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_created")
+      .order("desc")
+      .take(200);
+
+    const webhookHealth = {
+      total: recentWebhooks.length,
+      pending: recentWebhooks.filter((w) => w.status === "pending").length,
+      failed: recentWebhooks.filter((w) => w.status === "failed").length,
+    };
+
+    const pendingQueue = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+    const processingQueue = await ctx.db
+      .query("asaasWebhooks")
+      .withIndex("by_status", (q) => q.eq("status", "processing"))
+      .collect();
+    const queueDepth = { total: pendingQueue.length + processingQueue.length };
+
+    // 4. Circuit Breaker Status
+    const { getCircuitBreakerState } = await import("../lib/asaas");
+    const circuitBreaker = getCircuitBreakerState();
+
+    // 5. Recent Alerts (last 7 days) - using by_status index since we filter by active status
+    // Note: asaasAlerts uses 'status' field with values: active, acknowledged, resolved, suppressed
+    const alerts = await ctx.db
+      .query("asaasAlerts")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .order("desc")
+      .take(50);
+
+    // Calculate health score (0-100)
+    let healthScore = 100;
+    const issues: string[] = [];
+
+    // Deduct points for issues
+    if (circuitBreaker.state !== "closed") {
+      healthScore -= 30;
+      issues.push(`Circuit breaker is ${circuitBreaker.state}`);
+    }
+
+    if (apiUsage.errorRate > 10) {
+      healthScore -= 20;
+      issues.push(`High API error rate: ${apiUsage.errorRate}%`);
+    }
+
+    if (webhookHealth.failed > 10) {
+      healthScore -= 15;
+      issues.push(`${webhookHealth.failed} failed webhooks`);
+    }
+
+    if (queueDepth.total > 100) {
+      healthScore -= 10;
+      issues.push(`High webhook queue depth: ${queueDepth.total}`);
+    }
+
+    if (alerts.length > 5) {
+      healthScore -= 10;
+      issues.push(`${alerts.length} unresolved alerts`);
+    }
+
+    // Recommendations
+    const recommendations: string[] = [];
+
+    if (circuitBreaker.state === "open") {
+      recommendations.push("Circuit breaker is open. Check API connectivity and credentials.");
+    }
+
+    if (webhookHealth.failed > 0) {
+      recommendations.push(`Retry ${webhookHealth.failed} failed webhooks via api.asaas.retryFailedWebhooks`);
+    }
+
+    if (queueDepth.total > 50) {
+      recommendations.push("High webhook queue. Consider scaling or investigating processing delays.");
+    }
+
+    return {
+      healthScore: Math.max(0, healthScore),
+      status: healthScore >= 80 ? "healthy" : healthScore >= 50 ? "degraded" : "critical",
+      timestamp: Date.now(),
+
+      syncStats: {
+        lastSync: syncStats.customers?.lastSync,
+        totalSyncs: Object.values(syncStats).reduce((sum, s) => sum + s.totalSyncs, 0),
+        successRate: Object.values(syncStats).reduce((sum, s) => sum + s.successful, 0) /
+                     Math.max(1, Object.values(syncStats).reduce((sum, s) => sum + s.totalSyncs, 0)) * 100,
+      },
+
+      apiUsage: {
+        totalRequests: apiUsage.totalRequests,
+        errorRate: apiUsage.errorRate,
+        avgResponseTime: apiUsage.avgResponseTime,
+      },
+
+      webhookHealth: {
+        total: webhookHealth.total,
+        pending: webhookHealth.pending,
+        failed: webhookHealth.failed,
+        queueDepth: queueDepth.total,
+      },
+
+      circuitBreaker: {
+        state: circuitBreaker.state,
+        failureCount: circuitBreaker.failureCount,
+        isHealthy: circuitBreaker.state === "closed",
+      },
+
+      alerts: {
+        total: alerts.length,
+        critical: alerts.filter(a => a.severity === "critical").length,
+        high: alerts.filter(a => a.severity === "high").length,
+      },
+
+      issues,
+      recommendations,
+    };
+  },
+});

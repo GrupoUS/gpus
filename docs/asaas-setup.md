@@ -209,5 +209,98 @@ Todas as chamadas à API são logadas na tabela `asaasApiAudit`. Revise periodic
 | **Config Status** | `api.asaas.queries.getConfigStatus` | `{ isConfigured: true, isValid: true }` |
 | **Test Connection** | `api.asaas.actions.testAsaasConnection` | `{ success: true, status: 200 }` |
 | **Sync Logs** | `api.asaas.sync.getSyncLogs` | Logs com `status: 'completed'` |
-| **Circuit Breaker** | `api.asaas.sync.getCircuitBreakerState` | `{ state: 'closed' }` |
+| **Circuit Breaker** | `api.asaas.sync.getCircuitBreakerStatus` | `{ state: 'closed', isHealthy: true }` |
 | **API Usage** | `api.asaas.queries.getApiUsageStats` | `{ errorRate: < 10% }` |
+
+---
+
+## 🔧 Troubleshooting: Circuit Breaker
+
+### O que é o Circuit Breaker?
+
+O circuit breaker protege o sistema contra falhas em cascata quando a API do Asaas está instável. Ele possui 3 estados:
+
+- **CLOSED** (Saudável): Todas as requisições são processadas normalmente
+- **OPEN** (Bloqueado): Requisições são bloqueadas após 3 falhas consecutivas
+- **HALF-OPEN** (Testando): Permite 3 requisições de teste para verificar recuperação
+
+### Como Monitorar
+
+**Via Convex Dashboard:**
+```typescript
+// Query: api.asaas.sync.getCircuitBreakerStatus
+{
+  "state": "closed",
+  "failureCount": 0,
+  "isHealthy": true,
+  "isBlocking": false,
+  "recommendation": "Circuit breaker está SAUDÁVEL..."
+}
+```
+
+**Via Logs:**
+```bash
+bunx convex logs --filter "CircuitBreaker"
+```
+
+### Sintomas de Circuit Breaker Aberto
+
+- ❌ Erro: `Circuit breaker is OPEN. API requests are blocked.`
+- ⏱️ Mensagem: `Retry in Xs`
+- 📊 Dashboard mostra `state: "open"`, `isBlocking: true`
+
+### Como Resolver
+
+#### 1. Aguardar Reset Automático (Recomendado)
+O circuit breaker se recupera automaticamente após 60 segundos:
+- Aguarde o tempo indicado em `timeUntilRetryFormatted`
+- O sistema tentará 3 requisições de teste
+- Se bem-sucedidas, o circuit fecha automaticamente
+
+#### 2. Reset Manual (Emergência)
+Se você corrigiu o problema na API do Asaas:
+```typescript
+// Mutation: api.asaas.sync.resetCircuitBreakerManual
+// Requer permissão SETTINGS_WRITE
+```
+
+⚠️ **Atenção**: Reset manual só deve ser usado se você tem certeza que o problema foi resolvido externamente.
+
+### Causas Comuns
+
+1. **API Key Inválida**: Verifique em Configurações > Integrações
+2. **Rate Limiting**: Asaas bloqueou temporariamente (aguarde 60s)
+3. **Timeout de Rede**: Problemas de conectividade
+4. **Manutenção do Asaas**: Verifique status em https://status.asaas.com
+
+### Logs de Transição
+
+```
+[2024-01-15T10:30:00.000Z] [CircuitBreaker] State transition: CLOSED → OPEN
+| Reason: Failure threshold reached (3/3)
+| Next retry in: 60s
+
+[2024-01-15T10:31:00.000Z] [CircuitBreaker] State transition: OPEN → HALF-OPEN
+| Reason: Reset timeout elapsed (60s)
+| Test calls allowed: 3
+
+[2024-01-15T10:31:05.000Z] [CircuitBreaker] State transition: HALF-OPEN → CLOSED
+| Reason: All test calls succeeded (3/3)
+| Circuit is now healthy
+```
+
+### Debugging Falhas de Sync
+
+Para investigar falhas de sincronização:
+```typescript
+// Query detalhada de syncs com erro:
+api.asaas.sync.getFailedSyncDetails({ limit: 5 })
+
+// Retorna stack trace completo em lastError:
+{
+  "message": "Invalid API key",
+  "stack": "Error: Invalid API key\n    at AsaasClient.fetch...",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "code": "UNAUTHORIZED"
+}
+```

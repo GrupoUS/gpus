@@ -15,6 +15,27 @@ import { Activity, AlertTriangle, CheckCircle2, Clock, Database, XCircle } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Type for sync log from Asaas
+interface SyncLog {
+	status: 'pending' | 'running' | 'completed' | 'failed';
+	[key: string]: unknown;
+}
+
+// Type for endpoint stats from API
+interface EndpointStats {
+	endpoint: string;
+	count: number;
+	errorRate: number;
+	avgTime: number;
+}
+
+// Type for error stats
+interface ErrorStats {
+	endpoint: string;
+	errors: number;
+	errorRate: number;
+}
+
 export function AdminMetricsDashboard() {
 	// Get API usage stats for last 24 hours
 	const apiStats = useQuery(api.asaas.getApiUsageStats, { hours: 24 });
@@ -30,8 +51,8 @@ export function AdminMetricsDashboard() {
 	}
 
 	// Calculate sync stats from logs
-	const completedSyncs = syncStats.filter((s) => s.status === 'completed');
-	const failedSyncs = syncStats.filter((s) => s.status === 'failed');
+	const completedSyncs = syncStats.filter((s: SyncLog) => s.status === 'completed');
+	const failedSyncs = syncStats.filter((s: SyncLog) => s.status === 'failed');
 	const successRate = syncStats.length > 0 ? (completedSyncs.length / syncStats.length) * 100 : 0;
 
 	// Status determination
@@ -105,7 +126,7 @@ export function AdminMetricsDashboard() {
 						<StatItem
 							icon={<Clock className="h-4 w-4 text-yellow-500" />}
 							label="Em Execução"
-							value={syncStats.filter((s) => s.status === 'running').length}
+							value={syncStats.filter((s: SyncLog) => s.status === 'running').length}
 						/>
 					</div>
 				</CardContent>
@@ -119,7 +140,7 @@ export function AdminMetricsDashboard() {
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-3">
-						{apiStats.topEndpoints.slice(0, 5).map((endpoint, i) => (
+						{apiStats.topEndpoints.slice(0, 5).map((endpoint: EndpointStats, i: number) => (
 							<div key={i} className="flex items-center justify-between text-sm">
 								<div className="flex items-center gap-2 flex-1">
 									<span className="font-mono text-xs bg-muted px-2 py-1 rounded">
@@ -151,7 +172,7 @@ export function AdminMetricsDashboard() {
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-2">
-							{apiStats.errorsByEndpoint.map((error, i) => (
+							{apiStats.errorsByEndpoint.map((error: ErrorStats, i: number) => (
 								<div
 									key={i}
 									className="flex items-center justify-between text-sm py-2 border-b last:border-0"

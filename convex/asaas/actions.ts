@@ -782,7 +782,7 @@ export const importPaymentsFromAsaas = action({
       };
 
       // Process all payments in concurrent batches
-      await processBatch(
+      const result = await processBatch(
         allPayments,
         worker,
         {
@@ -796,6 +796,28 @@ export const importPaymentsFromAsaas = action({
         onProgress,
       );
 
+      // Calculate final statistics from batch processor results
+      const recordsCreated = result.created || 0;
+      const recordsUpdated = result.updated || 0;
+      const recordsProcessed = result.totalProcessed;
+      const recordsFailed = result.failed.length;
+
+      // Collect error messages
+      const errors = result.failed.map((f) => f.error).slice(0, 50);
+
+      // Update sync log as completed
+      // @ts-ignore
+      await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
+        logId,
+        status: "completed" as const,
+        recordsProcessed,
+        recordsCreated,
+        recordsUpdated,
+        recordsFailed,
+        errors: errors.length > 0 ? errors : undefined,
+        completedAt: Date.now(),
+      });
+
       // Recalculate financial metrics after import
       await ctx.runMutation(internal.metrics.calculateFinancialMetrics, {
         organizationId,
@@ -803,12 +825,21 @@ export const importPaymentsFromAsaas = action({
 
       return {
         success: true,
-        recordsProcessed: allPayments.length,
-        recordsCreated: 0, // Simplified for this call
-        recordsUpdated: 0,
-        recordsFailed: 0,
+        recordsProcessed,
+        recordsCreated,
+        recordsUpdated,
+        recordsFailed,
       };
     } catch (error: any) {
+      // Build detailed error object with stack trace
+      const errorDetails = {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        code: error.code,
+        name: error.name,
+      };
+
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
@@ -818,8 +849,15 @@ export const importPaymentsFromAsaas = action({
         recordsUpdated: 0,
         recordsFailed: allPayments.length,
         errors: [error.message],
+        lastError: JSON.stringify(errorDetails),
         completedAt: Date.now(),
       });
+
+      console.error(
+        `[${new Date().toISOString()}] [importPaymentsFromAsaas] Sync failed:`,
+        error.message,
+        error.stack,
+      );
 
       throw error;
     }
@@ -949,6 +987,15 @@ export const importSubscriptionsFromAsaas = action({
         recordsFailed,
       };
     } catch (error: any) {
+      // Build detailed error object with stack trace
+      const errorDetails = {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        code: error.code,
+        name: error.name,
+      };
+
       // @ts-ignore
       await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
         logId,
@@ -958,8 +1005,15 @@ export const importSubscriptionsFromAsaas = action({
         recordsUpdated: 0,
         recordsFailed: allSubscriptions.length,
         errors: [error.message],
+        lastError: JSON.stringify(errorDetails),
         completedAt: Date.now(),
       });
+
+      console.error(
+        `[${new Date().toISOString()}] [importSubscriptionsFromAsaas] Sync failed:`,
+        error.message,
+        error.stack,
+      );
 
       throw error;
     }

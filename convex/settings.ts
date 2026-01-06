@@ -16,6 +16,47 @@ function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEYS.includes(key) || key.endsWith("_key") || key.endsWith("_secret") || key.endsWith("_token");
 }
 
+// Inline validator to avoid circular dependencies with convex/asaas/config.ts
+function validateAsaasApiKey(key: string): {
+  valid: boolean;
+  error?: string;
+} {
+  // Check if key is empty or only whitespace
+  if (!key || key.trim().length === 0) {
+    return { valid: false, error: "API Key não pode estar vazia" };
+  }
+
+  // Clean the key
+  const cleanKey = key.trim();
+
+  // Check minimum length (Asaas keys are typically 40+ characters)
+  if (cleanKey.length < 32) {
+    return {
+      valid: false,
+      error: `API Key muito curta (${cleanKey.length} caracteres, mínimo 32)`,
+    };
+  }
+
+  // Check if starts with expected prefix ($aact_)
+  if (!cleanKey.startsWith("$aact_")) {
+    return {
+      valid: false,
+      error: "API Key deve começar com $aact_",
+    };
+  }
+
+  // Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
+  const validPattern = /^[\$a-zA-Z0-9_]+$/;
+  if (!validPattern.test(cleanKey)) {
+    return {
+      valid: false,
+      error: "API Key contém caracteres inválidos",
+    };
+  }
+
+  return { valid: true };
+}
+
 // List all settings (Admin only)
 export const list = query({
   args: {},
@@ -71,6 +112,14 @@ export const set = mutation({
     }
 
     let valueToStore = args.value;
+
+    // Validate Asaas API Key
+    if (args.key === "integration_asaas_api_key") {
+      const validation = validateAsaasApiKey(args.value);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
+    }
 
     // Encrypt sensitive keys
     if (isSensitiveKey(args.key) && typeof args.value === 'string') {

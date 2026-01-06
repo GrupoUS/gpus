@@ -128,11 +128,11 @@ export async function decrypt(encryptedData: string): Promise<string> {
 		const decrypted = await crypto.subtle.decrypt(
 			{
 				name: ENCRYPTION_CONFIG.algorithm,
-				iv: iv.buffer as ArrayBuffer,
+				iv: iv,
 				tagLength: ENCRYPTION_CONFIG.tagLength,
 			},
 			key,
-			encrypted.buffer as ArrayBuffer
+			encrypted
 		)
 
 		return decoder.decode(decrypted)

@@ -12,14 +12,17 @@ Este comando roda em **Plan Mode** (pesquisa + planejamento). Ele **não** imple
 
 ```mermaid
 flowchart TD
-    A[Início /research] --> B[Paralelização de Pesquisa]
-    B --> C1[Explore Agent: Codebase Patterns]
-    B --> C2[Librarian Agent: External Docs/GitHub]
-    B --> C3[Oracle Agent: Strategic Guidance]
-    C1 & C2 & C3 --> D[Sintetizar Resultados]
-    D --> E[Gerar YAML Output Contract]
-    E --> F[Executar todowrite para Atomic Tasks]
-    F --> G[Apresentar Plano para Aprovação]
+    A[Início /research] --> B[Phase 1: Discovery (Parallel)]
+    B --> C1[Explore: EXP-STRUCT]
+    B --> C2[Explore: EXP-TRACE]
+    B --> C3[Librarian: LIB-DOCS]
+    B --> C4[Librarian: LIB-EXAMPLES]
+    B --> C5[Plan Draft: PLAN-1]
+    C1 & C2 & C3 & C4 & C5 --> D[Barrier: Synthesis]
+    D --> E[Phase 2: Targeted Follow-up]
+    E --> F[Oracle: Architecture Review (L4+)]
+    F --> G[Gerar YAML Output Contract]
+    G --> H[Executar todowrite para Atomic Tasks]
 ```
 
 ## Task
@@ -75,22 +78,53 @@ chain_of_thought_process:
 
 ## Background Task Orchestration
 
-Use `background_task` to maximize throughput during research:
-
 ```yaml
 orchestration:
-  parallel_launch:
-    - agent: "explore"
-      prompt: "Find existing implementations of X in our codebase"
-    - agent: "librarian"
-      prompt: "Research best practices for library Y"
-  
+  limits:
+    max_concurrent: 5
+    timeout: 180000
+
+  phases:
+    - id: "P1"
+      name: "Discovery"
+      parallel: true
+      tasks:
+        - id: "EXP-STRUCT"
+          agent: "explore"
+          prompt: "Map file structure + entrypoints + patterns (routes, hooks, Convex)"
+        - id: "EXP-TRACE"
+          agent: "explore"
+          prompt: "Trace references (api.*, route usage, component composition)"
+        - id: "LIB-DOCS"
+          agent: "librarian"
+          prompt: "Official docs via Context7 (Convex, Clerk, TanStack, shadcn)"
+        - id: "LIB-EXAMPLES"
+          agent: "librarian"
+          prompt: "GitHub/OSS examples for complex patterns"
+        - id: "PLAN-1"
+          agent: "apex-researcher"
+          prompt: "Initial plan + acceptance criteria (Draft)"
+      barrier: { require_done: ["EXP-STRUCT", "EXP-TRACE", "LIB-DOCS", "LIB-EXAMPLES", "PLAN-1"] }
+
+    - id: "P2"
+      name: "Targeted Refinement"
+      parallel: true
+      tasks:
+        - id: "REV-1"
+          agent: "architect-reviewer"
+          prompt: "Validate P1 findings against architecture rules"
+          gate: "informational"
+        - id: "PLAN-REFINE"
+          agent: "apex-researcher"
+          prompt: "Finalize AT/VT task list based on Wave 1 evidence"
+          dependencies: ["P1"]
+
   collection:
-    - action: "background_output(task_id) when ready"
-    - action: "Synthesize findings into the final plan"
-    
+    - action: "Synthesize findings into .opencode/specs/[feature-id]/spec.md"
+    - action: "Execute todowrite() for AT-XXX and VT-XXX"
+
   cleanup:
-    - action: "background_cancel(all=true) before completion"
+    - action: "background_cancel(all=true)"
 ```
 
 ## Instruções para @apex-researcher
