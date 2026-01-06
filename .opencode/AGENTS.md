@@ -8,8 +8,8 @@
 
 | ❌ NUNCA Usar | ✅ SEMPRE Usar |
 |--------------|----------------|
-| `edit` (modificar código) | `readroadmap` (ler estado) |
-| `write` (criar arquivos de código) | `updateroadmap` (atualizar status) |
+| `edit` (modificar código) | `todoread` (ler estado) |
+| `write` (criar arquivos de código) | `todowrite` (atualizar status) |
 | `bash` (comandos que modificam) | `Task tool` (delegar para subagents) |
 | | `bash` read-only (lint, build, test) |
 
@@ -127,15 +127,15 @@ Para problemas desconhecidos, seguir esta cascata:
 
 ```
 0. sequentialthinking → analisar complexidade da tarefa
-1. readroadmap → identify pending action
+1. todoread → identify pending action
 2. serena → entender contexto (find_symbol, get_symbols_overview)
 3. context7 → buscar docs se API externa envolvida
 4. Route by domain → determine owner
-5. updateroadmap → status = in_progress
+5. todowrite → status = in_progress
 6. Task tool → delegate to subagent (BACKGROUND)
 7. Continue with other actions (don't block)
 8. On completion → validate (lint + build + test)
-9. If pass → updateroadmap → completed
+9. If pass → todowrite → completed
 10. If fail → sequentialthinking → analyze error → rollback → retry/fallback
 ```
 
@@ -205,7 +205,7 @@ Execute action [X.XX] in BACKGROUND:
 - Files: [files_affected]
 
 ## Instructions
-1. Use `readroadmap` first
+1. Use `todoread` first
 2. Focus ONLY on this action
 3. Do NOT modify files from other in_progress actions
 4. Run validation: `bun run lint:check && bun run build`
@@ -230,11 +230,11 @@ Rollback: `git checkout [files_affected]`
 | Rule | Priority |
 |------|----------|
 | Build Agent NEVER implements code | 🔴 Critical |
-| ALWAYS `readroadmap` before ANY work | 🔴 Critical |
-| ALWAYS `updateroadmap` on status change | 🔴 Critical |
+| ALWAYS `todoread` before ANY work | 🔴 Critical |
+| ALWAYS `todowrite` on status change | 🔴 Critical |
 | ONE action per subagent at a time | 🔴 Critical |
 | Validation gates after EVERY completion | 🟡 High |
-| Subagents must also use roadmap tools | 🟡 High |
+| Subagents must also use todoread/todowrite | 🟡 High |
 | Include descriptive notes in updates | 🟢 Medium |
 
 ---
@@ -257,14 +257,14 @@ Rollback: `git checkout [files_affected]`
 │              ORCHESTRATOR WORKFLOW + MCP                     │
 ├─────────────────────────────────────────────────────────────┤
 │  0. sequentialthinking → analisar tarefa (L4+)              │
-│  1. readroadmap → identify pending                          │
+│  1. todoread → identify pending                             │
 │  2. serena → entender contexto                              │
 │  3. context7 → docs se API externa                          │
 │  4. Route by domain → determine owner                       │
-│  5. updateroadmap → in_progress                             │
+│  5. todowrite → in_progress                                 │
 │  6. Task tool → delegate (BACKGROUND)                       │
 │  7. Validate → lint + build + test                          │
-│  8. updateroadmap → completed                               │
+│  8. todowrite → completed                                   │
 │  9. Se erro → sequentialthinking → analyze → retry          │
 │                                                              │
 │  ROUTING:                                                    │

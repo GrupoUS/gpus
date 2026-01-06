@@ -9,8 +9,8 @@
 ## ⚠️ Golden Rules (Non-Negotiable)
 
 | ❌ NEVER | ✅ ALWAYS |
-|----------|-----------|
-| Implement code directly | Use `readroadmap` at session start |
+|----------|-----------| 
+| Implement code directly | Use `todoread` at session start |
 | Skip complexity analysis | Invoke @apex-researcher for L4+ tasks |
 | Create tasks without research | Generate spec file before TodoWrite |
 | Approve without validation | Include VT-XXX validation tasks |
@@ -46,7 +46,7 @@ flowchart TD
 | 2. ANALYZE | Assess complexity with sequential-thinking | L1-L10 rating |
 | 3. RESEARCH | Invoke @apex-researcher (for L4+) | Research report YAML |
 | 4. GENERATE | Create spec at `.opencode/specs/[feature-id]/spec.md` | Spec file |
-| 5. CREATE | Use `createroadmap` tool | Roadmap structure |
+| 5. CREATE | Use `todowrite` tool | Task list structure |
 | 6. BRIDGE | Generate AT-XXX + VT-XXX tasks in TodoWrite format | TodoWrite tasks |
 | 7. PRESENT | Show plan summary to user | Approval prompt |
 
@@ -222,9 +222,9 @@ L[X] — [Justification for complexity rating]
 
 ---
 
-## Roadmap Creation
+## Task List Creation
 
-### Using createroadmap Tool
+### Using todowrite Tool
 
 ```yaml
 feature: "[Feature Name]"
@@ -418,45 +418,45 @@ From AGENTS.md - owner assignment by path:
 
 ---
 
-## Roadmap Plugin Tools Reference
+## TodoWrite Tools Reference
 
-### readroadmap
+### todoread
 
 **MANDATORY** before any planning work:
 
 ```yaml
-# Overview
-readroadmap()
-
-# Specific feature
-readroadmap(featureNumber: "1")
-
-# Specific action
-readroadmap(actionNumber: "1.01")
+# Read current task state
+todoread()
 ```
 
-### createroadmap
+### todowrite
 
-Create new roadmap after research:
+Create or update task list:
 
 ```yaml
-createroadmap(
-  feature: "[Name]",
-  spec: "[Description]",
-  features: [...]
-)
+todowrite({
+  todos: [
+    {
+      id: "AT-001",
+      content: "[AT-001] Task title | Phase: N | Files: paths",
+      status: "pending",
+      priority: "high"
+    },
+    // ... more tasks
+  ]
+})
 ```
 
-### updateroadmap
+### Task Status Updates
 
-Update action status:
+Update task status by modifying the `status` field:
 
 ```yaml
-updateroadmap(
-  actionNumber: "1.01",
-  status: "in_progress" | "completed" | "cancelled",
-  note: "Description of what was done"
-)
+# Status values:
+# "pending" → available for work
+# "in_progress" → currently being worked on
+# "completed" → finished and validated
+# "cancelled" → no longer needed
 ```
 
 ---
@@ -488,7 +488,7 @@ Before presenting any plan, validate against constitution.md:
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  SESSION START:                                                  │
-│    1. readroadmap() → check existing state                      │
+│    1. todoread() → check existing state                         │
 │    2. Understand user request                                   │
 │                                                                  │
 │  PLANNING FLOW:                                                  │
@@ -496,7 +496,7 @@ Before presenting any plan, validate against constitution.md:
 │    2. ANALYZE → sequential-thinking for complexity              │
 │    3. RESEARCH → @apex-researcher (L4+)                         │
 │    4. GENERATE → .opencode/specs/[feature-id]/spec.md           │
-│    5. CREATE → createroadmap()                                  │
+│    5. CREATE → todowrite()                                      │
 │    6. BRIDGE → AT-XXX + VT-XXX tasks                            │
 │    7. PRESENT → approval template                               │
 │                                                                  │
@@ -521,7 +521,7 @@ Before presenting any plan, validate against constitution.md:
 │                                                                  │
 │  NEVER:                                                          │
 │    - Implement code                                             │
-│    - Skip readroadmap                                           │
+│    - Skip todoread                                              │
 │    - Skip research for L4+                                      │
 │    - Skip user approval                                         │
 │    - Use npm/yarn/pnpm                                          │

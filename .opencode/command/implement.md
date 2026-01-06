@@ -1,5 +1,5 @@
 ---
-description: Execute approved plan from /research via @apex-dev in 5 phases
+description: Execute approved plan from /research via @apex-dev with parallel background task orchestration
 agent: apex-dev
 subtask: true
 ---
@@ -13,11 +13,11 @@ ultra_think_protocol:
   thinking_budget: "extended"
   pre_execution_thinking:
     - "Analyze TodoWrite DAG structure and critical path"
-    - "Identify parallelization opportunities by parallel_group"
-    - "Anticipate edge cases in constitution compliance"
+    - "Identify parallelization opportunities for independent tasks"
+    - "Determine agent delegation requirements"
     - "Validate all preconditions are satisfiable"
   inter_atomic_thinking:
-    - "Verify previous atom outputs meet postconditions"
+    - "Verify background task results"
     - "Adjust execution strategy based on actual results"
     - "Detect emergent dependencies or file conflicts"
   post_execution_thinking:
@@ -26,7 +26,7 @@ ultra_think_protocol:
     - "Identify technical debt or gaps introduced"
 ```
 
-Execute the approved implementation plan from TodoWrite. **ALWAYS** use `readroadmap` to execute the entire roadmap. If the roadmap is not found, use `createroadmap` to initiate a new roadmap.
+Execute approved implementation plan from TodoWrite. Use `todoread` to read current task state.
 
 ## Trigger
 
@@ -67,22 +67,74 @@ If any required input is missing, `/implement` MUST stop and request remediation
 
 ---
 
-## Optimized Architecture
+## Execution Strategy
 
-```mermaid
-flowchart LR
-  A[Plan Mode: /research] --> B[TodoWrite: AT-* + VT-*]
-  B --> C[Act Mode: /implement]
+### Background Task Parallelization
 
-  C --> D[@apex-dev: task runner]
-  D --> E{Delegation?}
-  E -->|convex/*| F[@database-specialist]
-  E -->|src/components/*| G[@apex-ui-ux-designer]
-  E -->|security/compliance| H[@code-reviewer]
-  E -->|default| D
+Launch parallel background tasks for independent work items:
 
-  D --> I[Phase checkpoints\n(lint/build/test)]
-  I --> J[Completion report]
+```yaml
+parallel_tasks:
+  launch:
+    action: "Use `background_task` tool for parallel execution"
+    max_concurrent: 3  # Maximum parallel tasks
+    timeout: 180000  # 3 minutes per task
+
+  collection:
+    action: "Use `background_output` when results are ready"
+    wait_for: ["critical_path_tasks", "blocking_tasks"]
+
+  cleanup:
+    action: "Cancel all with `background_cancel(all=true)` before completion"
+
+  constraints:
+    - "Different files"
+    - "No dependencies"
+    - "Different agents"
+    - "Auth/security/LGPD always sequential"
+```
+
+### Agent Coordination
+
+Available agents from oh-my-opencode:
+
+| Agent | Purpose | When to Use |
+|--------|----------|--------------|
+| **Oracle** | Architecture decisions, complex debugging | Multi-system tradeoffs, after 2+ failures |
+| **Librarian** | Official docs, open source research | Unfamiliar libraries, GitHub code examples |
+| **Explore** | Codebase patterns search | File structures, existing implementations |
+| **Apex-Dev** | Core implementation | Default when no specialist needed |
+| **Database-Specialist** | Convex tasks | Schema design, queries, mutations |
+| **Code-Reviewer** | Security & compliance review | OWASP, LGPD validation |
+| **Apex-UI-UX-Designer** | Frontend visual tasks | UI components, WCAG, design systems |
+
+### Task Flow
+
+```yaml
+task_execution:
+  1_read_tasks:
+    action: "todoread → read current task state"
+
+  2_evaluate_parallelization:
+    action: "Identify independent tasks for background execution"
+    criteria:
+      - "Different files"
+      - "No dependencies"
+      - "Different agents"
+
+  3_launch_background:
+    action: "Use background_task for parallel work"
+    collect_when: "tasks are independent"
+
+  4_execute_sequential:
+    action: "Execute remaining tasks one by one"
+    update: "todowrite after each completion"
+
+  5_collect_results:
+    action: "background_output(task_id) when ready"
+
+  6_cleanup:
+    action: "background_cancel(all=true) before completion"
 ```
 
 ---
@@ -93,9 +145,9 @@ Parse TodoWrite tasks created by `/research`:
 
 ### Execution Mode
 
-Mode: `one_shot_proactive`
+Mode: `parallel_aware_proactive`
 
-> This mode is optimized for approved, deterministic execution. If required inputs or constitution checks fail, stop early and request remediation.
+> This mode combines Ultra-Think Protocol with background task parallelization for maximum efficiency.
 
 ```yaml
 todowrite_parsing:
@@ -125,19 +177,16 @@ todowrite_parsing:
 
 ## Step 2: Order and Group Tasks
 
-Apply **Ultra-Think Protocol (UTP)** here to avoid unnecessary work and to ensure safe ordering.
+Apply **Ultra-Think Protocol (UTP)** to ensure safe ordering:
 
 ### Phase-Based Ordering
-
-Group tasks by phase (1→5) and resolve dependencies:
 
 ```yaml
 phase_ordering:
   algorithm:
-    1. Group tasks by phase: [1, 2, 3, 4, 5]
-    2. Within phase, topological sort by dependencies
-    3. Tasks with no dependencies can start immediately
-    4. Tasks with dependencies wait for dependency completion
+    1. "Group tasks by phase: [1, 2, 3, 4, 5]"
+    2. "Topological sort by dependencies within phase"
+    3. "Tasks with no dependencies can start immediately"
 
   phases:
     phase_1_setup:
@@ -161,81 +210,39 @@ phase_ordering:
       activities: ["optimization", "cleanup", "docs", "accessibility"]
 ```
 
-### Parallel Group Batching (`parallel_tool_calling`) + Decision Table
+### Parallelization Rules
 
-Safe parallelization is optional and MUST follow UTP + constitution constraints.
+**Strategy**: Launch background tasks for provably independent work
 
-**Strategy**: `parallel_tool_calling`
-- Only parallelize tasks that are *provably independent*.
-- Default to sequential if there is any uncertainty.
-
-**Hard limits** (to reduce risk):
-- Max parallel tasks per batch: **3**
-- Never parallelize if *any* task in the batch touches:
-  - auth/security/LGPD surfaces
-  - schema/config files (e.g., `convex/schema.ts`, `vite.config.ts`)
-  - generated files
-
-**Rules**:
-- Tasks with the same `parallel_group` MAY run concurrently.
-- Tasks in the same parallel group MUST NOT modify the same files.
-- `parallel_group = null` is always sequential.
-- Dependencies always override parallelization.
-- If compliance/security is triggered, force sequential + require `@code-reviewer` before completion.
-
-**Decision table**:
-
-| Condition | Example | Can run in parallel? | Notes |
-|---|---|---:|---|
-| Same `parallel_group` AND no shared files AND no unmet dependencies | AT-003 + AT-004 both group A, distinct files | Yes | Preferred case |
-| Same `parallel_group` BUT shared files | both touch `convex/schema.ts` | No | Force sequential |
-| Different `parallel_group` | group A vs B | Only if phases/deps allow | Default: keep sequential |
-| Any unmet dependency | AT-005 depends on AT-004 | No | Wait for dependency |
-| Any constitution gate uncertain (security/auth/LGPD) | auth changes | No | Run sequential + require review |
-
-```yaml
-parallel_batching:
-  strategy: "parallel_tool_calling"
-  max_parallel: 3
-
-  constraints:
-    - "Same parallel_group only"
-    - "No shared files_affected"
-    - "All dependencies completed"
-
-  on_conflict:
-    action: "Fallback to sequential"
-    log: "Warn: file conflict detected in parallel batch"
-
-  on_dependency_block:
-    action: "Wait until dependencies complete"
-
-  example:
-    batch_A:  # Concurrent execution
-      - AT-002: "Write notification mutation tests"
-      - AT-003: "Write notification UI tests"
-
-    sequential:  # One at a time
-      - AT-004: "Implement sendNotification mutation"
-```
+| Condition | Can run in parallel? |
+|-----------|---------------------|
+| Same `parallel_group` AND different files AND no unmet dependencies | Yes |
+| Same `parallel_group` BUT shared files | No |
+| Different `parallel_group` | Only if phases/deps allow |
+| Any unmet dependency | No |
+| Auth/security/LGPD changes | No (always sequential) |
 
 ---
 
-### 3. Task Execution Flow
-
-For each task:
+## Step 3: Task Execution Flow
 
 ```yaml
 task_execution:
   1_mark_in_progress:
-    action: "Update TodoWrite status to 'in_progress'"
+    action: "todowrite → status = 'in_progress'"
 
   2_check_dependencies:
     action: "Verify all dependency tasks are 'completed'"
     on_blocked: "Wait for dependencies"
 
   3_delegate_or_execute:
-    action: "Route to appropriate agent based on files_affected"
+    action: "Route to appropriate agent"
+    delegate_table:
+      convex: "@database-specialist"
+      components: "@apex-ui-ux-designer"
+      security: "@code-reviewer"
+      docs: "@librarian"
+      exploration: "@explore"
     pass_context:
       - "constitution.md"
       - "spec.md (if available)"
@@ -245,76 +252,41 @@ task_execution:
     action: "Execute task implementation"
     guidelines:
       - "Follow constitution principles"
-      - "Match spec contracts (if available)"
+      - "Match spec contracts"
       - "Meet acceptance criteria"
 
   5_validate:
     action: "Run acceptance criteria checks"
-    on_pass: "Mark 'completed'"
-    on_fail: "Execute rollback, mark 'failed'"
-```
-
-### 4 Postconditions (Validation + Commands + Sequence Diagram)
-
-Each task MUST end in a validated postcondition.
-
-```yaml
-4_validate_postconditions:
-  after_each_task:
-    verify:
-      - acceptance_criteria_met: "All criteria from task definition pass"
-      - files_created_modified: "Expected files exist with correct content"
-      - no_regressions: "Existing tests still pass"
-      - constitution_compliant: "Implementation follows all 10 principles"
-    validation_commands:
-      - "bun run build"
+    commands:
       - "bun run lint:check"
+      - "bun run build"
       - "bun run test --run"
-    on_failure:
-      action: "Execute rollback_strategy immediately"
-      mark_status: "failed"
-      halt_phase: true
-      report:
-        - task_id: "[AT-XXX]"
-        - failed_postcondition: "[description]"
-        - rollback_executed: "[command]"
-        - current_state: "[after rollback]"
+    on_pass: "todowrite → status = 'completed'"
+    on_fail: "Execute rollback, todowrite → status = 'failed'"
 ```
 
-**Validation commands (task-level)**:
-- `bun run lint:check` (Biome)
-- `bun run build` (TypeScript + build)
-- `bun run test --run` (Vitest)
-
-> Note: you may scope validations during development for speed, but **a phase checkpoint MUST run the full required commands**.
+### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant R as /implement runner
   participant TD as TodoWrite
+  participant BG as Background Tasks
   participant AD as @apex-dev
-  participant DS as @database-specialist
-  participant UX as @apex-ui-ux-designer
-  participant CR as @code-reviewer
-  participant V as Validation (lint/build/test)
+  participant Spec as Specialists
 
   R->>TD: Read pending tasks
-  R->>AD: Start next task (UTP applied)
-  AD->>TD: Mark in_progress
+  R->>BG: Launch parallel (independent tasks)
+  BG-->>AD: Task results
+  R->>AD: Execute sequential (blocking tasks)
 
-  alt Delegation needed
-    AD->>DS: Implement Convex task
-    DS-->>AD: Changes ready
-  else UI task
-    AD->>UX: Implement UI task
-    UX-->>AD: Changes ready
-  else Security/compliance validation
-    AD->>CR: Review (read-only)
-    CR-->>AD: Findings / approval
+  alt Specialist needed
+    AD->>Spec: Delegate with context
+    Spec-->>AD: Implementation ready
   end
 
-  AD->>V: Run validations (phase/task scoped)
+  R->>V: Run validations (lint/build/test)
   alt Validation PASS
     AD->>TD: Mark completed
   else Validation FAIL
@@ -324,3 +296,33 @@ sequenceDiagram
 ```
 
 ---
+
+## Step 4: Postconditions & Validation
+
+Each task MUST end in a validated postcondition:
+
+```yaml
+validation:
+  verify:
+    - "Files created/modified match spec"
+    - "All tests pass"
+    - "Lint clean"
+    - "Build successful"
+    - "No regressions"
+
+  failure_handling:
+    action: "Execute rollback_strategy immediately"
+    report:
+      - "Task ID that failed"
+      - "Postcondition that failed"
+      - "Rollback executed"
+      - "Current state"
+```
+
+### Cleanup
+
+```yaml
+cleanup:
+  action: "background_cancel(all=true) before completion report"
+  reason: "Conserve resources and ensure clean state"
+```
