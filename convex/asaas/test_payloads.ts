@@ -252,7 +252,7 @@ export const sendTestWebhook = action({
     paymentId: v.optional(v.string()),
     subscriptionId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<any> => {
     // Require admin role for testing
     await requireOrgRole(ctx, ["org:admin", "admin"]);
 

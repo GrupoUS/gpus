@@ -8,6 +8,10 @@ export const PERMISSIONS = {
   LEADS_READ: 'leads:read',
   LEADS_WRITE: 'leads:write',
 
+  // Marketing Leads (public capture)
+  MARKETING_LEADS_READ: 'marketing_leads:read',
+  MARKETING_LEADS_WRITE: 'marketing_leads:write',
+
   // Conversations (Chat/WhatsApp)
   CONVERSATIONS_READ: 'conversations:read',
   CONVERSATIONS_WRITE: 'conversations:write',
@@ -35,6 +39,8 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
   'sdr': [
     PERMISSIONS.LEADS_READ,
     PERMISSIONS.LEADS_WRITE,
+    PERMISSIONS.MARKETING_LEADS_READ,
+    PERMISSIONS.MARKETING_LEADS_WRITE,
     PERMISSIONS.STUDENTS_READ,
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,

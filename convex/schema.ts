@@ -68,7 +68,18 @@ export default defineSchema({
       v.literal("trafego_pago"),
       v.literal("outro"),
     ),
+
     sourceDetail: v.optional(v.string()), // Campanha específica / UTM
+
+    // UTM Tracking
+    utmSource: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmMedium: v.optional(v.string()), // e.g. "cpc", "email"
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
+
+    // Content
+    message: v.optional(v.string()), // Mensagem opcional do formulário
 
     // Qualificação (baseada no script de vendas)
     profession: v.optional(
@@ -143,7 +154,14 @@ export default defineSchema({
       v.literal("morno"),
       v.literal("quente"),
     ),
+
     score: v.optional(v.number()), // 0-100 calculado
+
+    // Consentimento (LGPD)
+    lgpdConsent: v.boolean(),
+    whatsappConsent: v.boolean(),
+    consentGrantedAt: v.optional(v.number()),
+    consentVersion: v.optional(v.string()), // Ex: "v1.0-2024"
 
     // Multi-tenant
     organizationId: v.optional(v.string()), // Optional for backward compatibility with existing data
@@ -801,6 +819,62 @@ export default defineSchema({
     .index("by_detected_by", ["detectedBy"]),
 
   // ═══════════════════════════════════════════════════════
+  // MARKETING LEADS (Public Lead Capture)
+  // ═══════════════════════════════════════════════════════
+  marketing_leads: defineTable({
+    // Contact Information
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+
+    // Interest & Message
+    interest: v.union(
+      v.literal("Harmonização Facial"),
+      v.literal("Estética Corporal"),
+      v.literal("Bioestimuladores"),
+      v.literal("Outros"),
+    ),
+    message: v.optional(v.string()),
+
+    // LGPD Consent
+    lgpdConsent: v.boolean(),
+    whatsappConsent: v.boolean(),
+
+    // UTM Tracking
+    utmSource: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+
+    // Status Management
+    status: v.union(
+      v.literal("new"),
+      v.literal("contacted"),
+      v.literal("converted"),
+      v.literal("unsubscribed"),
+    ),
+
+    // Anti-spam
+    honeypot: v.optional(v.string()), // Should be empty
+
+    // Multi-tenant (optional for public submissions)
+    organizationId: v.optional(v.string()),
+
+    // Brevo Sync
+    brevoContactId: v.optional(v.string()),
+    lastSyncedAt: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_email", ["email"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"])
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_status", ["organizationId", "status"])
+    .index("by_organization_created", ["organizationId", "createdAt"]),
+
+  // ═══════════════════════════════════════════════════════
   // EMAIL MARKETING (Brevo Integration)
   // ═══════════════════════════════════════════════════════
 
@@ -1399,4 +1473,15 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_organization_active", ["organizationId", "isActive"]),
+
+  // ═══════════════════════════════════════════════════════
+  // RATE LIMITING
+  // ═══════════════════════════════════════════════════════
+  rateLimits: defineTable({
+    identifier: v.string(), // IP or User ID
+    action: v.string(),     // "submit_form", etc.
+    timestamp: v.number(),
+  })
+    .index("by_identifier_action", ["identifier", "action"])
+    .index("by_timestamp", ["timestamp"]),
 });

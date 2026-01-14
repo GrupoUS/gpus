@@ -1,5 +1,5 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
@@ -202,7 +202,7 @@ function EditCampaignPage() {
 								</div>
 							) : (
 								<div className="space-y-2">
-									{lists?.map((list) => (
+									{lists?.map((list: Doc<'emailLists'>) => (
 										<div key={list._id} className="flex items-center gap-3 p-3 border rounded-lg">
 											<input
 												type="checkbox"

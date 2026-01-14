@@ -34,6 +34,30 @@ export const validationSchemas = {
 		organizationId: z.string().min(1),
 	}),
 
+	// Marketing lead capture validation
+	marketingLead: z.object({
+		name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
+		email: z.string().email('Email inválido'),
+		phone: z.string()
+			.regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato: (11) 99999-9999')
+			.transform(phone => phone.replace(/[^\d]/g, '')),
+		interest: z.enum([
+			'Harmonização Facial',
+			'Estética Corporal',
+			'Bioestimuladores',
+			'Outros'
+		]),
+		message: z.string().max(500, 'Mensagem deve ter no máximo 500 caracteres').optional(),
+		lgpdConsent: z.boolean().refine(val => val === true, {
+			message: 'Você deve aceitar os termos'
+		}),
+		whatsappConsent: z.boolean().default(false),
+		honeypot: z.string().max(0, 'Invalid submission').optional(), // Must be empty
+		utmSource: z.string().optional(),
+		utmCampaign: z.string().optional(),
+		utmMedium: z.string().optional(),
+	}),
+
 	// Student validation
 	student: z.object({
 		name: z.string().min(1).max(100).regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Nome inválido'),
@@ -352,6 +376,7 @@ export const rateLimiters = {
 	contact: new RateLimiter(20, 3600000), // 20 attempts per hour
 	dataExport: new RateLimiter(3, 86400000), // 3 exports per day
 	passwordReset: new RateLimiter(3, 3600000), // 3 attempts per hour
+	marketingLeadCapture: new RateLimiter(5, 3600000), // 5 submissions per hour
 } as const
 
 /**

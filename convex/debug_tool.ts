@@ -99,6 +99,9 @@ export const testCreate = mutation({
 				stage: 'novo',
 				temperature: 'frio',
 				organizationId: (identity as any).org_id || identity.subject,
+				lgpdConsent: false,
+				whatsappConsent: false,
+				message: 'Debug lead',
 				createdAt: Date.now(),
 				updatedAt: Date.now(),
 			})

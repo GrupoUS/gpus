@@ -155,6 +155,8 @@ export function LeadForm() {
 				...(values.currentRevenue && { currentRevenue: values.currentRevenue }),
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
+				lgpdConsent: true, // Manual entry implies consent or legitimate interest
+				whatsappConsent: true,
 			};
 
 			await createLead(payload);

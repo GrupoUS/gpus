@@ -10,12 +10,35 @@ import { PERMISSIONS } from './lib/permissions'
 const leadArgs = {
   name: v.string(),
   phone: v.string(),
-  email: v.optional(v.string()),
-  source: v.any(),
-  profession: v.optional(v.any()),
+  email: v.optional(v.string()), // Optional in schema? Schema says v.optional now? Wait, schema has email: v.optional(v.string()) in my update?
+  // Let's check schema update in Step 33.
+  // Schema line 59: email: v.optional(v.string())
+  // So email is optional.
+
+  source: v.any(), // Keeping v.any() for now as schema has v.union but args can be looser or match
+
+  // New fields
+  lgpdConsent: v.boolean(),
+  whatsappConsent: v.boolean(),
+  message: v.optional(v.string()),
+
+  // UTM
+  utmSource: v.optional(v.string()),
+  utmCampaign: v.optional(v.string()),
+  utmMedium: v.optional(v.string()),
+  utmContent: v.optional(v.string()),
+  utmTerm: v.optional(v.string()),
+
+  sourceDetail: v.optional(v.string()),
+
+  // Existing
+  profession: v.optional(v.any()), // v.any() to match existing 'leads.ts' looseness or strict?
+  // Schema line 94: profession: v.optional(v.union(...))
+  // leadArgs used v.optional(v.any()) previously.
+
   interestedProduct: v.optional(v.any()),
-  temperature: v.any(),
-  stage: v.any(),
+  temperature: v.optional(v.any()),
+  stage: v.optional(v.any()),
 
   // Clinic qualification
   hasClinic: v.optional(v.boolean()),
@@ -24,14 +47,12 @@ const leadArgs = {
 
   // Professional background
   yearsInAesthetics: v.optional(v.number()),
-  currentRevenue: v.optional(v.string()), // '0-5k' | '5k-10k' | '10k-20k' | '20k-50k' | '50k+'
+  currentRevenue: v.optional(v.string()),
 
   // Pain point diagnosis
   mainPain: v.optional(v.any()),
   mainDesire: v.optional(v.string()),
 
-  // Additional
-  sourceDetail: v.optional(v.string()),
   score: v.optional(v.number()),
   nextFollowUpAt: v.optional(v.number()),
 }
@@ -158,6 +179,8 @@ export const createLead = mutation({
       }
 
       const leadId = await ctx.db.insert('leads', {
+          stage: 'novo',
+          temperature: 'frio',
           ...args,
           organizationId,
           createdAt: Date.now(),
@@ -185,6 +208,86 @@ export const createLead = mutation({
 
       return leadId
   }
+})
+
+// New Public Mutation for Landing Page
+export const createPublicLead = mutation({
+    args: {
+        ...leadArgs,
+        organizationId: v.optional(v.string()), // Optional, or we find default
+        userIp: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        // 1. Rate Limit
+        if (args.userIp) {
+            const limit = 5;
+            const window = 60 * 60 * 1000;
+            const recent = await ctx.db.query("rateLimits")
+                .withIndex("by_identifier_action", q => q.eq("identifier", args.userIp!).eq("action", "submit_form"))
+                .filter(q => q.gte(q.field("timestamp"), Date.now() - window))
+                .collect();
+
+            if (recent.length >= limit) throw new Error("Rate limit exceeded");
+
+            await ctx.db.insert("rateLimits", {
+                identifier: args.userIp,
+                action: "submit_form",
+                timestamp: Date.now()
+            });
+        }
+
+        const { userIp, ...leadData } = args;
+
+        // Determine organization (fallback to null if not provided, or logic to find default)
+        // For now, we allow null organizationId as per schema
+        const orgId = args.organizationId;
+
+        // Check duplicates if OrgId is present
+        if (orgId) {
+            const existing = await ctx.db.query('leads')
+                .withIndex('by_organization_phone', q => q.eq('organizationId', orgId!).eq('phone', args.phone))
+                .first();
+            if (existing) return existing._id;
+        } else {
+             // Check global phone duplicate
+             const existing = await ctx.db.query('leads')
+                .withIndex('by_phone', q => q.eq('phone', args.phone))
+                .first();
+             if (existing) return existing._id;
+        }
+
+        const leadId = await ctx.db.insert('leads', {
+            ...leadData,
+            organizationId: orgId,
+            stage: 'novo',
+            temperature: 'frio',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            consentGrantedAt: Date.now(),
+            consentVersion: "v1.0",
+        });
+
+        // Activity log (system)
+        await ctx.db.insert('activities', {
+            type: 'lead_criado',
+            description: `Lead "${args.name}" capturado via Landing Page`,
+            leadId: leadId,
+            organizationId: orgId ?? "public",
+            performedBy: "system_landing_page",
+            createdAt: Date.now(),
+        });
+
+        // Trigger email sync
+        if (args.email) {
+            const syncFn = (internal as any).emailMarketing.syncLeadAsContactInternal;
+            await (ctx.scheduler as any).runAfter(0, syncFn, {
+                leadId,
+                organizationId: orgId ?? "public",
+            })
+        }
+
+        return leadId;
+    }
 })
 
 export const updateLeadStage = mutation({
@@ -259,6 +362,18 @@ export const updateLead = mutation({
              score: v.optional(v.number()),
              nextFollowUpAt: v.optional(v.number()),
              temperature: v.optional(v.any()),
+
+             // Content & Consent
+             message: v.optional(v.string()),
+             lgpdConsent: v.optional(v.boolean()),
+             whatsappConsent: v.optional(v.boolean()),
+
+             // UTM
+             utmSource: v.optional(v.string()),
+             utmCampaign: v.optional(v.string()),
+             utmMedium: v.optional(v.string()),
+             utmContent: v.optional(v.string()),
+             utmTerm: v.optional(v.string()),
         })
     },
     handler: async (ctx, args: any) => {

@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as CapturaIndexRouteImport } from './routes/captura/index'
 import { Route as SignUpSsoCallbackRouteImport } from './routes/sign-up/sso-callback'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up/$'
 import { Route as SignInSsoCallbackRouteImport } from './routes/sign-in/sso-callback'
@@ -75,6 +76,11 @@ const SignUpIndexRoute = SignUpIndexRouteImport.update({
 const SignInIndexRoute = SignInIndexRouteImport.update({
   id: '/sign-in/',
   path: '/sign-in/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CapturaIndexRoute = CapturaIndexRouteImport.update({
+  id: '/captura/',
+  path: '/captura/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignUpSsoCallbackRoute = SignUpSsoCallbackRouteImport.update({
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
+  '/captura': typeof CapturaIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
+  '/captura': typeof CapturaIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/financial/dashboard': typeof AuthenticatedFinancialDashboardRoute
@@ -439,6 +447,7 @@ export interface FileRoutesById {
   '/sign-in/sso-callback': typeof SignInSsoCallbackRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/sign-up/sso-callback': typeof SignUpSsoCallbackRoute
+  '/captura/': typeof CapturaIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/_authenticated/chat/$department': typeof AuthenticatedChatDepartmentRouteWithChildren
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/sign-in/sso-callback'
     | '/sign-up/$'
     | '/sign-up/sso-callback'
+    | '/captura'
     | '/sign-in'
     | '/sign-up'
     | '/chat/$department'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/sign-in/sso-callback'
     | '/sign-up/$'
     | '/sign-up/sso-callback'
+    | '/captura'
     | '/sign-in'
     | '/sign-up'
     | '/financial/dashboard'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/sign-in/sso-callback'
     | '/sign-up/$'
     | '/sign-up/sso-callback'
+    | '/captura/'
     | '/sign-in/'
     | '/sign-up/'
     | '/_authenticated/chat/$department'
@@ -628,6 +640,7 @@ export interface RootRouteChildren {
   SignInSsoCallbackRoute: typeof SignInSsoCallbackRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
   SignUpSsoCallbackRoute: typeof SignUpSsoCallbackRoute
+  CapturaIndexRoute: typeof CapturaIndexRoute
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
 }
@@ -660,6 +673,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/captura/': {
+      id: '/captura/'
+      path: '/captura'
+      fullPath: '/captura'
+      preLoaderRoute: typeof CapturaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-up/sso-callback': {
@@ -1193,6 +1213,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInSsoCallbackRoute: SignInSsoCallbackRoute,
   SignUpSplatRoute: SignUpSplatRoute,
   SignUpSsoCallbackRoute: SignUpSsoCallbackRoute,
+  CapturaIndexRoute: CapturaIndexRoute,
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
 }
