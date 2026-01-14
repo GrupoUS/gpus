@@ -3,7 +3,7 @@ import { useMutation } from 'convex/react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { type Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -22,7 +22,7 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 	const createPublicLead = useMutation(api.leads.createPublicLead);
 
 	const form = useForm<LeadFormValues>({
-		resolver: zodResolver(leadSchema) as any,
+		resolver: zodResolver(leadSchema) as Resolver<LeadFormValues>,
 		defaultValues: {
 			name: '',
 			phone: '',

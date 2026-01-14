@@ -33,9 +33,8 @@ function EditCampaignPage() {
 	const { campaignId } = Route.useParams();
 
 	// Fetch existing campaign data
-	const campaign = useQuery(api.emailMarketing.getCampaign, {
-		campaignId: campaignId as Id<'emailCampaigns'>,
-	});
+	const queryArgs = { campaignId: campaignId as Id<'emailCampaigns'> };
+	const campaign = useQuery(api.emailMarketing.getCampaign, queryArgs);
 	const isLoading = campaign === undefined;
 
 	// Fetch available email lists
