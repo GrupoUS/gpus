@@ -158,8 +158,8 @@ export default defineSchema({
     score: v.optional(v.number()), // 0-100 calculado
 
     // Consentimento (LGPD)
-    lgpdConsent: v.boolean(),
-    whatsappConsent: v.boolean(),
+    lgpdConsent: v.optional(v.boolean()),
+    whatsappConsent: v.optional(v.boolean()),
     consentGrantedAt: v.optional(v.number()),
     consentVersion: v.optional(v.string()), // Ex: "v1.0-2024"
 
