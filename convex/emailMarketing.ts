@@ -604,23 +604,29 @@ export const syncContactToBrevo = action({
       }
     }
 
-    // Call Brevo API - upsert contact
-    const result = await brevoContacts.upsert({
-      email: contact.email,
-      attributes: {
-        FIRSTNAME: contact.firstName || "",
-        LASTNAME: contact.lastName || "",
-      },
-      listIds: brevoListIds.length > 0 ? brevoListIds : undefined,
-    });
+    try {
+      // Call Brevo API - upsert contact
+      const result = await brevoContacts.upsert({
+        email: contact.email,
+        attributes: {
+          FIRSTNAME: contact.firstName || "",
+          LASTNAME: contact.lastName || "",
+        },
+        listIds: brevoListIds.length > 0 ? brevoListIds : undefined,
+      });
 
-    // Update DB with brevoId
-    await ctx.runMutation(internalEmailMarketing.updateContactBrevoId, {
-      contactId: args.contactId,
-      brevoId: String(result.id),
-    });
+      // Update DB with brevoId
+      await ctx.runMutation(internalEmailMarketing.updateContactBrevoId, {
+        contactId: args.contactId,
+        brevoId: String(result.id),
+      });
 
-    return { success: true, brevoId: result.id };
+      return { success: true, brevoId: result.id };
+    } catch (error) {
+      console.error(`[BrevoSync] Failed to sync contact ${contact.email}:`, error);
+      // Log failure but don't crash the whole app if possible, or throw a clean error
+      throw new Error(`Falha ao sincronizar contato com Brevo: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+    }
   },
 });
 
@@ -1623,28 +1629,33 @@ export const syncCampaignToBrevo = action({
       );
     }
 
-    // Create campaign in Brevo
-    const result = await brevoCampaigns.create({
-      name: campaign.name,
-      subject: campaign.subject,
-      sender: {
-        name: "GrupoUS",
-        email: "contato@grupous.com.br",
-      },
-      htmlContent:
-        campaign.htmlContent || "<html><body>{{message}}</body></html>",
-      recipients: {
-        listIds: brevoListIds,
-      },
-    });
+    try {
+      // Create campaign in Brevo
+      const result = await brevoCampaigns.create({
+        name: campaign.name,
+        subject: campaign.subject,
+        sender: {
+          name: "GrupoUS",
+          email: "contato@grupous.com.br",
+        },
+        htmlContent:
+          campaign.htmlContent || "<html><body>{{message}}</body></html>",
+        recipients: {
+          listIds: brevoListIds,
+        },
+      });
 
-    // Update DB with brevoCampaignId
-    await ctx.runMutation(internalEmailMarketing.updateCampaignBrevoId, {
-      campaignId: args.campaignId,
-      brevoCampaignId: result.id,
-    });
+      // Update DB with brevoCampaignId
+      await ctx.runMutation(internalEmailMarketing.updateCampaignBrevoId, {
+        campaignId: args.campaignId,
+        brevoCampaignId: result.id,
+      });
 
-    return { success: true, brevoCampaignId: result.id };
+      return { success: true, brevoCampaignId: result.id };
+    } catch (error) {
+       console.error(`[BrevoSync] Failed to sync campaign ${campaign.name}:`, error);
+       throw new Error(`Falha ao sincronizar campanha com Brevo: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+    }
   },
 });
 

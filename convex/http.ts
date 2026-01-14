@@ -43,7 +43,8 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     // 1. Validate webhook secret
-    const secret = request.headers.get("X-Brevo-Secret");
+    const url = new URL(request.url);
+    const secret = request.headers.get("X-Brevo-Secret") ?? url.searchParams.get("secret");
     if (!validateWebhookSecret(secret)) {
       console.error("Brevo webhook: Invalid secret");
       return new Response("Unauthorized", { status: 401 });

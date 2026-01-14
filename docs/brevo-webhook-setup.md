@@ -17,11 +17,12 @@ Este guia descreve como configurar o webhook no painel do Brevo para sincronizar
    - Clique no botão `Add a new webhook`.
 
 3. **Configurar URL**
-   - No campo `URL to call`, insira a URL do seu endpoint Convex HTTP:
+   - No campo `URL to call`, insira a URL do seu endpoint Convex HTTP com o segredo como parâmetro:
      ```
-     https://<YOUR_CONVEX_SITE_URL>/brevo-webhook
+     https://<YOUR_CONVEX_SITE_URL>/brevo/webhook?secret=<YOUR_WEBHOOK_SECRET>
      ```
-     *Substitua `<YOUR_CONVEX_SITE_URL>` pela URL do seu deployment Convex.*
+     - Substitua `<YOUR_CONVEX_SITE_URL>` pela URL do seu deployment Convex (ex: `https://happy-otter-123.convex.site`).
+     - Substitua `<YOUR_WEBHOOK_SECRET>` pelo valor da variável `BREVO_WEBHOOK_SECRET` que você definiu no `.env.local`.
 
 4. **Selecionar Eventos**
    - Marque os eventos que deseja rastrear. Recomendamos selecionar todos os eventos de mensagem:
@@ -34,9 +35,9 @@ Este guia descreve como configurar o webhook no painel do Brevo para sincronizar
      - [x] Unsubscribed
      - [x] Blocked
 
-5. **Configurar Autenticação (Opcional/Recomendado)**
-   - Embora o Brevo não suporte assinatura HMAC padrão em todos os planos, nossa implementação verifica a presença de `BREVO_WEBHOOK_SECRET` se configurado.
-   - No `.env`, certifique-se de que `BREVO_WEBHOOK_SECRET` está definido (embora a validação atual dependa principalmente da origem e payload).
+5. **Configurar Autenticação**
+   - A autenticação é feita via query parameter `?secret=...` na URL, pois o Brevo não suporta cabeçalhos personalizados facilmente.
+   - Certifique-se de que a variável de ambiente `BREVO_WEBHOOK_SECRET` está definida no seu projeto Convex (Dashboard > Settings > Environment Variables).
 
 6. **Salvar e Testar**
    - Clique em `Save` (ou `Add`).

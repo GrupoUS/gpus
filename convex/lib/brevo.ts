@@ -309,9 +309,11 @@ export async function brevoFetch<T>(
 		method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
 		body?: unknown
 		apiKey?: string
+		retries?: number
 	} = {},
 ): Promise<T> {
 	const apiKey = options.apiKey || process.env.BREVO_API_KEY
+	const retries = options.retries ?? 3;
 
 	if (!apiKey) {
 		throw new Error('BREVO_API_KEY environment variable is not set')
@@ -319,29 +321,61 @@ export async function brevoFetch<T>(
 
 	const url = `${BREVO_API_BASE}${endpoint}`
 
-	const response = await fetch(url, {
-		method: options.method || 'GET',
-		headers: {
-			'api-key': apiKey,
-			'Content-Type': 'application/json',
-			Accept: 'application/json',
-		},
-		body: options.body ? JSON.stringify(options.body) : undefined,
-	})
+	let lastError: unknown;
 
-	// Handle no content responses
-	if (response.status === 204) {
-		return undefined as T
+	for (let attempt = 0; attempt <= retries; attempt++) {
+		try {
+			const response = await fetch(url, {
+				method: options.method || 'GET',
+				headers: {
+					'api-key': apiKey,
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				body: options.body ? JSON.stringify(options.body) : undefined,
+			})
+
+			// Handle no content responses
+			if (response.status === 204) {
+				return undefined as T
+			}
+
+			// If rate limited or server error, throw to trigger retry
+			if (response.status === 429 || response.status >= 500) {
+				const text = await response.text();
+				throw new Error(`Brevo API Error ${response.status}: ${text}`);
+			}
+
+			const data = await response.json()
+
+			if (!response.ok) {
+				const error = data as BrevoApiError
+				throw new Error(`Brevo API Error: ${error.code} - ${error.message}`)
+			}
+
+			return data as T
+		} catch (error) {
+			lastError = error;
+			const isRetryable = error instanceof Error && (
+				error.message.includes('429') ||
+				error.message.includes('500') ||
+				error.message.includes('502') ||
+				error.message.includes('503') ||
+				error.message.includes('504') ||
+				error.message.includes('fetch failed')
+			);
+
+			if (attempt < retries && isRetryable) {
+				const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+				console.warn(`[BrevoAPI] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`, error);
+				await new Promise(resolve => setTimeout(resolve, delay));
+				continue;
+			}
+			throw error;
+		}
 	}
 
-	const data = await response.json()
-
-	if (!response.ok) {
-		const error = data as BrevoApiError
-		throw new Error(`Brevo API Error: ${error.code} - ${error.message}`)
-	}
-
-	return data as T
+	throw lastError;
 }
 
 // ═══════════════════════════════════════════════════════

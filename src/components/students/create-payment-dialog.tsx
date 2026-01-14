@@ -37,15 +37,12 @@ type BillingType = 'BOLETO' | 'PIX' | 'CREDIT_CARD';
 export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePaymentDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const billingTypeId = useId();
-	const valueId = useId();
-	const installmentsId = useId();
-	const dueDateId = useId();
-	const descriptionId = useId();
 
 	// Generate unique IDs for form accessibility
 	const formId = useId();
+	const billingTypeId = `${formId}-billingType`;
 	const valueInputId = `${formId}-value`;
+	const installmentsId = `${formId}-installments`;
 	const dueDateInputId = `${formId}-dueDate`;
 	const descriptionInputId = `${formId}-description`;
 
@@ -57,27 +54,17 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	const [installmentCount, setInstallmentCount] = useState('1');
 
 	// Get student data to check if synced with Asaas
-<<<<<<< Updated upstream
-	const student = useQuery(api.students.getById, { id: studentId });
-=======
 	// biome-ignore lint/suspicious/noExplicitAny: Deep type instantiation workaround for Convex
 	const student: any = useQuery(api.students.getById as any, { id: studentId });
->>>>>>> Stashed changes
 
 	// Create payment action
 	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
 	const syncStudent = useAction(api.asaas.mutations.syncStudentAsCustomer);
 
-<<<<<<< Updated upstream
-	const asaasCustomerId = (student as { asaasCustomerId?: string } | null)?.asaasCustomerId;
-	const syncError = (student as { asaasCustomerSyncError?: string } | null)?.asaasCustomerSyncError;
-	const studentName = (student as { name?: string } | null)?.name || 'Aluno';
-	const studentCpf = (student as { cpf?: string } | null)?.cpf;
-=======
 	const asaasCustomerId = student?.asaasCustomerId;
+	const syncError = student?.asaasCustomerSyncError;
 	const studentName = student?.name || 'Aluno';
 	const studentCpf = student?.cpf;
->>>>>>> Stashed changes
 
 	const handleManualSync = async () => {
 		try {
@@ -99,52 +86,33 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 		setInstallmentCount('1');
 	};
 
-<<<<<<< Updated upstream
-	const validateForm = (numericValue: number) => {
-=======
 	// Extract validation logic to reduce cognitive complexity and return validated data
 	const validatePaymentForm = (): { numericValue: number; asaasCustomerId: string } | null => {
->>>>>>> Stashed changes
 		if (!asaasCustomerId) {
 			toast.error('Aluno não sincronizado com Asaas', {
 				description: 'O aluno precisa ter CPF e ser sincronizado antes de criar cobranças.',
 			});
-<<<<<<< Updated upstream
-			return false;
-=======
 			return null;
->>>>>>> Stashed changes
 		}
 
 		if (!studentCpf) {
 			toast.error('CPF obrigatório', {
 				description: 'O aluno precisa ter CPF cadastrado para gerar cobranças.',
 			});
-<<<<<<< Updated upstream
-			return false;
-=======
 			return null;
->>>>>>> Stashed changes
 		}
 
+		const numericValue = Number.parseFloat(value);
 		if (!numericValue || numericValue <= 0) {
 			toast.error('Valor inválido', {
 				description: 'Informe um valor maior que zero.',
 			});
-<<<<<<< Updated upstream
-			return false;
-=======
 			return null;
->>>>>>> Stashed changes
 		}
 
 		if (!dueDate) {
 			toast.error('Data de vencimento obrigatória');
-<<<<<<< Updated upstream
-			return false;
-=======
 			return null;
->>>>>>> Stashed changes
 		}
 
 		const dueDateObj = new Date(dueDate);
@@ -155,22 +123,6 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 			toast.error('Data de vencimento inválida', {
 				description: 'A data de vencimento deve ser hoje ou no futuro.',
 			});
-<<<<<<< Updated upstream
-			return false;
-		}
-
-		return true;
-	};
-
-	const handleSubmit = async () => {
-		const numericValue = Number.parseFloat(value);
-
-		if (!(validateForm(numericValue) && asaasCustomerId)) {
-			return;
-		}
-
-		const customerId = asaasCustomerId;
-=======
 			return null;
 		}
 
@@ -183,7 +135,6 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 		const { numericValue, asaasCustomerId } = validatedData;
 
->>>>>>> Stashed changes
 		setIsSubmitting(true);
 		try {
 			const numInstallments = Number.parseInt(installmentCount, 10);
@@ -191,7 +142,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 			await createPayment({
 				studentId,
-				asaasCustomerId: customerId,
+				asaasCustomerId,
 				billingType,
 				value: numericValue,
 				dueDate,
@@ -271,15 +222,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Value */}
 						<div className="space-y-2">
-<<<<<<< Updated upstream
-							<Label htmlFor={valueId}>Valor Total (R$)</Label>
-							<Input
-								id={valueId}
-=======
 							<Label htmlFor={valueInputId}>Valor Total (R$)</Label>
 							<Input
 								id={valueInputId}
->>>>>>> Stashed changes
 								type="number"
 								min="0.01"
 								step="0.01"
@@ -311,15 +256,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Due Date */}
 						<div className="space-y-2">
-<<<<<<< Updated upstream
-							<Label htmlFor={dueDateId}>Data de Vencimento</Label>
-							<Input
-								id={dueDateId}
-=======
 							<Label htmlFor={dueDateInputId}>Data de Vencimento</Label>
 							<Input
 								id={dueDateInputId}
->>>>>>> Stashed changes
 								type="date"
 								value={dueDate}
 								onChange={(e) => setDueDate(e.target.value)}
@@ -329,15 +268,9 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 
 						{/* Description */}
 						<div className="space-y-2">
-<<<<<<< Updated upstream
-							<Label htmlFor={descriptionId}>Descrição (opcional)</Label>
-							<Textarea
-								id={descriptionId}
-=======
 							<Label htmlFor={descriptionInputId}>Descrição (opcional)</Label>
 							<Textarea
 								id={descriptionInputId}
->>>>>>> Stashed changes
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="Mensalidade, Matrícula, etc."
