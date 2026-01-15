@@ -24,18 +24,37 @@ export const PERMISSIONS = {
   TICKETS_READ: 'tickets:read',
   TICKETS_WRITE: 'tickets:write',
 
+  // Reports/Dashboard
+  REPORTS_READ: 'reports:read',
+
   // Settings
   SETTINGS_WRITE: 'settings:write',
 
-  // Reports/Dashboard
-  REPORTS_READ: 'reports:read',
+  // Dashboard
+  DASHBOARD_READ: 'dashboard:read',
+
+  // Team Management
+  TEAM_MANAGE: 'team:manage',
 } as const
 
 // Role to Permissions Mapping
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  'admin': [PERMISSIONS.ALL],
-  'org:admin': [PERMISSIONS.ALL],
+  'owner': [PERMISSIONS.ALL],
+  'admin': [PERMISSIONS.ALL, 'manage:settings', 'manage:team'], // Explicitly adding manage:team though ALL covers it, but for clarity
+  'manager': [
+    PERMISSIONS.STUDENTS_READ,
+    PERMISSIONS.CONVERSATIONS_READ,
+    PERMISSIONS.REPORTS_READ,
+    'view:team',
+    'manage:content'
+  ],
+  'member': [
+    PERMISSIONS.CONVERSATIONS_READ,
+    PERMISSIONS.STUDENTS_READ,
+    'view:content'
+  ],
 
+  // Legacy / Specific Roles
   'sdr': [
     PERMISSIONS.LEADS_READ,
     PERMISSIONS.LEADS_WRITE,
@@ -45,16 +64,6 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,
   ],
-  'org:sdr': [
-    PERMISSIONS.LEADS_READ,
-    PERMISSIONS.LEADS_WRITE,
-    PERMISSIONS.MARKETING_LEADS_READ,
-    PERMISSIONS.MARKETING_LEADS_WRITE,
-    PERMISSIONS.STUDENTS_READ,
-    PERMISSIONS.CONVERSATIONS_READ,
-    PERMISSIONS.CONVERSATIONS_WRITE,
-  ],
-
   'cs': [
     PERMISSIONS.STUDENTS_READ,
     PERMISSIONS.STUDENTS_WRITE,
@@ -62,22 +71,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.CONVERSATIONS_WRITE,
     PERMISSIONS.REPORTS_READ,
   ],
-  'org:cs': [
-    PERMISSIONS.STUDENTS_READ,
-    PERMISSIONS.STUDENTS_WRITE,
-    PERMISSIONS.CONVERSATIONS_READ,
-    PERMISSIONS.CONVERSATIONS_WRITE,
-    PERMISSIONS.REPORTS_READ,
-  ],
-
   'support': [
-    PERMISSIONS.CONVERSATIONS_READ,
-    PERMISSIONS.CONVERSATIONS_WRITE,
-    PERMISSIONS.TICKETS_READ,
-    PERMISSIONS.TICKETS_WRITE,
-    PERMISSIONS.STUDENTS_READ,
-  ],
-  'org:support': [
     PERMISSIONS.CONVERSATIONS_READ,
     PERMISSIONS.CONVERSATIONS_WRITE,
     PERMISSIONS.TICKETS_READ,

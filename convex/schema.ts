@@ -10,7 +10,11 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     role: v.union(
+      v.literal("owner"),
       v.literal("admin"),
+      v.literal("manager"),
+      v.literal("member"),
+      // Legacy roles
       v.literal("sdr"),
       v.literal("cs"),
       v.literal("support"),

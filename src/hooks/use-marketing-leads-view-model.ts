@@ -18,7 +18,8 @@ export function useMarketingLeadsViewModel(Route: any) {
 	const endTimestamp = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : undefined;
 
 	// Mutations & Queries
-	const updateStatus = useMutation(api.marketingLeads.updateStatus);
+	// biome-ignore lint/suspicious/noExplicitAny: prevent TS deep instantiation error
+	const updateStatus = useMutation(api.marketingLeads.updateStatus as any);
 	// We don't fetch CSV data automatically, only on demand
 
 	// Use paginated query for server-side pagination

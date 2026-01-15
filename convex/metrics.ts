@@ -264,7 +264,10 @@ export const getTeamPerformance = query({
     _id: v.id('users'),
     name: v.string(),
     role: v.union(
+      v.literal('owner'),
       v.literal('admin'),
+      v.literal('manager'),
+      v.literal('member'),
       v.literal('sdr'),
       v.literal('cs'),
       v.literal('support')

@@ -1,6 +1,14 @@
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
+import { action, internalMutation, mutation, query, internalQuery } from './_generated/server'
+import { internal } from './_generated/api'
+import { createClerkClient } from '@clerk/backend'
+import { createAuditLog } from './lib/auditLogging'
 import { getOrganizationId, requireAuth } from './lib/auth'
+
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+})
 
 /**
  * Get current user from Clerk auth
@@ -338,3 +346,226 @@ export const checkRoleSync = query({
     }
   },
 })
+
+/**
+ * Internal Audit Logger for Actions
+ */
+export const internalLogAudit = internalMutation({
+  args: {
+    actionType: v.string(),
+    description: v.string(),
+    dataCategory: v.string(),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    await createAuditLog(ctx, {
+      actionType: args.actionType as any,
+      description: args.description,
+      dataCategory: args.dataCategory,
+      metadata: args.metadata,
+    })
+  }
+})
+
+/**
+ * Get Caller Role for Actions (Security Check)
+ */
+export const getCallerData = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    return await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+  },
+});
+
+/**
+ * Invite User (Action)
+ */
+export const inviteTeamMember = action({
+  args: {
+    email: v.string(),
+    role: v.string(),
+    redirectUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.runQuery((internal as any).users.getCallerData);
+    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
+       throw new Error("Only admins can invite members");
+    }
+
+    try {
+      const invitation = await clerkClient.invitations.createInvitation({
+        emailAddress: args.email,
+        redirectUrl: args.redirectUrl,
+        publicMetadata: { role: args.role },
+      });
+
+      await ctx.runMutation(internal.users.internalLogAudit, {
+        actionType: 'data_creation',
+        description: `Invited user ${args.email} as ${args.role}`,
+        dataCategory: 'identificação',
+        metadata: { email: args.email, role: args.role, invitedBy: caller._id },
+      });
+
+      return invitation;
+    } catch (error: any) {
+      console.error("Invite Error", error);
+      throw new Error(error.message || "Failed to invite user");
+    }
+  },
+});
+
+/**
+ * Update Team Member Role (Action)
+ */
+export const updateTeamMemberRole = action({
+  args: {
+    userId: v.string(), // Clerk User ID
+    newRole: v.string(),
+    reason: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.runQuery(internal.users.getCallerData as any);
+    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
+      throw new Error("Only admins can update roles");
+    }
+
+    if (args.userId === identity.subject) {
+        throw new Error("Cannot update your own role");
+    }
+
+    try {
+       await clerkClient.users.updateUserMetadata(args.userId, {
+         publicMetadata: { role: args.newRole },
+       });
+
+       await ctx.runMutation(internal.users.syncUserRole, { clerkId: args.userId, role: args.newRole });
+
+       await ctx.runMutation(internal.users.internalLogAudit, {
+          actionType: 'data_modification',
+          description: `Updated role for ${args.userId} to ${args.newRole}: ${args.reason || 'No reason'}`,
+          dataCategory: 'identificação',
+          metadata: { userId: args.userId, newRole: args.newRole, reason: args.reason },
+       });
+
+       return { success: true };
+    } catch (error: any) {
+       console.error("Update Role Error", error);
+       throw new Error(error.message || "Failed to update role");
+    }
+  }
+});
+
+/**
+ * Remove Team Member (Action)
+ */
+export const removeTeamMember = action({
+  args: {
+    userId: v.string(), // Clerk User ID
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const caller = await ctx.runQuery(internal.users.getCallerData as any);
+    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
+      throw new Error("Only admins can remove members");
+    }
+
+    if (args.userId === identity.subject) {
+        throw new Error("Cannot remove yourself");
+    }
+
+    try {
+        await clerkClient.users.updateUserMetadata(args.userId, {
+          publicMetadata: { isActive: false },
+        });
+
+        await ctx.runMutation(internal.users.softDeleteUserByClerkId, { clerkId: args.userId });
+
+        await ctx.runMutation(internal.users.internalLogAudit, {
+            actionType: 'data_deletion',
+            description: `Removed user ${args.userId}. Reason: ${args.reason}`,
+            dataCategory: 'identificação',
+            metadata: { userId: args.userId, reason: args.reason },
+        });
+
+        return { success: true };
+    } catch(error: any) {
+        console.error("Remove Error", error);
+        throw new Error(error.message || "Failed to remove user");
+    }
+  }
+});
+
+/**
+ * Internal Mutation to Sync Role by Clerk ID
+ */
+export const syncUserRole = internalMutation({
+    args: { clerkId: v.string(), role: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.query('users').withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId)).unique();
+        if (user) {
+            await ctx.db.patch(user._id, { role: args.role as any });
+        }
+    }
+});
+
+/**
+ * Internal Mutation to Soft Delete by Clerk ID
+ */
+export const softDeleteUserByClerkId = internalMutation({
+    args: { clerkId: v.string() },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.query('users').withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId)).unique();
+        if (user) {
+            await ctx.db.patch(user._id, { isActive: false, updatedAt: Date.now() });
+        }
+    }
+});
+
+/**
+ * Search Team Members (Query)
+ */
+export const searchTeamMembers = query({
+  args: {
+    query: v.optional(v.string()),
+    paginationOpts: v.any(),
+  },
+  handler: async (ctx, args) => {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) return { page: [], isDone: true, continueCursor: '' };
+
+      let q: any = ctx.db.query('users');
+
+      const organizationId = await getOrganizationId(ctx);
+      if (organizationId) {
+         q = q.withIndex('by_organization', (qi: any) => qi.eq('organizationId', organizationId));
+      }
+
+      // Basic pagination
+      const result = await q.paginate(args.paginationOpts);
+
+      // In-memory filter if query exists
+      if (args.query && result.page.length > 0) {
+          const lowerQ = args.query.toLowerCase();
+          result.page = result.page.filter((u: any) =>
+             (u.name && u.name.toLowerCase().includes(lowerQ)) ||
+             (u.email && u.email.toLowerCase().includes(lowerQ))
+          );
+      }
+
+      return result;
+  }
+});
