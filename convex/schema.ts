@@ -844,6 +844,8 @@ export default defineSchema({
     utmSource: v.optional(v.string()),
     utmCampaign: v.optional(v.string()),
     utmMedium: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
 
     // Status Management
     status: v.union(

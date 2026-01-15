@@ -77,3 +77,28 @@ export const formatCurrency = (value: number): string =>
 		style: 'currency',
 		currency: 'BRL',
 	}).format(value);
+
+// Marketing Leads Constants
+export const leadStatusLabels: Record<string, string> = {
+	new: 'Novo',
+	contacted: 'Contatado',
+	converted: 'Convertido',
+	unsubscribed: 'Descadastrado',
+};
+
+export const leadStatusVariants: Record<
+	string,
+	'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+	new: 'default', // Blue-ish usually or heavy
+	contacted: 'secondary',
+	converted: 'outline', // Or maybe we style it custom in the component
+	unsubscribed: 'destructive',
+};
+
+export const leadInterestLabels: Record<string, string> = {
+	'Harmonização Facial': 'Harmonização Facial',
+	'Estética Corporal': 'Estética Corporal',
+	Bioestimuladores: 'Bioestimuladores',
+	Outros: 'Outros',
+};

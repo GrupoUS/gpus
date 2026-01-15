@@ -4,11 +4,19 @@ import type { Control } from 'react-hook-form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { LeadFormValues } from '@/lib/validations/lead-schema';
+import { formatPhoneNumber } from '@/lib/utils/phone-mask';
+import { interestOptions, type LeadCaptureFormData } from '@/lib/validations/lead-capture-schema';
 
 interface LeadFormFieldsProps {
-	control: Control<LeadFormValues>;
+	control: Control<LeadCaptureFormData>;
 	disabled?: boolean;
 }
 
@@ -38,8 +46,44 @@ export function LeadFormFields({ control, disabled }: LeadFormFieldsProps) {
 					<FormItem>
 						<FormLabel>WhatsApp</FormLabel>
 						<FormControl>
-							<Input placeholder="(11) 99999-9999" type="tel" disabled={disabled} {...field} />
+							<Input
+								placeholder="(11) 99999-9999"
+								type="tel"
+								disabled={disabled}
+								{...field}
+								onChange={(e) => {
+									const formatted = formatPhoneNumber(e.target.value);
+									field.onChange(formatted);
+								}}
+								maxLength={15}
+							/>
 						</FormControl>
+						<FormMessage />
+					</FormItem>
+				)}
+			/>
+
+			{/* Interest */}
+			<FormField
+				control={control}
+				name="interest"
+				render={({ field }) => (
+					<FormItem>
+						<FormLabel>Tenho interesse em</FormLabel>
+						<Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
+							<FormControl>
+								<SelectTrigger>
+									<SelectValue placeholder="Selecione uma opção" />
+								</SelectTrigger>
+							</FormControl>
+							<SelectContent>
+								{interestOptions.map((option) => (
+									<SelectItem key={option} value={option}>
+										{option}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 						<FormMessage />
 					</FormItem>
 				)}
@@ -51,7 +95,7 @@ export function LeadFormFields({ control, disabled }: LeadFormFieldsProps) {
 				name="email"
 				render={({ field }) => (
 					<FormItem>
-						<FormLabel>Email (Opcional)</FormLabel>
+						<FormLabel>Email</FormLabel>
 						<FormControl>
 							<Input placeholder="seu@email.com" type="email" disabled={disabled} {...field} />
 						</FormControl>

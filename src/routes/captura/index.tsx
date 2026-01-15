@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Check, ShieldCheck, Zap } from 'lucide-react';
+import { Check, Mail, ShieldCheck, Users, X } from 'lucide-react';
 import { z } from 'zod';
 
 import { LeadForm } from '@/components/lead-form/lead-form';
+import { Badge } from '@/components/ui/badge';
 
 const searchSchema = z.object({
 	utm_source: z.string().optional(),
@@ -24,8 +25,40 @@ function CapturaPage() {
 	// Use UTM source if available, otherwise default
 	const source = search.utm_source || 'landing_page';
 
+	const structuredData = {
+		'@context': 'https://schema.org',
+		'@type': 'WebPage',
+		name: 'Captura de Leads - GPUS',
+		description: 'Transforme sua carreira na estética com conteúdos exclusivos',
+		mainEntity: {
+			'@type': 'Organization',
+			name: 'Grupo US',
+			url: 'https://gpus.com.br',
+		},
+	};
+
 	return (
 		<div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+			{/* SEO Meta Tags */}
+			<title>Transforme sua Carreira na Estética | GPUS</title>
+			<meta
+				name="description"
+				content="Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais."
+			/>
+			<meta property="og:title" content="Transforme sua Carreira na Estética | GPUS" />
+			<meta
+				property="og:description"
+				content="Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais."
+			/>
+			<meta property="og:type" content="website" />
+			<meta property="og:url" content="https://gpus.com.br/captura" />
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:title" content="Transforme sua Carreira na Estética | GPUS" />
+			<meta
+				name="twitter:description"
+				content="Receba conteúdos exclusivos e oportunidades de formação"
+			/>
+			<script type="application/ld+json">{JSON.stringify(structuredData)}</script>
 			{/* Background Gradients */}
 			<div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
 				<div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[128px]" />
@@ -43,13 +76,13 @@ function CapturaPage() {
 					>
 						<div className="space-y-4">
 							<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-								Revolucione sua <br className="hidden lg:block" />
+								Transforme sua <br className="hidden lg:block" />
 								<span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
-									Clínica de Estética
+									Carreira na Estética
 								</span>
 							</h1>
 							<p className="text-xl text-muted-foreground leading-relaxed max-w-lg">
-								Domine gestão, vendas e procedimentos de alta performance com a metodologia GPUS.
+								Receba conteúdos exclusivos e oportunidades de formação com a metodologia GPUS.
 							</p>
 						</div>
 
@@ -74,16 +107,31 @@ function CapturaPage() {
 							))}
 						</div>
 
-						<div className="pt-4 flex items-center space-x-8 text-sm text-muted-foreground">
+						<div className="pt-4 flex flex-wrap gap-4 items-center text-sm text-muted-foreground">
 							<div className="flex items-center space-x-2">
 								<ShieldCheck className="h-5 w-5" />
-								<span>Dados Seguros</span>
+								<span>Seus dados estão protegidos</span>
 							</div>
 							<div className="flex items-center space-x-2">
-								<Zap className="h-5 w-5" />
-								<span>Resposta Rápida</span>
+								<Mail className="h-5 w-5" />
+								<span>Sem spam, prometemos</span>
+							</div>
+							<div className="flex items-center space-x-2">
+								<X className="h-5 w-5" />
+								<span>Cancele quando quiser</span>
 							</div>
 						</div>
+
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.5 }}
+						>
+							<Badge variant="secondary" className="px-4 py-2 text-base">
+								<Users className="mr-2 h-4 w-4" />
+								Junte-se a +2.000 profissionais
+							</Badge>
+						</motion.div>
 					</motion.div>
 
 					{/* Right Column: Form */}
@@ -98,9 +146,9 @@ function CapturaPage() {
 
 						<div className="relative bg-card border rounded-xl p-6 md:p-8 shadow-2xl">
 							<div className="mb-6">
-								<h2 className="text-2xl font-bold">Fale com um Especialista</h2>
+								<h2 className="text-2xl font-bold">Comece Sua Transformação</h2>
 								<p className="text-muted-foreground">
-									Preencha o formulário para receber o contato.
+									Preencha o formulário e receba conteúdos exclusivos
 								</p>
 							</div>
 

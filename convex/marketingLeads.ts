@@ -30,6 +30,8 @@ export const create = mutation({
     utmSource: v.optional(v.string()),
     utmCampaign: v.optional(v.string()),
     utmMedium: v.optional(v.string()),
+    utmContent: v.optional(v.string()),
+    utmTerm: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // 1. Honeypot Check (anti-spam)
@@ -81,6 +83,8 @@ export const create = mutation({
       utmSource: args.utmSource,
       utmCampaign: args.utmCampaign,
       utmMedium: args.utmMedium,
+      utmContent: args.utmContent,
+      utmTerm: args.utmTerm,
       status: 'new',
       organizationId: defaultOrgId,
       createdAt: Date.now(),

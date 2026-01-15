@@ -3,14 +3,17 @@ import { useMutation } from 'convex/react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { type Resolver, useForm } from 'react-hook-form';
+import { type DefaultValues, type Resolver, type SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
 import { LeadFormFields } from './lead-form-fields';
 import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
-import { type LeadFormValues, leadSchema } from '@/lib/validations/lead-schema';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { cleanPhoneNumber } from '@/lib/utils/phone-mask';
+import { useUTMParams } from '@/lib/utils/utm-capture';
+import { type LeadCaptureFormData, leadCaptureSchema } from '@/lib/validations/lead-capture-schema';
 
 interface LeadFormProps {
 	className?: string;
@@ -19,37 +22,51 @@ interface LeadFormProps {
 
 export function LeadForm({ className, defaultSource = 'landing_page' }: LeadFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
-	const createPublicLead = useMutation(api.leads.createPublicLead);
+	const createMarketingLead = useMutation(api.marketingLeads.create);
+	const utmParams = useUTMParams();
 
-	const form = useForm<LeadFormValues>({
-		resolver: zodResolver(leadSchema) as Resolver<LeadFormValues>,
+	const form = useForm<LeadCaptureFormData>({
+		resolver: zodResolver(leadCaptureSchema) as Resolver<LeadCaptureFormData>,
 		defaultValues: {
 			name: '',
 			phone: '',
 			email: '',
 			message: '',
+			// Interest is required in schema but Select needs a value.
+			// Validation will catch empty string if mapped correctly or we rely on user selection.
+			interest: undefined,
 			lgpdConsent: false,
 			whatsappConsent: false,
-			source: defaultSource,
-			sourceDetail: '',
-		},
+			honeypot: '',
+			utmSource: utmParams.utmSource || defaultSource,
+			utmCampaign: utmParams.utmCampaign,
+			utmMedium: utmParams.utmMedium,
+			utmContent: utmParams.utmContent,
+			utmTerm: utmParams.utmTerm,
+		} satisfies DefaultValues<LeadCaptureFormData>,
 	});
 
-	async function onSubmit(data: LeadFormValues) {
+	const onSubmit: SubmitHandler<LeadCaptureFormData> = async (data) => {
 		try {
-			// Get IP if possible, handled by Convex or middleware elsewhere usually.
-			// But mutation accepts userIp. We might get it from an external service or let backend handle it via request context if using http actions.
-			// Here we rely on backend rate limiting by IP if passed, but basic mutation doesn't have easy access to request IP unless passed from client or http action.
-			// For now, we'll pass a placeholder or rely on browser fingerprint if needed, but simple submission is priority.
+			if (data.honeypot) {
+				// Silently fail for bots
+				setIsSuccess(true);
+				return;
+			}
 
-			// Note: Passing IP from client is spoofable, but 'createPublicLead' allows it for basic rate limiting logic.
-			// A better way is fetching it from a service like ipify, but let's skip for simplicity unless required.
-
-			await createPublicLead({
-				...data,
-				phone: data.phone.replace(/\D/g, ''), // Clean phone
-				source: defaultSource, // Ensure source is set
-				// userIp: ...
+			await createMarketingLead({
+				name: data.name,
+				email: data.email,
+				phone: cleanPhoneNumber(data.phone),
+				interest: data.interest,
+				message: data.message,
+				lgpdConsent: data.lgpdConsent,
+				whatsappConsent: data.whatsappConsent,
+				utmSource: data.utmSource,
+				utmCampaign: data.utmCampaign,
+				utmMedium: data.utmMedium,
+				utmContent: data.utmContent,
+				utmTerm: data.utmTerm,
 			});
 
 			setIsSuccess(true);
@@ -57,7 +74,7 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 		} catch (_error) {
 			toast.error('Erro ao enviar formulário. Tente novamente.');
 		}
-	}
+	};
 
 	if (isSuccess) {
 		return (
@@ -94,6 +111,19 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 					<LeadFormFields control={form.control} disabled={form.formState.isSubmitting} />
+
+					{/* Hidden Honeypot Field */}
+					<FormField
+						control={form.control}
+						name="honeypot"
+						render={({ field }) => (
+							<FormItem className="hidden">
+								<FormControl>
+									<Input {...field} tabIndex={-1} autoComplete="off" />
+								</FormControl>
+							</FormItem>
+						)}
+					/>
 
 					<Button type="submit" className="w-full" size="lg" disabled={form.formState.isSubmitting}>
 						{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

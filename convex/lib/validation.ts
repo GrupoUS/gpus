@@ -56,6 +56,8 @@ export const validationSchemas = {
 		utmSource: z.string().optional(),
 		utmCampaign: z.string().optional(),
 		utmMedium: z.string().optional(),
+		utmContent: z.string().optional(),
+		utmTerm: z.string().optional(),
 	}),
 
 	// Student validation

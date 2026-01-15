@@ -8,6 +8,7 @@ import {
 	Megaphone,
 	MessageCircle,
 	Settings2,
+	UserPlus,
 	Users2,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -40,6 +41,11 @@ const menuItems = [
 		label: 'Marketing',
 		href: '/marketing/dashboard',
 		icon: <Megaphone className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+	},
+	{
+		label: 'Leads de Captura',
+		href: '/marketing/leads',
+		icon: <UserPlus className="text-sidebar-foreground h-5 w-5 shrink-0" />,
 	},
 	{
 		label: 'Relatórios',
