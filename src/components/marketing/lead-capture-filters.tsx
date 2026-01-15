@@ -1,9 +1,11 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
+import type { DateRange } from 'react-day-picker';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Input } from '@/components/ui/input';
 import {
 	Select,
@@ -21,6 +23,8 @@ interface LeadCaptureFiltersProps {
 	onStatusChange: (value: string) => void;
 	interest: string;
 	onInterestChange: (value: string) => void;
+	date: DateRange | undefined;
+	onDateChange: (date: DateRange | undefined) => void;
 	onClear: () => void;
 }
 
@@ -31,9 +35,11 @@ export function LeadCaptureFilters({
 	onStatusChange,
 	interest,
 	onInterestChange,
+	date,
+	onDateChange,
 	onClear,
 }: LeadCaptureFiltersProps) {
-	const hasFilters = search || status !== 'all' || interest !== 'all';
+	const hasFilters = search || status !== 'all' || interest !== 'all' || date?.from;
 
 	return (
 		<div className="space-y-4">
@@ -50,6 +56,9 @@ export function LeadCaptureFilters({
 
 			{/* Filters Row */}
 			<div className="flex flex-wrap items-center gap-3">
+				{/* Date Filter */}
+				<DatePickerWithRange date={date} setDate={onDateChange} />
+
 				{/* Status Filter */}
 				<Select value={status} onValueChange={onStatusChange}>
 					<SelectTrigger className="w-[160px]">
@@ -98,6 +107,19 @@ export function LeadCaptureFilters({
 							<button
 								type="button"
 								onClick={() => onSearchChange('')}
+								className="ml-1 hover:text-destructive"
+							>
+								<X className="h-3 w-3" />
+							</button>
+						</Badge>
+					)}
+					{date?.from && (
+						<Badge variant="secondary" className="gap-1">
+							Período: {date.from.toLocaleDateString('pt-BR')}
+							{date.to ? ` - ${date.to.toLocaleDateString('pt-BR')}` : ''}
+							<button
+								type="button"
+								onClick={() => onDateChange(undefined)}
 								className="ml-1 hover:text-destructive"
 							>
 								<X className="h-3 w-3" />

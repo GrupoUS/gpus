@@ -570,6 +570,72 @@ export const syncStudentAsContactInternal = internalMutation({
   },
 });
 
+/**
+ * Internal mutation for auto-sync on marketing lead creation
+ * Called via scheduler from marketingLeads.ts create mutation
+ */
+export const syncMarketingLeadAsContactInternal = internalMutation({
+  args: {
+    leadId: v.id("marketing_leads"),
+    organizationId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Get lead data
+    const lead = await ctx.db.get(args.leadId);
+    if (!lead) {
+      console.log(`[EmailMarketing] Marketing Lead ${args.leadId} not found for sync`);
+      return null;
+    }
+
+    // Check if contact already exists for this lead
+    const existing = await ctx.db
+      .query("emailContacts")
+      .withIndex("by_email", (q) => q.eq("email", lead.email))
+      .first();
+
+    if (existing) {
+      console.log(
+        `[EmailMarketing] Marketing Lead ${args.leadId} already synced as contact ${existing._id}`,
+      );
+      // Update existing contact source if needed, or just return
+      // We might want to link it if not linked?
+      // For now, simpler is better as per instructions
+      return existing._id;
+    }
+
+    const now = Date.now();
+    const nameParts = (lead.name || "").split(" ");
+
+    // Create contact
+    const contactId = await ctx.db.insert("emailContacts", {
+      email: lead.email,
+      firstName: nameParts[0] || undefined,
+      lastName: nameParts.slice(1).join(" ") || undefined,
+      sourceType: "lead", // We reuse 'lead' as per comment "extend syncLeadAsContactInternal to accept marketing_leads" or similar logic
+      // Actually comment said: "Add an internal mutation that reads from marketing_leads and creates/updates an emailContacts record (or extend syncLeadAsContactInternal to accept marketing_leads)"
+      // Since marketing_leads is a different table, I'm creating a new mutation but sticking to existing logic.
+      // However, sourceId points to likely 'leads' table in other logic.
+      // Schema validation for sourceId is string, so it's fine.
+      // But verify 'sourceType' enum in schema: v.union(v.literal("lead"), v.literal("student"))
+      // So we must use 'lead'.
+      sourceId: args.leadId,
+      // We can't set leadId field to marketing_leads id because it expects v.id("leads")
+      // So we leave leadId undefined or use a new field?
+      // Schema says: leadId: v.optional(v.id("leads"))
+      // So we CANNOT set leadId.
+      organizationId: args.organizationId || "system",
+      subscriptionStatus: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    console.log(
+      `[EmailMarketing] Auto-synced marketing lead ${args.leadId} as contact ${contactId}`,
+    );
+    return contactId;
+  },
+});
+
 // ─────────────────────────────────────────────────────────
 // Contact Actions (External API Calls)
 // ─────────────────────────────────────────────────────────

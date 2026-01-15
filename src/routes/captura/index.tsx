@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Check, Mail, ShieldCheck, Users, X } from 'lucide-react';
 import { z } from 'zod';
 
-import { LeadForm } from '@/components/lead-form/lead-form';
+import { LeadCaptureForm } from '@/components/lead-capture/lead-capture-form';
 import { Badge } from '@/components/ui/badge';
 
 const searchSchema = z.object({
@@ -14,9 +14,51 @@ const searchSchema = z.object({
 	utm_term: z.string().optional(),
 });
 
+const structuredData = {
+	'@context': 'https://schema.org',
+	'@type': 'WebPage',
+	name: 'Captura de Leads - GPUS',
+	description: 'Transforme sua carreira na estética com conteúdos exclusivos',
+	mainEntity: {
+		'@type': 'Organization',
+		name: 'Grupo US',
+		url: 'https://gpus.com.br',
+	},
+};
+
 export const Route = createFileRoute('/captura/')({
 	component: CapturaPage,
 	validateSearch: (search) => searchSchema.parse(search),
+	head: () => ({
+		meta: [
+			{ title: 'Transforme sua Carreira na Estética | GPUS' },
+			{
+				name: 'description',
+				content:
+					'Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais.',
+			},
+			{ property: 'og:title', content: 'Transforme sua Carreira na Estética | GPUS' },
+			{
+				property: 'og:description',
+				content:
+					'Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais.',
+			},
+			{ property: 'og:type', content: 'website' },
+			{ property: 'og:url', content: 'https://gpus.com.br/captura' },
+			{ name: 'twitter:card', content: 'summary_large_image' },
+			{ name: 'twitter:title', content: 'Transforme sua Carreira na Estética | GPUS' },
+			{
+				name: 'twitter:description',
+				content: 'Receba conteúdos exclusivos e oportunidades de formação',
+			},
+		],
+		scripts: [
+			{
+				type: 'application/ld+json',
+				children: JSON.stringify(structuredData),
+			},
+		],
+	}),
 });
 
 function CapturaPage() {
@@ -25,40 +67,8 @@ function CapturaPage() {
 	// Use UTM source if available, otherwise default
 	const source = search.utm_source || 'landing_page';
 
-	const structuredData = {
-		'@context': 'https://schema.org',
-		'@type': 'WebPage',
-		name: 'Captura de Leads - GPUS',
-		description: 'Transforme sua carreira na estética com conteúdos exclusivos',
-		mainEntity: {
-			'@type': 'Organization',
-			name: 'Grupo US',
-			url: 'https://gpus.com.br',
-		},
-	};
-
 	return (
 		<div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-			{/* SEO Meta Tags */}
-			<title>Transforme sua Carreira na Estética | GPUS</title>
-			<meta
-				name="description"
-				content="Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais."
-			/>
-			<meta property="og:title" content="Transforme sua Carreira na Estética | GPUS" />
-			<meta
-				property="og:description"
-				content="Receba conteúdos exclusivos e oportunidades de formação. Junte-se a +2.000 profissionais."
-			/>
-			<meta property="og:type" content="website" />
-			<meta property="og:url" content="https://gpus.com.br/captura" />
-			<meta name="twitter:card" content="summary_large_image" />
-			<meta name="twitter:title" content="Transforme sua Carreira na Estética | GPUS" />
-			<meta
-				name="twitter:description"
-				content="Receba conteúdos exclusivos e oportunidades de formação"
-			/>
-			<script type="application/ld+json">{JSON.stringify(structuredData)}</script>
 			{/* Background Gradients */}
 			<div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
 				<div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[128px]" />
@@ -152,7 +162,7 @@ function CapturaPage() {
 								</p>
 							</div>
 
-							<LeadForm defaultSource={source} className="w-full" />
+							<LeadCaptureForm defaultSource={source} className="w-full" />
 						</div>
 					</motion.div>
 				</div>

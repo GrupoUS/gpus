@@ -10,7 +10,12 @@ const PAGE_SIZE = 20;
 export function useMarketingLeadsViewModel(Route: any) {
 	const navigate = useNavigate();
 	const searchParams = Route.useSearch();
-	const { search, status, interest } = searchParams;
+	const { search, status, interest, startDate, endDate } = searchParams;
+
+	// Convert URL string dates to timestamps (start of day / end of day)
+	// Assuming YYYY-MM-DD format from URL or ISO
+	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
+	const endTimestamp = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : undefined;
 
 	// Mutations & Queries
 	const updateStatus = useMutation(api.marketingLeads.updateStatus);
@@ -28,6 +33,8 @@ export function useMarketingLeadsViewModel(Route: any) {
 			status: status === 'all' ? undefined : status,
 			interest: interest === 'all' ? undefined : interest,
 			search: search || undefined,
+			startDate: startTimestamp,
+			endDate: endTimestamp,
 		},
 		{ initialNumItems: PAGE_SIZE },
 	);
@@ -86,6 +93,18 @@ export function useMarketingLeadsViewModel(Route: any) {
 		});
 	};
 
+	const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
+		void navigate({
+			to: '/marketing/leads',
+			search: {
+				...searchParams,
+				startDate: range?.from ? range.from.toISOString().split('T')[0] : undefined,
+				endDate: range?.to ? range.to.toISOString().split('T')[0] : undefined,
+				page: 1,
+			},
+		});
+	};
+
 	const handleLoadMore = () => {
 		if (paginationStatus === 'CanLoadMore') {
 			loadMore(PAGE_SIZE);
@@ -100,6 +119,8 @@ export function useMarketingLeadsViewModel(Route: any) {
 				search: '',
 				status: 'all',
 				interest: 'all',
+				startDate: undefined,
+				endDate: undefined,
 			},
 		});
 	};
@@ -124,10 +145,9 @@ export function useMarketingLeadsViewModel(Route: any) {
 		try {
 			const data = await convex.query(api.marketingLeads.exportToCSV, {
 				status: status === 'all' ? undefined : status,
-				// We don't have date filters in the UI yet per instructions (only Status, Interest, Search)
-				// The `lead-capture-filters.tsx` instruction mentions Status and Interest.
-				// The backend `exportToCSV` supports status, startDate, endDate.
-				// We will just pass the current status filter.
+				interest: interest === 'all' ? undefined : interest,
+				startDate: startTimestamp,
+				endDate: endTimestamp,
 			});
 
 			if (!data || data.length === 0) {
@@ -195,9 +215,12 @@ export function useMarketingLeadsViewModel(Route: any) {
 			search,
 			status,
 			interest,
+			startDate: startTimestamp ? new Date(startTimestamp) : undefined,
+			endDate: endDate ? new Date(endDate) : undefined, // pass Date objects to UI
 		},
 		handleStatusUpdate,
 		handleFilterChange,
+		handleDateRangeChange,
 		handleLoadMore,
 		clearFilters,
 		handleExportCSV,

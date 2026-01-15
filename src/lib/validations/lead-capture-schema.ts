@@ -16,7 +16,7 @@ export const leadCaptureSchema = z.object({
 	lgpdConsent: z.boolean().refine((val) => val === true, {
 		message: 'Você deve aceitar os termos',
 	}),
-	whatsappConsent: z.boolean().default(false),
+	whatsappConsent: z.boolean(),
 	// Honeypot field - should be empty
 	honeypot: z.string().max(0, 'Invalid submission').optional(),
 

@@ -148,9 +148,6 @@ Before creating a PR:
 
 | MCP | Purpose |
 |-----|---------|
-| **Codebase Analysis** |
-| `serena` | Semantic code analysis, symbol discovery, pattern search, reference tracking |
-| `mgrep` | Semantic search by concept (embeddings-based) |
 | **Documentation & Research** |
 | `context7` | Official documentation lookup (resolve-lib + get-docs) |
 | `tavily_tavily-search` | Web search for current patterns (research only) |
@@ -158,21 +155,6 @@ Before creating a PR:
 | `tavily_tavily-crawl` | Crawl websites with structured navigation |
 | `tavily_tavily-map` | Map website structure and discover content |
 | `sequentialthinking` | Step-by-step deep reasoning (research/Plan mode only) |
-| **GitHub & External Code** |
-| `zread_search_doc` | Search GitHub repos (docs/issues/commits) |
-| `zread_read_file` | Read full file from GitHub repository |
-| `zread_get_repo_structure` | Explore repository structure and file list |
-| **Web Content** |
-| `web-reader_webReader` | Fetch and convert web pages to markdown |
-| **Multimodal AI** |
-| `zai-mcp-server_ui_to_artifact` | UI screenshots → React code/prompt/spec/description |
-| `zai-mcp-server_extract_text_from_screenshot` | OCR for code/text extraction |
-| `zai-mcp-server_diagnose_error_screenshot` | Analyze error messages and stack traces |
-| `zai-mcp-server_understand_technical_diagram` | Architecture/flowcharts/UML analysis |
-| `zai-mcp-server_analyze_data_visualization` | Charts/graphs/dashboards insights |
-| `zai-mcp-server_ui_diff_check` | Compare UI screenshots for QA |
-| `zai-mcp-server_analyze_image` | General image analysis (fallback) |
-| `zai-mcp-server_analyze_video` | Video content analysis (MP4/MOV/M4V) |
 
 ### Agent Invocation
 
@@ -185,23 +167,6 @@ Before creating a PR:
 @database-specialist  # Convex database tasks
 @apex-ui-ux-designer  # UI/UX components
 ```
-
-### Tool Selection Matrix
-
-| Scenario | Primary Tool | Fallback | Why |
-|----------|-------------|----------|-----|
-| "Find function X" | `serena find_symbol` | `mgrep` | Exact symbol match via LSP |
-| "How does auth work?" | `mgrep` | `serena search_for_pattern` | Conceptual/semantic query |
-| "Convex query syntax" | `context7` | `zread` | Official docs first |
-| "All usages of hook Y" | `serena find_referencing_symbols` | - | Reference tracking via LSP |
-| "Similar error handling" | `mgrep` | `serena search_for_pattern` | Pattern similarity |
-| "How to use library Z" | `context7` | `tavily` | Authoritative documentation |
-| "GitHub code examples" | `zread` | `tavily` | Real code from repos |
-| "Analyze screenshot" | `zai-mcp-server_diagnose_error_screenshot` | - | Computer vision for errors |
-| "Extract code from image" | `zai-mcp-server_extract_text_from_screenshot` | - | OCR for code/text |
-| "Generate UI from mockup" | `zai-mcp-server_ui_to_artifact` | - | Screenshot → React code |
-| "Web page content" | `web-reader_webReader` | `tavily_tavily-extract` | HTML → markdown |
-| "Deep reasoning" | `sequential_thinking` | - | Multi-step analysis (Plan only) |
 
 ### MCP Activation Protocol (MANDATORY)
 

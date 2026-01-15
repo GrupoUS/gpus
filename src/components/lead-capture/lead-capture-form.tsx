@@ -1,32 +1,34 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from 'convex/react';
-import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { type DefaultValues, type Resolver, type SubmitHandler, useForm } from 'react-hook-form';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
-import { LeadFormFields } from './lead-form-fields';
+import { LeadCaptureFormFields } from './lead-capture-form-fields';
+import { LeadCaptureSuccess } from './lead-capture-success';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { cleanPhoneNumber } from '@/lib/utils/phone-mask';
 import { useUTMParams } from '@/lib/utils/utm-capture';
 import { type LeadCaptureFormData, leadCaptureSchema } from '@/lib/validations/lead-capture-schema';
 
-interface LeadFormProps {
+interface LeadCaptureFormProps {
 	className?: string;
 	defaultSource?: string;
 }
 
-export function LeadForm({ className, defaultSource = 'landing_page' }: LeadFormProps) {
+export function LeadCaptureForm({
+	className,
+	defaultSource = 'landing_page',
+}: LeadCaptureFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
 	const createMarketingLead = useMutation(api.marketingLeads.create);
 	const utmParams = useUTMParams();
 
 	const form = useForm<LeadCaptureFormData>({
-		resolver: zodResolver(leadCaptureSchema) as Resolver<LeadCaptureFormData>,
+		resolver: zodResolver(leadCaptureSchema),
 		defaultValues: {
 			name: '',
 			phone: '',
@@ -43,7 +45,7 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 			utmMedium: utmParams.utmMedium,
 			utmContent: utmParams.utmContent,
 			utmTerm: utmParams.utmTerm,
-		} satisfies DefaultValues<LeadCaptureFormData>,
+		},
 	});
 
 	const onSubmit: SubmitHandler<LeadCaptureFormData> = async (data) => {
@@ -57,7 +59,7 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 			await createMarketingLead({
 				name: data.name,
 				email: data.email,
-				phone: cleanPhoneNumber(data.phone),
+				phone: data.phone,
 				interest: data.interest,
 				message: data.message,
 				lgpdConsent: data.lgpdConsent,
@@ -78,31 +80,12 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 
 	if (isSuccess) {
 		return (
-			<div className="rounded-xl border bg-card p-8 text-center shadow-sm">
-				<motion.div
-					initial={{ scale: 0.8, opacity: 0 }}
-					animate={{ scale: 1, opacity: 1 }}
-					className="flex flex-col items-center justify-center space-y-4"
-				>
-					<div className="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
-						<CheckCircle2 className="h-12 w-12 text-green-600 dark:text-green-400" />
-					</div>
-					<h3 className="text-2xl font-bold">Sucesso!</h3>
-					<p className="text-muted-foreground">
-						Recebemos seus dados e entraremos em contato em breve.
-					</p>
-					<Button
-						variant="outline"
-						className="mt-4"
-						onClick={() => {
-							setIsSuccess(false);
-							form.reset();
-						}}
-					>
-						Enviar nova mensagem
-					</Button>
-				</motion.div>
-			</div>
+			<LeadCaptureSuccess
+				onReset={() => {
+					setIsSuccess(false);
+					form.reset();
+				}}
+			/>
 		);
 	}
 
@@ -110,7 +93,7 @@ export function LeadForm({ className, defaultSource = 'landing_page' }: LeadForm
 		<div className={className}>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-					<LeadFormFields control={form.control} disabled={form.formState.isSubmitting} />
+					<LeadCaptureFormFields control={form.control} disabled={form.formState.isSubmitting} />
 
 					{/* Hidden Honeypot Field */}
 					<FormField

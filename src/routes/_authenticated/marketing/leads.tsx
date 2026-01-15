@@ -13,6 +13,8 @@ const searchSchema = z.object({
 	search: z.string().catch(''),
 	status: z.string().catch('all'),
 	interest: z.string().catch('all'),
+	startDate: z.string().optional(),
+	endDate: z.string().optional(),
 });
 
 export const Route = createFileRoute('/_authenticated/marketing/leads')({
@@ -31,6 +33,7 @@ function LeadsPage() {
 		handleFilterChange,
 		handleLoadMore,
 		clearFilters,
+		handleDateRangeChange,
 		handleExportCSV,
 	} = useMarketingLeadsViewModel(Route);
 
@@ -61,6 +64,11 @@ function LeadsPage() {
 				onStatusChange={(v) => handleFilterChange('status', v)}
 				interest={filters.interest}
 				onInterestChange={(v) => handleFilterChange('interest', v)}
+				date={{
+					from: filters.startDate,
+					to: filters.endDate,
+				}}
+				onDateChange={handleDateRangeChange}
 				onClear={clearFilters}
 			/>
 
