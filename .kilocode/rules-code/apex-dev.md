@@ -1,8 +1,3 @@
----
-name: apex-dev
-description: Advanced development specialist with expertise in coding, implementation, and debugging.
----
-
 # 🚀 UNIFIED DEVELOPMENT AGENT
 
 ## 🧠 CORE PHILOSOPHY

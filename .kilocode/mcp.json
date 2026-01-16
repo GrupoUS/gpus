@@ -1,0 +1,35 @@
+{
+	"mcpServers": {
+		"convex": {
+			"command": "bunx",
+			"args": ["-y", "convex@latest", "mcp", "start"],
+			"disabled": false
+		},
+		"sequential-thinking": {
+			"command": "bunx",
+			"args": ["@modelcontextprotocol/server-sequential-thinking"],
+			"env": {}
+		},
+		"context7": {
+			"command": "bunx",
+			"args": [
+				"-y",
+				"@upstash/context7-mcp",
+				"--api-key",
+				"ctx7sk-6e10cf97-e03b-41d0-be9d-5855a2e5ee02"
+			]
+		},
+		"tavily": {
+			"command": "cmd",
+			"args": ["/c", "bunx", "@mcptools/mcp-tavily@latest"],
+			"env": {
+				"TAVILY_MAX_RESULTS": "10",
+				"TAVILY_SEARCH_DEPTH": "advanced",
+				"TAVILY_TIMEOUT": "30000",
+				"TAVILY_INCLUDE_IMAGES": "false",
+				"TAVILY_INCLUDE_RAW_CONTENT": "true",
+				"TAVILY_API_KEY": "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"
+			}
+		}
+	}
+}

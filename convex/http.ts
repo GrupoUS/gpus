@@ -61,13 +61,10 @@ http.route({
 		const eventType = normalizeEventType(payload.event);
 
 		// 5. Find contact by email (if exists)
-		// biome-ignore lint/suspicious/noExplicitAny: Internal API type workaround
-		const contact = await (ctx as any).runQuery(
-			(internal as any).emailMarketing.getContactByEmailInternal,
-			{
-				email: payload.email,
-			},
-		);
+		// @ts-expect-error - Deep type instantiation error with internal queries
+		const contact = await ctx.runQuery(internal.emailMarketing.getContactByEmailInternal, {
+			email: payload.email,
+		});
 
 		// 6. Extract timestamp (prefer epoch, fallback to ts, then current time)
 		const timestamp = payload.ts_epoch ?? payload.ts ?? Date.now();

@@ -1,4 +1,5 @@
 import { createClerkClient } from '@clerk/backend';
+import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
@@ -629,7 +630,7 @@ export const softDeleteUserByClerkId = internalMutation({
 export const searchTeamMembers = query({
 	args: {
 		query: v.optional(v.string()),
-		paginationOpts: v.any(),
+		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
 		// Security Check
