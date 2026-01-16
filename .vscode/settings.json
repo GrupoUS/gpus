@@ -1,215 +1,205 @@
 {
-  "json.schemas": [
-    {
-      "fileMatch": [
-        ".vscode/mcp.json"
-      ],
-      "schema": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "properties": {
-          "servers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "command": {
-                  "type": "string"
-                },
-                "args": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "env": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "stdio",
-                    "sse"
-                  ]
-                },
-                "alwaysAllow": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "disabledTools": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "disabled": {
-                  "type": "boolean"
-                },
-                "fromGalleryId": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "command"
-              ],
-              "additionalProperties": true
-            }
-          }
-        },
-        "additionalProperties": true
-      }
-    }
-  ],
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit",
-    "source.fixAll.biome": "explicit"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "css.lint.unknownProperties": "ignore",
-  "css.lint.unknownAtRules": "ignore",
-  "tailwindCSS.experimental.classRegex": [
-    [
-      "cn\\(([^)]*)\\)",
-      "[\"'`]([^\"'`]*).*?[\"'`]"
-    ]
-  ],
-  "tailwindCSS.validate": true,
-  "tailwindCSS.emmetCompletions": true,
-  "tailwindCSS.colorDecorators": true,
-  "tailwindCSS.suggestions": true,
-  "files.associations": {
-    "*.css": "css"
-  },
-  "editor.quickSuggestions": {
-    "strings": true
-  },
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "files.exclude": {
-    "**/node_modules": true,
-    "*/node_modules/*": true,
-    "**/node_modules/**": true
-  },
-  "typescript.preferences.includePackageJsonAutoImports": "on",
-  "typescript.suggest.autoImports": true,
-  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
-  "workbench.colorTheme": "One Dark Pro Darker",
-  "workbench.iconTheme": "catppuccin-mocha",
-  "editor.fontFamily": "Cousine Nerd Font",
-  "files.autoSave": "afterDelay",
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
-    "**/node_modules/**": true,
-    "**/dist/**": true,
-    "**/coverage/**": true,
-    "**/.next/**": true,
-    "**/.turbo/**": true
-  },
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/coverage": true,
-    "**/.git": true,
-    "**/.next": true
-  },
-  "typescript.tsserver.log": "verbose",
-  "javascript.validate.enable": true,
-  "typescript.validate.enable": true,
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": true,
-  "editor.linkedEditing": true,
-  "editor.cursorBlinking": "smooth",
-  "editor.cursorSmoothCaretAnimation": "on",
-  "editor.renderWhitespace": "selection",
-  "files.trimTrailingWhitespace": true,
-  "workbench.list.smoothScrolling": true,
-  "terminal.integrated.smoothScrolling": true,
-  "terminal.integrated.cursorBlinking": true,
-  "editor.minimap.enabled": true,
-  "editor.minimap.side": "right",
-  "editor.minimap.showSlider": "always",
-  "editor.minimap.renderCharacters": false,
-  "editor.smoothScrolling": true,
-  "workbench.preferredDarkColorTheme": "One Dark Pro Darker",
-  "biome.suggestInstallingGlobally": false,
-  "biome.requireConfiguration": true,
-  "explorer.confirmDelete": false,
-  "git.confirmSync": false,
-  "git.enableSmartCommit": true,
-  "kilo-code.allowedCommands": [
-    "git log",
-    "git diff",
-    "git show",
-    "cd",
-    "ls",
-    "bun run",
-    "npx",
-    "bun",
-    "bunx",
-    "grep",
-    "head",
-    "findstr",
-    "diagnostics",
-    "supabase",
-    "echo"
-  ],
-  "kilo-code.deniedCommands": [],
-  "workbench.activityBar.location": "top",
-  "git.autofetch": true,
-  "editor.formatOnPaste": true,
-  "emmet.showExpandedAbbreviation": "never",
-  "[html]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[vue]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[svelte]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[css]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[yaml]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[graphql]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[markdown]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[mdx]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  }
+	"json.schemas": [
+		{
+			"fileMatch": [".vscode/mcp.json"],
+			"schema": {
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type": "object",
+				"properties": {
+					"servers": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"command": {
+									"type": "string"
+								},
+								"args": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"env": {
+									"type": "object",
+									"additionalProperties": {
+										"type": "string"
+									}
+								},
+								"type": {
+									"type": "string",
+									"enum": ["stdio", "sse"]
+								},
+								"alwaysAllow": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"disabledTools": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"disabled": {
+									"type": "boolean"
+								},
+								"fromGalleryId": {
+									"type": "string"
+								},
+								"url": {
+									"type": "string"
+								}
+							},
+							"required": ["command"],
+							"additionalProperties": true
+						}
+					}
+				},
+				"additionalProperties": true
+			}
+		}
+	],
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"quickfix.biome": "explicit",
+		"source.organizeImports.biome": "explicit",
+		"source.fixAll.biome": "explicit"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"typescript.preferences.importModuleSpecifier": "relative",
+	"css.lint.unknownProperties": "ignore",
+	"css.lint.unknownAtRules": "ignore",
+	"tailwindCSS.experimental.classRegex": [
+		["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+	],
+	"tailwindCSS.validate": true,
+	"tailwindCSS.emmetCompletions": true,
+	"tailwindCSS.colorDecorators": true,
+	"tailwindCSS.suggestions": true,
+	"files.associations": {
+		"*.css": "css"
+	},
+	"editor.quickSuggestions": {
+		"strings": true
+	},
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"files.exclude": {
+		"**/node_modules": true,
+		"*/node_modules/*": true,
+		"**/node_modules/**": true
+	},
+	"typescript.preferences.includePackageJsonAutoImports": "on",
+	"typescript.suggest.autoImports": true,
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
+	"workbench.colorTheme": "One Dark Pro Darker",
+	"workbench.iconTheme": "catppuccin-mocha",
+	"editor.fontFamily": "Cousine Nerd Font",
+	"files.autoSave": "afterDelay",
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/**": true,
+		"**/dist/**": true,
+		"**/coverage/**": true,
+		"**/.next/**": true,
+		"**/.turbo/**": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/coverage": true,
+		"**/.git": true,
+		"**/.next": true
+	},
+	"typescript.tsserver.log": "verbose",
+	"javascript.validate.enable": true,
+	"typescript.validate.enable": true,
+	"editor.bracketPairColorization.enabled": true,
+	"editor.guides.bracketPairs": true,
+	"editor.linkedEditing": true,
+	"editor.cursorBlinking": "smooth",
+	"editor.cursorSmoothCaretAnimation": "on",
+	"editor.renderWhitespace": "selection",
+	"files.trimTrailingWhitespace": true,
+	"workbench.list.smoothScrolling": true,
+	"terminal.integrated.smoothScrolling": true,
+	"terminal.integrated.cursorBlinking": true,
+	"editor.minimap.enabled": true,
+	"editor.minimap.side": "right",
+	"editor.minimap.showSlider": "always",
+	"editor.minimap.renderCharacters": false,
+	"editor.smoothScrolling": true,
+	"workbench.preferredDarkColorTheme": "One Dark Pro Darker",
+	"biome.suggestInstallingGlobally": false,
+	"biome.requireConfiguration": true,
+	"explorer.confirmDelete": false,
+	"git.confirmSync": false,
+	"git.enableSmartCommit": true,
+	"kilo-code.allowedCommands": [
+		"git log",
+		"git diff",
+		"git show",
+		"cd",
+		"ls",
+		"bun run",
+		"npx",
+		"bun",
+		"bunx",
+		"grep",
+		"head",
+		"findstr",
+		"diagnostics",
+		"supabase",
+		"echo"
+	],
+	"kilo-code.deniedCommands": [],
+	"workbench.activityBar.location": "top",
+	"git.autofetch": true,
+	"editor.formatOnPaste": true,
+	"emmet.showExpandedAbbreviation": "never",
+	"[html]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[vue]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[svelte]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[yaml]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[graphql]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[mdx]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	}
 }

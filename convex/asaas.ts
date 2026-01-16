@@ -22,12 +22,10 @@ export * from './asaas/sync';
 
 // Alerts (public mutations)
 export {
-  resolveAlertPublic as resolveAlert,
-  acknowledgeAlertPublic as acknowledgeAlert,
-  suppressAlertPublic as suppressAlert,
+	resolveAlertPublic as resolveAlert,
+	acknowledgeAlertPublic as acknowledgeAlert,
+	suppressAlertPublic as suppressAlert,
 } from './asaas/alerts';
 
 // Conflict resolution (public mutations)
-export {
-  resolveConflictManually as resolveConflict,
-} from './asaas/conflict_resolution';
+export { resolveConflictManually as resolveConflict } from './asaas/conflict_resolution';

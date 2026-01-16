@@ -13,17 +13,17 @@
  * All sends are logged in emailEvents table for tracking.
  */
 
-import { v } from 'convex/values'
-import { action, internalMutation, internalQuery } from './_generated/server'
-import { internal } from './_generated/api'
-import { brevoSmtp } from './lib/brevo'
+import { v } from 'convex/values';
+import { action, internalMutation, internalQuery } from './_generated/server';
+import { internal } from './_generated/api';
+import { brevoSmtp } from './lib/brevo';
 
 // Type assertion helper for internal functions during code generation bootstrap
 // @ts-ignore - Convex type inference is excessively deep for internal API references
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const _internalAny: any = internal
+const _internalAny: any = internal;
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const internalTransactionalEmails: Record<string, any> = _internalAny.transactionalEmails
+const internalTransactionalEmails: Record<string, any> = _internalAny.transactionalEmails;
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL QUERIES
@@ -35,9 +35,9 @@ const internalTransactionalEmails: Record<string, any> = _internalAny.transactio
 export const getLeadForEmail = internalQuery({
 	args: { leadId: v.id('leads') },
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.leadId)
+		return await ctx.db.get(args.leadId);
 	},
-})
+});
 
 /**
  * Get student data for transactional email
@@ -45,9 +45,9 @@ export const getLeadForEmail = internalQuery({
 export const getStudentForEmail = internalQuery({
 	args: { studentId: v.id('students') },
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.studentId)
+		return await ctx.db.get(args.studentId);
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL MUTATIONS
@@ -75,9 +75,9 @@ export const logTransactionalEmailSend = internalMutation({
 				...args.metadata,
 			},
 			createdAt: Date.now(),
-		})
+		});
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // TRANSACTIONAL EMAIL ACTIONS
@@ -94,17 +94,17 @@ export const sendWelcomeEmailToLead = action({
 		// Get lead data
 		const lead = await ctx.runQuery(internalTransactionalEmails.getLeadForEmail, {
 			leadId: args.leadId,
-		})
+		});
 
 		if (!lead) {
-			throw new Error('Lead não encontrado')
+			throw new Error('Lead não encontrado');
 		}
 
 		if (!lead.email) {
-			throw new Error('Lead não possui email cadastrado')
+			throw new Error('Lead não possui email cadastrado');
 		}
 
-		const firstName = lead.name?.split(' ')[0] || 'Visitante'
+		const firstName = lead.name?.split(' ')[0] || 'Visitante';
 
 		// Build welcome email HTML
 		const htmlContent = `
@@ -144,7 +144,7 @@ export const sendWelcomeEmailToLead = action({
     </p>
   </div>
 </body>
-</html>`
+</html>`;
 
 		// Send via Brevo SMTP
 		const result = await brevoSmtp.sendHtml(
@@ -152,7 +152,7 @@ export const sendWelcomeEmailToLead = action({
 			'Bem-vindo(a) ao GRUPOUS! 🎉',
 			htmlContent,
 			{ tags: ['welcome', 'lead'] },
-		)
+		);
 
 		// Log the email send
 		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
@@ -160,11 +160,11 @@ export const sendWelcomeEmailToLead = action({
 			emailType: 'welcome_lead',
 			messageId: result.messageId,
 			metadata: { leadId: args.leadId },
-		})
+		});
 
-		return { success: true, messageId: result.messageId }
+		return { success: true, messageId: result.messageId };
 	},
-})
+});
 
 /**
  * Send enrollment confirmation email to a student
@@ -179,20 +179,19 @@ export const sendEnrollmentConfirmation = action({
 	},
 	handler: async (ctx, args) => {
 		// Get student data
-		const student = await ctx.runQuery(
-			internalTransactionalEmails.getStudentForEmail,
-			{ studentId: args.studentId },
-		)
+		const student = await ctx.runQuery(internalTransactionalEmails.getStudentForEmail, {
+			studentId: args.studentId,
+		});
 
 		if (!student) {
-			throw new Error('Aluno não encontrado')
+			throw new Error('Aluno não encontrado');
 		}
 
 		if (!student.email) {
-			throw new Error('Aluno não possui email cadastrado')
+			throw new Error('Aluno não possui email cadastrado');
 		}
 
-		const firstName = student.name?.split(' ')[0] || 'Aluno(a)'
+		const firstName = student.name?.split(' ')[0] || 'Aluno(a)';
 
 		// Build enrollment confirmation HTML
 		const htmlContent = `
@@ -233,7 +232,7 @@ export const sendEnrollmentConfirmation = action({
     </p>
   </div>
 </body>
-</html>`
+</html>`;
 
 		// Send via Brevo SMTP
 		const result = await brevoSmtp.sendHtml(
@@ -241,7 +240,7 @@ export const sendEnrollmentConfirmation = action({
 			`Matrícula confirmada: ${args.courseName} ✅`,
 			htmlContent,
 			{ tags: ['enrollment', 'confirmation', 'student'] },
-		)
+		);
 
 		// Log the email send
 		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
@@ -249,11 +248,11 @@ export const sendEnrollmentConfirmation = action({
 			emailType: 'enrollment_confirmation',
 			messageId: result.messageId,
 			metadata: { studentId: args.studentId, courseName: args.courseName },
-		})
+		});
 
-		return { success: true, messageId: result.messageId }
+		return { success: true, messageId: result.messageId };
 	},
-})
+});
 
 /**
  * Send class reminder email to a student
@@ -269,16 +268,15 @@ export const sendClassReminder = action({
 		location: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		const student = await ctx.runQuery(
-			internalTransactionalEmails.getStudentForEmail,
-			{ studentId: args.studentId },
-		)
+		const student = await ctx.runQuery(internalTransactionalEmails.getStudentForEmail, {
+			studentId: args.studentId,
+		});
 
 		if (!student || !student.email) {
-			throw new Error('Aluno não encontrado ou sem email')
+			throw new Error('Aluno não encontrado ou sem email');
 		}
 
-		const firstName = student.name?.split(' ')[0] || 'Aluno(a)'
+		const firstName = student.name?.split(' ')[0] || 'Aluno(a)';
 
 		const htmlContent = `
 <!DOCTYPE html>
@@ -310,25 +308,25 @@ export const sendClassReminder = action({
     </p>
   </div>
 </body>
-</html>`
+</html>`;
 
 		const result = await brevoSmtp.sendHtml(
 			{ email: student.email, name: student.name || undefined },
 			`Lembrete: ${args.className} em ${args.classDate}`,
 			htmlContent,
 			{ tags: ['reminder', 'class', 'student'] },
-		)
+		);
 
 		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
 			email: student.email,
 			emailType: 'class_reminder',
 			messageId: result.messageId,
 			metadata: { studentId: args.studentId, className: args.className },
-		})
+		});
 
-		return { success: true, messageId: result.messageId }
+		return { success: true, messageId: result.messageId };
 	},
-})
+});
 
 /**
  * Send a generic transactional email
@@ -348,22 +346,19 @@ export const sendGenericEmail = action({
 		emailType: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		const result = await brevoSmtp.sendHtml(
-			args.to,
-			args.subject,
-			args.htmlContent,
-			{ tags: args.tags },
-		)
+		const result = await brevoSmtp.sendHtml(args.to, args.subject, args.htmlContent, {
+			tags: args.tags,
+		});
 
 		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
 			email: args.to.email,
 			emailType: args.emailType || 'generic',
 			messageId: result.messageId,
-		})
+		});
 
-		return { success: true, messageId: result.messageId }
+		return { success: true, messageId: result.messageId };
 	},
-})
+});
 
 /**
  * Send email using a Brevo template
@@ -383,20 +378,17 @@ export const sendTemplateEmail = action({
 		emailType: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		const result = await brevoSmtp.sendTemplate(
-			args.templateId,
-			args.to,
-			args.params,
-			{ tags: args.tags },
-		)
+		const result = await brevoSmtp.sendTemplate(args.templateId, args.to, args.params, {
+			tags: args.tags,
+		});
 
 		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
 			email: args.to.email,
 			emailType: args.emailType || `template_${args.templateId}`,
 			messageId: result.messageId,
 			metadata: { templateId: args.templateId, params: args.params },
-		})
+		});
 
-		return { success: true, messageId: result.messageId }
+		return { success: true, messageId: result.messageId };
 	},
-})
+});

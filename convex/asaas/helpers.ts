@@ -4,21 +4,21 @@
  * Shared utility functions for Asaas integration operations.
  */
 
-import type { MutationCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from '../_generated/server';
+import type { Id } from '../_generated/dataModel';
 
 /**
  * Enrollment matching result
  */
 export type EnrollmentMatchResult =
-  | {
-      enrollmentId: Id<"enrollments">;
-      matchType: "exact" | "single" | "product_match" | "first";
-    }
-  | {
-      enrollmentId: undefined;
-      reason: "no_active_enrollments" | "multiple_without_match";
-    };
+	| {
+			enrollmentId: Id<'enrollments'>;
+			matchType: 'exact' | 'single' | 'product_match' | 'first';
+	  }
+	| {
+			enrollmentId: undefined;
+			reason: 'no_active_enrollments' | 'multiple_without_match';
+	  };
 
 /**
  * Finds the best matching enrollment for a student based on various strategies.
@@ -35,55 +35,55 @@ export type EnrollmentMatchResult =
  * @returns EnrollmentMatchResult with enrollment ID or reason for no match
  */
 export async function findMatchingEnrollment(
-  ctx: MutationCtx,
-  studentId: Id<"students">,
-  description?: string,
+	ctx: MutationCtx,
+	studentId: Id<'students'>,
+	description?: string,
 ): Promise<EnrollmentMatchResult> {
-  // Get all non-cancelled enrollments for the student
-  const activeEnrollments = await ctx.db
-    .query("enrollments")
-    .withIndex("by_student", (q) => q.eq("studentId", studentId))
-    .filter((q) => q.neq(q.field("status"), "cancelado"))
-    .collect();
+	// Get all non-cancelled enrollments for the student
+	const activeEnrollments = await ctx.db
+		.query('enrollments')
+		.withIndex('by_student', (q) => q.eq('studentId', studentId))
+		.filter((q) => q.neq(q.field('status'), 'cancelado'))
+		.collect();
 
-  // No active enrollments found
-  if (activeEnrollments.length === 0) {
-    return { enrollmentId: undefined, reason: "no_active_enrollments" };
-  }
+	// No active enrollments found
+	if (activeEnrollments.length === 0) {
+		return { enrollmentId: undefined, reason: 'no_active_enrollments' };
+	}
 
-  // Single active enrollment - exact match
-  if (activeEnrollments.length === 1) {
-    return { enrollmentId: activeEnrollments[0]._id, matchType: "single" };
-  }
+	// Single active enrollment - exact match
+	if (activeEnrollments.length === 1) {
+		return { enrollmentId: activeEnrollments[0]._id, matchType: 'single' };
+	}
 
-  // Multiple enrollments - try product matching if description provided
-  if (description && activeEnrollments.length > 1) {
-    const desc = description.toLowerCase();
+	// Multiple enrollments - try product matching if description provided
+	if (description && activeEnrollments.length > 1) {
+		const desc = description.toLowerCase();
 
-    // Product keyword mapping
-    const productKeywords: Record<string, string[]> = {
-      trintae3: ["trinta", "30e3", "30 e 3", "trinta e três"],
-      otb: ["otb", "outside", "beyond"],
-      black_neon: ["black", "neon"],
-      comunidade: ["comunidade", "club", "community"],
-      auriculo: ["aurículo", "acupuntura", "auriculotherapy"],
-      na_mesa_certa: ["mesa", "table"],
-    };
+		// Product keyword mapping
+		const productKeywords: Record<string, string[]> = {
+			trintae3: ['trinta', '30e3', '30 e 3', 'trinta e três'],
+			otb: ['otb', 'outside', 'beyond'],
+			black_neon: ['black', 'neon'],
+			comunidade: ['comunidade', 'club', 'community'],
+			auriculo: ['aurículo', 'acupuntura', 'auriculotherapy'],
+			na_mesa_certa: ['mesa', 'table'],
+		};
 
-    // Try to find matching enrollment by product keywords
-    for (const [product, keywords] of Object.entries(productKeywords)) {
-      if (keywords.some((keyword) => desc.includes(keyword))) {
-        const matched = activeEnrollments.find((e) => e.product === product);
-        if (matched) {
-          return { enrollmentId: matched._id, matchType: "product_match" };
-        }
-      }
-    }
-  }
+		// Try to find matching enrollment by product keywords
+		for (const [product, keywords] of Object.entries(productKeywords)) {
+			if (keywords.some((keyword) => desc.includes(keyword))) {
+				const matched = activeEnrollments.find((e) => e.product === product);
+				if (matched) {
+					return { enrollmentId: matched._id, matchType: 'product_match' };
+				}
+			}
+		}
+	}
 
-  // Multiple enrollments without product match - return first as fallback
-  // This is a deliberate fallback to avoid blocking payment processing
-  return { enrollmentId: activeEnrollments[0]._id, matchType: "first" };
+	// Multiple enrollments without product match - return first as fallback
+	// This is a deliberate fallback to avoid blocking payment processing
+	return { enrollmentId: activeEnrollments[0]._id, matchType: 'first' };
 }
 
 /**
@@ -97,30 +97,30 @@ export async function findMatchingEnrollment(
  * @returns Enrollment ID or undefined
  */
 export async function getEnrollmentIdOrDefault(
-  ctx: MutationCtx,
-  studentId: Id<"students">,
-  explicitEnrollmentId: Id<"enrollments"> | undefined,
-  description?: string,
-): Promise<Id<"enrollments"> | undefined> {
-  // If explicitly provided, use it
-  if (explicitEnrollmentId) {
-    return explicitEnrollmentId;
-  }
+	ctx: MutationCtx,
+	studentId: Id<'students'>,
+	explicitEnrollmentId: Id<'enrollments'> | undefined,
+	description?: string,
+): Promise<Id<'enrollments'> | undefined> {
+	// If explicitly provided, use it
+	if (explicitEnrollmentId) {
+		return explicitEnrollmentId;
+	}
 
-  // Otherwise, find best match
-  const result = await findMatchingEnrollment(ctx, studentId, description);
+	// Otherwise, find best match
+	const result = await findMatchingEnrollment(ctx, studentId, description);
 
-  if (result.enrollmentId) {
-    return result.enrollmentId;
-  }
+	if (result.enrollmentId) {
+		return result.enrollmentId;
+	}
 
-  // Log warning about no match but don't throw
-  // This allows payment processing to continue
-  console.warn(
-    `No matching enrollment found for student ${studentId}. ` +
-      `Reason: ${result.enrollmentId === undefined ? "no_active_enrollments" : "multiple_without_match"}. ` +
-      `Payment will be created without enrollment link.`,
-  );
+	// Log warning about no match but don't throw
+	// This allows payment processing to continue
+	console.warn(
+		`No matching enrollment found for student ${studentId}. ` +
+			`Reason: ${result.enrollmentId === undefined ? 'no_active_enrollments' : 'multiple_without_match'}. ` +
+			`Payment will be created without enrollment link.`,
+	);
 
-  return undefined;
+	return undefined;
 }

@@ -1,4 +1,4 @@
-import { mutation, query } from './_generated/server'
+import { mutation, query } from './_generated/server';
 
 /**
  * DEBUG: Investigate encrypted data in students table
@@ -7,7 +7,7 @@ import { mutation, query } from './_generated/server'
 export const debugEncryptedData = query({
 	args: {},
 	handler: async (ctx) => {
-		const students = await ctx.db.query('students').take(5)
+		const students = await ctx.db.query('students').take(5);
 
 		return students.map((s) => ({
 			id: s._id,
@@ -23,9 +23,9 @@ export const debugEncryptedData = query({
 			hasCpf: !!s.cpf,
 			hasEmail: !!s.email,
 			hasPhone: !!s.phone,
-		}))
+		}));
 	},
-})
+});
 
 /**
  * Verify authentication configuration
@@ -35,7 +35,7 @@ export const debugEncryptedData = query({
 export const checkAuth = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const identity = await ctx.auth.getUserIdentity()
+		const identity = await ctx.auth.getUserIdentity();
 
 		const debug = {
 			timestamp: new Date().toISOString(),
@@ -58,17 +58,16 @@ export const checkAuth = mutation({
 
 			// Configuration reference
 			verification: {
-				jwks_url:
-					'https://apparent-oryx-57.clerk.accounts.dev/.well-known/jwks.json',
+				jwks_url: 'https://apparent-oryx-57.clerk.accounts.dev/.well-known/jwks.json',
 				expected_issuer: 'https://apparent-oryx-57.clerk.accounts.dev',
 				algorithm: 'RS256',
 				jwt_template: 'convex',
 			},
-		}
+		};
 
-		return debug
+		return debug;
 	},
-})
+});
 
 /**
  * DEBUG: Test database write permissions
@@ -79,15 +78,14 @@ export const checkAuth = mutation({
 export const testCreate = mutation({
 	args: {},
 	handler: async (ctx) => {
-		const identity = await ctx.auth.getUserIdentity()
+		const identity = await ctx.auth.getUserIdentity();
 
 		if (!identity) {
 			return {
 				success: false,
 				error: 'Não autenticado',
-				suggestion:
-					"Verifique se o JWT template 'convex' está configurado no Clerk Dashboard",
-			}
+				suggestion: "Verifique se o JWT template 'convex' está configurado no Clerk Dashboard",
+			};
 		}
 
 		try {
@@ -104,23 +102,23 @@ export const testCreate = mutation({
 				message: 'Debug lead',
 				createdAt: Date.now(),
 				updatedAt: Date.now(),
-			})
+			});
 
 			// Delete immediately
-			await ctx.db.delete(testId)
+			await ctx.db.delete(testId);
 
 			return {
 				success: true,
 				message: 'Criação e deleção funcionando corretamente',
 				userId: identity.subject,
 				email: identity.email,
-			}
+			};
 		} catch (error) {
 			return {
 				success: false,
 				error: String(error),
 				suggestion: 'Verifique o schema e os índices no Convex',
-			}
+			};
 		}
 	},
-})
+});

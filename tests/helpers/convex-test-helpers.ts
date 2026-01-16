@@ -4,8 +4,8 @@
  * Utility functions for creating test data and mocking Convex context
  */
 
-import { vi } from 'vitest'
-import type { Id } from '../../convex/_generated/dataModel'
+import { vi } from 'vitest';
+import type { Id } from '../../convex/_generated/dataModel';
 
 /**
  * Create a test student object
@@ -26,7 +26,7 @@ export function createTestStudent(overrides: Partial<any> = {}) {
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -43,7 +43,7 @@ export function mockAsaasCustomer(overrides: Partial<any> = {}) {
 		cpfCnpj: '52998224725',
 		notificationDisabled: false,
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -64,7 +64,7 @@ export function createTestPayment(overrides: Partial<any> = {}) {
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -85,7 +85,7 @@ export function createTestEnrollment(overrides: Partial<any> = {}) {
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -105,7 +105,7 @@ export function createTestLead(overrides: Partial<any> = {}) {
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -127,7 +127,7 @@ export function createTestSyncLog(overrides: Partial<any> = {}) {
 		initiatedBy: 'test_user_id',
 		createdAt: Date.now(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -135,23 +135,23 @@ export function createTestSyncLog(overrides: Partial<any> = {}) {
  * @returns Mock database context
  */
 export function createMockDb() {
-	const db = new Map()
+	const db = new Map();
 
 	return {
 		get: vi.fn((id: string) => db.get(id)),
 		insert: vi.fn((_table: string, doc: any) => {
-			const id = `table_${Date.now()}`
-			db.set(id, { _id: id, ...doc })
-			return id
+			const id = `table_${Date.now()}`;
+			db.set(id, { _id: id, ...doc });
+			return id;
 		}),
 		patch: vi.fn((id: string, _updates: any) => {
-			const existing = db.get(id)
+			const existing = db.get(id);
 			if (existing) {
-				db.set(id, { ...existing, ..._updates })
+				db.set(id, { ...existing, ..._updates });
 			}
 		}),
 		delete: vi.fn((id: string) => {
-			db.delete(id)
+			db.delete(id);
 		}),
 		query: vi.fn((_table: string) => ({
 			withIndex: vi.fn((_index: string, _fn: any) => ({
@@ -159,7 +159,7 @@ export function createMockDb() {
 				collect: vi.fn(() => []),
 			})),
 		})),
-	}
+	};
 }
 
 /**
@@ -175,7 +175,7 @@ export function createMockAuth(overrides: Partial<any> = {}) {
 			name: 'Test User',
 			...overrides,
 		}),
-	}
+	};
 }
 
 /**
@@ -185,7 +185,7 @@ export function createMockAuth(overrides: Partial<any> = {}) {
 export function createMockScheduler() {
 	return {
 		runAfter: vi.fn(),
-	}
+	};
 }
 
 /**
@@ -201,7 +201,7 @@ export function createMockContext(overrides: Partial<any> = {}) {
 		runQuery: vi.fn(),
 		runMutation: vi.fn(),
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -210,7 +210,7 @@ export function createMockContext(overrides: Partial<any> = {}) {
  * @returns Promise that resolves after the specified time
  */
 export function wait(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms))
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -235,7 +235,7 @@ export function createTestWebhookPayload(overrides: Partial<any> = {}) {
 			},
 		},
 		...overrides,
-	}
+	};
 }
 
 /**
@@ -253,7 +253,7 @@ export const TEST_DATA = {
 	ASAAS_PAYMENT_ID: 'pay_test123',
 	ORGANIZATION_ID: 'org_test123',
 	CLERK_ID: 'user_test123',
-}
+};
 
 /**
  * Helper to generate a random CPF for testing
@@ -262,14 +262,8 @@ export const TEST_DATA = {
  */
 export function generateTestCPF(): string {
 	// This is a simple implementation that generates one of the known valid test CPFs
-	const testCPFs = [
-		'52998224725',
-		'12345678909',
-		'98765432100',
-		'11144477735',
-		'22233344400',
-	]
-	return testCPFs[Math.floor(Math.random() * testCPFs.length)]
+	const testCPFs = ['52998224725', '12345678909', '98765432100', '11144477735', '22233344400'];
+	return testCPFs[Math.floor(Math.random() * testCPFs.length)];
 }
 
 /**
@@ -277,5 +271,5 @@ export function generateTestCPF(): string {
  * @returns A random email address
  */
 export function generateTestEmail(): string {
-	return `test_${Date.now()}@example.com`
+	return `test_${Date.now()}@example.com`;
 }

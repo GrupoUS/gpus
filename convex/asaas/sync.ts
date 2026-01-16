@@ -4,12 +4,12 @@
  * Mutations and queries for managing Asaas sync logs and settings.
  */
 
-import { v } from 'convex/values'
-import { internalMutation, mutation, query } from '../_generated/server'
-import { api } from '../_generated/api'
-import type { Doc } from '../_generated/dataModel'
-import { requirePermission } from '../lib/auth'
-import { PERMISSIONS } from '../lib/permissions'
+import { v } from 'convex/values';
+import { internalMutation, mutation, query } from '../_generated/server';
+import { api } from '../_generated/api';
+import type { Doc } from '../_generated/dataModel';
+import { requirePermission } from '../lib/auth';
+import { PERMISSIONS } from '../lib/permissions';
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL MUTATIONS (Called by actions)
@@ -24,17 +24,19 @@ export const createSyncLog = internalMutation({
 			v.literal('customers'),
 			v.literal('payments'),
 			v.literal('subscriptions'),
-			v.literal('financial')
+			v.literal('financial'),
 		),
 		initiatedBy: v.string(),
-		filters: v.optional(v.object({
-			startDate: v.optional(v.string()),
-			endDate: v.optional(v.string()),
-			status: v.optional(v.string()),
-		})),
+		filters: v.optional(
+			v.object({
+				startDate: v.optional(v.string()),
+				endDate: v.optional(v.string()),
+				status: v.optional(v.string()),
+			}),
+		),
 	},
 	handler: async (ctx, args) => {
-		const now = Date.now()
+		const now = Date.now();
 		return await ctx.db.insert('asaasSyncLogs', {
 			syncType: args.syncType,
 			status: 'running',
@@ -46,9 +48,9 @@ export const createSyncLog = internalMutation({
 			filters: args.filters,
 			initiatedBy: args.initiatedBy,
 			createdAt: now,
-		})
+		});
 	},
-})
+});
 
 /**
  * Update sync log with progress
@@ -56,12 +58,14 @@ export const createSyncLog = internalMutation({
 export const updateSyncLog = internalMutation({
 	args: {
 		logId: v.id('asaasSyncLogs'),
-		status: v.optional(v.union(
-			v.literal('pending'),
-			v.literal('running'),
-			v.literal('completed'),
-			v.literal('failed')
-		)),
+		status: v.optional(
+			v.union(
+				v.literal('pending'),
+				v.literal('running'),
+				v.literal('completed'),
+				v.literal('failed'),
+			),
+		),
 		recordsProcessed: v.optional(v.number()),
 		recordsCreated: v.optional(v.number()),
 		recordsUpdated: v.optional(v.number()),
@@ -71,24 +75,24 @@ export const updateSyncLog = internalMutation({
 		completedAt: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const { logId, ...updates } = args
-		const existing = await ctx.db.get(logId)
-		if (!existing) throw new Error('Sync log not found')
+		const { logId, ...updates } = args;
+		const existing = await ctx.db.get(logId);
+		if (!existing) throw new Error('Sync log not found');
 
 		// Only include defined fields
-		const patch: Partial<Doc<'asaasSyncLogs'>> = {}
-		if (updates.status !== undefined) patch.status = updates.status
-		if (updates.recordsProcessed !== undefined) patch.recordsProcessed = updates.recordsProcessed
-		if (updates.recordsCreated !== undefined) patch.recordsCreated = updates.recordsCreated
-		if (updates.recordsUpdated !== undefined) patch.recordsUpdated = updates.recordsUpdated
-		if (updates.recordsFailed !== undefined) patch.recordsFailed = updates.recordsFailed
-		if (updates.errors !== undefined) patch.errors = updates.errors
-		if (updates.lastError !== undefined) patch.lastError = updates.lastError
-		if (updates.completedAt !== undefined) patch.completedAt = updates.completedAt
+		const patch: Partial<Doc<'asaasSyncLogs'>> = {};
+		if (updates.status !== undefined) patch.status = updates.status;
+		if (updates.recordsProcessed !== undefined) patch.recordsProcessed = updates.recordsProcessed;
+		if (updates.recordsCreated !== undefined) patch.recordsCreated = updates.recordsCreated;
+		if (updates.recordsUpdated !== undefined) patch.recordsUpdated = updates.recordsUpdated;
+		if (updates.recordsFailed !== undefined) patch.recordsFailed = updates.recordsFailed;
+		if (updates.errors !== undefined) patch.errors = updates.errors;
+		if (updates.lastError !== undefined) patch.lastError = updates.lastError;
+		if (updates.completedAt !== undefined) patch.completedAt = updates.completedAt;
 
-		await ctx.db.patch(logId, patch)
+		await ctx.db.patch(logId, patch);
 	},
-})
+});
 
 /**
  * Update sync log with progress (for checkpointing during batch processing)
@@ -103,14 +107,14 @@ export const updateSyncLogProgress = internalMutation({
 		recordsFailed: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const { logId, ...updates } = args
-		const existing = await ctx.db.get(logId)
-		if (!existing) throw new Error('Sync log not found')
+		const { logId, ...updates } = args;
+		const existing = await ctx.db.get(logId);
+		if (!existing) throw new Error('Sync log not found');
 
 		// Patch with the provided updates
-		await ctx.db.patch(logId, updates)
+		await ctx.db.patch(logId, updates);
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // QUERIES
@@ -122,45 +126,49 @@ export const updateSyncLogProgress = internalMutation({
 export const getLastSyncStatus = query({
 	args: {},
 	handler: async (ctx) => {
-		const syncTypes = ['customers', 'payments', 'subscriptions', 'financial'] as const
+		const syncTypes = ['customers', 'payments', 'subscriptions', 'financial'] as const;
 
-		const result: Record<string, Doc<'asaasSyncLogs'> | null> = {}
+		const result: Record<string, Doc<'asaasSyncLogs'> | null> = {};
 
 		for (const syncType of syncTypes) {
 			const latestSync = await ctx.db
 				.query('asaasSyncLogs')
 				.withIndex('by_sync_type', (q) => q.eq('syncType', syncType))
 				.order('desc')
-				.first()
+				.first();
 
-			result[syncType] = latestSync
+			result[syncType] = latestSync;
 		}
 
-		return result
+		return result;
 	},
-})
+});
 
 /**
  * Get sync logs with optional filtering
  */
 export const getSyncLogs = query({
 	args: {
-		syncType: v.optional(v.union(
-			v.literal('customers'),
-			v.literal('payments'),
-			v.literal('subscriptions'),
-			v.literal('financial')
-		)),
-		status: v.optional(v.union(
-			v.literal('pending'),
-			v.literal('running'),
-			v.literal('completed'),
-			v.literal('failed')
-		)),
+		syncType: v.optional(
+			v.union(
+				v.literal('customers'),
+				v.literal('payments'),
+				v.literal('subscriptions'),
+				v.literal('financial'),
+			),
+		),
+		status: v.optional(
+			v.union(
+				v.literal('pending'),
+				v.literal('running'),
+				v.literal('completed'),
+				v.literal('failed'),
+			),
+		),
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const limit = args.limit ?? 20
+		const limit = args.limit ?? 20;
 
 		// If both syncType and status are specified
 		if (args.syncType && args.status) {
@@ -170,7 +178,7 @@ export const getSyncLogs = query({
 				.withIndex('by_sync_type', (q) => q.eq('syncType', args.syncType!))
 				.filter((q) => q.eq(q.field('status'), args.status!))
 				.order('desc')
-				.take(limit)
+				.take(limit);
 		}
 
 		// If only status is specified, use the by_status index
@@ -179,7 +187,7 @@ export const getSyncLogs = query({
 				.query('asaasSyncLogs')
 				.withIndex('by_status', (q) => q.eq('status', args.status!))
 				.order('desc')
-				.take(limit)
+				.take(limit);
 		}
 
 		// If only syncType is specified (existing behavior)
@@ -188,16 +196,13 @@ export const getSyncLogs = query({
 				.query('asaasSyncLogs')
 				.withIndex('by_sync_type', (q) => q.eq('syncType', args.syncType!))
 				.order('desc')
-				.take(limit)
+				.take(limit);
 		}
 
 		// No filters, return all ordered by creation time
-		return await ctx.db
-			.query('asaasSyncLogs')
-			.order('desc')
-			.take(limit)
+		return await ctx.db.query('asaasSyncLogs').order('desc').take(limit);
 	},
-})
+});
 
 /**
  * Get recent sync logs (simplified query for SyncHistory component)
@@ -205,14 +210,10 @@ export const getSyncLogs = query({
 export const getRecentSyncLogs = query({
 	args: { limit: v.optional(v.number()) },
 	handler: async (ctx, args): Promise<Doc<'asaasSyncLogs'>[]> => {
-		const limit = args.limit || 10
-		return await ctx.db
-			.query('asaasSyncLogs')
-			.withIndex('by_created')
-			.order('desc')
-			.take(limit)
+		const limit = args.limit || 10;
+		return await ctx.db.query('asaasSyncLogs').withIndex('by_created').order('desc').take(limit);
 	},
-})
+});
 
 /**
  * Get a specific sync log by ID
@@ -220,9 +221,9 @@ export const getRecentSyncLogs = query({
 export const getSyncLog = query({
 	args: { logId: v.id('asaasSyncLogs') },
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.logId)
+		return await ctx.db.get(args.logId);
 	},
-})
+});
 
 /**
  * Check if there's a sync currently running for a type
@@ -233,7 +234,7 @@ export const isSyncRunning = query({
 			v.literal('customers'),
 			v.literal('payments'),
 			v.literal('subscriptions'),
-			v.literal('financial')
+			v.literal('financial'),
 		),
 	},
 	handler: async (ctx, args) => {
@@ -241,52 +242,54 @@ export const isSyncRunning = query({
 			.query('asaasSyncLogs')
 			.withIndex('by_status', (q) => q.eq('status', 'running'))
 			.filter((q) => q.eq(q.field('syncType'), args.syncType))
-			.first()
+			.first();
 
-		return runningSync !== null
+		return runningSync !== null;
 	},
-})
+});
 
 /**
  * Get detailed information about failed syncs for debugging
  */
 export const getFailedSyncDetails = query({
 	args: {
-		syncType: v.optional(v.union(
-			v.literal('customers'),
-			v.literal('payments'),
-			v.literal('subscriptions'),
-			v.literal('financial')
-		)),
+		syncType: v.optional(
+			v.union(
+				v.literal('customers'),
+				v.literal('payments'),
+				v.literal('subscriptions'),
+				v.literal('financial'),
+			),
+		),
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		// Require admin/reports permission for viewing failed sync details
-		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 
-		const limit = args.limit ?? 10
+		const limit = args.limit ?? 10;
 
 		let failedSyncs = await ctx.db
 			.query('asaasSyncLogs')
 			.withIndex('by_status', (q) => q.eq('status', 'failed'))
 			.order('desc')
-			.take(limit * 2) // Get more to filter
+			.take(limit * 2); // Get more to filter
 
 		// Filter by syncType if specified
 		if (args.syncType) {
-			failedSyncs = failedSyncs.filter((sync) => sync.syncType === args.syncType)
+			failedSyncs = failedSyncs.filter((sync) => sync.syncType === args.syncType);
 		}
 
 		// Take only the requested limit
-		failedSyncs = failedSyncs.slice(0, limit)
+		failedSyncs = failedSyncs.slice(0, limit);
 
 		return failedSyncs.map((sync) => {
-			let parsedLastError = null
+			let parsedLastError = null;
 			if (sync.lastError) {
 				try {
-					parsedLastError = JSON.parse(sync.lastError)
+					parsedLastError = JSON.parse(sync.lastError);
 				} catch {
-					parsedLastError = { message: sync.lastError }
+					parsedLastError = { message: sync.lastError };
 				}
 			}
 
@@ -302,10 +305,10 @@ export const getFailedSyncDetails = query({
 				lastError: parsedLastError,
 				initiatedBy: sync.initiatedBy,
 				filters: sync.filters,
-			}
-		})
+			};
+		});
 	},
-})
+});
 
 /**
  * Get circuit breaker state for monitoring (public query)
@@ -313,13 +316,11 @@ export const getFailedSyncDetails = query({
 export const getCircuitBreakerStatus = query({
 	args: {},
 	handler: async () => {
-		const { getCircuitBreakerState } = await import('../lib/asaas')
-		const state = getCircuitBreakerState()
+		const { getCircuitBreakerState } = await import('../lib/asaas');
+		const state = getCircuitBreakerState();
 
-		const now = Date.now()
-		const timeUntilRetry = state.state === 'open'
-			? Math.max(0, state.nextAttemptTime - now)
-			: 0
+		const now = Date.now();
+		const timeUntilRetry = state.state === 'open' ? Math.max(0, state.nextAttemptTime - now) : 0;
 
 		return {
 			state: state.state,
@@ -336,19 +337,18 @@ export const getCircuitBreakerStatus = query({
 			isHealthy: state.state === 'closed',
 			isTesting: state.state === 'half-open',
 			timeUntilRetryMs: timeUntilRetry,
-			timeUntilRetryFormatted: timeUntilRetry > 0
-				? `${Math.ceil(timeUntilRetry / 1000)}s`
-				: 'N/A',
+			timeUntilRetryFormatted: timeUntilRetry > 0 ? `${Math.ceil(timeUntilRetry / 1000)}s` : 'N/A',
 			halfOpenTestCalls: state.halfOpenTestCalls,
 			// Add actionable recommendations
-			recommendation: state.state === 'open'
-				? `Circuit breaker está ABERTO. Aguarde ${Math.ceil(timeUntilRetry / 1000)}s antes de tentar novamente.`
-				: state.state === 'half-open'
-				? `Circuit breaker está em TESTE. ${state.halfOpenTestCalls} chamadas de teste realizadas.`
-				: 'Circuit breaker está SAUDÁVEL. Todas as requisições estão sendo processadas normalmente.',
-		}
+			recommendation:
+				state.state === 'open'
+					? `Circuit breaker está ABERTO. Aguarde ${Math.ceil(timeUntilRetry / 1000)}s antes de tentar novamente.`
+					: state.state === 'half-open'
+						? `Circuit breaker está em TESTE. ${state.halfOpenTestCalls} chamadas de teste realizadas.`
+						: 'Circuit breaker está SAUDÁVEL. Todas as requisições estão sendo processadas normalmente.',
+		};
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // SYNC CONFIGURATION
@@ -361,12 +361,12 @@ export const getAutoSyncConfig = query({
 	args: {},
 	handler: async (ctx) => {
 		// Require auth to view config
-		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 
 		const config = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
-			.first()
+			.first();
 
 		return (
 			config?.value || {
@@ -374,9 +374,9 @@ export const getAutoSyncConfig = query({
 				intervalHours: 1,
 				updateExisting: true,
 			}
-		)
+		);
 	},
-})
+});
 
 /**
  * Save auto sync configuration (public mutation for frontend)
@@ -389,35 +389,35 @@ export const saveAutoSyncConfig = mutation({
 	},
 	handler: async (ctx, args) => {
 		// Require settings write permission to change config
-		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 
 		const existing = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
-			.first()
+			.first();
 
 		const value = {
 			enabled: args.enabled,
 			intervalHours: Math.max(1, args.intervalHours), // Minimum 1 hour
 			updateExisting: args.updateExisting,
-		}
+		};
 
 		if (existing) {
 			await ctx.db.patch(existing._id, {
 				value,
 				updatedAt: Date.now(),
-			})
+			});
 		} else {
 			await ctx.db.insert('settings', {
 				key: 'asaas_auto_sync_config',
 				value,
 				updatedAt: Date.now(),
-			})
+			});
 		}
 
-		return value
+		return value;
 	},
-})
+});
 
 /**
  * Reset circuit breaker manually (admin only)
@@ -427,25 +427,26 @@ export const resetCircuitBreakerManual = mutation({
 	args: {},
 	handler: async (ctx) => {
 		// Require admin permission
-		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE)
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 
-		const { resetCircuitBreaker } = await import('../lib/asaas')
-		resetCircuitBreaker()
+		const { resetCircuitBreaker } = await import('../lib/asaas');
+		resetCircuitBreaker();
 
-		const identity = await ctx.auth.getUserIdentity()
+		const identity = await ctx.auth.getUserIdentity();
 		console.log(
 			`[${new Date().toISOString()}] [CircuitBreaker] Manual reset triggered by admin`,
-			`| User: ${identity?.email || 'unknown'}`
-		)
+			`| User: ${identity?.email || 'unknown'}`,
+		);
 
 		return {
 			success: true,
-			message: 'Circuit breaker foi resetado manualmente. Todas as requisições serão processadas normalmente.',
-		}
+			message:
+				'Circuit breaker foi resetado manualmente. Todas as requisições serão processadas normalmente.',
+		};
 	},
-})
+});
 
-import { internalAction, internalQuery } from '../_generated/server'
+import { internalAction, internalQuery } from '../_generated/server';
 
 /**
  * Get circuit breaker state for operational diagnostics
@@ -453,10 +454,10 @@ import { internalAction, internalQuery } from '../_generated/server'
 export const getCircuitBreakerState = internalQuery({
 	args: {},
 	handler: async () => {
-		const { getCircuitBreakerState } = await import('../lib/asaas')
-		return getCircuitBreakerState()
+		const { getCircuitBreakerState } = await import('../lib/asaas');
+		return getCircuitBreakerState();
 	},
-})
+});
 
 /**
  * Run auto sync (called by cron)
@@ -465,23 +466,23 @@ export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
 		// @ts-ignore - Deep type instantiation error
-		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
+		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig);
 
 		if (!config.enabled) {
-			console.log('Asaas auto-sync is disabled, skipping.')
-			return { skipped: true }
+			console.log('Asaas auto-sync is disabled, skipping.');
+			return { skipped: true };
 		}
 
-		console.log('Starting Asaas auto-sync...')
+		console.log('Starting Asaas auto-sync...');
 
 		// 2. Call import action
 		await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
 			initiatedBy: 'system_auto_sync',
-		})
+		});
 
-		return { success: true }
+		return { success: true };
 	},
-})
+});
 
 /**
  * Run auto sync payments (called by cron)
@@ -490,19 +491,19 @@ export const runAutoSyncPaymentsAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
 		// @ts-ignore - Deep type instantiation error
-		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig)
+		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig);
 
 		if (!config.enabled) {
-			console.log('Asaas payments auto-sync is disabled, skipping.')
-			return { skipped: true }
+			console.log('Asaas payments auto-sync is disabled, skipping.');
+			return { skipped: true };
 		}
 
-		console.log('Starting Asaas payments auto-sync...')
+		console.log('Starting Asaas payments auto-sync...');
 
 		await ctx.runAction(api.asaas.actions.importPaymentsFromAsaas, {
 			initiatedBy: 'cron_auto_sync',
-		})
+		});
 
-		return { success: true }
+		return { success: true };
 	},
-})
+});

@@ -7,24 +7,20 @@
  * - Webhook payloads are encrypted before storage to protect PII
  * - Automatic 90-day retention policy for webhook logs
  */
-import { v } from "convex/values";
+import { v } from 'convex/values';
+import { internalAction, internalMutation, internalQuery } from '../_generated/server';
+import { internal } from '../_generated/api';
+import { decrypt, encrypt } from '../lib/encryption';
 import {
-  internalAction,
-  internalMutation,
-  internalQuery,
-} from "../_generated/server";
-import { internal } from "../_generated/api";
-import { decrypt, encrypt } from "../lib/encryption";
-import {
-  processCustomerWorker,
-  processPaymentWorker,
-  processSubscriptionWorker,
-} from "./import_workers";
+	processCustomerWorker,
+	processPaymentWorker,
+	processSubscriptionWorker,
+} from './import_workers';
 import type {
-  AsaasCustomerResponse,
-  AsaasPaymentResponse,
-  AsaasSubscriptionResponse,
-} from "./types";
+	AsaasCustomerResponse,
+	AsaasPaymentResponse,
+	AsaasSubscriptionResponse,
+} from './types';
 
 /**
  * Webhook retention period (90 days as per ANPD guidelines)
@@ -38,435 +34,399 @@ const RETRY_JITTER_MS = 5000;
 const RETRY_MAX_DELAY_MS = 30 * 60 * 1000;
 
 type WebhookResult =
-  | { processed: true; webhookId: string }
-  | { processed: false; reason: string; webhookId?: string };
+	| { processed: true; webhookId: string }
+	| { processed: false; reason: string; webhookId?: string };
 
 function calculateRetryDelay(attempt: number): number {
-  const exponent = Math.max(0, attempt - 1);
-  const delay = RETRY_BASE_DELAY_MS * Math.pow(2, exponent);
-  const jitter = Math.floor(Math.random() * RETRY_JITTER_MS);
-  return Math.min(delay + jitter, RETRY_MAX_DELAY_MS);
+	const exponent = Math.max(0, attempt - 1);
+	const delay = RETRY_BASE_DELAY_MS * Math.pow(2, exponent);
+	const jitter = Math.floor(Math.random() * RETRY_JITTER_MS);
+	return Math.min(delay + jitter, RETRY_MAX_DELAY_MS);
 }
 
 /**
  * Get webhook event by Asaas event ID (idempotency)
  */
 export const getWebhookByEventId = internalQuery({
-  args: { eventId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("asaasWebhooks")
-      .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
-      .first();
-  },
+	args: { eventId: v.string() },
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query('asaasWebhooks')
+			.withIndex('by_event_id', (q) => q.eq('eventId', args.eventId))
+			.first();
+	},
 });
 
 /**
  * Get webhook event by internal ID
  */
 export const getWebhookById = internalQuery({
-  args: { id: v.id("asaasWebhooks") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
+	args: { id: v.id('asaasWebhooks') },
+	handler: async (ctx, args) => {
+		return await ctx.db.get(args.id);
+	},
 });
 
 /**
  * Create webhook event log entry (internal)
  */
 export const createWebhookEvent = internalMutation({
-  args: {
-    eventId: v.string(),
-    eventType: v.string(),
-    paymentId: v.optional(v.string()),
-    subscriptionId: v.optional(v.string()),
-    customerId: v.optional(v.string()),
-    payload: v.any(),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const retentionUntil = now + WEBHOOK_RETENTION_MS;
+	args: {
+		eventId: v.string(),
+		eventType: v.string(),
+		paymentId: v.optional(v.string()),
+		subscriptionId: v.optional(v.string()),
+		customerId: v.optional(v.string()),
+		payload: v.any(),
+	},
+	handler: async (ctx, args) => {
+		const now = Date.now();
+		const retentionUntil = now + WEBHOOK_RETENTION_MS;
 
-    let encryptedPayload: string | undefined;
-    try {
-      encryptedPayload = await encrypt(JSON.stringify(args.payload));
-    } catch (error) {
-      console.error("Failed to encrypt webhook payload:", error);
-    }
+		let encryptedPayload: string | undefined;
+		try {
+			encryptedPayload = await encrypt(JSON.stringify(args.payload));
+		} catch (error) {
+			console.error('Failed to encrypt webhook payload:', error);
+		}
 
-    const webhookId = await ctx.db.insert("asaasWebhooks", {
-      eventId: args.eventId,
-      event: args.eventType,
-      paymentId: args.paymentId,
-      subscriptionId: args.subscriptionId,
-      customerId: args.customerId,
-      payload: encryptedPayload,
-      processed: false,
-      status: "pending",
-      retryCount: 0,
-      createdAt: now,
-      retentionUntil,
-    });
+		const webhookId = await ctx.db.insert('asaasWebhooks', {
+			eventId: args.eventId,
+			event: args.eventType,
+			paymentId: args.paymentId,
+			subscriptionId: args.subscriptionId,
+			customerId: args.customerId,
+			payload: encryptedPayload,
+			processed: false,
+			status: 'pending',
+			retryCount: 0,
+			createdAt: now,
+			retentionUntil,
+		});
 
-    return { webhookId, storedPayload: Boolean(encryptedPayload) };
-  },
+		return { webhookId, storedPayload: Boolean(encryptedPayload) };
+	},
 });
 
 /**
  * Update webhook event status (internal)
  */
 export const updateWebhookStatus = internalMutation({
-  args: {
-    id: v.id("asaasWebhooks"),
-    status: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("processing"),
-        v.literal("done"),
-        v.literal("failed"),
-      ),
-    ),
-    processed: v.optional(v.boolean()),
-    retryCount: v.optional(v.number()),
-    lastAttemptAt: v.optional(v.number()),
-    processedAt: v.optional(v.number()),
-    error: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { id, ...updates } = args;
-    const patch: Record<string, unknown> = {};
+	args: {
+		id: v.id('asaasWebhooks'),
+		status: v.optional(
+			v.union(
+				v.literal('pending'),
+				v.literal('processing'),
+				v.literal('done'),
+				v.literal('failed'),
+			),
+		),
+		processed: v.optional(v.boolean()),
+		retryCount: v.optional(v.number()),
+		lastAttemptAt: v.optional(v.number()),
+		processedAt: v.optional(v.number()),
+		error: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const { id, ...updates } = args;
+		const patch: Record<string, unknown> = {};
 
-    if (updates.status !== undefined) patch.status = updates.status;
-    if (updates.processed !== undefined) patch.processed = updates.processed;
-    if (updates.retryCount !== undefined) patch.retryCount = updates.retryCount;
-    if (updates.lastAttemptAt !== undefined)
-      patch.lastAttemptAt = updates.lastAttemptAt;
-    if (updates.processedAt !== undefined)
-      patch.processedAt = updates.processedAt;
-    if ("error" in updates) patch.error = updates.error;
+		if (updates.status !== undefined) patch.status = updates.status;
+		if (updates.processed !== undefined) patch.processed = updates.processed;
+		if (updates.retryCount !== undefined) patch.retryCount = updates.retryCount;
+		if (updates.lastAttemptAt !== undefined) patch.lastAttemptAt = updates.lastAttemptAt;
+		if (updates.processedAt !== undefined) patch.processedAt = updates.processedAt;
+		if ('error' in updates) patch.error = updates.error;
 
-    if (Object.keys(patch).length > 0) {
-      await ctx.db.patch(id, patch);
-    }
-  },
+		if (Object.keys(patch).length > 0) {
+			await ctx.db.patch(id, patch);
+		}
+	},
 });
 
 /**
  * Process webhook event idempotently (internal)
  */
 export const processWebhookIdempotent = internalAction({
-  args: {
-    eventId: v.string(),
-    eventType: v.string(),
-    paymentId: v.optional(v.string()),
-    subscriptionId: v.optional(v.string()),
-    customerId: v.optional(v.string()),
-    payload: v.any(),
-  },
-  handler: async (ctx, args): Promise<WebhookResult> => {
-    const existing = await ctx.runQuery(
-      internal.asaas.webhooks.getWebhookByEventId,
-      { eventId: args.eventId },
-    );
+	args: {
+		eventId: v.string(),
+		eventType: v.string(),
+		paymentId: v.optional(v.string()),
+		subscriptionId: v.optional(v.string()),
+		customerId: v.optional(v.string()),
+		payload: v.any(),
+	},
+	handler: async (ctx, args): Promise<WebhookResult> => {
+		const existing = await ctx.runQuery(internal.asaas.webhooks.getWebhookByEventId, {
+			eventId: args.eventId,
+		});
 
-    if (existing) {
-      return { processed: false, reason: "Already received", webhookId: existing._id };
-    }
+		if (existing) {
+			return { processed: false, reason: 'Already received', webhookId: existing._id };
+		}
 
-    const created = await ctx.runMutation(
-      internal.asaas.webhooks.createWebhookEvent,
-      {
-        eventId: args.eventId,
-        eventType: args.eventType,
-        paymentId: args.paymentId,
-        subscriptionId: args.subscriptionId,
-        customerId: args.customerId,
-        payload: args.payload,
-      },
-    );
+		const created = await ctx.runMutation(internal.asaas.webhooks.createWebhookEvent, {
+			eventId: args.eventId,
+			eventType: args.eventType,
+			paymentId: args.paymentId,
+			subscriptionId: args.subscriptionId,
+			customerId: args.customerId,
+			payload: args.payload,
+		});
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.asaas.webhooks.processWebhookEvent,
-      {
-        webhookId: created.webhookId,
-        rawPayload: created.storedPayload ? undefined : args.payload,
-      },
-    );
+		await ctx.scheduler.runAfter(0, internal.asaas.webhooks.processWebhookEvent, {
+			webhookId: created.webhookId,
+			rawPayload: created.storedPayload ? undefined : args.payload,
+		});
 
-    return { processed: true, webhookId: created.webhookId };
-  },
+		return { processed: true, webhookId: created.webhookId };
+	},
 });
 
 /**
  * Process webhook event (internal action)
  */
 export const processWebhookEvent = internalAction({
-  args: {
-    webhookId: v.id("asaasWebhooks"),
-    rawPayload: v.optional(v.any()),
-  },
-  handler: async (ctx, args) => {
-    const webhook = await ctx.runQuery(internal.asaas.webhooks.getWebhookById, {
-      id: args.webhookId,
-    });
+	args: {
+		webhookId: v.id('asaasWebhooks'),
+		rawPayload: v.optional(v.any()),
+	},
+	handler: async (ctx, args) => {
+		const webhook = await ctx.runQuery(internal.asaas.webhooks.getWebhookById, {
+			id: args.webhookId,
+		});
 
-    if (!webhook) {
-      return { processed: false, reason: "Webhook not found" };
-    }
+		if (!webhook) {
+			return { processed: false, reason: 'Webhook not found' };
+		}
 
-    if (webhook.status === "processing" || webhook.status === "done") {
-      return { processed: false, reason: "Already processing or completed" };
-    }
+		if (webhook.status === 'processing' || webhook.status === 'done') {
+			return { processed: false, reason: 'Already processing or completed' };
+		}
 
-    const retryCount = (webhook.retryCount ?? 0) + 1;
-    await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-      id: args.webhookId,
-      status: "processing",
-      processed: false,
-      retryCount,
-      lastAttemptAt: Date.now(),
-      error: undefined,
-    });
+		const retryCount = (webhook.retryCount ?? 0) + 1;
+		await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+			id: args.webhookId,
+			status: 'processing',
+			processed: false,
+			retryCount,
+			lastAttemptAt: Date.now(),
+			error: undefined,
+		});
 
-    let payload = args.rawPayload;
-    if (!payload && webhook.payload) {
-      try {
-        const decrypted = await decrypt(webhook.payload);
-        payload = JSON.parse(decrypted);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to decrypt payload";
-        await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-          id: args.webhookId,
-          status: "failed",
-          processed: true,
-          error: message,
-        });
-        return { processed: false, reason: message };
-      }
-    }
+		let payload = args.rawPayload;
+		if (!payload && webhook.payload) {
+			try {
+				const decrypted = await decrypt(webhook.payload);
+				payload = JSON.parse(decrypted);
+			} catch (error) {
+				const message = error instanceof Error ? error.message : 'Failed to decrypt payload';
+				await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+					id: args.webhookId,
+					status: 'failed',
+					processed: true,
+					error: message,
+				});
+				return { processed: false, reason: message };
+			}
+		}
 
-    if (!payload || typeof payload !== "object") {
-      await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-        id: args.webhookId,
-        status: "failed",
-        processed: true,
-        error: "Missing webhook payload",
-      });
-      return { processed: false, reason: "Missing webhook payload" };
-    }
+		if (!payload || typeof payload !== 'object') {
+			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+				id: args.webhookId,
+				status: 'failed',
+				processed: true,
+				error: 'Missing webhook payload',
+			});
+			return { processed: false, reason: 'Missing webhook payload' };
+		}
 
-    const eventType =
-      typeof (payload as { event?: unknown }).event === "string"
-        ? (payload as { event: string }).event
-        : webhook.event;
+		const eventType =
+			typeof (payload as { event?: unknown }).event === 'string'
+				? (payload as { event: string }).event
+				: webhook.event;
 
-    try {
-      if (eventType.startsWith("PAYMENT_")) {
-        const payment = (payload as { payment?: AsaasPaymentResponse }).payment;
-        if (!payment || typeof payment.id !== "string") {
-          throw new Error("Missing payment data in webhook payload");
-        }
+		try {
+			if (eventType.startsWith('PAYMENT_')) {
+				const payment = (payload as { payment?: AsaasPaymentResponse }).payment;
+				if (!payment || typeof payment.id !== 'string') {
+					throw new Error('Missing payment data in webhook payload');
+				}
 
-        const result = await processPaymentWorker(ctx, payment, undefined);
-        if (!result.success) {
-          const reason = result.error || result.reason || "Payment processing failed";
-          await ctx.runMutation(internal.asaas.alerts.createAlert, {
-            alertType: "data_integrity",
-            severity: "medium",
-            title: "Webhook payment processing failed",
-            message: reason,
-            details: {
-              eventType,
-              eventId: webhook.eventId,
-              paymentId: payment.id,
-            },
-          });
-          throw new Error(reason);
-        }
+				const result = await processPaymentWorker(ctx, payment, undefined);
+				if (!result.success) {
+					const reason = result.error || result.reason || 'Payment processing failed';
+					await ctx.runMutation(internal.asaas.alerts.createAlert, {
+						alertType: 'data_integrity',
+						severity: 'medium',
+						title: 'Webhook payment processing failed',
+						message: reason,
+						details: {
+							eventType,
+							eventId: webhook.eventId,
+							paymentId: payment.id,
+						},
+					});
+					throw new Error(reason);
+				}
 
-        const paymentRecord = await ctx.runQuery(
-          internal.asaas.mutations.getPaymentByAsaasId,
-          { asaasPaymentId: payment.id },
-        );
+				const paymentRecord = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
+					asaasPaymentId: payment.id,
+				});
 
-        if (paymentRecord?.studentId) {
-          if (payment.status === "CONFIRMED") {
-            await ctx.scheduler.runAfter(
-              0,
-              internal.notifications.sendPaymentConfirmed,
-              {
-                paymentId: paymentRecord._id,
-                studentId: paymentRecord.studentId,
-              },
-            );
-          } else if (
-            payment.status === "RECEIVED" ||
-            payment.status === "RECEIVED_IN_CASH"
-          ) {
-            await ctx.scheduler.runAfter(
-              0,
-              internal.notifications.sendPaymentReceived,
-              {
-                paymentId: paymentRecord._id,
-                studentId: paymentRecord.studentId,
-              },
-            );
-          } else if (payment.status === "OVERDUE") {
-            await ctx.scheduler.runAfter(
-              0,
-              internal.notifications.sendPaymentOverdue,
-              {
-                paymentId: paymentRecord._id,
-                studentId: paymentRecord.studentId,
-              },
-            );
-          }
-        }
-      } else if (eventType.startsWith("SUBSCRIPTION_")) {
-        const subscription = (
-          payload as { subscription?: AsaasSubscriptionResponse }
-        ).subscription;
-        if (!subscription || typeof subscription.id !== "string") {
-          throw new Error("Missing subscription data in webhook payload");
-        }
+				if (paymentRecord?.studentId) {
+					if (payment.status === 'CONFIRMED') {
+						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentConfirmed, {
+							paymentId: paymentRecord._id,
+							studentId: paymentRecord.studentId,
+						});
+					} else if (payment.status === 'RECEIVED' || payment.status === 'RECEIVED_IN_CASH') {
+						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentReceived, {
+							paymentId: paymentRecord._id,
+							studentId: paymentRecord.studentId,
+						});
+					} else if (payment.status === 'OVERDUE') {
+						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentOverdue, {
+							paymentId: paymentRecord._id,
+							studentId: paymentRecord.studentId,
+						});
+					}
+				}
+			} else if (eventType.startsWith('SUBSCRIPTION_')) {
+				const subscription = (payload as { subscription?: AsaasSubscriptionResponse }).subscription;
+				if (!subscription || typeof subscription.id !== 'string') {
+					throw new Error('Missing subscription data in webhook payload');
+				}
 
-        const result = await processSubscriptionWorker(
-          ctx,
-          subscription,
-          undefined,
-        );
-        if (!result.success) {
-          const reason =
-            result.error || result.reason || "Subscription processing failed";
-          await ctx.runMutation(internal.asaas.alerts.createAlert, {
-            alertType: "data_integrity",
-            severity: "medium",
-            title: "Webhook subscription processing failed",
-            message: reason,
-            details: {
-              eventType,
-              eventId: webhook.eventId,
-              subscriptionId: subscription.id,
-            },
-          });
-          throw new Error(reason);
-        }
-      } else if (eventType.startsWith("CUSTOMER_")) {
-        const customer = (payload as { customer?: AsaasCustomerResponse }).customer;
-        if (!customer || typeof customer.id !== "string") {
-          throw new Error("Missing customer data in webhook payload");
-        }
+				const result = await processSubscriptionWorker(ctx, subscription, undefined);
+				if (!result.success) {
+					const reason = result.error || result.reason || 'Subscription processing failed';
+					await ctx.runMutation(internal.asaas.alerts.createAlert, {
+						alertType: 'data_integrity',
+						severity: 'medium',
+						title: 'Webhook subscription processing failed',
+						message: reason,
+						details: {
+							eventType,
+							eventId: webhook.eventId,
+							subscriptionId: subscription.id,
+						},
+					});
+					throw new Error(reason);
+				}
+			} else if (eventType.startsWith('CUSTOMER_')) {
+				const customer = (payload as { customer?: AsaasCustomerResponse }).customer;
+				if (!customer || typeof customer.id !== 'string') {
+					throw new Error('Missing customer data in webhook payload');
+				}
 
-        const result = await processCustomerWorker(ctx, customer, undefined);
-        if (!result.success) {
-          const reason = result.error || result.reason || "Customer processing failed";
-          await ctx.runMutation(internal.asaas.alerts.createAlert, {
-            alertType: "data_integrity",
-            severity: "low",
-            title: "Webhook customer processing failed",
-            message: reason,
-            details: {
-              eventType,
-              eventId: webhook.eventId,
-              customerId: customer.id,
-            },
-          });
-          throw new Error(reason);
-        }
-      } else {
-        await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-          id: args.webhookId,
-          status: "done",
-          processed: true,
-          processedAt: Date.now(),
-        });
-        return { processed: true, reason: "Ignored event type" };
-      }
+				const result = await processCustomerWorker(ctx, customer, undefined);
+				if (!result.success) {
+					const reason = result.error || result.reason || 'Customer processing failed';
+					await ctx.runMutation(internal.asaas.alerts.createAlert, {
+						alertType: 'data_integrity',
+						severity: 'low',
+						title: 'Webhook customer processing failed',
+						message: reason,
+						details: {
+							eventType,
+							eventId: webhook.eventId,
+							customerId: customer.id,
+						},
+					});
+					throw new Error(reason);
+				}
+			} else {
+				await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+					id: args.webhookId,
+					status: 'done',
+					processed: true,
+					processedAt: Date.now(),
+				});
+				return { processed: true, reason: 'Ignored event type' };
+			}
 
-      await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-        id: args.webhookId,
-        status: "done",
-        processed: true,
-        processedAt: Date.now(),
-        error: undefined,
-      });
+			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+				id: args.webhookId,
+				status: 'done',
+				processed: true,
+				processedAt: Date.now(),
+				error: undefined,
+			});
 
-      return { processed: true };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown webhook processing error";
+			return { processed: true };
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Unknown webhook processing error';
 
-      await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-        id: args.webhookId,
-        status: "failed",
-        processed: true,
-        error: errorMessage,
-      });
+			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+				id: args.webhookId,
+				status: 'failed',
+				processed: true,
+				error: errorMessage,
+			});
 
-      return { processed: false, reason: errorMessage };
-    }
-  },
+			return { processed: false, reason: errorMessage };
+		}
+	},
 });
 
 /**
  * Retry failed webhooks (internal)
  */
 export const retryFailedWebhooks = internalAction({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
+	args: {
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const limit = args.limit ?? 50;
 
-    const failed = await ctx.runQuery(internal.asaas.webhooks.getFailedWebhooks, {
-      limit,
-    });
+		const failed = await ctx.runQuery(internal.asaas.webhooks.getFailedWebhooks, {
+			limit,
+		});
 
-    let queued = 0;
-    for (const webhook of failed) {
-      if ((webhook.retryCount ?? 0) >= MAX_WEBHOOK_RETRIES) {
-        await ctx.runMutation(internal.asaas.alerts.createAlert, {
-          alertType: "webhook_timeout",
-          severity: "high",
-          title: "Webhook permanently failed",
-          message: `Webhook ${webhook.eventId || webhook._id} exceeded retry limit`,
-          details: {
-            eventId: webhook.eventId,
-            status: webhook.status,
-            retryCount: webhook.retryCount,
-          },
-        });
-        continue;
-      }
+		let queued = 0;
+		for (const webhook of failed) {
+			if ((webhook.retryCount ?? 0) >= MAX_WEBHOOK_RETRIES) {
+				await ctx.runMutation(internal.asaas.alerts.createAlert, {
+					alertType: 'webhook_timeout',
+					severity: 'high',
+					title: 'Webhook permanently failed',
+					message: `Webhook ${webhook.eventId || webhook._id} exceeded retry limit`,
+					details: {
+						eventId: webhook.eventId,
+						status: webhook.status,
+						retryCount: webhook.retryCount,
+					},
+				});
+				continue;
+			}
 
-      const delay = calculateRetryDelay(webhook.retryCount ?? 0);
-      await ctx.scheduler.runAfter(
-        delay,
-        internal.asaas.webhooks.processWebhookEvent,
-        { webhookId: webhook._id },
-      );
-      queued++;
-    }
+			const delay = calculateRetryDelay(webhook.retryCount ?? 0);
+			await ctx.scheduler.runAfter(delay, internal.asaas.webhooks.processWebhookEvent, {
+				webhookId: webhook._id,
+			});
+			queued++;
+		}
 
-    return { queued };
-  },
+		return { queued };
+	},
 });
 
 /**
  * List failed webhooks for retry (internal)
  */
 export const getFailedWebhooks = internalQuery({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
-    return await ctx.db
-      .query("asaasWebhooks")
-      .withIndex("by_status", (q) => q.eq("status", "failed"))
-      .order("desc")
-      .take(limit);
-  },
+	args: { limit: v.optional(v.number()) },
+	handler: async (ctx, args) => {
+		const limit = args.limit ?? 50;
+		return await ctx.db
+			.query('asaasWebhooks')
+			.withIndex('by_status', (q) => q.eq('status', 'failed'))
+			.order('desc')
+			.take(limit);
+	},
 });
 
 /**
@@ -474,21 +434,21 @@ export const getFailedWebhooks = internalQuery({
  * Call this periodically to prevent database bloat
  */
 export const cleanupExpiredDeduplicationEntries = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-    const expired = await ctx.db
-      .query("asaasWebhookDeduplication")
-      .withIndex("by_expires_at", (q) => q.lt("expiresAt", now))
-      .collect();
+	args: {},
+	handler: async (ctx) => {
+		const now = Date.now();
+		const expired = await ctx.db
+			.query('asaasWebhookDeduplication')
+			.withIndex('by_expires_at', (q) => q.lt('expiresAt', now))
+			.collect();
 
-    // Delete expired entries
-    for (const entry of expired) {
-      await ctx.db.delete(entry._id);
-    }
+		// Delete expired entries
+		for (const entry of expired) {
+			await ctx.db.delete(entry._id);
+		}
 
-    return { deleted: expired.length };
-  },
+		return { deleted: expired.length };
+	},
 });
 
 /**
@@ -498,19 +458,19 @@ export const cleanupExpiredDeduplicationEntries = internalMutation({
  * Call this periodically (e.g., daily) via cron job
  */
 export const cleanupExpiredWebhooks = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-    const expired = await ctx.db
-      .query("asaasWebhooks")
-      .withIndex("by_retention_until", (q) => q.lt("retentionUntil", now))
-      .collect();
+	args: {},
+	handler: async (ctx) => {
+		const now = Date.now();
+		const expired = await ctx.db
+			.query('asaasWebhooks')
+			.withIndex('by_retention_until', (q) => q.lt('retentionUntil', now))
+			.collect();
 
-    // Delete expired webhook logs
-    for (const webhook of expired) {
-      await ctx.db.delete(webhook._id);
-    }
+		// Delete expired webhook logs
+		for (const webhook of expired) {
+			await ctx.db.delete(webhook._id);
+		}
 
-    return { deleted: expired.length };
-  },
+		return { deleted: expired.length };
+	},
 });

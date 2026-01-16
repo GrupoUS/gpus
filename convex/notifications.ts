@@ -4,9 +4,9 @@
  * Internal mutations for sending payment status notifications via email/WhatsApp.
  */
 
-import { v } from 'convex/values'
-import { internalMutation } from './_generated/server'
-import { internal } from './_generated/api'
+import { v } from 'convex/values';
+import { internalMutation } from './_generated/server';
+import { internal } from './_generated/api';
 
 /**
  * Send payment confirmed notification
@@ -18,29 +18,29 @@ export const sendPaymentConfirmed = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		// Get payment details
-		const payment = await ctx.db.get(args.paymentId)
+		const payment = await ctx.db.get(args.paymentId);
 		if (!payment) {
-			console.error('sendPaymentConfirmed: Payment not found', args.paymentId)
-			return { sent: false, reason: 'Payment not found' }
+			console.error('sendPaymentConfirmed: Payment not found', args.paymentId);
+			return { sent: false, reason: 'Payment not found' };
 		}
 
 		// Get student details if available
-		let student = null
+		let student = null;
 		if (args.studentId) {
-			student = await ctx.db.get(args.studentId)
+			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
-			student = await ctx.db.get(payment.studentId)
+			student = await ctx.db.get(payment.studentId);
 		}
 
 		if (!student) {
-			return { sent: false, reason: 'No student linked' }
+			return { sent: false, reason: 'No student linked' };
 		}
 
 		// Format values
 		const formattedValue = new Intl.NumberFormat('pt-BR', {
 			style: 'currency',
 			currency: 'BRL',
-		}).format(payment.value)
+		}).format(payment.value);
 
 		// Send email via Brevo if student has email
 		if (student.email) {
@@ -51,9 +51,9 @@ export const sendPaymentConfirmed = internalMutation({
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					paymentDescription: payment.description || 'Pagamento',
-				})
+				});
 			} catch (error) {
-				console.error('sendPaymentConfirmed: Failed to send email', error)
+				console.error('sendPaymentConfirmed: Failed to send email', error);
 			}
 		}
 
@@ -72,11 +72,11 @@ export const sendPaymentConfirmed = internalMutation({
 				value: payment.value,
 			},
 			createdAt: Date.now(),
-		})
+		});
 
-		return { sent: true }
+		return { sent: true };
 	},
-})
+});
 
 /**
  * Send payment overdue notification
@@ -88,33 +88,33 @@ export const sendPaymentOverdue = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		// Get payment details
-		const payment = await ctx.db.get(args.paymentId)
+		const payment = await ctx.db.get(args.paymentId);
 		if (!payment) {
-			console.error('sendPaymentOverdue: Payment not found', args.paymentId)
-			return { sent: false, reason: 'Payment not found' }
+			console.error('sendPaymentOverdue: Payment not found', args.paymentId);
+			return { sent: false, reason: 'Payment not found' };
 		}
 
 		// Get student details
-		let student = null
+		let student = null;
 		if (args.studentId) {
-			student = await ctx.db.get(args.studentId)
+			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
-			student = await ctx.db.get(payment.studentId)
+			student = await ctx.db.get(payment.studentId);
 		}
 
 		if (!student) {
-			return { sent: false, reason: 'No student linked' }
+			return { sent: false, reason: 'No student linked' };
 		}
 
 		// Format values
 		const formattedValue = new Intl.NumberFormat('pt-BR', {
 			style: 'currency',
 			currency: 'BRL',
-		}).format(payment.value)
+		}).format(payment.value);
 
 		const formattedDueDate = payment.dueDate
 			? new Date(payment.dueDate).toLocaleDateString('pt-BR')
-			: 'N/A'
+			: 'N/A';
 
 		// Send email via Brevo if student has email
 		if (student.email) {
@@ -125,9 +125,9 @@ export const sendPaymentOverdue = internalMutation({
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					dueDate: formattedDueDate,
-				})
+				});
 			} catch (error) {
-				console.error('sendPaymentOverdue: Failed to send email', error)
+				console.error('sendPaymentOverdue: Failed to send email', error);
 			}
 		}
 
@@ -147,11 +147,11 @@ export const sendPaymentOverdue = internalMutation({
 				dueDate: payment.dueDate,
 			},
 			createdAt: Date.now(),
-		})
+		});
 
-		return { sent: true }
+		return { sent: true };
 	},
-})
+});
 
 /**
  * Send payment received notification
@@ -163,26 +163,26 @@ export const sendPaymentReceived = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		// Similar to sendPaymentConfirmed but for RECEIVED status
-		const payment = await ctx.db.get(args.paymentId)
+		const payment = await ctx.db.get(args.paymentId);
 		if (!payment) {
-			return { sent: false, reason: 'Payment not found' }
+			return { sent: false, reason: 'Payment not found' };
 		}
 
-		let student = null
+		let student = null;
 		if (args.studentId) {
-			student = await ctx.db.get(args.studentId)
+			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
-			student = await ctx.db.get(payment.studentId)
+			student = await ctx.db.get(payment.studentId);
 		}
 
 		if (!student) {
-			return { sent: false, reason: 'No student linked' }
+			return { sent: false, reason: 'No student linked' };
 		}
 
 		const formattedValue = new Intl.NumberFormat('pt-BR', {
 			style: 'currency',
 			currency: 'BRL',
-		}).format(payment.value)
+		}).format(payment.value);
 
 		// Log notification
 		await ctx.db.insert('notifications', {
@@ -199,8 +199,8 @@ export const sendPaymentReceived = internalMutation({
 				value: payment.value,
 			},
 			createdAt: Date.now(),
-		})
+		});
 
-		return { sent: true }
+		return { sent: true };
 	},
-})
+});

@@ -18,7 +18,13 @@ import { Input } from '@/components/ui/input';
 
 export const Route = createFileRoute('/_authenticated/settings/team')({
 	beforeLoad: ({ context }) => {
-		if (context.auth?.isLoaded && !context.auth?.has?.({ permission: 'team:manage' })) {
+		const isLoaded = context.auth?.isLoaded;
+		const role = context.auth?.orgRole;
+		const isAdmin =
+			role === 'org:admin' || role === 'org:owner' || role === 'admin' || role === 'owner';
+		const hasPermission = context.auth?.has?.({ permission: 'team:manage' });
+
+		if (isLoaded && !isAdmin && !hasPermission) {
 			// Instead of throwing a raw error, redirect with a message
 			toast.error('Você não tem permissão para acessar o gerenciamento de equipe.');
 			throw redirect({
@@ -34,9 +40,12 @@ function TeamSettingsPage() {
 	const [debouncedQuery] = useDebounce(searchQuery, 300);
 
 	// Use paginated query
-	const { results, status, loadMore } = usePaginatedQuery(
-		// biome-ignore lint/suspicious/noExplicitAny: Internal API type workaround
-		(api as any).users.searchTeamMembers,
+	// biome-ignore lint/suspicious/noExplicitAny: Fix deep type instantiation
+	const searchTeamMembers = (api as any).users.searchTeamMembers;
+	// biome-ignore lint/suspicious/noExplicitAny: Fix deep type instantiation
+	const paginatedQuery = usePaginatedQuery as any;
+	const { results, status, loadMore } = paginatedQuery(
+		searchTeamMembers,
 		{ query: debouncedQuery },
 		{ initialNumItems: 10 },
 	);

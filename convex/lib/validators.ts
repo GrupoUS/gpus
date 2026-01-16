@@ -7,55 +7,55 @@ import type { AsaasCustomerPayload } from './asaas';
  * @returns Object with valid boolean and optional error message
  */
 export function validateCPF(cpf: string): { valid: boolean; error?: string } {
-  // Remove non-numeric characters
-  const cleanCPF = cpf.replace(/\D/g, '');
+	// Remove non-numeric characters
+	const cleanCPF = cpf.replace(/\D/g, '');
 
-  // Check length
-  if (cleanCPF.length !== 11) {
-    return { valid: false, error: 'CPF deve ter 11 dígitos' };
-  }
+	// Check length
+	if (cleanCPF.length !== 11) {
+		return { valid: false, error: 'CPF deve ter 11 dígitos' };
+	}
 
-  // Check for known invalid patterns (all same digits)
-  if (/^(\d)\1+$/.test(cleanCPF)) {
-    return { valid: false, error: 'CPF inválido (dígitos repetidos)' };
-  }
+	// Check for known invalid patterns (all same digits)
+	if (/^(\d)\1+$/.test(cleanCPF)) {
+		return { valid: false, error: 'CPF inválido (dígitos repetidos)' };
+	}
 
-  // Validate check digits
-  let sum = 0;
-  let remainder;
+	// Validate check digits
+	let sum = 0;
+	let remainder;
 
-  // First check digit
-  for (let i = 1; i <= 9; i++) {
-    sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
-  }
-  remainder = (sum * 10) % 11;
+	// First check digit
+	for (let i = 1; i <= 9; i++) {
+		sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+	}
+	remainder = (sum * 10) % 11;
 
-  if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(cleanCPF.substring(9, 10))) {
-    return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
-  }
+	if (remainder === 10 || remainder === 11) remainder = 0;
+	if (remainder !== parseInt(cleanCPF.substring(9, 10))) {
+		return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
+	}
 
-  // Second check digit
-  sum = 0;
-  for (let i = 1; i <= 10; i++) {
-    sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
-  }
-  remainder = (sum * 10) % 11;
+	// Second check digit
+	sum = 0;
+	for (let i = 1; i <= 10; i++) {
+		sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+	}
+	remainder = (sum * 10) % 11;
 
-  if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(cleanCPF.substring(10, 11))) {
-    return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
-  }
+	if (remainder === 10 || remainder === 11) remainder = 0;
+	if (remainder !== parseInt(cleanCPF.substring(10, 11))) {
+		return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
+	}
 
-  return { valid: true };
+	return { valid: true };
 }
 
 /**
  * Result of payload validation
  */
 export interface ValidationResult {
-  valid: boolean;
-  errors: string[];
+	valid: boolean;
+	errors: string[];
 }
 
 /**
@@ -65,40 +65,40 @@ export interface ValidationResult {
  * @returns ValidationResult object
  */
 export function validateAsaasCustomerPayload(payload: AsaasCustomerPayload): ValidationResult {
-  const errors: string[] = [];
+	const errors: string[] = [];
 
-  // Required fields
-  if (!payload.name || payload.name.trim().length === 0) {
-    errors.push('Nome é obrigatório');
-  }
+	// Required fields
+	if (!payload.name || payload.name.trim().length === 0) {
+		errors.push('Nome é obrigatório');
+	}
 
-  if (!payload.cpfCnpj || payload.cpfCnpj.trim().length === 0) {
-    // Although Asaas might allow creation without CPF in some cases, 
-    // for our business logic it is usually required for billing.
-    // However, the plan says "se fornecido" in 1.1, but let's stick to strict validation if present.
-    // If the payload has it, we validate it.
-  }
+	if (!payload.cpfCnpj || payload.cpfCnpj.trim().length === 0) {
+		// Although Asaas might allow creation without CPF in some cases,
+		// for our business logic it is usually required for billing.
+		// However, the plan says "se fornecido" in 1.1, but let's stick to strict validation if present.
+		// If the payload has it, we validate it.
+	}
 
-  // Email format (simplified RFC 5322)
-  if (payload.email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(payload.email)) {
-      errors.push('Email inválido');
-    }
-  }
+	// Email format (simplified RFC 5322)
+	if (payload.email) {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(payload.email)) {
+			errors.push('Email inválido');
+		}
+	}
 
-  // Phone format (Brazilian: 10-11 digits)
-  // Asaas accepts phone or mobilePhone. We check whichever is present.
-  const phoneToCheck = payload.mobilePhone || payload.phone;
-  if (phoneToCheck) {
-    const cleanPhone = phoneToCheck.replace(/\D/g, '');
-    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
-      errors.push('Telefone deve ter 10 ou 11 dígitos (com DDD)');
-    }
-  }
+	// Phone format (Brazilian: 10-11 digits)
+	// Asaas accepts phone or mobilePhone. We check whichever is present.
+	const phoneToCheck = payload.mobilePhone || payload.phone;
+	if (phoneToCheck) {
+		const cleanPhone = phoneToCheck.replace(/\D/g, '');
+		if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+			errors.push('Telefone deve ter 10 ou 11 dígitos (com DDD)');
+		}
+	}
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
+	return {
+		valid: errors.length === 0,
+		errors,
+	};
 }

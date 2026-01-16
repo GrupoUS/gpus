@@ -12,11 +12,11 @@
  * Base error class for all Asaas-related errors
  */
 export class AsaasError extends Error {
-	public readonly code: string
-	public readonly isTransient: boolean
-	public readonly isRetryable: boolean
-	public readonly statusCode?: number
-	public readonly originalError?: unknown
+	public readonly code: string;
+	public readonly isTransient: boolean;
+	public readonly isRetryable: boolean;
+	public readonly statusCode?: number;
+	public readonly originalError?: unknown;
 
 	constructor(
 		message: string,
@@ -26,14 +26,14 @@ export class AsaasError extends Error {
 		statusCode?: number,
 		originalError?: unknown,
 	) {
-		super(message)
-		this.name = 'AsaasError'
-		this.code = code
-		this.isTransient = isTransient
-		this.isRetryable = isRetryable
-		this.statusCode = statusCode
-		this.originalError = originalError
-		Error.captureStackTrace(this, this.constructor)
+		super(message);
+		this.name = 'AsaasError';
+		this.code = code;
+		this.isTransient = isTransient;
+		this.isRetryable = isRetryable;
+		this.statusCode = statusCode;
+		this.originalError = originalError;
+		Error.captureStackTrace(this, this.constructor);
 	}
 
 	toJSON() {
@@ -44,7 +44,7 @@ export class AsaasError extends Error {
 			isTransient: this.isTransient,
 			isRetryable: this.isRetryable,
 			statusCode: this.statusCode,
-		}
+		};
 	}
 }
 
@@ -53,8 +53,8 @@ export class AsaasError extends Error {
  */
 export class AsaasConfigurationError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'CONFIGURATION_ERROR', false, false, undefined, originalError)
-		this.name = 'AsaasConfigurationError'
+		super(message, 'CONFIGURATION_ERROR', false, false, undefined, originalError);
+		this.name = 'AsaasConfigurationError';
 	}
 }
 
@@ -63,8 +63,8 @@ export class AsaasConfigurationError extends AsaasError {
  */
 export class AsaasValidationError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'VALIDATION_ERROR', false, false, 400, originalError)
-		this.name = 'AsaasValidationError'
+		super(message, 'VALIDATION_ERROR', false, false, 400, originalError);
+		this.name = 'AsaasValidationError';
 	}
 }
 
@@ -73,8 +73,8 @@ export class AsaasValidationError extends AsaasError {
  */
 export class AsaasAuthenticationError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'AUTHENTICATION_ERROR', false, false, 401, originalError)
-		this.name = 'AsaasAuthenticationError'
+		super(message, 'AUTHENTICATION_ERROR', false, false, 401, originalError);
+		this.name = 'AsaasAuthenticationError';
 	}
 }
 
@@ -83,8 +83,8 @@ export class AsaasAuthenticationError extends AsaasError {
  */
 export class AsaasNotFoundError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'NOT_FOUND_ERROR', false, false, 404, originalError)
-		this.name = 'AsaasNotFoundError'
+		super(message, 'NOT_FOUND_ERROR', false, false, 404, originalError);
+		this.name = 'AsaasNotFoundError';
 	}
 }
 
@@ -93,12 +93,12 @@ export class AsaasNotFoundError extends AsaasError {
  */
 export class AsaasRateLimitError extends AsaasError {
 	constructor(message: string, retryAfter?: number, originalError?: unknown) {
-		super(message, 'RATE_LIMIT_ERROR', true, true, 429, originalError)
-		this.name = 'AsaasRateLimitError'
-		this.retryAfter = retryAfter
+		super(message, 'RATE_LIMIT_ERROR', true, true, 429, originalError);
+		this.name = 'AsaasRateLimitError';
+		this.retryAfter = retryAfter;
 	}
 
-	public retryAfter?: number
+	public retryAfter?: number;
 }
 
 /**
@@ -106,8 +106,8 @@ export class AsaasRateLimitError extends AsaasError {
  */
 export class AsaasServerError extends AsaasError {
 	constructor(message: string, statusCode: number, originalError?: unknown) {
-		super(message, 'SERVER_ERROR', true, true, statusCode, originalError)
-		this.name = 'AsaasServerError'
+		super(message, 'SERVER_ERROR', true, true, statusCode, originalError);
+		this.name = 'AsaasServerError';
 	}
 }
 
@@ -116,8 +116,8 @@ export class AsaasServerError extends AsaasError {
  */
 export class AsaasNetworkError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'NETWORK_ERROR', true, true, undefined, originalError)
-		this.name = 'AsaasNetworkError'
+		super(message, 'NETWORK_ERROR', true, true, undefined, originalError);
+		this.name = 'AsaasNetworkError';
 	}
 }
 
@@ -126,8 +126,8 @@ export class AsaasNetworkError extends AsaasError {
  */
 export class AsaasIdempotencyError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'IDEMPOTENCY_ERROR', false, false, 409, originalError)
-		this.name = 'AsaasIdempotencyError'
+		super(message, 'IDEMPOTENCY_ERROR', false, false, 409, originalError);
+		this.name = 'AsaasIdempotencyError';
 	}
 }
 
@@ -141,104 +141,102 @@ export class AsaasIdempotencyError extends AsaasError {
 export function classifyError(error: unknown): AsaasError {
 	// Already classified error
 	if (error instanceof AsaasError) {
-		return error
+		return error;
 	}
 
 	// Network errors (no response)
 	if (error instanceof Error && !('response' in error)) {
-		return new AsaasNetworkError(
-			`Erro de rede: ${error.message}`,
-			error,
-		)
+		return new AsaasNetworkError(`Erro de rede: ${error.message}`, error);
 	}
 
 	// API errors with response
-	const apiError = error as any
-	const statusCode = apiError.response?.status
-	const responseData = apiError.response?.data
+	const apiError = error as any;
+	const statusCode = apiError.response?.status;
+	const responseData = apiError.response?.data;
 
 	// Configuration errors (no API key)
 	if (apiError.message?.includes('ASAAS_API_KEY') || apiError.message?.includes('api_key')) {
-		return new AsaasConfigurationError(apiError.message, error)
+		return new AsaasConfigurationError(apiError.message, error);
 	}
 
 	// Authentication errors (401)
 	if (statusCode === 401) {
-		const message = responseData?.errors?.[0]?.description || 'Autenticação falhou'
-		return new AsaasAuthenticationError(message, error)
+		const message = responseData?.errors?.[0]?.description || 'Autenticação falhou';
+		return new AsaasAuthenticationError(message, error);
 	}
 
 	// Not found errors (404)
 	if (statusCode === 404) {
-		const message = responseData?.errors?.[0]?.description || 'Recurso não encontrado'
-		return new AsaasNotFoundError(message, error)
+		const message = responseData?.errors?.[0]?.description || 'Recurso não encontrado';
+		return new AsaasNotFoundError(message, error);
 	}
 
 	// Rate limit errors (429)
 	if (statusCode === 429) {
-		const message = responseData?.errors?.[0]?.description || 'Limite de requisições excedido'
-		const retryAfter = apiError.response?.headers?.['retry-after']
-		return new AsaasRateLimitError(message, retryAfter ? parseInt(retryAfter) : undefined, error)
+		const message = responseData?.errors?.[0]?.description || 'Limite de requisições excedido';
+		const retryAfter = apiError.response?.headers?.['retry-after'];
+		return new AsaasRateLimitError(message, retryAfter ? parseInt(retryAfter) : undefined, error);
 	}
 
 	// Client errors (4xx, excluding 401, 404, 429)
 	if (statusCode >= 400 && statusCode < 500) {
-		const message = responseData?.errors?.[0]?.description || apiError.message || 'Erro na requisição'
-		return new AsaasValidationError(message, error)
+		const message =
+			responseData?.errors?.[0]?.description || apiError.message || 'Erro na requisição';
+		return new AsaasValidationError(message, error);
 	}
 
 	// Server errors (5xx)
 	if (statusCode >= 500) {
-		const message = responseData?.errors?.[0]?.description || 'Erro no servidor Asaas'
-		return new AsaasServerError(message, statusCode, error)
+		const message = responseData?.errors?.[0]?.description || 'Erro no servidor Asaas';
+		return new AsaasServerError(message, statusCode, error);
 	}
 
 	// Unknown error
-	const message = apiError.message || 'Erro desconhecido'
-	return new AsaasError(message, 'UNKNOWN_ERROR', false, false, statusCode, error)
+	const message = apiError.message || 'Erro desconhecido';
+	return new AsaasError(message, 'UNKNOWN_ERROR', false, false, statusCode, error);
 }
 
 /**
  * Check if error is retryable
  */
 export function isRetryableError(error: unknown): boolean {
-	const classified = classifyError(error)
-	return classified.isRetryable
+	const classified = classifyError(error);
+	return classified.isRetryable;
 }
 
 /**
  * Check if error is transient (temporary)
  */
 export function isTransientError(error: unknown): boolean {
-	const classified = classifyError(error)
-	return classified.isTransient
+	const classified = classifyError(error);
+	return classified.isTransient;
 }
 
 /**
  * Get user-friendly error message
  */
 export function getUserErrorMessage(error: unknown): string {
-	const classified = classifyError(error)
+	const classified = classifyError(error);
 
 	switch (classified.code) {
 		case 'CONFIGURATION_ERROR':
-			return 'Configuração da API Asaas está incompleta. Entre em contato com o suporte.'
+			return 'Configuração da API Asaas está incompleta. Entre em contato com o suporte.';
 		case 'AUTHENTICATION_ERROR':
-			return 'Credenciais da API Asaas inválidas. Entre em contato com o suporte.'
+			return 'Credenciais da API Asaas inválidas. Entre em contato com o suporte.';
 		case 'RATE_LIMIT_ERROR':
-			return 'Muitas requisições. Aguarde alguns minutos e tente novamente.'
+			return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
 		case 'SERVER_ERROR':
-			return 'Serviço Asaas temporariamente indisponível. Tente novamente em instantes.'
+			return 'Serviço Asaas temporariamente indisponível. Tente novamente em instantes.';
 		case 'NETWORK_ERROR':
-			return 'Erro de conexão com Asaas. Verifique sua internet e tente novamente.'
+			return 'Erro de conexão com Asaas. Verifique sua internet e tente novamente.';
 		case 'VALIDATION_ERROR':
-			return `Dados inválidos: ${classified.message}`
+			return `Dados inválidos: ${classified.message}`;
 		case 'NOT_FOUND_ERROR':
-			return 'Recurso não encontrado no Asaas.'
+			return 'Recurso não encontrado no Asaas.';
 		case 'IDEMPOTENCY_ERROR':
-			return 'Operação já realizada anteriormente.'
+			return 'Operação já realizada anteriormente.';
 		default:
-			return 'Erro ao processar requisição. Tente novamente ou entre em contato com o suporte.'
+			return 'Erro ao processar requisição. Tente novamente ou entre em contato com o suporte.';
 	}
 }
 
@@ -246,14 +244,14 @@ export function getUserErrorMessage(error: unknown): string {
  * Sanitize error for logging (remove sensitive data)
  */
 export function sanitizeErrorForLogging(error: unknown): string {
-	const classified = classifyError(error)
-	const json = classified.toJSON()
+	const classified = classifyError(error);
+	const json = classified.toJSON();
 
 	// Remove any potential API keys or tokens
 	return JSON.stringify(json, (_key, value) => {
 		if (typeof value === 'string' && value.length > 32 && /^[a-zA-Z0-9]+$/.test(value)) {
-			return '[REDACTED]'
+			return '[REDACTED]';
 		}
-		return value
-	})
+		return value;
+	});
 }

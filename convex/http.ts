@@ -9,7 +9,7 @@
 
 import { httpRouter } from 'convex/server';
 
-import { internal } from './_generated/api';
+import { api, internal } from './_generated/api';
 import { type ActionCtx, httpAction } from './_generated/server';
 import { type BrevoWebhookPayload, normalizeEventType, validateWebhookSecret } from './lib/brevo';
 import {
@@ -17,6 +17,11 @@ import {
 	normalizeMessageStatus,
 	validateMessagingWebhookSecret,
 } from './lib/messaging';
+import {
+	formatTypebotPhone,
+	mapTypebotInterest,
+	validateTypebotWebhookSecret,
+} from './lib/typebot';
 
 const http = httpRouter();
 
@@ -154,6 +159,75 @@ http.route({
 		}
 
 		return new Response('OK', { status: 200 });
+	}),
+});
+
+/**
+ * Typebot Webhook Endpoint
+ *
+ * Receives lead data from Typebot HTTP Request blocks after form completion.
+ *
+ * POST /typebot/webhook
+ *
+ * Headers:
+ * - X-Typebot-Secret: Webhook secret for authentication
+ *
+ * Body: JSON with lead fields (nome, email, telefone, etc.)
+ */
+http.route({
+	path: '/typebot/webhook',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate webhook secret
+		const secret = request.headers.get('X-Typebot-Secret');
+		if (!validateTypebotWebhookSecret(secret)) {
+			return new Response('Unauthorized', { status: 401 });
+		}
+
+		// 2. Parse payload
+		// biome-ignore lint/suspicious/noExplicitAny: External payload structure is flexible
+		let body: any;
+		try {
+			body = await request.json();
+		} catch {
+			return new Response('Bad Request: Invalid JSON', { status: 400 });
+		}
+
+		// 3. Map Typebot variables to CRM arguments
+		// We handle both English and Portuguese field names for flexibility
+		const args = {
+			name: body.nome || body.name || 'Nome não fornecido',
+			email: body.email || body.email_contato || '',
+			phone: formatTypebotPhone(body.telefone || body.phone || body.whatsapp || ''),
+			interest: mapTypebotInterest(body.interesse || body.interest),
+			message: body.mensagem || body.message || body.notes || '',
+			lgpdConsent: body.lgpdConsent !== false, // Assuming consent if they finished the bot, unless explicit false
+			whatsappConsent: body.whatsappConsent !== false,
+			utmSource: body.utmSource || body.utm_source,
+			utmCampaign: body.utmCampaign || body.utm_campaign,
+			utmMedium: body.utmMedium || body.utm_medium,
+			utmContent: body.utmContent || body.utm_content,
+			utmTerm: body.utmTerm || body.utm_term,
+			userIp: request.headers.get('x-forwarded-for') || 'unknown',
+		};
+
+		// 4. Trigger creation mutation
+		try {
+			// We use the public mutation via internal access to avoid type issues with generated 'api'
+			// biome-ignore lint/suspicious/noExplicitAny: break type inference chain
+			const leadId = await ctx.runMutation((api as any).marketingLeads.create, args);
+
+			return new Response(JSON.stringify({ success: true, leadId }), {
+				status: 201,
+				headers: { 'Content-Type': 'application/json' },
+			});
+			// biome-ignore lint/suspicious/noExplicitAny: error type
+		} catch (error: any) {
+			return new Response(JSON.stringify({ success: false, error: error.message }), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
 	}),
 });
 

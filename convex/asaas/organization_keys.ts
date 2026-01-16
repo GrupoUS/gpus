@@ -5,17 +5,12 @@
  * Each organization can have their own Asaas API configuration.
  */
 
-import { v } from "convex/values";
-import {
-	query,
-	mutation,
-	action,
-	internalQuery,
-} from "../_generated/server";
-import { getOrganizationId, requirePermission } from "../lib/auth";
-import { encrypt, decrypt } from "../lib/encryption";
-import { PERMISSIONS } from "../lib/permissions";
-import { createAsaasClient } from "./client";
+import { v } from 'convex/values';
+import { query, mutation, action, internalQuery } from '../_generated/server';
+import { getOrganizationId, requirePermission } from '../lib/auth';
+import { encrypt, decrypt } from '../lib/encryption';
+import { PERMISSIONS } from '../lib/permissions';
+import { createAsaasClient } from './client';
 
 // ═══════════════════════════════════════════════════════
 // QUERIES
@@ -29,11 +24,11 @@ export const getOrganizationApiKey = query({
 	args: {},
 	returns: v.union(
 		v.object({
-			_id: v.id("organizationAsaasApiKeys"),
+			_id: v.id('organizationAsaasApiKeys'),
 			organizationId: v.string(),
 			apiKeyMasked: v.string(),
 			baseUrl: v.string(),
-			environment: v.union(v.literal("production"), v.literal("sandbox")),
+			environment: v.union(v.literal('production'), v.literal('sandbox')),
 			hasWebhookSecret: v.boolean(),
 			isActive: v.boolean(),
 			lastTestedAt: v.optional(v.number()),
@@ -50,14 +45,14 @@ export const getOrganizationApiKey = query({
 		const orgId = await getOrganizationId(ctx);
 
 		const config = await ctx.db
-			.query("organizationAsaasApiKeys")
-			.withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+			.query('organizationAsaasApiKeys')
+			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 			.first();
 
 		if (!config) return null;
 
 		// Mask the API key for display
-		let apiKeyMasked = "••••••••";
+		let apiKeyMasked = '••••••••';
 		try {
 			const decryptedKey = await decrypt(config.encryptedApiKey);
 			if (decryptedKey && decryptedKey.length > 8) {
@@ -94,7 +89,7 @@ export const internalGetOrganizationApiKey = internalQuery({
 		v.object({
 			apiKey: v.string(),
 			baseUrl: v.string(),
-			environment: v.union(v.literal("production"), v.literal("sandbox")),
+			environment: v.union(v.literal('production'), v.literal('sandbox')),
 			webhookSecret: v.optional(v.string()),
 			isActive: v.boolean(),
 		}),
@@ -102,9 +97,9 @@ export const internalGetOrganizationApiKey = internalQuery({
 	),
 	handler: async (ctx, args) => {
 		const config = await ctx.db
-			.query("organizationAsaasApiKeys")
-			.withIndex("by_organization_active", (q) =>
-				q.eq("organizationId", args.organizationId).eq("isActive", true),
+			.query('organizationAsaasApiKeys')
+			.withIndex('by_organization_active', (q) =>
+				q.eq('organizationId', args.organizationId).eq('isActive', true),
 			)
 			.first();
 
@@ -115,10 +110,7 @@ export const internalGetOrganizationApiKey = internalQuery({
 		try {
 			apiKey = await decrypt(config.encryptedApiKey);
 		} catch (error) {
-			console.error(
-				"[AsaasOrgKeys] Failed to decrypt API key:",
-				error,
-			);
+			console.error('[AsaasOrgKeys] Failed to decrypt API key:', error);
 			return null;
 		}
 
@@ -153,11 +145,11 @@ export const saveOrganizationApiKey = mutation({
 	args: {
 		apiKey: v.string(),
 		baseUrl: v.string(),
-		environment: v.union(v.literal("production"), v.literal("sandbox")),
+		environment: v.union(v.literal('production'), v.literal('sandbox')),
 		webhookSecret: v.optional(v.string()),
 		isActive: v.boolean(),
 	},
-	returns: v.id("organizationAsaasApiKeys"),
+	returns: v.id('organizationAsaasApiKeys'),
 	handler: async (ctx, args) => {
 		const identity = await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 		const orgId = await getOrganizationId(ctx);
@@ -171,8 +163,8 @@ export const saveOrganizationApiKey = mutation({
 
 		// Check if config already exists
 		const existing = await ctx.db
-			.query("organizationAsaasApiKeys")
-			.withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+			.query('organizationAsaasApiKeys')
+			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 			.first();
 
 		if (existing) {
@@ -194,7 +186,7 @@ export const saveOrganizationApiKey = mutation({
 		}
 
 		// Create new
-		return await ctx.db.insert("organizationAsaasApiKeys", {
+		return await ctx.db.insert('organizationAsaasApiKeys', {
 			organizationId: orgId,
 			encryptedApiKey,
 			baseUrl: args.baseUrl,
@@ -219,8 +211,8 @@ export const deleteOrganizationApiKey = mutation({
 		const orgId = await getOrganizationId(ctx);
 
 		const existing = await ctx.db
-			.query("organizationAsaasApiKeys")
-			.withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+			.query('organizationAsaasApiKeys')
+			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 			.first();
 
 		if (!existing) {
@@ -237,7 +229,7 @@ export const deleteOrganizationApiKey = mutation({
  */
 export const updateTestResult = mutation({
 	args: {
-		configId: v.id("organizationAsaasApiKeys"),
+		configId: v.id('organizationAsaasApiKeys'),
 		success: v.boolean(),
 		message: v.string(),
 	},
@@ -283,7 +275,7 @@ export const testOrganizationApiKey = action({
 
 			return {
 				success: true,
-				message: "Conexão com Asaas estabelecida com sucesso!",
+				message: 'Conexão com Asaas estabelecida com sucesso!',
 				details: {
 					totalCustomers: response.totalCount ?? 0,
 				},
@@ -292,7 +284,7 @@ export const testOrganizationApiKey = action({
 			const errorMessage =
 				error.response?.data?.errors?.[0]?.description ||
 				error.message ||
-				"Erro desconhecido ao conectar com Asaas";
+				'Erro desconhecido ao conectar com Asaas';
 
 			return {
 				success: false,

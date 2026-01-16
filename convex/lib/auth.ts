@@ -1,4 +1,4 @@
-import type { ActionCtx, MutationCtx, QueryCtx } from '../_generated/server'
+import type { ActionCtx, MutationCtx, QueryCtx } from '../_generated/server';
 
 /**
  * Interface for Clerk JWT identity claims
@@ -7,31 +7,31 @@ import type { ActionCtx, MutationCtx, QueryCtx } from '../_generated/server'
  */
 export interface ClerkIdentity {
 	// Standard OIDC claims
-	subject: string // user_xxx (Clerk User ID)
-	tokenIdentifier: string
-	issuer: string // https://apparent-oryx-57.clerk.accounts.dev
+	subject: string; // user_xxx (Clerk User ID)
+	tokenIdentifier: string;
+	issuer: string; // https://apparent-oryx-57.clerk.accounts.dev
 
 	// Optional standard claims
-	email?: string
-	name?: string
-	pictureUrl?: string
+	email?: string;
+	name?: string;
+	pictureUrl?: string;
 
 	// Custom claims from Clerk JWT Template (if configured)
-	org_id?: string
-	org_role?: string
-	org_slug?: string
-	org_permissions?: string[]
+	org_id?: string;
+	org_role?: string;
+	org_slug?: string;
+	org_permissions?: string[];
 }
 
-type Context = QueryCtx | MutationCtx | ActionCtx
+type Context = QueryCtx | MutationCtx | ActionCtx;
 
 /**
  * Get the authenticated user's identity
  * @returns ClerkIdentity if authenticated, null otherwise
  */
 export async function getIdentity(ctx: Context): Promise<ClerkIdentity | null> {
-	const identity = await ctx.auth.getUserIdentity()
-	return identity as ClerkIdentity | null
+	const identity = await ctx.auth.getUserIdentity();
+	return identity as ClerkIdentity | null;
 }
 
 /**
@@ -39,16 +39,14 @@ export async function getIdentity(ctx: Context): Promise<ClerkIdentity | null> {
  * @throws Error if user is not authenticated
  */
 export async function requireAuth(ctx: Context): Promise<ClerkIdentity> {
-	const identity = await getIdentity(ctx)
+	const identity = await getIdentity(ctx);
 
 	if (!identity) {
-		throw new Error('Não autenticado. Faça login para continuar.')
+		throw new Error('Não autenticado. Faça login para continuar.');
 	}
 
-	return identity
+	return identity;
 }
-
-
 
 /**
  * Get the organization ID for multi-tenant data access
@@ -58,15 +56,15 @@ export async function requireAuth(ctx: Context): Promise<ClerkIdentity> {
  * 2. subject (clerkId) as fallback (personal organization)
  */
 export async function getOrganizationId(ctx: Context): Promise<string> {
-	const identity = await requireAuth(ctx)
+	const identity = await requireAuth(ctx);
 
 	// If org_id is present in JWT, user is in an organization context
 	if (identity.org_id) {
-		return identity.org_id
+		return identity.org_id;
 	}
 
 	// Fallback: use the user's own ID as their "personal organization"
-	return identity.subject
+	return identity.subject;
 }
 
 /**
@@ -74,44 +72,36 @@ export async function getOrganizationId(ctx: Context): Promise<string> {
  * @throws Error if not authenticated
  */
 export async function getClerkId(ctx: Context): Promise<string> {
-	const identity = await requireAuth(ctx)
-	return identity.subject
+	const identity = await requireAuth(ctx);
+	return identity.subject;
 }
 
 /**
  * Check if user has one of the allowed organization roles
  * @returns true if user has one of the roles, false otherwise
  */
-export async function hasOrgRole(
-	ctx: Context,
-	allowedRoles: string[],
-): Promise<boolean> {
-	const identity = await getIdentity(ctx)
+export async function hasOrgRole(ctx: Context, allowedRoles: string[]): Promise<boolean> {
+	const identity = await getIdentity(ctx);
 
 	if (!identity?.org_role) {
-		return false
+		return false;
 	}
 
-	return allowedRoles.includes(identity.org_role)
+	return allowedRoles.includes(identity.org_role);
 }
 
 /**
  * Require one of the specified organization roles
  * @throws Error if user doesn't have required role
  */
-export async function requireOrgRole(
-	ctx: Context,
-	allowedRoles: string[],
-): Promise<ClerkIdentity> {
-	const identity = await requireAuth(ctx)
+export async function requireOrgRole(ctx: Context, allowedRoles: string[]): Promise<ClerkIdentity> {
+	const identity = await requireAuth(ctx);
 
-	if (!identity.org_role || !allowedRoles.includes(identity.org_role)) {
-		throw new Error(
-			`Permissão negada. Role necessária: ${allowedRoles.join(' ou ')}`,
-		)
+	if (!(identity.org_role && allowedRoles.includes(identity.org_role))) {
+		throw new Error(`Permissão negada. Role necessária: ${allowedRoles.join(' ou ')}`);
 	}
 
-	return identity
+	return identity;
 }
 
 /**
@@ -119,7 +109,7 @@ export async function requireOrgRole(
  * Use this when you need to know who is making the request for audit purposes
  */
 export async function requireAuthAsUser(ctx: Context): Promise<ClerkIdentity> {
-	const identity = await requireAuth(ctx)
+	const identity = await requireAuth(ctx);
 
 	// Verify it's actually a user (not a system account)
 	// In Clerk, we can check metadata or just assume if they have a subject they are a user.
@@ -128,33 +118,38 @@ export async function requireAuthAsUser(ctx: Context): Promise<ClerkIdentity> {
 		// Action context doesn't have db access directly, so we can't verify against DB here easily
 		// unless we run a query. But actions shouldn't verify DB existence usually, mutations do.
 		// If this is used in mutation/query:
-		return identity
+		return identity;
 	}
 
-	const user = await ctx.db.get(identity.subject as any)
+	// Verify that the user exists in our database
+	const user = await ctx.db
+		.query('users')
+		.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+		.first();
+
 	if (!user) {
-		throw new Error('User not found in database')
+		throw new Error('User not found in database');
 	}
 
-	return identity
+	return identity;
 }
 
-import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions'
+import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions';
 
 /**
  * Convert permission format from code (leads:read) to Clerk format (org:leads_read:leads_read)
  */
 function toClerkPermissionFormat(permission: string): string {
 	if (permission === PERMISSIONS.ALL) {
-		return PERMISSIONS.ALL
+		return PERMISSIONS.ALL;
 	}
 	// Convert leads:read -> org:leads_read:leads_read
-	const parts = permission.split(':')
+	const parts = permission.split(':');
 	if (parts.length === 2) {
-		const [resource, action] = parts
-		return `org:${resource}_${action}:${resource}_${action}`
+		const [resource, action] = parts;
+		return `org:${resource}_${action}:${resource}_${action}`;
 	}
-	return permission
+	return permission;
 }
 
 /**
@@ -163,37 +158,35 @@ function toClerkPermissionFormat(permission: string): string {
  * @param permission Permission to check (e.g., 'leads:read')
  * @returns true if user has the permission, false otherwise
  */
-export async function hasPermission(
-	ctx: Context,
-	permission: string,
-): Promise<boolean> {
-	const identity = await getIdentity(ctx)
+export async function hasPermission(ctx: Context, permission: string): Promise<boolean> {
+	const identity = await getIdentity(ctx);
 
 	if (!identity) {
-		return false
+		return false;
 	}
 
-	// Admin has all permissions
-	if (identity.org_role === 'org:admin') {
-		return true
+	// Admin and Owner have all permissions
+	const role = identity.org_role;
+	if (role === 'org:admin' || role === 'org:owner' || role === 'admin' || role === 'owner') {
+		return true;
 	}
 
 	// Check if permission is in JWT claims
 	// Clerk returns permissions in format org:resource_action:resource_action
 	if (identity.org_permissions && Array.isArray(identity.org_permissions)) {
-		const clerkPermission = toClerkPermissionFormat(permission)
+		const clerkPermission = toClerkPermissionFormat(permission);
 		if (identity.org_permissions.includes(clerkPermission)) {
-			return true
+			return true;
 		}
 		// Also check for 'all' permission in the array just in case
 		if (identity.org_permissions.includes(PERMISSIONS.ALL)) {
-			return true
+			return true;
 		}
 	}
 
 	// Fallback: Check DB role if JWT claims are missing or insufficient
-	const permissions = await getUserPermissions(ctx, identity)
-	return permissions.includes(permission) || permissions.includes(PERMISSIONS.ALL)
+	const permissions = await getUserPermissions(ctx, identity);
+	return permissions.includes(permission) || permissions.includes(PERMISSIONS.ALL);
 }
 
 /**
@@ -202,30 +195,24 @@ export async function hasPermission(
  * @param permission Permission required (e.g., 'leads:write')
  * @throws Error if user doesn't have the permission
  */
-export async function requirePermission(
-	ctx: Context,
-	permission: string,
-): Promise<ClerkIdentity> {
-	const identity = await requireAuth(ctx)
-	const isAllowed = await hasPermission(ctx, permission)
+export async function requirePermission(ctx: Context, permission: string): Promise<ClerkIdentity> {
+	const identity = await requireAuth(ctx);
+	const isAllowed = await hasPermission(ctx, permission);
 
 	if (!isAllowed) {
 		// Differentiate between "User not found" (sync issue) and "Permission denied" (role issue)
 		// We can check if the user actually exists in DB by calling getUserPermissions internally or checking identity.org_permissions
-		const permissions = await getUserPermissions(ctx, identity)
+		const permissions = await getUserPermissions(ctx, identity);
 
 		if (permissions.length === 0 && !identity.org_permissions) {
-			console.error(`[Auth] User ${identity.subject} has no permissions (User might not exist in DB).`)
-			throw new Error('Usuário não sincronizado. Tente fazer logout e login novamente.')
+			throw new Error('Usuário não sincronizado. Tente fazer logout e login novamente.');
 		}
-
-		console.error(`[Auth] Permission denied for user ${identity.subject}. Required: ${permission}`)
 		throw new Error(
 			`Permissão negada. Você precisa da permissão "${permission}" para realizar esta ação. Contate o administrador.`,
-		)
+		);
 	}
 
-	return identity
+	return identity;
 }
 
 /**
@@ -234,19 +221,16 @@ export async function requirePermission(
  * @param permissions Array of permissions to check
  * @returns true if user has at least one permission, false otherwise
  */
-export async function hasAnyPermission(
-	ctx: Context,
-	permissions: string[],
-): Promise<boolean> {
-	if (permissions.length === 0) return true
+export async function hasAnyPermission(ctx: Context, permissions: string[]): Promise<boolean> {
+	if (permissions.length === 0) return true;
 
 	for (const permission of permissions) {
 		if (await hasPermission(ctx, permission)) {
-			return true
+			return true;
 		}
 	}
 
-	return false
+	return false;
 }
 
 /**
@@ -255,17 +239,17 @@ export async function hasAnyPermission(
 async function getUserPermissions(ctx: Context, identity: ClerkIdentity): Promise<string[]> {
 	// Action context doesn't have direct DB access
 	if (!('db' in ctx)) {
-		return []
+		return [];
 	}
 
 	const user = await ctx.db
 		.query('users')
-		.withIndex('by_clerk_id', (q: any) => q.eq('clerkId', identity.subject))
-		.first()
+		.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+		.first();
 
 	if (!user || typeof user.role !== 'string') {
-		return []
+		return [];
 	}
 
-	return ROLE_PERMISSIONS[user.role] || []
+	return ROLE_PERMISSIONS[user.role] || [];
 }

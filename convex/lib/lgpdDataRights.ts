@@ -10,15 +10,22 @@
  * - Objection (Art. 18)
  */
 
-import type { MutationCtx, QueryCtx } from '../_generated/server'
+import type { MutationCtx, QueryCtx } from '../_generated/server';
 // getIdentity available for identity checks, getClerkId used
-import { getClerkId, getIdentity as _getIdentity } from './auth'
-import { createAuditLog } from './auditLogging'
+import { getClerkId, getIdentity as _getIdentity } from './auth';
+import { createAuditLog } from './auditLogging';
 // encrypt, decrypt, hashSensitiveData available for data processing
-import { encrypt as _encrypt, decrypt as _decrypt, hashSensitiveData as _hashSensitiveData } from './encryption'
-import { generateDataExport, hasConsentForDataCategory as _hasConsentForDataCategory } from './lgpdCompliance'
-import { validateInput } from './validation'
-import { z } from 'zod'
+import {
+	encrypt as _encrypt,
+	decrypt as _decrypt,
+	hashSensitiveData as _hashSensitiveData,
+} from './encryption';
+import {
+	generateDataExport,
+	hasConsentForDataCategory as _hasConsentForDataCategory,
+} from './lgpdCompliance';
+import { validateInput } from './validation';
+import { z } from 'zod';
 
 /**
  * Request types for LGPD data subject rights
@@ -31,7 +38,7 @@ export const LGPD_RIGHTS_TYPES = {
 	INFORMATION: 'information',
 	OBJECTIVE: 'objective',
 	RESTRICTION: 'restriction',
-} as const
+} as const;
 
 /**
  * Validation schemas for LGPD requests
@@ -48,11 +55,13 @@ const lgpdRequestSchemas = {
 		studentId: z.string(),
 		requestType: z.literal(LGPD_RIGHTS_TYPES.CORRECTION),
 		identityProof: z.string().min(10),
-		fields: z.array(z.object({
-			fieldName: z.string(),
-			currentValue: z.string(),
-			newValue: z.string(),
-		})),
+		fields: z.array(
+			z.object({
+				fieldName: z.string(),
+				currentValue: z.string(),
+				newValue: z.string(),
+			}),
+		),
 		description: z.string().optional(),
 	}),
 
@@ -91,37 +100,41 @@ const lgpdRequestSchemas = {
 		objectionReason: z.string().min(10),
 		description: z.string().optional(),
 	}),
-} as const
+} as const;
 
 /**
  * Creates a new LGPD data subject request
  */
-export async function createLgpdRequest(
-	ctx: MutationCtx,
-	requestData: any
-) {
-	const clerkId = await getClerkId(ctx)
+export async function createLgpdRequest(ctx: MutationCtx, requestData: any) {
+	const clerkId = await getClerkId(ctx);
 
 	// Validate request based on type
-	const requestType = requestData.requestType
-	const schema = lgpdRequestSchemas[requestType as keyof typeof lgpdRequestSchemas]
+	const requestType = requestData.requestType;
+	const schema = lgpdRequestSchemas[requestType as keyof typeof lgpdRequestSchemas];
 
 	if (!schema) {
-		throw new Error(`Invalid LGPD request type: ${requestType}`)
+		throw new Error(`Invalid LGPD request type: ${requestType}`);
 	}
 
-	const validation = validateInput(schema as any, requestData)
+	const validation = validateInput(schema as any, requestData);
 	if (!validation.success) {
-		throw new Error(`Invalid LGPD request: ${validation.error}`)
+		throw new Error(`Invalid LGPD request: ${validation.error}`);
 	}
 
 	// Type assertion for validated data
 	const data = validation.data as {
-		studentId: string
-		requestType: 'access' | 'correction' | 'deletion' | 'portability' | 'information' | 'restriction' | 'objection'
-		description?: string
-		identityProof: string
-	}
+		studentId: string;
+		requestType:
+			| 'access'
+			| 'correction'
+			| 'deletion'
+			| 'portability'
+			| 'information'
+			| 'restriction'
+			| 'objection';
+		description?: string;
+		identityProof: string;
+	};
 
 	// Create LGPD request record
 	const requestId = await ctx.db.insert('lgpdRequests', {
@@ -135,7 +148,7 @@ export async function createLgpdRequest(
 		processedBy: clerkId, // Initial assignee
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
-	})
+	});
 
 	// Log request creation
 	await createAuditLog(ctx, {
@@ -150,16 +163,16 @@ export async function createLgpdRequest(
 		},
 		processingPurpose: 'cumprimento LGPD',
 		legalBasis: 'direito do titular de dados',
-	})
+	});
 
 	// Auto-process for certain request types if simple enough
 	if (requestType === LGPD_RIGHTS_TYPES.ACCESS) {
 		// Schedule immediate processing for access requests
 		// In production, this would be handled by a background job
-		await processAccessRequest(ctx, requestId, data.studentId, clerkId)
+		await processAccessRequest(ctx, requestId, data.studentId, clerkId);
 	}
 
-	return requestId
+	return requestId;
 }
 
 /**
@@ -169,27 +182,39 @@ export async function processAccessRequest(
 	ctx: MutationCtx,
 	requestId: string,
 	studentId: string,
-	requesterId: string
+	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any)
+	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
 	if (!student) {
-		throw new Error('Student not found')
+		throw new Error('Student not found');
 	}
 
 	// Get all consents
 	const consents = await ctx.db
 		.query('lgpdConsent')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-		.collect()
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
+		.collect();
 
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-		.take(100) // Limit for access request
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
+		.take(100); // Limit for access request
 
 	// Prepare access data - use type assertion since we know student is from students table
-	const studentData = student as { name: string; email: string; phone: string; profession: string; hasClinic: boolean; clinicName?: string | null; clinicCity?: string | null }
+	const studentData = student as {
+		name: string;
+		email: string;
+		phone: string;
+		profession: string;
+		hasClinic: boolean;
+		clinicName?: string | null;
+		clinicCity?: string | null;
+	};
 	const accessData = {
 		personalData: {
 			name: studentData.name,
@@ -200,13 +225,13 @@ export async function processAccessRequest(
 			clinicName: studentData.clinicName,
 			clinicCity: studentData.clinicCity,
 		},
-		consents: consents.map(consent => ({
+		consents: consents.map((consent) => ({
 			type: consent.consentType,
 			granted: consent.granted,
 			grantedAt: consent.grantedAt,
 			withdrawal: consent.rightsWithdrawal,
 		})),
-		auditHistory: auditLog.map(log => ({
+		auditHistory: auditLog.map((log) => ({
 			action: log.actionType,
 			date: new Date(log.createdAt).toISOString(),
 			actor: log.actorId,
@@ -225,11 +250,11 @@ export async function processAccessRequest(
 			requesterId,
 			version: '1.0',
 		},
-	}
+	};
 
 	// Update request with response
-	const normalizedRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
-	if (!normalizedRequestId) throw new Error('Invalid request ID')
+	const normalizedRequestId = ctx.db.normalizeId('lgpdRequests', requestId);
+	if (!normalizedRequestId) throw new Error('Invalid request ID');
 	await ctx.db.patch(normalizedRequestId, {
 		status: 'completed',
 		response: JSON.stringify(accessData),
@@ -237,7 +262,7 @@ export async function processAccessRequest(
 		processedBy: requesterId,
 		processingNotes: 'Access request processed successfully',
 		updatedAt: Date.now(),
-	})
+	});
 
 	// Log processing completion
 	await createAuditLog(ctx, {
@@ -253,9 +278,9 @@ export async function processAccessRequest(
 		},
 		processingPurpose: 'cumprimento LGPD - direito de acesso',
 		legalBasis: 'direito do titular de dados',
-	})
+	});
 
-	return accessData
+	return accessData;
 }
 
 /**
@@ -266,28 +291,28 @@ export async function processCorrectionRequest(
 	requestId: string,
 	studentId: string,
 	corrections: Array<{ fieldName: string; newValue: string }>,
-	requesterId: string
+	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any)
+	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
 	if (!student) {
-		throw new Error('Student not found')
+		throw new Error('Student not found');
 	}
 
-	const updates: any = {}
-	const auditEntries: any[] = []
+	const updates: any = {};
+	const auditEntries: any[] = [];
 
 	// Process each correction
 	for (const correction of corrections) {
-		const { fieldName, newValue } = correction
-		const oldValue = student[fieldName as keyof typeof student]
+		const { fieldName, newValue } = correction;
+		const oldValue = student[fieldName as keyof typeof student];
 
 		// Validate correction
 		if (!isValidCorrection(fieldName, newValue, student)) {
-			throw new Error(`Invalid correction for field ${fieldName}`)
+			throw new Error(`Invalid correction for field ${fieldName}`);
 		}
 
 		// Apply correction
-		updates[fieldName] = newValue
+		updates[fieldName] = newValue;
 
 		// Log correction
 		auditEntries.push({
@@ -295,14 +320,14 @@ export async function processCorrectionRequest(
 			oldValue,
 			newValue,
 			timestamp: Date.now(),
-		})
+		});
 	}
 
 	// Update student record
 	await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
 		...updates,
 		updatedAt: Date.now(),
-	})
+	});
 
 	// Log corrections
 	for (const entry of auditEntries) {
@@ -314,12 +339,12 @@ export async function processCorrectionRequest(
 			metadata: entry,
 			processingPurpose: 'cumprimento LGPD - direito de correção',
 			legalBasis: 'direito do titular de dados',
-		})
+		});
 	}
 
 	// Update request
-	const normalizedCorrectionRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
-	if (!normalizedCorrectionRequestId) throw new Error('Invalid request ID')
+	const normalizedCorrectionRequestId = ctx.db.normalizeId('lgpdRequests', requestId);
+	if (!normalizedCorrectionRequestId) throw new Error('Invalid request ID');
 	await ctx.db.patch(normalizedCorrectionRequestId, {
 		status: 'completed',
 		response: JSON.stringify({ corrections: auditEntries }),
@@ -327,9 +352,9 @@ export async function processCorrectionRequest(
 		processedBy: requesterId,
 		processingNotes: `Applied ${corrections.length} corrections`,
 		updatedAt: Date.now(),
-	})
+	});
 
-	return { corrected: corrections.length, corrections: auditEntries }
+	return { corrected: corrections.length, corrections: auditEntries };
 }
 
 /**
@@ -340,19 +365,19 @@ export async function processDeletionRequest(
 	requestId: string,
 	studentId: string,
 	deletionOptions: {
-		includePii?: boolean
-		includeAcademic?: boolean
-		reason: string
+		includePii?: boolean;
+		includeAcademic?: boolean;
+		reason: string;
 	},
-	requesterId: string
+	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any)
+	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
 	if (!student) {
-		throw new Error('Student not found')
+		throw new Error('Student not found');
 	}
 
-	const now = Date.now()
-	const auditEntries: any[] = []
+	const now = Date.now();
+	const auditEntries: any[] = [];
 
 	// Phase 1: Anonymize PII data
 	if (deletionOptions.includePii !== false) {
@@ -366,32 +391,34 @@ export async function processDeletionRequest(
 			encryptedPhone: '[DELETED]',
 			clinicName: null,
 			clinicCity: null,
-		}
+		};
 
 		await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
 			...anonymizedData,
 			updatedAt: now,
-		})
+		});
 
 		auditEntries.push({
 			category: 'pii',
 			action: 'anonymized',
 			timestamp: now,
-		})
+		});
 	}
 
 	// Phase 2: Handle academic data
 	if (deletionOptions.includeAcademic) {
 		const enrollments = await ctx.db
 			.query('enrollments')
-			.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-			.collect()
+			.withIndex('by_student', (q) =>
+				q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+			)
+			.collect();
 
 		for (const enrollment of enrollments) {
 			await ctx.db.patch(enrollment._id, {
 				status: 'cancelado',
 				updatedAt: now,
-			})
+			});
 		}
 
 		auditEntries.push({
@@ -399,26 +426,28 @@ export async function processDeletionRequest(
 			action: 'cancelled',
 			count: enrollments.length,
 			timestamp: now,
-		})
+		});
 	}
 
 	// Phase 3: Delete conversations and messages
 	const conversations = await ctx.db
 		.query('conversations')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-		.collect()
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
+		.collect();
 
 	for (const conversation of conversations) {
 		const messages = await ctx.db
 			.query('messages')
-			.withIndex('by_conversation', q => q.eq('conversationId', conversation._id))
-			.collect()
+			.withIndex('by_conversation', (q) => q.eq('conversationId', conversation._id))
+			.collect();
 
 		for (const message of messages) {
-			await ctx.db.delete(message._id)
+			await ctx.db.delete(message._id);
 		}
 
-		await ctx.db.delete(conversation._id)
+		await ctx.db.delete(conversation._id);
 	}
 
 	auditEntries.push({
@@ -426,7 +455,7 @@ export async function processDeletionRequest(
 		action: 'deleted',
 		count: conversations.length,
 		timestamp: now,
-	})
+	});
 
 	// Log deletion
 	await createAuditLog(ctx, {
@@ -441,11 +470,11 @@ export async function processDeletionRequest(
 		},
 		processingPurpose: 'cumprimento LGPD - direito ao esquecimento',
 		legalBasis: 'direito do titular de dados',
-	})
+	});
 
 	// Update request
-	const normalizedDeletionRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
-	if (!normalizedDeletionRequestId) throw new Error('Invalid request ID')
+	const normalizedDeletionRequestId = ctx.db.normalizeId('lgpdRequests', requestId);
+	if (!normalizedDeletionRequestId) throw new Error('Invalid request ID');
 	await ctx.db.patch(normalizedDeletionRequestId, {
 		status: 'completed',
 		response: JSON.stringify({ deletionSteps: auditEntries }),
@@ -453,9 +482,9 @@ export async function processDeletionRequest(
 		processedBy: requesterId,
 		processingNotes: `Data deletion completed with ${auditEntries.length} steps`,
 		updatedAt: now,
-	})
+	});
 
-	return { deleted: true, steps: auditEntries }
+	return { deleted: true, steps: auditEntries };
 }
 
 /**
@@ -467,31 +496,35 @@ export async function processPortabilityRequest(
 	studentId: string,
 	dataCategories: string[],
 	exportFormat: 'json' | 'csv' | 'pdf',
-	requesterId: string
+	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any)
+	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
 	if (!student) {
-		throw new Error('Student not found')
+		throw new Error('Student not found');
 	}
 
 	// Get consents to verify what can be exported
 	const consents = await ctx.db
 		.query('lgpdConsent')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-		.collect()
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
+		.collect();
 
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
-		.take(100)
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
+		.take(100);
 
 	// Generate export data
-	const exportData = generateDataExport(student, consents, auditLog)
+	const exportData = generateDataExport(student, consents, auditLog);
 
 	// Create file (in production, this would be stored securely)
-	const fileName = `lgpd_export_${studentId}_${Date.now()}.${exportFormat}`
-	const fileUrl = `/exports/${fileName}` // Simplified - actual implementation would store file
+	const fileName = `lgpd_export_${studentId}_${Date.now()}.${exportFormat}`;
+	const fileUrl = `/exports/${fileName}`; // Simplified - actual implementation would store file
 
 	// Log export
 	await createAuditLog(ctx, {
@@ -507,11 +540,11 @@ export async function processPortabilityRequest(
 		},
 		processingPurpose: 'cumprimento LGPD - direito à portabilidade',
 		legalBasis: 'direito do titular de dados',
-	})
+	});
 
 	// Update request
-	const normalizedPortabilityRequestId = ctx.db.normalizeId('lgpdRequests', requestId)
-	if (!normalizedPortabilityRequestId) throw new Error('Invalid request ID')
+	const normalizedPortabilityRequestId = ctx.db.normalizeId('lgpdRequests', requestId);
+	if (!normalizedPortabilityRequestId) throw new Error('Invalid request ID');
 	await ctx.db.patch(normalizedPortabilityRequestId, {
 		status: 'completed',
 		responseFiles: [fileName],
@@ -520,23 +553,22 @@ export async function processPortabilityRequest(
 		processedBy: requesterId,
 		processingNotes: `Data export generated in ${exportFormat} format`,
 		updatedAt: Date.now(),
-	})
+	});
 
-	return { fileUrl, fileName, format: exportFormat }
+	return { fileUrl, fileName, format: exportFormat };
 }
 
 /**
  * Gets all LGPD requests for a student
  */
-export async function getStudentLgpdRequests(
-	ctx: QueryCtx,
-	studentId: string
-) {
+export async function getStudentLgpdRequests(ctx: QueryCtx, studentId: string) {
 	return await ctx.db
 		.query('lgpdRequests')
-		.withIndex('by_student', q => q.eq('studentId', ctx.db.normalizeId('students', studentId) as any))
+		.withIndex('by_student', (q) =>
+			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
+		)
 		.order('desc')
-		.collect()
+		.collect();
 }
 
 /**
@@ -548,19 +580,19 @@ function isValidCorrection(fieldName: string, newValue: string, _student: unknow
 	// Basic validation - extend as needed (student available for context-based validation)
 	switch (fieldName) {
 		case 'name':
-			return newValue.length >= 2 && newValue.length <= 100
+			return newValue.length >= 2 && newValue.length <= 100;
 		case 'email':
-			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newValue)
+			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newValue);
 		case 'phone':
-			return /^\d{10,15}$/.test(newValue.replace(/\D/g, ''))
+			return /^\d{10,15}$/.test(newValue.replace(/\D/g, ''));
 		case 'profession':
-			return newValue.length >= 2 && newValue.length <= 50
+			return newValue.length >= 2 && newValue.length <= 50;
 		case 'clinicName':
-			return !newValue || (newValue.length >= 2 && newValue.length <= 100)
+			return !newValue || (newValue.length >= 2 && newValue.length <= 100);
 		case 'clinicCity':
-			return !newValue || (newValue.length >= 2 && newValue.length <= 50)
+			return !newValue || (newValue.length >= 2 && newValue.length <= 50);
 		default:
-			return false
+			return false;
 	}
 }
 
@@ -574,34 +606,31 @@ function getStudentDataCategory(fieldName: string): string {
 		professionalId: 'profissional',
 		clinicName: 'profissional',
 		clinicCity: 'profissional',
-	}
+	};
 
-	return categoryMap[fieldName] || 'outros'
+	return categoryMap[fieldName] || 'outros';
 }
 
 /**
  * LGPD compliance report generator
  */
-export async function generateComplianceReport(
-	ctx: QueryCtx,
-	organizationId?: string
-) {
-	const now = Date.now()
-	const last30Days = now - (30 * 24 * 60 * 60 * 1000)
+export async function generateComplianceReport(ctx: QueryCtx, organizationId?: string) {
+	const now = Date.now();
+	const last30Days = now - 30 * 24 * 60 * 60 * 1000;
 
 	// Get recent requests
 	const requests = organizationId
 		? await ctx.db.query('lgpdRequests').collect() // Filter by org in production
-		: await ctx.db.query('lgpdRequests').collect()
+		: await ctx.db.query('lgpdRequests').collect();
 
-	const recentRequests = requests.filter(req => req.createdAt >= last30Days)
+	const recentRequests = requests.filter((req) => req.createdAt >= last30Days);
 
 	// Get recent audit logs
 	const auditLogs = organizationId
 		? await ctx.db.query('lgpdAudit').collect() // Filter by org in production
-		: await ctx.db.query('lgpdAudit').collect()
+		: await ctx.db.query('lgpdAudit').collect();
 
-	const recentAuditLogs = auditLogs.filter(log => log.createdAt >= last30Days)
+	const recentAuditLogs = auditLogs.filter((log) => log.createdAt >= last30Days);
 
 	// Generate report
 	const report = {
@@ -611,51 +640,67 @@ export async function generateComplianceReport(
 		},
 		requests: {
 			total: recentRequests.length,
-			byType: recentRequests.reduce((acc, req) => {
-				acc[req.requestType] = (acc[req.requestType] || 0) + 1
-				return acc
-			}, {} as Record<string, number>),
-			byStatus: recentRequests.reduce((acc, req) => {
-				acc[req.status] = (acc[req.status] || 0) + 1
-				return acc
-			}, {} as Record<string, number>),
+			byType: recentRequests.reduce(
+				(acc, req) => {
+					acc[req.requestType] = (acc[req.requestType] || 0) + 1;
+					return acc;
+				},
+				{} as Record<string, number>,
+			),
+			byStatus: recentRequests.reduce(
+				(acc, req) => {
+					acc[req.status] = (acc[req.status] || 0) + 1;
+					return acc;
+				},
+				{} as Record<string, number>,
+			),
 		},
 		auditLogs: {
 			total: recentAuditLogs.length,
-			byAction: recentAuditLogs.reduce((acc, log) => {
-				acc[log.actionType] = (acc[log.actionType] || 0) + 1
-				return acc
-			}, {} as Record<string, number>),
-			byCategory: recentAuditLogs.reduce((acc, log) => {
-				acc[log.dataCategory] = (acc[log.dataCategory] || 0) + 1
-				return acc
-			}, {} as Record<string, number>),
+			byAction: recentAuditLogs.reduce(
+				(acc, log) => {
+					acc[log.actionType] = (acc[log.actionType] || 0) + 1;
+					return acc;
+				},
+				{} as Record<string, number>,
+			),
+			byCategory: recentAuditLogs.reduce(
+				(acc, log) => {
+					acc[log.dataCategory] = (acc[log.dataCategory] || 0) + 1;
+					return acc;
+				},
+				{} as Record<string, number>,
+			),
 		},
 		complianceMetrics: {
-			requestProcessingRate: recentRequests.length > 0
-				? (recentRequests.filter(req => req.status === 'completed').length / recentRequests.length) * 100
-				: 0,
+			requestProcessingRate:
+				recentRequests.length > 0
+					? (recentRequests.filter((req) => req.status === 'completed').length /
+							recentRequests.length) *
+						100
+					: 0,
 			averageProcessingTime: calculateAverageProcessingTime(recentRequests),
 			auditTrailCoverage: 100, // All operations are audited
 		},
 		generatedAt: new Date().toISOString(),
-	}
+	};
 
-	return report
+	return report;
 }
 
 function calculateAverageProcessingTime(requests: any[]): number {
-	const completedRequests = requests.filter(req =>
-		req.status === 'completed' && req.completedAt && req.createdAt
-	)
+	const completedRequests = requests.filter(
+		(req) => req.status === 'completed' && req.completedAt && req.createdAt,
+	);
 
 	if (completedRequests.length === 0) {
-		return 0
+		return 0;
 	}
 
-	const totalTime = completedRequests.reduce((acc, req) =>
-		acc + (req.completedAt - req.createdAt), 0
-	)
+	const totalTime = completedRequests.reduce(
+		(acc, req) => acc + (req.completedAt - req.createdAt),
+		0,
+	);
 
-	return Math.round(totalTime / completedRequests.length)
+	return Math.round(totalTime / completedRequests.length);
 }

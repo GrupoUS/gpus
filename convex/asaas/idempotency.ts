@@ -5,8 +5,8 @@
  * Uses in-memory tracking with TTL for simplicity.
  */
 
-import { v } from 'convex/values'
-import { internalMutation, internalQuery } from '../_generated/server'
+import { v } from 'convex/values';
+import { internalMutation, internalQuery } from '../_generated/server';
 
 // ═══════════════════════════════════════════════════════
 // TYPES
@@ -15,16 +15,16 @@ import { internalMutation, internalQuery } from '../_generated/server'
 /**
  * Default TTL for idempotency keys (24 hours)
  */
-const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000
+const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Idempotency record structure
  */
 interface IdempotencyRecord {
-	key: string
-	processedAt: number
-	expiresAt: number
-	result?: unknown
+	key: string;
+	processedAt: number;
+	expiresAt: number;
+	result?: unknown;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -39,27 +39,27 @@ export const checkIdempotency = internalQuery({
 		key: v.string(),
 	},
 	handler: async (ctx, args) => {
-		const now = Date.now()
+		const now = Date.now();
 
 		// Look for existing idempotency key in settings table
 		const existing = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', `idempotency:${args.key}`))
-			.first()
+			.first();
 
 		if (!existing) {
-			return { exists: false }
+			return { exists: false };
 		}
 
 		// Check if expired
-		const record = existing.value as IdempotencyRecord
+		const record = existing.value as IdempotencyRecord;
 		if (record.expiresAt < now) {
-			return { exists: false, expired: true }
+			return { exists: false, expired: true };
 		}
 
-		return { exists: true, result: record.result }
+		return { exists: true, result: record.result };
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL MUTATION
@@ -75,38 +75,38 @@ export const markIdempotency = internalMutation({
 		ttlMs: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const now = Date.now()
-		const ttl = args.ttlMs ?? DEFAULT_TTL_MS
+		const now = Date.now();
+		const ttl = args.ttlMs ?? DEFAULT_TTL_MS;
 
 		const record: IdempotencyRecord = {
 			key: args.key,
 			processedAt: now,
 			expiresAt: now + ttl,
 			result: args.result,
-		}
+		};
 
 		// Use settings table to store idempotency records
 		const existing = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', `idempotency:${args.key}`))
-			.first()
+			.first();
 
 		if (existing) {
 			await ctx.db.patch(existing._id, {
 				value: record,
 				updatedAt: now,
-			})
+			});
 		} else {
 			await ctx.db.insert('settings', {
 				key: `idempotency:${args.key}`,
 				value: record,
 				updatedAt: now,
-			})
+			});
 		}
 
-		return { success: true }
+		return { success: true };
 	},
-})
+});
 
 /**
  * Clean up expired idempotency records
@@ -115,28 +115,26 @@ export const markIdempotency = internalMutation({
 export const cleanupExpiredIdempotency = internalMutation({
 	args: {},
 	handler: async (ctx) => {
-		const now = Date.now()
+		const now = Date.now();
 
 		// Get all idempotency records
-		const allRecords = await ctx.db
-			.query('settings')
-			.collect()
+		const allRecords = await ctx.db.query('settings').collect();
 
-		const idempotencyRecords = allRecords.filter((r) => r.key.startsWith('idempotency:'))
+		const idempotencyRecords = allRecords.filter((r) => r.key.startsWith('idempotency:'));
 
-		let deletedCount = 0
+		let deletedCount = 0;
 
 		for (const record of idempotencyRecords) {
-			const value = record.value as IdempotencyRecord
+			const value = record.value as IdempotencyRecord;
 			if (value.expiresAt < now) {
-				await ctx.db.delete(record._id)
-				deletedCount++
+				await ctx.db.delete(record._id);
+				deletedCount++;
 			}
 		}
 
-		return { deletedCount }
+		return { deletedCount };
 	},
-})
+});
 
 // ═══════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -145,13 +143,10 @@ export const cleanupExpiredIdempotency = internalMutation({
 /**
  * Generate an idempotency key for an operation
  */
-export function generateIdempotencyKey(
-	operation: string,
-	identifier: string,
-): string {
-	const timestamp = Date.now()
-	const random = Math.random().toString(36).substring(2, 8)
-	return `${operation}:${identifier}:${timestamp}:${random}`
+export function generateIdempotencyKey(operation: string, identifier: string): string {
+	const timestamp = Date.now();
+	const random = Math.random().toString(36).substring(2, 8);
+	return `${operation}:${identifier}:${timestamp}:${random}`;
 }
 
 /**
@@ -159,21 +154,21 @@ export function generateIdempotencyKey(
  * Based on ASAAS customer ID to prevent duplicate imports
  */
 export function generateCustomerImportKey(asaasCustomerId: string): string {
-	return `customer:import:${asaasCustomerId}`
+	return `customer:import:${asaasCustomerId}`;
 }
 
 /**
  * Generate a stable idempotency key for payment import
  */
 export function generatePaymentImportKey(asaasPaymentId: string): string {
-	return `payment:import:${asaasPaymentId}`
+	return `payment:import:${asaasPaymentId}`;
 }
 
 /**
  * Generate a stable idempotency key for subscription import
  */
 export function generateSubscriptionImportKey(asaasSubscriptionId: string): string {
-	return `subscription:import:${asaasSubscriptionId}`
+	return `subscription:import:${asaasSubscriptionId}`;
 }
 
 /**
@@ -188,14 +183,14 @@ export async function withIdempotency<T>(
 ): Promise<{ proceeded: boolean; result?: T; existingResult?: unknown }> {
 	// Check if already processed
 	// @ts-ignore - Deep type instantiation error
-	const existing = await ctx.runQuery(internal.asaas.idempotency.checkIdempotency, { key })
+	const existing = await ctx.runQuery(internal.asaas.idempotency.checkIdempotency, { key });
 
 	if (existing.exists) {
-		return { proceeded: false, existingResult: existing.result }
+		return { proceeded: false, existingResult: existing.result };
 	}
 
 	// Execute the operation
-	const result = await fn()
+	const result = await fn();
 
 	// Mark as processed
 	// @ts-ignore - Deep type instantiation error
@@ -203,7 +198,7 @@ export async function withIdempotency<T>(
 		key,
 		result,
 		ttlMs,
-	})
+	});
 
-	return { proceeded: true, result }
+	return { proceeded: true, result };
 }

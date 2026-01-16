@@ -1,4 +1,4 @@
-import type { AuthConfig } from 'convex/server'
+import type { AuthConfig } from 'convex/server';
 
 /**
  * Convex Auth Configuration for Clerk JWT Verification
@@ -19,4 +19,4 @@ export default {
 			applicationID: 'convex',
 		},
 	],
-} satisfies AuthConfig
+} satisfies AuthConfig;

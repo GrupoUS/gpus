@@ -14,57 +14,57 @@
  */
 export interface BatchProcessorConfig {
 	/** Records per batch (default: 10) */
-	batchSize: number
+	batchSize: number;
 	/** Number of parallel promises (default: 5) */
-	concurrency: number
+	concurrency: number;
 	/** Delay between batches in ms (default: 100) */
-	delayBetweenBatches: number
+	delayBetweenBatches: number;
 	/** Per-record max retries (default: 3) */
-	maxRetries: number
+	maxRetries: number;
 	/** Records before progress update (default: 50) */
-	checkpointInterval: number
+	checkpointInterval: number;
 	/** Adjust batch size based on error rate */
-	adaptiveBatching: boolean
+	adaptiveBatching: boolean;
 }
 
 /**
  * Result from processing a single item
  */
 export interface WorkerResult<T> {
-	success: boolean
-	data?: T
-	error?: string
-	skipped?: boolean
-	reason?: string
-	created?: boolean
-	updated?: boolean
+	success: boolean;
+	data?: T;
+	error?: string;
+	skipped?: boolean;
+	reason?: string;
+	created?: boolean;
+	updated?: boolean;
 }
 
 /**
  * Progress statistics for checkpointing
  */
 export interface ProgressStats {
-	totalProcessed: number
-	successful: number
-	failed: number
-	skipped: number
-	created?: number
-	updated?: number
-	currentBatch: number
-	totalBatches?: number
+	totalProcessed: number;
+	successful: number;
+	failed: number;
+	skipped: number;
+	created?: number;
+	updated?: number;
+	currentBatch: number;
+	totalBatches?: number;
 }
 
 /**
  * Result from batch processing
  */
 export interface BatchResult<T> {
-	successful: T[]
-	failed: Array<{ item: unknown; error: string }>
-	skipped: Array<{ item: unknown; reason: string }>
-	totalProcessed: number
-	duration: number
-	created?: number
-	updated?: number
+	successful: T[];
+	failed: Array<{ item: unknown; error: string }>;
+	skipped: Array<{ item: unknown; reason: string }>;
+	totalProcessed: number;
+	duration: number;
+	created?: number;
+	updated?: number;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -78,7 +78,7 @@ const DEFAULT_CONFIG: BatchProcessorConfig = {
 	maxRetries: 3,
 	checkpointInterval: 50,
 	adaptiveBatching: true,
-}
+};
 
 // ═══════════════════════════════════════════════════════
 // BATCH PROCESSOR
@@ -88,7 +88,7 @@ const DEFAULT_CONFIG: BatchProcessorConfig = {
  * Sleep utility for delays
  */
 function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms))
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -108,72 +108,100 @@ export async function processBatch<T, R>(
 	config: Partial<BatchProcessorConfig> = {},
 	onProgress?: (stats: ProgressStats) => Promise<void>,
 ): Promise<BatchResult<R>> {
-	const startTime = Date.now()
-	const fullConfig = { ...DEFAULT_CONFIG, ...config }
+	const startTime = Date.now();
+	const fullConfig = { ...DEFAULT_CONFIG, ...config };
 
 	// Initialize results
-	const successful: R[] = []
-	const failed: Array<{ item: unknown; error: string }> = []
-	const skipped: Array<{ item: unknown; reason: string }> = []
-	let createdCount = 0
-	let updatedCount = 0
+	const successful: R[] = [];
+	const failed: Array<{ item: unknown; error: string }> = [];
+	const skipped: Array<{ item: unknown; reason: string }> = [];
+	let createdCount = 0;
+	let updatedCount = 0;
 
 	// Calculate total batches
-	const totalBatches = Math.ceil(items.length / fullConfig.batchSize)
-	let currentBatch = 0
-	let totalProcessed = 0
+	const totalBatches = Math.ceil(items.length / fullConfig.batchSize);
+	let currentBatch = 0;
+	let totalProcessed = 0;
 
 	// Adaptive batch sizing state
-	let currentBatchSize = fullConfig.batchSize
-	let consecutiveErrors = 0
+	let currentBatchSize = fullConfig.batchSize;
+	let consecutiveErrors = 0;
 
 	try {
 		// Process items in batches
-	for (let i = 0; i < items.length; i += currentBatchSize) {
-		currentBatch++
-		const batch = items.slice(i, i + currentBatchSize)
+		for (let i = 0; i < items.length; i += currentBatchSize) {
+			currentBatch++;
+			const batch = items.slice(i, i + currentBatchSize);
 
-		// Process batch with concurrency control
-		const batchResults = await processConcurrentBatch(
-			batch,
-			worker,
-			fullConfig.concurrency,
-			fullConfig.maxRetries,
-		)
+			// Process batch with concurrency control
+			const batchResults = await processConcurrentBatch(
+				batch,
+				worker,
+				fullConfig.concurrency,
+				fullConfig.maxRetries,
+			);
 
-		// Aggregate results
-		for (const result of batchResults) {
-			totalProcessed++
+			// Aggregate results
+			for (const result of batchResults) {
+				totalProcessed++;
 
-			if (result.success && result.data) {
-				successful.push(result.data)
-				if (result.created) createdCount++
-				if (result.updated) updatedCount++
-			} else if (result.skipped) {
-				skipped.push({ item: batch[batchResults.indexOf(result)], reason: result.reason || 'Skipped' })
-			} else if (!result.success) {
-				failed.push({ item: batch[batchResults.indexOf(result)], error: result.error || 'Unknown error' })
-				consecutiveErrors++
-			} else {
-				consecutiveErrors = 0
+				if (result.success && result.data) {
+					successful.push(result.data);
+					if (result.created) createdCount++;
+					if (result.updated) updatedCount++;
+				} else if (result.skipped) {
+					skipped.push({
+						item: batch[batchResults.indexOf(result)],
+						reason: result.reason || 'Skipped',
+					});
+				} else if (!result.success) {
+					failed.push({
+						item: batch[batchResults.indexOf(result)],
+						error: result.error || 'Unknown error',
+					});
+					consecutiveErrors++;
+				} else {
+					consecutiveErrors = 0;
+				}
+			}
+
+			// Adaptive batch sizing
+			if (fullConfig.adaptiveBatching) {
+				const errorRate = consecutiveErrors / batch.length;
+				if (errorRate > 0.5) {
+					// Reduce batch size if error rate is high
+					currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
+					console.log(
+						`[BatchProcessor] High error rate (${(errorRate * 100).toFixed(1)}%), reducing batch size to ${currentBatchSize}`,
+					);
+				} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
+					// Increase batch size if error rate is low
+					currentBatchSize = Math.min(fullConfig.batchSize * 2, currentBatchSize + 2);
+				}
+			}
+
+			// Progress callback
+			if (onProgress && totalProcessed % fullConfig.checkpointInterval === 0) {
+				await onProgress({
+					totalProcessed,
+					successful: successful.length,
+					failed: failed.length,
+					skipped: skipped.length,
+					created: createdCount,
+					updated: updatedCount,
+					currentBatch,
+					totalBatches,
+				});
+			}
+
+			// Delay between batches to avoid rate limiting
+			if (i + currentBatchSize < items.length) {
+				await sleep(fullConfig.delayBetweenBatches);
 			}
 		}
 
-		// Adaptive batch sizing
-		if (fullConfig.adaptiveBatching) {
-			const errorRate = consecutiveErrors / batch.length
-			if (errorRate > 0.5) {
-				// Reduce batch size if error rate is high
-				currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2))
-				console.log(`[BatchProcessor] High error rate (${(errorRate * 100).toFixed(1)}%), reducing batch size to ${currentBatchSize}`)
-			} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
-				// Increase batch size if error rate is low
-				currentBatchSize = Math.min(fullConfig.batchSize * 2, currentBatchSize + 2)
-			}
-		}
-
-		// Progress callback
-		if (onProgress && totalProcessed % fullConfig.checkpointInterval === 0) {
+		// Final progress update
+		if (onProgress) {
 			await onProgress({
 				totalProcessed,
 				successful: successful.length,
@@ -183,41 +211,21 @@ export async function processBatch<T, R>(
 				updated: updatedCount,
 				currentBatch,
 				totalBatches,
-			})
+			});
 		}
 
-		// Delay between batches to avoid rate limiting
-		if (i + currentBatchSize < items.length) {
-			await sleep(fullConfig.delayBetweenBatches)
-		}
-	}
-
-	// Final progress update
-	if (onProgress) {
-		await onProgress({
+		return {
+			successful,
+			failed,
+			skipped,
 			totalProcessed,
-			successful: successful.length,
-			failed: failed.length,
-			skipped: skipped.length,
+			duration: Date.now() - startTime,
 			created: createdCount,
 			updated: updatedCount,
-			currentBatch,
-			totalBatches,
-		})
-	}
-
-	return {
-		successful,
-		failed,
-		skipped,
-		totalProcessed,
-		duration: Date.now() - startTime,
-		created: createdCount,
-		updated: updatedCount,
-	}
+		};
 	} catch (error) {
 		// Re-throw any errors that occur during batch processing
-		throw error
+		throw error;
 	}
 }
 
@@ -230,33 +238,33 @@ async function processConcurrentBatch<T, R>(
 	concurrency: number,
 	maxRetries: number,
 ): Promise<WorkerResult<R>[]> {
-	const results: WorkerResult<R>[] = []
+	const results: WorkerResult<R>[] = [];
 
 	// Process items in chunks based on concurrency
 	for (let i = 0; i < batch.length; i += concurrency) {
-		const chunk = batch.slice(i, i + concurrency)
+		const chunk = batch.slice(i, i + concurrency);
 
 		// Execute all items in chunk concurrently
 		const chunkResults = await Promise.all(
 			chunk.map(async (item) => {
-				let lastError: string | undefined
+				let lastError: string | undefined;
 
 				// Retry logic for individual items
 				for (let attempt = 0; attempt <= maxRetries; attempt++) {
 					try {
-						const result = await worker(item)
-						return result
+						const result = await worker(item);
+						return result;
 					} catch (error) {
-						lastError = error instanceof Error ? error.message : String(error)
+						lastError = error instanceof Error ? error.message : String(error);
 
 						// Don't retry on last attempt
 						if (attempt === maxRetries) {
-							break
+							break;
 						}
 
 						// Exponential backoff for retries
-						const delay = Math.min(1000 * Math.pow(2, attempt), 5000)
-						await sleep(delay)
+						const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+						await sleep(delay);
 					}
 				}
 
@@ -264,14 +272,14 @@ async function processConcurrentBatch<T, R>(
 				return {
 					success: false,
 					error: lastError || 'Max retries exceeded',
-				} as WorkerResult<R>
+				} as WorkerResult<R>;
 			}),
-		)
+		);
 
-		results.push(...chunkResults)
+		results.push(...chunkResults);
 	}
 
-	return results
+	return results;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -282,17 +290,17 @@ async function processConcurrentBatch<T, R>(
  * Calculate estimated time remaining
  */
 export function calculateETR(startTime: number, processed: number, total: number): string {
-	const elapsed = Date.now() - startTime
-	const avgTimePerItem = elapsed / processed
-	const remaining = total - processed
-	const etrMs = avgTimePerItem * remaining
+	const elapsed = Date.now() - startTime;
+	const avgTimePerItem = elapsed / processed;
+	const remaining = total - processed;
+	const etrMs = avgTimePerItem * remaining;
 
 	if (etrMs < 60000) {
-		return `${Math.round(etrMs / 1000)}s`
+		return `${Math.round(etrMs / 1000)}s`;
 	} else if (etrMs < 3600000) {
-		return `${Math.round(etrMs / 60000)}m`
+		return `${Math.round(etrMs / 60000)}m`;
 	} else {
-		return `${Math.round(etrMs / 3600000)}h`
+		return `${Math.round(etrMs / 3600000)}h`;
 	}
 }
 
@@ -300,5 +308,5 @@ export function calculateETR(startTime: number, processed: number, total: number
  * Format progress percentage
  */
 export function formatProgress(processed: number, total: number): string {
-	return `${((processed / total) * 100).toFixed(1)}%`
+	return `${((processed / total) * 100).toFixed(1)}%`;
 }

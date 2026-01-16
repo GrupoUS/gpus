@@ -54,7 +54,7 @@ const productValidator = v.union(
 	v.literal('black_neon'),
 	v.literal('comunidade'),
 	v.literal('auriculo'),
-	v.literal('na_mesa_certa')
+	v.literal('na_mesa_certa'),
 );
 
 // Define student import data shape
@@ -72,12 +72,7 @@ const studentImportData = v.object({
 	clinicName: v.optional(v.string()),
 	clinicCity: v.optional(v.string()),
 	status: v.optional(
-		v.union(
-			v.literal('ativo'),
-			v.literal('inativo'),
-			v.literal('pausado'),
-			v.literal('formado')
-		)
+		v.union(v.literal('ativo'), v.literal('inativo'), v.literal('pausado'), v.literal('formado')),
 	),
 
 	// Address fields
@@ -120,7 +115,7 @@ interface ImportRowResult {
 
 // Normalize payment status from various inputs
 function normalizePaymentStatus(
-	status: string | undefined
+	status: string | undefined,
 ): 'em_dia' | 'atrasado' | 'quitado' | 'cancelado' {
 	if (!status) return 'em_dia';
 
@@ -156,7 +151,7 @@ export const bulkImport = mutation({
 	},
 	handler: async (
 		ctx,
-		args
+		args,
 	): Promise<{
 		totalRows: number;
 		successCount: number;
@@ -189,14 +184,12 @@ export const bulkImport = mutation({
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 		const emailToStudent = new Map(
-			existingStudents.filter((s) => s.email).map((s) => [s.email!.toLowerCase(), s])
+			existingStudents.filter((s) => s.email).map((s) => [s.email!.toLowerCase(), s]),
 		);
 		const cpfToStudent = new Map(
-			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(/\D/g, ''), s])
+			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(/\D/g, ''), s]),
 		);
-		const phoneToStudent = new Map(
-			existingStudents.map((s) => [s.phone.replace(/\D/g, ''), s])
-		);
+		const phoneToStudent = new Map(existingStudents.map((s) => [s.phone.replace(/\D/g, ''), s]));
 
 		// Track emails/CPFs/phones processed in this batch
 		const processedEmails = new Set<string>();
@@ -261,7 +254,7 @@ export const bulkImport = mutation({
 				}
 				processedPhones.add(normalizedPhone);
 
-					// Check for duplicate CPF within same batch
+				// Check for duplicate CPF within same batch
 				if (student.cpf) {
 					const normalizedCPF = student.cpf.replace(/\D/g, '');
 
@@ -337,11 +330,11 @@ export const bulkImport = mutation({
 				const studentData = {
 					organizationId,
 					name: student.name.trim(),
-				email: normalizedEmail,
-				phone: normalizedPhone,
-				profession: student.profession ?? 'outro',
-				hasClinic: student.hasClinic ?? false,
-				status: student.status || ('ativo' as const),
+					email: normalizedEmail,
+					phone: normalizedPhone,
+					profession: student.profession ?? 'outro',
+					hasClinic: student.hasClinic ?? false,
+					status: student.status || ('ativo' as const),
 					churnRisk: 'baixo' as const,
 
 					// Encrypted fields (already resolved)
@@ -439,14 +432,14 @@ export const bulkImport = mutation({
 							_id: newStudentId,
 							_creationTime: Date.now(),
 							createdAt: Date.now(),
-						} as typeof existingStudents[0]);
+						} as (typeof existingStudents)[0]);
 					}
 					phoneToStudent.set(normalizedPhone, {
 						...studentData,
 						_id: newStudentId,
 						_creationTime: Date.now(),
 						createdAt: Date.now(),
-					} as typeof existingStudents[0]);
+					} as (typeof existingStudents)[0]);
 
 					// Log LGPD audit for creation
 					await logAudit(ctx, {
@@ -499,9 +492,7 @@ export const bulkImport = mutation({
 				if (existingEnrollment) {
 					// Update existing enrollment
 					await ctx.db.patch(existingEnrollment._id, enrollmentData);
-					warnings.push(
-						`Matrícula existente para ${args.product} atualizada`
-					);
+					warnings.push(`Matrícula existente para ${args.product} atualizada`);
 				} else {
 					// Create new enrollment
 					await ctx.db.insert('enrollments', {
@@ -554,7 +545,7 @@ export const validateImport = mutation({
 	},
 	handler: async (
 		ctx,
-		args
+		args,
 	): Promise<{
 		valid: boolean;
 		totalRows: number;
@@ -582,14 +573,12 @@ export const validateImport = mutation({
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 		const existingEmails = new Set(
-			existingStudents.filter((s) => s.email).map((s) => s.email!.toLowerCase())
+			existingStudents.filter((s) => s.email).map((s) => s.email!.toLowerCase()),
 		);
 		const existingCPFs = new Set(
-			existingStudents.filter((s) => s.cpf).map((s) => s.cpf?.replace(/\D/g, ''))
+			existingStudents.filter((s) => s.cpf).map((s) => s.cpf?.replace(/\D/g, '')),
 		);
-		const existingPhones = new Set(
-			existingStudents.map((s) => s.phone.replace(/\D/g, ''))
-		);
+		const existingPhones = new Set(existingStudents.map((s) => s.phone.replace(/\D/g, '')));
 
 		const errors: Array<{ rowNumber: number; errors: string[] }> = [];
 		const duplicateEmails: string[] = [];
@@ -668,17 +657,18 @@ export const validateImport = mutation({
 					willUpdate++;
 				} else {
 					// Only add error if not in upsert mode
-					const identifier = student.cpf && existingCPFs.has(student.cpf.replace(/\D/g, ''))
-						? 'CPF'
-						: normalizedPhone && existingPhones.has(normalizedPhone)
-							? 'Telefone'
-							: 'Email';
+					const identifier =
+						student.cpf && existingCPFs.has(student.cpf.replace(/\D/g, ''))
+							? 'CPF'
+							: normalizedPhone && existingPhones.has(normalizedPhone)
+								? 'Telefone'
+								: 'Email';
 					rowErrors.push(`${identifier} já cadastrado`);
 				}
 			} else {
 				willCreate++;
 			}
-		// profession and hasClinic are optional - defaults applied during import
+			// profession and hasClinic are optional - defaults applied during import
 
 			// Check CPF duplicates
 			if (student.cpf) {

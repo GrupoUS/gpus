@@ -6,9 +6,9 @@
  * in actions.ts and export.ts, adding enhanced logging and validation.
  */
 
-import { internal } from "../_generated/api";
-import { createAsaasClient, type AsaasClient } from "./client";
-import { AsaasConfigurationError } from "./errors";
+import { internal } from '../_generated/api';
+import { createAsaasClient, type AsaasClient } from './client';
+import { AsaasConfigurationError } from './errors';
 
 // ═══════════════════════════════════════════════════════
 // API KEY VALIDATION
@@ -20,43 +20,43 @@ import { AsaasConfigurationError } from "./errors";
  * @returns Object with validation result and optional error message
  */
 export function validateAsaasApiKey(key: string): {
-  valid: boolean;
-  error?: string;
+	valid: boolean;
+	error?: string;
 } {
-  // Check if key is empty or only whitespace
-  if (!key || key.trim().length === 0) {
-    return { valid: false, error: "API Key não pode estar vazia" };
-  }
+	// Check if key is empty or only whitespace
+	if (!key || key.trim().length === 0) {
+		return { valid: false, error: 'API Key não pode estar vazia' };
+	}
 
-  // Clean the key
-  const cleanKey = key.trim();
+	// Clean the key
+	const cleanKey = key.trim();
 
-  // Check minimum length (Asaas keys are typically 40+ characters)
-  if (cleanKey.length < 32) {
-    return {
-      valid: false,
-      error: `API Key muito curta (${cleanKey.length} caracteres, mínimo 32)`,
-    };
-  }
+	// Check minimum length (Asaas keys are typically 40+ characters)
+	if (cleanKey.length < 32) {
+		return {
+			valid: false,
+			error: `API Key muito curta (${cleanKey.length} caracteres, mínimo 32)`,
+		};
+	}
 
-  // Check if starts with expected prefix ($aact_)
-  if (!cleanKey.startsWith("$aact_")) {
-    return {
-      valid: false,
-      error: "API Key deve começar com $aact_",
-    };
-  }
+	// Check if starts with expected prefix ($aact_)
+	if (!cleanKey.startsWith('$aact_')) {
+		return {
+			valid: false,
+			error: 'API Key deve começar com $aact_',
+		};
+	}
 
-  // Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
-  const validPattern = /^[\$a-zA-Z0-9_]+$/;
-  if (!validPattern.test(cleanKey)) {
-    return {
-      valid: false,
-      error: "API Key contém caracteres inválidos",
-    };
-  }
+	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
+	const validPattern = /^[\$a-zA-Z0-9_]+$/;
+	if (!validPattern.test(cleanKey)) {
+		return {
+			valid: false,
+			error: 'API Key contém caracteres inválidos',
+		};
+	}
 
-  return { valid: true };
+	return { valid: true };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -72,78 +72,67 @@ export function validateAsaasApiKey(key: string): {
  * @returns Configured AsaasClient instance
  * @throws AsaasConfigurationError if API key is not configured or invalid
  */
-export async function getAsaasClientFromSettings(
-  ctx: any
-): Promise<AsaasClient> {
-  console.log("[AsaasConfig] Checking database settings...");
+export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
+	console.log('[AsaasConfig] Checking database settings...');
 
-  // Try to get settings from database first
-  const config: Record<string, any> | null = await ctx.runQuery(
-    // @ts-ignore - Deep type instantiation error with Convex internal references
-    internal.settings.internalGetIntegrationConfig,
-    { integrationName: "asaas" }
-  );
+	// Try to get settings from database first
+	const config: Record<string, any> | null = await ctx.runQuery(
+		// @ts-ignore - Deep type instantiation error with Convex internal references
+		internal.settings.internalGetIntegrationConfig,
+		{ integrationName: 'asaas' },
+	);
 
-  // Log what keys are available in config
-  if (config) {
-    const configKeys = Object.keys(config).filter(
-      (k) => config[k] !== undefined && config[k] !== null
-    );
-    console.log("[AsaasConfig] Database config keys:", configKeys.join(", "));
-  } else {
-    console.log("[AsaasConfig] No database config found");
-  }
+	// Log what keys are available in config
+	if (config) {
+		const configKeys = Object.keys(config).filter(
+			(k) => config[k] !== undefined && config[k] !== null,
+		);
+		console.log('[AsaasConfig] Database config keys:', configKeys.join(', '));
+	} else {
+		console.log('[AsaasConfig] No database config found');
+	}
 
-  // Determine API key source
-  const dbApiKey = config?.api_key || config?.apiKey;
-  const envApiKey = process.env.ASAAS_API_KEY;
-  const apiKey = dbApiKey || envApiKey;
+	// Determine API key source
+	const dbApiKey = config?.api_key || config?.apiKey;
+	const envApiKey = process.env.ASAAS_API_KEY;
+	const apiKey = dbApiKey || envApiKey;
 
-  // Determine base URL
-  const baseUrl =
-    config?.base_url ||
-    config?.baseUrl ||
-    process.env.ASAAS_BASE_URL ||
-    "https://api.asaas.com/v3";
+	// Determine base URL
+	const baseUrl =
+		config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3';
 
-  // Log the source of the API key
-  const apiKeySource = dbApiKey ? "database" : envApiKey ? "env var" : "none";
-  console.log(
-    "[AsaasConfig] API Key source:",
-    apiKey ? apiKeySource : "not found"
-  );
-  console.log("[AsaasConfig] Base URL:", baseUrl);
+	// Log the source of the API key
+	const apiKeySource = dbApiKey ? 'database' : envApiKey ? 'env var' : 'none';
+	console.log('[AsaasConfig] API Key source:', apiKey ? apiKeySource : 'not found');
+	console.log('[AsaasConfig] Base URL:', baseUrl);
 
-  // Check if API key exists
-  if (!apiKey) {
-    console.error("[AsaasConfig] API Key not configured");
-    throw new AsaasConfigurationError(
-      "ASAAS_API_KEY não configurada.\n" +
-        "Configure via:\n" +
-        "1. Convex Dashboard > Environment Variables > ASAAS_API_KEY, OU\n" +
-        "2. UI Admin > Configurações > Integrações > Asaas > Salvar API Key\n" +
-        "Verifique o status em: Admin > Integrações > Asaas > Status da Configuração"
-    );
-  }
+	// Check if API key exists
+	if (!apiKey) {
+		console.error('[AsaasConfig] API Key not configured');
+		throw new AsaasConfigurationError(
+			'ASAAS_API_KEY não configurada.\n' +
+				'Configure via:\n' +
+				'1. Convex Dashboard > Environment Variables > ASAAS_API_KEY, OU\n' +
+				'2. UI Admin > Configurações > Integrações > Asaas > Salvar API Key\n' +
+				'Verifique o status em: Admin > Integrações > Asaas > Status da Configuração',
+		);
+	}
 
-  // Validate API key format
-  const validation = validateAsaasApiKey(apiKey);
-  if (!validation.valid) {
-    console.error(
-      "[AsaasConfig] API Key validation: FAILED -",
-      validation.error
-    );
-    throw new AsaasConfigurationError(
-      `API Key inválida: ${validation.error}\n` +
-        "Verifique se a key foi copiada corretamente do painel Asaas.\n" +
-        "Gere uma nova key em: https://www.asaas.com > Integrações > API"
-    );
-  }
+	// Validate API key format
+	const validation = validateAsaasApiKey(apiKey);
+	if (!validation.valid) {
+		console.error('[AsaasConfig] API Key validation: FAILED -', validation.error);
+		throw new AsaasConfigurationError(
+			`API Key inválida: ${validation.error}\n` +
+				'Verifique se a key foi copiada corretamente do painel Asaas.\n' +
+				'Gere uma nova key em: https://www.asaas.com > Integrações > API',
+		);
+	}
 
-  console.log("[AsaasConfig] API Key validation: PASSED");
+	console.log('[AsaasConfig] API Key validation: PASSED');
 
-  // Use enhanced client with circuit breaker and retry logic
-  return createAsaasClient({ apiKey, baseUrl });
+	// Use enhanced client with circuit breaker and retry logic
+	return createAsaasClient({ apiKey, baseUrl });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -156,126 +145,111 @@ export async function getAsaasClientFromSettings(
  * @returns Configuration status object
  */
 export async function getConfigurationStatus(ctx: any): Promise<{
-  isConfigured: boolean;
-  isValid: boolean;
-  activeSource: "database" | "environment" | "none";
-  sources: {
-    environment: {
-      exists: boolean;
-      valid: boolean;
-      masked: string | null;
-    };
-    database: {
-      exists: boolean;
-      valid: boolean;
-      masked: string | null;
-    };
-  };
-  baseUrl: string;
-  recommendations: string[];
+	isConfigured: boolean;
+	isValid: boolean;
+	activeSource: 'database' | 'environment' | 'none';
+	sources: {
+		environment: {
+			exists: boolean;
+			valid: boolean;
+			masked: string | null;
+		};
+		database: {
+			exists: boolean;
+			valid: boolean;
+			masked: string | null;
+		};
+	};
+	baseUrl: string;
+	recommendations: string[];
 }> {
-  // Check environment variable
-  const envKeyExists = !!process.env.ASAAS_API_KEY;
-  const envKeyValid = envKeyExists
-    ? validateAsaasApiKey(process.env.ASAAS_API_KEY!).valid
-    : false;
+	// Check environment variable
+	const envKeyExists = !!process.env.ASAAS_API_KEY;
+	const envKeyValid = envKeyExists ? validateAsaasApiKey(process.env.ASAAS_API_KEY!).valid : false;
 
-  // Check database settings
-  const config: Record<string, any> | null = await ctx.runQuery(
-    // @ts-ignore - Deep type instantiation error with Convex internal references
-    internal.settings.internalGetIntegrationConfig,
-    { integrationName: "asaas" }
-  );
+	// Check database settings
+	const config: Record<string, any> | null = await ctx.runQuery(
+		// @ts-ignore - Deep type instantiation error with Convex internal references
+		internal.settings.internalGetIntegrationConfig,
+		{ integrationName: 'asaas' },
+	);
 
-  const dbKey = config?.api_key || config?.apiKey;
-  const dbKeyExists = !!dbKey;
-  const dbKeyValid = dbKeyExists ? validateAsaasApiKey(dbKey).valid : false;
+	const dbKey = config?.api_key || config?.apiKey;
+	const dbKeyExists = !!dbKey;
+	const dbKeyValid = dbKeyExists ? validateAsaasApiKey(dbKey).valid : false;
 
-  // Determine which source is being used
-  const activeSource: "database" | "environment" | "none" = dbKeyExists
-    ? "database"
-    : envKeyExists
-      ? "environment"
-      : "none";
+	// Determine which source is being used
+	const activeSource: 'database' | 'environment' | 'none' = dbKeyExists
+		? 'database'
+		: envKeyExists
+			? 'environment'
+			: 'none';
 
-  const isConfigured = dbKeyExists || envKeyExists;
-  const isValid = (dbKeyExists && dbKeyValid) || (envKeyExists && envKeyValid);
+	const isConfigured = dbKeyExists || envKeyExists;
+	const isValid = (dbKeyExists && dbKeyValid) || (envKeyExists && envKeyValid);
 
-  // Get base URL
-  const baseUrl =
-    config?.base_url ||
-    config?.baseUrl ||
-    process.env.ASAAS_BASE_URL ||
-    "https://api.asaas.com/v3";
+	// Get base URL
+	const baseUrl =
+		config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3';
 
-  // Generate recommendations
-  const recommendations = generateRecommendations(
-    isConfigured,
-    isValid,
-    activeSource,
-    dbKeyValid,
-    envKeyValid
-  );
+	// Generate recommendations
+	const recommendations = generateRecommendations(
+		isConfigured,
+		isValid,
+		activeSource,
+		dbKeyValid,
+		envKeyValid,
+	);
 
-  return {
-    isConfigured,
-    isValid,
-    activeSource,
-    sources: {
-      environment: {
-        exists: envKeyExists,
-        valid: envKeyValid,
-        masked: envKeyExists
-          ? `${process.env.ASAAS_API_KEY!.substring(0, 8)}...`
-          : null,
-      },
-      database: {
-        exists: dbKeyExists,
-        valid: dbKeyValid,
-        masked: dbKeyExists ? `${dbKey.substring(0, 8)}...` : null,
-      },
-    },
-    baseUrl,
-    recommendations,
-  };
+	return {
+		isConfigured,
+		isValid,
+		activeSource,
+		sources: {
+			environment: {
+				exists: envKeyExists,
+				valid: envKeyValid,
+				masked: envKeyExists ? `${process.env.ASAAS_API_KEY!.substring(0, 8)}...` : null,
+			},
+			database: {
+				exists: dbKeyExists,
+				valid: dbKeyValid,
+				masked: dbKeyExists ? `${dbKey.substring(0, 8)}...` : null,
+			},
+		},
+		baseUrl,
+		recommendations,
+	};
 }
 
 /**
  * Generate recommendations based on configuration status
  */
 function generateRecommendations(
-  isConfigured: boolean,
-  isValid: boolean,
-  source: string,
-  dbKeyValid: boolean,
-  envKeyValid: boolean
+	isConfigured: boolean,
+	isValid: boolean,
+	source: string,
+	dbKeyValid: boolean,
+	envKeyValid: boolean,
 ): string[] {
-  const recommendations: string[] = [];
+	const recommendations: string[] = [];
 
-  if (!isConfigured) {
-    recommendations.push(
-      "Configure a API key via Convex Dashboard ou UI Admin"
-    );
-    recommendations.push("Acesse: Admin > Configurações > Integrações > Asaas");
-    recommendations.push(
-      "Ou adicione ASAAS_API_KEY nas Environment Variables do Convex Dashboard"
-    );
-  } else if (!isValid) {
-    if (source === "database" && !dbKeyValid) {
-      recommendations.push("API key no database está inválida");
-    } else if (source === "environment" && !envKeyValid) {
-      recommendations.push("API key em environment variable está inválida");
-    }
-    recommendations.push(
-      "Verifique se a key foi copiada corretamente do painel Asaas"
-    );
-    recommendations.push(
-      "Gere uma nova key em: https://www.asaas.com > Integrações > API"
-    );
-  } else {
-    recommendations.push("✅ Configuração válida");
-    recommendations.push(`📍 Usando API key de: ${source}`);
-  }
+	if (!isConfigured) {
+		recommendations.push('Configure a API key via Convex Dashboard ou UI Admin');
+		recommendations.push('Acesse: Admin > Configurações > Integrações > Asaas');
+		recommendations.push('Ou adicione ASAAS_API_KEY nas Environment Variables do Convex Dashboard');
+	} else if (!isValid) {
+		if (source === 'database' && !dbKeyValid) {
+			recommendations.push('API key no database está inválida');
+		} else if (source === 'environment' && !envKeyValid) {
+			recommendations.push('API key em environment variable está inválida');
+		}
+		recommendations.push('Verifique se a key foi copiada corretamente do painel Asaas');
+		recommendations.push('Gere uma nova key em: https://www.asaas.com > Integrações > API');
+	} else {
+		recommendations.push('✅ Configuração válida');
+		recommendations.push(`📍 Usando API key de: ${source}`);
+	}
 
-  return recommendations;
+	return recommendations;
 }

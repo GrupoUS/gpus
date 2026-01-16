@@ -3,11 +3,11 @@ import { test, expect } from '@playwright/test';
 test.describe('Student Creation Flow', () => {
 	// Note: This test assumes the user is authenticated.
 	// In a production environment, we would use a storageState or a mock auth provider.
-	
+
 	test.beforeEach(async ({ page }) => {
 		// Navigate to the students page
 		await page.goto('/students');
-		
+
 		// If redirected to sign-in, it means auth is required and not mocked.
 		// For the purpose of this task, we proceed with the selectors.
 	});
@@ -22,12 +22,19 @@ test.describe('Student Creation Flow', () => {
 		const uniqueId = Date.now();
 		await page.getByLabel(/Nome Completo/i).fill(`Aluno de Teste E2E ${uniqueId}`);
 		await page.getByLabel(/Email/i).fill(`teste.e2e.${uniqueId}@grupous.com.br`);
-		await page.getByLabel(/Telefone/i).fill('119' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0'));
+		await page.getByLabel(/Telefone/i).fill(
+			'119' +
+				Math.floor(Math.random() * 100000000)
+					.toString()
+					.padStart(8, '0'),
+		);
 		await page.getByLabel(/CPF/i).fill('123.456.789-01');
 		await page.getByLabel(/Profissão/i).fill('Esteticista');
 
 		// LGPD Consent - Using the label to click
-		const lgpdLabel = page.getByText(/Estou de acordo com o processamento dos meus dados pessoais/i);
+		const lgpdLabel = page.getByText(
+			/Estou de acordo com o processamento dos meus dados pessoais/i,
+		);
 		await expect(lgpdLabel).toBeVisible();
 		await lgpdLabel.click();
 
@@ -39,7 +46,7 @@ test.describe('Student Creation Flow', () => {
 		// Verify success toast or error toast to understand what's happening
 		const successToast = page.getByText(/Aluno criado com sucesso!/i);
 		const errorToast = page.getByText(/Erro ao criar aluno/i);
-		
+
 		await expect(successToast.or(errorToast)).toBeVisible({ timeout: 15000 });
 		await expect(successToast).toBeVisible();
 	});

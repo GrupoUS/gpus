@@ -5,7 +5,7 @@
  * handling personal data in educational CRM systems.
  */
 
-import { v } from 'convex/values'
+import { v } from 'convex/values';
 
 /**
  * LGPD Consent Types for Data Processing
@@ -17,7 +17,7 @@ export const LGPD_CONSENT_TYPES = {
 	ANALYTICS: 'analytics',
 	PROFILE_STORAGE: 'profile_storage',
 	CERTIFICATION_PROOF: 'certification_proof',
-} as const
+} as const;
 
 /**
  * LGPD Data Subject Rights
@@ -29,7 +29,7 @@ export const LGPD_RIGHTS = {
 	PORTABILITY: 'portability',
 	INFORMATION: 'information',
 	OBJECTIVE: 'objective',
-} as const
+} as const;
 
 /**
  * LGPD Data Categories
@@ -43,7 +43,7 @@ export const LGPD_DATA_CATEGORIES = {
 	HEALTH: 'health',
 	BIOMETRIC: 'biometric',
 	GEOLOCATION: 'geolocation',
-} as const
+} as const;
 
 /**
  * Zod schema for LGPD consent records
@@ -61,7 +61,7 @@ export const consentRecordSchema = v.object({
 	justification: v.optional(v.string()),
 	dataCategories: v.array(v.string()),
 	rightsWithdrawal: v.boolean(),
-})
+});
 
 /**
  * Zod schema for LGPD audit log
@@ -77,7 +77,7 @@ export const auditLogSchema = v.object({
 		v.literal('consent_granted'),
 		v.literal('consent_withdrawn'),
 		v.literal('data_export'),
-		v.literal('data_portability')
+		v.literal('data_portability'),
 	),
 	actorId: v.string(),
 	actorRole: v.optional(v.string()),
@@ -89,7 +89,7 @@ export const auditLogSchema = v.object({
 	legalBasis: v.string(),
 	retentionDays: v.optional(v.number()),
 	createdAt: v.number(),
-})
+});
 
 /**
  * Zod schema for LGPD data retention policies
@@ -103,7 +103,7 @@ export const retentionPolicySchema = v.object({
 	notificationBeforeDeletion: v.number(), // days
 	requiresExplicitConsent: v.boolean(),
 	minorAgeRestriction: v.optional(v.number()),
-})
+});
 
 /**
  * Generates LGPD-compliant consent text
@@ -112,60 +112,58 @@ export function generateConsentText(
 	_consentType: string, // Consent type available for customization if needed
 	dataCategories: string[],
 	processingPurpose: string,
-	retentionDays: number
+	retentionDays: number,
 ): string {
 	const baseText = `Conforme a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018),
-	autorizo o tratamento de meus dados pessoais para as seguintes finalidades:`
+	autorizo o tratamento de meus dados pessoais para as seguintes finalidades:`;
 
-	const categoriesText = dataCategories.map(category => {
-		const descriptions: Record<string, string> = {
-			[LGPD_DATA_CATEGORIES.IDENTIFICATION]: 'identificação (nome, CPF, e-mail)',
-			[LGPD_DATA_CATEGORIES.CONTACT]: 'contato (telefone, endereço)',
-			[LGPD_DATA_CATEGORIES.PROFESSIONAL]: 'dados profissionais (formação, área de atuação)',
-			[LGPD_DATA_CATEGORIES.FINANCIAL]: 'dados financeiros (informações de pagamento)',
-			[LGPD_DATA_CATEGORIES.ACADEMIC]: 'dados acadêmicos (histórico, certificados)',
-			[LGPD_DATA_CATEGORIES.HEALTH]: 'dados de saúde (procedimentos estéticos)',
-		}
-		return descriptions[category] || category
-	}).join(', ')
+	const categoriesText = dataCategories
+		.map((category) => {
+			const descriptions: Record<string, string> = {
+				[LGPD_DATA_CATEGORIES.IDENTIFICATION]: 'identificação (nome, CPF, e-mail)',
+				[LGPD_DATA_CATEGORIES.CONTACT]: 'contato (telefone, endereço)',
+				[LGPD_DATA_CATEGORIES.PROFESSIONAL]: 'dados profissionais (formação, área de atuação)',
+				[LGPD_DATA_CATEGORIES.FINANCIAL]: 'dados financeiros (informações de pagamento)',
+				[LGPD_DATA_CATEGORIES.ACADEMIC]: 'dados acadêmicos (histórico, certificados)',
+				[LGPD_DATA_CATEGORIES.HEALTH]: 'dados de saúde (procedimentos estéticos)',
+			};
+			return descriptions[category] || category;
+		})
+		.join(', ');
 
 	const retentionText = `Seus dados serão armazenados por ${retentionDays} dias,
-	exceto quando houver obrigação legal ou contratual de manutenção.`
+	exceto quando houver obrigação legal ou contratual de manutenção.`;
 
 	const rightsText = `Você tem direito de acesso, correção, exclusão,
 	portabilidade e informações sobre o compartilhamento de seus dados,
-	conforme previsto nos artigos 18 e 20 da LGPD.`
+	conforme previsto nos artigos 18 e 20 da LGPD.`;
 
 	const withdrawalText = `Esta autorização pode ser revogada a qualquer momento,
-	sem efeitos retroativos.`
+	sem efeitos retroativos.`;
 
-	return `${baseText}\n\n${processingPurpose}\n\n${categoriesText}\n\n${retentionText}\n\n${rightsText}\n\n${withdrawalText}`
+	return `${baseText}\n\n${processingPurpose}\n\n${categoriesText}\n\n${retentionText}\n\n${rightsText}\n\n${withdrawalText}`;
 }
 
 /**
  * Validates if a student is under 18 (minor data protection)
  */
 export function isMinor(birthDate: number | string): boolean {
-	const birth = typeof birthDate === 'string' ? new Date(birthDate) : new Date(birthDate)
-	const today = new Date()
-	const age = today.getFullYear() - birth.getFullYear()
-	const monthDiff = today.getMonth() - birth.getMonth()
+	const birth = typeof birthDate === 'string' ? new Date(birthDate) : new Date(birthDate);
+	const today = new Date();
+	const age = today.getFullYear() - birth.getFullYear();
+	const monthDiff = today.getMonth() - birth.getMonth();
 
 	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-		return age - 1 < 18
+		return age - 1 < 18;
 	}
 
-	return age < 18
+	return age < 18;
 }
 
 /**
  * Generates LGPD-compliant data export format
  */
-export function generateDataExport(
-	studentData: any,
-	consents: any[],
-	auditLog: any[]
-): string {
+export function generateDataExport(studentData: any, consents: any[], auditLog: any[]): string {
 	const exportData = {
 		metadata: {
 			exportDate: new Date().toISOString(),
@@ -182,19 +180,19 @@ export function generateDataExport(
 				: '[REDACTED BY CONSENT]',
 		},
 		dataProcessing: {
-			purposes: consents.map(c => c.consentType),
-			dataCategories: consents.flatMap(c => c.dataCategories || []),
+			purposes: consents.map((c) => c.consentType),
+			dataCategories: consents.flatMap((c) => c.dataCategories || []),
 			legalBasis: 'consentimento explícito',
 			retentionPolicies: getRetentionPolicies(),
 		},
-		consents: consents.map(consent => ({
+		consents: consents.map((consent) => ({
 			type: consent.consentType,
 			granted: consent.granted,
 			grantedAt: new Date(consent.grantedAt).toISOString(),
 			expiresAt: consent.expiresAt ? new Date(consent.expiresAt).toISOString() : null,
 			withdrawn: consent.rightsWithdrawal,
 		})),
-		auditHistory: auditLog.map(log => ({
+		auditHistory: auditLog.map((log) => ({
 			action: log.actionType,
 			date: new Date(log.createdAt).toISOString(),
 			actor: log.actorId,
@@ -208,32 +206,27 @@ export function generateDataExport(
 			information: true,
 			objective: true,
 		},
-	}
+	};
 
-	return JSON.stringify(exportData, null, 2)
+	return JSON.stringify(exportData, null, 2);
 }
 
 /**
  * Checks if student has given consent for specific data category
  */
-export function hasConsentForDataCategory(
-	consents: any[],
-	dataCategory: string
-): boolean {
-	return consents.some(consent =>
-		consent.granted &&
-		!consent.rightsWithdrawal &&
-		consent.dataCategories?.includes(dataCategory)
-	)
+export function hasConsentForDataCategory(consents: any[], dataCategory: string): boolean {
+	return consents.some(
+		(consent) =>
+			consent.granted &&
+			!consent.rightsWithdrawal &&
+			consent.dataCategories?.includes(dataCategory),
+	);
 }
 
 /**
  * Calculates data retention period based on LGPD requirements
  */
-export function calculateRetentionDays(
-	dataCategory: string,
-	studentStatus: string
-): number {
+export function calculateRetentionDays(dataCategory: string, studentStatus: string): number {
 	const retentionRules: Record<string, Record<string, number>> = {
 		[LGPD_DATA_CATEGORIES.IDENTIFICATION]: {
 			ativo: 365 * 5, // 5 years while active
@@ -255,14 +248,14 @@ export function calculateRetentionDays(
 			inativo: 365 * 1, // 1 year
 			formado: 365 * 2, // 2 years
 		},
-	}
+	};
 
-	const rules = retentionRules[dataCategory]
+	const rules = retentionRules[dataCategory];
 	if (!rules || !rules[studentStatus]) {
-		return 365 * 2 // Default: 2 years
+		return 365 * 2; // Default: 2 years
 	}
 
-	return rules[studentStatus]
+	return rules[studentStatus];
 }
 
 /**
@@ -326,7 +319,7 @@ Para exercer seus direitos, entre em contato com nosso Encarregado
 de Proteção de Dados através do e-mail: dpo@portalgrupo.us
 
 Esta política foi atualizada em ${new Date().toLocaleDateString('pt-BR')}.
-	`.trim()
+	`.trim();
 }
 
 /**
@@ -338,5 +331,5 @@ function getRetentionPolicies() {
 		[LGPD_DATA_CATEGORIES.ACADEMIC]: '10 anos enquanto ativo, 20 anos após formatura',
 		[LGPD_DATA_CATEGORIES.FINANCIAL]: '5 anos (obrigações fiscais)',
 		[LGPD_DATA_CATEGORIES.CONTACT]: '3 anos enquanto ativo, 1 ano após inatividade',
-	}
+	};
 }

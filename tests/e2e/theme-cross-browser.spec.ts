@@ -13,13 +13,10 @@ import { test, expect } from '@playwright/test';
  * TODO: Add Clerk auth fixtures and move these tests to authenticated E2E suite
  */
 test.describe('Theme System Cross-Browser', () => {
-	test.skip(
-		'theme toggle requires authentication - toggle not on public pages',
-		async () => {
-			// Theme toggle is only available in authenticated sidebar
-			// These tests need Clerk auth fixtures to work
-		}
-	);
+	test.skip('theme toggle requires authentication - toggle not on public pages', async () => {
+		// Theme toggle is only available in authenticated sidebar
+		// These tests need Clerk auth fixtures to work
+	});
 });
 
 test.describe('Landing Page Theme Support', () => {
@@ -35,9 +32,7 @@ test.describe('Landing Page Theme Support', () => {
 		await expect(page.locator('body')).toBeVisible();
 	});
 
-	test('should render correctly with light mode browser preference', async ({
-		page,
-	}) => {
+	test('should render correctly with light mode browser preference', async ({ page }) => {
 		// Emulate light mode system preference
 		await page.emulateMedia({ colorScheme: 'light' });
 		await page.goto('/');

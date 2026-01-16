@@ -6,11 +6,7 @@ const config: KnipConfig = {
 	vite: {
 		config: 'vite.config.ts',
 	},
-	ignore: [
-		'src/components/ui/**',
-		'convex/_generated/**',
-		'src/routeTree.gen.ts',
-	],
+	ignore: ['src/components/ui/**', 'convex/_generated/**', 'src/routeTree.gen.ts'],
 	ignoreDependencies: ['@tanstack/router-devtools', 'tailwindcss-animate'],
 	rules: {
 		files: 'warn',

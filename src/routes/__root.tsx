@@ -7,6 +7,8 @@ interface RouterContext {
 		| {
 				userId: string | null | undefined;
 				isLoaded: boolean;
+				orgRole?: string | null;
+				orgPermissions?: string[] | null;
 				has?: (args: { permission: string }) => boolean;
 		  }
 		| undefined;

@@ -66,6 +66,7 @@ import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_securityHealth from "../lib/securityHealth.js";
 import type * as lib_securityMiddleware from "../lib/securityMiddleware.js";
+import type * as lib_typebot from "../lib/typebot.js";
 import type * as lib_validation from "../lib/validation.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as marketingLeads from "../marketingLeads.js";
@@ -152,6 +153,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/securityHealth": typeof lib_securityHealth;
   "lib/securityMiddleware": typeof lib_securityMiddleware;
+  "lib/typebot": typeof lib_typebot;
   "lib/validation": typeof lib_validation;
   "lib/validators": typeof lib_validators;
   marketingLeads: typeof marketingLeads;
