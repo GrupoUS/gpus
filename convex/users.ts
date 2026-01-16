@@ -74,6 +74,7 @@ export const listCSUsers = query({
 
 		// Return minimal data for LGPD compliance
 		return activeCSUsers.map((user) => ({
+			// biome-ignore lint/style/useNamingConvention: Convex convention uses _id
 			_id: user._id,
 			name: user.name,
 			email: user.email,
@@ -157,6 +158,7 @@ export const syncUser = internalMutation({
 			v.union(v.literal('admin'), v.literal('sdr'), v.literal('cs'), v.literal('support')),
 		),
 	},
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex auth logic required here
 	handler: async (ctx, args) => {
 		// Additional security: Ensure this is only used for legitimate user sync operations
 		// This prevents abuse of the internal mutation for creating unauthorized admin users

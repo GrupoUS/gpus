@@ -7,11 +7,14 @@ export const interestOptions = [
 	'Outros',
 ] as const;
 
+// Mutable copy for z.enum
+const interestOptionsMutable = [...interestOptions] as [string, ...string[]];
+
 export const leadCaptureSchema = z.object({
 	name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
 	email: z.string().email('Email inválido'),
 	phone: z.string().regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato: (11) 99999-9999'),
-	interest: z.enum(interestOptions),
+	interest: z.enum(interestOptionsMutable),
 	message: z.string().max(500, 'Mensagem deve ter no máximo 500 caracteres').optional(),
 	lgpdConsent: z.boolean().refine((val) => val === true, {
 		message: 'Você deve aceitar os termos',

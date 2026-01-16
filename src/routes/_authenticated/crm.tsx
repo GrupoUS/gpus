@@ -20,7 +20,11 @@ export const Route = createFileRoute('/_authenticated/crm')({
 });
 
 type LeadItem = Doc<'leads'>;
-type ListLeadsResult = { page: LeadItem[]; isDone: boolean; continueCursor: string };
+interface ListLeadsResult {
+	page: LeadItem[];
+	isDone: boolean;
+	continueCursor: string;
+}
 
 function CRMPage() {
 	const [filters, setFilters] = useState({
@@ -32,14 +36,15 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
+	// biome-ignore lint/suspicious/noExplicitAny: Type inference issue with conditional properties
 	const leads = useQuery(api.leads.listLeads, {
 		paginationOpts: { numItems: 1000, cursor: null },
 		search: filters.search || undefined,
-		stages: filters.stages.length ? filters.stages : undefined,
-		temperature: filters.temperature.length ? filters.temperature : undefined,
-		products: filters.products.length ? filters.products : undefined,
-		source: filters.source.length ? filters.source : undefined,
-	}) as ListLeadsResult | undefined;
+		stages: filters.stages.length > 0 ? filters.stages : undefined,
+		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
+		products: filters.products.length > 0 ? filters.products : undefined,
+		source: filters.source.length > 0 ? filters.source : undefined,
+	} as any) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -63,11 +68,11 @@ function CRMPage() {
 		})) ?? [];
 
 	return (
-		<div className="h-[calc(100vh-4rem)] flex flex-col space-y-4">
-			<div className="flex flex-col gap-4 animate-fade-in-up">
+		<div className="flex h-[calc(100vh-4rem)] flex-col space-y-4">
+			<div className="flex animate-fade-in-up flex-col gap-4">
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+						<h1 className="font-bold font-display text-4xl tracking-tight md:text-5xl">
 							Pipeline de Vendas
 						</h1>
 						<p className="font-sans text-base text-muted-foreground">
@@ -85,7 +90,7 @@ function CRMPage() {
 
 			<div className="flex-1 overflow-hidden">
 				{leads === undefined ? (
-					<div className="h-full flex items-center justify-center text-muted-foreground">
+					<div className="flex h-full items-center justify-center text-muted-foreground">
 						Carregando pipeline...
 					</div>
 				) : (

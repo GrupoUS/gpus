@@ -24,7 +24,8 @@ export function LeadCaptureForm({
 	defaultSource = 'landing_page',
 }: LeadCaptureFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
-	const createMarketingLead = useMutation(api.marketingLeads.create);
+	// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+	const createMarketingLead = useMutation((api as any).marketingLeads.create);
 	const utmParams = useUTMParams();
 
 	const form = useForm<LeadCaptureFormData>({
@@ -60,7 +61,8 @@ export function LeadCaptureForm({
 				name: data.name,
 				email: data.email,
 				phone: data.phone,
-				interest: data.interest,
+				// biome-ignore lint/suspicious/noExplicitAny: mismatch between Zod enum and Convex union types
+				interest: data.interest as any,
 				message: data.message,
 				lgpdConsent: data.lgpdConsent,
 				whatsappConsent: data.whatsappConsent,
@@ -92,7 +94,7 @@ export function LeadCaptureForm({
 	return (
 		<div className={className}>
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+				<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
 					<LeadCaptureFormFields control={form.control} disabled={form.formState.isSubmitting} />
 
 					{/* Hidden Honeypot Field */}
@@ -102,13 +104,13 @@ export function LeadCaptureForm({
 						render={({ field }) => (
 							<FormItem className="hidden">
 								<FormControl>
-									<Input {...field} tabIndex={-1} autoComplete="off" />
+									<Input {...field} autoComplete="off" tabIndex={-1} />
 								</FormControl>
 							</FormItem>
 						)}
 					/>
 
-					<Button type="submit" className="w-full" size="lg" disabled={form.formState.isSubmitting}>
+					<Button className="w-full" disabled={form.formState.isSubmitting} size="lg" type="submit">
 						{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 						Enviar Solicitação
 					</Button>

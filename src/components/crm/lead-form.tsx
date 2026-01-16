@@ -5,7 +5,7 @@ import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -109,19 +109,20 @@ const formSchema = z
 
 export function LeadForm() {
 	const [open, setOpen] = useState(false);
-	const createLead = useMutation(api.leads.createLead);
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
+	const createLead = useMutation((api as any).leads.createLead);
 
-	const form = useForm({
+	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
 			phone: '',
 			email: '',
-			source: 'instagram' as const,
+			source: 'instagram',
 			profession: undefined,
 			interestedProduct: undefined,
-			temperature: 'frio' as const,
-			stage: 'novo' as const,
+			temperature: 'frio',
+			stage: 'novo',
 			hasClinic: false,
 			clinicName: '',
 			clinicCity: '',
@@ -174,26 +175,26 @@ export function LeadForm() {
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<div className="w-full mb-4 px-1">
+		<Dialog onOpenChange={setOpen} open={open}>
+			<div className="mb-4 w-full px-1">
 				<DialogTrigger asChild>
-					<FlipButton className="w-full h-12" initial={false}>
-						<FlipButtonFront className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
+					<FlipButton className="h-12 w-full" initial={false}>
+						<FlipButtonFront className="h-full w-full overflow-hidden rounded-full bg-transparent p-0">
 							<HoverBorderGradient
 								as="div"
+								className="flex h-full w-full items-center justify-center bg-background font-medium text-foreground"
 								containerClassName="rounded-full w-full h-full"
-								className="bg-background text-foreground w-full h-full flex items-center justify-center font-medium"
 							>
-								<Plus className="h-4 w-4 mr-2" />
+								<Plus className="mr-2 h-4 w-4" />
 								Novo Lead
 							</HoverBorderGradient>
 						</FlipButtonFront>
-						<FlipButtonBack className="w-full h-full p-0 bg-transparent rounded-full overflow-hidden">
+						<FlipButtonBack className="h-full w-full overflow-hidden rounded-full bg-transparent p-0">
 							<HoverBorderGradient
 								as="div"
-								containerClassName="rounded-full w-full h-full border-none"
-								className="bg-[#004b5a] text-[#d4af37] w-full h-full flex items-center justify-center font-bold tracking-wide"
+								className="flex h-full w-full items-center justify-center bg-[#004b5a] font-bold text-[#d4af37] tracking-wide"
 								clockwise={false}
+								containerClassName="rounded-full w-full h-full border-none"
 							>
 								Cadastrar
 							</HoverBorderGradient>
@@ -201,7 +202,7 @@ export function LeadForm() {
 					</FlipButton>
 				</DialogTrigger>
 			</div>
-			<DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-border/50">
+			<DialogContent className="border-border/50 bg-card/95 backdrop-blur-xl sm:max-w-[600px]">
 				<DialogHeader>
 					<DialogTitle>Novo Lead</DialogTitle>
 					<DialogDescription>
@@ -210,8 +211,8 @@ export function LeadForm() {
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							{/* Nome */}
 							<FormField
 								control={form.control}
@@ -264,7 +265,7 @@ export function LeadForm() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Fonte de Aquisição</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione a fonte" />
@@ -293,7 +294,7 @@ export function LeadForm() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Profissão</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione..." />
@@ -321,7 +322,7 @@ export function LeadForm() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Produto de Interesse</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione..." />
@@ -344,7 +345,7 @@ export function LeadForm() {
 						</div>
 
 						{/* Clínica */}
-						<div className="space-y-4 p-4 rounded-lg border border-border/50 bg-muted/30">
+						<div className="space-y-4 rounded-lg border border-border/50 bg-muted/30 p-4">
 							<FormField
 								control={form.control}
 								name="hasClinic"
@@ -361,7 +362,7 @@ export function LeadForm() {
 							/>
 
 							{form.watch('hasClinic') && (
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+								<div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
 									<FormField
 										control={form.control}
 										name="clinicName"
@@ -393,7 +394,7 @@ export function LeadForm() {
 						</div>
 
 						{/* Background Profissional */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							<FormField
 								control={form.control}
 								name="yearsInAesthetics"
@@ -401,7 +402,7 @@ export function LeadForm() {
 									<FormItem>
 										<FormLabel>Anos na Estética</FormLabel>
 										<FormControl>
-											<Input type="number" placeholder="Ex: 3" {...field} />
+											<Input placeholder="Ex: 3" type="number" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -413,7 +414,7 @@ export function LeadForm() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Faturamento Mensal</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione..." />
@@ -441,7 +442,7 @@ export function LeadForm() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Dor Principal</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Qual a maior dificuldade?" />
@@ -469,8 +470,8 @@ export function LeadForm() {
 										<FormLabel>Principal Desejo / Objetivo</FormLabel>
 										<FormControl>
 											<Textarea
-												placeholder="Ex: Quero faturar R$ 30k/mês com procedimentos estéticos..."
 												className="resize-none"
+												placeholder="Ex: Quero faturar R$ 30k/mês com procedimentos estéticos..."
 												{...field}
 											/>
 										</FormControl>
@@ -489,15 +490,15 @@ export function LeadForm() {
 									<FormLabel>Temperatura Inicial</FormLabel>
 									<FormControl>
 										<RadioGroup
-											onValueChange={field.onChange}
-											defaultValue={field.value}
 											className="flex space-x-4"
+											defaultValue={field.value}
+											onValueChange={field.onChange}
 										>
 											<FormItem className="flex items-center space-x-2 space-y-0">
 												<FormControl>
 													<RadioGroupItem value="frio" />
 												</FormControl>
-												<FormLabel className="font-normal cursor-pointer text-primary">
+												<FormLabel className="cursor-pointer font-normal text-primary">
 													❄️ Frio
 												</FormLabel>
 											</FormItem>
@@ -505,7 +506,7 @@ export function LeadForm() {
 												<FormControl>
 													<RadioGroupItem value="morno" />
 												</FormControl>
-												<FormLabel className="font-normal cursor-pointer text-yellow-400">
+												<FormLabel className="cursor-pointer font-normal text-yellow-400">
 													🌤️ Morno
 												</FormLabel>
 											</FormItem>
@@ -513,7 +514,7 @@ export function LeadForm() {
 												<FormControl>
 													<RadioGroupItem value="quente" />
 												</FormControl>
-												<FormLabel className="font-normal cursor-pointer text-red-500">
+												<FormLabel className="cursor-pointer font-normal text-red-500">
 													🔥 Quente
 												</FormLabel>
 											</FormItem>
@@ -526,9 +527,9 @@ export function LeadForm() {
 
 						<div className="flex justify-end pt-4">
 							<Button
-								type="submit"
+								className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
 								disabled={form.formState.isSubmitting}
-								className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+								type="submit"
 							>
 								{form.formState.isSubmitting ? (
 									<>

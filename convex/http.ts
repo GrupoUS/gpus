@@ -61,8 +61,10 @@ http.route({
 		const eventType = normalizeEventType(payload.event);
 
 		// 5. Find contact by email (if exists)
-		// @ts-expect-error - Deep type instantiation error with internal queries
-		const contact = await ctx.runQuery(internal.emailMarketing.getContactByEmailInternal, {
+		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+		const getContactFn = (internal as any).emailMarketing.getContactByEmailInternal;
+		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+		const contact = await ctx.runQuery(getContactFn as any, {
 			email: payload.email,
 		});
 
@@ -70,7 +72,8 @@ http.route({
 		const timestamp = payload.ts_epoch ?? payload.ts ?? Date.now();
 
 		// 7. Record the event
-		await ctx.runMutation(internal.emailMarketing.recordEmailEvent, {
+		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+		await ctx.runMutation((internal as any).emailMarketing.recordEmailEvent, {
 			email: payload.email,
 			contactId: contact?._id,
 			campaignId: undefined, // Campaign ID not available in webhook payload
@@ -85,7 +88,8 @@ http.route({
 		// 8. Handle unsubscribe and hard bounce events - update subscription status
 		const unsubscribeEvents = ['unsubscribed', 'hard_bounce', 'invalid_email'];
 		if (unsubscribeEvents.includes(payload.event)) {
-			await ctx.runMutation(internal.emailMarketing.updateContactSubscriptionInternal, {
+			// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+			await ctx.runMutation((internal as any).emailMarketing.updateContactSubscriptionInternal, {
 				email: payload.email,
 				subscriptionStatus: 'unsubscribed',
 			});
@@ -138,7 +142,8 @@ http.route({
 
 		// 5. Update message status via internal mutation
 		try {
-			await ctx.runMutation(internal.messages.updateStatusInternal, {
+			// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+			await ctx.runMutation((internal as any).messages.updateStatusInternal, {
 				// biome-ignore lint/suspicious/noExplicitAny: ID from external provider doesn't match internal Id type
 				messageId: payload.messageId as any,
 				status: normalizedStatus,
