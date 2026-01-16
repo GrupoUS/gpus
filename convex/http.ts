@@ -71,9 +71,8 @@ http.route({
     const eventType = normalizeEventType(payload.event);
 
     // 5. Find contact by email (if exists)
-    // @ts-ignore - Deep type instantiation workaround for Convex
     const contact = await ctx.runQuery(
-      internal.emailMarketing.getContactByEmailInternal as any,
+      (internal as any).emailMarketing.getContactByEmailInternal,
       {
         email: payload.email,
       },

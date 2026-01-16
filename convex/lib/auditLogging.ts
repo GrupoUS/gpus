@@ -27,7 +27,7 @@ export type AuditActionType =
 /**
  * Audit log entry interface
  */
-interface AuditLogEntry {
+export interface AuditLogEntry {
 	actionType: AuditActionType
 	dataCategory: string
 	description: string
@@ -39,6 +39,8 @@ interface AuditLogEntry {
 	retentionDays?: number
 	ipAddress?: string
 	userAgent?: string
+	previous_value?: any
+	new_value?: any
 }
 
 /**
@@ -70,6 +72,13 @@ export async function createAuditLog(
 		const clerkId = await getClerkId(ctx)
 		const timestamp = Date.now()
 
+		// Prepare metadata with potentially merged extra fields
+		const auditMetadata = {
+			...(entry.metadata || {}),
+			...(entry.previous_value !== undefined ? { previous_value: entry.previous_value } : {}),
+			...(entry.new_value !== undefined ? { new_value: entry.new_value } : {}),
+		}
+
 		// Create comprehensive audit entry
 		const auditId = await ctx.db.insert('lgpdAudit', {
 			studentId: entry.studentId ? ctx.db.normalizeId('students', entry.studentId) as any : undefined,
@@ -83,6 +92,7 @@ export async function createAuditLog(
 			processingPurpose: entry.processingPurpose,
 			legalBasis: entry.legalBasis || 'consentimento',
 			retentionDays: entry.retentionDays || calculateRetentionDays(entry.dataCategory),
+			metadata: Object.keys(auditMetadata).length > 0 ? auditMetadata : undefined,
 			createdAt: timestamp,
 		})
 

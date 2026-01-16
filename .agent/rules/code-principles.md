@@ -89,9 +89,13 @@ This error occurs when TS inference hits recursion limits on deeply nested `api`
 // ❌ Anti-Pattern: Persistent Compilation Errors
 const mutate = useMutation(api.leads.updateStatus);
 
-// ✅ Pattern: Break Inference Chain with Cast
-// biome-ignore lint/suspicious/noExplicitAny: fix deep instantiation error
+// ❌ Weak Pattern: Late Cast (Still recurses)
 const mutate = useMutation(api.leads.updateStatus as any);
+
+// ✅ Pattern: Early Cast (Breaks recursion immediately)
+const mutate = useMutation((api as any).leads.updateStatus);
+// OR for internal:
+await ctx.runMutation((internal as any).module.func);
 ```
 
 ### 2. Biome Rules

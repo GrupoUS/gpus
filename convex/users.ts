@@ -395,7 +395,7 @@ export const inviteTeamMember = action({
   handler: async (ctx, args) => {
     // Security Check
     const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
-    const callerRole = identity.org_role || 'member'; // Fallback
+
 
     // Additional check for role assignment safety (only admins/owners can assign admin/manager?)
     // Basic requirement is TEAM_MANAGE.

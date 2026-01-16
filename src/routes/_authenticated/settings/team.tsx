@@ -16,6 +16,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export const Route = createFileRoute('/_authenticated/settings/team')({
+	beforeLoad: ({ context }) => {
+		if (context.auth?.isLoaded && !context.auth?.has?.({ permission: 'team:manage' })) {
+			throw new Error('Unauthorized'); // Check if this should be a redirect or error
+		}
+	},
 	component: TeamSettingsPage,
 });
 

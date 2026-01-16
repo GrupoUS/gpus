@@ -104,8 +104,17 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 							</Badge>
 						</TableCell>
 						<TableCell>
-							<Badge variant={user.isActive ? 'default' : 'secondary'}>
-								{user.isActive ? 'Ativo' : 'Inativo'}
+							<Badge
+								variant={
+									// inviteStatus added to schema
+									user.inviteStatus === 'pending'
+										? 'secondary'
+										: user.isActive
+											? 'default'
+											: 'secondary'
+								}
+							>
+								{user.inviteStatus === 'pending' ? 'Pendente' : user.isActive ? 'Ativo' : 'Inativo'}
 							</Badge>
 						</TableCell>
 						<TableCell onClick={(e) => e.stopPropagation()}>
