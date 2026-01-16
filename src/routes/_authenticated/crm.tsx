@@ -36,15 +36,16 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Type inference issue with conditional properties
-	const leads = useQuery(api.leads.listLeads, {
+	// Break type inference chain to avoid "Type instantiation is excessively deep" error
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
+	const leads = useQuery((api as any).leads.listLeads, {
 		paginationOpts: { numItems: 1000, cursor: null },
 		search: filters.search || undefined,
 		stages: filters.stages.length > 0 ? filters.stages : undefined,
 		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
 		products: filters.products.length > 0 ? filters.products : undefined,
 		source: filters.source.length > 0 ? filters.source : undefined,
-	} as any) as ListLeadsResult | undefined;
+	}) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 

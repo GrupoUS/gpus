@@ -1,42 +1,63 @@
 ---
 name: frontend-design
-description: Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics.
-license: Complete terms in LICENSE.txt
+description: Universal suite for creating distinctive, production-grade frontend interfaces and standalone HTML artifacts. Optimized for React, Tailwind CSS, and shadcn/ui with integrated Gemini image generation.
 ---
 
-This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+# Universal Frontend Design Skill
 
-The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
+This skill guides the creation of distinctive, production-grade frontend interfaces—both within an existing project and as standalone HTML artifacts. It focuses on functional excellence, bold aesthetics, and unique visual assets.
 
-## Design Thinking
+## Core Design Philosophy: "Intentional Minimalism"
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+- **Anti-AI Slop**: Reject generic layouts, overused fonts (Inter, Roboto), and predictable color schemes (purple gradients on white).
+- **Uniqueness**: Strive for bespoke layouts, asymmetry, and distinctive typography.
+- **Precision**: Match implementation complexity to the aesthetic vision. Minimalism requires restraint; maximalism requires elaborate code.
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+## Workflow 1: Project-Based Development
 
-Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+Use this when building components, pages, or features directly within the current codebase.
 
-## Frontend Aesthetics Guidelines
+1. **Aesthetic Direction**: Commit to a bold tone (Refined Minimalism, Brutalist, Retro-Futuristic, etc.).
+2. **Typography**: Pair characterful display fonts with refined body fonts.
+3. **Motion**: Prioritize high-impact orchestrated page loads over scattered micro-interactions.
+4. **Implementation**: Build semantic, functional code that follows project standards (React, Bun, Convex).
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+## Workflow 2: Standalone Artifacts Builder
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+Use this for creating complex, multi-component standalone HTML artifacts for demonstration or quick prototyping.
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+### Step 1: Initialize Project
+Run the initialization script to create a new React project:
+```bash
+bash .agent/skills/frontend-design/scripts/init-artifact.sh <project-name>
+```
+- Creates a React 18 + TypeScript + Vite + Tailwind + shadcn/ui environment.
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+### Step 2: Build & Preview
+Develop your artifact, then bundle it into a single self-contained HTML file:
+```bash
+bash .agent/skills/frontend-design/scripts/bundle-artifact.sh
+```
+- Share the generated `bundle.html` in the conversation.
 
-Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+## Visual Assets: Nano Banana System
+
+When the design requires unique images or placeholders, use the integrated Gemini image generation:
+
+### Local Generation Script
+Use the Python generator to create high-fidelity assets using Gemini 3 Pro:
+```bash
+python .agent/skills/frontend-design/scripts/generate_images.py "Your prompt here" "output_filename"
+```
+- **Reference**: See [nanobananaskill.md](file:///d:/Coders/gpus/.agent/skills/frontend-design/nanobananaskill.md) for advanced prompting strategies.
+
+### Asset Guidelines
+- **No text, logos, or recognizable faces**.
+- **Simple composition**: Soft gradients, subtle grain, minimal detail.
+- **Workflow**: Plan image requirements → Generate using the script → Integrate into the implementation.
+
+---
+
+## Technical Reference
+- **Stack**: React, Tailwind CSS, shadcn/ui (Radix UI).
+- **Resources**: [shadcn/ui Docs](https://ui.shadcn.com/docs/components)

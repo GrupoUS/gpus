@@ -61,10 +61,11 @@ http.route({
 		const eventType = normalizeEventType(payload.event);
 
 		// 5. Find contact by email (if exists)
-		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
-		const getContactFn = (internal as any).emailMarketing.getContactByEmailInternal;
-		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
-		const contact = await ctx.runQuery(getContactFn as any, {
+		// Break type inference chain to avoid "Type instantiation is excessively deep" error
+		// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
+		const internalAny = internal as any;
+		const getContactFn = internalAny.emailMarketing.getContactByEmailInternal;
+		const contact = await ctx.runQuery(getContactFn, {
 			email: payload.email,
 		});
 
