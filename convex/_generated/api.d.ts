@@ -75,6 +75,7 @@ import type * as messages from "../messages.js";
 import type * as metrics from "../metrics.js";
 import type * as migrationTrigger from "../migrationTrigger.js";
 import type * as migrations from "../migrations.js";
+import type * as migrations_fixLeadsConsentFields from "../migrations/fixLeadsConsentFields.js";
 import type * as migrations_syncExistingClerkUsers from "../migrations/syncExistingClerkUsers.js";
 import type * as migrations_updateRoles from "../migrations/updateRoles.js";
 import type * as notifications from "../notifications.js";
@@ -162,6 +163,7 @@ declare const fullApi: ApiFromModules<{
   metrics: typeof metrics;
   migrationTrigger: typeof migrationTrigger;
   migrations: typeof migrations;
+  "migrations/fixLeadsConsentFields": typeof migrations_fixLeadsConsentFields;
   "migrations/syncExistingClerkUsers": typeof migrations_syncExistingClerkUsers;
   "migrations/updateRoles": typeof migrations_updateRoles;
   notifications: typeof notifications;
