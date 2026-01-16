@@ -31,3 +31,6 @@ docs/Aura-Connect/
 
 # Auto Claude data directory
 .auto-claude/
+
+# Factory templates (AI generated)
+.factory/

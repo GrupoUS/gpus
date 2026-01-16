@@ -358,6 +358,7 @@ export const internalLogAudit = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		await createAuditLog(ctx, {
+			// biome-ignore lint/suspicious/noExplicitAny: actionType from string arg doesn't match strict union
 			actionType: args.actionType as any,
 			description: args.description,
 			dataCategory: args.dataCategory,
@@ -424,8 +425,9 @@ export const inviteTeamMember = action({
 			});
 
 			return invitation;
-		} catch (error: any) {
-			throw new Error(error.message || 'Failed to invite user');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to invite user';
+			throw new Error(message);
 		}
 	},
 });
@@ -449,6 +451,7 @@ export const createPendingUser = internalMutation({
 			// If existing user, maybe update role? For now, do nothing if already exists.
 			if (existing.inviteStatus === 'pending') {
 				await ctx.db.patch(existing._id, {
+					// biome-ignore lint/suspicious/noExplicitAny: role string arg doesn't match strict union
 					role: args.role as any,
 					invitedAt: args.invitedAt,
 					updatedAt: Date.now(),
@@ -461,6 +464,7 @@ export const createPendingUser = internalMutation({
 			clerkId: `pending_${crypto.randomUUID()}`, // Placeholder ID
 			email: args.email,
 			name: args.email.split('@')[0], // Placeholder name
+			// biome-ignore lint/suspicious/noExplicitAny: role string arg doesn't match strict union
 			role: args.role as any,
 			organizationId: args.organizationId,
 			isActive: false, // Pending
@@ -528,8 +532,9 @@ export const updateTeamMemberRole = action({
 			});
 
 			return { success: true };
-		} catch (error: any) {
-			throw new Error(error.message || 'Failed to update role');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to update role';
+			throw new Error(message);
 		}
 	},
 });
@@ -578,8 +583,9 @@ export const removeTeamMember = action({
 			});
 
 			return { success: true };
-		} catch (error: any) {
-			throw new Error(error.message || 'Failed to remove user');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Failed to remove user';
+			throw new Error(message);
 		}
 	},
 });
@@ -595,6 +601,7 @@ export const syncUserRole = internalMutation({
 			.withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
 			.unique();
 		if (user) {
+			// biome-ignore lint/suspicious/noExplicitAny: role string arg doesn't match strict union
 			await ctx.db.patch(user._id, { role: args.role as any });
 		}
 	},
@@ -631,10 +638,11 @@ export const searchTeamMembers = query({
 
 		// Search Logic with Index
 		if (args.query) {
+			const searchQuery = args.query;
 			return await ctx.db
 				.query('users')
 				.withSearchIndex('search_name', (q) =>
-					q.search('name', args.query!).eq('organizationId', organizationId),
+					q.search('name', searchQuery).eq('organizationId', organizationId),
 				)
 				.paginate(args.paginationOpts);
 		}

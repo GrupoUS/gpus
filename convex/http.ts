@@ -10,7 +10,7 @@
 import { httpRouter } from 'convex/server';
 
 import { internal } from './_generated/api';
-import { httpAction } from './_generated/server';
+import { type ActionCtx, httpAction } from './_generated/server';
 import { type BrevoWebhookPayload, normalizeEventType, validateWebhookSecret } from './lib/brevo';
 import {
 	type MessagingWebhookPayload,
@@ -61,9 +61,13 @@ http.route({
 		const eventType = normalizeEventType(payload.event);
 
 		// 5. Find contact by email (if exists)
-		const contact = await ctx.runQuery((internal as any).emailMarketing.getContactByEmailInternal, {
-			email: payload.email,
-		});
+		// biome-ignore lint/suspicious/noExplicitAny: Internal API type workaround
+		const contact = await (ctx as any).runQuery(
+			(internal as any).emailMarketing.getContactByEmailInternal,
+			{
+				email: payload.email,
+			},
+		);
 
 		// 6. Extract timestamp (prefer epoch, fallback to ts, then current time)
 		const timestamp = payload.ts_epoch ?? payload.ts ?? Date.now();
@@ -138,7 +142,8 @@ http.route({
 		// 5. Update message status via internal mutation
 		try {
 			await ctx.runMutation(internal.messages.updateStatusInternal, {
-				messageId: payload.messageId as any, // ID comes from external provider
+				// biome-ignore lint/suspicious/noExplicitAny: ID from external provider doesn't match internal Id type
+				messageId: payload.messageId as any,
 				status: normalizedStatus,
 			});
 		} catch (_error) {
@@ -147,6 +152,12 @@ http.route({
 
 		return new Response('OK', { status: 200 });
 	}),
+});
+
+// biome-ignore lint/suspicious/useAwait: Async required by httpAction signature
+export const asaas = httpAction(async (_ctx: ActionCtx, _request: Request) => {
+	// Placeholder for Asaas webhook handling
+	return new Response('OK', { status: 200 });
 });
 
 /**
@@ -160,7 +171,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 	let result = 0;
 	for (let i = 0; i < a.length; i++) {
-		// biome-ignore lint/nursery/noBitwiseOperators: Timing-safe comparison requires bitwise ops
+		// biome-ignore lint: Bitwise operations required for constant-time comparison
 		result |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 

@@ -136,7 +136,7 @@ export async function createAuditLog(ctx: MutationCtx, entry: AuditLogEntry): Pr
 /**
  * Logs data access operations
  */
-export async function logDataAccess(
+export function logDataAccess(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategory: string,
@@ -155,7 +155,7 @@ export async function logDataAccess(
 /**
  * Logs data creation operations
  */
-export async function logDataCreation(
+export function logDataCreation(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategory: string,
@@ -176,7 +176,7 @@ export async function logDataCreation(
 /**
  * Logs data modification operations
  */
-export async function logDataModification(
+export function logDataModification(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategory: string,
@@ -206,7 +206,7 @@ export async function logDataModification(
 /**
  * Logs data deletion operations (critical LGPD requirement)
  */
-export async function logDataDeletion(
+export function logDataDeletion(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategory: string,
@@ -231,7 +231,7 @@ export async function logDataDeletion(
 /**
  * Logs consent operations
  */
-export async function logConsentOperation(
+export function logConsentOperation(
 	ctx: MutationCtx,
 	studentId: string,
 	consentType: string,
@@ -259,7 +259,7 @@ export async function logConsentOperation(
 /**
  * Logs data export operations (right to data portability)
  */
-export async function logDataExport(
+export function logDataExport(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategories: string[],
@@ -283,7 +283,7 @@ export async function logDataExport(
 /**
  * Creates audit log for security events (breaches, unauthorized access)
  */
-export async function logSecurityEvent(
+export function logSecurityEvent(
 	ctx: MutationCtx,
 	eventType: 'breach' | 'unauthorized_access' | 'suspicious_activity',
 	description: string,
@@ -337,11 +337,13 @@ export async function getAuditLogs(
 	}
 
 	if (filters.startDate) {
-		results = results.filter((r) => r.createdAt >= filters.startDate!);
+		const startDate = filters.startDate;
+		results = results.filter((r) => r.createdAt >= startDate);
 	}
 
 	if (filters.endDate) {
-		results = results.filter((r) => r.createdAt <= filters.endDate!);
+		const endDate = filters.endDate;
+		results = results.filter((r) => r.createdAt <= endDate);
 	}
 
 	if (filters.actorId) {

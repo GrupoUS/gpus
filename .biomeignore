@@ -1,0 +1,13 @@
+.agent/**
+.factory/**
+.claude/**
+.gemini/**
+node_modules/**
+dist/**
+coverage/**
+.turbo/**
+build/**
+.vercel/**
+.output/**
+.nitro/**
+.tanstack/**

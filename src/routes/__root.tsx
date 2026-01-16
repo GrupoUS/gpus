@@ -3,9 +3,12 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { Toaster } from '@/components/ui/sonner';
 
 interface RouterContext {
-	// biome-ignore lint/suspicious/noExplicitAny: Clerk auth type
 	auth:
-		| { userId: string | null | undefined; isLoaded: boolean; has?: (args: any) => boolean }
+		| {
+				userId: string | null | undefined;
+				isLoaded: boolean;
+				has?: (args: { permission: string }) => boolean;
+		  }
 		| undefined;
 }
 

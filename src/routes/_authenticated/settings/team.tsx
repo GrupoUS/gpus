@@ -30,6 +30,7 @@ function TeamSettingsPage() {
 
 	// Use paginated query
 	const { results, status, loadMore } = usePaginatedQuery(
+		// biome-ignore lint/suspicious/noExplicitAny: Internal API type workaround
 		(api as any).users.searchTeamMembers,
 		{ query: debouncedQuery },
 		{ initialNumItems: 10 },
