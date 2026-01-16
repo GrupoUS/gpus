@@ -636,7 +636,8 @@ export const searchTeamMembers = query({
 	},
 	handler: async (ctx, args) => {
 		// Security Check
-		const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
+		await requirePermission(ctx, PERMISSIONS.TEAM_READ);
+		const identity = await requireAuth(ctx);
 		const organizationId = identity.org_id || identity.subject;
 
 		// Search Logic with Index
