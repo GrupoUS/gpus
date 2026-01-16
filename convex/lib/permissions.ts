@@ -2,7 +2,7 @@
 // Format: resource:action (consistent with Clerk format)
 export const PERMISSIONS = {
 	// Global
-	ALL: 'all', // Super admin permission
+	ALL: 'all', // Super admin permission (granted to Master Admins, Owners, and Admins)
 
 	// Leads
 	LEADS_READ: 'leads:read',

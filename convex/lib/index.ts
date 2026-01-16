@@ -5,6 +5,9 @@
  * and LGPD compliance utilities.
  */
 
+// Configuration
+export * from './config';
+
 // Authentication and Authorization
 export * from './auth';
 

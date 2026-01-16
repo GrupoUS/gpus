@@ -134,6 +134,7 @@ export async function requireAuthAsUser(ctx: Context): Promise<ClerkIdentity> {
 	return identity;
 }
 
+import { isMasterAdmin } from './config';
 import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions';
 
 /**
@@ -163,6 +164,11 @@ export async function hasPermission(ctx: Context, permission: string): Promise<b
 
 	if (!identity) {
 		return false;
+	}
+
+	// Master Admins have unrestricted access to all permissions
+	if (isMasterAdmin(identity.email)) {
+		return true;
 	}
 
 	// Admin and Owner have all permissions
