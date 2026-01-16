@@ -1,7 +1,5 @@
 ---
 description: Execute approved plan from /research via @apex-dev with parallel background task orchestration
-agent: apex-dev
-subtask: true
 ---
 
 # /implement | /implementar
@@ -120,6 +118,5 @@ task_execution:
 ---
 
 ## Referências
-- Documentação: `https://antigravity.google/docs/`
 - Princípios: `code-principles.md`
 - Pesquisa: `research.md`

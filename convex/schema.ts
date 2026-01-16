@@ -48,11 +48,26 @@ export default defineSchema({
         sidebarCollapsed: v.optional(v.boolean()),
       }),
     ),
+    // Convites
+    inviteStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("accepted"),
+        v.literal("expired"),
+        v.literal("revoked"),
+      ),
+    ),
+    invitedAt: v.optional(v.number()),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_organization", ["organizationId"])
     .index("by_email", ["email"])
-    .index("by_role", ["role"]),
+    .index("by_role", ["role"])
+    .index("by_invite_status", ["inviteStatus"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["organizationId"],
+    }),
 
   // ═══════════════════════════════════════════════════════
   // LEADS (Potenciais clientes)

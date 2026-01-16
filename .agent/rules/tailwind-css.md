@@ -1,10 +1,5 @@
 ---
-trigger: always_on
----
-
----
-alwaysApply: true
-description: Tailwind CSS usage rules for styling (2025 best practices)
+trigger: glob
 globs: **/*.{html,js,jsx,ts,tsx,vue,svelte,css,scss,sass,md,mdx,php,blade.php,ejs,hbs,twig,liquid,njk,pug,astro,xml,json,yml,yaml,svg}
 ---
 

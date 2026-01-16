@@ -3,7 +3,8 @@ import { action, internalMutation, mutation, query, internalQuery } from './_gen
 import { internal } from './_generated/api'
 import { createClerkClient } from '@clerk/backend'
 import { createAuditLog } from './lib/auditLogging'
-import { getOrganizationId, requireAuth } from './lib/auth'
+import { getOrganizationId, requireAuth, requirePermission } from './lib/auth'
+import { PERMISSIONS } from './lib/permissions'
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
@@ -392,13 +393,12 @@ export const inviteTeamMember = action({
     redirectUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    // Security Check
+    const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
+    const callerRole = identity.org_role || 'member'; // Fallback
 
-    const caller = await ctx.runQuery((internal as any).users.getCallerData);
-    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
-       throw new Error("Only admins can invite members");
-    }
+    // Additional check for role assignment safety (only admins/owners can assign admin/manager?)
+    // Basic requirement is TEAM_MANAGE.
 
     try {
       const invitation = await clerkClient.invitations.createInvitation({
@@ -407,11 +407,23 @@ export const inviteTeamMember = action({
         publicMetadata: { role: args.role },
       });
 
+        // Create pending user record for team visibility
+        // We need organizationId. Actions don't have direct access to `getOrganizationId` helper easily without `ctx.runQuery`.
+        // But `requirePermission` returns identity which has `org_id`.
+        const organizationId = identity.org_id || identity.subject; // Fallback to personal org
+
+        await ctx.runMutation(internal.users.createPendingUser, {
+            email: args.email,
+            role: args.role,
+            invitedAt: Date.now(),
+            organizationId,
+        });
+
       await ctx.runMutation(internal.users.internalLogAudit, {
         actionType: 'data_creation',
         description: `Invited user ${args.email} as ${args.role}`,
         dataCategory: 'identificação',
-        metadata: { email: args.email, role: args.role, invitedBy: caller._id },
+        metadata: { email: args.email, role: args.role, invitedBy: identity.subject },
       });
 
       return invitation;
@@ -420,6 +432,45 @@ export const inviteTeamMember = action({
       throw new Error(error.message || "Failed to invite user");
     }
   },
+});
+
+/**
+ * Internal mutation to create pending user
+ */
+export const createPendingUser = internalMutation({
+    args: {
+        email: v.string(),
+        role: v.string(),
+        invitedAt: v.number(),
+        organizationId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db.query('users').withIndex('by_email', q => q.eq('email', args.email)).unique();
+        if (existing) {
+             // If existing user, maybe update role? For now, do nothing if already exists.
+             if (existing.inviteStatus === 'pending') {
+                 await ctx.db.patch(existing._id, {
+                     role: args.role as any,
+                     invitedAt: args.invitedAt,
+                     updatedAt: Date.now(),
+                 });
+             }
+             return;
+        }
+
+        await ctx.db.insert('users', {
+            clerkId: `pending_${crypto.randomUUID()}`, // Placeholder ID
+            email: args.email,
+            name: args.email.split('@')[0], // Placeholder name
+            role: args.role as any,
+            organizationId: args.organizationId,
+            isActive: false, // Pending
+            inviteStatus: 'pending',
+            invitedAt: args.invitedAt,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+    }
 });
 
 /**
@@ -432,16 +483,28 @@ export const updateTeamMemberRole = action({
     reason: v.optional(v.string())
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    // Security check
+    const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
 
-    const caller = await ctx.runQuery(internal.users.getCallerData as any);
-    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
-      throw new Error("Only admins can update roles");
+    // Validate role
+    const ALLOWED_ROLES = ['admin', 'manager', 'member'];
+    if (!ALLOWED_ROLES.includes(args.newRole)) {
+        throw new Error(`Invalid role. Allowed: ${ALLOWED_ROLES.join(', ')}`);
     }
 
     if (args.userId === identity.subject) {
         throw new Error("Cannot update your own role");
+    }
+
+    // Safety: Check target user role before update (prevent modifying OWNER)
+    // We need to fetch the target user. We can use `internal.users.getUserByClerkId` if it exists or generic query.
+    // We'll trust `getCallerData` pattern but for target.
+    // Let's us `internal.users.getUserRole` for check. I'll add a helper or use existing query.
+    // Actually, `invoke` query.
+    const targetUser = await ctx.runQuery(internal.users.getUserByClerkIdInternal, { clerkId: args.userId });
+
+    if (targetUser && targetUser.role === 'owner') {
+        throw new Error("Cannot modify the Owner role.");
     }
 
     try {
@@ -453,9 +516,15 @@ export const updateTeamMemberRole = action({
 
        await ctx.runMutation(internal.users.internalLogAudit, {
           actionType: 'data_modification',
-          description: `Updated role for ${args.userId} to ${args.newRole}: ${args.reason || 'No reason'}`,
+          description: `Updated role for ${args.userId} to ${args.newRole}`,
           dataCategory: 'identificação',
-          metadata: { userId: args.userId, newRole: args.newRole, reason: args.reason },
+          metadata: {
+              userId: args.userId,
+              previous_value: targetUser?.role || 'unknown',
+              new_value: args.newRole,
+              reason: args.reason,
+              ip_address: 'client_action' // Placeholder as we don't have IP here easily
+          },
        });
 
        return { success: true };
@@ -475,16 +544,16 @@ export const removeTeamMember = action({
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const caller = await ctx.runQuery(internal.users.getCallerData as any);
-    if (!caller || (caller.role !== 'admin' && caller.role !== 'owner')) {
-      throw new Error("Only admins can remove members");
-    }
+    const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
 
     if (args.userId === identity.subject) {
         throw new Error("Cannot remove yourself");
+    }
+
+    const targetUser = await ctx.runQuery(internal.users.getUserByClerkIdInternal, { clerkId: args.userId });
+
+    if (targetUser && targetUser.role === 'owner') {
+        throw new Error("Cannot remove the Owner.");
     }
 
     try {
@@ -496,9 +565,15 @@ export const removeTeamMember = action({
 
         await ctx.runMutation(internal.users.internalLogAudit, {
             actionType: 'data_deletion',
-            description: `Removed user ${args.userId}. Reason: ${args.reason}`,
+            description: `Removed user ${args.userId}`,
             dataCategory: 'identificação',
-            metadata: { userId: args.userId, reason: args.reason },
+            metadata: {
+                userId: args.userId,
+                reason: args.reason,
+                previous_value: 'active',
+                new_value: 'inactive',
+                ip_address: 'client_action'
+            },
         });
 
         return { success: true };
@@ -544,28 +619,32 @@ export const searchTeamMembers = query({
     paginationOpts: v.any(),
   },
   handler: async (ctx, args) => {
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) return { page: [], isDone: true, continueCursor: '' };
+      // Security Check
+      const identity = await requirePermission(ctx, PERMISSIONS.TEAM_MANAGE);
+      const organizationId = identity.org_id || identity.subject;
 
-      let q: any = ctx.db.query('users');
-
-      const organizationId = await getOrganizationId(ctx);
-      if (organizationId) {
-         q = q.withIndex('by_organization', (qi: any) => qi.eq('organizationId', organizationId));
+      // Search Logic with Index
+      if (args.query) {
+          return await ctx.db
+              .query('users')
+              .withSearchIndex('search_name', (q) =>
+                  q.search('name', args.query!)
+                   .eq('organizationId', organizationId)
+              )
+              .paginate(args.paginationOpts);
       }
 
-      // Basic pagination
-      const result = await q.paginate(args.paginationOpts);
-
-      // In-memory filter if query exists
-      if (args.query && result.page.length > 0) {
-          const lowerQ = args.query.toLowerCase();
-          result.page = result.page.filter((u: any) =>
-             (u.name && u.name.toLowerCase().includes(lowerQ)) ||
-             (u.email && u.email.toLowerCase().includes(lowerQ))
-          );
-      }
-
-      return result;
+      // Default Listing
+      return await ctx.db
+          .query('users')
+          .withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+          .paginate(args.paginationOpts);
   }
+});
+
+export const getUserByClerkIdInternal = internalQuery({
+    args: { clerkId: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db.query('users').withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId)).unique();
+    }
 });
