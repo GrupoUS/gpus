@@ -42,13 +42,19 @@ export const addAdmin = internalMutation({
 			});
 		}
 
-		await logSecurityEvent(
-			ctx,
-			'suspicious_activity',
-			`Admin role granted via internal fix_admin.addAdmin for ${args.clerkId}`,
-			'critical',
-			[args.clerkId],
-		);
+		// Log security event - handle unauthenticated context for bootstrap
+		try {
+			await logSecurityEvent(
+				ctx,
+				'suspicious_activity',
+				`Admin role granted via internal fix_admin.addAdmin for ${args.clerkId}`,
+				'critical',
+				[args.clerkId],
+			);
+		} catch (error) {
+			// If audit logging fails (e.g., unauthenticated context), log to console but don't fail
+			console.warn('Audit logging failed for admin bootstrap:', error);
+		}
 
 		return message;
 	},

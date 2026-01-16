@@ -55,6 +55,7 @@ import type * as lib_asaas from "../lib/asaas.js";
 import type * as lib_auditLogging from "../lib/auditLogging.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_brevo from "../lib/brevo.js";
+import type * as lib_config from "../lib/config.js";
 import type * as lib_contextProcessor from "../lib/contextProcessor.js";
 import type * as lib_encryption from "../lib/encryption.js";
 import type * as lib_index from "../lib/index.js";
@@ -142,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auditLogging": typeof lib_auditLogging;
   "lib/auth": typeof lib_auth;
   "lib/brevo": typeof lib_brevo;
+  "lib/config": typeof lib_config;
   "lib/contextProcessor": typeof lib_contextProcessor;
   "lib/encryption": typeof lib_encryption;
   "lib/index": typeof lib_index;
