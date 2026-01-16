@@ -3,41 +3,9 @@
  * Executa: bun run scripts/add-admin-to-org.ts
  */
 
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+import { clerkRequest, ORGANIZATION_ID, USER_EMAIL, USER_ID } from './clerk-utils.js';
 
-if (!CLERK_SECRET_KEY) {
-	console.error('\n❌ ERRO: CLERK_SECRET_KEY não encontrada nas variáveis de ambiente.');
-	console.error(
-		'Certifique-se de que a variável CLERK_SECRET_KEY está configurada no seu terminal ou arquivo .env.local\n',
-	);
-	process.exit(1);
-}
-
-const CLERK_API_URL = 'https://api.clerk.com/v1';
-
-// Configuração do usuário e organização
-const USER_ID = 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6';
-const USER_EMAIL = 'msm.jur@gmail.com';
-const ORGANIZATION_ID = 'org_3744yWknE4NtI6EtvJqYT8h0MLN';
 const ROLE = 'org:admin';
-
-async function clerkRequest(endpoint: string, method: string = 'GET', body?: any) {
-	const response = await fetch(`${CLERK_API_URL}${endpoint}`, {
-		method,
-		headers: {
-			Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-			'Content-Type': 'application/json',
-		},
-		body: body ? JSON.stringify(body) : undefined,
-	});
-
-	if (!response.ok) {
-		const error = await response.text();
-		throw new Error(`Clerk API error: ${response.status} - ${error}`);
-	}
-
-	return response.json();
-}
 
 async function checkExistingMembership() {
 	try {

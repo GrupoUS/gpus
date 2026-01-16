@@ -3,57 +3,19 @@
  * Executa: bun run scripts/verify-jwt-template.ts
  */
 
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+import { clerkRequest, listJwtTemplates, USER_ID } from './clerk-utils.js';
 
-if (!CLERK_SECRET_KEY) {
-	console.error('\n❌ ERRO: CLERK_SECRET_KEY não encontrada nas variáveis de ambiente.');
-	console.error(
-		'Certifique-se de que a variável CLERK_SECRET_KEY está configurada no seu terminal ou arquivo .env.local\n',
-	);
-	process.exit(1);
-}
-
-const CLERK_API_URL = 'https://api.clerk.com/v1';
-
-const USER_ID = 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6';
-const USER_EMAIL = 'msm.jur@gmail.com';
-const ORGANIZATION_ID = 'org_3744yWknE4NtI6EtvJqYT8h0MLN';
-
-async function clerkRequest(endpoint: string, method: string = 'GET', body?: any) {
-	const response = await fetch(`${CLERK_API_URL}${endpoint}`, {
-		method,
-		headers: {
-			Authorization: `Bearer ${CLERK_SECRET_KEY}`,
-			'Content-Type': 'application/json',
-		},
-		body: body ? JSON.stringify(body) : undefined,
-	});
-
-	if (!response.ok) {
-		const error = await response.text();
-		throw new Error(`Clerk API error: ${response.status} - ${error}`);
-	}
-
-	return response.json();
-}
-
-async function listJwtTemplates() {
-	try {
-		const result = await clerkRequest('/jwt_templates');
-		console.log('📋 JWT Templates encontrados:');
-		if (result.data && result.data.length > 0) {
-			for (const template of result.data) {
-				console.log(`   - ${template.name} (${template.slug})`);
-			}
-			return result.data;
-		} else {
-			console.log('   ⚠️ Nenhum JWT Template encontrado');
-			return [];
+async function listJwtTemplatesVerbose() {
+	const templates = await listJwtTemplates();
+	console.log('📋 JWT Templates encontrados:');
+	if (templates.length > 0) {
+		for (const template of templates) {
+			console.log(`   - ${template.name} (${template.slug})`);
 		}
-	} catch (error: any) {
-		console.log('⚠️ Erro ao listar JWT Templates:', error.message);
-		return [];
+	} else {
+		console.log('   ⚠️ Nenhum JWT Template encontrado');
 	}
+	return templates;
 }
 
 async function getJwtTemplate(slug: string) {
@@ -91,7 +53,7 @@ async function main() {
 	console.log('🎯 Script: Verificar JWT Template Configuration\n');
 
 	// Listar JWT Templates
-	const templates = await listJwtTemplates();
+	const templates = await listJwtTemplatesVerbose();
 
 	// Verificar se existe template "convex"
 	const convexTemplate = templates.find((t: any) => t.slug === 'convex');

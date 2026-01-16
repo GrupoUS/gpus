@@ -19,7 +19,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 
 	// Mutations & Queries
 	// biome-ignore lint/suspicious/noExplicitAny: prevent TS deep instantiation error
-	const updateStatus = useMutation(api.marketingLeads.updateStatus as any);
+	const updateStatus = useMutation((api as any).marketingLeads.updateStatus);
 	// We don't fetch CSV data automatically, only on demand
 
 	// Use paginated query for server-side pagination
