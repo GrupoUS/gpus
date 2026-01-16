@@ -33,3 +33,6 @@ docs/Aura-Connect/
 
 # Factory templates (AI generated)
 .factory/
+
+
+.agent\skills\frontend-design\scripts\generate_images.py
