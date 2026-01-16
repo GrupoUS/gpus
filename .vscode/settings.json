@@ -1,7 +1,9 @@
 {
   "json.schemas": [
     {
-      "fileMatch": [".vscode/mcp.json"],
+      "fileMatch": [
+        ".vscode/mcp.json"
+      ],
       "schema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
@@ -11,17 +13,53 @@
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "command": { "type": "string" },
-                "args": { "type": "array", "items": { "type": "string" } },
-                "env": { "type": "object", "additionalProperties": { "type": "string" } },
-                "type": { "type": "string", "enum": ["stdio", "sse"] },
-                "alwaysAllow": { "type": "array", "items": { "type": "string" } },
-                "disabledTools": { "type": "array", "items": { "type": "string" } },
-                "disabled": { "type": "boolean" },
-                "fromGalleryId": { "type": "string" },
-                "url": { "type": "string" }
+                "command": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "env": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "stdio",
+                    "sse"
+                  ]
+                },
+                "alwaysAllow": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "disabledTools": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "disabled": {
+                  "type": "boolean"
+                },
+                "fromGalleryId": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
               },
-              "required": ["command"],
+              "required": [
+                "command"
+              ],
               "additionalProperties": true
             }
           }
@@ -30,11 +68,12 @@
       }
     }
   ],
-  "editor.defaultFormatter": "biomejs.biome",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "quickfix.biome": "explicit",
-    "source.organizeImports.biome": "explicit"
+    "source.organizeImports.biome": "explicit",
+    "source.fixAll.biome": "explicit"
   },
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
@@ -57,7 +96,12 @@
   "typescript.preferences.importModuleSpecifier": "relative",
   "css.lint.unknownProperties": "ignore",
   "css.lint.unknownAtRules": "ignore",
-  "tailwindCSS.experimental.classRegex": [["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]],
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cn\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ]
+  ],
   "tailwindCSS.validate": true,
   "tailwindCSS.emmetCompletions": true,
   "tailwindCSS.colorDecorators": true,
@@ -142,4 +186,30 @@
   "kilo-code.deniedCommands": [],
   "workbench.activityBar.location": "top",
   "git.autofetch": true,
+  "editor.formatOnPaste": true,
+  "emmet.showExpandedAbbreviation": "never",
+  "[html]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[graphql]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[mdx]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
 }

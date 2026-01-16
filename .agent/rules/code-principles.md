@@ -109,14 +109,6 @@ await ctx.runMutation((internal as any).module.func);
 - [ ] Added fields are optional?
 - [ ] New code < 50% of what a fresh implementation would be?
 
-You are a senior fullstack developer specializing in complete feature development with expertise across backend and frontend technologies. Your primary focus is delivering cohesive, end-to-end solutions that work seamlessly from database to user interface.
-
-When invoked:
-1. Query context manager for full-stack architecture and existing patterns
-2. Analyze data flow from database through API to frontend
-3. Review authentication and authorization across all layers
-4. Design cohesive solution maintaining consistency throughout stack
-
 Fullstack development checklist:
 - Database schema aligned with API contracts
 - Type-safe API implementation with shared types
@@ -197,110 +189,93 @@ Deployment pipeline:
 - Rollback procedures
 - Monitoring integration
 
-## Implementation Workflow
-
-Navigate fullstack development through comprehensive phases:
-
-### 1. Architecture Planning
-
-Analyze the entire stack to design cohesive solutions.
-
-Planning considerations:
-- Data model design and relationships
-- API contract definition
-- Frontend component architecture
-- Authentication flow design
-- Caching strategy placement
-- Performance requirements
-- Scalability considerations
-- Security boundaries
-
-Technical evaluation:
-- Framework compatibility assessment
-- Library selection criteria
-- Database technology choice
-- State management approach
-- Build tool configuration
-- Testing framework setup
-- Deployment target analysis
-- Monitoring solution selection
-
-### 2. Integrated Development
-
-Build features with stack-wide consistency and optimization.
-
-Development activities:
-- Database schema implementation
-- API endpoint creation
-- Frontend component building
-- Authentication integration
-- State management setup
-- Real-time features if needed
-- Comprehensive testing
-- Documentation creation
-
-### 3. Stack-Wide Delivery
-
-Complete feature delivery with all layers properly integrated.
-
-Delivery components:
-- Database migrations ready
-- API documentation complete
-- Frontend build optimized
-- Tests passing at all levels
-- Deployment scripts prepared
-- Monitoring configured
-- Performance validated
-- Security verified
-
-Technology selection matrix:
-- Frontend framework evaluation
-- Backend language comparison
-- Database technology analysis
-- State management options
-- Authentication methods
-- Deployment platform choices
-- Monitoring solution selection
-- Testing framework decisions
-
-Shared code management:
-- TypeScript interfaces for API contracts
-- Validation schema sharing (Zod/Yup)
-- Utility function libraries
-- Configuration management
-- Error handling patterns
-- Logging standards
-- Style guide enforcement
-- Documentation templates
-
-Feature specification approach:
-- User story definition
-- Technical requirements
-- API contract design
-- UI/UX mockups
-- Database schema planning
-- Test scenario creation
-- Performance targets
-- Security considerations
-
-Integration patterns:
-- API client generation
-- Type-safe data fetching
-- Error boundary implementation
-- Loading state management
-- Optimistic update handling
-- Cache synchronization
-- Real-time data flow
-- Offline capability
-
-Integration with other agents:
-- Collaborate with database-optimizer on schema design
-- Coordinate with api-designer on contracts
-- Work with ui-designer on component specs
-- Partner with devops-engineer on deployment
-- Consult security-auditor on vulnerabilities
-- Sync with performance-engineer on optimization
-- Engage qa-expert on test strategies
-- Align with microservices-architect on boundaries
-
 Always prioritize end-to-end thinking, maintain consistency across the stack, and deliver complete, production-ready features.
+
+# Ultracite Code Standards
+This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
+## Quick Reference
+- **Format code**: `bun run format`
+- **Check for issues**: `bun run check`
+- **Diagnose setup**: `bun run doctor`
+biome (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
+
+## Core Principles
+Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
+### Type Safety & Explicitness
+- Use explicit types for function parameters and return values when they enhance clarity
+- Prefer `unknown` over `any` when the type is genuinely unknown
+- Use const assertions (`as const`) for immutable values and literal types
+- Leverage TypeScript's type narrowing instead of type assertions
+- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
+### Modern JavaScript/TypeScript
+- Use arrow functions for callbacks and short functions
+- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
+- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
+- Prefer template literals over string concatenation
+- Use destructuring for object and array assignments
+- Use `const` by default, `let` only when reassignment is needed, never `var`
+### Async & Promises
+- Always `await` promises in async functions - don't forget to use the return value
+- Use `async/await` syntax instead of promise chains for better readability
+- Handle errors appropriately in async code with try-catch blocks
+- Don't use async functions as Promise executors
+### React & JSX
+- Use function components over class components
+- Call hooks at the top level only, never conditionally
+- Specify all dependencies in hook dependency arrays correctly
+- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
+- Nest children between opening and closing tags instead of passing as props
+- Don't define components inside other components
+- Use semantic HTML and ARIA attributes for accessibility:
+  - Provide meaningful alt text for images
+  - Use proper heading hierarchy
+  - Add labels for form inputs
+  - Include keyboard event handlers alongside mouse events
+  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
+### Error Handling & Debugging
+- Remove `console.log`, `debugger`, and `alert` statements from production code
+- Throw `Error` objects with descriptive messages, not strings or other values
+- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
+- Prefer early returns over nested conditionals for error cases
+### Code Organization
+- Keep functions focused and under reasonable cognitive complexity limits
+- Extract complex conditions into well-named boolean variables
+- Use early returns to reduce nesting
+- Prefer simple conditionals over nested ternary operators
+- Group related code together and separate concerns
+### Security
+- Add `rel="noopener"` when using `target="_blank"` on links
+- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
+- Don't use `eval()` or assign directly to `document.cookie`
+- Validate and sanitize user input
+### Performance
+- Avoid spread syntax in accumulators within loops
+- Use top-level regex literals instead of creating them in loops
+- Prefer specific imports over namespace imports
+- Avoid barrel files (index files that re-export everything)
+- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
+### Framework-Specific Guidance
+**Next.js:**
+- Use Next.js `<Image>` component for images
+- Use `next/head` or App Router metadata API for head elements
+- Use Server Components for async data fetching instead of async Client Components
+**React 19+:**
+- Use ref as a prop instead of `React.forwardRef`
+**Solid/Svelte/Vue/Qwik:**
+- Use `class` and `for` attributes (not `className` or `htmlFor`)
+
+## Testing
+- Write assertions inside `it()` or `test()` blocks
+- Avoid done callbacks in async tests - use async/await instead
+- Don't use `.only` or `.skip` in committed code
+- Keep test suites reasonably flat - avoid excessive `describe` nesting
+## When biome Can't Help
+biome's linter will catch most issues automatically. Focus your attention on:
+1. **Business logic correctness** - biome can't validate your algorithms
+2. **Meaningful naming** - Use descriptive names for functions, variables, and types
+3. **Architecture decisions** - Component structure, data flow, and API design
+4. **Edge cases** - Handle boundary conditions and error states
+5. **User experience** - Accessibility, performance, and usability considerations
+6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
+---
+Most formatting and common issues are automatically fixed by biome. Run `npm ultracite fix` before committing to ensure compliance.

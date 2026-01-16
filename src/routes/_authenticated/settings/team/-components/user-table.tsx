@@ -52,14 +52,14 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 		return (
 			<div className="space-y-2">
 				{Array.from({ length: 5 }).map((_, i) => (
-					<div key={i} className="h-16 w-full animate-pulse bg-muted rounded-md" />
+					<div className="h-16 w-full animate-pulse rounded-md bg-muted" key={i} />
 				))}
 			</div>
 		);
 	}
 
 	if (users.length === 0) {
-		return <div className="text-center py-12 text-muted-foreground">Nenhum membro encontrado.</div>;
+		return <div className="py-12 text-center text-muted-foreground">Nenhum membro encontrado.</div>;
 	}
 
 	return (
@@ -76,14 +76,14 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 			<TableBody>
 				{users.map((user) => (
 					<TableRow
-						key={user._id}
 						className="cursor-pointer hover:bg-muted/50"
+						key={user._id}
 						onClick={() => onView(user)}
 					>
 						<TableCell>
 							<div className="flex items-center gap-3">
 								<Avatar className="h-9 w-9">
-									<AvatarFallback className="text-xs bg-primary/10 text-primary">
+									<AvatarFallback className="bg-primary/10 text-primary text-xs">
 										{user.name
 											? user.name
 													.split(' ')
@@ -105,36 +105,36 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 						</TableCell>
 						<TableCell>
 							<Badge
-								variant={
-									// inviteStatus added to schema
-									user.inviteStatus === 'pending'
-										? 'secondary'
-										: user.isActive
-											? 'default'
-											: 'secondary'
-								}
+								variant={(() => {
+									if (user.inviteStatus === 'pending') return 'secondary';
+									return user.isActive ? 'default' : 'secondary';
+								})()}
 							>
-								{user.inviteStatus === 'pending' ? 'Pendente' : user.isActive ? 'Ativo' : 'Inativo'}
+								{(() => {
+									if (user.inviteStatus === 'pending') return 'Pendente';
+									if (user.isActive) return 'Ativo';
+									return 'Inativo';
+								})()}
 							</Badge>
 						</TableCell>
 						<TableCell onClick={(e) => e.stopPropagation()}>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon">
+									<Button size="icon" variant="ghost">
 										<MoreVertical className="h-4 w-4" />
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end">
 									<DropdownMenuItem onClick={() => onView(user)}>
-										<Eye className="h-4 w-4 mr-2" />
+										<Eye className="mr-2 h-4 w-4" />
 										Detalhes
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => onEdit(user)}>
-										<UserCog className="h-4 w-4 mr-2" />
+										<UserCog className="mr-2 h-4 w-4" />
 										Editar Função
 									</DropdownMenuItem>
 									<DropdownMenuItem className="text-destructive" onClick={() => onRemove(user)}>
-										<Trash2 className="h-4 w-4 mr-2" />
+										<Trash2 className="mr-2 h-4 w-4" />
 										Remover
 									</DropdownMenuItem>
 								</DropdownMenuContent>

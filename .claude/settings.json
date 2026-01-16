@@ -8,5 +8,18 @@
   "statusLine": {
     "type": "command",
     "command": "py D:\\\\gpus\\\\.claude\\\\scripts\\\\context-monitor.py"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx ultracite fix"
+          }
+        ]
+      }
+    ]
   }
 }

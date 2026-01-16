@@ -30,7 +30,7 @@ function TeamSettingsPage() {
 
 	// Use paginated query
 	const { results, status, loadMore } = usePaginatedQuery(
-		api.users.searchTeamMembers as any,
+		(api as any).users.searchTeamMembers,
 		{ query: debouncedQuery },
 		{ initialNumItems: 10 },
 	);
@@ -62,7 +62,7 @@ function TeamSettingsPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
+					<h1 className="flex items-center gap-2 font-bold text-2xl">
 						<UserCog className="h-6 w-6 text-purple-500" />
 						Gerenciar Equipe
 					</h1>
@@ -73,30 +73,30 @@ function TeamSettingsPage() {
 
 			{/* Filters */}
 			<div className="flex items-center gap-4">
-				<div className="relative flex-1 max-w-sm">
-					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+				<div className="relative max-w-sm flex-1">
+					<Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 					<Input
-						placeholder="Buscar por nome ou email..."
 						className="pl-8"
-						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
+						placeholder="Buscar por nome ou email..."
+						value={searchQuery}
 					/>
 				</div>
 			</div>
 
 			{/* Table */}
 			<UserTable
-				users={results || []}
 				isLoading={isLoading}
 				onEdit={handleEditRole}
 				onRemove={handleRemove}
 				onView={handleView}
+				users={results || []}
 			/>
 
 			{/* Pagination / Load More */}
 			<div className="flex justify-center py-4">
 				{status === 'CanLoadMore' && (
-					<Button variant="outline" onClick={() => loadMore(10)}>
+					<Button onClick={() => loadMore(10)} variant="outline">
 						Carregar mais
 					</Button>
 				)}
@@ -105,7 +105,6 @@ function TeamSettingsPage() {
 			{/* Dialogs */}
 			{selectedUser && (
 				<UserDetailsDrawer
-					user={selectedUser}
 					onClose={() => setSelectedUser(null)}
 					onEditRole={(u) => {
 						setSelectedUser(u);
@@ -115,17 +114,18 @@ function TeamSettingsPage() {
 						setSelectedUser(u);
 						setIsRemoveOpen(true);
 					}}
+					user={selectedUser}
 				/>
 			)}
 
 			{selectedUser && (
 				<>
 					<EditRoleDialog
-						open={isEditOpen}
 						onOpenChange={(open) => {
 							setIsEditOpen(open);
 							if (!open) setSelectedUser(null);
 						}}
+						open={isEditOpen}
 						user={{
 							clerkId: selectedUser.clerkId || '',
 							name: selectedUser.name,
@@ -133,11 +133,11 @@ function TeamSettingsPage() {
 						}}
 					/>
 					<RemoveDialog
-						open={isRemoveOpen}
 						onOpenChange={(open) => {
 							setIsRemoveOpen(open);
 							if (!open) setSelectedUser(null);
 						}}
+						open={isRemoveOpen}
 						user={{
 							clerkId: selectedUser.clerkId || '',
 							name: selectedUser.name,

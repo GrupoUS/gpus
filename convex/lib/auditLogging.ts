@@ -5,9 +5,9 @@
  * as required by LGPD Article 6, VIII (accountability).
  */
 
-import type { MutationCtx, QueryCtx } from '../_generated/server'
-import { getClerkId } from './auth'
-import { validateEncryptionConfig } from './encryption'
+import type { Id } from '../_generated/dataModel';
+import type { MutationCtx, QueryCtx } from '../_generated/server';
+import { getClerkId } from './auth';
 
 /**
  * Valid action types for audit logs (matches schema)
@@ -22,25 +22,25 @@ export type AuditActionType =
 	| 'data_export'
 	| 'data_portability'
 	| 'security_event'
-	| 'data_breach'
+	| 'data_breach';
 
 /**
  * Audit log entry interface
  */
 export interface AuditLogEntry {
-	actionType: AuditActionType
-	dataCategory: string
-	description: string
-	studentId?: string
-	entityId?: string
-	metadata?: any
-	processingPurpose?: string
-	legalBasis?: string
-	retentionDays?: number
-	ipAddress?: string
-	userAgent?: string
-	previous_value?: any
-	new_value?: any
+	actionType: AuditActionType;
+	dataCategory: string;
+	description: string;
+	studentId?: string;
+	entityId?: string;
+	metadata?: Record<string, unknown>;
+	processingPurpose?: string;
+	legalBasis?: string;
+	retentionDays?: number;
+	ipAddress?: string;
+	userAgent?: string;
+	previous_value?: unknown;
+	new_value?: unknown;
 }
 
 /**
@@ -52,36 +52,66 @@ export const AUDIT_LEVELS = {
 	MEDIUM: 'medium', // Data modifications, access requests
 	LOW: 'low', // Normal operations, data creation
 	INFO: 'info', // System events, configuration changes
-} as const
+} as const;
+
+function calculateRetentionDays(dataCategory: string): number {
+	const retentionRules: Record<string, number> = {
+		identificacao: 365 * 7, // 7 years for identification data
+		academico: 365 * 20, // 20 years for academic records
+		financeiro: 365 * 5, // 5 years for financial data
+		contato: 365 * 3, // 3 years for contact data
+		consentimento: 365 * 5, // 5 years for consent records
+		auditoria: 365 * 7, // 7 years for audit logs
+	};
+	return retentionRules[dataCategory] || 365 * 5; // Default: 5 years
+}
+
+async function getActorRole(ctx: MutationCtx, clerkId: string): Promise<string> {
+	try {
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', clerkId))
+			.first();
+
+		return user?.role || 'unknown';
+	} catch (_error) {
+		return 'unknown';
+	}
+}
+
+function sanitizeForAuditLog(data: unknown, dataCategory: string): unknown {
+	if (!data) return data;
+
+	// Don't log actual sensitive values, just metadata
+	const sensitiveCategories = ['identificacao', 'contato', 'financeiro'];
+	if (sensitiveCategories.includes(dataCategory)) {
+		return '[REDACTED_FOR_PRIVACY]';
+	}
+
+	// For non-sensitive data, log normally
+	return data;
+}
 
 /**
  * Creates audit log entry with all required LGPD fields
  */
-export async function createAuditLog(
-	ctx: MutationCtx,
-	entry: AuditLogEntry
-): Promise<string> {
-	// Validate encryption is configured
-	const encryptionValidation = await validateEncryptionConfig()
-	if (!encryptionValidation.valid) {
-		console.error('Audit logging failed: Encryption not configured', encryptionValidation.message)
-		throw new Error('LGPD compliance: Encryption configuration required for audit logging')
-	}
-
+export async function createAuditLog(ctx: MutationCtx, entry: AuditLogEntry): Promise<string> {
 	try {
-		const clerkId = await getClerkId(ctx)
-		const timestamp = Date.now()
+		const clerkId = await getClerkId(ctx);
+		const timestamp = Date.now();
 
 		// Prepare metadata with potentially merged extra fields
 		const auditMetadata = {
 			...(entry.metadata || {}),
 			...(entry.previous_value !== undefined ? { previous_value: entry.previous_value } : {}),
 			...(entry.new_value !== undefined ? { new_value: entry.new_value } : {}),
-		}
+		};
 
 		// Create comprehensive audit entry
 		const auditId = await ctx.db.insert('lgpdAudit', {
-			studentId: entry.studentId ? ctx.db.normalizeId('students', entry.studentId) as any : undefined,
+			studentId: entry.studentId
+				? (ctx.db.normalizeId('students', entry.studentId) as Id<'students'>)
+				: undefined,
 			actionType: entry.actionType,
 			actorId: clerkId,
 			actorRole: await getActorRole(ctx, clerkId),
@@ -94,19 +124,12 @@ export async function createAuditLog(
 			retentionDays: entry.retentionDays || calculateRetentionDays(entry.dataCategory),
 			metadata: Object.keys(auditMetadata).length > 0 ? auditMetadata : undefined,
 			createdAt: timestamp,
-		})
+		});
 
-		// Log to system console for immediate monitoring
-		console.log(`[AUDIT] ${entry.actionType}: ${entry.description}`, {
-			timestamp: new Date(timestamp).toISOString(),
-			actor: clerkId,
-			student: entry.studentId,
-		})
-
-		return auditId
+		return auditId;
 	} catch (error) {
-		console.error('Failed to create audit log:', error)
-		throw new Error(`LGPD audit logging failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		throw new Error(`Failed to create audit log: ${errorMessage}`);
 	}
 }
 
@@ -117,7 +140,7 @@ export async function logDataAccess(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategory: string,
-	purpose: string
+	purpose: string,
 ): Promise<string> {
 	return createAuditLog(ctx, {
 		actionType: 'data_access',
@@ -126,7 +149,7 @@ export async function logDataAccess(
 		studentId,
 		processingPurpose: purpose,
 		legalBasis: 'consentimento',
-	})
+	});
 }
 
 /**
@@ -137,17 +160,17 @@ export async function logDataCreation(
 	studentId: string,
 	dataCategory: string,
 	entityType: string,
-	entityId: string
+	entityId: string,
 ): Promise<string> {
 	return createAuditLog(ctx, {
 		actionType: 'data_creation',
 		dataCategory,
-		description: `Criação de ${entityType} para estudante`,
+		description: `Criacao de ${entityType} para estudante`,
 		studentId,
 		entityId,
-		processingPurpose: 'gestão acadêmica',
+		processingPurpose: 'gestao academica',
 		legalBasis: 'consentimento',
-	})
+	});
 }
 
 /**
@@ -158,16 +181,16 @@ export async function logDataModification(
 	studentId: string,
 	dataCategory: string,
 	fieldName: string,
-	oldValue: any,
-	newValue: any
+	oldValue: unknown,
+	newValue: unknown,
 ): Promise<string> {
-	const sanitizedOldValue = sanitizeForAuditLog(oldValue, dataCategory)
-	const sanitizedNewValue = sanitizeForAuditLog(newValue, dataCategory)
+	const sanitizedOldValue = sanitizeForAuditLog(oldValue, dataCategory);
+	const sanitizedNewValue = sanitizeForAuditLog(newValue, dataCategory);
 
 	return createAuditLog(ctx, {
 		actionType: 'data_modification',
 		dataCategory,
-		description: `Modificação de campo ${fieldName} de estudante`,
+		description: `Modificacao de campo ${fieldName} de estudante`,
 		studentId,
 		metadata: {
 			fieldName,
@@ -175,9 +198,9 @@ export async function logDataModification(
 			newValue: sanitizedNewValue,
 			changeTimestamp: Date.now(),
 		},
-		processingPurpose: 'gestão acadêmica',
+		processingPurpose: 'gestao academica',
 		legalBasis: 'consentimento',
-	})
+	});
 }
 
 /**
@@ -188,12 +211,12 @@ export async function logDataDeletion(
 	studentId: string,
 	dataCategory: string,
 	reason: string,
-	deletionType: 'soft' | 'hard' = 'soft'
+	deletionType: 'soft' | 'hard' = 'soft',
 ): Promise<string> {
 	return createAuditLog(ctx, {
 		actionType: 'data_deletion',
 		dataCategory,
-		description: `Deleção ${deletionType} de dados de estudante: ${reason}`,
+		description: `Delecao ${deletionType} de dados de estudante: ${reason}`,
 		studentId,
 		metadata: {
 			deletionType,
@@ -202,7 +225,7 @@ export async function logDataDeletion(
 		},
 		processingPurpose: 'cumprimento LGPD - direito ao esquecimento',
 		legalBasis: 'direito do titular de dados',
-	})
+	});
 }
 
 /**
@@ -213,14 +236,14 @@ export async function logConsentOperation(
 	studentId: string,
 	consentType: string,
 	granted: boolean,
-	reason?: string
+	reason?: string,
 ): Promise<string> {
-	const actionType = granted ? 'consent_granted' : 'consent_withdrawn'
+	const actionType = granted ? 'consent_granted' : 'consent_withdrawn';
 
 	return createAuditLog(ctx, {
 		actionType,
 		dataCategory: 'consentimento',
-		description: `${granted ? 'Concessão' : 'Retirada'} de consentimento: ${consentType}`,
+		description: `${granted ? 'Concessao' : 'Retirada'} de consentimento: ${consentType}`,
 		studentId,
 		metadata: {
 			consentType,
@@ -229,8 +252,8 @@ export async function logConsentOperation(
 			timestamp: Date.now(),
 		},
 		processingPurpose: 'cumprimento LGPD',
-		legalBasis: 'consentimento explícito',
-	})
+		legalBasis: 'consentimento explicito',
+	});
 }
 
 /**
@@ -240,76 +263,21 @@ export async function logDataExport(
 	ctx: MutationCtx,
 	studentId: string,
 	dataCategories: string[],
-	exportFormat: string
+	exportFormat: string,
 ): Promise<string> {
 	return createAuditLog(ctx, {
 		actionType: 'data_export',
 		dataCategory: dataCategories.join(', '),
-		description: `Exportação de dados do estudante: formato ${exportFormat}`,
+		description: `Exportacao de dados do estudante: formato ${exportFormat}`,
 		studentId,
 		metadata: {
 			dataCategories,
 			exportFormat,
 			requestDate: Date.now(),
 		},
-		processingPurpose: 'cumprimento LGPD - direito à portabilidade',
+		processingPurpose: 'cumprimento LGPD - direito a portabilidade',
 		legalBasis: 'direito do titular de dados',
-	})
-}
-
-/**
- * NOTE: Convex functions don't have access to HTTP headers directly.
- * IP and UserAgent must be passed from HTTP actions or client if needed.
- * For now, we use placeholder values for audit logging.
- */
-
-/**
- * Gets actor role from authentication context
- */
-async function getActorRole(ctx: MutationCtx, clerkId: string): Promise<string> {
-	try {
-		const user = await ctx.db
-			.query('users')
-			.withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
-			.first()
-
-		return user?.role || 'unknown'
-	} catch (error) {
-		console.error('Failed to get actor role:', error)
-		return 'unknown'
-	}
-}
-
-/**
- * Sanitizes sensitive data for audit logs
- */
-function sanitizeForAuditLog(data: any, dataCategory: string): any {
-	if (!data) return data
-
-	// Don't log actual sensitive values, just metadata
-	const sensitiveCategories = ['identificação', 'contato', 'financeiro']
-	if (sensitiveCategories.includes(dataCategory)) {
-		return '[REDACTED_FOR_PRIVACY]'
-	}
-
-	// For non-sensitive data, log normally
-	return data
-}
-
-/**
- * Calculates retention days for audit logs based on data category
- */
-function calculateRetentionDays(dataCategory: string): number {
-	const retentionRules: Record<string, number> = {
-		'identificação': 365 * 7, // 7 years for identification data
-		'acadêmico': 365 * 20, // 20 years for academic records
-		'financeiro': 365 * 5, // 5 years for financial data
-		'contato': 365 * 3, // 3 years for contact data
-		'consentimento': 365 * 5, // 5 years for consent records
-		'auditoria': 365 * 7, // 7 years for audit logs
-	}
-
-	return retentionRules[dataCategory] || 365 * 5 // Default: 5 years
+	});
 }
 
 /**
@@ -320,21 +288,21 @@ export async function logSecurityEvent(
 	eventType: 'breach' | 'unauthorized_access' | 'suspicious_activity',
 	description: string,
 	severity: 'low' | 'medium' | 'high' | 'critical' = 'medium',
-	affectedUsers?: string[]
+	affectedUsers?: string[],
 ): Promise<string> {
 	return createAuditLog(ctx, {
 		actionType: 'security_event',
-		dataCategory: 'segurança',
-		description: `Evento de segurança: ${eventType} - ${description}`,
+		dataCategory: 'seguranca',
+		description: `Evento de seguranca: ${eventType} - ${description}`,
 		metadata: {
 			eventType,
 			severity,
 			affectedUsers,
 			requiresIncidentResponse: severity === 'high' || severity === 'critical',
 		},
-		processingPurpose: 'resposta a incidentes de segurança',
-		legalBasis: 'obrigação legal de segurança',
-	})
+		processingPurpose: 'resposta a incidentes de seguranca',
+		legalBasis: 'obrigacao legal de seguranca',
+	});
 }
 
 /**
@@ -343,42 +311,42 @@ export async function logSecurityEvent(
 export async function getAuditLogs(
 	ctx: QueryCtx,
 	filters: {
-		studentId?: string
-		actionType?: string
-		dataCategory?: string
-		startDate?: number
-		endDate?: number
-		actorId?: string
-	}
+		studentId?: string;
+		actionType?: string;
+		dataCategory?: string;
+		startDate?: number;
+		endDate?: number;
+		actorId?: string;
+	},
 ) {
 	// Start with base query
-	let results = await ctx.db.query('lgpdAudit').order('desc').take(1000)
+	let results = await ctx.db.query('lgpdAudit').order('desc').take(1000);
 
 	// Apply filters in memory (Convex doesn't support dynamic chained filters)
 	if (filters.studentId) {
-		const normalizedId = ctx.db.normalizeId('students', filters.studentId)
-		results = results.filter(r => r.studentId === normalizedId)
+		const normalizedId = ctx.db.normalizeId('students', filters.studentId);
+		results = results.filter((r) => r.studentId === normalizedId);
 	}
 
 	if (filters.actionType) {
-		results = results.filter(r => r.actionType === filters.actionType)
+		results = results.filter((r) => r.actionType === filters.actionType);
 	}
 
 	if (filters.dataCategory) {
-		results = results.filter(r => r.dataCategory === filters.dataCategory)
+		results = results.filter((r) => r.dataCategory === filters.dataCategory);
 	}
 
 	if (filters.startDate) {
-		results = results.filter(r => r.createdAt >= filters.startDate!)
+		results = results.filter((r) => r.createdAt >= filters.startDate!);
 	}
 
 	if (filters.endDate) {
-		results = results.filter(r => r.createdAt <= filters.endDate!)
+		results = results.filter((r) => r.createdAt <= filters.endDate!);
 	}
 
 	if (filters.actorId) {
-		results = results.filter(r => r.actorId === filters.actorId)
+		results = results.filter((r) => r.actorId === filters.actorId);
 	}
 
-	return results
+	return results;
 }
