@@ -7,20 +7,19 @@
  * 3. Script value: use the logic below.
  */
 
-// Assuming the raw phone is in a variable named 'rawPhone'
-let phone = rawPhone;
+function _validatePhone(rawPhone) {
+	// 1. Remove non-numeric characters
+	let phone = rawPhone.replace(/\D/g, '');
 
-// 1. Remove non-numeric characters
-phone = phone.replace(/\D/g, '');
+	// 2. Handle Brazilian numbers
+	if ((phone.length === 11 || phone.length === 10) && !phone.startsWith('55')) {
+		phone = `55${phone}`;
+	}
 
-// 2. Handle Brazilian numbers
-if ((phone.length === 11 || phone.length === 10) && !phone.startsWith('55')) {
-	phone = `55${phone}`;
+	// 3. Add '+' prefix (Convex expects international format)
+	if (!phone.startsWith('+')) {
+		phone = `+${phone}`;
+	}
+
+	return phone;
 }
-
-// 3. Add '+' prefix (Convex expects international format)
-if (!phone.startsWith('+')) {
-	phone = `+${phone}`;
-}
-
-return phone;

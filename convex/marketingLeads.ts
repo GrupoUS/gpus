@@ -138,6 +138,7 @@ export const create = mutation({
 		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
 		const syncFn = (internal as any).emailMarketing?.syncMarketingLeadAsContactInternal;
 		if (syncFn) {
+			// biome-ignore lint/suspicious/noExplicitAny: scheduler type not fully generated
 			await (ctx.scheduler as any).runAfter(0, syncFn, {
 				leadId,
 				organizationId: defaultOrgId,
@@ -170,11 +171,12 @@ export const list = convexQuery({
 		let leadQuery: any;
 
 		if (args.status && args.status !== 'all') {
-			leadQuery = ctx.db
-				.query('marketing_leads')
-				.withIndex('by_organization_status', (q) =>
-					q.eq('organizationId', organizationId).eq('status', args.status as any),
-				);
+			leadQuery = ctx.db.query('marketing_leads').withIndex('by_organization_status', (q) =>
+				q.eq('organizationId', organizationId).eq(
+					'status', // biome-ignore lint/suspicious/noExplicitAny: status type from args
+					args.status as any,
+				),
+			);
 		} else {
 			leadQuery = ctx.db
 				.query('marketing_leads')
@@ -268,6 +270,7 @@ export const updateStatus = mutation({
 			// biome-ignore lint/suspicious/noExplicitAny: Internal API may not be fully generated
 			const syncFn = (internal as any).emailMarketing?.updateContactSubscriptionInternal;
 			if (syncFn) {
+				// biome-ignore lint/suspicious/noExplicitAny: scheduler type not fully generated
 				await (ctx.scheduler as any).runAfter(0, syncFn, {
 					email: lead.email,
 					subscriptionStatus: 'unsubscribed',
@@ -292,11 +295,12 @@ export const exportToCSV = convexQuery({
 		let exportQuery: any;
 
 		if (args.status && args.status !== 'all') {
-			exportQuery = ctx.db
-				.query('marketing_leads')
-				.withIndex('by_organization_status', (q) =>
-					q.eq('organizationId', organizationId).eq('status', args.status as any),
-				);
+			exportQuery = ctx.db.query('marketing_leads').withIndex('by_organization_status', (q) =>
+				q.eq('organizationId', organizationId).eq(
+					'status', // biome-ignore lint/suspicious/noExplicitAny: status type from args
+					args.status as any,
+				),
+			);
 		} else {
 			exportQuery = ctx.db
 				.query('marketing_leads')
@@ -312,18 +316,21 @@ export const exportToCSV = convexQuery({
 		let leads = await exportQuery.order('desc').collect();
 
 		if (args.interest && args.interest !== 'all') {
-			leads = leads.filter((l) => l.interest === args.interest);
+			// biome-ignore lint/suspicious/noExplicitAny: complex filter type
+			leads = leads.filter((l: any) => l.interest === args.interest);
 		}
 
 		if (args.startDate || args.endDate) {
-			leads = leads.filter((l) => {
+			// biome-ignore lint/suspicious/noExplicitAny: complex filter type
+			leads = leads.filter((l: any) => {
 				if (args.startDate && l.createdAt < args.startDate) return false;
 				if (args.endDate && l.createdAt > args.endDate) return false;
 				return true;
 			});
 		}
 
-		return leads.map((l) => ({
+		// biome-ignore lint/suspicious/noExplicitAny: complex map type
+		return leads.map((l: any) => ({
 			name: l.name,
 			email: l.email,
 			phone: l.phone,

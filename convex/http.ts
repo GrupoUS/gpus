@@ -68,8 +68,7 @@ http.route({
 		// 5. Find contact by email (if exists)
 		// Break type inference chain to avoid "Type instantiation is excessively deep" error
 		// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
-		const internalAny = internal as any;
-		const getContactFn = internalAny.emailMarketing.getContactByEmailInternal;
+		const getContactFn = (internal as any).emailMarketing.getContactByEmailInternal;
 		const contact = await ctx.runQuery(getContactFn, {
 			email: payload.email,
 		});
@@ -163,6 +162,66 @@ http.route({
 });
 
 /**
+ * Helper function to extract user IP from request headers
+ */
+function extractUserIp(request: Request): string {
+	const ipHeader =
+		request.headers.get('x-forwarded-for') ||
+		request.headers.get('x-real-ip') ||
+		request.headers.get('cf-connecting-ip') ||
+		'unknown';
+	return ipHeader.split(',')[0].trim();
+}
+
+/**
+ * Helper function to map Typebot body to CRM args
+ */
+// biome-ignore lint/suspicious/noExplicitAny: External payload structure is flexible
+function mapTypebotBodyToArgs(body: any, userIp: string) {
+	const baseArgs = {
+		name: body.nome || body.name || 'Nome não fornecido',
+		email: body.email || body.email_contato || '',
+		phone: formatTypebotPhone(body.telefone || body.phone || body.whatsapp || ''),
+		interest: mapTypebotInterest(body.interesse || body.interest),
+		message: body.mensagem || body.message || body.notes || '',
+		lgpdConsent: body.lgpdConsent !== false,
+		whatsappConsent: body.whatsappConsent !== false,
+		utmSource: body.utmSource || body.utm_source,
+		utmCampaign: body.utmCampaign || body.utm_campaign,
+		utmMedium: body.utmMedium || body.utm_medium,
+		utmContent: body.utmContent || body.utm_content,
+		utmTerm: body.utmTerm || body.utm_term,
+	};
+
+	return {
+		...baseArgs,
+		userIp,
+		company: body.empresa || body.company,
+		jobRole: body.cargo || body.jobRole || body.role,
+		origin: body.origem || body.source || body.origin,
+		typebotId: body.typebot_id || body.typebotId,
+		resultId: body.result_id || body.resultId,
+		externalTimestamp: typeof body.timestamp === 'number' ? body.timestamp : undefined,
+	};
+}
+
+/**
+ * Helper function to determine HTTP status from error message
+ */
+function getStatusFromError(errorMsg: string): number {
+	if (errorMsg.includes('Validation failed') || errorMsg.includes('Invalid submission')) {
+		return 400;
+	}
+	if (
+		errorMsg.includes('Rate limit exceeded') ||
+		errorMsg.includes('Limite de submissões excedido')
+	) {
+		return 429;
+	}
+	return 500;
+}
+
+/**
  * Typebot Webhook Endpoint
  *
  * Receives lead data from Typebot HTTP Request blocks after form completion.
@@ -193,48 +252,14 @@ http.route({
 			return new Response('Bad Request: Invalid JSON', { status: 400 });
 		}
 
-		// 3. Map Typebot variables to CRM arguments
-		// We handle both English and Portuguese field names for flexibility
-		const Args = {
-			name: body.nome || body.name || 'Nome não fornecido',
-			email: body.email || body.email_contato || '',
-			phone: formatTypebotPhone(body.telefone || body.phone || body.whatsapp || ''),
-			interest: mapTypebotInterest(body.interesse || body.interest),
-			message: body.mensagem || body.message || body.notes || '',
-			lgpdConsent: body.lgpdConsent !== false, // Assuming consent if they finished the bot, unless explicit false
-			whatsappConsent: body.whatsappConsent !== false,
-			utmSource: body.utmSource || body.utm_source,
-			utmCampaign: body.utmCampaign || body.utm_campaign,
-			utmMedium: body.utmMedium || body.utm_medium,
-			utmContent: body.utmContent || body.utm_content,
-			utmTerm: body.utmTerm || body.utm_term,
-		};
-
-		// 3. Robust IP Detection
-		const ipHeader =
-			request.headers.get('x-forwarded-for') ||
-			request.headers.get('x-real-ip') ||
-			request.headers.get('cf-connecting-ip') ||
-			'unknown';
-		const userIp = ipHeader.split(',')[0].trim();
+		// 3. Extract user IP
+		const userIp = extractUserIp(request);
 
 		// 4. Map Typebot variables to CRM arguments
-		// We handle both English and Portuguese field names for flexibility
-		const args = {
-			...Args,
-			userIp,
-			// Additional metadata requested in verification
-			company: body.empresa || body.company,
-			jobRole: body.cargo || body.jobRole || body.role,
-			origin: body.origem || body.source || body.origin,
-			typebotId: body.typebot_id || body.typebotId,
-			resultId: body.result_id || body.resultId,
-			externalTimestamp: typeof body.timestamp === 'number' ? body.timestamp : undefined,
-		};
+		const args = mapTypebotBodyToArgs(body, userIp);
 
 		// 5. Trigger creation mutation
 		try {
-			// We use the public mutation via internal access to avoid type issues with generated 'api'
 			// biome-ignore lint/suspicious/noExplicitAny: break type inference chain
 			const leadId = await ctx.runMutation((api as any).marketingLeads.create, args);
 
@@ -245,16 +270,7 @@ http.route({
 			// biome-ignore lint/suspicious/noExplicitAny: error type
 		} catch (error: any) {
 			const errorMsg = error.message || '';
-			let status = 500;
-
-			if (errorMsg.includes('Validation failed') || errorMsg.includes('Invalid submission')) {
-				status = 400;
-			} else if (
-				errorMsg.includes('Rate limit exceeded') ||
-				errorMsg.includes('Limite de submissões excedido')
-			) {
-				status = 429;
-			}
+			const status = getStatusFromError(errorMsg);
 
 			return new Response(JSON.stringify({ success: false, error: errorMsg }), {
 				status,
@@ -281,7 +297,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 	let result = 0;
 	for (let i = 0; i < a.length; i++) {
-		// biome-ignore lint/suspicious/noExplicitAny: constant-time comparison needed
+		// biome-ignore lint/suspicious/noBitwiseOperators: constant-time comparison needed for security
 		result |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 
