@@ -173,7 +173,20 @@ export function useMarketingLeadsViewModel(Route: any) {
 			];
 			const csvContent = [
 				headers.join(','),
-				...data.map((row) =>
+				...data.map((row: {
+					name: string;
+					email: string | null;
+					phone: string;
+					interest: string | null;
+					message: string | null;
+					lgpdConsent: boolean;
+					whatsappConsent: boolean;
+					status: string;
+					utmSource: string | null;
+					utmCampaign: string | null;
+					utmMedium: string | null;
+					createdAt: number;
+				}) =>
 					[
 						`"${row.name}"`,
 						`"${row.email}"`,
