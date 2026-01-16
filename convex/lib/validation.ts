@@ -9,6 +9,15 @@ import { v } from 'convex/values';
 import { z } from 'zod';
 
 /**
+ * Regex patterns at top level for performance
+ */
+const CPF_REPEATED_REGEX = /^(\d)\1{10}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const DANGEROUS_EXTENSIONS_REGEX = /\.(exe|bat|cmd|scr|pif|com)$/i;
+const DANGEROUS_SYSTEM_PATTERNS_REGEX = /(con|prn|aux|nul)\./i;
+const DANGEROUS_CHARS_REGEX = /[<>"|:*?]/;
+
+/**
  * Validation schemas for different data types
  */
 export const validationSchemas = {
@@ -96,6 +105,12 @@ export const validationSchemas = {
 		utmMedium: z.string().optional(),
 		utmContent: z.string().optional(),
 		utmTerm: z.string().optional(),
+		company: z.string().max(100).optional(),
+		jobRole: z.string().max(100).optional(),
+		origin: z.string().max(100).optional(),
+		typebotId: z.string().max(100).optional(),
+		resultId: z.string().max(100).optional(),
+		externalTimestamp: z.number().optional(),
 	}),
 
 	// Student validation
@@ -202,31 +217,31 @@ export function validateInput<T>(
  */
 export function isValidCPF(cpf: string): boolean {
 	// Remove non-digits
-	cpf = cpf.replace(/[^\d]/g, '');
+	const cleanCpf = cpf.replace(/[^\d]/g, '');
 
 	// Check length
-	if (cpf.length !== 11) return false;
+	if (cleanCpf.length !== 11) return false;
 
 	// Check if all digits are the same (invalid CPFs)
-	if (/^(\d)\1{10}$/.test(cpf)) return false;
+	if (CPF_REPEATED_REGEX.test(cleanCpf)) return false;
 
 	// Validate first check digit
 	let sum = 0;
 	for (let i = 0; i < 9; i++) {
-		sum += parseInt(cpf[i]) * (10 - i);
+		sum += Number.parseInt(cleanCpf[i], 10) * (10 - i);
 	}
 	let checkDigit = 11 - (sum % 11);
 	if (checkDigit > 9) checkDigit = 0;
-	if (checkDigit !== parseInt(cpf[9])) return false;
+	if (checkDigit !== Number.parseInt(cleanCpf[9], 10)) return false;
 
 	// Validate second check digit
 	sum = 0;
 	for (let i = 0; i < 10; i++) {
-		sum += parseInt(cpf[i]) * (11 - i);
+		sum += Number.parseInt(cleanCpf[i], 10) * (11 - i);
 	}
 	checkDigit = 11 - (sum % 11);
 	if (checkDigit > 9) checkDigit = 0;
-	if (checkDigit !== parseInt(cpf[10])) return false;
+	if (checkDigit !== Number.parseInt(cleanCpf[10], 10)) return false;
 
 	return true;
 }
@@ -235,8 +250,7 @@ export function isValidCPF(cpf: string): boolean {
  * Validates email format more strictly
  */
 export function isValidEmail(email: string): boolean {
-	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-	return emailRegex.test(email);
+	return EMAIL_REGEX.test(email);
 }
 
 /**
@@ -338,7 +352,11 @@ export function validateFileUpload(file: { name: string; size: number; type: str
 	}
 
 	// Check for dangerous file names
-	const dangerousPatterns = [/\.(exe|bat|cmd|scr|pif|com)$/i, /(con|prn|aux|nul)\./i, /[<>"|:*?]/];
+	const dangerousPatterns = [
+		DANGEROUS_EXTENSIONS_REGEX,
+		DANGEROUS_SYSTEM_PATTERNS_REGEX,
+		DANGEROUS_CHARS_REGEX,
+	];
 
 	if (dangerousPatterns.some((pattern) => pattern.test(file.name))) {
 		return {
@@ -354,17 +372,20 @@ export function validateFileUpload(file: { name: string; size: number; type: str
  * Rate limiting validation
  */
 export class RateLimiter {
-	private attempts: Map<string, number[]> = new Map();
+	private readonly attempts: Map<string, number[]> = new Map();
 
-	constructor(
-		private maxAttempts: number = 10,
-		private windowMs: number = 60000, // 1 minute
-	) {}
+	private readonly maxAttempts: number;
+	private readonly windowMs: number;
+
+	constructor(maxAttempts = 10, windowMs = 60_000) {
+		this.maxAttempts = maxAttempts;
+		this.windowMs = windowMs;
+	}
 
 	/**
 	 * Checks if request is allowed
 	 */
-	public isAllowed(key: string): boolean {
+	isAllowed(key: string): boolean {
 		const now = Date.now();
 		const attempts = this.attempts.get(key) || [];
 
@@ -386,7 +407,7 @@ export class RateLimiter {
 	/**
 	 * Gets remaining attempts
 	 */
-	public getRemainingAttempts(key: string): number {
+	getRemainingAttempts(key: string): number {
 		const now = Date.now();
 		const attempts = this.attempts.get(key) || [];
 
@@ -398,7 +419,7 @@ export class RateLimiter {
 	/**
 	 * Gets time until next allowed request
 	 */
-	public getResetTime(key: string): number {
+	getResetTime(key: string): number {
 		const now = Date.now();
 		const attempts = this.attempts.get(key) || [];
 
@@ -418,11 +439,11 @@ export class RateLimiter {
  * Default rate limiter instances
  */
 export const rateLimiters = {
-	login: new RateLimiter(5, 900000), // 5 attempts per 15 minutes
-	contact: new RateLimiter(20, 3600000), // 20 attempts per hour
-	dataExport: new RateLimiter(3, 86400000), // 3 exports per day
-	passwordReset: new RateLimiter(3, 3600000), // 3 attempts per hour
-	marketingLeadCapture: new RateLimiter(5, 3600000), // 5 submissions per hour
+	login: new RateLimiter(5, 900_000), // 5 attempts per 15 minutes
+	contact: new RateLimiter(20, 3_600_000), // 20 attempts per hour
+	dataExport: new RateLimiter(3, 86_400_000), // 3 exports per day
+	passwordReset: new RateLimiter(3, 3_600_000), // 3 attempts per hour
+	marketingLeadCapture: new RateLimiter(5, 3_600_000), // 5 submissions per hour
 } as const;
 
 /**
@@ -430,8 +451,10 @@ export const rateLimiters = {
  */
 export function withValidation<T>(
 	schema: z.ZodSchema<T>,
+	// biome-ignore lint/suspicious/noExplicitAny: Generic handler type
 	handler: (ctx: any, data: T) => Promise<any>,
 ) {
+	// biome-ignore lint/suspicious/noExplicitAny: Generic internal handler type
 	return async (ctx: any, data: unknown) => {
 		const validation = validateInput(schema, data);
 

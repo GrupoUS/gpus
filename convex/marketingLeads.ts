@@ -1,13 +1,11 @@
-import { v } from 'convex/values';
-import { mutation, query, internalMutation } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
-import * as apiModule from './_generated/api';
-const internal = (apiModule as any).internal;
-import { requirePermission, getOrganizationId } from './lib/auth';
+import { v } from 'convex/values';
+
+import { internal } from './_generated/api';
+import { query as convexQuery, internalMutation, mutation } from './_generated/server';
+import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
-import { validateInput, rateLimiters, validationSchemas } from './lib/validation';
-// createAuditLog removed from imports as we do manual insert to avoid auth check
-// import { createAuditLog } from './lib/auditLogging'
+import { rateLimiters, validateInput, validationSchemas } from './lib/validation';
 
 // ═══════════════════════════════════════════════════════
 // PUBLIC MUTATION: Create Marketing Lead
@@ -34,11 +32,16 @@ export const create = mutation({
 		utmContent: v.optional(v.string()),
 		utmTerm: v.optional(v.string()),
 		userIp: v.optional(v.string()),
+		company: v.optional(v.string()),
+		jobRole: v.optional(v.string()),
+		origin: v.optional(v.string()),
+		typebotId: v.optional(v.string()),
+		resultId: v.optional(v.string()),
+		externalTimestamp: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		// 1. Honeypot Check (anti-spam)
 		if (args.honeypot && args.honeypot.length > 0) {
-			console.warn('[MarketingLeads] Honeypot triggered, rejecting submission');
 			throw new Error('Invalid submission');
 		}
 
@@ -55,7 +58,7 @@ export const create = mutation({
 			const recent = await ctx.db
 				.query('rateLimits')
 				.withIndex('by_identifier_action', (q) =>
-					q.eq('identifier', args.userIp!).eq('action', 'marketing_lead_submit'),
+					q.eq('identifier', args.userIp ?? '').eq('action', 'marketing_lead_submit'),
 				)
 				.filter((q) => q.gte(q.field('timestamp'), Date.now() - window))
 				.collect();
@@ -74,26 +77,21 @@ export const create = mutation({
 		if (!rateLimiter.isAllowed(args.email)) {
 			const resetTime = rateLimiter.getResetTime(args.email);
 			throw new Error(
-				`Limite de submissões excedido. Tente novamente em ${Math.ceil(resetTime / 60000)} minutos.`,
+				`Limite de submissões excedido. Tente novamente em ${Math.ceil(resetTime / 60_000)} minutos.`,
 			);
 		}
 
 		// 4. Duplicate Email Check
-		// We try to catch constraints if they exist, but usually Convex throws on insert if unique index exists.
-		// However, we'll keep the check for graceful handling.
 		const existing = await ctx.db
 			.query('marketing_leads')
 			.withIndex('by_email', (q) => q.eq('email', args.email))
 			.first();
 
 		if (existing) {
-			// Idempotent: return existing ID
-			console.log('[MarketingLeads] Duplicate email, returning existing lead');
 			return existing._id;
 		}
 
 		// 5. Get Default Organization ID (from env or null)
-		// Note: process.env for Convex functions is set in Dashboard
 		const defaultOrgId = process.env.DEFAULT_ORGANIZATION_ID || undefined;
 
 		// 6. Insert Lead
@@ -110,41 +108,40 @@ export const create = mutation({
 			utmMedium: args.utmMedium,
 			utmContent: args.utmContent,
 			utmTerm: args.utmTerm,
+			company: args.company,
+			jobRole: args.jobRole,
+			origin: args.origin,
+			typebotId: args.typebotId,
+			resultId: args.resultId,
+			externalTimestamp: args.externalTimestamp,
 			status: 'new',
 			organizationId: defaultOrgId,
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
 		});
 
-		// 7. Log Audit Event (Manual Insert to bypass Auth check)
-		// Comment 1: "replace it with a logging path that does not require authentication"
+		// 7. Log Audit Event
 		await ctx.db.insert('lgpdAudit', {
 			actionType: 'data_creation',
 			dataCategory: 'marketing_leads',
 			description: `Lead capturado via formulário público: ${args.email}`,
-			// entityId removed from top level, moved to metadata
-			// entityId: leadId,
 			metadata: { entityId: leadId },
 			processingPurpose: 'captura de leads de marketing',
 			legalBasis: 'consentimento',
 			ipAddress: args.userIp || 'unknown',
-			actorId: 'system_public_form', // System identity
+			actorId: 'system_public_form',
 			actorRole: 'system',
 			createdAt: Date.now(),
 		});
 
 		// 8. Auto-sync to Brevo (async)
-		// Comment 2: "uses the wrong internal mutation... update to schedule that function"
-		const syncFn = (internal as any)?.emailMarketing?.syncMarketingLeadAsContactInternal;
+		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
+		const syncFn = (internal as any).emailMarketing?.syncMarketingLeadAsContactInternal;
 		if (syncFn) {
 			await (ctx.scheduler as any).runAfter(0, syncFn, {
 				leadId,
 				organizationId: defaultOrgId,
 			});
-		} else {
-			console.warn(
-				'syncMarketingLeadAsContactInternal not scheduled - internal API likely not generated yet.',
-			);
 		}
 
 		return leadId;
@@ -155,7 +152,7 @@ export const create = mutation({
 // ADMIN QUERIES
 // ═══════════════════════════════════════════════════════
 
-export const list = query({
+export const list = convexQuery({
 	args: {
 		paginationOpts: paginationOptsValidator,
 		status: v.optional(v.string()),
@@ -164,53 +161,48 @@ export const list = query({
 		startDate: v.optional(v.number()),
 		endDate: v.optional(v.number()),
 	},
+	// biome-ignore lint/suspicious/noExplicitAny: Generic handler type
 	handler: async (ctx, args: any) => {
-		// Require admin permissions
 		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
-		// Comment 3: Organization scoping
 		const organizationId = await getOrganizationId(ctx);
 
-		// Build query with filters
-		let query: any; // Use any to allow different Query types (Ordered vs Filtered)
+		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
+		let leadQuery: any;
 
 		if (args.status && args.status !== 'all') {
-			// Filter by status using index
-			query = ctx.db
+			leadQuery = ctx.db
 				.query('marketing_leads')
 				.withIndex('by_organization_status', (q) =>
 					q.eq('organizationId', organizationId).eq('status', args.status as any),
 				);
 		} else {
-			// Default: all statuses
-			// Use index 'by_organization_created' [organizationId, createdAt]
-			query = ctx.db
+			leadQuery = ctx.db
 				.query('marketing_leads')
 				.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
 		}
 
-		// Apply filters
-		// Note: .filter() returns Query, preserving type
 		if (args.interest) {
-			query = query.filter((q: any) => q.eq(q.field('interest'), args.interest));
+			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
+			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('interest'), args.interest));
 		}
 
-		// Date range filter
 		if (args.startDate || args.endDate) {
-			query = query.filter((q: any) => {
-				const conditions = [];
+			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
+			leadQuery = leadQuery.filter((q: any) => {
+				// biome-ignore lint/suspicious/noExplicitAny: Complex condition array
+				const conditions: any[] = [];
 				if (args.startDate) conditions.push(q.gte(q.field('createdAt'), args.startDate));
 				if (args.endDate) conditions.push(q.lte(q.field('createdAt'), args.endDate));
 				return q.and(...conditions);
 			});
 		}
 
-		// Always order desc (reverse index scan/system order)
-		const results = await query.order('desc').paginate(args.paginationOpts);
+		const results = await leadQuery.order('desc').paginate(args.paginationOpts);
 
-		// Search filter (in-memory)
 		if (args.search) {
 			const searchLower = args.search.toLowerCase();
 			results.page = results.page.filter(
+				// biome-ignore lint/suspicious/noExplicitAny: generic result type
 				(l: any) =>
 					l.name.toLowerCase().includes(searchLower) ||
 					l.email.toLowerCase().includes(searchLower) ||
@@ -222,7 +214,7 @@ export const list = query({
 	},
 });
 
-export const get = query({
+export const get = convexQuery({
 	args: { leadId: v.id('marketing_leads') },
 	handler: async (ctx, args) => {
 		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
@@ -255,7 +247,6 @@ export const updateStatus = mutation({
 		const organizationId = await getOrganizationId(ctx);
 
 		const lead = await ctx.db.get(args.leadId);
-		// Comment 3: verify lead's organizationId matches
 		if (!lead || lead.organizationId !== organizationId) {
 			throw new Error('Lead not found or permission denied');
 		}
@@ -265,17 +256,16 @@ export const updateStatus = mutation({
 			updatedAt: Date.now(),
 		});
 
-		// Log activity
 		await ctx.db.insert('activities', {
-			type: 'lead_criado', // Using existing type for now
+			type: 'lead_criado',
 			description: `Marketing lead status changed to ${args.newStatus}`,
 			organizationId: lead.organizationId || 'system',
 			performedBy: identity.subject,
 			createdAt: Date.now(),
 		});
 
-		// If unsubscribed, update Brevo
 		if (args.newStatus === 'unsubscribed' && lead.brevoContactId) {
+			// biome-ignore lint/suspicious/noExplicitAny: Internal API may not be fully generated
 			const syncFn = (internal as any).emailMarketing?.updateContactSubscriptionInternal;
 			if (syncFn) {
 				await (ctx.scheduler as any).runAfter(0, syncFn, {
@@ -287,7 +277,7 @@ export const updateStatus = mutation({
 	},
 });
 
-export const exportToCSV = query({
+export const exportToCSV = convexQuery({
 	args: {
 		status: v.optional(v.string()),
 		interest: v.optional(v.string()),
@@ -298,43 +288,33 @@ export const exportToCSV = query({
 		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
 		const organizationId = await getOrganizationId(ctx);
 
-		// const baseQuery removed
-		let query;
+		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
+		let exportQuery: any;
 
 		if (args.status && args.status !== 'all') {
-			// Use efficient index
-			query = ctx.db
+			exportQuery = ctx.db
 				.query('marketing_leads')
 				.withIndex('by_organization_status', (q) =>
 					q.eq('organizationId', organizationId).eq('status', args.status as any),
 				);
 		} else {
-			query = ctx.db
+			exportQuery = ctx.db
 				.query('marketing_leads')
 				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 		}
 
-		if (args.startDate || args.endDate) {
-			// If sorting by date is less important than organization + status, we filter in memory or use complex index
-			// Schema has "by_organization_created"
-			// If status is 'all' and we have dates, use that.
-			if ((!args.status || args.status === 'all') && (args.startDate || args.endDate)) {
-				query = ctx.db
-					.query('marketing_leads')
-					.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
-				// We could use range queries if we had strict ranges, but filter is fine for CSV export volume
-			}
+		if ((args.startDate || args.endDate) && (!args.status || args.status === 'all')) {
+			exportQuery = ctx.db
+				.query('marketing_leads')
+				.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
 		}
 
-		// Always order desc
-		let leads = await query.order('desc').collect();
+		let leads = await exportQuery.order('desc').collect();
 
-		// Interest filter
 		if (args.interest && args.interest !== 'all') {
 			leads = leads.filter((l) => l.interest === args.interest);
 		}
 
-		// Date range filter
 		if (args.startDate || args.endDate) {
 			leads = leads.filter((l) => {
 				if (args.startDate && l.createdAt < args.startDate) return false;
@@ -343,7 +323,6 @@ export const exportToCSV = query({
 			});
 		}
 
-		// Format for CSV export (return as array of objects)
 		return leads.map((l) => ({
 			name: l.name,
 			email: l.email,
@@ -365,7 +344,7 @@ export const exportToCSV = query({
 });
 
 // ═══════════════════════════════════════════════════════
-// INTERNAL MUTATIONS (Brevo Sync)
+// INTERNAL MUTATIONS (Brevo Sync Wrapper)
 // ═══════════════════════════════════════════════════════
 
 export const syncToBrevoInternal = internalMutation({
@@ -375,19 +354,14 @@ export const syncToBrevoInternal = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		const lead = await ctx.db.get(args.leadId);
-		if (!lead) {
-			console.error('[MarketingLeads] Lead not found for Brevo sync');
-			return;
-		}
+		if (!lead) return;
 
-		// Check if contact already exists
 		const existingContact = await ctx.db
 			.query('emailContacts')
 			.withIndex('by_email', (q) => q.eq('email', lead.email))
 			.first();
 
 		if (existingContact) {
-			console.log('[MarketingLeads] Contact already exists in Brevo');
 			await ctx.db.patch(args.leadId, {
 				brevoContactId: existingContact.brevoId,
 				lastSyncedAt: Date.now(),
@@ -395,35 +369,13 @@ export const syncToBrevoInternal = internalMutation({
 			return;
 		}
 
-		// Create new contact via emailMarketing module
-		// Note: We access internal via any to avoid type errors before generation
-		// Comment 2: Use syncMarketingLeadAsContactInternal (though this is the OLD syncToBrevoInternal wrapper?
-		// Comment 2 only mentioned updating create to schedule the function.
-		// It says "Update convex/marketingLeads.ts to schedule that function" - probably refers to the create mutation.
-		// But `syncToBrevoInternal` here is likely legacy or unused code if we change `create` to call `emailMarketing` directly.
-		// However, if we keep `syncToBrevoInternal` as a wrapper, we should update it.
-		// The previous implementation of `create` called `syncToBrevoInternal`? No, it called `emailMarketing.syncToBrevoInternal`?
-		// Wait, step 9 code line 108: `const syncFn = (internal as any)?.marketingLeads?.syncToBrevoInternal`.
-		// Ah, it was calling ITSELF (internal mutation in same file).
-		// And THAT internal mutation (at line 283) called `emailMarketing.syncLeadAsContactInternal`.
-		// The comment says "Update convex/marketingLeads.ts to schedule THAT function" (referring to the new internal mutation in emailMarketing).
-		// So in `create`, I should call `emailMarketing.syncMarketingLeadAsContactInternal` properly.
-		// And this `syncToBrevoInternal` function in `marketingLeads.ts` might become redundant or needs to be updated to use the new one.
-		// I will simply remove `syncToBrevoInternal` from `marketingLeads.ts` if it's no longer used, OR update it to redirect.
-		// Since `create` now calls `emailMarketing` directly (as per my update above), this function is orphaned unless scheduled elsewhere.
-		// I'll leave it but updated just in case, or comment it out?
-		// I'll update it to use the new correct internal function too, for safety.
-
+		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
 		const syncFn = (internal as any).emailMarketing?.syncMarketingLeadAsContactInternal;
-
 		if (syncFn) {
 			await ctx.scheduler.runAfter(0, syncFn, {
 				leadId: args.leadId,
 				organizationId: args.organizationId || 'system',
 			});
-			console.log('[MarketingLeads] Scheduled Brevo sync for lead via wrapper:', lead.email);
-		} else {
-			console.error('[MarketingLeads] emailMarketing.syncMarketingLeadAsContactInternal not found');
 		}
 	},
 });

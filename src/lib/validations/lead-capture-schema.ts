@@ -29,6 +29,12 @@ export const leadCaptureSchema = z.object({
 	utmMedium: z.string().optional(),
 	utmContent: z.string().optional(),
 	utmTerm: z.string().optional(),
+	company: z.string().optional(),
+	jobRole: z.string().optional(),
+	origin: z.string().optional(),
+	typebotId: z.string().optional(),
+	resultId: z.string().optional(),
+	externalTimestamp: z.number().optional(),
 });
 
 export type LeadCaptureFormData = z.infer<typeof leadCaptureSchema>;

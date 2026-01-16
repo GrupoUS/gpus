@@ -850,6 +850,14 @@ export default defineSchema({
 		// Anti-spam
 		honeypot: v.optional(v.string()), // Should be empty
 
+		// Typebot & External Metadata
+		company: v.optional(v.string()), // empresa
+		jobRole: v.optional(v.string()), // cargo
+		origin: v.optional(v.string()), // origem
+		typebotId: v.optional(v.string()), // typebot_id
+		resultId: v.optional(v.string()), // result_id
+		externalTimestamp: v.optional(v.number()), // timestamp
+
 		// Multi-tenant (optional for public submissions)
 		organizationId: v.optional(v.string()),
 

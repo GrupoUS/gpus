@@ -1,0 +1,28 @@
+{
+	"path": "leads:createPublicLead",
+	"args": {
+		"name": "{{Nome}}",
+		"phone": "{{Telefone}}",
+		"email": "{{Email}}",
+		"source": "landing_page",
+		"sourceDetail": "typebot_clre581p70023ug1x6arhrszx",
+		"message": "{{Mensagem}}",
+		"interestedProduct": "{{Produto}}",
+		"profession": "{{Profissao}}",
+		"hasClinic": {{TemClinica}},
+		"clinicName": "{{NomeClinica}}",
+		"clinicCity": "{{CidadeClinica}}",
+		"yearsInAesthetics": {{AnosExperiencia}},
+		"currentRevenue": "{{FaturamentoAtual}}",
+		"mainPain": "{{DorPrincipal}}",
+		"mainDesire": "{{DesejoMaior}}",
+		"lgpdConsent": true,
+		"whatsappConsent": true,
+		"utmSource": "{{utm_source}}",
+		"utmCampaign": "{{utm_campaign}}",
+		"utmMedium": "{{utm_medium}}",
+		"utmContent": "{{utm_content}}",
+		"utmTerm": "{{utm_term}}"
+	},
+	"format": "json"
+}

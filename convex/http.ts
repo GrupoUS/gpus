@@ -195,7 +195,7 @@ http.route({
 
 		// 3. Map Typebot variables to CRM arguments
 		// We handle both English and Portuguese field names for flexibility
-		const args = {
+		const Args = {
 			name: body.nome || body.name || 'Nome não fornecido',
 			email: body.email || body.email_contato || '',
 			phone: formatTypebotPhone(body.telefone || body.phone || body.whatsapp || ''),
@@ -208,10 +208,31 @@ http.route({
 			utmMedium: body.utmMedium || body.utm_medium,
 			utmContent: body.utmContent || body.utm_content,
 			utmTerm: body.utmTerm || body.utm_term,
-			userIp: request.headers.get('x-forwarded-for') || 'unknown',
 		};
 
-		// 4. Trigger creation mutation
+		// 3. Robust IP Detection
+		const ipHeader =
+			request.headers.get('x-forwarded-for') ||
+			request.headers.get('x-real-ip') ||
+			request.headers.get('cf-connecting-ip') ||
+			'unknown';
+		const userIp = ipHeader.split(',')[0].trim();
+
+		// 4. Map Typebot variables to CRM arguments
+		// We handle both English and Portuguese field names for flexibility
+		const args = {
+			...Args,
+			userIp,
+			// Additional metadata requested in verification
+			company: body.empresa || body.company,
+			jobRole: body.cargo || body.jobRole || body.role,
+			origin: body.origem || body.source || body.origin,
+			typebotId: body.typebot_id || body.typebotId,
+			resultId: body.result_id || body.resultId,
+			externalTimestamp: typeof body.timestamp === 'number' ? body.timestamp : undefined,
+		};
+
+		// 5. Trigger creation mutation
 		try {
 			// We use the public mutation via internal access to avoid type issues with generated 'api'
 			// biome-ignore lint/suspicious/noExplicitAny: break type inference chain
@@ -223,8 +244,20 @@ http.route({
 			});
 			// biome-ignore lint/suspicious/noExplicitAny: error type
 		} catch (error: any) {
-			return new Response(JSON.stringify({ success: false, error: error.message }), {
-				status: 500,
+			const errorMsg = error.message || '';
+			let status = 500;
+
+			if (errorMsg.includes('Validation failed') || errorMsg.includes('Invalid submission')) {
+				status = 400;
+			} else if (
+				errorMsg.includes('Rate limit exceeded') ||
+				errorMsg.includes('Limite de submissões excedido')
+			) {
+				status = 429;
+			}
+
+			return new Response(JSON.stringify({ success: false, error: errorMsg }), {
+				status,
 				headers: { 'Content-Type': 'application/json' },
 			});
 		}
@@ -248,7 +281,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 	let result = 0;
 	for (let i = 0; i < a.length; i++) {
-		// biome-ignore lint: Bitwise operations required for constant-time comparison
+		// biome-ignore lint/suspicious/noExplicitAny: constant-time comparison needed
 		result |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 
@@ -357,6 +390,10 @@ class WebhookRateLimiter {
 const webhookRateLimiter = new WebhookRateLimiter(100, 60_000);
 
 // Cleanup rate limiter every 5 minutes
-setInterval(() => webhookRateLimiter.cleanup(), 5 * 60 * 1000);
+// Note: setInterval is used here for in-memory cleanup, though in serverless
+// environments like Convex global state may be reset frequently.
+if (typeof setInterval !== 'undefined') {
+	setInterval(() => webhookRateLimiter.cleanup(), 5 * 60 * 1000);
+}
 
 export default http;
