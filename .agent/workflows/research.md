@@ -6,6 +6,8 @@ description: Pesquisa multi-fonte com validação cruzada e geração de atomic 
 
 Este comando roda em **Plan Mode** (pesquisa + planejamento). Ele **não** implementa sem aprovação explícita.
 
+Sempre use a Skill planning (.agent\skills\planning\SKILL.md)
+
 ## Fluxo de Orquestração Nativo Antigravity
 
 ```mermaid
