@@ -33,3 +33,7 @@ docs/Aura-Connect/
 
 # Factory templates (AI generated)
 .factory/
+
+.mcp/
+.mcp.json
+.mcp.lock
