@@ -29,7 +29,7 @@ function validateStudentForExport(student: any): {
 	}
 
 	// At least one contact method is required
-	if (!student.phone && !student.email) {
+	if (!(student.phone || student.email)) {
 		return {
 			valid: false,
 			reason: 'At least one contact method (phone or email) is required',
@@ -47,7 +47,7 @@ function validateStudentForExport(student: any): {
 /**
  * Sanitize data for LGPD compliance in logs
  */
-function sanitizeForLog(data: { cpf?: string; phone?: string; email?: string }): string {
+function _sanitizeForLog(data: { cpf?: string; phone?: string; email?: string }): string {
 	const parts: string[] = [];
 	if (data.cpf) {
 		parts.push(`CPF: ***${data.cpf.slice(-3)}`);
@@ -133,15 +133,11 @@ export async function exportStudentWorker(
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
 		// Update student with Asaas customer ID
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 			studentId: student._id,
 			asaasCustomerId: asaasCustomer.id,
 		});
-
-		console.log(
-			`[ExportStudentWorker] Exported student ${student._id} -> Asaas customer ${asaasCustomer.id}`,
-		);
 
 		return {
 			success: true,
@@ -163,7 +159,7 @@ export async function exportStudentWorker(
 			)
 		) {
 			// Create conflict record for manual resolution
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.conflictResolution.createConflict, {
 				conflictType: 'duplicate_customer',
 				studentId: student._id,
@@ -176,23 +172,12 @@ export async function exportStudentWorker(
 				organizationId: student.organizationId,
 			});
 
-			console.warn(
-				`[ExportStudentWorker] Duplicate customer detected for student ${student._id}:`,
-				sanitizeForLog({
-					cpf: student.cpf,
-					phone: student.phone,
-					email: student.email,
-				}),
-			);
-
 			return {
 				success: false,
 				skipped: true,
 				reason: 'Duplicate customer in Asaas - requires manual resolution',
 			};
 		}
-
-		console.error(`[ExportStudentWorker] Failed to export student ${student._id}:`, error.message);
 
 		return {
 			success: false,
@@ -278,10 +263,6 @@ export async function exportPaymentWorker(
 			updatedAt: Date.now(),
 		});
 
-		console.log(
-			`[ExportPaymentWorker] Exported payment ${payment._id} -> Asaas payment ${asaasPayment.id}`,
-		);
-
 		return {
 			success: true,
 			data: {
@@ -291,8 +272,6 @@ export async function exportPaymentWorker(
 			created: true,
 		};
 	} catch (error: any) {
-		console.error(`[ExportPaymentWorker] Failed to export payment ${payment._id}:`, error.message);
-
 		return {
 			success: false,
 			error: error.message || 'Unknown error',

@@ -114,15 +114,15 @@ interface ListNotFoundProps {
 function ListNotFound({ onBack }: ListNotFoundProps) {
 	return (
 		<div className="space-y-6">
-			<Button variant="ghost" onClick={onBack}>
+			<Button onClick={onBack} variant="ghost">
 				<ArrowLeft className="mr-2 h-4 w-4" />
 				Voltar para listas
 			</Button>
 			<Card>
 				<CardContent className="flex flex-col items-center justify-center py-12">
 					<XCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-					<h2 className="text-lg font-semibold">Lista não encontrada</h2>
-					<p className="mt-2 text-sm text-muted-foreground">
+					<h2 className="font-semibold text-lg">Lista não encontrada</h2>
+					<p className="mt-2 text-muted-foreground text-sm">
 						A lista que você procura não existe ou foi removida.
 					</p>
 					<Button className="mt-6" onClick={onBack}>
@@ -167,7 +167,7 @@ function AddContactDialog({
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={onOpenChange}>
+		<Dialog onOpenChange={onOpenChange} open={isOpen}>
 			<DialogTrigger asChild>
 				<Button>
 					<UserPlus className="mr-2 h-4 w-4" />
@@ -189,7 +189,7 @@ function AddContactDialog({
 					</div>
 				) : (
 					<div className="py-4">
-						<Select value={selectedContactId} onValueChange={setSelectedContactId}>
+						<Select onValueChange={setSelectedContactId} value={selectedContactId}>
 							<SelectTrigger>
 								<SelectValue placeholder="Selecione um contato..." />
 							</SelectTrigger>
@@ -212,10 +212,10 @@ function AddContactDialog({
 				)}
 
 				<DialogFooter>
-					<Button variant="outline" onClick={() => onOpenChange(false)}>
+					<Button onClick={() => onOpenChange(false)} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={handleAdd} disabled={!selectedContactId || isAdding}>
+					<Button disabled={!selectedContactId || isAdding} onClick={handleAdd}>
 						{isAdding ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -288,10 +288,10 @@ function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
 									<AlertDialog>
 										<AlertDialogTrigger asChild>
 											<Button
-												variant="ghost"
-												size="icon"
-												disabled={isRemoving === contact._id}
 												className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+												disabled={isRemoving === contact._id}
+												size="icon"
+												variant="ghost"
 											>
 												{isRemoving === contact._id ? (
 													<Loader2 className="h-4 w-4 animate-spin" />
@@ -311,8 +311,8 @@ function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
 											<AlertDialogFooter>
 												<AlertDialogCancel>Cancelar</AlertDialogCancel>
 												<AlertDialogAction
-													onClick={() => onRemove(contact._id)}
 													className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+													onClick={() => onRemove(contact._id)}
 												>
 													Remover
 												</AlertDialogAction>
@@ -510,22 +510,22 @@ function ListDetailsPage() {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-4">
-					<Button variant="ghost" size="icon" onClick={handleBack}>
+					<Button onClick={handleBack} size="icon" variant="ghost">
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
 					<div>
 						<div className="flex items-center gap-2">
-							<h1 className="text-2xl font-bold tracking-tight">{list.name}</h1>
+							<h1 className="font-bold text-2xl tracking-tight">{list.name}</h1>
 							<Badge variant={list.isActive ? 'default' : 'secondary'}>
 								{list.isActive ? 'Ativa' : 'Inativa'}
 							</Badge>
 							{list.brevoListId ? (
-								<Badge variant="outline" className="gap-1">
+								<Badge className="gap-1" variant="outline">
 									<Cloud className="h-3 w-3" />
 									Brevo
 								</Badge>
 							) : (
-								<Badge variant="outline" className="gap-1 text-muted-foreground">
+								<Badge className="gap-1 text-muted-foreground" variant="outline">
 									<CloudOff className="h-3 w-3" />
 									Não sincronizada
 								</Badge>
@@ -537,7 +537,7 @@ function ListDetailsPage() {
 
 				{/* Header Actions */}
 				<div className="flex items-center gap-2">
-					<Button variant="outline" onClick={handleSyncToBrevo} disabled={isSyncing}>
+					<Button disabled={isSyncing} onClick={handleSyncToBrevo} variant="outline">
 						{isSyncing ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -557,18 +557,18 @@ function ListDetailsPage() {
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Contatos</CardTitle>
+						<CardTitle className="font-medium text-sm">Contatos</CardTitle>
 						<Users className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{contactsInList.length}</div>
-						<p className="text-xs text-muted-foreground">contatos nesta lista</p>
+						<div className="font-bold text-2xl">{contactsInList.length}</div>
+						<p className="text-muted-foreground text-xs">contatos nesta lista</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Status</CardTitle>
+						<CardTitle className="font-medium text-sm">Status</CardTitle>
 						<List className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
@@ -576,8 +576,8 @@ function ListDetailsPage() {
 							<span className="text-sm">{list.isActive ? 'Lista Ativa' : 'Lista Inativa'}</span>
 							<Switch
 								checked={list.isActive}
-								onCheckedChange={handleToggleActive}
 								disabled={isUpdating}
+								onCheckedChange={handleToggleActive}
 							/>
 						</div>
 					</CardContent>
@@ -595,7 +595,7 @@ function ListDetailsPage() {
 							</CardTitle>
 							<CardDescription>Detalhes e configurações da lista de contatos</CardDescription>
 						</div>
-						<Button variant="outline" size="sm" disabled>
+						<Button disabled size="sm" variant="outline">
 							<Edit className="mr-2 h-4 w-4" />
 							Editar
 						</Button>
@@ -604,11 +604,11 @@ function ListDetailsPage() {
 				<CardContent className="space-y-4">
 					<div className="grid gap-4 sm:grid-cols-2">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">Nome</p>
+							<p className="font-medium text-muted-foreground text-sm">Nome</p>
 							<p className="mt-1">{list.name}</p>
 						</div>
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">Descrição</p>
+							<p className="font-medium text-muted-foreground text-sm">Descrição</p>
 							<p className="mt-1">{list.description || '-'}</p>
 						</div>
 					</div>
@@ -617,7 +617,7 @@ function ListDetailsPage() {
 						<>
 							<Separator />
 							<div>
-								<p className="text-sm font-medium text-muted-foreground">ID Brevo</p>
+								<p className="font-medium text-muted-foreground text-sm">ID Brevo</p>
 								<p className="mt-1 flex items-center gap-2">
 									<ExternalLink className="h-4 w-4 text-muted-foreground" />
 									<code className="rounded bg-muted px-2 py-0.5 text-sm">{list.brevoListId}</code>
@@ -632,13 +632,13 @@ function ListDetailsPage() {
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="font-medium text-destructive">Zona de Perigo</p>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Excluir esta lista permanentemente. Esta ação não pode ser desfeita.
 							</p>
 						</div>
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
-								<Button variant="destructive" disabled={isDeleting}>
+								<Button disabled={isDeleting} variant="destructive">
 									{isDeleting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -663,8 +663,8 @@ function ListDetailsPage() {
 								<AlertDialogFooter>
 									<AlertDialogCancel>Cancelar</AlertDialogCancel>
 									<AlertDialogAction
-										onClick={handleDelete}
 										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+										onClick={handleDelete}
 									>
 										Excluir
 									</AlertDialogAction>
@@ -688,18 +688,18 @@ function ListDetailsPage() {
 						</div>
 						<AddContactDialog
 							availableContacts={contactsNotInList}
-							isOpen={isAddDialogOpen}
-							onOpenChange={setIsAddDialogOpen}
-							onAdd={handleAddContact}
 							isAdding={isAdding}
+							isOpen={isAddDialogOpen}
+							onAdd={handleAddContact}
+							onOpenChange={setIsAddDialogOpen}
 						/>
 					</div>
 				</CardHeader>
 				<CardContent>
 					<ContactsTable
 						contacts={contactsInList}
-						onRemove={handleRemoveContact}
 						isRemoving={isRemoving}
+						onRemove={handleRemoveContact}
 					/>
 				</CardContent>
 			</Card>

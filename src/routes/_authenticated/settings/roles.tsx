@@ -68,9 +68,9 @@ function RolesSettingsPage() {
 	const isAdmin = userData?.role === 'admin';
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<Shield className="h-6 w-6 text-purple-500" />
 					Funções e Permissões
 				</h1>
@@ -78,7 +78,7 @@ function RolesSettingsPage() {
 			</div>
 
 			{!isAdmin && (
-				<div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+				<div className="flex items-center gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4 text-yellow-700 dark:text-yellow-400">
 					<Lock className="h-4 w-4" />
 					<p className="text-sm">
 						Você está visualizando em modo leitura. Apenas administradores podem editar permissões.
@@ -112,7 +112,7 @@ function RolesSettingsPage() {
 									<TableCell>
 										<div className="flex flex-wrap gap-1">
 											{role.permissions.map((p) => (
-												<Badge key={p} variant="secondary" className="text-xs font-normal">
+												<Badge className="font-normal text-xs" key={p} variant="secondary">
 													{p}
 												</Badge>
 											))}

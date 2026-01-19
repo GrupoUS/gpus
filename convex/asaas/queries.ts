@@ -5,9 +5,10 @@
  */
 
 import { v } from 'convex/values';
-import { internalQuery, query } from '../_generated/server';
+
 import type { Doc } from '../_generated/dataModel';
-import { requireAuth, getOrganizationId, requireOrgRole } from '../lib/auth';
+import { internalQuery, query } from '../_generated/server';
+import { getOrganizationId, requireAuth, requireOrgRole } from '../lib/auth';
 import { getConfigurationStatus } from './config';
 
 // ═══════════════════════════════════════════════════════
@@ -97,7 +98,7 @@ export const getStaleWebhooks = internalQuery({
 		olderThan: v.number(), // Timestamp
 	},
 	handler: async (ctx, args) => {
-		let webhooks = await ctx.db
+		const webhooks = await ctx.db
 			.query('asaasWebhooks')
 			.withIndex('by_processed', (q) => q.eq('processed', false))
 			.collect();

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { action } from '../_generated/server';
+
 import { api } from '../_generated/api';
+import { action } from '../_generated/server';
 import { getAsaasClientFromSettings } from './config';
 
 /**
@@ -36,7 +37,6 @@ export const testAsaasSyncFlow = action({
 		};
 
 		const log = (msg: string) => {
-			console.log(`[TestSync:${args.testScenario}] ${msg}`);
 			results.logs.push(msg);
 		};
 
@@ -54,7 +54,11 @@ export const testAsaasSyncFlow = action({
 				log('Starting happy path test');
 
 				let customer;
-				if (!args.dryRun) {
+				if (args.dryRun) {
+					log('Dry run: Simulated customer creation');
+					results.details.customerCreated = true;
+					results.details.customerId = 'cus_simulated_123';
+				} else {
 					const client = await getAsaasClientFromSettings(ctx);
 					log('Creating customer in Asaas...');
 					customer = await client.createCustomer(testCustomer);
@@ -68,13 +72,9 @@ export const testAsaasSyncFlow = action({
 					try {
 						// Not all Asaas environments allow deletion if there are charges, but this is new
 						// await client.deleteCustomer(customer.id); // Assuming client has this or implementation matches
-					} catch (e) {
+					} catch (_e) {
 						log('Cleanup warning: could not delete test customer');
 					}
-				} else {
-					log('Dry run: Simulated customer creation');
-					results.details.customerCreated = true;
-					results.details.customerId = 'cus_simulated_123';
 				}
 
 				results.success = true;
@@ -213,10 +213,6 @@ export const loadTestSync = action({
 		const customerCount = args.customerCount || 100;
 		const batchSize = args.batchSize || 50;
 
-		console.log(
-			`[LoadTest] Starting sync of ${customerCount} customers (batch size: ${batchSize})`,
-		);
-
 		const results = {
 			totalCustomers: customerCount,
 			successful: 0,
@@ -238,7 +234,7 @@ export const loadTestSync = action({
 		const testCustomers = Array.from({ length: customerCount }, (_, i) => ({
 			name: `Test Customer ${i + 1}`,
 			email: `test${i + 1}_${Date.now()}@loadtest.com`,
-			phone: `1199999${String(i % 10000).padStart(4, '0')}`,
+			phone: `1199999${String(i % 10_000).padStart(4, '0')}`,
 			cpfCnpj: generateTestCPF(i), // Helper function
 			externalReference: `loadtest_${Date.now()}_${i}`,
 		}));
@@ -247,10 +243,6 @@ export const loadTestSync = action({
 		for (let i = 0; i < testCustomers.length; i += batchSize) {
 			const batch = testCustomers.slice(i, i + batchSize);
 			const batchStartTime = Date.now();
-
-			console.log(
-				`[LoadTest] Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(customerCount / batchSize)}`,
-			);
 
 			// Process batch with error isolation
 			if (args.dryRun) {
@@ -287,9 +279,6 @@ export const loadTestSync = action({
 			const batchTime = Date.now() - batchStartTime;
 			results.batchTimes.push(batchTime);
 
-			// Log progress
-			console.log(`[LoadTest] Batch completed in ${batchTime}ms`);
-
 			// Throttle to avoid rate limiting (100ms between batches)
 			await new Promise((resolve) => setTimeout(resolve, 100));
 		}
@@ -297,11 +286,6 @@ export const loadTestSync = action({
 		results.totalTimeMs = Date.now() - startTime;
 		results.avgTimePerCustomer = results.totalTimeMs / customerCount;
 		results.throughput = (customerCount / results.totalTimeMs) * 1000; // customers/second
-
-		console.log(
-			`[LoadTest] Completed: ${results.successful}/${customerCount} successful in ${results.totalTimeMs}ms`,
-		);
-		console.log(`[LoadTest] Throughput: ${results.throughput.toFixed(2)} customers/second`);
 
 		// Validate performance requirements
 		const performanceCheck = {
@@ -331,7 +315,7 @@ function generateTestCPF(seed: number): string {
 
 	// Use seed to create deterministic but varied results
 	const seededRnd = (n: number, offset: number) =>
-		Math.round(((((seed + offset) * 9301 + 49297) % 233280) / 233280) * n);
+		Math.round(((((seed + offset) * 9301 + 49_297) % 233_280) / 233_280) * n);
 	const mod = (dividend: number, divisor: number) =>
 		Math.round(dividend - Math.floor(dividend / divisor) * divisor);
 

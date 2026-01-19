@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+
 import { internalMutation } from './_generated/server';
 import { decrypt, encrypt, encryptCPF, hashSensitiveData } from './lib/encryption';
 
@@ -60,9 +61,7 @@ export const backfillCpfHash = internalMutation({
 					});
 					updatedCount++;
 				}
-			} catch (error) {
-				console.error(`Failed to backfill CPF hash for student ${student._id}:`, error);
-			}
+			} catch (_error) {}
 		}
 
 		return {
@@ -84,7 +83,7 @@ export const encryptLegacyCpfs = internalMutation({
 		const students = await ctx.db.query('students').collect();
 
 		const studentsToMigrate = students
-			.filter((s) => s.cpf && (!s.encryptedCPF || !s.cpfHash))
+			.filter((s) => s.cpf && !(s.encryptedCPF && s.cpfHash))
 			.slice(0, limit);
 
 		let updatedCount = 0;
@@ -113,7 +112,7 @@ export const encryptLegacyCpfs = internalMutation({
 		}
 
 		const remaining =
-			students.filter((s) => s.cpf && (!s.encryptedCPF || !s.cpfHash)).length - updatedCount;
+			students.filter((s) => s.cpf && !(s.encryptedCPF && s.cpfHash)).length - updatedCount;
 
 		return {
 			processed: studentsToMigrate.length,
@@ -220,7 +219,7 @@ export const reEncryptAllData = internalMutation({
 						// No encrypted field, use plaintext
 						updates.encryptedCPF = await encryptCPF(student.cpf);
 					}
-				} catch (e) {
+				} catch (_e) {
 					// Decryption failed - key was rotated, use plaintext as fallback
 					if (student.cpf) {
 						updates.encryptedCPF = await encryptCPF(student.cpf);
@@ -244,7 +243,7 @@ export const reEncryptAllData = internalMutation({
 					} else if (student.email) {
 						updates.encryptedEmail = await encrypt(student.email);
 					}
-				} catch (e) {
+				} catch (_e) {
 					// Decryption failed - key was rotated
 					if (student.email) {
 						updates.encryptedEmail = await encrypt(student.email);
@@ -268,7 +267,7 @@ export const reEncryptAllData = internalMutation({
 					} else if (student.phone) {
 						updates.encryptedPhone = await encrypt(student.phone);
 					}
-				} catch (e) {
+				} catch (_e) {
 					// Decryption failed - key was rotated
 					if (student.phone) {
 						updates.encryptedPhone = await encrypt(student.phone);

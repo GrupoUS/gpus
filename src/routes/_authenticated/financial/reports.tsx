@@ -102,7 +102,7 @@ function FinancialReportsPage() {
 			case 'failed':
 				return <XCircle className="h-4 w-4 text-red-500" />;
 			case 'running':
-				return <Clock className="h-4 w-4 text-yellow-500 animate-spin" />;
+				return <Clock className="h-4 w-4 animate-spin text-yellow-500" />;
 			default:
 				return <Clock className="h-4 w-4 text-muted-foreground" />;
 		}
@@ -125,24 +125,24 @@ function FinancialReportsPage() {
 		<div className="space-y-6 p-6">
 			{/* Header */}
 			<div>
-				<h1 className="text-2xl font-bold">Relatórios Financeiros</h1>
+				<h1 className="font-bold text-2xl">Relatórios Financeiros</h1>
 				<p className="text-muted-foreground">Análise detalhada e histórico de sincronizações</p>
 			</div>
 
 			<Tabs defaultValue="payments">
 				<TabsList>
 					<TabsTrigger value="payments">
-						<DollarSign className="h-4 w-4 mr-2" />
+						<DollarSign className="mr-2 h-4 w-4" />
 						Pagamentos
 					</TabsTrigger>
 					<TabsTrigger value="webhooks">
-						<FileText className="h-4 w-4 mr-2" />
+						<FileText className="mr-2 h-4 w-4" />
 						Logs de Sincronização
 					</TabsTrigger>
 				</TabsList>
 
 				{/* Payments Tab */}
-				<TabsContent value="payments" className="space-y-6">
+				<TabsContent className="space-y-6" value="payments">
 					{/* Filters */}
 					<Card>
 						<CardHeader>
@@ -152,7 +152,7 @@ function FinancialReportsPage() {
 							<div className="grid gap-4 md:grid-cols-4">
 								<div className="space-y-2">
 									<Label>Status</Label>
-									<Select value={statusFilter} onValueChange={setStatusFilter}>
+									<Select onValueChange={setStatusFilter} value={statusFilter}>
 										<SelectTrigger>
 											<SelectValue placeholder="Todos os status" />
 										</SelectTrigger>
@@ -170,28 +170,28 @@ function FinancialReportsPage() {
 									<Label htmlFor={startDateId}>Data Inicial</Label>
 									<Input
 										id={startDateId}
+										onChange={(e) => setStartDate(e.target.value)}
 										type="date"
 										value={startDate}
-										onChange={(e) => setStartDate(e.target.value)}
 									/>
 								</div>
 								<div className="space-y-2">
 									<Label htmlFor={endDateId}>Data Final</Label>
 									<Input
 										id={endDateId}
+										onChange={(e) => setEndDate(e.target.value)}
 										type="date"
 										value={endDate}
-										onChange={(e) => setEndDate(e.target.value)}
 									/>
 								</div>
 								<div className="flex items-end">
 									<Button
-										variant="outline"
 										onClick={() => {
 											setStatusFilter('all');
 											setStartDate('');
 											setEndDate('');
 										}}
+										variant="outline"
 									>
 										Limpar
 									</Button>
@@ -204,57 +204,57 @@ function FinancialReportsPage() {
 					<div className="grid gap-4 md:grid-cols-4">
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium flex items-center gap-2">
+								<CardTitle className="flex items-center gap-2 font-medium text-sm">
 									<Calendar className="h-4 w-4" />
 									Total Filtrado
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
-								<p className="text-xs text-muted-foreground">{payments.length} cobranças</p>
+								<div className="font-bold text-2xl">{formatCurrency(totalValue)}</div>
+								<p className="text-muted-foreground text-xs">{payments.length} cobranças</p>
 							</CardContent>
 						</Card>
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium flex items-center gap-2">
+								<CardTitle className="flex items-center gap-2 font-medium text-sm">
 									<CheckCircle className="h-4 w-4 text-green-500" />
 									Recebido
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="text-2xl font-bold text-green-600">{formatCurrency(paidValue)}</div>
-								<p className="text-xs text-muted-foreground">{paidPayments.length} pagamentos</p>
+								<div className="font-bold text-2xl text-green-600">{formatCurrency(paidValue)}</div>
+								<p className="text-muted-foreground text-xs">{paidPayments.length} pagamentos</p>
 							</CardContent>
 						</Card>
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium flex items-center gap-2">
+								<CardTitle className="flex items-center gap-2 font-medium text-sm">
 									<AlertTriangle className="h-4 w-4 text-red-500" />
 									Vencido
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="text-2xl font-bold text-red-600">
+								<div className="font-bold text-2xl text-red-600">
 									{formatCurrency(overdueValue)}
 								</div>
-								<p className="text-xs text-muted-foreground">{overduePayments.length} cobranças</p>
+								<p className="text-muted-foreground text-xs">{overduePayments.length} cobranças</p>
 							</CardContent>
 						</Card>
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium">Taxa Recebimento</CardTitle>
+								<CardTitle className="font-medium text-sm">Taxa Recebimento</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="text-2xl font-bold">
+								<div className="font-bold text-2xl">
 									{payments.length > 0
 										? ((paidPayments.length / payments.length) * 100).toFixed(1)
 										: 0}
 									%
 								</div>
-								<p className="text-xs text-muted-foreground">do total filtrado</p>
+								<p className="text-muted-foreground text-xs">do total filtrado</p>
 							</CardContent>
 						</Card>
 					</div>
@@ -294,7 +294,7 @@ function FinancialReportsPage() {
 									))}
 									{payments.length === 0 && (
 										<TableRow>
-											<TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+											<TableCell className="py-8 text-center text-muted-foreground" colSpan={6}>
 												Nenhuma cobrança encontrada
 											</TableCell>
 										</TableRow>
@@ -306,7 +306,7 @@ function FinancialReportsPage() {
 				</TabsContent>
 
 				{/* Webhook Logs Tab */}
-				<TabsContent value="webhooks" className="space-y-6">
+				<TabsContent className="space-y-6" value="webhooks">
 					<Card>
 						<CardHeader>
 							<CardTitle>Histórico de Sincronizações</CardTitle>
@@ -332,7 +332,7 @@ function FinancialReportsPage() {
 										<TableRow key={log._id}>
 											<TableCell>{getSyncStatusIcon(log.status)}</TableCell>
 											<TableCell>
-												<Badge variant="outline" className="capitalize">
+												<Badge className="capitalize" variant="outline">
 													{log.syncType}
 												</Badge>
 											</TableCell>
@@ -348,7 +348,7 @@ function FinancialReportsPage() {
 													'-'
 												)}
 											</TableCell>
-											<TableCell className="text-sm max-w-xs truncate">
+											<TableCell className="max-w-xs truncate text-sm">
 												{log.errors && log.errors.length > 0
 													? log.errors[0]
 													: log.status === 'completed'
@@ -359,7 +359,7 @@ function FinancialReportsPage() {
 									))}
 									{(!syncLogs || syncLogs.length === 0) && (
 										<TableRow>
-											<TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+											<TableCell className="py-8 text-center text-muted-foreground" colSpan={7}>
 												Nenhum log de sincronização encontrado
 											</TableCell>
 										</TableRow>

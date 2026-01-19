@@ -67,7 +67,7 @@ export function InviteDialog() {
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog onOpenChange={setOpen} open={open}>
 			<DialogTrigger asChild>
 				<Button className="gap-2">
 					<Plus className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function InviteDialog() {
 					<DialogTitle>Convidar Membro</DialogTitle>
 				</DialogHeader>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 						<FormField
 							control={form.control}
 							name="email"
@@ -99,7 +99,7 @@ export function InviteDialog() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Função</FormLabel>
-									<Select onValueChange={field.onChange} defaultValue={field.value}>
+									<Select defaultValue={field.value} onValueChange={field.onChange}>
 										<FormControl>
 											<SelectTrigger>
 												<SelectValue />
@@ -116,7 +116,7 @@ export function InviteDialog() {
 							)}
 						/>
 						<div className="flex justify-end pt-4">
-							<Button type="submit" disabled={form.formState.isSubmitting}>
+							<Button disabled={form.formState.isSubmitting} type="submit">
 								{form.formState.isSubmitting ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

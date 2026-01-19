@@ -26,24 +26,24 @@ export function validateCPF(cpf: string): { valid: boolean; error?: string } {
 
 	// First check digit
 	for (let i = 1; i <= 9; i++) {
-		sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+		sum += Number.parseInt(cleanCPF.substring(i - 1, i), 10) * (11 - i);
 	}
 	remainder = (sum * 10) % 11;
 
 	if (remainder === 10 || remainder === 11) remainder = 0;
-	if (remainder !== parseInt(cleanCPF.substring(9, 10))) {
+	if (remainder !== Number.parseInt(cleanCPF.substring(9, 10), 10)) {
 		return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
 	}
 
 	// Second check digit
 	sum = 0;
 	for (let i = 1; i <= 10; i++) {
-		sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+		sum += Number.parseInt(cleanCPF.substring(i - 1, i), 10) * (12 - i);
 	}
 	remainder = (sum * 10) % 11;
 
 	if (remainder === 10 || remainder === 11) remainder = 0;
-	if (remainder !== parseInt(cleanCPF.substring(10, 11))) {
+	if (remainder !== Number.parseInt(cleanCPF.substring(10, 11), 10)) {
 		return { valid: false, error: 'CPF inválido (dígito verificador incorreto)' };
 	}
 

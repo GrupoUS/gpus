@@ -31,13 +31,13 @@ function ReportsPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
+					<h1 className="flex items-center gap-2 font-bold text-2xl">
 						<BarChart3 className="h-6 w-6 text-primary" />
 						Relatórios
 					</h1>
 					<p className="text-muted-foreground">Métricas e análises do seu negócio</p>
 				</div>
-				<Select value={period} onValueChange={(value: typeof period) => setPeriod(value)}>
+				<Select onValueChange={(value: typeof period) => setPeriod(value)} value={period}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Período" />
 					</SelectTrigger>
@@ -53,26 +53,26 @@ function ReportsPage() {
 			{/* Report Navigation Cards */}
 			<div className="grid gap-4 md:grid-cols-2">
 				<Link to="/reports/sales">
-					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
+					<Card className="cursor-pointer transition-all hover:border-primary/20 hover:shadow-md">
 						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-base font-medium">Relatório de Vendas</CardTitle>
+							<CardTitle className="font-medium text-base">Relatório de Vendas</CardTitle>
 							<DollarSign className="h-5 w-5 text-green-500" />
 						</CardHeader>
 						<CardContent>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Análise detalhada de receita, conversões e performance de vendas
 							</p>
 						</CardContent>
 					</Card>
 				</Link>
 				<Link to="/reports/team">
-					<Card className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all">
+					<Card className="cursor-pointer transition-all hover:border-primary/20 hover:shadow-md">
 						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-base font-medium">Relatório de Equipe</CardTitle>
+							<CardTitle className="font-medium text-base">Relatório de Equipe</CardTitle>
 							<Users className="h-5 w-5 text-primary" />
 						</CardHeader>
 						<CardContent>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Performance individual e métricas por membro da equipe
 							</p>
 						</CardContent>
@@ -84,60 +84,60 @@ function ReportsPage() {
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
+						<CardTitle className="font-medium text-sm">Total de Leads</CardTitle>
 						<Users className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{stats?.totalLeads ?? 0}</div>
-						<p className="text-xs text-muted-foreground">no período selecionado</p>
+						<div className="font-bold text-2xl">{stats?.totalLeads ?? 0}</div>
+						<p className="text-muted-foreground text-xs">no período selecionado</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Conversões</CardTitle>
+						<CardTitle className="font-medium text-sm">Conversões</CardTitle>
 						<TrendingUp className="h-4 w-4 text-green-500" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
+						<div className="font-bold text-2xl text-green-600">
 							{stats?.funnel?.fechado_ganho ?? 0}
 						</div>
-						<p className="text-xs text-muted-foreground">Leads convertidos</p>
+						<p className="text-muted-foreground text-xs">Leads convertidos</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Mensagens</CardTitle>
+						<CardTitle className="font-medium text-sm">Mensagens</CardTitle>
 						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-primary">{stats?.totalMessages ?? 0}</div>
-						<p className="text-xs text-muted-foreground">Total de mensagens</p>
+						<div className="font-bold text-2xl text-primary">{stats?.totalMessages ?? 0}</div>
+						<p className="text-muted-foreground text-xs">Total de mensagens</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Conversas</CardTitle>
+						<CardTitle className="font-medium text-sm">Conversas</CardTitle>
 						<MessageSquare className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-primary">
+						<div className="font-bold text-2xl text-primary">
 							{Math.round(((stats?.conversionRate ?? 0) * (stats?.totalLeads ?? 1)) / 100)}
 						</div>
-						<p className="text-xs text-muted-foreground">Total de conversas</p>
+						<p className="text-muted-foreground text-xs">Total de conversas</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+						<CardTitle className="font-medium text-sm">Taxa de Conversão</CardTitle>
 						<TrendingUp className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-primary">{stats?.conversionRate ?? 0}%</div>
-						<p className="text-xs text-muted-foreground">Lead → Cliente</p>
+						<div className="font-bold text-2xl text-primary">{stats?.conversionRate ?? 0}%</div>
+						<p className="text-muted-foreground text-xs">Lead → Cliente</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -152,13 +152,13 @@ function ReportsPage() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-3xl font-bold text-green-600">
+						<div className="font-bold text-3xl text-green-600">
 							{new Intl.NumberFormat('pt-BR', {
 								style: 'currency',
 								currency: 'BRL',
 							}).format(stats?.revenue ?? 0)}
 						</div>
-						<p className="text-sm text-muted-foreground mt-2">Baseado em conversões</p>
+						<p className="mt-2 text-muted-foreground text-sm">Baseado em conversões</p>
 					</CardContent>
 				</Card>
 
@@ -176,19 +176,19 @@ function ReportsPage() {
 									const total = (stats.totalLeads as number) || 1;
 									const percentage = Math.round((count / total) * 100);
 									return (
-										<div key={stage} className="flex items-center gap-3">
+										<div className="flex items-center gap-3" key={stage}>
 											<div className="flex-1">
-												<div className="flex items-center justify-between mb-1">
-													<span className="text-sm font-medium capitalize">
+												<div className="mb-1 flex items-center justify-between">
+													<span className="font-medium text-sm capitalize">
 														{stage.replace(/_/g, ' ')}
 													</span>
-													<span className="text-xs text-muted-foreground">
+													<span className="text-muted-foreground text-xs">
 														{count as number} ({percentage}%)
 													</span>
 												</div>
-												<div className="h-2 bg-muted rounded-full overflow-hidden">
+												<div className="h-2 overflow-hidden rounded-full bg-muted">
 													<div
-														className="h-full bg-linear-to-r from-primary to-primary/70 rounded-lg"
+														className="h-full rounded-lg bg-linear-to-r from-primary to-primary/70"
 														style={{ width: `${percentage}%` }}
 													/>
 												</div>
@@ -223,17 +223,17 @@ function ReportsPage() {
 						<div className="grid gap-4 md:grid-cols-3">
 							{(Object.entries(stats.leadsByProduct) as [string, number][]).map(
 								([product, count]) => (
-									<div key={product} className="p-4 border rounded-lg">
-										<p className="text-sm font-medium capitalize">{product.replace(/_/g, ' ')}</p>
-										<p className="text-2xl font-bold text-primary">{count as number}</p>
-										<p className="text-xs text-muted-foreground">leads interessados</p>
+									<div className="rounded-lg border p-4" key={product}>
+										<p className="font-medium text-sm capitalize">{product.replace(/_/g, ' ')}</p>
+										<p className="font-bold text-2xl text-primary">{count as number}</p>
+										<p className="text-muted-foreground text-xs">leads interessados</p>
 									</div>
 								),
 							)}
 						</div>
 					) : (
-						<div className="text-center py-8 text-muted-foreground">
-							<BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+						<div className="py-8 text-center text-muted-foreground">
+							<BarChart3 className="mx-auto mb-4 h-12 w-12 opacity-30" />
 							<p>Nenhum dado de produto disponível</p>
 						</div>
 					)}

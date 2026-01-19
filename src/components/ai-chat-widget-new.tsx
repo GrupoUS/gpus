@@ -125,35 +125,35 @@ export function AIChatWidget() {
 	};
 
 	return (
-		<div className="fixed bottom-4 right-4 z-50">
-			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+		<div className="fixed right-4 bottom-4 z-50">
+			<Collapsible onOpenChange={setIsOpen} open={isOpen}>
 				<CollapsibleTrigger asChild>
 					<Button
-						size="lg"
-						className="h-14 w-14 rounded-full shadow-lg bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-2 border-background animate-pulse-subtle"
 						aria-label={isOpen ? 'Fechar assistente IA' : 'Abrir assistente IA'}
+						className="h-14 w-14 animate-pulse-subtle rounded-full border-2 border-background bg-linear-to-r from-purple-600 to-pink-600 shadow-lg hover:from-purple-700 hover:to-pink-700"
+						size="lg"
 					>
 						{isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
 					</Button>
 				</CollapsibleTrigger>
 
-				<CollapsibleContent className="absolute bottom-16 right-0 w-96 mb-2">
+				<CollapsibleContent className="absolute right-0 bottom-16 mb-2 w-96">
 					<MotionWrapper>
-						<Card className="glass-card shadow-2xl border-0">
-							<CardHeader className="bg-linear-to-r from-purple-600/10 to-pink-600/10 border-b">
+						<Card className="glass-card border-0 shadow-2xl">
+							<CardHeader className="border-b bg-linear-to-r from-purple-600/10 to-pink-600/10">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2">
 										<Bot className="h-5 w-5 text-purple-600" />
 										<div>
 											<h3 className="font-semibold text-sm">Assistente IA</h3>
-											<p className="text-xs text-muted-foreground">Grupo US</p>
+											<p className="text-muted-foreground text-xs">Grupo US</p>
 										</div>
 									</div>
 									<Button
-										variant="ghost"
-										size="icon"
 										className="h-6 w-6"
 										onClick={() => setIsOpen(false)}
+										size="icon"
+										variant="ghost"
 									>
 										<X className="h-4 w-4" />
 									</Button>
@@ -161,16 +161,16 @@ export function AIChatWidget() {
 							</CardHeader>
 
 							<CardContent className="p-0">
-								<div className="h-112 flex flex-col">
+								<div className="flex h-112 flex-col">
 									{/* Messages Area */}
-									<div className="flex-1 overflow-y-auto p-4 space-y-3">
+									<div className="flex-1 space-y-3 overflow-y-auto p-4">
 										{messages.map((message) => (
 											<div
-												key={message.id}
 												className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+												key={message.id}
 											>
 												<div
-													className={`flex items-start gap-2 max-w-[80%] ${
+													className={`flex max-w-[80%] items-start gap-2 ${
 														message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
 													}`}
 												>
@@ -181,8 +181,8 @@ export function AIChatWidget() {
 																: 'bg-muted'
 														}`}
 													>
-														<p className="text-sm whitespace-pre-wrap">{message.content}</p>
-														<p className="text-xs opacity-70 mt-1">
+														<p className="whitespace-pre-wrap text-sm">{message.content}</p>
+														<p className="mt-1 text-xs opacity-70">
 															{message.timestamp.toLocaleTimeString('pt-BR', {
 																hour: '2-digit',
 																minute: '2-digit',
@@ -190,10 +190,10 @@ export function AIChatWidget() {
 														</p>
 													</div>
 													<div
-														className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${
+														className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
 															message.sender === 'user'
-																? 'bg-primary text-primary-foreground ml-2'
-																: 'bg-muted text-muted-foreground mr-2'
+																? 'ml-2 bg-primary text-primary-foreground'
+																: 'mr-2 bg-muted text-muted-foreground'
 														}`}
 													>
 														{message.sender === 'user' ? (
@@ -209,14 +209,14 @@ export function AIChatWidget() {
 										{isLoading && (
 											<div className="flex justify-start">
 												<div className="flex items-start gap-2">
-													<div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center mr-2">
+													<div className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-muted">
 														<Bot className="h-3 w-3 text-muted-foreground" />
 													</div>
-													<div className="bg-muted rounded-lg px-3 py-2">
+													<div className="rounded-lg bg-muted px-3 py-2">
 														<div className="flex items-center gap-1">
-															<div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" />
-															<div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse delay-75" />
-															<div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse delay-150" />
+															<div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground" />
+															<div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-75" />
+															<div className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-150" />
 														</div>
 													</div>
 												</div>
@@ -229,40 +229,40 @@ export function AIChatWidget() {
 
 									{/* Input Area */}
 									<div className="p-3">
-										<div className="flex gap-2 mb-2">
+										<div className="mb-2 flex gap-2">
 											<Input
-												value={inputValue}
+												className="flex-1"
+												disabled={isLoading}
 												onChange={(e) => setInputValue(e.target.value)}
 												onKeyPress={handleKeyPress}
 												placeholder="Digite sua mensagem sobre a Virada Estética..."
-												className="flex-1"
-												disabled={isLoading}
+												value={inputValue}
 											/>
 											<Button
-												size="icon"
-												onClick={handleSendMessage}
 												disabled={!inputValue.trim() || isLoading}
+												onClick={handleSendMessage}
+												size="icon"
 											>
 												<Send className="h-4 w-4" />
 											</Button>
 										</div>
 
 										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-2 text-xs text-muted-foreground">
+											<div className="flex items-center gap-2 text-muted-foreground text-xs">
 												<HandHelping className="h-3 w-3" />
 												<span>Precisa de ajuda humana?</span>
 											</div>
 											<Button
-												variant="outline"
-												size="sm"
-												onClick={handleEscalate}
 												className="text-xs"
+												onClick={handleEscalate}
+												size="sm"
+												variant="outline"
 											>
 												Falar com humano
 											</Button>
 										</div>
 
-										<div className="mt-2 pt-2 border-t text-xs text-muted-foreground text-center">
+										<div className="mt-2 border-t pt-2 text-center text-muted-foreground text-xs">
 											<p>
 												IA treinada na narrativa "Profissional Abandonado → Empresário da Saúde
 												Estética"

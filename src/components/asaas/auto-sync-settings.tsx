@@ -81,51 +81,51 @@ export function AutoSyncSettings() {
 			</CardHeader>
 			<CardContent className="space-y-6">
 				<div className="flex items-center justify-between space-x-2">
-					<Label htmlFor={autoSyncId} className="flex flex-col space-y-1">
+					<Label className="flex flex-col space-y-1" htmlFor={autoSyncId}>
 						<span>Habilitar Sincronização Automática</span>
-						<span className="font-normal text-xs text-muted-foreground">
+						<span className="font-normal text-muted-foreground text-xs">
 							O sistema irá buscar novos alunos automaticamente.
 						</span>
 					</Label>
-					<Switch id={autoSyncId} checked={enabled} onCheckedChange={setEnabled} />
+					<Switch checked={enabled} id={autoSyncId} onCheckedChange={setEnabled} />
 				</div>
 
 				<div className="grid gap-2">
 					<Label htmlFor={intervalId}>Intervalo (horas)</Label>
 					<Input
-						id={intervalId}
-						type="number"
-						min="1"
-						max="24"
-						value={intervalHours}
-						onChange={(e) => setIntervalHours(Number(e.target.value))}
-						disabled={!enabled}
 						className="max-w-[120px]"
+						disabled={!enabled}
+						id={intervalId}
+						max="24"
+						min="1"
+						onChange={(e) => setIntervalHours(Number(e.target.value))}
+						type="number"
+						value={intervalHours}
 					/>
-					<p className="text-xs text-muted-foreground">
+					<p className="text-muted-foreground text-xs">
 						Defina a frequência da sincronização (mínimo 1 hora).
 					</p>
 				</div>
 
 				<div className="flex items-center justify-between space-x-2">
-					<Label htmlFor={updateExistingId} className="flex flex-col space-y-1">
+					<Label className="flex flex-col space-y-1" htmlFor={updateExistingId}>
 						<span>Atualizar Alunos Existentes</span>
-						<span className="font-normal text-xs text-muted-foreground">
+						<span className="font-normal text-muted-foreground text-xs">
 							Se ativado, dados de alunos já cadastrados serão atualizados.
 						</span>
 					</Label>
 					<Switch
-						id={updateExistingId}
 						checked={updateExisting}
-						onCheckedChange={setUpdateExisting}
 						disabled={!enabled}
+						id={updateExistingId}
+						onCheckedChange={setUpdateExisting}
 					/>
 				</div>
 
 				{lastSync && (
 					<div className="rounded-md bg-muted p-3 text-sm">
-						<p className="font-medium mb-1">Última sincronização:</p>
-						<div className="flex justify-between items-center text-muted-foreground">
+						<p className="mb-1 font-medium">Última sincronização:</p>
+						<div className="flex items-center justify-between text-muted-foreground">
 							<span>{new Date(lastSync.completedAt || lastSync.startedAt).toLocaleString()}</span>
 							<span
 								className={
@@ -144,7 +144,7 @@ export function AutoSyncSettings() {
 							</span>
 						</div>
 						{lastSync.status === 'completed' && (
-							<p className="text-xs mt-1 text-muted-foreground">
+							<p className="mt-1 text-muted-foreground text-xs">
 								{lastSync.recordsCreated || 0} criados, {lastSync.recordsUpdated || 0} atualizados
 							</p>
 						)}
@@ -152,7 +152,7 @@ export function AutoSyncSettings() {
 				)}
 			</CardContent>
 			<CardFooter>
-				<Button onClick={handleSave} disabled={isSaving} className="ml-auto">
+				<Button className="ml-auto" disabled={isSaving} onClick={handleSave}>
 					{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 					Salvar Configurações
 				</Button>

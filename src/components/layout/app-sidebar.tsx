@@ -20,42 +20,42 @@ const menuItems = [
 	{
 		label: 'Painel',
 		href: '/dashboard',
-		icon: <LayoutDashboard className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <LayoutDashboard className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'CRM',
 		href: '/crm',
-		icon: <Users2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <Users2 className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Alunos',
 		href: '/students',
-		icon: <GraduationCap className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <GraduationCap className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Chat',
 		href: '/chat',
-		icon: <MessageCircle className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <MessageCircle className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Marketing',
 		href: '/marketing/dashboard',
-		icon: <Megaphone className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <Megaphone className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Leads de Captura',
 		href: '/marketing/leads',
-		icon: <UserPlus className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <UserPlus className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Relatórios',
 		href: '/reports',
-		icon: <BarChart3 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <BarChart3 className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 	{
 		label: 'Configurações',
 		href: '/settings',
-		icon: <Settings2 className="text-sidebar-foreground h-5 w-5 shrink-0" />,
+		icon: <Settings2 className="h-5 w-5 shrink-0 text-sidebar-foreground" />,
 	},
 ];
 
@@ -66,18 +66,18 @@ export function AppSidebar() {
 	return (
 		<Sidebar open={open} setOpen={setOpen}>
 			<SidebarBody className="justify-between gap-10">
-				<div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+				<div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
 					{open ? <Logo /> : <LogoIcon />}
 					<div className="mt-8">
 						{/* Desktop View */}
-						<div className="hidden md:flex flex-col gap-2">
+						<div className="hidden flex-col gap-2 md:flex">
 							{menuItems.map((item, idx) => (
 								<SidebarLink key={idx} link={item} />
 							))}
 						</div>
 
 						{/* Mobile View */}
-						<div className="md:hidden flex flex-col gap-2">
+						<div className="flex flex-col gap-2 md:hidden">
 							{menuItems.map((item, idx) => (
 								<SidebarLink key={idx} link={item} />
 							))}
@@ -90,7 +90,7 @@ export function AppSidebar() {
 							label: user?.fullName || 'Usuário',
 							href: '#',
 							icon: (
-								<div className="h-7 w-7 shrink-0 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+								<div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
 									<UserButton
 										afterSignOutUrl="/sign-in"
 										appearance={{
@@ -115,14 +115,14 @@ export function AppSidebar() {
 const Logo = () => {
 	return (
 		<Link
+			className="relative z-20 flex items-center space-x-2 py-1 font-normal text-foreground text-sm"
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-foreground" />
 			<motion.span
-				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
-				className="font-medium text-foreground whitespace-pre"
+				className="whitespace-pre font-medium text-foreground"
+				initial={{ opacity: 0 }}
 			>
 				Grupo US
 			</motion.span>
@@ -133,10 +133,10 @@ const Logo = () => {
 const LogoIcon = () => {
 	return (
 		<Link
+			className="relative z-20 flex items-center space-x-2 py-1 font-normal text-foreground text-sm"
 			to="/dashboard"
-			className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
 		>
-			<div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
+			<div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-foreground" />
 		</Link>
 	);
 };

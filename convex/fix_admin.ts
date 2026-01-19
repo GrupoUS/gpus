@@ -1,6 +1,6 @@
-import { internalMutation } from './_generated/server';
 import { v } from 'convex/values';
 
+import { internalMutation } from './_generated/server';
 import { logSecurityEvent } from './lib/auditLogging';
 
 export const addAdmin = internalMutation({
@@ -51,10 +51,7 @@ export const addAdmin = internalMutation({
 				'critical',
 				[args.clerkId],
 			);
-		} catch (error) {
-			// If audit logging fails (e.g., unauthenticated context), log to console but don't fail
-			console.warn('Audit logging failed for admin bootstrap:', error);
-		}
+		} catch (_error) {}
 
 		return message;
 	},

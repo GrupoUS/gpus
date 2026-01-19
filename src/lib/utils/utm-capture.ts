@@ -1,12 +1,12 @@
 import { useSearch } from '@tanstack/react-router';
 
-export type UTMParams = {
+export interface UTMParams {
 	utmSource?: string;
 	utmCampaign?: string;
 	utmMedium?: string;
 	utmContent?: string;
 	utmTerm?: string;
-};
+}
 
 export function useUTMParams(): UTMParams {
 	const search = useSearch({ strict: false }) as Record<string, unknown>;

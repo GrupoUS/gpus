@@ -19,7 +19,7 @@ export function LeadsByProduct({ data }: LeadsByProductProps) {
 	return (
 		<Card className="glass-card">
 			<CardHeader>
-				<CardTitle className="font-display text-2xl font-semibold">Leads por Produto</CardTitle>
+				<CardTitle className="font-display font-semibold text-2xl">Leads por Produto</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-4">
@@ -41,7 +41,7 @@ export function LeadsByProduct({ data }: LeadsByProductProps) {
 						</>
 					) : Object.keys(data).length === 0 ? (
 						// Empty state
-						<p className="text-sm text-muted-foreground text-center py-4">
+						<p className="py-4 text-center text-muted-foreground text-sm">
 							Nenhum lead registrado no período
 						</p>
 					) : (
@@ -52,17 +52,18 @@ export function LeadsByProduct({ data }: LeadsByProductProps) {
 								const allValues = Object.values(data);
 								const maxValue = Math.max(...allValues, 1);
 								return (
-									<div key={product} className="space-y-1">
-										<div className="flex justify-between text-sm font-sans">
+									<div className="space-y-1" key={product}>
+										<div className="flex justify-between font-sans text-sm">
 											<span>{productLabels[product] || product}</span>
-											<span className="font-medium font-display tabular-nums">{value}</span>
+											<span className="font-display font-medium tabular-nums">{value}</span>
 										</div>
-										<div className="h-2 rounded-full bg-muted overflow-hidden">
+										<div className="h-2 overflow-hidden rounded-full bg-muted">
 											<div
-												className="h-full rounded-full progress-bar"
+												className="progress-bar h-full rounded-full"
 												style={{
 													width: `${(value / maxValue) * 100}%`,
-													background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-3)))`,
+													background:
+														'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--chart-3)))',
 												}}
 											/>
 										</div>

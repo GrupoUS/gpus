@@ -122,9 +122,9 @@ export function AdminExportDialog() {
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog onOpenChange={setOpen} open={open}>
 			<DialogTrigger asChild>
-				<Button size="lg" className="w-full">
+				<Button className="w-full" size="lg">
 					<Upload className="mr-2 h-5 w-5" />
 					Exportar Dados para Asaas
 				</Button>
@@ -145,9 +145,9 @@ export function AdminExportDialog() {
 					<div className="space-y-3">
 						<Label>Tipo de Exportação</Label>
 						<Select
-							value={exportType}
-							onValueChange={(v) => setExportType(v as 'students' | 'payments' | 'all')}
 							disabled={isExporting}
+							onValueChange={(v) => setExportType(v as 'students' | 'payments' | 'all')}
+							value={exportType}
 						>
 							<SelectTrigger>
 								<SelectValue />
@@ -158,7 +158,7 @@ export function AdminExportDialog() {
 								<SelectItem value="all">Todos os Dados</SelectItem>
 							</SelectContent>
 						</Select>
-						<div className="text-sm text-muted-foreground">
+						<div className="text-muted-foreground text-sm">
 							{exportType === 'students' &&
 								`${studentsToExport?.length || 0} estudantes para exportar`}
 							{exportType === 'payments' && `${pendingPaymentsCount} pagamentos pendentes`}
@@ -171,53 +171,53 @@ export function AdminExportDialog() {
 					<div className="space-y-3">
 						<Label>Estratégia de Resolução de Conflitos</Label>
 						<RadioGroup
-							value={conflictStrategy}
+							disabled={isExporting}
 							onValueChange={(v) =>
 								setConflictStrategy(v as 'local_wins' | 'remote_wins' | 'newest_wins' | 'manual')
 							}
-							disabled={isExporting}
+							value={conflictStrategy}
 						>
 							<div className="space-y-2">
-								<div className="flex items-start space-x-2 p-3 rounded-lg border">
-									<RadioGroupItem value="manual" id={manualId} />
+								<div className="flex items-start space-x-2 rounded-lg border p-3">
+									<RadioGroupItem id={manualId} value="manual" />
 									<div className="flex-1">
-										<Label htmlFor={manualId} className="cursor-pointer font-medium">
+										<Label className="cursor-pointer font-medium" htmlFor={manualId}>
 											Resolução Manual
 										</Label>
-										<p className="text-xs text-muted-foreground mt-1">
+										<p className="mt-1 text-muted-foreground text-xs">
 											Requerer aprovação para cada conflito
 										</p>
 									</div>
 								</div>
-								<div className="flex items-start space-x-2 p-3 rounded-lg border">
-									<RadioGroupItem value="local_wins" id={localWinsId} />
+								<div className="flex items-start space-x-2 rounded-lg border p-3">
+									<RadioGroupItem id={localWinsId} value="local_wins" />
 									<div className="flex-1">
-										<Label htmlFor={localWinsId} className="cursor-pointer font-medium">
+										<Label className="cursor-pointer font-medium" htmlFor={localWinsId}>
 											Local Prevalece
 										</Label>
-										<p className="text-xs text-muted-foreground mt-1">
+										<p className="mt-1 text-muted-foreground text-xs">
 											Dados locais sobrescrevem dados do Asaas em caso de conflito
 										</p>
 									</div>
 								</div>
-								<div className="flex items-start space-x-2 p-3 rounded-lg border">
-									<RadioGroupItem value="remote_wins" id={remoteWinsId} />
+								<div className="flex items-start space-x-2 rounded-lg border p-3">
+									<RadioGroupItem id={remoteWinsId} value="remote_wins" />
 									<div className="flex-1">
-										<Label htmlFor={remoteWinsId} className="cursor-pointer font-medium">
+										<Label className="cursor-pointer font-medium" htmlFor={remoteWinsId}>
 											Asaas Prevalece
 										</Label>
-										<p className="text-xs text-muted-foreground mt-1">
+										<p className="mt-1 text-muted-foreground text-xs">
 											Dados do Asaas sobrescrevem dados locais em caso de conflito
 										</p>
 									</div>
 								</div>
-								<div className="flex items-start space-x-2 p-3 rounded-lg border bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-									<RadioGroupItem value="newest_wins" id={newestWinsId} />
+								<div className="flex items-start space-x-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+									<RadioGroupItem id={newestWinsId} value="newest_wins" />
 									<div className="flex-1">
-										<Label htmlFor={newestWinsId} className="cursor-pointer font-medium">
+										<Label className="cursor-pointer font-medium" htmlFor={newestWinsId}>
 											Mais Recente Prevalece
 										</Label>
-										<p className="text-xs text-muted-foreground mt-1">
+										<p className="mt-1 text-muted-foreground text-xs">
 											Dados mais recentes (baseado na data de atualização) são mantidos
 										</p>
 									</div>
@@ -233,7 +233,7 @@ export function AdminExportDialog() {
 								<span>Progresso da Exportação</span>
 								<span className="text-muted-foreground">{exportProgress}%</span>
 							</div>
-							<Progress value={exportProgress} className="h-2" />
+							<Progress className="h-2" value={exportProgress} />
 						</div>
 					)}
 
@@ -246,23 +246,23 @@ export function AdminExportDialog() {
 							<CardContent>
 								<div className="grid grid-cols-3 gap-4">
 									<div className="text-center">
-										<div className="text-2xl font-bold text-green-600">{exportResults.success}</div>
-										<div className="text-xs text-muted-foreground">Sucesso</div>
+										<div className="font-bold text-2xl text-green-600">{exportResults.success}</div>
+										<div className="text-muted-foreground text-xs">Sucesso</div>
 									</div>
 									<div className="text-center">
-										<div className="text-2xl font-bold text-yellow-600">
+										<div className="font-bold text-2xl text-yellow-600">
 											{exportResults.skipped}
 										</div>
-										<div className="text-xs text-muted-foreground">Ignorados</div>
+										<div className="text-muted-foreground text-xs">Ignorados</div>
 									</div>
 									<div className="text-center">
-										<div className="text-2xl font-bold text-red-600">{exportResults.failed}</div>
-										<div className="text-xs text-muted-foreground">Falharam</div>
+										<div className="font-bold text-2xl text-red-600">{exportResults.failed}</div>
+										<div className="text-muted-foreground text-xs">Falharam</div>
 									</div>
 								</div>
 								{exportResults.failed > 0 && (
-									<div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded text-sm text-yellow-700 dark:text-yellow-300 flex items-start gap-2">
-										<AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+									<div className="mt-4 flex items-start gap-2 rounded bg-yellow-50 p-3 text-sm text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-300">
+										<AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
 										<span>
 											Alguns registros falharam. Verifique o histórico de sincronização para mais
 											detalhes.
@@ -275,10 +275,10 @@ export function AdminExportDialog() {
 
 					{/* Actions */}
 					<div className="flex justify-end gap-3">
-						<Button variant="outline" onClick={() => setOpen(false)} disabled={isExporting}>
+						<Button disabled={isExporting} onClick={() => setOpen(false)} variant="outline">
 							Cancelar
 						</Button>
-						<Button onClick={handleExport} disabled={isExporting || totalToExport === 0}>
+						<Button disabled={isExporting || totalToExport === 0} onClick={handleExport}>
 							{isExporting ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />

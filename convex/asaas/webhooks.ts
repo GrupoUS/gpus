@@ -8,8 +8,9 @@
  * - Automatic 90-day retention policy for webhook logs
  */
 import { v } from 'convex/values';
-import { internalAction, internalMutation, internalQuery } from '../_generated/server';
+
 import { internal } from '../_generated/api';
+import { internalAction, internalMutation, internalQuery } from '../_generated/server';
 import { decrypt, encrypt } from '../lib/encryption';
 import {
 	processCustomerWorker,
@@ -29,7 +30,7 @@ const WEBHOOK_RETENTION_DAYS = 90;
 const WEBHOOK_RETENTION_MS = WEBHOOK_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 const MAX_WEBHOOK_RETRIES = 5;
-const RETRY_BASE_DELAY_MS = 60000;
+const RETRY_BASE_DELAY_MS = 60_000;
 const RETRY_JITTER_MS = 5000;
 const RETRY_MAX_DELAY_MS = 30 * 60 * 1000;
 
@@ -39,7 +40,7 @@ type WebhookResult =
 
 function calculateRetryDelay(attempt: number): number {
 	const exponent = Math.max(0, attempt - 1);
-	const delay = RETRY_BASE_DELAY_MS * Math.pow(2, exponent);
+	const delay = RETRY_BASE_DELAY_MS * 2 ** exponent;
 	const jitter = Math.floor(Math.random() * RETRY_JITTER_MS);
 	return Math.min(delay + jitter, RETRY_MAX_DELAY_MS);
 }
@@ -86,9 +87,7 @@ export const createWebhookEvent = internalMutation({
 		let encryptedPayload: string | undefined;
 		try {
 			encryptedPayload = await encrypt(JSON.stringify(args.payload));
-		} catch (error) {
-			console.error('Failed to encrypt webhook payload:', error);
-		}
+		} catch (_error) {}
 
 		const webhookId = await ctx.db.insert('asaasWebhooks', {
 			eventId: args.eventId,

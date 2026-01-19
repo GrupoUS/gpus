@@ -5,38 +5,28 @@
  * and LGPD compliance utilities.
  */
 
-// Configuration
-export * from './config';
-
-// Authentication and Authorization
-export * from './auth';
-
-// Encryption and Data Protection
-export * from './encryption';
-
-// Input Validation (core Zod schemas)
-// Note: convexValidationSchemas uses simplified v.* API
-export * from './validation';
-
 // Audit Logging
 export * from './auditLogging';
-
+// Re-export commonly used types
+export type { ClerkIdentity } from './auth';
+// Authentication and Authorization
+export * from './auth';
+// Configuration
+export * from './config';
+// Encryption and Data Protection
+export * from './encryption';
 // LGPD Compliance
 export * from './lgpdCompliance';
 export * from './lgpdDataRights';
-
-// Security Middleware
-export * from './securityMiddleware';
-
-// Security Health Monitoring
-export * from './securityHealth';
-
-// Re-export commonly used types
-export type { ClerkIdentity } from './auth';
-
-export type { SecurityContext } from './securityMiddleware';
-
 export type {
 	HealthCheckResult,
 	HealthIssue,
 } from './securityHealth';
+// Security Health Monitoring
+export * from './securityHealth';
+export type { SecurityContext } from './securityMiddleware';
+// Security Middleware
+export * from './securityMiddleware';
+// Input Validation (core Zod schemas)
+// Note: convexValidationSchemas uses simplified v.* API
+export * from './validation';

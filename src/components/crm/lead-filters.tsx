@@ -69,41 +69,41 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 		filters.source.length;
 
 	return (
-		<div className="flex flex-col sm:flex-row gap-3 w-full bg-card/50 p-2 rounded-lg border border-border/50">
+		<div className="flex w-full flex-col gap-3 rounded-lg border border-border/50 bg-card/50 p-2 sm:flex-row">
 			<div className="relative flex-1">
-				<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+				<Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
 				<Input
+					className="border-border/50 bg-background/50 pl-9"
+					onChange={handleSearchChange}
 					placeholder="Buscar leads..."
 					value={filters.search}
-					onChange={handleSearchChange}
-					className="pl-9 bg-background/50 border-border/50"
 				/>
 			</div>
 
 			<Popover>
 				<PopoverTrigger asChild>
-					<Button variant="outline" className="gap-2 border-border/50 bg-background/50 relative">
+					<Button className="relative gap-2 border-border/50 bg-background/50" variant="outline">
 						<Filter className="h-4 w-4" />
 						Filtros
 						{activeFiltersCount > 0 && (
 							<Badge
+								className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary p-0 text-[10px] text-primary-foreground"
 								variant="secondary"
-								className="ml-1 h-5 w-5 p-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full text-[10px]"
 							>
 								{activeFiltersCount}
 							</Badge>
 						)}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="w-80 p-4" align="end">
+				<PopoverContent align="end" className="w-80 p-4">
 					<div className="space-y-4">
 						<div className="flex items-center justify-between">
 							<h4 className="font-medium leading-none">Filtros</h4>
 							<Button
-								variant="ghost"
-								size="sm"
-								className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+								className="h-auto p-0 text-muted-foreground text-xs hover:text-foreground"
 								onClick={clearFilters}
+								size="sm"
+								variant="ghost"
 							>
 								Limpar
 							</Button>
@@ -113,20 +113,20 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 
 						{/* Temperatura */}
 						<div className="space-y-2">
-							<h5 className="text-sm font-medium text-muted-foreground">Temperatura</h5>
+							<h5 className="font-medium text-muted-foreground text-sm">Temperatura</h5>
 							<div className="grid grid-cols-2 gap-2">
 								{[
 									{ id: 'frio', label: '❄️ Frio' },
 									{ id: 'morno', label: '🌤️ Morno' },
 									{ id: 'quente', label: '🔥 Quente' },
 								].map((item) => (
-									<div key={item.id} className="flex items-center space-x-2">
+									<div className="flex items-center space-x-2" key={item.id}>
 										<Checkbox
-											id={`temp-${item.id}`}
 											checked={filters.temperature.includes(item.id)}
+											id={`temp-${item.id}`}
 											onCheckedChange={() => toggleFilter('temperature', item.id)}
 										/>
-										<Label htmlFor={`temp-${item.id}`} className="text-sm font-normal">
+										<Label className="font-normal text-sm" htmlFor={`temp-${item.id}`}>
 											{item.label}
 										</Label>
 									</div>
@@ -138,7 +138,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 
 						{/* Produtos */}
 						<div className="space-y-2">
-							<h5 className="text-sm font-medium text-muted-foreground">Produtos</h5>
+							<h5 className="font-medium text-muted-foreground text-sm">Produtos</h5>
 							<div className="grid grid-cols-2 gap-2">
 								{[
 									{ id: 'trintae3', label: 'TrintaE3' },
@@ -146,13 +146,13 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 									{ id: 'black_neon', label: 'Black Neon' },
 									{ id: 'comunidade', label: 'Comunidade' },
 								].map((item) => (
-									<div key={item.id} className="flex items-center space-x-2">
+									<div className="flex items-center space-x-2" key={item.id}>
 										<Checkbox
-											id={`prod-${item.id}`}
 											checked={filters.products.includes(item.id)}
+											id={`prod-${item.id}`}
 											onCheckedChange={() => toggleFilter('products', item.id)}
 										/>
-										<Label htmlFor={`prod-${item.id}`} className="text-sm font-normal">
+										<Label className="font-normal text-sm" htmlFor={`prod-${item.id}`}>
 											{item.label}
 										</Label>
 									</div>
@@ -164,7 +164,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 
 						{/* Estágio */}
 						<div className="space-y-2">
-							<h5 className="text-sm font-medium text-muted-foreground">Estágio</h5>
+							<h5 className="font-medium text-muted-foreground text-sm">Estágio</h5>
 							<div className="grid grid-cols-2 gap-2">
 								{[
 									{ id: 'novo', label: 'Novo' },
@@ -175,13 +175,13 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 									{ id: 'fechado_ganho', label: 'Fechado Ganho' },
 									{ id: 'fechado_perdido', label: 'Fechado Perdido' },
 								].map((item) => (
-									<div key={item.id} className="flex items-center space-x-2">
+									<div className="flex items-center space-x-2" key={item.id}>
 										<Checkbox
-											id={`stage-${item.id}`}
 											checked={filters.stages.includes(item.id)}
+											id={`stage-${item.id}`}
 											onCheckedChange={() => toggleFilter('stages', item.id)}
 										/>
-										<Label htmlFor={`stage-${item.id}`} className="text-sm font-normal">
+										<Label className="font-normal text-sm" htmlFor={`stage-${item.id}`}>
 											{item.label}
 										</Label>
 									</div>
@@ -193,7 +193,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 
 						{/* Origem */}
 						<div className="space-y-2">
-							<h5 className="text-sm font-medium text-muted-foreground">Origem</h5>
+							<h5 className="font-medium text-muted-foreground text-sm">Origem</h5>
 							<div className="grid grid-cols-2 gap-2">
 								{[
 									{ id: 'instagram', label: 'Instagram' },
@@ -201,13 +201,13 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 									{ id: 'trafego_pago', label: 'Tráfego' },
 									{ id: 'landing_page', label: 'Site' },
 								].map((item) => (
-									<div key={item.id} className="flex items-center space-x-2">
+									<div className="flex items-center space-x-2" key={item.id}>
 										<Checkbox
-											id={`src-${item.id}`}
 											checked={filters.source.includes(item.id)}
+											id={`src-${item.id}`}
 											onCheckedChange={() => toggleFilter('source', item.id)}
 										/>
-										<Label htmlFor={`src-${item.id}`} className="text-sm font-normal">
+										<Label className="font-normal text-sm" htmlFor={`src-${item.id}`}>
 											{item.label}
 										</Label>
 									</div>
@@ -219,7 +219,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 			</Popover>
 
 			{activeFiltersCount > 0 && (
-				<Button variant="ghost" size="icon" onClick={clearFilters} title="Limpar filtros">
+				<Button onClick={clearFilters} size="icon" title="Limpar filtros" variant="ghost">
 					<X className="h-4 w-4 text-muted-foreground" />
 				</Button>
 			)}

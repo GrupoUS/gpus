@@ -18,7 +18,7 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
 		return (
 			<div className="grid gap-4 md:grid-cols-2">
 				{[1, 2, 3, 4].map((i) => (
-					<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
+					<div className="h-40 animate-pulse rounded-lg bg-muted/20" key={i} />
 				))}
 			</div>
 		);
@@ -26,8 +26,8 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
 
 	if (enrollments.length === 0) {
 		return (
-			<div className="text-center py-12 text-muted-foreground">
-				<BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+			<div className="py-12 text-center text-muted-foreground">
+				<BookOpen className="mx-auto mb-4 h-12 w-12 opacity-50" />
 				<p>Nenhuma matrícula encontrada</p>
 			</div>
 		);
@@ -36,7 +36,7 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
 	return (
 		<div className="grid gap-4 md:grid-cols-2">
 			{enrollments.map((enrollment: Doc<'enrollments'>) => (
-				<EnrollmentCard key={enrollment._id} enrollment={enrollment} />
+				<EnrollmentCard enrollment={enrollment} key={enrollment._id} />
 			))}
 		</div>
 	);

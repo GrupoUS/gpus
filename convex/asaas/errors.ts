@@ -21,8 +21,8 @@ export class AsaasError extends Error {
 	constructor(
 		message: string,
 		code: string,
-		isTransient: boolean = false,
-		isRetryable: boolean = false,
+		isTransient = false,
+		isRetryable = false,
 		statusCode?: number,
 		originalError?: unknown,
 	) {
@@ -175,7 +175,11 @@ export function classifyError(error: unknown): AsaasError {
 	if (statusCode === 429) {
 		const message = responseData?.errors?.[0]?.description || 'Limite de requisições excedido';
 		const retryAfter = apiError.response?.headers?.['retry-after'];
-		return new AsaasRateLimitError(message, retryAfter ? parseInt(retryAfter) : undefined, error);
+		return new AsaasRateLimitError(
+			message,
+			retryAfter ? Number.parseInt(retryAfter, 10) : undefined,
+			error,
+		);
 	}
 
 	// Client errors (4xx, excluding 401, 404, 429)

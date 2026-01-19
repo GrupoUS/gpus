@@ -18,13 +18,13 @@ export const Route = createFileRoute('/_authenticated/financial')({
 	component: FinancialDashboard,
 });
 
-type ImportResult = {
+interface ImportResult {
 	success: boolean;
 	recordsProcessed: number;
 	recordsCreated: number;
 	recordsUpdated: number;
 	recordsFailed: number;
-};
+}
 
 function FinancialDashboard() {
 	const [isSyncing, setIsSyncing] = useState(false);
@@ -57,16 +57,16 @@ function FinancialDashboard() {
 			{/* Header with Quick Actions */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-3xl font-bold tracking-tight">Financeiro</h2>
+					<h2 className="font-bold text-3xl tracking-tight">Financeiro</h2>
 					<p className="text-muted-foreground">Acompanhe cobranças, receitas e pagamentos</p>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
-						variant="outline"
-						size="sm"
-						onClick={handleSync}
-						disabled={isSyncing}
 						className="gap-2"
+						disabled={isSyncing}
+						onClick={handleSync}
+						size="sm"
+						variant="outline"
 					>
 						<RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
 						{isSyncing ? 'Sincronizando...' : 'Sincronizar'}

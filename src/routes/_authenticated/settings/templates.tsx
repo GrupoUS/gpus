@@ -105,14 +105,14 @@ function TemplatesSettingsPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
+					<h1 className="flex items-center gap-2 font-bold text-2xl">
 						<FileText className="h-6 w-6 text-green-500" />
 						Templates de Mensagem
 					</h1>
 					<p className="text-muted-foreground">Gerencie respostas rápidas para chat</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<Select value={categoryFilter} onValueChange={setCategoryFilter}>
+					<Select onValueChange={setCategoryFilter} value={categoryFilter}>
 						<SelectTrigger className="w-[180px]">
 							<SelectValue placeholder="Categoria" />
 						</SelectTrigger>
@@ -125,7 +125,7 @@ function TemplatesSettingsPage() {
 							))}
 						</SelectContent>
 					</Select>
-					<Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+					<Dialog onOpenChange={setIsCreateOpen} open={isCreateOpen}>
 						<DialogTrigger asChild>
 							<Button className="gap-2">
 								<Plus className="h-4 w-4" />
@@ -173,7 +173,7 @@ function TemplatesSettingsPage() {
 							<TableCell>
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
-										<Button variant="ghost" size="icon">
+										<Button size="icon" variant="ghost">
 											<MoreVertical className="h-4 w-4" />
 										</Button>
 									</DropdownMenuTrigger>
@@ -188,7 +188,7 @@ function TemplatesSettingsPage() {
 												<DialogHeader>
 													<DialogTitle>Editar Template</DialogTitle>
 												</DialogHeader>
-												<TemplateForm templateId={template._id} initialData={template} />
+												<TemplateForm initialData={template} templateId={template._id} />
 											</DialogContent>
 										</Dialog>
 										<DropdownMenuItem
@@ -206,7 +206,7 @@ function TemplatesSettingsPage() {
 												}
 											}}
 										>
-											<Trash2 className="h-4 w-4 mr-2" />
+											<Trash2 className="mr-2 h-4 w-4" />
 											Excluir
 										</DropdownMenuItem>
 									</DropdownMenuContent>
@@ -260,7 +260,7 @@ function TemplateForm({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+			<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 				<FormField
 					control={form.control}
 					name="name"
@@ -282,7 +282,7 @@ function TemplateForm({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Categoria</FormLabel>
-								<Select onValueChange={field.onChange} defaultValue={field.value}>
+								<Select defaultValue={field.value} onValueChange={field.onChange}>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue />
@@ -307,7 +307,7 @@ function TemplateForm({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Produto (Opcional)</FormLabel>
-								<Select onValueChange={field.onChange} defaultValue={field.value}>
+								<Select defaultValue={field.value} onValueChange={field.onChange}>
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue placeholder="Geral" />
@@ -336,8 +336,8 @@ function TemplateForm({
 							<FormLabel>Conteúdo</FormLabel>
 							<FormControl>
 								<Textarea
-									placeholder="Digite o conteúdo do template... Use {{nome}}, {{produto}} para variáveis."
 									className="min-h-[150px] resize-none"
+									placeholder="Digite o conteúdo do template... Use {{nome}}, {{produto}} para variáveis."
 									{...field}
 								/>
 							</FormControl>
@@ -347,7 +347,7 @@ function TemplateForm({
 				/>
 
 				<div className="flex justify-end pt-4">
-					<Button type="submit" disabled={form.formState.isSubmitting}>
+					<Button disabled={form.formState.isSubmitting} type="submit">
 						{form.formState.isSubmitting ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />

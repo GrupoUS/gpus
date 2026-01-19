@@ -72,14 +72,14 @@ function DashboardPage() {
 				<MotionWrapper>
 					<div className="flex items-center justify-between">
 						<div>
-							<h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+							<h1 className="font-bold font-display text-4xl tracking-tight md:text-5xl">
 								Dashboard
 							</h1>
 							<p className="font-sans text-base text-muted-foreground">
 								Visão geral do Grupo US em tempo real
 							</p>
 						</div>
-						<Select value={period} onValueChange={(value: typeof period) => setPeriod(value)}>
+						<Select onValueChange={(value: typeof period) => setPeriod(value)} value={period}>
 							<SelectTrigger className="w-[180px]">
 								<SelectValue placeholder="Período" />
 							</SelectTrigger>
@@ -95,51 +95,51 @@ function DashboardPage() {
 
 				<MotionWrapper>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-						{!metrics ? (
-							<>
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-							</>
-						) : (
+						{metrics ? (
 							<>
 								<StatsCard
-									title="Leads este mês"
-									value={metrics.totalLeads || 0}
+									description="vs. período anterior"
 									icon={Users}
+									title="Leads este mês"
 									trend={{
 										value: metrics.leadsTrend || 0,
 										isPositive: (metrics.leadsTrend || 0) > 0,
 									}}
-									description="vs. período anterior"
+									value={metrics.totalLeads || 0}
 								/>
 								<StatsCard
-									title="Taxa de Conversão"
-									value={metrics ? `${metrics.conversionRate}%` : '0%'}
 									description="vs. período anterior"
 									icon={TrendingUp}
+									title="Taxa de Conversão"
 									trend={{
 										value: metrics.conversionTrend || 0,
 										isPositive: (metrics.conversionTrend || 0) > 0,
 									}}
+									value={metrics ? `${metrics.conversionRate}%` : '0%'}
 								/>
 								<StatsCard
-									title="Faturamento"
-									value={metrics ? formatCurrency(metrics.revenue) : 'R$ 0'}
 									description="vs. período anterior"
 									icon={DollarSign}
+									title="Faturamento"
 									trend={{
 										value: metrics.revenueTrend || 0,
 										isPositive: (metrics.revenueTrend || 0) > 0,
 									}}
+									value={metrics ? formatCurrency(metrics.revenue) : 'R$ 0'}
 								/>
 								<StatsCard
-									title="Mensagens"
-									value={metrics?.totalMessages?.toString() || '0'}
 									description="últimas 24h"
 									icon={MessageSquare}
+									title="Mensagens"
+									value={metrics?.totalMessages?.toString() || '0'}
 								/>
+							</>
+						) : (
+							<>
+								<Skeleton className="h-32 w-full" />
+								<Skeleton className="h-32 w-full" />
+								<Skeleton className="h-32 w-full" />
+								<Skeleton className="h-32 w-full" />
 							</>
 						)}
 					</div>
@@ -202,12 +202,12 @@ class DashboardErrorBoundary extends Component<
 	render() {
 		if (this.state.hasError) {
 			return (
-				<div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background p-8 text-center animate-in fade-in zoom-in-95">
+				<div className="fade-in zoom-in-95 flex min-h-[50vh] animate-in flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-background p-8 text-center">
 					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
 						<AlertTriangle className="h-6 w-6 text-destructive" />
 					</div>
 					<div className="space-y-1">
-						<h3 className="text-lg font-semibold">Erro ao carregar dashboard</h3>
+						<h3 className="font-semibold text-lg">Erro ao carregar dashboard</h3>
 						<p className="max-w-xs text-muted-foreground text-sm">
 							{this.state.error?.message || 'Ocorreu um erro inesperado.'}
 						</p>

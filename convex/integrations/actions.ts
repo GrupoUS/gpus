@@ -1,8 +1,9 @@
-import { v } from 'convex/values';
-import { action } from '../_generated/server';
-import { internal } from '../_generated/api';
-import { createAsaasClient } from '../lib/asaas';
 import axios from 'axios';
+import { v } from 'convex/values';
+
+import { internal } from '../_generated/api';
+import { action } from '../_generated/server';
+import { createAsaasClient } from '../lib/asaas';
 
 export const testAsaasConnection = action({
 	args: {
@@ -25,7 +26,6 @@ export const testAsaasConnection = action({
 				message: 'Conexão com Asaas estabelecida com sucesso.',
 			};
 		} catch (error: any) {
-			console.error('Asaas connection test failed:', error.message);
 			let message = 'Falha na conexão com Asaas.';
 
 			if (error.response) {
@@ -66,7 +66,7 @@ export const sendMessageToDify = action({
 		const baseUrl: any = config?.base_url || config?.baseUrl;
 		const apiKey: any = config?.api_key || config?.apiKey;
 
-		if (!baseUrl || !apiKey) {
+		if (!(baseUrl && apiKey)) {
 			throw new Error('Dify configuration missing in settings.');
 		}
 
@@ -93,7 +93,6 @@ export const sendMessageToDify = action({
 
 			return response.data;
 		} catch (error: any) {
-			console.error('Dify API error:', error.message);
 			if (error.response) {
 				throw new Error(
 					`Dify API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`,
@@ -115,14 +114,14 @@ export const testEvolutionConnection = action({
 		try {
 			// Endpoint: GET /instance/connectionState/{instanceName}
 			// Need to construct full URL carefully
-			let baseUrl = args.apiUrl.replace(/\/$/, '');
+			const baseUrl = args.apiUrl.replace(/\/$/, '');
 			const url = `${baseUrl}/instance/connectionState/${args.instanceName}`;
 
 			const response: any = await axios.get(url, {
 				headers: {
 					apikey: args.apiKey,
 				},
-				timeout: 10000,
+				timeout: 10_000,
 			});
 
 			if (response.status === 200) {
@@ -139,7 +138,6 @@ export const testEvolutionConnection = action({
 				message: `Status inesperado: ${response.status}`,
 			};
 		} catch (error: any) {
-			console.error('Evolution connection test failed:', error.message);
 			let message = 'Falha na conexão com Evolution API.';
 
 			if (error.response) {
@@ -171,7 +169,7 @@ export const testDifyConnection = action({
 			// Endpoint: GET /info or /parameters?
 			// Dify API usually requires "Authorization: Bearer " + apiKey
 
-			let baseUrl = args.apiUrl.replace(/\/$/, '');
+			const baseUrl = args.apiUrl.replace(/\/$/, '');
 
 			// Use appId in the request to ensure it's valid as per verification comment
 			// "build the URL with the app id path or query according to Dify’s API, such as `${baseUrl}/apps/${appId}/parameters`"
@@ -202,7 +200,7 @@ export const testDifyConnection = action({
 				headers: {
 					Authorization: `Bearer ${args.apiKey}`,
 				},
-				timeout: 10000,
+				timeout: 10_000,
 			});
 
 			// If we get 200, it's good.
@@ -211,7 +209,6 @@ export const testDifyConnection = action({
 				message: 'Conexão com Dify AI estabelecida com sucesso.',
 			};
 		} catch (error: any) {
-			console.error('Dify connection test failed:', error.message);
 			let message = 'Falha na conexão com Dify AI.';
 
 			if (error.response) {

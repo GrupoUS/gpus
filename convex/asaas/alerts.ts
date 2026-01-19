@@ -6,9 +6,10 @@
  */
 
 import { v } from 'convex/values';
-import { internalMutation, internalAction, mutation } from '../_generated/server';
+
 import { internal } from '../_generated/api';
 import type { Doc } from '../_generated/dataModel';
+import { internalAction, internalMutation, mutation } from '../_generated/server';
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL MUTATIONS (for workers and actions)
@@ -184,7 +185,7 @@ export const resolveAlertPublic = mutation({
 			throw new Error('Unauthenticated');
 		}
 
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.resolveAlert, {
 			alertId: args.alertId,
 			resolvedBy: identity.subject,
@@ -206,7 +207,7 @@ export const acknowledgeAlertPublic = mutation({
 			throw new Error('Unauthenticated');
 		}
 
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.acknowledgeAlert, {
 			alertId: args.alertId,
 			acknowledgedBy: identity.subject,
@@ -230,7 +231,7 @@ export const suppressAlertPublic = mutation({
 
 		const suppressUntil = Date.now() + args.suppressForHours * 60 * 60 * 1000;
 
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.suppressAlert, {
 			alertId: args.alertId,
 			suppressUntil,
@@ -255,7 +256,7 @@ export const checkAndCreateAlerts = internalAction({
 		// 1. Check for high API error rate
 		const apiHealth = await checkApiErrorRate(ctx);
 		if (apiHealth.shouldAlert) {
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'api_error',
 				severity: apiHealth.severity,
@@ -269,7 +270,7 @@ export const checkAndCreateAlerts = internalAction({
 		// 2. Check for recent sync failures
 		const syncHealth = await checkRecentSyncFailures(ctx);
 		if (syncHealth.shouldAlert) {
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'sync_failure',
 				severity: syncHealth.severity,
@@ -283,7 +284,7 @@ export const checkAndCreateAlerts = internalAction({
 		// 3. Check for rate limit warnings
 		const rateLimitHealth = await checkRateLimitWarnings(ctx);
 		if (rateLimitHealth.shouldAlert) {
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'rate_limit',
 				severity: rateLimitHealth.severity,
@@ -297,7 +298,7 @@ export const checkAndCreateAlerts = internalAction({
 		// 4. Check for stale webhooks
 		const webhookHealth = await checkStaleWebhooks(ctx);
 		if (webhookHealth.shouldAlert) {
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'webhook_timeout',
 				severity: webhookHealth.severity,
@@ -311,7 +312,7 @@ export const checkAndCreateAlerts = internalAction({
 		// 5. Check for pending conflicts
 		const conflictHealth = await checkPendingConflicts(ctx);
 		if (conflictHealth.shouldAlert) {
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'duplicate_detection',
 				severity: conflictHealth.severity,
@@ -344,7 +345,7 @@ async function checkApiErrorRate(ctx: any): Promise<{
 	errorCount: number;
 	totalRequests: number;
 }> {
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const logs = await ctx.runQuery(internal.asaas.monitoring.getApiHealthMetricsInternal, {
 		hours: 1,
 	});
@@ -354,11 +355,14 @@ async function checkApiErrorRate(ctx: any): Promise<{
 	// Alert thresholds
 	if (errorRate >= 50) {
 		return { shouldAlert: true, severity: 'critical', errorRate, errorCount: 0, totalRequests: 0 };
-	} else if (errorRate >= 25) {
+	}
+	if (errorRate >= 25) {
 		return { shouldAlert: true, severity: 'high', errorRate, errorCount: 0, totalRequests: 0 };
-	} else if (errorRate >= 10) {
+	}
+	if (errorRate >= 10) {
 		return { shouldAlert: true, severity: 'medium', errorRate, errorCount: 0, totalRequests: 0 };
-	} else if (errorRate >= 5) {
+	}
+	if (errorRate >= 5) {
 		return { shouldAlert: true, severity: 'low', errorRate, errorCount: 0, totalRequests: 0 };
 	}
 
@@ -373,7 +377,7 @@ async function checkRecentSyncFailures(ctx: any): Promise<{
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	failedCount: number;
 }> {
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const stats = await ctx.runQuery(internal.asaas.queries.getSyncStatisticsInternal, {});
 
 	const totalFailed =
@@ -384,11 +388,14 @@ async function checkRecentSyncFailures(ctx: any): Promise<{
 	// Alert thresholds
 	if (totalFailed >= 10) {
 		return { shouldAlert: true, severity: 'critical', failedCount: totalFailed };
-	} else if (totalFailed >= 5) {
+	}
+	if (totalFailed >= 5) {
 		return { shouldAlert: true, severity: 'high', failedCount: totalFailed };
-	} else if (totalFailed >= 3) {
+	}
+	if (totalFailed >= 3) {
 		return { shouldAlert: true, severity: 'medium', failedCount: totalFailed };
-	} else if (totalFailed >= 1) {
+	}
+	if (totalFailed >= 1) {
 		return { shouldAlert: true, severity: 'low', failedCount: totalFailed };
 	}
 
@@ -406,7 +413,7 @@ async function checkRateLimitWarnings(ctx: any): Promise<{
 	// Get recent API audit logs for 429 status codes
 	const hourAgo = Date.now() - 60 * 60 * 1000;
 
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const auditLogs = await ctx.runQuery(internal.asaas.queries.getRecentAuditLogs, {
 		since: hourAgo,
 	});
@@ -416,11 +423,14 @@ async function checkRateLimitWarnings(ctx: any): Promise<{
 	// Alert thresholds
 	if (rateLimitCount >= 50) {
 		return { shouldAlert: true, severity: 'critical', rateLimitCount };
-	} else if (rateLimitCount >= 20) {
+	}
+	if (rateLimitCount >= 20) {
 		return { shouldAlert: true, severity: 'high', rateLimitCount };
-	} else if (rateLimitCount >= 10) {
+	}
+	if (rateLimitCount >= 10) {
 		return { shouldAlert: true, severity: 'medium', rateLimitCount };
-	} else if (rateLimitCount >= 5) {
+	}
+	if (rateLimitCount >= 5) {
 		return { shouldAlert: true, severity: 'low', rateLimitCount };
 	}
 
@@ -438,7 +448,7 @@ async function checkStaleWebhooks(ctx: any): Promise<{
 	// Get unprocessed webhooks older than 1 hour
 	const hourAgo = Date.now() - 60 * 60 * 1000;
 
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const staleWebhooks = await ctx.runQuery(internal.asaas.queries.getStaleWebhooks, {
 		olderThan: hourAgo,
 	});
@@ -448,11 +458,14 @@ async function checkStaleWebhooks(ctx: any): Promise<{
 	// Alert thresholds
 	if (staleCount >= 100) {
 		return { shouldAlert: true, severity: 'critical', staleCount };
-	} else if (staleCount >= 50) {
+	}
+	if (staleCount >= 50) {
 		return { shouldAlert: true, severity: 'high', staleCount };
-	} else if (staleCount >= 20) {
+	}
+	if (staleCount >= 20) {
 		return { shouldAlert: true, severity: 'medium', staleCount };
-	} else if (staleCount >= 5) {
+	}
+	if (staleCount >= 5) {
 		return { shouldAlert: true, severity: 'low', staleCount };
 	}
 
@@ -467,7 +480,7 @@ async function checkPendingConflicts(ctx: any): Promise<{
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	conflictCount: number;
 }> {
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const conflicts = await ctx.runQuery(internal.asaas.conflict_resolution.getPendingConflicts, {});
 
 	const conflictCount = conflicts.length;
@@ -475,11 +488,14 @@ async function checkPendingConflicts(ctx: any): Promise<{
 	// Alert thresholds
 	if (conflictCount >= 50) {
 		return { shouldAlert: true, severity: 'critical', conflictCount };
-	} else if (conflictCount >= 20) {
+	}
+	if (conflictCount >= 20) {
 		return { shouldAlert: true, severity: 'high', conflictCount };
-	} else if (conflictCount >= 10) {
+	}
+	if (conflictCount >= 10) {
 		return { shouldAlert: true, severity: 'medium', conflictCount };
-	} else if (conflictCount >= 5) {
+	}
+	if (conflictCount >= 5) {
 		return { shouldAlert: true, severity: 'low', conflictCount };
 	}
 
@@ -497,7 +513,7 @@ async function findExistingAlert(ctx: any, args: any): Promise<Doc<'asaasAlerts'
 	const now = Date.now();
 
 	// Get active alerts of this type
-	// @ts-ignore - Deep type instantiation
+	// @ts-expect-error - Deep type instantiation
 	const alerts = await ctx.runQuery(internal.asaas.monitoring.getAlertsByTypeInternal, {
 		alertType: args.alertType,
 		organizationId: args.organizationId,

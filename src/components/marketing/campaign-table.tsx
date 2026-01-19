@@ -96,9 +96,9 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 	const getSortIcon = (field: SortField) => {
 		if (sort.field !== field) return null;
 		return sort.direction === 'asc' ? (
-			<ChevronUp className="h-4 w-4 ml-1" />
+			<ChevronUp className="ml-1 h-4 w-4" />
 		) : (
-			<ChevronDown className="h-4 w-4 ml-1" />
+			<ChevronDown className="ml-1 h-4 w-4" />
 		);
 	};
 
@@ -109,10 +109,10 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 					<TableRow>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('name')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por nome"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('name')}
+								type="button"
 							>
 								Campanha
 								{getSortIcon('name')}
@@ -120,10 +120,10 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 						</TableHead>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('status')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por status"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('status')}
+								type="button"
 							>
 								Status
 								{getSortIcon('status')}
@@ -131,10 +131,10 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 						</TableHead>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('openRate')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por taxa de abertura"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('openRate')}
+								type="button"
 							>
 								Abertura
 								{getSortIcon('openRate')}
@@ -142,10 +142,10 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 						</TableHead>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('createdAt')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por data"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('createdAt')}
+								type="button"
 							>
 								Data
 								{getSortIcon('createdAt')}
@@ -159,8 +159,9 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 						const openRate = getOpenRate(campaign);
 						return (
 							<TableRow
+								aria-label={`Ver detalhes de ${campaign.name}`}
+								className="cursor-pointer transition-colors hover:bg-muted/50"
 								key={campaign._id}
-								className="cursor-pointer hover:bg-muted/50 transition-colors"
 								onClick={() => onCampaignClick(campaign._id)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
@@ -168,18 +169,17 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 										onCampaignClick(campaign._id);
 									}
 								}}
-								tabIndex={0}
 								role="button"
-								aria-label={`Ver detalhes de ${campaign.name}`}
+								tabIndex={0}
 							>
 								<TableCell>
 									<div className="flex items-center gap-3">
-										<div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
+										<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-indigo-500">
 											<Mail className="h-4 w-4 text-white" />
 										</div>
 										<div>
 											<p className="font-medium text-sm">{campaign.name}</p>
-											<p className="text-xs text-muted-foreground truncate max-w-[200px]">
+											<p className="max-w-[200px] truncate text-muted-foreground text-xs">
 												{campaign.subject}
 											</p>
 										</div>

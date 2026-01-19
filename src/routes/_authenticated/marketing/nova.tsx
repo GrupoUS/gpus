@@ -143,17 +143,17 @@ function NewCampaignPage() {
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Button variant="ghost" size="icon" onClick={handleCancel}>
+				<Button onClick={handleCancel} size="icon" variant="ghost">
 					<ArrowLeft className="h-4 w-4" />
 				</Button>
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Nova Campanha</h1>
+					<h1 className="font-bold text-2xl tracking-tight">Nova Campanha</h1>
 					<p className="text-muted-foreground">Crie uma nova campanha de email marketing</p>
 				</div>
 			</div>
 
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+				<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
 					<div className="grid gap-6 lg:grid-cols-3">
 						{/* Main Form Card */}
 						<div className="space-y-6 lg:col-span-2">
@@ -229,11 +229,11 @@ function NewCampaignPage() {
 													<SelectContent>
 														<SelectItem value="none">Sem template - criar do zero</SelectItem>
 														{templates === undefined ? (
-															<SelectItem value="loading" disabled>
+															<SelectItem disabled value="loading">
 																Carregando templates...
 															</SelectItem>
 														) : templates.length === 0 ? (
-															<SelectItem value="empty" disabled>
+															<SelectItem disabled value="empty">
 																Nenhum template disponível
 															</SelectItem>
 														) : (
@@ -268,8 +268,8 @@ function NewCampaignPage() {
 													<FormLabel>Conteúdo do Email</FormLabel>
 													<FormControl>
 														<Textarea
-															placeholder="Escreva o conteúdo do seu email aqui...&#10;&#10;Você pode usar HTML para formatação avançada."
 															className="min-h-[200px] font-mono text-sm"
+															placeholder="Escreva o conteúdo do seu email aqui...&#10;&#10;Você pode usar HTML para formatação avançada."
 															{...field}
 														/>
 													</FormControl>
@@ -312,7 +312,7 @@ function NewCampaignPage() {
 												{lists === undefined ? (
 													<div className="space-y-3">
 														{[1, 2, 3].map((i) => (
-															<Skeleton key={i} className="h-10 w-full" />
+															<Skeleton className="h-10 w-full" key={i} />
 														))}
 													</div>
 												) : lists.length === 0 ? (
@@ -324,14 +324,14 @@ function NewCampaignPage() {
 													<div className="space-y-3">
 														{lists.map((list: Doc<'emailLists'>) => (
 															<FormField
-																key={list._id}
 																control={form.control}
+																key={list._id}
 																name="listIds"
 																render={({ field }) => {
 																	return (
 																		<FormItem
-																			key={list._id}
 																			className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 transition-colors hover:bg-muted/50"
+																			key={list._id}
 																		>
 																			<FormControl>
 																				<Checkbox
@@ -351,7 +351,7 @@ function NewCampaignPage() {
 																				<FormLabel className="cursor-pointer font-medium">
 																					{list.name}
 																				</FormLabel>
-																				<p className="text-xs text-muted-foreground">
+																				<p className="text-muted-foreground text-xs">
 																					{list.contactCount ?? 0} contatos
 																					{list.description && <span> • {list.description}</span>}
 																				</p>
@@ -391,7 +391,7 @@ function NewCampaignPage() {
 									<CardTitle>Ações</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-3">
-									<Button type="submit" className="w-full" disabled={isSubmitting}>
+									<Button className="w-full" disabled={isSubmitting} type="submit">
 										{isSubmitting ? (
 											<>
 												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -405,11 +405,11 @@ function NewCampaignPage() {
 										)}
 									</Button>
 									<Button
+										className="w-full"
+										disabled={isSubmitting}
+										onClick={handleCancel}
 										type="button"
 										variant="outline"
-										className="w-full"
-										onClick={handleCancel}
-										disabled={isSubmitting}
 									>
 										Cancelar
 									</Button>
@@ -419,7 +419,7 @@ function NewCampaignPage() {
 							{/* Info Card */}
 							<Card className="border-primary/20 bg-primary/5">
 								<CardContent className="pt-6">
-									<p className="text-sm text-muted-foreground">
+									<p className="text-muted-foreground text-sm">
 										<strong>Dica:</strong> Após salvar, você poderá revisar e enviar a campanha na
 										página de detalhes.
 									</p>

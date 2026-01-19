@@ -18,32 +18,32 @@ export function StudentPagination({
 	onPageChange,
 }: StudentPaginationProps) {
 	return (
-		<div className="flex items-center justify-between pt-4 border-t">
-			<p className="text-sm text-muted-foreground">
+		<div className="flex items-center justify-between border-t pt-4">
+			<p className="text-muted-foreground text-sm">
 				Mostrando {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalStudents)} de{' '}
 				{totalStudents} alunos
 			</p>
 			<div className="flex items-center gap-2">
 				<Button
-					variant="outline"
-					size="sm"
 					disabled={page === 1}
 					onClick={() => onPageChange(page - 1)}
+					size="sm"
+					variant="outline"
 				>
-					<ChevronLeft className="h-4 w-4 mr-1" />
+					<ChevronLeft className="mr-1 h-4 w-4" />
 					Anterior
 				</Button>
-				<span className="text-sm text-muted-foreground">
+				<span className="text-muted-foreground text-sm">
 					{page} / {totalPages}
 				</span>
 				<Button
-					variant="outline"
-					size="sm"
 					disabled={page === totalPages}
 					onClick={() => onPageChange(page + 1)}
+					size="sm"
+					variant="outline"
 				>
 					Próximo
-					<ChevronRight className="h-4 w-4 ml-1" />
+					<ChevronRight className="ml-1 h-4 w-4" />
 				</Button>
 			</div>
 		</div>

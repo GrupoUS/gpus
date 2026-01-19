@@ -179,8 +179,8 @@ function IntegrationsSettingsPage() {
 		if (lastResult?.success) {
 			return (
 				<Badge
+					className="flex items-center gap-1 border-green-600 text-green-600"
 					variant="outline"
-					className="text-green-600 border-green-600 flex gap-1 items-center"
 				>
 					<CheckCircle2 className="h-3 w-3" />
 					Ativo
@@ -189,7 +189,7 @@ function IntegrationsSettingsPage() {
 		}
 		if (lastResult && !lastResult.success) {
 			return (
-				<Badge variant="outline" className="text-red-600 border-red-600 flex gap-1 items-center">
+				<Badge className="flex items-center gap-1 border-red-600 text-red-600" variant="outline">
 					<AlertCircle className="h-3 w-3" />
 					Erro
 				</Badge>
@@ -199,13 +199,13 @@ function IntegrationsSettingsPage() {
 		switch (status) {
 			case 'active':
 				return (
-					<Badge variant="outline" className="text-green-600 border-green-600">
+					<Badge className="border-green-600 text-green-600" variant="outline">
 						Configurado
 					</Badge>
 				);
 			default:
 				return (
-					<Badge variant="outline" className="text-yellow-600 border-yellow-600">
+					<Badge className="border-yellow-600 text-yellow-600" variant="outline">
 						Em Configuração
 					</Badge>
 				);
@@ -232,10 +232,10 @@ function IntegrationsSettingsPage() {
 
 	if (!isAdmin) {
 		return (
-			<div className="space-y-6 p-6 max-w-4xl mx-auto">
+			<div className="mx-auto max-w-4xl space-y-6 p-6">
 				<Card className="border-yellow-500/50 bg-yellow-500/10">
 					<CardContent className="pt-6">
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							Você precisa ser administrador para configurar integrações.
 						</p>
 					</CardContent>
@@ -245,10 +245,10 @@ function IntegrationsSettingsPage() {
 	}
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			{/* Header */}
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<Settings className="h-6 w-6 text-purple-500" />
 					Integrações
 				</h1>
@@ -260,15 +260,15 @@ function IntegrationsSettingsPage() {
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<div className="h-12 w-12 rounded-lg bg-green-500/10 flex items-center justify-center">
+							<div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
 								<MessageSquare className="h-6 w-6 text-green-500" />
 							</div>
 							<div>
 								<div className="flex items-center gap-2">
 									<CardTitle>WhatsApp Business</CardTitle>
 									<StatusDot
-										status={evolution.getIntegrationStatus()}
 										lastResult={evolution.lastTestResult}
+										status={evolution.getIntegrationStatus()}
 									/>
 								</div>
 								<CardDescription>Conecte via Evolution API</CardDescription>
@@ -280,8 +280,8 @@ function IntegrationsSettingsPage() {
 				<CardContent className="space-y-4">
 					<Form {...evolutionForm}>
 						<form
-							onSubmit={evolutionForm.handleSubmit((d) => handleSaveEvolution(d))}
 							className="space-y-4"
+							onSubmit={evolutionForm.handleSubmit((d) => handleSaveEvolution(d))}
 						>
 							<FormField
 								control={evolutionForm.control}
@@ -303,7 +303,7 @@ function IntegrationsSettingsPage() {
 									<FormItem>
 										<FormLabel>API Key</FormLabel>
 										<FormControl>
-											<Input type="password" placeholder="••••••••••••••••" {...field} />
+											<Input placeholder="••••••••••••••••" type="password" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -324,15 +324,15 @@ function IntegrationsSettingsPage() {
 							/>
 							<div className="flex items-center justify-between pt-4">
 								<Button
+									disabled={evolution.isTesting}
+									onClick={handleTestEvolution}
 									type="button"
 									variant="outline"
-									onClick={handleTestEvolution}
-									disabled={evolution.isTesting}
 								>
 									{evolution.isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
 									Testar Conexão
 								</Button>
-								<Button type="submit" disabled={evolutionForm.formState.isSubmitting}>
+								<Button disabled={evolutionForm.formState.isSubmitting} type="submit">
 									{evolutionForm.formState.isSubmitting && (
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									)}
@@ -349,15 +349,15 @@ function IntegrationsSettingsPage() {
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<div className="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
+							<div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10">
 								<Bot className="h-6 w-6 text-purple-500" />
 							</div>
 							<div>
 								<div className="flex items-center gap-2">
 									<CardTitle>Dify AI</CardTitle>
 									<StatusDot
-										status={dify.getIntegrationStatus()}
 										lastResult={dify.lastTestResult}
+										status={dify.getIntegrationStatus()}
 									/>
 								</div>
 								<CardDescription>Assistente de IA para atendimento</CardDescription>
@@ -368,7 +368,7 @@ function IntegrationsSettingsPage() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<Form {...difyForm}>
-						<form onSubmit={difyForm.handleSubmit((d) => handleSaveDify(d))} className="space-y-4">
+						<form className="space-y-4" onSubmit={difyForm.handleSubmit((d) => handleSaveDify(d))}>
 							<FormField
 								control={difyForm.control}
 								name="url"
@@ -389,7 +389,7 @@ function IntegrationsSettingsPage() {
 									<FormItem>
 										<FormLabel>API Key</FormLabel>
 										<FormControl>
-											<Input type="password" placeholder="app-••••••••••••••••" {...field} />
+											<Input placeholder="app-••••••••••••••••" type="password" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -410,15 +410,15 @@ function IntegrationsSettingsPage() {
 							/>
 							<div className="flex items-center justify-between pt-4">
 								<Button
+									disabled={dify.isTesting}
+									onClick={handleTestDify}
 									type="button"
 									variant="outline"
-									onClick={handleTestDify}
-									disabled={dify.isTesting}
 								>
 									{dify.isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
 									Testar Conexão
 								</Button>
-								<Button type="submit" disabled={difyForm.formState.isSubmitting}>
+								<Button disabled={difyForm.formState.isSubmitting} type="submit">
 									{difyForm.formState.isSubmitting && (
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									)}
@@ -435,15 +435,15 @@ function IntegrationsSettingsPage() {
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<div className="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
+							<div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
 								<CreditCard className="h-6 w-6 text-blue-500" />
 							</div>
 							<div>
 								<div className="flex items-center gap-2">
 									<CardTitle>Asaas Pagamentos</CardTitle>
 									<StatusDot
-										status={asaas.getIntegrationStatus()}
 										lastResult={asaas.lastTestResult}
+										status={asaas.getIntegrationStatus()}
 									/>
 								</div>
 								<CardDescription>Gateway de pagamento brasileiro</CardDescription>
@@ -455,8 +455,8 @@ function IntegrationsSettingsPage() {
 				<CardContent className="space-y-4">
 					<Form {...asaasForm}>
 						<form
-							onSubmit={asaasForm.handleSubmit((d) => handleSaveAsaas(d))}
 							className="space-y-4"
+							onSubmit={asaasForm.handleSubmit((d) => handleSaveAsaas(d))}
 						>
 							<FormField
 								control={asaasForm.control}
@@ -464,7 +464,7 @@ function IntegrationsSettingsPage() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Ambiente</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
+										<Select defaultValue={field.value} onValueChange={field.onChange}>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecione o ambiente" />
@@ -500,7 +500,7 @@ function IntegrationsSettingsPage() {
 									<FormItem>
 										<FormLabel>API Key</FormLabel>
 										<FormControl>
-											<Input type="password" placeholder="••••••••••••••••" {...field} />
+											<Input placeholder="••••••••••••••••" type="password" {...field} />
 										</FormControl>
 										<FormDescription>
 											Sua chave de API do Asaas (começa com "$aact...").
@@ -517,7 +517,7 @@ function IntegrationsSettingsPage() {
 									<FormItem>
 										<FormLabel>Webhook Secret (Opcional)</FormLabel>
 										<FormControl>
-											<Input type="password" placeholder="••••••••••••••••" {...field} />
+											<Input placeholder="••••••••••••••••" type="password" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -526,15 +526,15 @@ function IntegrationsSettingsPage() {
 
 							<div className="flex items-center justify-between pt-4">
 								<Button
+									disabled={asaas.isTesting}
+									onClick={handleTestAsaas}
 									type="button"
 									variant="outline"
-									onClick={handleTestAsaas}
-									disabled={asaas.isTesting}
 								>
 									{asaas.isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
 									Testar Conexão
 								</Button>
-								<Button type="submit" disabled={asaasForm.formState.isSubmitting}>
+								<Button disabled={asaasForm.formState.isSubmitting} type="submit">
 									{asaasForm.formState.isSubmitting && (
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									)}
@@ -543,12 +543,12 @@ function IntegrationsSettingsPage() {
 							</div>
 						</form>
 					</Form>
-					<div className="rounded-lg bg-muted/50 p-4 mt-4">
+					<div className="mt-4 rounded-lg bg-muted/50 p-4">
 						<div className="flex items-start gap-2">
-							<HelpCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-							<div className="text-sm text-muted-foreground">
-								<p className="font-medium text-foreground mb-1">Funcionalidades Suportadas:</p>
-								<ul className="list-disc pl-4 space-y-1">
+							<HelpCircle className="mt-0.5 h-5 w-5 text-blue-500" />
+							<div className="text-muted-foreground text-sm">
+								<p className="mb-1 font-medium text-foreground">Funcionalidades Suportadas:</p>
+								<ul className="list-disc space-y-1 pl-4">
 									<li>Pagamentos via PIX, Boleto e Cartão de Crédito</li>
 									<li>Gestão de Assinaturas Recorrentes</li>
 									<li>Webhooks automáticos para atualização de status</li>
@@ -557,7 +557,7 @@ function IntegrationsSettingsPage() {
 						</div>
 					</div>
 
-					<div className="mt-6 pt-6 border-t space-y-6">
+					<div className="mt-6 space-y-6 border-t pt-6">
 						{/* Manual Sync Controls */}
 						<SyncControls />
 
@@ -585,21 +585,21 @@ function IntegrationsSettingsPage() {
 					<CardTitle>Documentação</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-2">
-					<Button variant="ghost" className="w-full justify-start" asChild>
-						<a href="https://doc.evolution-api.com" target="_blank" rel="noopener noreferrer">
-							<ExternalLink className="h-4 w-4 mr-2" />
+					<Button asChild className="w-full justify-start" variant="ghost">
+						<a href="https://doc.evolution-api.com" rel="noopener noreferrer" target="_blank">
+							<ExternalLink className="mr-2 h-4 w-4" />
 							Evolution API Docs
 						</a>
 					</Button>
-					<Button variant="ghost" className="w-full justify-start" asChild>
-						<a href="https://docs.dify.ai" target="_blank" rel="noopener noreferrer">
-							<ExternalLink className="h-4 w-4 mr-2" />
+					<Button asChild className="w-full justify-start" variant="ghost">
+						<a href="https://docs.dify.ai" rel="noopener noreferrer" target="_blank">
+							<ExternalLink className="mr-2 h-4 w-4" />
 							Dify AI Docs
 						</a>
 					</Button>
-					<Button variant="ghost" className="w-full justify-start" asChild>
-						<a href="https://docs.asaas.com" target="_blank" rel="noopener noreferrer">
-							<ExternalLink className="h-4 w-4 mr-2" />
+					<Button asChild className="w-full justify-start" variant="ghost">
+						<a href="https://docs.asaas.com" rel="noopener noreferrer" target="_blank">
+							<ExternalLink className="mr-2 h-4 w-4" />
 							Asaas API Docs
 						</a>
 					</Button>

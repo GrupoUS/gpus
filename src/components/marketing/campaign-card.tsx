@@ -44,7 +44,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 	return (
 		<Card
 			className={cn(
-				'transition-all hover:shadow-md cursor-pointer',
+				'cursor-pointer transition-all hover:shadow-md',
 				onClick && 'hover:border-primary/50',
 			)}
 			onClick={onClick}
@@ -52,12 +52,12 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 			<CardHeader className="pb-2">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center">
+						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-primary/70">
 							<Mail className="h-5 w-5 text-white" />
 						</div>
 						<div className="min-w-0 flex-1">
-							<h3 className="font-semibold text-sm truncate">{campaign.name}</h3>
-							<p className="text-xs text-muted-foreground truncate">{campaign.subject}</p>
+							<h3 className="truncate font-semibold text-sm">{campaign.name}</h3>
+							<p className="truncate text-muted-foreground text-xs">{campaign.subject}</p>
 						</div>
 					</div>
 					<Badge variant={statusVariants[campaign.status]}>{statusLabels[campaign.status]}</Badge>
@@ -70,25 +70,25 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 					<div className="grid grid-cols-3 gap-2 text-center">
 						<div className="flex flex-col items-center gap-1">
 							<Users className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm font-medium">{campaign.stats.delivered}</span>
-							<span className="text-xs text-muted-foreground">Entregues</span>
+							<span className="font-medium text-sm">{campaign.stats.delivered}</span>
+							<span className="text-muted-foreground text-xs">Entregues</span>
 						</div>
 						<div className="flex flex-col items-center gap-1">
 							<Eye className="h-4 w-4 text-primary" />
-							<span className="text-sm font-medium text-primary">{openRate.toFixed(1)}%</span>
-							<span className="text-xs text-muted-foreground">Abertos</span>
+							<span className="font-medium text-primary text-sm">{openRate.toFixed(1)}%</span>
+							<span className="text-muted-foreground text-xs">Abertos</span>
 						</div>
 						<div className="flex flex-col items-center gap-1">
 							<MousePointerClick className="h-4 w-4 text-green-500" />
-							<span className="text-sm font-medium text-green-600">{clickRate.toFixed(1)}%</span>
-							<span className="text-xs text-muted-foreground">Cliques</span>
+							<span className="font-medium text-green-600 text-sm">{clickRate.toFixed(1)}%</span>
+							<span className="text-muted-foreground text-xs">Cliques</span>
 						</div>
 					</div>
 				)}
 
 				{/* Footer */}
-				<div className="flex items-center justify-between pt-2 border-t">
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
+				<div className="flex items-center justify-between border-t pt-2">
+					<div className="flex items-center gap-2 text-muted-foreground text-xs">
 						{campaign.status === 'sent' && campaign.sentAt ? (
 							<>
 								<Send className="h-3 w-3" />

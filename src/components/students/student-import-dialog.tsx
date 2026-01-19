@@ -366,10 +366,10 @@ function renderUploadStep(props: StepContentProps) {
 	return (
 		<div className="space-y-4">
 			<div className="space-y-2">
-				<span className="block text-sm font-medium">
+				<span className="block font-medium text-sm">
 					Produto para matrícula <span className="text-red-500">*</span>
 				</span>
-				<Select value={selectedProduct} onValueChange={setSelectedProduct}>
+				<Select onValueChange={setSelectedProduct} value={selectedProduct}>
 					<SelectTrigger aria-label="Selecione o produto para matrícula">
 						<SelectValue placeholder="Selecione o produto..." />
 					</SelectTrigger>
@@ -382,39 +382,39 @@ function renderUploadStep(props: StepContentProps) {
 						<SelectItem value="na_mesa_certa">Na Mesa Certa</SelectItem>
 					</SelectContent>
 				</Select>
-				<p className="text-xs text-muted-foreground">
+				<p className="text-muted-foreground text-xs">
 					Todos os alunos importados serão matriculados neste produto.
 				</p>
 			</div>
 
 			<button
-				type="button"
-				className="w-full border-2 border-dashed rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-				onDrop={handleDrop}
-				onDragOver={(e) => e.preventDefault()}
-				onClick={() => document.getElementById(fileInputId)?.click()}
+				className="w-full cursor-pointer rounded-lg border-2 border-dashed bg-transparent p-8 text-center transition-colors hover:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
 				disabled={!selectedProduct}
+				onClick={() => document.getElementById(fileInputId)?.click()}
+				onDragOver={(e) => e.preventDefault()}
+				onDrop={handleDrop}
+				type="button"
 			>
 				<input
-					id={fileInputId}
-					type="file"
 					accept=".csv,.xlsx,.xls"
 					className="hidden"
+					id={fileInputId}
 					onChange={handleFileSelect}
+					type="file"
 				/>
 				{isProcessing ? (
-					<Loader2 className="h-12 w-12 mx-auto mb-4 text-purple-500 animate-spin" />
+					<Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-purple-500" />
 				) : (
-					<Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+					<Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
 				)}
-				<p className="text-lg font-medium">
+				<p className="font-medium text-lg">
 					{isProcessing
 						? 'Processando arquivo...'
-						: !selectedProduct
-							? 'Selecione um produto primeiro'
-							: 'Arraste e solte um arquivo aqui'}
+						: selectedProduct
+							? 'Arraste e solte um arquivo aqui'
+							: 'Selecione um produto primeiro'}
 				</p>
-				<p className="text-sm text-muted-foreground mt-2">ou clique para selecionar (CSV, XLSX)</p>
+				<p className="mt-2 text-muted-foreground text-sm">ou clique para selecionar (CSV, XLSX)</p>
 			</button>
 		</div>
 	);
@@ -425,7 +425,7 @@ function renderSheetSelectStep(props: StepContentProps) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+			<div className="flex items-center gap-2 text-muted-foreground text-sm">
 				<FileSpreadsheet className="h-4 w-4" />
 				<span>Arquivo: {fileName}</span>
 			</div>
@@ -433,7 +433,7 @@ function renderSheetSelectStep(props: StepContentProps) {
 				O arquivo contém <strong>{availableSheets.length} planilhas</strong>. Selecione qual deseja
 				importar:
 			</p>
-			<Select value={selectedSheet} onValueChange={setSelectedSheet}>
+			<Select onValueChange={setSelectedSheet} value={selectedSheet}>
 				<SelectTrigger>
 					<SelectValue placeholder="Selecione a planilha..." />
 				</SelectTrigger>
@@ -468,7 +468,7 @@ function renderHeaderSelectStep(props: HeaderSelectStepProps) {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
-				<span className="text-sm text-muted-foreground">Confiança na detecção:</span>
+				<span className="text-muted-foreground text-sm">Confiança na detecção:</span>
 				<Badge variant={headerDetection.confidence >= 0.7 ? 'default' : 'secondary'}>
 					{Math.round(headerDetection.confidence * 100)}%
 				</Badge>
@@ -477,15 +477,15 @@ function renderHeaderSelectStep(props: HeaderSelectStepProps) {
 			<div className="space-y-2">
 				<Label>Selecione a linha de cabeçalho:</Label>
 				<RadioGroup
-					value={String(selectedHeaderRow)}
 					onValueChange={(v) => setSelectedHeaderRow(Number(v))}
+					value={String(selectedHeaderRow)}
 				>
 					{headerDetection.candidates.map((candidate) => (
-						<div key={candidate.rowIndex} className="flex items-center space-x-2">
-							<RadioGroupItem value={String(candidate.rowIndex)} id={`row-${candidate.rowIndex}`} />
-							<Label htmlFor={`row-${candidate.rowIndex}`} className="flex-1 cursor-pointer">
+						<div className="flex items-center space-x-2" key={candidate.rowIndex}>
+							<RadioGroupItem id={`row-${candidate.rowIndex}`} value={String(candidate.rowIndex)} />
+							<Label className="flex-1 cursor-pointer" htmlFor={`row-${candidate.rowIndex}`}>
 								<span className="font-medium">Linha {candidate.rowIndex + 1}</span>
-								<span className="text-muted-foreground ml-2">
+								<span className="ml-2 text-muted-foreground">
 									({Math.round(candidate.score * 100)}% - {candidate.headers.slice(0, 3).join(', ')}
 									{candidate.headers.length > 3 && '...'})
 								</span>
@@ -497,13 +497,13 @@ function renderHeaderSelectStep(props: HeaderSelectStepProps) {
 
 			<Card>
 				<CardContent className="p-4">
-					<p className="text-sm font-medium mb-2">Prévia dos dados:</p>
+					<p className="mb-2 font-medium text-sm">Prévia dos dados:</p>
 					<div className="overflow-x-auto">
-						<table className="text-xs w-full">
+						<table className="w-full text-xs">
 							<thead>
 								<tr className="border-b">
 									{headerRow?.slice(0, 5).map((h, i) => (
-										<th key={i} className="p-1 text-left font-medium">
+										<th className="p-1 text-left font-medium" key={i}>
 											{String(h) || `Col ${i + 1}`}
 										</th>
 									))}
@@ -512,9 +512,9 @@ function renderHeaderSelectStep(props: HeaderSelectStepProps) {
 							</thead>
 							<tbody>
 								{previewRows.map((row, i) => (
-									<tr key={i} className="border-b last:border-0">
+									<tr className="border-b last:border-0" key={i}>
 										{(row as unknown[]).slice(0, 5).map((cell, j) => (
-											<td key={j} className="p-1 truncate max-w-[150px]">
+											<td className="max-w-[150px] truncate p-1" key={j}>
 												{String(cell ?? '')}
 											</td>
 										))}
@@ -547,12 +547,12 @@ function renderMappingStep(props: StepContentProps) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between text-sm text-muted-foreground">
+			<div className="flex items-center justify-between text-muted-foreground text-sm">
 				<span>Arquivo: {fileName}</span>
 				<span>{parsedData.rows.length} registros encontrados</span>
 			</div>
 
-			<div className="border rounded-lg overflow-hidden">
+			<div className="overflow-hidden rounded-lg border">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -567,8 +567,8 @@ function renderMappingStep(props: StepContentProps) {
 								<TableCell className="font-medium">{header}</TableCell>
 								<TableCell>
 									<Select
-										value={columnMapping[header] || '_skip'}
 										onValueChange={(value) => handleMappingChange?.(header, value)}
+										value={columnMapping[header] || '_skip'}
 									>
 										<SelectTrigger className="w-full">
 											<SelectValue placeholder="Selecione..." />
@@ -583,7 +583,7 @@ function renderMappingStep(props: StepContentProps) {
 										</SelectContent>
 									</Select>
 								</TableCell>
-								<TableCell className="text-sm text-muted-foreground truncate max-w-[200px]">
+								<TableCell className="max-w-[200px] truncate text-muted-foreground text-sm">
 									{String(parsedData.rows[0]?.[header] || '-')}
 								</TableCell>
 							</TableRow>
@@ -594,10 +594,10 @@ function renderMappingStep(props: StepContentProps) {
 
 			{!canProceed && (
 				<div className="flex items-start gap-2 text-amber-500 text-sm">
-					<AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+					<AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
 					<div>
 						<span className="font-medium">Campos obrigatórios faltando:</span>
-						<ul className="list-disc list-inside mt-1">
+						<ul className="mt-1 list-inside list-disc">
 							{missingFields.map((field) => {
 								const fieldLabel = schemaFields.find((f) => f.value === field)?.label || field;
 								return <li key={field}>{fieldLabel}</li>;
@@ -608,16 +608,16 @@ function renderMappingStep(props: StepContentProps) {
 			)}
 
 			<div className="space-y-3 border-t pt-4">
-				<label className="flex items-center gap-2 cursor-pointer">
+				<label className="flex cursor-pointer items-center gap-2">
 					<input
-						type="checkbox"
 						checked={upsertMode}
-						onChange={(e) => setUpsertMode?.(e.target.checked)}
 						className="rounded"
+						onChange={(e) => setUpsertMode?.(e.target.checked)}
+						type="checkbox"
 					/>
 					<span className="text-sm">Atualizar alunos existentes (se email já cadastrado)</span>
 				</label>
-				<p className="text-xs text-muted-foreground ml-6">
+				<p className="ml-6 text-muted-foreground text-xs">
 					{upsertMode
 						? 'Alunos existentes serão atualizados e nova matrícula será adicionada.'
 						: 'Alunos com email duplicado serão ignorados.'}
@@ -645,24 +645,24 @@ function renderPreviewStep(props: StepContentProps) {
 	return (
 		<div className="space-y-4">
 			<div className="grid grid-cols-3 gap-4 text-center">
-				<div className="border rounded-lg p-4">
-					<p className="text-2xl font-bold">{parsedData.rows.length}</p>
-					<p className="text-sm text-muted-foreground">Total de registros</p>
+				<div className="rounded-lg border p-4">
+					<p className="font-bold text-2xl">{parsedData.rows.length}</p>
+					<p className="text-muted-foreground text-sm">Total de registros</p>
 				</div>
-				<div className="border rounded-lg p-4">
-					<p className="text-2xl font-bold text-green-500">{previewValidation.valid}</p>
-					<p className="text-sm text-muted-foreground">Válidos (amostra)</p>
+				<div className="rounded-lg border p-4">
+					<p className="font-bold text-2xl text-green-500">{previewValidation.valid}</p>
+					<p className="text-muted-foreground text-sm">Válidos (amostra)</p>
 				</div>
-				<div className="border rounded-lg p-4">
-					<p className="text-2xl font-bold text-red-500">{previewValidation.invalid}</p>
-					<p className="text-sm text-muted-foreground">Com erros (amostra)</p>
+				<div className="rounded-lg border p-4">
+					<p className="font-bold text-2xl text-red-500">{previewValidation.invalid}</p>
+					<p className="text-muted-foreground text-sm">Com erros (amostra)</p>
 				</div>
 			</div>
 
 			{previewValidation.errors.length > 0 && (
-				<div className="border border-red-200 rounded-lg p-4 bg-red-50 dark:bg-red-950">
-					<h4 className="font-medium text-red-700 dark:text-red-300 mb-2">Erros encontrados:</h4>
-					<ul className="text-sm text-red-600 dark:text-red-400 list-disc list-inside">
+				<div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:bg-red-950">
+					<h4 className="mb-2 font-medium text-red-700 dark:text-red-300">Erros encontrados:</h4>
+					<ul className="list-inside list-disc text-red-600 text-sm dark:text-red-400">
 						{previewValidation.errors.slice(0, 5).map((error, i) => (
 							<li key={i}>{error}</li>
 						))}
@@ -670,7 +670,7 @@ function renderPreviewStep(props: StepContentProps) {
 				</div>
 			)}
 
-			<div className="border rounded-lg overflow-hidden">
+			<div className="overflow-hidden rounded-lg border">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -689,7 +689,7 @@ function renderPreviewStep(props: StepContentProps) {
 								<TableRow key={i}>
 									<TableCell>{i + 2}</TableCell>
 									{mappedFields.map((field) => (
-										<TableCell key={field} className="truncate max-w-[150px]">
+										<TableCell className="max-w-[150px] truncate" key={field}>
 											{String(transformed[field] || '-')}
 										</TableCell>
 									))}
@@ -708,14 +708,14 @@ function renderImportingStep(props: StepContentProps) {
 
 	return (
 		<div className="py-8 text-center">
-			<Loader2 className="h-12 w-12 mx-auto mb-4 text-purple-500 animate-spin" />
-			<p className="text-lg font-medium">Importando alunos...</p>
-			<p className="text-sm text-muted-foreground mt-2">
+			<Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-purple-500" />
+			<p className="font-medium text-lg">Importando alunos...</p>
+			<p className="mt-2 text-muted-foreground text-sm">
 				Processando {parsedData?.rows.length || 0} registros
 			</p>
-			<div className="w-full bg-secondary rounded-full h-2 mt-4">
+			<div className="mt-4 h-2 w-full rounded-full bg-secondary">
 				<div
-					className="bg-purple-500 h-2 rounded-full transition-all"
+					className="h-2 rounded-full bg-purple-500 transition-all"
 					style={{ width: `${importProgress}%` }}
 				/>
 			</div>
@@ -731,29 +731,29 @@ function renderResultsStep(props: StepContentProps) {
 	return (
 		<div className="space-y-4">
 			<div className="grid grid-cols-3 gap-4 text-center">
-				<div className="border rounded-lg p-4">
-					<p className="text-2xl font-bold">{importResults.totalRows}</p>
-					<p className="text-sm text-muted-foreground">Total</p>
+				<div className="rounded-lg border p-4">
+					<p className="font-bold text-2xl">{importResults.totalRows}</p>
+					<p className="text-muted-foreground text-sm">Total</p>
 				</div>
-				<div className="border rounded-lg p-4">
-					<CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-500" />
-					<p className="text-2xl font-bold text-green-500">{importResults.successCount}</p>
-					<p className="text-sm text-muted-foreground">Importados</p>
+				<div className="rounded-lg border p-4">
+					<CheckCircle className="mx-auto mb-2 h-6 w-6 text-green-500" />
+					<p className="font-bold text-2xl text-green-500">{importResults.successCount}</p>
+					<p className="text-muted-foreground text-sm">Importados</p>
 				</div>
-				<div className="border rounded-lg p-4">
-					<XCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-					<p className="text-2xl font-bold text-red-500">{importResults.failureCount}</p>
-					<p className="text-sm text-muted-foreground">Com erros</p>
+				<div className="rounded-lg border p-4">
+					<XCircle className="mx-auto mb-2 h-6 w-6 text-red-500" />
+					<p className="font-bold text-2xl text-red-500">{importResults.failureCount}</p>
+					<p className="text-muted-foreground text-sm">Com erros</p>
 				</div>
 			</div>
 
 			{importResults.failureCount > 0 && (
 				<>
-					<div className="border border-red-200 rounded-lg p-4 bg-red-50 dark:bg-red-950 max-h-48 overflow-y-auto">
-						<h4 className="font-medium text-red-700 dark:text-red-300 mb-2">
+					<div className="max-h-48 overflow-y-auto rounded-lg border border-red-200 bg-red-50 p-4 dark:bg-red-950">
+						<h4 className="mb-2 font-medium text-red-700 dark:text-red-300">
 							Erros na importação:
 						</h4>
-						<ul className="text-sm text-red-600 dark:text-red-400 space-y-1">
+						<ul className="space-y-1 text-red-600 text-sm dark:text-red-400">
 							{importResults.results
 								.filter((r) => !r.success)
 								.slice(0, 10)
@@ -768,7 +768,7 @@ function renderResultsStep(props: StepContentProps) {
 						</ul>
 					</div>
 
-					<Button variant="outline" className="gap-2" onClick={downloadErrorLog}>
+					<Button className="gap-2" onClick={downloadErrorLog} variant="outline">
 						<Download className="h-4 w-4" />
 						Baixar log de erros
 					</Button>
@@ -813,13 +813,13 @@ function DialogFooterButtons({
 		case 'sheet-select':
 			return (
 				<>
-					<Button variant="outline" onClick={resetState}>
+					<Button onClick={resetState} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={handleSheetSelect} disabled={isProcessing || !selectedSheet}>
+					<Button disabled={isProcessing || !selectedSheet} onClick={handleSheetSelect}>
 						{isProcessing ? (
 							<>
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 								Processando...
 							</>
 						) : (
@@ -831,13 +831,13 @@ function DialogFooterButtons({
 		case 'header-select':
 			return (
 				<>
-					<Button variant="outline" onClick={resetState}>
+					<Button onClick={resetState} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={handleHeaderSelect} disabled={isProcessing}>
+					<Button disabled={isProcessing} onClick={handleHeaderSelect}>
 						{isProcessing ? (
 							<>
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 								Processando...
 							</>
 						) : (
@@ -849,10 +849,10 @@ function DialogFooterButtons({
 		case 'mapping':
 			return (
 				<>
-					<Button variant="outline" onClick={resetState}>
+					<Button onClick={resetState} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={() => setStep('preview')} disabled={!canProceed}>
+					<Button disabled={!canProceed} onClick={() => setStep('preview')}>
 						Pré-visualizar
 					</Button>
 				</>
@@ -860,13 +860,13 @@ function DialogFooterButtons({
 		case 'preview':
 			return (
 				<>
-					<Button variant="outline" onClick={() => setStep('mapping')}>
+					<Button onClick={() => setStep('mapping')} variant="outline">
 						Voltar
 					</Button>
-					<Button onClick={handleImport} disabled={isProcessing}>
+					<Button disabled={isProcessing} onClick={handleImport}>
 						{isProcessing ? (
 							<>
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 								Importando...
 							</>
 						) : (
@@ -1294,7 +1294,7 @@ export function StudentImportDialog() {
 	return (
 		<>
 			{/* Password Dialog for protected XLSX files */}
-			<Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+			<Dialog onOpenChange={setShowPasswordDialog} open={showPasswordDialog}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
 						<DialogTitle>Arquivo Protegido</DialogTitle>
@@ -1307,18 +1307,18 @@ export function StudentImportDialog() {
 							<Label htmlFor={passwordInputId}>Senha</Label>
 							<Input
 								id={passwordInputId}
-								type="password"
-								value={xlsxPassword}
 								onChange={(e) => setXlsxPassword(e.target.value)}
 								onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
 								placeholder="Digite a senha do arquivo"
+								type="password"
+								value={xlsxPassword}
 							/>
 						</div>
 						<div className="flex justify-end gap-2">
-							<Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
+							<Button onClick={() => setShowPasswordDialog(false)} variant="outline">
 								Cancelar
 							</Button>
-							<Button onClick={handlePasswordSubmit} disabled={!xlsxPassword || isProcessing}>
+							<Button disabled={!xlsxPassword || isProcessing} onClick={handlePasswordSubmit}>
 								{isProcessing ? 'Verificando...' : 'Confirmar'}
 							</Button>
 						</div>
@@ -1328,19 +1328,19 @@ export function StudentImportDialog() {
 
 			{/* Main Import Dialog */}
 			<Dialog
-				open={open}
 				onOpenChange={(isOpen) => {
 					setOpen(isOpen);
 					if (!isOpen) resetState();
 				}}
+				open={open}
 			>
 				<DialogTrigger asChild>
-					<Button variant="outline" className="gap-2">
+					<Button className="gap-2" variant="outline">
 						<Upload className="h-4 w-4" />
 						Importar CSV
 					</Button>
 				</DialogTrigger>
-				<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+				<DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<FileSpreadsheet className="h-5 w-5 text-purple-500" />
@@ -1430,17 +1430,17 @@ export function StudentImportDialog() {
 
 					<DialogFooter>
 						<DialogFooterButtons
-							step={step}
-							isProcessing={isProcessing}
 							canProceed={canProceed}
-							selectedSheet={selectedSheet}
-							parsedDataRowCount={parsedData?.rows.length || 0}
-							resetState={resetState}
-							handleSheetSelect={handleSheetSelect}
 							handleHeaderSelect={handleHeaderSelect}
 							handleImport={handleImport}
-							setStep={setStep}
+							handleSheetSelect={handleSheetSelect}
+							isProcessing={isProcessing}
+							parsedDataRowCount={parsedData?.rows.length || 0}
+							resetState={resetState}
+							selectedSheet={selectedSheet}
 							setOpen={setOpen}
+							setStep={setStep}
+							step={step}
 						/>
 					</DialogFooter>
 				</DialogContent>

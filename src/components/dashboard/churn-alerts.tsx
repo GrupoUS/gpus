@@ -20,32 +20,34 @@ export function ChurnAlerts({ data }: ChurnAlertsProps) {
 	return (
 		<Card className="glass-card">
 			<CardHeader className="flex flex-row items-center justify-between">
-				<CardTitle className="font-display text-2xl font-semibold">Alertas de Risco</CardTitle>
+				<CardTitle className="font-display font-semibold text-2xl">Alertas de Risco</CardTitle>
 				<AlertTriangle className="h-4 w-4 text-amber-500" />
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					{!data ? (
-						<Skeleton className="h-16 w-full" />
-					) : data.length > 0 ? (
-						data.map((alert) => (
-							<div
-								key={alert._id}
-								className="flex items-center justify-between p-2 rounded-lg bg-amber-500/10"
-							>
-								<div>
-									<p className="text-sm font-medium">{alert.studentName}</p>
-									<p className="text-xs text-muted-foreground">{alert.reason}</p>
+					{data ? (
+						data.length > 0 ? (
+							data.map((alert) => (
+								<div
+									className="flex items-center justify-between rounded-lg bg-amber-500/10 p-2"
+									key={alert._id}
+								>
+									<div>
+										<p className="font-medium text-sm">{alert.studentName}</p>
+										<p className="text-muted-foreground text-xs">{alert.reason}</p>
+									</div>
+									<Badge className="border-amber-600 text-amber-600" variant="outline">
+										{alert.risk}
+									</Badge>
 								</div>
-								<Badge variant="outline" className="text-amber-600 border-amber-600">
-									{alert.risk}
-								</Badge>
-							</div>
-						))
+							))
+						) : (
+							<p className="py-4 text-center text-muted-foreground text-sm">
+								Nenhum alerta no momento 🎉
+							</p>
+						)
 					) : (
-						<p className="text-sm text-muted-foreground text-center py-4">
-							Nenhum alerta no momento 🎉
-						</p>
+						<Skeleton className="h-16 w-full" />
 					)}
 				</div>
 			</CardContent>

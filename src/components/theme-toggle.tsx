@@ -18,11 +18,11 @@ export function ThemeToggle() {
 
 	return (
 		<Button
-			variant="ghost"
-			size="icon"
-			onClick={toggleTheme}
-			className="relative"
 			aria-label={`Alternar para tema ${isDark ? 'claro' : 'escuro'}`}
+			className="relative"
+			onClick={toggleTheme}
+			size="icon"
+			variant="ghost"
 		>
 			<Sun
 				className={`h-[1.2rem] w-[1.2rem] transition-all duration-300 ${

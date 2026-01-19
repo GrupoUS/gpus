@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { action, internalMutation } from '../_generated/server';
+
 import { internal } from '../_generated/api';
+import { action, internalMutation } from '../_generated/server';
 
 /**
  * Script de migração para sincronizar usuários existentes do Clerk para o Convex
@@ -27,7 +28,7 @@ export const sync = action({
 		const limit = 100;
 		let offset = 0;
 		let hasMore = true;
-		let totalFetched = 0;
+		let _totalFetched = 0;
 
 		const stats = {
 			total: 0,
@@ -37,14 +38,10 @@ export const sync = action({
 			skipped: 0,
 		};
 
-		console.log('Starting migration: Syncing Clerk users to Convex...');
-
 		while (hasMore) {
 			const url = new URL('https://api.clerk.com/v1/users');
 			url.searchParams.append('limit', limit.toString());
 			url.searchParams.append('offset', offset.toString());
-
-			console.log(`Fetching users from Clerk (offset: ${offset})...`);
 			const response = await fetch(url.toString(), {
 				headers: {
 					Authorization: `Bearer ${clerkSecretKey}`,
@@ -65,7 +62,7 @@ export const sync = action({
 				break;
 			}
 
-			totalFetched += usersArray.length;
+			_totalFetched += usersArray.length;
 			stats.total += usersArray.length;
 
 			for (const user of usersArray) {
@@ -78,13 +75,11 @@ export const sync = action({
 					const pictureUrl = user.image_url;
 
 					if (!email) {
-						console.warn(`User ${clerkId} has no email, skipping`);
 						stats.skipped++;
 						continue;
 					}
 
 					if (args.dryRun) {
-						console.log(`[DRY RUN] Would sync user: ${email} (${clerkId})`);
 						continue;
 					}
 
@@ -102,13 +97,10 @@ export const sync = action({
 
 					if (result === 'created') {
 						stats.created++;
-						console.log(`✓ Created user: ${email} (${clerkId})`);
 					} else if (result === 'exists') {
 						stats.alreadyExists++;
-						console.log(`- User already exists: ${email} (${clerkId})`);
 					}
-				} catch (err) {
-					console.error(`Error syncing user ${user.id}:`, err);
+				} catch (_err) {
 					stats.errors++;
 				}
 			}
@@ -117,13 +109,6 @@ export const sync = action({
 			hasMore = usersArray.length === limit;
 			offset += limit;
 		}
-
-		console.log('\n=== Migration Summary ===');
-		console.log(`Total users fetched from Clerk: ${stats.total}`);
-		console.log(`Users created: ${stats.created}`);
-		console.log(`Users already exist: ${stats.alreadyExists}`);
-		console.log(`Users skipped (no email): ${stats.skipped}`);
-		console.log(`Errors: ${stats.errors}`);
 
 		return stats;
 	},
@@ -174,16 +159,13 @@ export const syncUserInternal = internalMutation({
 			await ctx.db.insert('activities', {
 				type: 'user_created',
 				description: `User ${args.name} created via migration script`,
-				userId: userId,
+				userId,
 				metadata: { externalId: args.clerkId, reason: 'migration' },
 				organizationId,
 				performedBy: args.clerkId, // Use the user's own clerkId
 				createdAt: Date.now(),
 			});
-		} catch (activityError) {
-			// Don't fail migration if activity logging fails
-			console.warn('Failed to log activity for user creation:', activityError);
-		}
+		} catch (_activityError) {}
 
 		return 'created';
 	},

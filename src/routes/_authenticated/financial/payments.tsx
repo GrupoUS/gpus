@@ -86,7 +86,7 @@ function PaymentTableRow({ payment, onSelect, onCopy }: PaymentTableRowProps) {
 			<TableCell>
 				{payment.description || 'Cobrança'}
 				{payment.installmentNumber && payment.totalInstallments && (
-					<span className="text-xs text-muted-foreground ml-2">
+					<span className="ml-2 text-muted-foreground text-xs">
 						({payment.installmentNumber}/{payment.totalInstallments})
 					</span>
 				)}
@@ -97,19 +97,19 @@ function PaymentTableRow({ payment, onSelect, onCopy }: PaymentTableRowProps) {
 				<Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
 			</TableCell>
 			<TableCell>{payment.billingType}</TableCell>
-			<TableCell className="text-right space-x-1">
-				<Button variant="ghost" size="sm" onClick={() => onSelect(payment)}>
+			<TableCell className="space-x-1 text-right">
+				<Button onClick={() => onSelect(payment)} size="sm" variant="ghost">
 					Detalhes
 				</Button>
 				{payment.boletoUrl && (
-					<Button variant="ghost" size="sm" asChild>
-						<a href={payment.boletoUrl} target="_blank" rel="noopener noreferrer">
+					<Button asChild size="sm" variant="ghost">
+						<a href={payment.boletoUrl} rel="noopener noreferrer" target="_blank">
 							<FileText className="h-4 w-4" />
 						</a>
 					</Button>
 				)}
 				{payment.pixQrCode && (
-					<Button variant="ghost" size="sm" onClick={() => onCopy(payment.pixQrCode ?? '')}>
+					<Button onClick={() => onCopy(payment.pixQrCode ?? '')} size="sm" variant="ghost">
 						<Copy className="h-4 w-4" />
 					</Button>
 				)}
@@ -160,15 +160,15 @@ function PaymentFilters({
 			<CardContent>
 				<div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
 					<div className="relative">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+						<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
 						<Input
+							className="pl-10"
+							onChange={(e) => onSearchChange(e.target.value)}
 							placeholder="Buscar por descrição..."
 							value={search}
-							onChange={(e) => onSearchChange(e.target.value)}
-							className="pl-10"
 						/>
 					</div>
-					<Select value={statusFilter} onValueChange={onStatusFilterChange}>
+					<Select onValueChange={onStatusFilterChange} value={statusFilter}>
 						<SelectTrigger>
 							<SelectValue placeholder="Status" />
 						</SelectTrigger>
@@ -182,7 +182,7 @@ function PaymentFilters({
 							<SelectItem value="CANCELLED">Cancelado</SelectItem>
 						</SelectContent>
 					</Select>
-					<Select value={billingTypeFilter} onValueChange={onBillingTypeFilterChange}>
+					<Select onValueChange={onBillingTypeFilterChange} value={billingTypeFilter}>
 						<SelectTrigger>
 							<SelectValue placeholder="Tipo de Pagamento" />
 						</SelectTrigger>
@@ -195,33 +195,33 @@ function PaymentFilters({
 						</SelectContent>
 					</Select>
 					<div>
-						<Label htmlFor={startDateId} className="sr-only">
+						<Label className="sr-only" htmlFor={startDateId}>
 							Data Inicial
 						</Label>
 						<Input
 							id={startDateId}
-							type="date"
-							value={startDate}
 							onChange={(e) => onStartDateChange(e.target.value)}
 							placeholder="Data Inicial"
+							type="date"
+							value={startDate}
 						/>
 					</div>
 					<div>
-						<Label htmlFor={endDateId} className="sr-only">
+						<Label className="sr-only" htmlFor={endDateId}>
 							Data Final
 						</Label>
 						<Input
 							id={endDateId}
-							type="date"
-							value={endDate}
 							onChange={(e) => onEndDateChange(e.target.value)}
 							placeholder="Data Final"
+							type="date"
+							value={endDate}
 						/>
 					</div>
 				</div>
 				{hasFilters && (
 					<div className="mt-4">
-						<Button variant="outline" size="sm" onClick={onClearFilters}>
+						<Button onClick={onClearFilters} size="sm" variant="outline">
 							Limpar Filtros
 						</Button>
 					</div>
@@ -290,28 +290,28 @@ function PaymentDetailContent({ payment, onCopy }: PaymentDetailContentProps) {
 					<p className="font-medium">{payment.description}</p>
 				</div>
 			)}
-			<div className="flex flex-wrap gap-2 pt-4 border-t">
+			<div className="flex flex-wrap gap-2 border-t pt-4">
 				{payment.boletoUrl && (
-					<Button variant="outline" size="sm" asChild>
-						<a href={payment.boletoUrl} target="_blank" rel="noopener noreferrer">
-							<FileText className="h-4 w-4 mr-2" />
+					<Button asChild size="sm" variant="outline">
+						<a href={payment.boletoUrl} rel="noopener noreferrer" target="_blank">
+							<FileText className="mr-2 h-4 w-4" />
 							Ver Boleto
 						</a>
 					</Button>
 				)}
 				{payment.pixQrCode && (
-					<Button variant="outline" size="sm" onClick={() => onCopy(payment.pixQrCode ?? '')}>
-						<Copy className="h-4 w-4 mr-2" />
+					<Button onClick={() => onCopy(payment.pixQrCode ?? '')} size="sm" variant="outline">
+						<Copy className="mr-2 h-4 w-4" />
 						Copiar PIX
 					</Button>
 				)}
-				<Button variant="outline" size="sm" asChild>
+				<Button asChild size="sm" variant="outline">
 					<a
 						href={`https://www.asaas.com/cobrancas/${payment.asaasPaymentId}`}
-						target="_blank"
 						rel="noopener noreferrer"
+						target="_blank"
 					>
-						<ExternalLink className="h-4 w-4 mr-2" />
+						<ExternalLink className="mr-2 h-4 w-4" />
 						Abrir no Asaas
 					</a>
 				</Button>
@@ -384,37 +384,37 @@ function PaymentsPage() {
 	return (
 		<div className="space-y-6 p-6">
 			<div>
-				<h1 className="text-3xl font-bold">Cobranças</h1>
+				<h1 className="font-bold text-3xl">Cobranças</h1>
 				<p className="text-muted-foreground">Gerencie todas as cobranças do sistema</p>
 			</div>
 
 			{/* Filters */}
 			<PaymentFilters
-				search={search}
-				onSearchChange={setSearch}
-				statusFilter={statusFilter}
-				onStatusFilterChange={(v) => {
-					setStatusFilter(v);
-					setOffset(0);
-				}}
 				billingTypeFilter={billingTypeFilter}
+				endDate={endDate}
+				endDateId={endDateId}
 				onBillingTypeFilterChange={(v) => {
 					setBillingTypeFilter(v);
 					setOffset(0);
 				}}
-				startDate={startDate}
-				onStartDateChange={(v) => {
-					setStartDate(v);
-					setOffset(0);
-				}}
-				endDate={endDate}
+				onClearFilters={handleClearFilters}
 				onEndDateChange={(v) => {
 					setEndDate(v);
 					setOffset(0);
 				}}
-				onClearFilters={handleClearFilters}
+				onSearchChange={setSearch}
+				onStartDateChange={(v) => {
+					setStartDate(v);
+					setOffset(0);
+				}}
+				onStatusFilterChange={(v) => {
+					setStatusFilter(v);
+					setOffset(0);
+				}}
+				search={search}
+				startDate={startDate}
 				startDateId={startDateId}
-				endDateId={endDateId}
+				statusFilter={statusFilter}
 			/>
 
 			{/* Payments Table */}
@@ -430,7 +430,7 @@ function PaymentsPage() {
 					{paymentsResult === undefined ? (
 						<Skeleton className="h-64" />
 					) : filteredPayments.length === 0 ? (
-						<p className="text-center text-muted-foreground py-8">Nenhuma cobrança encontrada</p>
+						<p className="py-8 text-center text-muted-foreground">Nenhuma cobrança encontrada</p>
 					) : (
 						<>
 							<Table>
@@ -448,16 +448,16 @@ function PaymentsPage() {
 									{filteredPayments.map((payment: Doc<'asaasPayments'>) => (
 										<PaymentTableRow
 											key={payment._id}
-											payment={payment}
-											onSelect={setSelectedPayment}
 											onCopy={copyToClipboard}
+											onSelect={setSelectedPayment}
+											payment={payment}
 										/>
 									))}
 								</TableBody>
 							</Table>
 							{hasMore && (
 								<div className="mt-4 flex justify-center">
-									<Button variant="outline" onClick={handleLoadMore}>
+									<Button onClick={handleLoadMore} variant="outline">
 										Carregar Mais
 									</Button>
 								</div>
@@ -468,14 +468,14 @@ function PaymentsPage() {
 			</Card>
 
 			{/* Payment Detail Dialog */}
-			<Dialog open={!!selectedPayment} onOpenChange={(open) => !open && setSelectedPayment(null)}>
+			<Dialog onOpenChange={(open) => !open && setSelectedPayment(null)} open={!!selectedPayment}>
 				<DialogContent className="max-w-md">
 					<DialogHeader>
 						<DialogTitle>Detalhes da Cobrança</DialogTitle>
 						<DialogDescription>{selectedPayment?.asaasPaymentId}</DialogDescription>
 					</DialogHeader>
 					{selectedPayment && (
-						<PaymentDetailContent payment={selectedPayment} onCopy={copyToClipboard} />
+						<PaymentDetailContent onCopy={copyToClipboard} payment={selectedPayment} />
 					)}
 				</DialogContent>
 			</Dialog>

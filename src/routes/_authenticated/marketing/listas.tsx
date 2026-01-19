@@ -27,7 +27,7 @@ function LoadingSkeleton() {
 			<Skeleton className="h-10 w-full max-w-sm" />
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{[1, 2, 3, 4, 5, 6].map((i) => (
-					<Skeleton key={i} className="h-40" />
+					<Skeleton className="h-40" key={i} />
 				))}
 			</div>
 		</div>
@@ -40,8 +40,8 @@ function EmptyState() {
 		<Card>
 			<CardContent className="flex flex-col items-center justify-center py-12">
 				<List className="mb-4 h-12 w-12 text-muted-foreground" />
-				<h2 className="text-lg font-semibold">Nenhuma lista encontrada</h2>
-				<p className="mt-2 text-center text-sm text-muted-foreground">
+				<h2 className="font-semibold text-lg">Nenhuma lista encontrada</h2>
+				<p className="mt-2 text-center text-muted-foreground text-sm">
 					Crie sua primeira lista de contatos para começar a segmentar seus destinatários.
 				</p>
 				<div className="mt-6">
@@ -57,28 +57,28 @@ function SyncStatusBadge({ status }: { status?: string }) {
 	switch (status) {
 		case 'synced':
 			return (
-				<Badge variant="outline" className="gap-1 text-green-600">
+				<Badge className="gap-1 text-green-600" variant="outline">
 					<Cloud className="h-3 w-3" />
 					Sincronizada
 				</Badge>
 			);
 		case 'syncing':
 			return (
-				<Badge variant="outline" className="gap-1">
+				<Badge className="gap-1" variant="outline">
 					<Loader2 className="h-3 w-3 animate-spin" />
 					Sincronizando
 				</Badge>
 			);
 		case 'error':
 			return (
-				<Badge variant="destructive" className="gap-1">
+				<Badge className="gap-1" variant="destructive">
 					<CloudOff className="h-3 w-3" />
 					Erro
 				</Badge>
 			);
 		case 'pending':
 			return (
-				<Badge variant="secondary" className="gap-1">
+				<Badge className="gap-1" variant="secondary">
 					Pendente
 				</Badge>
 			);
@@ -128,11 +128,11 @@ function ListsPage() {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-4">
-					<Button variant="ghost" size="icon" onClick={handleBack}>
+					<Button onClick={handleBack} size="icon" variant="ghost">
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
 					<div>
-						<h1 className="text-2xl font-bold tracking-tight">Listas de Contatos</h1>
+						<h1 className="font-bold text-2xl tracking-tight">Listas de Contatos</h1>
 						<p className="text-muted-foreground">
 							Gerencie suas listas de segmentação para campanhas
 						</p>
@@ -143,12 +143,12 @@ function ListsPage() {
 
 			{/* Search */}
 			<div className="relative max-w-sm">
-				<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+				<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
+					className="pl-9"
+					onChange={(e) => setSearchQuery(e.target.value)}
 					placeholder="Buscar listas..."
 					value={searchQuery}
-					onChange={(e) => setSearchQuery(e.target.value)}
-					className="pl-9"
 				/>
 			</div>
 
@@ -158,11 +158,11 @@ function ListsPage() {
 					<Card>
 						<CardContent className="flex flex-col items-center justify-center py-12">
 							<Search className="mb-4 h-12 w-12 text-muted-foreground" />
-							<h2 className="text-lg font-semibold">Nenhum resultado</h2>
-							<p className="mt-2 text-center text-sm text-muted-foreground">
+							<h2 className="font-semibold text-lg">Nenhum resultado</h2>
+							<p className="mt-2 text-center text-muted-foreground text-sm">
 								Não encontramos listas com "{searchQuery}". Tente outro termo.
 							</p>
-							<Button variant="outline" className="mt-4" onClick={() => setSearchQuery('')}>
+							<Button className="mt-4" onClick={() => setSearchQuery('')} variant="outline">
 								Limpar busca
 							</Button>
 						</CardContent>
@@ -174,8 +174,8 @@ function ListsPage() {
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{filteredLists.map((list: Doc<'emailLists'>) => (
 						<Card
-							key={list._id}
 							className="cursor-pointer transition-colors hover:bg-muted/50"
+							key={list._id}
 							onClick={() => handleListClick(list._id)}
 						>
 							<CardHeader className="pb-3">
@@ -210,7 +210,7 @@ function ListsPage() {
 
 			{/* Summary */}
 			{lists.length > 0 && (
-				<div className="flex items-center justify-between text-sm text-muted-foreground">
+				<div className="flex items-center justify-between text-muted-foreground text-sm">
 					<span>
 						{filteredLists.length} de {lists.length} lista
 						{lists.length !== 1 ? 's' : ''}

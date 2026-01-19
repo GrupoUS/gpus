@@ -8,7 +8,7 @@ export function StudentHeader() {
 	return (
 		<div className="flex items-center justify-between">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<GraduationCap className="h-6 w-6 text-purple-500" />
 					Alunos
 				</h1>

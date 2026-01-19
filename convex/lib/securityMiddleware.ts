@@ -6,17 +6,9 @@
  */
 
 import type { MutationCtx, QueryCtx } from '../_generated/server';
-import { getClerkId as _getClerkId } from './auth';
-// validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
-import {
-	validateInput,
-	rateLimiters,
-	validateFileUpload,
-	validationSchemas as _validationSchemas,
-} from './validation';
 import { logSecurityEvent } from './auditLogging';
-// hashSensitiveData available for security hashing if needed
-import { hashSensitiveData as _hashSensitiveData } from './encryption';
+// validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
+import { rateLimiters, validateFileUpload, validateInput } from './validation';
 
 /**
  * Security configuration
@@ -134,11 +126,11 @@ function validateQueryParams(params: any): { valid: boolean; sanitized: any; err
 		const start = new Date(params.startDate);
 		const end = new Date(params.endDate);
 
-		if (isNaN(start.getTime())) {
+		if (Number.isNaN(start.getTime())) {
 			errors.push('Invalid startDate format');
 		}
 
-		if (isNaN(end.getTime())) {
+		if (Number.isNaN(end.getTime())) {
 			errors.push('Invalid endDate format');
 		}
 
@@ -153,7 +145,7 @@ function validateQueryParams(params: any): { valid: boolean; sanitized: any; err
 		}
 
 		const isValidDateRange =
-			!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= end;
+			!(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) && start <= end;
 		if (isValidDateRange) {
 			sanitized.startDate = start.getTime();
 			sanitized.endDate = end.getTime();
@@ -191,7 +183,7 @@ async function checkRateLimit(
  * Validates file uploads for security
  */
 function validateFileUploads(files: any[]): { valid: boolean; errors: string[] } {
-	if (!files || !Array.isArray(files)) {
+	if (!(files && Array.isArray(files))) {
 		return { valid: true, errors: [] };
 	}
 
@@ -218,7 +210,7 @@ function detectSQLInjection(input: string): boolean {
 		/;/i,
 		/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
 		/(\b(OR|AND)\s+\d+\s*=\s*\d+)/i,
-		/(\b(OR|AND)\s+\'\w+\'\s*=\s*\'\w+\')/i,
+		/(\b(OR|AND)\s+'\w+'\s*=\s*'\w+')/i,
 		/(1=1|1 = 1)/i,
 		/(true|TRUE)/i,
 	];
@@ -270,7 +262,7 @@ function detectCommandInjection(input: string): boolean {
 function validateInputSecurity(input: any): { valid: boolean; threats: string[] } {
 	const threats: string[] = [];
 
-	const checkThreats = (value: any, path: string = '') => {
+	const checkThreats = (value: any, path = '') => {
 		if (typeof value === 'string') {
 			if (detectSQLInjection(value)) {
 				threats.push(`SQL injection detected in ${path}`);
@@ -343,17 +335,19 @@ export function withSecurity<T, R>(
 		}
 
 		// Role validation
-		if (allowedRoles && allowedRoles.length > 0) {
-			if (!allowedRoles.includes(securityContext.actorRole)) {
-				await logSecurityEvent(
-					ctx,
-					'unauthorized_access',
-					`Role ${securityContext.actorRole} not allowed`,
-					'medium',
-					[securityContext.actorId],
-				);
-				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
-			}
+		if (
+			allowedRoles &&
+			allowedRoles.length > 0 &&
+			!allowedRoles.includes(securityContext.actorRole)
+		) {
+			await logSecurityEvent(
+				ctx,
+				'unauthorized_access',
+				`Role ${securityContext.actorRole} not allowed`,
+				'medium',
+				[securityContext.actorId],
+			);
+			throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
 		}
 
 		// Permission validation
@@ -498,10 +492,12 @@ export function withQuerySecurity<T, R>(
 		}
 
 		// Role validation
-		if (allowedRoles && allowedRoles.length > 0) {
-			if (!allowedRoles.includes(securityContext.actorRole)) {
-				throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
-			}
+		if (
+			allowedRoles &&
+			allowedRoles.length > 0 &&
+			!allowedRoles.includes(securityContext.actorRole)
+		) {
+			throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
 		}
 
 		// Permission validation
@@ -577,7 +573,7 @@ export async function securityHealthCheck(ctx: QueryCtx): Promise<{
 	try {
 		await ctx.db.query('users').take(1);
 		metadata.schemaIntegrity = true;
-	} catch (error) {
+	} catch (_error) {
 		issues.push('Schema integrity check failed');
 		metadata.schemaIntegrity = false;
 	}
@@ -597,7 +593,7 @@ export async function securityHealthCheck(ctx: QueryCtx): Promise<{
 		if (recentEvents.length > 10) {
 			issues.push('High number of recent security events');
 		}
-	} catch (error) {
+	} catch (_error) {
 		issues.push('Security event monitoring failed');
 		metadata.securityMonitoring = false;
 	}

@@ -42,29 +42,29 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 			<div className="input-wrapper relative">
 				{label && (
 					<label
-						htmlFor={inputId}
 						className={cn(
-							'input-label absolute left-3 pointer-events-none transition-all duration-200 ease-out text-muted-foreground',
+							'input-label pointer-events-none absolute left-3 text-muted-foreground transition-all duration-200 ease-out',
 							shouldFloat
 								? 'top-0 -translate-y-1/2 scale-75 bg-background px-1 text-primary'
 								: 'top-1/2 -translate-y-1/2 text-sm',
 						)}
+						htmlFor={inputId}
 					>
 						{label}
 					</label>
 				)}
 				<input
-					id={inputId}
-					type={type}
 					className={cn(
-						'input-field flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+						'input-field flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-all file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
 						label && 'pt-3',
 						className,
 					)}
-					ref={inputRef}
-					onFocus={handleFocus}
+					id={inputId}
 					onBlur={handleBlur}
 					onChange={handleChange}
+					onFocus={handleFocus}
+					ref={inputRef}
+					type={type}
 					{...props}
 				/>
 			</div>

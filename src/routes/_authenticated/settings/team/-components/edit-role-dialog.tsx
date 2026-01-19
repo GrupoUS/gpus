@@ -77,7 +77,7 @@ export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog onOpenChange={onOpenChange} open={open}>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Alterar Função</DialogTitle>
@@ -86,14 +86,14 @@ export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 						<FormField
 							control={form.control}
 							name="role"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Nova Função</FormLabel>
-									<Select onValueChange={field.onChange} defaultValue={field.value}>
+									<Select defaultValue={field.value} onValueChange={field.onChange}>
 										<FormControl>
 											<SelectTrigger>
 												<SelectValue />
@@ -120,8 +120,8 @@ export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps
 									<FormLabel>Motivo (Opcional)</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Justificativa para auditoria..."
 											className="resize-none"
+											placeholder="Justificativa para auditoria..."
 											{...field}
 										/>
 									</FormControl>
@@ -130,10 +130,10 @@ export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps
 							)}
 						/>
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+							<Button onClick={() => onOpenChange(false)} type="button" variant="outline">
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={form.formState.isSubmitting}>
+							<Button disabled={form.formState.isSubmitting} type="submit">
 								{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 								Salvar Alterações
 							</Button>

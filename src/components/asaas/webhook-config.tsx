@@ -22,7 +22,7 @@ export function WebhookConfig() {
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex gap-2">
-					<Input value={webhookUrl} readOnly />
+					<Input readOnly value={webhookUrl} />
 					<Button onClick={handleCopy} size="icon">
 						<Copy className="h-4 w-4" />
 					</Button>

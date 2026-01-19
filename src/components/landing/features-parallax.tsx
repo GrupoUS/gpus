@@ -13,17 +13,17 @@ export function FeaturesParallax() {
 		link: undefined,
 		thumbnail: undefined,
 		content: (
-			<Card className="glass-card border-border/50 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group h-full flex flex-col justify-center">
+			<Card className="glass-card group flex h-full flex-col justify-center border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-primary/10 hover:shadow-xl">
 				<CardHeader>
 					<div
-						className={`w-12 h-12 rounded-lg ${feature.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+						className={`h-12 w-12 rounded-lg ${feature.bgColor} mb-4 flex items-center justify-center transition-transform group-hover:scale-110`}
 					>
-						<feature.icon className={`w-6 h-6 ${feature.color}`} />
+						<feature.icon className={`h-6 w-6 ${feature.color}`} />
 					</div>
 					<CardTitle className="font-display text-xl">{feature.title}</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<p className="font-sans text-sm text-muted-foreground">{feature.description}</p>
+					<p className="font-sans text-muted-foreground text-sm">{feature.description}</p>
 				</CardContent>
 			</Card>
 		),
@@ -36,17 +36,17 @@ export function FeaturesParallax() {
 	const displayProducts = [...products, ...products, ...products].slice(0, 15);
 
 	const Header = () => (
-		<div className="max-w-7xl relative mx-auto py-20 md:py-40 px-4 w-full left-0 top-0">
-			<motion.div variants={fadeInUp} initial="hidden" whileInView="visible" className="max-w-3xl">
-				<h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
+		<div className="relative top-0 left-0 mx-auto w-full max-w-7xl px-4 py-20 md:py-40">
+			<motion.div className="max-w-3xl" initial="hidden" variants={fadeInUp} whileInView="visible">
+				<h2 className="mb-4 font-bold font-display text-3xl text-foreground tracking-tight md:text-5xl">
 					Tudo que você precisa para crescer
 				</h2>
-				<p className="font-sans text-muted-foreground text-lg md:text-xl">
+				<p className="font-sans text-lg text-muted-foreground md:text-xl">
 					Ferramentas poderosas desenhadas para impulsionar seu negócio para o próximo nível.
 				</p>
 			</motion.div>
 		</div>
 	);
 
-	return <HeroParallax products={displayProducts} header={<Header />} />;
+	return <HeroParallax header={<Header />} products={displayProducts} />;
 }

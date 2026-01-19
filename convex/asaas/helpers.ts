@@ -4,8 +4,8 @@
  * Shared utility functions for Asaas integration operations.
  */
 
-import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
+import type { MutationCtx } from '../_generated/server';
 
 /**
  * Enrollment matching result
@@ -113,14 +113,6 @@ export async function getEnrollmentIdOrDefault(
 	if (result.enrollmentId) {
 		return result.enrollmentId;
 	}
-
-	// Log warning about no match but don't throw
-	// This allows payment processing to continue
-	console.warn(
-		`No matching enrollment found for student ${studentId}. ` +
-			`Reason: ${result.enrollmentId === undefined ? 'no_active_enrollments' : 'multiple_without_match'}. ` +
-			`Payment will be created without enrollment link.`,
-	);
 
 	return undefined;
 }

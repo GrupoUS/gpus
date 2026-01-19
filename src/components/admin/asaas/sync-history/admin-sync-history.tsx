@@ -100,9 +100,9 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 						<CardDescription>{filteredLogs.length} sincronizações encontradas</CardDescription>
 					</div>
 					<div className="flex items-center gap-2">
-						<Select value={statusFilter} onValueChange={setStatusFilter}>
+						<Select onValueChange={setStatusFilter} value={statusFilter}>
 							<SelectTrigger className="w-[140px]">
-								<Filter className="h-4 w-4 mr-2" />
+								<Filter className="mr-2 h-4 w-4" />
 								<SelectValue placeholder="Status" />
 							</SelectTrigger>
 							<SelectContent>
@@ -113,7 +113,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 								<SelectItem value="pending">Pendente</SelectItem>
 							</SelectContent>
 						</Select>
-						<Select value={typeFilter} onValueChange={setTypeFilter}>
+						<Select onValueChange={setTypeFilter} value={typeFilter}>
 							<SelectTrigger className="w-[140px]">
 								<SelectValue placeholder="Tipo" />
 							</SelectTrigger>
@@ -130,7 +130,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 			</CardHeader>
 			<CardContent>
 				{paginatedLogs.length === 0 ? (
-					<div className="text-center py-8 text-muted-foreground">
+					<div className="py-8 text-center text-muted-foreground">
 						Nenhuma sincronização encontrada
 					</div>
 				) : (
@@ -180,11 +180,11 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 												<span className="text-green-600">{log.recordsCreated}</span> /{' '}
 												<span className="text-blue-600">{log.recordsUpdated}</span>
 												{log.recordsFailed > 0 && (
-													<span className="text-red-600 ml-2">({log.recordsFailed} erros)</span>
+													<span className="ml-2 text-red-600">({log.recordsFailed} erros)</span>
 												)}
 											</TableCell>
 											<TableCell className="text-right">
-												<Button variant="ghost" size="sm" onClick={() => handleViewDetails(log)}>
+												<Button onClick={() => handleViewDetails(log)} size="sm" variant="ghost">
 													<Eye className="h-4 w-4" />
 												</Button>
 											</TableCell>
@@ -196,25 +196,25 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 
 						{/* Pagination */}
 						{totalPages > 1 && (
-							<div className="flex items-center justify-between mt-4">
-								<div className="text-sm text-muted-foreground">
+							<div className="mt-4 flex items-center justify-between">
+								<div className="text-muted-foreground text-sm">
 									Página {page + 1} de {totalPages}
 								</div>
 								<div className="flex items-center gap-2">
 									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => setPage((p) => Math.max(0, p - 1))}
 										disabled={page === 0}
+										onClick={() => setPage((p) => Math.max(0, p - 1))}
+										size="sm"
+										variant="outline"
 									>
 										<ChevronLeft className="h-4 w-4" />
 										Anterior
 									</Button>
 									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
 										disabled={page >= totalPages - 1}
+										onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+										size="sm"
+										variant="outline"
 									>
 										Próxima
 										<ChevronRight className="h-4 w-4" />
@@ -227,7 +227,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 			</CardContent>
 
 			{/* Detail Dialog */}
-			<Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+			<Dialog onOpenChange={setDetailOpen} open={detailOpen}>
 				<DialogContent className="max-w-2xl">
 					<DialogHeader>
 						<DialogTitle>Detalhes da Sincronização</DialogTitle>
@@ -237,23 +237,23 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 						<div className="space-y-4">
 							<div className="grid grid-cols-2 gap-4">
 								<div>
-									<div className="text-sm text-muted-foreground">Tipo</div>
+									<div className="text-muted-foreground text-sm">Tipo</div>
 									<div className="font-medium capitalize">{selectedLog.syncType}</div>
 								</div>
 								<div>
-									<div className="text-sm text-muted-foreground">Status</div>
+									<div className="text-muted-foreground text-sm">Status</div>
 									<Badge variant={STATUS_BADGE[selectedLog.status].variant}>
 										{STATUS_BADGE[selectedLog.status].label}
 									</Badge>
 								</div>
 								<div>
-									<div className="text-sm text-muted-foreground">Iniciado</div>
+									<div className="text-muted-foreground text-sm">Iniciado</div>
 									<div className="font-medium">
 										{new Date(selectedLog.startedAt).toLocaleString('pt-BR')}
 									</div>
 								</div>
 								<div>
-									<div className="text-sm text-muted-foreground">Concluído</div>
+									<div className="text-muted-foreground text-sm">Concluído</div>
 									<div className="font-medium">
 										{selectedLog.completedAt
 											? new Date(selectedLog.completedAt).toLocaleString('pt-BR')
@@ -262,34 +262,34 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 								</div>
 							</div>
 
-							<div className="grid grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+							<div className="grid grid-cols-4 gap-4 rounded-lg bg-muted/50 p-4">
 								<div className="text-center">
-									<div className="text-2xl font-bold">{selectedLog.recordsProcessed}</div>
-									<div className="text-xs text-muted-foreground">Processados</div>
+									<div className="font-bold text-2xl">{selectedLog.recordsProcessed}</div>
+									<div className="text-muted-foreground text-xs">Processados</div>
 								</div>
 								<div className="text-center">
-									<div className="text-2xl font-bold text-green-600">
+									<div className="font-bold text-2xl text-green-600">
 										{selectedLog.recordsCreated}
 									</div>
-									<div className="text-xs text-muted-foreground">Criados</div>
+									<div className="text-muted-foreground text-xs">Criados</div>
 								</div>
 								<div className="text-center">
-									<div className="text-2xl font-bold text-blue-600">
+									<div className="font-bold text-2xl text-blue-600">
 										{selectedLog.recordsUpdated}
 									</div>
-									<div className="text-xs text-muted-foreground">Atualizados</div>
+									<div className="text-muted-foreground text-xs">Atualizados</div>
 								</div>
 								<div className="text-center">
-									<div className="text-2xl font-bold text-red-600">{selectedLog.recordsFailed}</div>
-									<div className="text-xs text-muted-foreground">Falharam</div>
+									<div className="font-bold text-2xl text-red-600">{selectedLog.recordsFailed}</div>
+									<div className="text-muted-foreground text-xs">Falharam</div>
 								</div>
 							</div>
 
 							{selectedLog.errors && selectedLog.errors.length > 0 && (
 								<div>
-									<div className="text-sm text-muted-foreground mb-1">Erros</div>
-									<div className="p-3 bg-red-50 dark:bg-red-950/30 rounded text-sm text-red-700 dark:text-red-300">
-										<ul className="list-disc list-inside space-y-1">
+									<div className="mb-1 text-muted-foreground text-sm">Erros</div>
+									<div className="rounded bg-red-50 p-3 text-red-700 text-sm dark:bg-red-950/30 dark:text-red-300">
+										<ul className="list-inside list-disc space-y-1">
 											{selectedLog.errors.map((error, i) => (
 												<li key={i}>{error}</li>
 											))}
@@ -300,8 +300,8 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 
 							{selectedLog.filters && (
 								<div>
-									<div className="text-sm text-muted-foreground mb-1">Filtros</div>
-									<pre className="p-3 bg-muted rounded text-xs overflow-auto max-h-40">
+									<div className="mb-1 text-muted-foreground text-sm">Filtros</div>
+									<pre className="max-h-40 overflow-auto rounded bg-muted p-3 text-xs">
 										{JSON.stringify(selectedLog.filters, null, 2)}
 									</pre>
 								</div>

@@ -45,7 +45,7 @@ export function RevenueChart() {
 				<CardTitle>Receita: Recebido vs Projetado</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={300} minWidth={0}>
+				<ResponsiveContainer height={300} minWidth={0} width="100%">
 					<LineChart data={chartData}>
 						<CartesianGrid strokeDasharray="3 3" />
 						<XAxis dataKey="month" />
@@ -55,13 +55,13 @@ export function RevenueChart() {
 								typeof value === 'number' ? formatCurrency(value) : value
 							}
 						/>
-						<Line type="monotone" dataKey="received" stroke="#10b981" name="Recebido" />
+						<Line dataKey="received" name="Recebido" stroke="#10b981" type="monotone" />
 						<Line
-							type="monotone"
 							dataKey="projected"
-							stroke="#3b82f6"
 							name="Projetado"
+							stroke="#3b82f6"
 							strokeDasharray="5 5"
+							type="monotone"
 						/>
 					</LineChart>
 				</ResponsiveContainer>

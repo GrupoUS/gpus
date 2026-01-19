@@ -42,7 +42,7 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 		return (
 			<div className="space-y-2 p-4">
 				{[1, 2, 3, 4, 5].map((i) => (
-					<div key={i} className="h-16 bg-muted/20 animate-pulse rounded-lg" />
+					<div className="h-16 animate-pulse rounded-lg bg-muted/20" key={i} />
 				))}
 			</div>
 		);
@@ -50,8 +50,8 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 
 	if (conversations.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center p-8 text-center h-64 text-muted-foreground">
-				<MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+			<div className="flex h-64 flex-col items-center justify-center p-8 text-center text-muted-foreground">
+				<MessageSquare className="mb-4 h-12 w-12 opacity-50" />
 				<p>Nenhuma conversa encontrada</p>
 			</div>
 		);
@@ -74,42 +74,42 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 
 					return (
 						<Link
-							key={item._id}
-							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
-							to={`/chat/${item.department}/${item._id}` as any}
-							preload="intent"
-							className="w-full text-left p-3 rounded-lg transition-colors hover:bg-muted/50 block group"
 							activeProps={{ className: 'bg-muted' }}
+							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
+							className="group block w-full rounded-lg p-3 text-left transition-colors hover:bg-muted/50"
+							key={item._id}
+							preload="intent"
+							to={`/chat/${item.department}/${item._id}` as any}
 						>
 							<div className="flex items-start gap-3">
-								<div className="shrink-0 relative">
-									<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-medium text-sm">
+								<div className="relative shrink-0">
+									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-indigo-500 font-medium text-sm text-white">
 										{initials}
 									</div>
 									<div
 										className={cn(
-											'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background',
+											'absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-background',
 											statusColors[item.status] || 'bg-muted-foreground',
 										)}
 									/>
 								</div>
-								<div className="flex-1 min-w-0">
+								<div className="min-w-0 flex-1">
 									<div className="flex items-center justify-between gap-2">
-										<span className="font-medium text-sm truncate text-foreground">
+										<span className="truncate font-medium text-foreground text-sm">
 											{contactName}
 										</span>
-										<span className="text-xs text-muted-foreground whitespace-nowrap">
+										<span className="whitespace-nowrap text-muted-foreground text-xs">
 											{formatDistanceToNow(item.lastMessageAt || item._creationTime, {
 												addSuffix: false,
 												locale: ptBR,
 											})}
 										</span>
 									</div>
-									<p className="text-xs text-muted-foreground truncate mt-0.5 group-hover:text-foreground/80 transition-colors">
+									<p className="mt-0.5 truncate text-muted-foreground text-xs transition-colors group-hover:text-foreground/80">
 										{lastMessageText}
 									</p>
 									<div className="mt-1 flex gap-2">
-										<Badge variant="outline" className="text-[10px] px-1 h-5">
+										<Badge className="h-5 px-1 text-[10px]" variant="outline">
 											{item.channel}
 										</Badge>
 									</div>

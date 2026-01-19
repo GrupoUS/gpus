@@ -14,16 +14,17 @@
  */
 
 import { v } from 'convex/values';
-import { action, internalMutation, internalQuery } from './_generated/server';
+
 import { internal } from './_generated/api';
+import { action, internalMutation, internalQuery } from './_generated/server';
 import { brevoSmtp } from './lib/brevo';
 
 // Type assertion helper for internal functions during code generation bootstrap
-// @ts-ignore - Convex type inference is excessively deep for internal API references
+// @ts-expect-error - Convex type inference is excessively deep for internal API references
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const _internalAny: any = internal;
+const InternalAny: any = internal;
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const internalTransactionalEmails: Record<string, any> = _internalAny.transactionalEmails;
+const internalTransactionalEmails: Record<string, any> = InternalAny.transactionalEmails;
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL QUERIES
@@ -272,7 +273,7 @@ export const sendClassReminder = action({
 			studentId: args.studentId,
 		});
 
-		if (!student || !student.email) {
+		if (!student?.email) {
 			throw new Error('Aluno não encontrado ou sem email');
 		}
 

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
-import { query, internalMutation } from './_generated/server';
+
+import { internalMutation, query } from './_generated/server';
 import { getOrganizationId } from './lib/auth';
 
 /**
@@ -195,7 +196,7 @@ export const getDashboard = query({
 		const calculateAvgResponseTime = (convs: typeof currentConversations) => {
 			if (convs.length === 0) return 0;
 			const totalTime = convs.reduce((sum, c) => sum + ((c.firstResponseAt || 0) - c.createdAt), 0);
-			return Math.round(totalTime / convs.length / 60000); // in minutes
+			return Math.round(totalTime / convs.length / 60_000); // in minutes
 		};
 
 		const avgResponseTime = calculateAvgResponseTime(currentConversations);

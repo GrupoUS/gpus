@@ -68,11 +68,11 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 							<TableCell>
 								<div className="flex flex-col">
 									<span className="font-medium">{lead.name}</span>
-									<div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+									<div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
 										<Mail className="h-3 w-3" />
 										{lead.email}
 									</div>
-									<div className="flex items-center gap-2 text-xs text-muted-foreground">
+									<div className="flex items-center gap-2 text-muted-foreground text-xs">
 										<Phone className="h-3 w-3" />
 										{lead.phone}
 									</div>
@@ -83,10 +83,10 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 							</TableCell>
 							<TableCell>{getStatusBadge(lead.status)}</TableCell>
 							<TableCell>
-								<span className="text-sm text-muted-foreground">{lead.utmSource || '-'}</span>
+								<span className="text-muted-foreground text-sm">{lead.utmSource || '-'}</span>
 							</TableCell>
 							<TableCell>
-								<div className="flex flex-col text-sm text-muted-foreground">
+								<div className="flex flex-col text-muted-foreground text-sm">
 									<span>
 										{formatDistanceToNow(lead.createdAt, {
 											addSuffix: true,
@@ -94,8 +94,8 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 										})}
 									</span>
 									{lead.lgpdConsent && (
-										<span className="text-[10px] text-green-600 flex items-center gap-1">
-											<span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+										<span className="flex items-center gap-1 text-[10px] text-green-600">
+											<span className="h-1.5 w-1.5 rounded-full bg-green-500" />
 											LGPD
 										</span>
 									)}
@@ -103,12 +103,12 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 							</TableCell>
 							<TableCell className="text-right">
 								<Select
-									value={lead.status}
 									onValueChange={(value: 'new' | 'contacted' | 'converted' | 'unsubscribed') =>
 										onStatusUpdate(lead._id, value)
 									}
+									value={lead.status}
 								>
-									<SelectTrigger className="w-[140px] ml-auto h-8 text-xs">
+									<SelectTrigger className="ml-auto h-8 w-[140px] text-xs">
 										<SelectValue placeholder="Alterar Status" />
 									</SelectTrigger>
 									<SelectContent>
@@ -124,7 +124,7 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 					))}
 					{leads.length === 0 && (
 						<TableRow>
-							<TableCell colSpan={6} className="h-24 text-center">
+							<TableCell className="h-24 text-center" colSpan={6}>
 								Nenhum lead encontrado. Ajuste os filtros ou aguarde novos cadastros.
 							</TableCell>
 						</TableRow>

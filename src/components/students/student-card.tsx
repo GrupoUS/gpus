@@ -61,8 +61,8 @@ function Highlight({ text, term }: { text?: string; term?: string }) {
 			{parts.map((part, i) =>
 				part.toLowerCase() === safeTerm.toLowerCase() ? (
 					<mark
+						className="rounded-xs bg-yellow-200 px-0.5 text-foreground dark:bg-yellow-800"
 						key={i}
-						className="bg-yellow-200 dark:bg-yellow-800 rounded-xs px-0.5 text-foreground"
 					>
 						{part}
 					</mark>
@@ -78,7 +78,7 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 	return (
 		<Card
 			className={cn(
-				'transition-all hover:shadow-md cursor-pointer',
+				'cursor-pointer transition-all hover:shadow-md',
 				onClick && 'hover:border-primary/50',
 			)}
 			onClick={onClick}
@@ -86,14 +86,14 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 			<CardHeader className="pb-2">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-indigo-500">
 							<User className="h-5 w-5 text-white" />
 						</div>
 						<div>
 							<h3 className="font-semibold text-sm">
-								<Highlight text={student.name} term={searchTerm} />
+								<Highlight term={searchTerm} text={student.name} />
 							</h3>
-							<p className="text-xs text-muted-foreground">{student.profession}</p>
+							<p className="text-muted-foreground text-xs">{student.profession}</p>
 						</div>
 					</div>
 					<Badge variant={statusVariants[student.status]}>{statusLabels[student.status]}</Badge>
@@ -102,20 +102,20 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 
 			<CardContent className="space-y-3">
 				{/* Contact Info */}
-				<div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+				<div className="flex flex-wrap gap-3 text-muted-foreground text-xs">
 					<span className="flex items-center gap-1">
 						<Phone className="h-3 w-3" />
-						<Highlight text={student.phone} term={searchTerm} />
+						<Highlight term={searchTerm} text={student.phone} />
 					</span>
 					<span className="flex items-center gap-1">
 						<Mail className="h-3 w-3" />
-						<Highlight text={student.email} term={searchTerm} />
+						<Highlight term={searchTerm} text={student.email} />
 					</span>
 				</div>
 
 				{/* Clinic Info */}
 				{student.hasClinic && student.clinicName && (
-					<div className="flex items-center gap-1 text-xs text-muted-foreground">
+					<div className="flex items-center gap-1 text-muted-foreground text-xs">
 						<Building2 className="h-3 w-3" />
 						{student.clinicName}
 						{student.clinicCity && ` - ${student.clinicCity}`}
@@ -123,10 +123,10 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 				)}
 
 				{/* Footer */}
-				<div className="flex items-center justify-between pt-2 border-t">
+				<div className="flex items-center justify-between border-t pt-2">
 					<div className="flex items-center gap-2">
 						<GraduationCap className="h-4 w-4 text-muted-foreground" />
-						<span className="text-xs text-muted-foreground">
+						<span className="text-muted-foreground text-xs">
 							Desde {formatDistanceToNow(student.createdAt, { locale: ptBR })}
 						</span>
 					</div>
@@ -134,7 +134,7 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 					{student.churnRisk !== 'baixo' && (
 						<div className={cn('flex items-center gap-1', churnRiskColors[student.churnRisk])}>
 							<AlertTriangle className="h-3 w-3" />
-							<span className="text-xs font-medium">Risco {student.churnRisk}</span>
+							<span className="font-medium text-xs">Risco {student.churnRisk}</span>
 						</div>
 					)}
 				</div>

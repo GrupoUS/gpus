@@ -18,23 +18,23 @@ interface PreviewCardProps {
 function PreviewCard({ title, value, icon: Icon, delay = 0 }: PreviewCardProps) {
 	return (
 		<motion.div
-			variants={float}
-			initial="hidden"
 			animate="visible"
+			initial="hidden"
 			transition={{
 				delay,
 				duration: 3,
 				repeat: Number.POSITIVE_INFINITY,
 				ease: 'easeInOut',
 			}}
+			variants={float}
 		>
-			<Card className="glass-card hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
+			<Card className="glass-card transition-all duration-300 hover:shadow-primary/20 hover:shadow-xl">
 				<CardHeader className="flex flex-row items-center justify-between pb-2">
-					<CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+					<CardTitle className="font-medium text-muted-foreground text-sm">{title}</CardTitle>
 					<Icon className="h-4 w-4 text-primary" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold font-display">{value}</div>
+					<div className="font-bold font-display text-2xl">{value}</div>
 				</CardContent>
 			</Card>
 		</motion.div>
@@ -56,28 +56,28 @@ function DashboardContent() {
 	return (
 		<MacbookScreenContent className="bg-background/95">
 			{/* Grid of floating cards */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
 				{previewData.map((item, index) => (
 					<PreviewCard
+						delay={index * 0.2}
+						icon={item.icon}
 						key={item.title}
 						title={item.title}
 						value={item.value}
-						icon={item.icon}
-						delay={index * 0.2}
 					/>
 				))}
 			</div>
 
 			{/* Chart preview placeholder */}
 			<motion.div
-				variants={fadeInUp}
-				initial="hidden"
 				animate="visible"
-				className="mt-4 md:mt-6 h-32 md:h-48 lg:h-56 rounded-lg bg-linear-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 border border-primary/20 flex items-center justify-center"
+				className="mt-4 flex h-32 items-center justify-center rounded-lg border border-primary/20 bg-linear-to-br from-primary/10 via-us-purple-light/10 to-us-gold/10 md:mt-6 md:h-48 lg:h-56"
+				initial="hidden"
+				variants={fadeInUp}
 			>
 				<div className="text-center">
-					<BarChart3 className="h-8 w-8 md:h-10 md:w-10 mx-auto mb-2 md:mb-3 text-primary/50" />
-					<p className="text-xs md:text-sm text-muted-foreground font-sans">
+					<BarChart3 className="mx-auto mb-2 h-8 w-8 text-primary/50 md:mb-3 md:h-10 md:w-10" />
+					<p className="font-sans text-muted-foreground text-xs md:text-sm">
 						Visualização de dados em tempo real
 					</p>
 				</div>
@@ -88,22 +88,22 @@ function DashboardContent() {
 
 export function DashboardPreview() {
 	return (
-		<section className="py-16 md:py-24 relative overflow-hidden">
+		<section className="relative overflow-hidden py-16 md:py-24">
 			{/* Background overlay */}
 			<div className="absolute inset-0 bg-linear-to-b from-transparent via-background/50 to-background" />
 
 			<motion.div
-				variants={staggerContainer}
+				className="container relative z-10 mx-auto px-4 md:px-6"
 				initial="hidden"
-				whileInView="visible"
+				variants={staggerContainer}
 				viewport={{ once: true, margin: '-100px' }}
-				className="container px-4 md:px-6 mx-auto relative z-10"
+				whileInView="visible"
 			>
-				<motion.div variants={fadeInUp} className="mb-8 md:mb-12">
+				<motion.div className="mb-8 md:mb-12" variants={fadeInUp}>
 					<ScrollFloatText
 						containerClassName="max-w-4xl mx-auto"
-						textClassName="text-3xl md:text-4xl font-display font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/50"
 						subNoteClassName="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4"
+						textClassName="text-3xl md:text-4xl font-display font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/50"
 					/>
 				</motion.div>
 

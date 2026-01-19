@@ -71,7 +71,7 @@ export function RemoveDialog({ open, onOpenChange, user }: RemoveDialogProps) {
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog onOpenChange={onOpenChange} open={open}>
 			<DialogContent className="border-destructive/50">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2 text-destructive">
@@ -84,7 +84,7 @@ export function RemoveDialog({ open, onOpenChange, user }: RemoveDialogProps) {
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 						<FormField
 							control={form.control}
 							name="reason"
@@ -114,10 +114,10 @@ export function RemoveDialog({ open, onOpenChange, user }: RemoveDialogProps) {
 							)}
 						/>
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+							<Button onClick={() => onOpenChange(false)} type="button" variant="outline">
 								Cancelar
 							</Button>
-							<Button type="submit" variant="destructive" disabled={form.formState.isSubmitting}>
+							<Button disabled={form.formState.isSubmitting} type="submit" variant="destructive">
 								{form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 								Confirmar Remoção
 							</Button>

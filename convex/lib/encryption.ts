@@ -100,7 +100,6 @@ export async function encrypt(data: string): Promise<string> {
 
 		return bufferToHex(combined.buffer as ArrayBuffer);
 	} catch (error) {
-		console.error('Encryption error:', error);
 		if (error instanceof Error && error.message.includes('ENCRYPTION_KEY')) {
 			throw error;
 		}
@@ -128,7 +127,7 @@ export async function decrypt(encryptedData: string): Promise<string> {
 		const decrypted = await crypto.subtle.decrypt(
 			{
 				name: ENCRYPTION_CONFIG.algorithm,
-				iv: iv,
+				iv,
 				tagLength: ENCRYPTION_CONFIG.tagLength,
 			},
 			key,
@@ -137,7 +136,6 @@ export async function decrypt(encryptedData: string): Promise<string> {
 
 		return decoder.decode(decrypted);
 	} catch (error) {
-		console.error('Decryption error:', error);
 		if (error instanceof Error && error.message.includes('ENCRYPTION_KEY')) {
 			throw error;
 		}

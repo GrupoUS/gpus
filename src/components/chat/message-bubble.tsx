@@ -26,8 +26,8 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 
 	if (isSystem) {
 		return (
-			<div className="flex justify-center my-2">
-				<span className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+			<div className="my-2 flex justify-center">
+				<span className="rounded-full bg-muted/50 px-3 py-1 text-muted-foreground text-xs">
 					{message.content}
 				</span>
 			</div>
@@ -35,34 +35,34 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 	}
 
 	return (
-		<div className={cn('flex mb-3', isOwn ? 'justify-end' : 'justify-start')}>
+		<div className={cn('mb-3 flex', isOwn ? 'justify-end' : 'justify-start')}>
 			<div
 				className={cn(
 					'max-w-[75%] rounded-2xl px-4 py-2 shadow-sm',
 					isOwn
-						? 'bg-linear-to-r from-purple-600 to-indigo-600 text-white rounded-br-md'
+						? 'rounded-br-md bg-linear-to-r from-purple-600 to-indigo-600 text-white'
 						: isBot
-							? 'bg-amber-100 text-amber-900 rounded-bl-md border border-amber-200'
-							: 'bg-muted rounded-bl-md',
+							? 'rounded-bl-md border border-amber-200 bg-amber-100 text-amber-900'
+							: 'rounded-bl-md bg-muted',
 				)}
 			>
-				{isBot && <span className="text-xs font-medium block mb-1 opacity-75">🤖 Bot</span>}
+				{isBot && <span className="mb-1 block font-medium text-xs opacity-75">🤖 Bot</span>}
 
 				{message.contentType === 'image' && message.mediaUrl && (
-					<img src={message.mediaUrl} alt="Imagem" className="rounded-lg max-w-full mb-2" />
+					<img alt="Imagem" className="mb-2 max-w-full rounded-lg" src={message.mediaUrl} />
 				)}
 
 				{message.contentType === 'audio' && message.mediaUrl && (
-					<audio controls className="max-w-full mb-2">
+					<audio className="mb-2 max-w-full" controls>
 						<source src={message.mediaUrl} />
 						<track kind="captions" />
 					</audio>
 				)}
 
-				<p className="text-sm wrap-break-word">{message.content}</p>
+				<p className="wrap-break-word text-sm">{message.content}</p>
 
 				<div
-					className={cn('flex items-center gap-1 mt-1', isOwn ? 'justify-end' : 'justify-start')}
+					className={cn('mt-1 flex items-center gap-1', isOwn ? 'justify-end' : 'justify-start')}
 				>
 					<span className={cn('text-xs', isOwn ? 'text-white/70' : 'text-muted-foreground')}>
 						{formatDistanceToNow(message.createdAt ?? message._creationTime, {

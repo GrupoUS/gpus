@@ -26,5 +26,5 @@ function StudentDetailPage() {
 		navigate({ to: '/students', search: (prev) => prev });
 	};
 
-	return <StudentDetail studentId={studentId as Id<'students'>} onClose={handleClose} />;
+	return <StudentDetail onClose={handleClose} studentId={studentId as Id<'students'>} />;
 }

@@ -14,14 +14,14 @@ export function ProductEmptyState({
 	onAddStudent,
 }: ProductEmptyStateProps) {
 	return (
-		<div className="flex flex-col items-center justify-center py-12 text-center col-span-full bg-muted/5 rounded-lg border border-dashed">
-			<div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+		<div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/5 py-12 text-center">
+			<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 				<GraduationCap className="h-6 w-6 text-muted-foreground" />
 			</div>
-			<p className="text-sm text-muted-foreground mb-4">{message}</p>
+			<p className="mb-4 text-muted-foreground text-sm">{message}</p>
 			{onAddStudent && (
-				<Button variant="outline" size="sm" onClick={onAddStudent}>
-					<Plus className="w-4 h-4 mr-2" />
+				<Button onClick={onAddStudent} size="sm" variant="outline">
+					<Plus className="mr-2 h-4 w-4" />
 					Adicionar aluno
 				</Button>
 			)}

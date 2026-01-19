@@ -15,7 +15,6 @@ export function validateMessagingWebhookSecret(secret: string | null): boolean {
 	const expectedSecret = process.env.MESSAGING_WEBHOOK_SECRET;
 
 	if (!expectedSecret) {
-		console.error('MESSAGING_WEBHOOK_SECRET environment variable not set');
 		return false;
 	}
 

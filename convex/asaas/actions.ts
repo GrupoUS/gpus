@@ -1,12 +1,13 @@
 'use action';
 
-import { action } from '../_generated/server';
-import { internal } from '../_generated/api';
 import { v } from 'convex/values';
-import { type AsaasClient } from './client';
-import { AsaasConfigurationError } from './errors';
+
+import { internal } from '../_generated/api';
+import { action } from '../_generated/server';
 import { getOrganizationId } from '../lib/auth';
+import type { AsaasClient } from './client';
 import { getAsaasClientFromSettings } from './config';
+import { AsaasConfigurationError } from './errors';
 
 /**
  * Check if a customer already exists in Asaas by CPF or Email
@@ -81,13 +82,13 @@ export const createAsaasCustomer = action({
 			});
 
 			// Save Asaas ID to student record
-			// @ts-ignore - TypeScript has issues with deep type inference in Convex internal mutations
+			// @ts-expect-error - TypeScript has issues with deep type inference in Convex internal mutations
 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 				studentId: args.studentId,
 				asaasCustomerId: customer.id,
 			});
 
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/customers',
 				method: 'POST',
@@ -98,7 +99,7 @@ export const createAsaasCustomer = action({
 
 			return customer;
 		} catch (error: any) {
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/customers',
 				method: 'POST',
@@ -107,7 +108,6 @@ export const createAsaasCustomer = action({
 				userId: (await ctx.auth.getUserIdentity())?.subject,
 				errorMessage: error.message,
 			});
-			console.error('Asaas createCustomer error:', error.response?.data || error.message);
 			throw new Error(
 				`Failed to create Asaas customer: ${JSON.stringify(error.response?.data || error.message)}`,
 			);
@@ -157,9 +157,7 @@ export const createAsaasPayment = action({
 						encodedImage: qrResponse.encodedImage,
 						payload: qrResponse.payload,
 					};
-				} catch (qrError) {
-					console.error('Failed to fetch PIX QrCode', qrError);
-				}
+				} catch (_qrError) {}
 			}
 
 			// Save to DB
@@ -177,7 +175,7 @@ export const createAsaasPayment = action({
 				pixQrCode: pixData.payload, // Save payload string
 			});
 
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/payments',
 				method: 'POST',
@@ -192,7 +190,7 @@ export const createAsaasPayment = action({
 				pixQrCodePayload: pixData.payload,
 			};
 		} catch (error: any) {
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/payments',
 				method: 'POST',
@@ -201,7 +199,6 @@ export const createAsaasPayment = action({
 				userId: (await ctx.auth.getUserIdentity())?.subject,
 				errorMessage: error.message,
 			});
-			console.error('Asaas createPayment error:', error.response?.data || error.message);
 			throw new Error(
 				`Failed to create Asaas payment: ${JSON.stringify(error.response?.data || error.message)}`,
 			);
@@ -241,7 +238,7 @@ export const createAsaasSubscription = action({
 				externalReference: args.externalReference,
 			});
 
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/subscriptions',
 				method: 'POST',
@@ -252,7 +249,7 @@ export const createAsaasSubscription = action({
 
 			return subscription;
 		} catch (error: any) {
-			// @ts-ignore - audit module types not yet generated
+			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/subscriptions',
 				method: 'POST',
@@ -261,7 +258,6 @@ export const createAsaasSubscription = action({
 				userId: (await ctx.auth.getUserIdentity())?.subject,
 				errorMessage: error.message,
 			});
-			console.error('Asaas createSubscription error:', error.response?.data || error.message);
 			throw new Error(
 				`Failed to create Asaas subscription: ${JSON.stringify(error.response?.data || error.message)}`,
 			);
@@ -277,18 +273,10 @@ export const testAsaasConnection = action({
 	args: {},
 	handler: async (ctx) => {
 		try {
-			// Log configuration status
-			console.log('[AsaasTest] Testing connection...');
-
 			const client = await getAsaasClientFromSettings(ctx);
-
-			console.log('[AsaasTest] Client created successfully');
-			console.log('[AsaasTest] Making test API call...');
 
 			// Make a simple API call to validate credentials
 			const response = await client.testConnection();
-
-			console.log('[AsaasTest] Connection successful');
 
 			return {
 				success: true,
@@ -297,8 +285,6 @@ export const testAsaasConnection = action({
 				timestamp: Date.now(),
 			};
 		} catch (error: any) {
-			console.error('[AsaasTest] Connection failed:', error);
-
 			const errorMessage =
 				error.response?.data?.errors?.[0]?.description || error.message || 'Erro desconhecido';
 			const statusCode = error.response?.status;
@@ -369,7 +355,7 @@ export const syncStudentToAsaas = action({
 		}
 
 		// Get student data
-		// @ts-ignore - Deep type instantiation error
+		// @ts-expect-error - Deep type instantiation error
 		const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
 			studentId: args.studentId,
 		});
@@ -456,7 +442,7 @@ export const syncAllStudents = action({
 			throw new Error('Organization ID not found.');
 		}
 
-		// @ts-ignore
+		// @ts-expect-error
 		const students = (await ctx.runQuery(internal.asaas.queries.listAllStudents, {
 			organizationId,
 		})) as any[];
@@ -514,8 +500,7 @@ export const syncAllStudents = action({
 				});
 
 				synced++;
-			} catch (error) {
-				console.error(`Error syncing student ${student._id}:`, error);
+			} catch (_error) {
 				errors++;
 			}
 		}
@@ -540,12 +525,10 @@ export const importCustomersFromAsaas = action({
 		let organizationId: string | undefined;
 		try {
 			organizationId = await getOrganizationId(ctx);
-		} catch (e) {
-			console.warn('Could not determine organizationId in importCustomersFromAsaas', e);
-		}
+		} catch (_e) {}
 
 		// Create sync log
-		// @ts-ignore - TypeScript has issues with deep type inference
+		// @ts-expect-error - TypeScript has issues with deep type inference
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'customers' as const,
 			initiatedBy: args.initiatedBy,
@@ -579,7 +562,7 @@ export const importCustomersFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-ignore - Deep type instantiation
+				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -614,7 +597,7 @@ export const importCustomersFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -644,7 +627,7 @@ export const importCustomersFromAsaas = action({
 			};
 
 			// Update sync log as failed with detailed error
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -656,12 +639,6 @@ export const importCustomersFromAsaas = action({
 				lastError: JSON.stringify(errorDetails),
 				completedAt: Date.now(),
 			});
-
-			console.error(
-				`[${new Date().toISOString()}] [importCustomersFromAsaas] Sync failed:`,
-				error.message,
-				error.stack,
-			);
 
 			throw error;
 		}
@@ -686,12 +663,10 @@ export const importPaymentsFromAsaas = action({
 		let organizationId: string | undefined;
 		try {
 			organizationId = await getOrganizationId(ctx);
-		} catch (e) {
-			console.warn('Could not determine organizationId in importPaymentsFromAsaas', e);
-		}
+		} catch (_e) {}
 
 		// Create sync log
-		// @ts-ignore
+		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'payments' as const,
 			initiatedBy: args.initiatedBy,
@@ -736,7 +711,7 @@ export const importPaymentsFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-ignore - Deep type instantiation
+				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -771,7 +746,7 @@ export const importPaymentsFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -805,7 +780,7 @@ export const importPaymentsFromAsaas = action({
 				name: error.name,
 			};
 
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -817,12 +792,6 @@ export const importPaymentsFromAsaas = action({
 				lastError: JSON.stringify(errorDetails),
 				completedAt: Date.now(),
 			});
-
-			console.error(
-				`[${new Date().toISOString()}] [importPaymentsFromAsaas] Sync failed:`,
-				error.message,
-				error.stack,
-			);
 
 			throw error;
 		}
@@ -845,12 +814,10 @@ export const importSubscriptionsFromAsaas = action({
 		let organizationId: string | undefined;
 		try {
 			organizationId = await getOrganizationId(ctx);
-		} catch (e) {
-			console.warn('Could not determine organizationId in importSubscriptionsFromAsaas', e);
-		}
+		} catch (_e) {}
 
 		// Create sync log
-		// @ts-ignore
+		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'subscriptions' as const,
 			initiatedBy: args.initiatedBy,
@@ -892,7 +859,7 @@ export const importSubscriptionsFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-ignore - Deep type instantiation
+				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -927,7 +894,7 @@ export const importSubscriptionsFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -956,7 +923,7 @@ export const importSubscriptionsFromAsaas = action({
 				name: error.name,
 			};
 
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -968,12 +935,6 @@ export const importSubscriptionsFromAsaas = action({
 				lastError: JSON.stringify(errorDetails),
 				completedAt: Date.now(),
 			});
-
-			console.error(
-				`[${new Date().toISOString()}] [importSubscriptionsFromAsaas] Sync failed:`,
-				error.message,
-				error.stack,
-			);
 
 			throw error;
 		}
@@ -993,7 +954,7 @@ export const syncFinancialDataFromAsaas = action({
 		const client = await getAsaasClientFromSettings(ctx);
 
 		// Create sync log
-		// @ts-ignore
+		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'financial' as const,
 			initiatedBy: args.initiatedBy,
@@ -1011,7 +972,7 @@ export const syncFinancialDataFromAsaas = action({
 			});
 
 			// Update sync log as completed
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -1027,7 +988,7 @@ export const syncFinancialDataFromAsaas = action({
 				summary,
 			};
 		} catch (error: any) {
-			// @ts-ignore
+			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -1070,22 +1031,16 @@ export const importAllFromAsaas = action({
 		initiatedBy: v.string(),
 	},
 	handler: async (ctx, args): Promise<CombinedImportResult> => {
-		console.log('[importAllFromAsaas] Starting batch import...');
-
 		// CRITICAL: Require authentication before importing
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) {
-			console.error('[importAllFromAsaas] No authenticated user');
 			throw new Error('Você precisa estar logado para importar dados do Asaas.');
 		}
-		console.log('[importAllFromAsaas] User authenticated:', identity.subject);
 
 		let client: AsaasClient;
 		try {
 			client = await getAsaasClientFromSettings(ctx);
-			console.log('[importAllFromAsaas] Asaas client initialized successfully');
 		} catch (error: any) {
-			console.error('[importAllFromAsaas] Failed to initialize Asaas client:', error.message);
 			throw new Error(
 				`Falha ao conectar com Asaas: ${error.message}. Verifique se a API Key está configurada em Configurações > Integrações.`,
 			);
@@ -1095,9 +1050,7 @@ export const importAllFromAsaas = action({
 		let organizationId: string;
 		try {
 			organizationId = await getOrganizationId(ctx);
-			console.log('[importAllFromAsaas] Organization ID:', organizationId);
-		} catch (e: any) {
-			console.error('[importAllFromAsaas] Failed to get organizationId:', e.message);
+		} catch (_e: any) {
 			throw new Error(
 				'Não foi possível determinar sua organização. Por favor, faça logout e login novamente.',
 			);
@@ -1122,11 +1075,6 @@ export const importAllFromAsaas = action({
 			adaptiveBatching: true,
 		};
 
-		// ═══════════════════════════════════════════════════════
-		// STEP 1: IMPORT CUSTOMERS (BATCH PROCESSING)
-		// ═══════════════════════════════════════════════════════
-		console.log('[importAllFromAsaas] Step 1: Batch importing customers...');
-
 		let customersLogId;
 		try {
 			customersLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
@@ -1147,7 +1095,6 @@ export const importAllFromAsaas = action({
 
 		while (customersHasMore && customersPageCount < MAX_PAGES) {
 			customersPageCount++;
-			console.log(`[importAllFromAsaas] Fetching customers page ${customersPageCount}...`);
 			const response = await client.listAllCustomers({
 				offset: customersOffset,
 				limit,
@@ -1156,9 +1103,6 @@ export const importAllFromAsaas = action({
 			customersHasMore = response.hasMore;
 			customersOffset += limit;
 		}
-		console.log(
-			`[importAllFromAsaas] Collected ${allCustomers.length} customers for batch processing`,
-		);
 
 		// Batch process customers
 		const customerWorker = (customer: any) => processCustomerWorker(ctx, customer, organizationId);
@@ -1213,11 +1157,6 @@ export const importAllFromAsaas = action({
 			};
 		}
 
-		// ═══════════════════════════════════════════════════════
-		// STEP 2: IMPORT PAYMENTS (BATCH PROCESSING)
-		// ═══════════════════════════════════════════════════════
-		console.log('[importAllFromAsaas] Step 2: Batch importing payments...');
-
 		const paymentsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'payments' as const,
 			initiatedBy: args.initiatedBy,
@@ -1239,9 +1178,6 @@ export const importAllFromAsaas = action({
 			paymentsHasMore = response.hasMore;
 			paymentsOffset += limit;
 		}
-		console.log(
-			`[importAllFromAsaas] Collected ${allPayments.length} payments for batch processing`,
-		);
 
 		// Batch process payments
 		const paymentWorker = (payment: any) => processPaymentWorker(ctx, payment, organizationId);
@@ -1283,11 +1219,6 @@ export const importAllFromAsaas = action({
 			recordsFailed: paymentsBatchResult.failed.length,
 		};
 
-		// ═══════════════════════════════════════════════════════
-		// STEP 3: IMPORT SUBSCRIPTIONS (BATCH PROCESSING)
-		// ═══════════════════════════════════════════════════════
-		console.log('[importAllFromAsaas] Step 3: Batch importing subscriptions...');
-
 		const subscriptionsLogId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'subscriptions' as const,
 			initiatedBy: args.initiatedBy,
@@ -1309,9 +1240,6 @@ export const importAllFromAsaas = action({
 			subscriptionsHasMore = response.hasMore;
 			subscriptionsOffset += limit;
 		}
-		console.log(
-			`[importAllFromAsaas] Collected ${allSubscriptions.length} subscriptions for batch processing`,
-		);
 
 		// Batch process subscriptions
 		const subscriptionWorker = (subscription: any) =>
@@ -1353,8 +1281,6 @@ export const importAllFromAsaas = action({
 			recordsUpdated: subscriptionsBatchResult.updated || 0,
 			recordsFailed: subscriptionsBatchResult.failed.length,
 		};
-
-		console.log('[importAllFromAsaas] Batch import completed');
 
 		return {
 			success: customersResult.success && paymentsResult.success && subscriptionsResult.success,

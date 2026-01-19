@@ -67,9 +67,9 @@ function ProfileSettingsPage() {
 	}
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<User className="h-6 w-6 text-purple-500" />
 					Meu Perfil
 				</h1>
@@ -91,14 +91,14 @@ function ProfileSettingsPage() {
 						</Avatar>
 						<div className="space-y-1">
 							<h3 className="font-medium">Foto de Perfil</h3>
-							<p className="text-sm text-muted-foreground max-w-xs">
+							<p className="max-w-xs text-muted-foreground text-sm">
 								Sua foto é gerenciada pela sua conta Clerk.
 							</p>
 						</div>
 					</div>
 
 					<Form {...form}>
-						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+						<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 							<FormField
 								control={form.control}
 								name="name"
@@ -131,7 +131,7 @@ function ProfileSettingsPage() {
 							/>
 
 							<div className="flex justify-end">
-								<Button type="submit" disabled={form.formState.isSubmitting}>
+								<Button disabled={form.formState.isSubmitting} type="submit">
 									{form.formState.isSubmitting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />

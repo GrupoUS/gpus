@@ -86,6 +86,7 @@ import type * as scripts_syncUsers from "../scripts/syncUsers.js";
 import type * as settings from "../settings.js";
 import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
+import type * as tags from "../tags.js";
 import type * as templates from "../templates.js";
 import type * as test_helpers from "../test/helpers.js";
 import type * as transactionalEmails from "../transactionalEmails.js";
@@ -176,6 +177,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   students: typeof students;
   studentsImport: typeof studentsImport;
+  tags: typeof tags;
   templates: typeof templates;
   "test/helpers": typeof test_helpers;
   transactionalEmails: typeof transactionalEmails;

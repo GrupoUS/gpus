@@ -1,5 +1,5 @@
-import type { MutationCtx, QueryCtx } from './_generated/server';
 import type { Id } from './_generated/dataModel';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 
 /**
  * Logs an LGPD-related operation to the audit table.
@@ -42,7 +42,7 @@ export async function logAudit(
 		createdAt: Date.now(),
 		studentId: params.studentId,
 		actionType: params.actionType,
-		actorId: actorId,
+		actorId,
 		actorRole: params.actorRole,
 		dataCategory: params.dataCategory,
 		description: params.description,

@@ -201,6 +201,67 @@ export default defineSchema({
 		.index('by_organization_phone', ['organizationId', 'phone']),
 
 	// ═══════════════════════════════════════════════════════
+	// OBJEÇÕES (Objeções de vendas estruturadas)
+	// ═══════════════════════════════════════════════════════
+	objections: defineTable({
+		// Referência ao lead
+		leadId: v.id('leads'),
+
+		// Conteúdo da objeção
+		objectionText: v.string(),
+
+		// Status de resolução
+		resolved: v.optional(v.boolean()),
+		resolution: v.optional(v.string()),
+
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Auditoria
+		recordedBy: v.string(), // Clerk user ID
+		recordedAt: v.number(),
+	})
+		.index('by_lead', ['leadId'])
+		.index('by_organization', ['organizationId'])
+		.index('by_lead_recorded', ['leadId', 'recordedAt']),
+
+	// ═══════════════════════════════════════════════════════
+	// TAREFAS (Itens acionáveis com menções)
+	// ═══════════════════════════════════════════════════════
+	tasks: defineTable({
+		// Descrição da tarefa
+		description: v.string(),
+
+		// Referências opcionais (tarefa pode ser geral ou específica)
+		leadId: v.optional(v.id('leads')),
+		studentId: v.optional(v.id('students')),
+
+		// Agendamento
+		dueDate: v.optional(v.number()), // Unix timestamp
+
+		// Status de conclusão
+		completed: v.boolean(),
+		completedAt: v.optional(v.number()),
+
+		// Colaboração
+		mentionedUserIds: v.optional(v.array(v.id('users'))),
+		assignedTo: v.optional(v.string()), // Clerk user ID
+
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Auditoria
+		createdBy: v.string(), // Clerk user ID
+		createdAt: v.number(),
+		updatedAt: v.number(),
+	})
+		.index('by_lead', ['leadId'])
+		.index('by_organization', ['organizationId'])
+		.index('by_assigned_to', ['assignedTo'])
+		.index('by_due_date', ['dueDate'])
+		.index('by_mentioned_user', ['mentionedUserIds']),
+
+	// ═══════════════════════════════════════════════════════
 	// ALUNOS (Clientes convertidos) - LGPD COMPLIANT
 	// ═══════════════════════════════════════════════════════
 	students: defineTable({
@@ -1500,19 +1561,5 @@ export default defineSchema({
 	})
 		.index('by_lead', ['leadId'])
 		.index('by_tag', ['tagId'])
-		.index('by_organization', ['organizationId']),
-
-	// ═══════════════════════════════════════════════════════
-	// SALES OBJECTIONS
-	// ═══════════════════════════════════════════════════════
-	objections: defineTable({
-		leadId: v.id('leads'),
-		objectionText: v.string(),
-		organizationId: v.string(),
-		recordedBy: v.string(), // Clerk user ID
-		recordedAt: v.number(),
-		resolved: v.optional(v.boolean()),
-	})
-		.index('by_lead_recorded', ['leadId', 'recordedAt'])
 		.index('by_organization', ['organizationId']),
 });

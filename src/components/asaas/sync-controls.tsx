@@ -53,9 +53,9 @@ export function SyncControls() {
 			<CardContent>
 				<div className="grid gap-2 md:grid-cols-2">
 					<Button
-						variant="outline"
-						onClick={() => handleSync('customers')}
 						disabled={loading.customers}
+						onClick={() => handleSync('customers')}
+						variant="outline"
 					>
 						{loading.customers ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -65,9 +65,9 @@ export function SyncControls() {
 						Sincronizar Clientes
 					</Button>
 					<Button
-						variant="outline"
-						onClick={() => handleSync('payments')}
 						disabled={loading.payments}
+						onClick={() => handleSync('payments')}
+						variant="outline"
 					>
 						{loading.payments ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -77,9 +77,9 @@ export function SyncControls() {
 						Sincronizar Pagamentos
 					</Button>
 					<Button
-						variant="outline"
-						onClick={() => handleSync('subscriptions')}
 						disabled={loading.subscriptions}
+						onClick={() => handleSync('subscriptions')}
+						variant="outline"
 					>
 						{loading.subscriptions ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -88,7 +88,7 @@ export function SyncControls() {
 						)}
 						Sincronizar Assinaturas
 					</Button>
-					<Button onClick={() => handleSync('all')} disabled={loading.all}>
+					<Button disabled={loading.all} onClick={() => handleSync('all')}>
 						{loading.all ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 						) : (

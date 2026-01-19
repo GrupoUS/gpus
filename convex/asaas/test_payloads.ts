@@ -8,8 +8,9 @@
  */
 
 import { v } from 'convex/values';
-import { action } from '../_generated/server';
+
 import { internal } from '../_generated/api';
+import { action } from '../_generated/server';
 import { requireOrgRole } from '../lib/auth';
 
 // ═══════════════════════════════════════════════════════
@@ -303,7 +304,7 @@ export const sendTestWebhook = action({
 
 		try {
 			// Call internal webhook processor
-			// @ts-ignore - Deep type instantiation workaround for Convex internal actions
+			// @ts-expect-error - Deep type instantiation workaround for Convex internal actions
 			const result = await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
 				eventId: (payload.id as string) || `test_${Date.now()}`,
 				eventType: (payload.event as string) || args.eventType,

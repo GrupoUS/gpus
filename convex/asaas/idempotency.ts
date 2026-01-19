@@ -6,6 +6,7 @@
  */
 
 import { v } from 'convex/values';
+
 import { internalMutation, internalQuery } from '../_generated/server';
 
 // ═══════════════════════════════════════════════════════
@@ -182,7 +183,7 @@ export async function withIdempotency<T>(
 	ttlMs?: number,
 ): Promise<{ proceeded: boolean; result?: T; existingResult?: unknown }> {
 	// Check if already processed
-	// @ts-ignore - Deep type instantiation error
+	// @ts-expect-error - Deep type instantiation error
 	const existing = await ctx.runQuery(internal.asaas.idempotency.checkIdempotency, { key });
 
 	if (existing.exists) {
@@ -193,7 +194,7 @@ export async function withIdempotency<T>(
 	const result = await fn();
 
 	// Mark as processed
-	// @ts-ignore - Deep type instantiation error
+	// @ts-expect-error - Deep type instantiation error
 	await ctx.runMutation(internal.asaas.idempotency.markIdempotency, {
 		key,
 		result,

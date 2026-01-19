@@ -44,17 +44,17 @@ function MarketingLayout() {
 	];
 
 	return (
-		<div className="flex flex-col h-full bg-background">
+		<div className="flex h-full flex-col bg-background">
 			<div className="border-b">
-				<div className="flex h-12 items-center px-4 gap-6 overflow-x-auto">
+				<div className="flex h-12 items-center gap-6 overflow-x-auto px-4">
 					{navItems.map((item) => (
 						<Link
-							key={item.href}
-							to={item.href}
 							className={cn(
-								'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary whitespace-nowrap py-3 border-b-2 border-transparent',
+								'flex items-center gap-2 whitespace-nowrap border-transparent border-b-2 py-3 font-medium text-sm transition-colors hover:text-primary',
 								item.active ? 'border-primary text-primary' : 'text-muted-foreground',
 							)}
+							key={item.href}
+							to={item.href}
 						>
 							<item.icon className="h-4 w-4" />
 							{item.label}

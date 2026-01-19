@@ -29,11 +29,11 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 	const isOpen = !!leadId;
 
 	return (
-		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+		<Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
 			<SheetContent
+				className="flex w-full flex-col overflow-hidden border-border/50 border-l bg-background/95 p-0 backdrop-blur-xl sm:max-w-2xl"
 				side="right"
 				transition={{ type: 'spring', stiffness: 150, damping: 22 }}
-				className="w-full sm:max-w-2xl p-0 flex flex-col overflow-hidden border-l border-border/50 bg-background/95 backdrop-blur-xl"
 			>
 				{/* Accessibility requirements */}
 				<SheetHeader className="sr-only">
@@ -43,26 +43,19 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 					</SheetDescription>
 				</SheetHeader>
 
-				{!lead ? (
-					<div className="flex items-center justify-center h-full">
-						<div className="flex flex-col items-center gap-2">
-							<div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-							<p className="text-sm text-muted-foreground font-medium">Carregando...</p>
-						</div>
-					</div>
-				) : (
+				{lead ? (
 					<>
 						{/* Header */}
-						<div className="p-6 border-b border-border/50 bg-muted/20">
-							<div className="flex items-start justify-between mb-4">
+						<div className="border-border/50 border-b bg-muted/20 p-6">
+							<div className="mb-4 flex items-start justify-between">
 								<div>
-									<h2 className="text-2xl font-bold font-display tracking-tight text-foreground">
+									<h2 className="font-bold font-display text-2xl text-foreground tracking-tight">
 										{lead.name}
 									</h2>
-									<div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
+									<div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
 										<Badge
+											className="border-primary/50 bg-primary/10 text-primary"
 											variant="outline"
-											className="border-primary/50 text-primary bg-primary/10"
 										>
 											{lead.stage.replace('_', ' ').toUpperCase()}
 										</Badge>
@@ -80,36 +73,36 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 
 							<div className="flex gap-2">
 								<Button
-									size="sm"
-									className="flex-1 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white border-0"
+									className="flex-1 gap-2 border-0 bg-[#25D366] text-white hover:bg-[#128C7E]"
 									onClick={() =>
 										window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}`, '_blank')
 									}
+									size="sm"
 								>
 									<MessageSquare className="h-4 w-4" />
 									WhatsApp
 								</Button>
 								<Button
-									size="sm"
-									variant="outline"
 									className="flex-1 gap-2"
 									onClick={() => {
 										window.location.href = `tel:${lead.phone}`;
 									}}
+									size="sm"
+									variant="outline"
 								>
 									<Phone className="h-4 w-4" />
 									Ligar
 								</Button>
 								<Button
-									size="sm"
-									variant="outline"
 									className="flex-1 gap-2"
 									disabled={!lead.email}
 									onClick={() => {
 										if (!lead.email) return;
 										window.location.href = `mailto:${lead.email}`;
 									}}
-									title={!lead.email ? 'Sem email cadastrado' : undefined}
+									size="sm"
+									title={lead.email ? undefined : 'Sem email cadastrado'}
+									variant="outline"
 								>
 									<Mail className="h-4 w-4" />
 									Email
@@ -118,24 +111,24 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 						</div>
 
 						{/* Content Tabs */}
-						<Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
-							<div className="px-6 pt-2 border-b border-border/50 bg-muted/10">
-								<TabsList className="bg-transparent p-0 gap-6">
+						<Tabs className="flex flex-1 flex-col overflow-hidden" defaultValue="overview">
+							<div className="border-border/50 border-b bg-muted/10 px-6 pt-2">
+								<TabsList className="gap-6 bg-transparent p-0">
 									<TabsTrigger
+										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
 										value="overview"
-										className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2"
 									>
 										Visão Geral
 									</TabsTrigger>
 									<TabsTrigger
+										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
 										value="timeline"
-										className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2"
 									>
 										Timeline
 									</TabsTrigger>
 									<TabsTrigger
+										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
 										value="notes"
-										className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2"
 									>
 										Notas
 									</TabsTrigger>
@@ -144,27 +137,34 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 
 							<ScrollArea className="flex-1 p-6">
 								<TabsContent
+									className="slide-in-from-left-2 mt-0 animate-in space-y-6 duration-300"
 									value="overview"
-									className="mt-0 space-y-6 animate-in slide-in-from-left-2 duration-300"
 								>
 									<LeadOverview lead={lead} />
 								</TabsContent>
 
 								<TabsContent
+									className="slide-in-from-right-2 mt-0 animate-in space-y-4 duration-300"
 									value="timeline"
-									className="mt-0 space-y-4 animate-in slide-in-from-right-2 duration-300"
 								>
 									<LeadTimeline activities={activities} />
 								</TabsContent>
 
-								<TabsContent value="notes" className="mt-0">
-									<div className="flex items-center justify-center h-40 text-muted-foreground border-2 border-dashed border-border/50 rounded-lg bg-muted/10">
+								<TabsContent className="mt-0" value="notes">
+									<div className="flex h-40 items-center justify-center rounded-lg border-2 border-border/50 border-dashed bg-muted/10 text-muted-foreground">
 										Em breve: Notas e Comentários
 									</div>
 								</TabsContent>
 							</ScrollArea>
 						</Tabs>
 					</>
+				) : (
+					<div className="flex h-full items-center justify-center">
+						<div className="flex flex-col items-center gap-2">
+							<div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+							<p className="font-medium text-muted-foreground text-sm">Carregando...</p>
+						</div>
+					</div>
 				)}
 			</SheetContent>
 		</Sheet>
@@ -175,46 +175,46 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 	return (
 		<>
 			<section className="space-y-3">
-				<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
 					<Briefcase className="h-4 w-4" /> Dados Profissionais
 				</h3>
 				<div className="grid grid-cols-2 gap-4 text-sm">
-					<div className="p-3 rounded-lg bg-card border border-border/50">
-						<span className="text-muted-foreground block text-xs mb-1">Profissão</span>
+					<div className="rounded-lg border border-border/50 bg-card p-3">
+						<span className="mb-1 block text-muted-foreground text-xs">Profissão</span>
 						<span className="font-medium">{lead.profession || 'Não informado'}</span>
 					</div>
-					<div className="p-3 rounded-lg bg-card border border-border/50">
-						<span className="text-muted-foreground block text-xs mb-1">Clínica</span>
+					<div className="rounded-lg border border-border/50 bg-card p-3">
+						<span className="mb-1 block text-muted-foreground text-xs">Clínica</span>
 						<span className="font-medium">{lead.hasClinic ? lead.clinicName || 'Sim' : 'Não'}</span>
 						{lead.clinicCity && (
-							<span className="text-xs text-muted-foreground block">{lead.clinicCity}</span>
+							<span className="block text-muted-foreground text-xs">{lead.clinicCity}</span>
 						)}
 					</div>
-					<div className="p-3 rounded-lg bg-card border border-border/50">
-						<span className="text-muted-foreground block text-xs mb-1">Experiência</span>
+					<div className="rounded-lg border border-border/50 bg-card p-3">
+						<span className="mb-1 block text-muted-foreground text-xs">Experiência</span>
 						<span className="font-medium">
 							{lead.yearsInAesthetics ? `${lead.yearsInAesthetics} anos` : 'N/A'}
 						</span>
 					</div>
-					<div className="p-3 rounded-lg bg-card border border-border/50">
-						<span className="text-muted-foreground block text-xs mb-1">Faturamento</span>
+					<div className="rounded-lg border border-border/50 bg-card p-3">
+						<span className="mb-1 block text-muted-foreground text-xs">Faturamento</span>
 						<span className="font-medium">{lead.currentRevenue || 'N/A'}</span>
 					</div>
 				</div>
 			</section>
 
 			<section className="space-y-3">
-				<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
 					<Activity className="h-4 w-4" /> Interesse
 				</h3>
-				<div className="p-4 rounded-lg bg-card border border-border/50 space-y-3">
-					<div className="flex justify-between border-b border-border/30 pb-2">
+				<div className="space-y-3 rounded-lg border border-border/50 bg-card p-4">
+					<div className="flex justify-between border-border/30 border-b pb-2">
 						<span className="text-muted-foreground">Produto</span>
 						<span className="font-medium text-primary">
 							{lead.interestedProduct || 'Indefinido'}
 						</span>
 					</div>
-					<div className="flex justify-between border-b border-border/30 pb-2">
+					<div className="flex justify-between border-border/30 border-b pb-2">
 						<span className="text-muted-foreground">Temperatura</span>
 						<Badge
 							variant={
@@ -237,7 +237,7 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
 					</div>
 					{lead.mainDesire && (
-						<div className="space-y-1 pt-2 border-t border-border/30">
+						<div className="space-y-1 border-border/30 border-t pt-2">
 							<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
 							<p className="text-sm">{lead.mainDesire}</p>
 						</div>
@@ -253,7 +253,7 @@ function LeadTimeline({ activities }: { activities?: Doc<'activities'>[] }) {
 		return (
 			<div className="space-y-4">
 				{[1, 2, 3].map((i) => (
-					<div key={i} className="h-16 bg-muted/20 animate-pulse rounded-lg" />
+					<div className="h-16 animate-pulse rounded-lg bg-muted/20" key={i} />
 				))}
 			</div>
 		);
@@ -261,24 +261,24 @@ function LeadTimeline({ activities }: { activities?: Doc<'activities'>[] }) {
 
 	if (activities.length === 0) {
 		return (
-			<div className="text-center py-10 text-muted-foreground">Nenhuma atividade registrada.</div>
+			<div className="py-10 text-center text-muted-foreground">Nenhuma atividade registrada.</div>
 		);
 	}
 
 	return (
-		<div className="relative border-l border-border/50 ml-3 space-y-6">
+		<div className="relative ml-3 space-y-6 border-border/50 border-l">
 			{activities.map((activity) => (
-				<div key={activity._id} className="relative pl-6">
-					<div className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background ring-2 ring-primary/20" />
+				<div className="relative pl-6" key={activity._id}>
+					<div className="absolute top-1 -left-[5px] h-2.5 w-2.5 rounded-full border-2 border-background bg-primary ring-2 ring-primary/20" />
 					<div className="flex flex-col gap-1">
-						<span className="text-xs text-muted-foreground">
+						<span className="text-muted-foreground text-xs">
 							{formatDistanceToNow(activity.createdAt, {
 								addSuffix: true,
 								locale: ptBR,
 							})}
 						</span>
-						<p className="text-sm font-medium">{activity.description}</p>
-						<span className="text-xs px-2 py-0.5 rounded-full bg-muted w-fit text-muted-foreground capitalize">
+						<p className="font-medium text-sm">{activity.description}</p>
+						<span className="w-fit rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs capitalize">
 							{activity.type.replace('_', ' ')}
 						</span>
 					</div>

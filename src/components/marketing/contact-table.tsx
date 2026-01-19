@@ -80,7 +80,7 @@ export function ContactTable({ contacts, onSync }: ContactTableProps) {
 												: 'Sem Nome'}
 										</span>
 									</div>
-									<div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+									<div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
 										<Mail className="h-3 w-3" />
 										{contact.email}
 									</div>
@@ -89,24 +89,24 @@ export function ContactTable({ contacts, onSync }: ContactTableProps) {
 							<TableCell>{getSourceBadge(contact.sourceType)}</TableCell>
 							<TableCell>{getStatusBadge(contact.subscriptionStatus)}</TableCell>
 							<TableCell>
-								<div className="text-sm text-muted-foreground">
+								<div className="text-muted-foreground text-sm">
 									{contact.lastSyncedAt
 										? formatDistanceToNow(contact.lastSyncedAt, { addSuffix: true, locale: ptBR })
 										: 'Nunca'}
 								</div>
 								{contact.brevoId && (
-									<div className="text-xs text-green-600 flex items-center gap-1 mt-1">
-										<span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+									<div className="mt-1 flex items-center gap-1 text-green-600 text-xs">
+										<span className="h-1.5 w-1.5 rounded-full bg-green-500" />
 										Sincronizado
 									</div>
 								)}
 							</TableCell>
 							<TableCell className="text-right">
 								<Button
-									variant="ghost"
-									size="sm"
 									onClick={() => onSync(contact._id)}
+									size="sm"
 									title="Sincronizar com Brevo"
+									variant="ghost"
 								>
 									<RefreshCw className="h-4 w-4" />
 								</Button>
@@ -115,7 +115,7 @@ export function ContactTable({ contacts, onSync }: ContactTableProps) {
 					))}
 					{contacts.length === 0 && (
 						<TableRow>
-							<TableCell colSpan={5} className="h-24 text-center">
+							<TableCell className="h-24 text-center" colSpan={5}>
 								Nenhum contato encontrado.
 							</TableCell>
 						</TableRow>

@@ -36,16 +36,16 @@ if (!clerkPubKey) {
 
 function InnerApp() {
 	const auth = useAuth();
-	return <RouterProvider router={router} context={{ auth }} />;
+	return <RouterProvider context={{ auth }} router={router} />;
 }
 
 export function App() {
 	return (
 		<ClerkProvider
+			afterSignOutUrl="/"
 			publishableKey={clerkPubKey}
 			signInForceRedirectUrl="/dashboard"
 			signUpForceRedirectUrl="/dashboard"
-			afterSignOutUrl="/"
 		>
 			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
 				<InnerApp />

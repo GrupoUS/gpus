@@ -280,7 +280,7 @@ function sleep(ms: number): Promise<void> {
  * Convert date string (YYYY-MM-DD) to timestamp (start of day in UTC)
  */
 export function dateStringToTimestamp(dateStr: string): number {
-	const date = new Date(dateStr + 'T00:00:00.000Z');
+	const date = new Date(`${dateStr}T00:00:00.000Z`);
 	return date.getTime();
 }
 
@@ -314,11 +314,11 @@ export interface CircuitBreakerState {
 
 const CIRCUIT_CONFIG = {
 	failureThreshold: 3, // Open circuit after 3 consecutive failures (reduced from 5 for faster detection)
-	resetTimeoutMs: 60000, // Wait 60s before attempting recovery
+	resetTimeoutMs: 60_000, // Wait 60s before attempting recovery
 	halfOpenMaxTestCalls: 3, // Allow 3 test calls in half-open state
 };
 
-let circuitState: CircuitBreakerState = {
+const circuitState: CircuitBreakerState = {
 	state: 'closed',
 	failureCount: 0,
 	lastFailureTime: 0,
@@ -346,12 +346,6 @@ export function checkCircuitBreaker(): boolean {
 		if (now >= circuitState.nextAttemptTime) {
 			circuitState.state = 'half-open';
 			circuitState.halfOpenTestCalls = 0;
-			console.log(
-				`[${new Date().toISOString()}] [CircuitBreaker] State transition: OPEN → HALF-OPEN`,
-				`| Reason: Reset timeout elapsed (${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s)`,
-				`| Failure count: ${circuitState.failureCount}`,
-				`| Test calls allowed: ${CIRCUIT_CONFIG.halfOpenMaxTestCalls}`,
-			);
 			return true;
 		}
 		return false;
@@ -377,11 +371,6 @@ export function recordSuccess(): void {
 			circuitState.state = 'closed';
 			circuitState.failureCount = 0;
 			circuitState.halfOpenTestCalls = 0;
-			console.log(
-				`[${new Date().toISOString()}] [CircuitBreaker] State transition: HALF-OPEN → CLOSED`,
-				`| Reason: All test calls succeeded (${CIRCUIT_CONFIG.halfOpenMaxTestCalls}/${CIRCUIT_CONFIG.halfOpenMaxTestCalls})`,
-				`| Circuit is now healthy`,
-			);
 		}
 	} else if (circuitState.state === 'closed') {
 		circuitState.failureCount = 0;
@@ -400,20 +389,10 @@ export function recordFailure(): void {
 		// Half-open test failed, open the circuit again
 		circuitState.state = 'open';
 		circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
-		console.error(
-			`[${new Date().toISOString()}] [CircuitBreaker] State transition: HALF-OPEN → OPEN`,
-			`| Reason: Test call failed`,
-			`| Next retry in: ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s`,
-		);
 	} else if (circuitState.failureCount >= CIRCUIT_CONFIG.failureThreshold) {
 		// Threshold reached, open the circuit
 		circuitState.state = 'open';
 		circuitState.nextAttemptTime = Date.now() + CIRCUIT_CONFIG.resetTimeoutMs;
-		console.error(
-			`[${new Date().toISOString()}] [CircuitBreaker] State transition: CLOSED → OPEN`,
-			`| Reason: Failure threshold reached (${circuitState.failureCount}/${CIRCUIT_CONFIG.failureThreshold})`,
-			`| Next retry in: ${CIRCUIT_CONFIG.resetTimeoutMs / 1000}s`,
-		);
 	}
 }
 
@@ -433,7 +412,6 @@ export function resetCircuitBreaker(): void {
 	circuitState.lastFailureTime = 0;
 	circuitState.nextAttemptTime = 0;
 	circuitState.halfOpenTestCalls = 0;
-	console.log(`[${new Date().toISOString()}] [CircuitBreaker] Manually reset to CLOSED state`);
 }
 
 /**
@@ -484,7 +462,6 @@ async function asaasFetch<T>(
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
 			if (attempt > 0) {
-				console.log(`Asaas API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`);
 			}
 
 			const response = await fetch(url, {
@@ -495,7 +472,7 @@ async function asaasFetch<T>(
 					'User-Agent': 'gpus-saas/1.0',
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined,
-				signal: AbortSignal.timeout(30000), // 30s timeout
+				signal: AbortSignal.timeout(30_000), // 30s timeout
 			});
 
 			// Handle no content responses
@@ -525,7 +502,7 @@ async function asaasFetch<T>(
 					lastError = new Error(`Asaas API Error: ${errorMessage}`);
 					recordFailure(); // Circuit breaker: record server error
 					if (attempt < retries) {
-						const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
+						const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 						await sleep(delay);
 						continue;
 					}
@@ -563,7 +540,7 @@ async function asaasFetch<T>(
 
 			// Retry on network errors or server errors
 			if (attempt < retries) {
-				const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
+				const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 				await sleep(delay);
 				continue;
 			}
@@ -760,7 +737,7 @@ export const asaasSubscriptions = {
 // ═══════════════════════════════════════════════════════
 
 export class AsaasClient {
-	private config: { apiKey: string; baseUrl: string };
+	private readonly config: { apiKey: string; baseUrl: string };
 
 	constructor(config: { apiKey: string; baseUrl?: string }) {
 		this.config = {
@@ -799,7 +776,6 @@ export class AsaasClient {
 		for (let attempt = 0; attempt <= retries; attempt++) {
 			try {
 				if (attempt > 0) {
-					console.log(`AsaasClient API attempt ${attempt + 1}/${retries + 1} for ${endpoint}`);
 				}
 
 				const response = await fetch(url, {
@@ -810,7 +786,7 @@ export class AsaasClient {
 						'User-Agent': 'gpus-saas/1.0',
 					},
 					body: options.body ? JSON.stringify(options.body) : undefined,
-					signal: AbortSignal.timeout(30000), // 30s timeout
+					signal: AbortSignal.timeout(30_000), // 30s timeout
 				});
 
 				// Handle no content responses
@@ -840,7 +816,7 @@ export class AsaasClient {
 						lastError = new Error(`Asaas API Error: ${errorMessage}`);
 						recordFailure(); // Circuit breaker: record server error
 						if (attempt < retries) {
-							const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
+							const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 							await sleep(delay);
 							continue;
 						}
@@ -878,7 +854,7 @@ export class AsaasClient {
 
 				// Retry on network errors or server errors
 				if (attempt < retries) {
-					const delay = addJitter(INITIAL_RETRY_DELAY * Math.pow(2, attempt));
+					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 					await sleep(delay);
 					continue;
 				}
@@ -891,15 +867,10 @@ export class AsaasClient {
 	}
 
 	public async testConnection(): Promise<any> {
-		try {
-			const response = await this.fetch<any>('/customers?limit=1');
-			// Return a mocked response-like object or the data, adapted for actions.ts usage
-			// actions.ts expects response.status
-			return { status: 200, ...response };
-		} catch (error: any) {
-			// If fetch throws, we might want to ensure it has response.status if possible
-			throw error;
-		}
+		const response = await this.fetch<any>('/customers?limit=1');
+		// Return a mocked response-like object or the data, adapted for actions.ts usage
+		// actions.ts expects response.status
+		return { status: 200, ...response };
 	}
 
 	public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {

@@ -48,9 +48,7 @@ export const SidebarProvider = ({
 	const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
 
 	return (
-		<SidebarContext.Provider value={{ open, setOpen, animate: animate }}>
-			{children}
-		</SidebarContext.Provider>
+		<SidebarContext.Provider value={{ open, setOpen, animate }}>{children}</SidebarContext.Provider>
 	);
 };
 
@@ -66,7 +64,7 @@ export const Sidebar = ({
 	animate?: boolean;
 }) => {
 	return (
-		<SidebarProvider open={open} setOpen={setOpen} animate={animate}>
+		<SidebarProvider animate={animate} open={open} setOpen={setOpen}>
 			{children}
 		</SidebarProvider>
 	);
@@ -92,10 +90,6 @@ export const DesktopSidebar = ({
 	const { open, setOpen, animate } = useSidebar();
 	return (
 		<motion.div
-			className={cn(
-				'h-full px-4 py-4 hidden md:flex md:flex-col bg-sidebar-background shrink-0',
-				className,
-			)}
 			animate={{
 				width: animate
 					? open
@@ -103,6 +97,10 @@ export const DesktopSidebar = ({
 						: SIDEBAR_WIDTH_COLLAPSED
 					: SIDEBAR_WIDTH_EXPANDED,
 			}}
+			className={cn(
+				'hidden h-full shrink-0 bg-sidebar-background px-4 py-4 md:flex md:flex-col',
+				className,
+			)}
 			onMouseEnter={() => setOpen(true)}
 			onMouseLeave={() => setOpen(false)}
 			{...props}
@@ -118,33 +116,33 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
 	return (
 		<div
 			className={cn(
-				'h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-sidebar-background w-full',
+				'flex h-10 w-full flex-row items-center justify-between bg-sidebar-background px-4 py-4 md:hidden',
 			)}
 			{...props}
 		>
-			<div className="flex justify-end z-20 w-full">
+			<div className="z-20 flex w-full justify-end">
 				<Menu className="text-sidebar-foreground" onClick={() => setOpen(!open)} />
 			</div>
 			<AnimatePresence>
 				{open && (
 					<motion.div
-						initial={{ x: '-100%', opacity: 0 }}
 						animate={{ x: 0, opacity: 1 }}
+						className={cn(
+							'fixed inset-0 z-100 flex h-full w-full flex-col justify-between bg-background p-10',
+							className,
+						)}
 						exit={{ x: '-100%', opacity: 0 }}
+						initial={{ x: '-100%', opacity: 0 }}
 						transition={{
 							duration: 0.3,
 							ease: 'easeInOut',
 						}}
-						className={cn(
-							'fixed h-full w-full inset-0 bg-background p-10 z-100 flex flex-col justify-between',
-							className,
-						)}
 					>
 						<button
-							className="absolute right-10 top-10 z-50 text-foreground"
+							aria-label="Close sidebar"
+							className="absolute top-10 right-10 z-50 text-foreground"
 							onClick={() => setOpen(!open)}
 							type="button"
-							aria-label="Close sidebar"
 						>
 							<X />
 						</button>
@@ -178,20 +176,20 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 
 	return (
 		<Link
-			to={link.href}
 			className={cn(
-				'flex items-center justify-start gap-2 group/sidebar py-2.5',
-				isActive && 'bg-sidebar-accent rounded-md px-2',
+				'group/sidebar flex items-center justify-start gap-2 py-2.5',
+				isActive && 'rounded-md bg-sidebar-accent px-2',
 				className,
 			)}
-			onMouseMove={(e) => mouseX.set(e.pageX)}
 			onMouseLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
+			onMouseMove={(e) => mouseX.set(e.pageX)}
+			to={link.href}
 			{...props}
 		>
 			<motion.div
+				className="origin-center will-change-transform"
 				ref={ref}
 				style={{ scale }}
-				className="will-change-transform origin-center"
 				transition={{ type: 'spring', stiffness: 150, damping: 12 }}
 			>
 				{link.icon}
@@ -202,7 +200,7 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 					display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
 					opacity: animate ? (open ? 1 : 0) : 1,
 				}}
-				className="text-sidebar-foreground text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block p-0! m-0!"
+				className="m-0! inline-block whitespace-pre p-0! text-sidebar-foreground text-sm transition duration-150 group-hover/sidebar:translate-x-1"
 			>
 				{link.label}
 			</motion.span>

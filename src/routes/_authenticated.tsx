@@ -41,7 +41,7 @@ function AuthenticatedLayout() {
 			<div className="flex h-screen w-full items-center justify-center bg-background p-4">
 				<div className="flex max-w-md flex-col items-center gap-6 text-center">
 					<div className="space-y-2">
-						<h2 className="text-destructive text-xl font-bold">Erro de Sincronização</h2>
+						<h2 className="font-bold text-destructive text-xl">Erro de Sincronização</h2>
 						<p className="text-muted-foreground">
 							{error?.message ||
 								'Não foi possível sincronizar seu perfil. Por favor, tente novamente.'}
@@ -50,10 +50,10 @@ function AuthenticatedLayout() {
 					<div className="flex gap-4">
 						<Button onClick={() => window.location.reload()}>Tentar novamente</Button>
 						<Button
-							variant="outline"
 							onClick={() => {
 								window.location.href = '/sign-in';
 							}}
+							variant="outline"
 						>
 							Voltar para Login
 						</Button>

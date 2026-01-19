@@ -2,7 +2,7 @@
  * Asaas Type Utilities
  *
  * Type helpers and utilities to resolve Convex deep type instantiation issues
- * and reduce the need for @ts-ignore throughout the codebase.
+ * and reduce the need for @ts-expect-error throughout the codebase.
  */
 
 import type { Id } from '../_generated/dataModel';
@@ -35,11 +35,11 @@ export type WrappedAction<T> = Promise<T>;
 export type {
 	AsaasCustomerPayload,
 	AsaasCustomerResponse,
+	AsaasFinancialSummaryResponse,
 	AsaasPaymentPayload,
 	AsaasPaymentResponse,
 	AsaasSubscriptionPayload,
 	AsaasSubscriptionResponse,
-	AsaasFinancialSummaryResponse,
 } from './client';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -413,7 +413,7 @@ export async function getOrganizationId(ctx: ActionCtx): Promise<string | undefi
 		if (!identity) return undefined;
 
 		// Try to get user from Clerk subject
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const user = await ctx.runQuery((internal as any).users.getUserByClerkId, {
 			clerkId: identity.subject,
 		});

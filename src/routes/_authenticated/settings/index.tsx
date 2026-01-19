@@ -72,22 +72,22 @@ function SettingItem({
 }: SettingItemProps) {
 	const content = (
 		<motion.button
+			className={cn(
+				'flex w-full cursor-pointer flex-col items-center gap-3 rounded-xl border p-5 transition-all',
+				'bg-background/60 backdrop-blur-sm',
+				'hover:border-primary/30 hover:shadow-lg',
+				'group',
+			)}
+			onClick={onClick}
 			type="button"
 			variants={fadeInUp}
 			whileHover={{ scale: 1.02, y: -2 }}
 			whileTap={{ scale: 0.98 }}
-			className={cn(
-				'flex flex-col items-center gap-3 p-5 rounded-xl border transition-all cursor-pointer w-full',
-				'bg-background/60 backdrop-blur-sm',
-				'hover:shadow-lg hover:border-primary/30',
-				'group',
-			)}
-			onClick={onClick}
 		>
 			{/* Icon with circular gradient background */}
 			<div
 				className={cn(
-					'h-14 w-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110',
+					'flex h-14 w-14 items-center justify-center rounded-full transition-transform group-hover:scale-110',
 					`bg-linear-to-br ${colorClass}`,
 				)}
 			>
@@ -96,20 +96,20 @@ function SettingItem({
 
 			{/* Title and description */}
 			<div className="text-center">
-				<h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+				<h3 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
 					{title}
 				</h3>
-				<p className="text-xs text-muted-foreground line-clamp-2">{description}</p>
+				<p className="line-clamp-2 text-muted-foreground text-xs">{description}</p>
 			</div>
 
 			{/* Arrow indicator */}
-			<ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3" />
+			<ChevronRight className="absolute top-3 right-3 h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
 		</motion.button>
 	);
 
 	if (href) {
 		return (
-			<Link to={href} className="relative block">
+			<Link className="relative block" to={href}>
 				{content}
 			</Link>
 		);
@@ -121,149 +121,149 @@ function SettingItem({
 function SettingSection({ title, Icon, colorClass, children, className }: SettingSectionProps) {
 	return (
 		<motion.div
-			variants={fadeInUp}
-			whileHover={{ y: -4 }}
-			transition={{ type: 'spring', stiffness: 300, damping: 25 }}
 			className={cn(
-				'rounded-2xl p-5 border transition-all duration-300',
+				'rounded-2xl border p-5 transition-all duration-300',
 				'bg-linear-to-b from-card/80 via-card/60 to-card/40',
 				'backdrop-blur-sm',
-				'hover:shadow-xl hover:border-primary/20',
+				'hover:border-primary/20 hover:shadow-xl',
 				'shadow-[0_4px_20px_rgb(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)]',
 				className,
 			)}
+			transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+			variants={fadeInUp}
+			whileHover={{ y: -4 }}
 		>
 			{/* Section Header */}
-			<div className="flex items-center gap-3 mb-5">
+			<div className="mb-5 flex items-center gap-3">
 				<div
 					className={cn(
-						'h-10 w-10 rounded-lg flex items-center justify-center',
+						'flex h-10 w-10 items-center justify-center rounded-lg',
 						`bg-linear-to-br ${colorClass}`,
 					)}
 				>
 					<Icon className="h-5 w-5 text-white" />
 				</div>
-				<h2 className="text-lg font-semibold">{title}</h2>
+				<h2 className="font-semibold text-lg">{title}</h2>
 			</div>
 
 			{/* Items Grid */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
 		</motion.div>
 	);
 }
 
 function SettingsPage() {
 	return (
-		<div className="p-4 sm:p-6 lg:p-8 w-full">
+		<div className="w-full p-4 sm:p-6 lg:p-8">
 			{/* Header */}
-			<motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-				<h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
-					<div className="h-10 w-10 rounded-lg bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+			<motion.div animate={{ opacity: 1, y: 0 }} className="mb-8" initial={{ opacity: 0, y: -20 }}>
+				<h1 className="flex items-center gap-3 font-bold text-2xl sm:text-3xl">
+					<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-purple-500 to-indigo-500">
 						<SettingsIcon className="h-5 w-5 text-white" />
 					</div>
 					Configurações
 				</h1>
-				<p className="text-muted-foreground mt-2">Gerencie as configurações do sistema</p>
+				<p className="mt-2 text-muted-foreground">Gerencie as configurações do sistema</p>
 			</motion.div>
 
 			{/* Bento Grid Layout */}
 			<motion.div
-				initial="hidden"
 				animate="visible"
+				className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+				initial="hidden"
 				variants={staggerContainer}
-				className="grid grid-cols-1 lg:grid-cols-2 gap-6"
 			>
 				{/* Conta - Full Width on Mobile, Half on Desktop */}
 				<SettingSection
-					title="Conta"
-					Icon={User}
-					colorClass="from-purple-500 to-purple-600"
 					className="lg:col-span-2"
+					colorClass="from-purple-500 to-purple-600"
+					Icon={User}
+					title="Conta"
 				>
 					<SettingItem
-						Icon={User}
-						title="Perfil"
+						colorClass="from-purple-500/20 to-purple-600/20"
 						description="Gerencie suas informações pessoais"
 						href="/settings/profile"
-						colorClass="from-purple-500/20 to-purple-600/20"
+						Icon={User}
 						iconColorClass="text-purple-500"
+						title="Perfil"
 					/>
 					<SettingItem
-						Icon={Key}
-						title="Segurança"
+						colorClass="from-purple-500/20 to-purple-600/20"
 						description="Autenticação e controle de acesso"
 						href="/settings/security"
-						colorClass="from-purple-500/20 to-purple-600/20"
+						Icon={Key}
 						iconColorClass="text-purple-500"
+						title="Segurança"
 					/>
 					<SettingItem
-						Icon={Bell}
-						title="Notificações"
+						colorClass="from-purple-500/20 to-purple-600/20"
 						description="Configure alertas e preferências"
 						href="/settings/notifications"
-						colorClass="from-purple-500/20 to-purple-600/20"
+						Icon={Bell}
 						iconColorClass="text-purple-500"
+						title="Notificações"
 					/>
 				</SettingSection>
 
 				{/* Equipe */}
-				<SettingSection title="Equipe" Icon={Users} colorClass="from-blue-500 to-blue-600">
+				<SettingSection colorClass="from-blue-500 to-blue-600" Icon={Users} title="Equipe">
 					<SettingItem
-						Icon={Users}
-						title="Membros"
+						colorClass="from-blue-500/20 to-blue-600/20"
 						description="Gerencie usuários e permissões"
 						href="/settings/team"
-						colorClass="from-blue-500/20 to-blue-600/20"
+						Icon={Users}
 						iconColorClass="text-blue-500"
+						title="Membros"
 					/>
 					<SettingItem
-						Icon={Shield}
-						title="Funções e Permissões"
+						colorClass="from-blue-500/20 to-blue-600/20"
 						description="Configure níveis de acesso"
 						href="/settings/roles"
-						colorClass="from-blue-500/20 to-blue-600/20"
+						Icon={Shield}
 						iconColorClass="text-blue-500"
+						title="Funções e Permissões"
 					/>
 				</SettingSection>
 
 				{/* Sistema */}
 				<SettingSection
-					title="Sistema"
-					Icon={SettingsIcon}
 					colorClass="from-green-500 to-green-600"
+					Icon={SettingsIcon}
+					title="Sistema"
 				>
 					<SettingItem
-						Icon={FileText}
-						title="Templates de Mensagem"
+						colorClass="from-green-500/20 to-green-600/20"
 						description="Gerencie templates para chat"
 						href="/settings/templates"
-						colorClass="from-green-500/20 to-green-600/20"
+						Icon={FileText}
 						iconColorClass="text-green-500"
+						title="Templates de Mensagem"
 					/>
 					<SettingItem
-						Icon={Palette}
-						title="Aparência"
+						colorClass="from-green-500/20 to-green-600/20"
 						description="Personalize a interface"
 						href="/settings/appearance"
-						colorClass="from-green-500/20 to-green-600/20"
+						Icon={Palette}
 						iconColorClass="text-green-500"
+						title="Aparência"
 					/>
 				</SettingSection>
 
 				{/* Integrações */}
 				<SettingSection
-					title="Integrações"
-					Icon={Plug}
-					colorClass="from-orange-500 to-orange-600"
 					className="lg:col-span-2"
+					colorClass="from-orange-500 to-orange-600"
+					Icon={Plug}
+					title="Integrações"
 				>
 					<SettingItem
-						Icon={Plug}
-						title="Integrações"
+						colorClass="from-orange-500/20 to-orange-600/20"
 						description="WhatsApp, Instagram e outros canais"
 						href="/settings/integrations"
-						colorClass="from-orange-500/20 to-orange-600/20"
+						Icon={Plug}
 						iconColorClass="text-orange-500"
+						title="Integrações"
 					/>
 				</SettingSection>
 			</motion.div>

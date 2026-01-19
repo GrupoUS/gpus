@@ -251,7 +251,7 @@ export function calculateRetentionDays(dataCategory: string, studentStatus: stri
 	};
 
 	const rules = retentionRules[dataCategory];
-	if (!rules || !rules[studentStatus]) {
+	if (!rules?.[studentStatus]) {
 		return 365 * 2; // Default: 2 years
 	}
 

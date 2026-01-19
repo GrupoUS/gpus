@@ -35,20 +35,20 @@ const roleLabels: Record<string, string> = {
 	support: 'Suporte',
 };
 
-type User = {
+interface User {
 	_id: Id<'users'>;
 	name: string;
 	role: string;
-};
+}
 
-type TeamPerformanceMember = {
+interface TeamPerformanceMember {
 	_id: Id<'users'>;
 	name: string;
 	role: string;
 	metric: number;
 	metricLabel: string;
 	period: string;
-};
+}
 
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
@@ -63,13 +63,13 @@ function TeamReportPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
+					<h1 className="flex items-center gap-2 font-bold text-2xl">
 						<Users className="h-6 w-6 text-primary" />
 						Performance da Equipe
 					</h1>
 					<p className="text-muted-foreground">Métricas individuais e rankings</p>
 				</div>
-				<Select value={period} onValueChange={(v: typeof period) => setPeriod(v)}>
+				<Select onValueChange={(v: typeof period) => setPeriod(v)} value={period}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue />
 					</SelectTrigger>
@@ -85,7 +85,7 @@ function TeamReportPage() {
 			{/* Top Performers */}
 			<div className="grid gap-4 md:grid-cols-3">
 				{teamPerformance?.slice(0, 3).map((member: TeamPerformanceMember, index: number) => (
-					<Card key={member._id} className={index === 0 ? 'border-yellow-500/50' : ''}>
+					<Card className={index === 0 ? 'border-yellow-500/50' : ''} key={member._id}>
 						<CardHeader className="pb-3">
 							<div className="flex items-center justify-between">
 								<Badge variant={index === 0 ? 'default' : 'secondary'}>
@@ -109,12 +109,12 @@ function TeamReportPage() {
 								</Avatar>
 								<div>
 									<p className="font-medium">{member.name}</p>
-									<p className="text-xs text-muted-foreground">{roleLabels[member.role]}</p>
+									<p className="text-muted-foreground text-xs">{roleLabels[member.role]}</p>
 								</div>
 							</div>
 							<div className="mt-4">
-								<p className="text-2xl font-bold text-primary">{member.metric}</p>
-								<p className="text-xs text-muted-foreground">{member.metricLabel}</p>
+								<p className="font-bold text-2xl text-primary">{member.metric}</p>
+								<p className="text-muted-foreground text-xs">{member.metricLabel}</p>
 							</div>
 						</CardContent>
 					</Card>
@@ -144,7 +144,7 @@ function TeamReportPage() {
 									<TableCell>
 										<div className="flex items-center gap-3">
 											<Avatar className="h-8 w-8">
-												<AvatarFallback className="text-xs bg-primary/10 text-primary">
+												<AvatarFallback className="bg-primary/10 text-primary text-xs">
 													{member.name
 														.split(' ')
 														.map((n: string) => n[0])
@@ -178,35 +178,35 @@ function TeamReportPage() {
 			<div className="grid gap-4 md:grid-cols-3">
 				<Card>
 					<CardHeader className="pb-2">
-						<CardTitle className="text-sm font-medium">Total de Membros</CardTitle>
+						<CardTitle className="font-medium text-sm">Total de Membros</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{allUsers?.length ?? 0}</div>
-						<p className="text-xs text-muted-foreground">Usuários ativos</p>
+						<div className="font-bold text-2xl">{allUsers?.length ?? 0}</div>
+						<p className="text-muted-foreground text-xs">Usuários ativos</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="pb-2">
-						<CardTitle className="text-sm font-medium">SDRs</CardTitle>
+						<CardTitle className="font-medium text-sm">SDRs</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{allUsers?.filter((u: User) => u.role === 'sdr').length ?? 0}
 						</div>
-						<p className="text-xs text-muted-foreground">Vendas</p>
+						<p className="text-muted-foreground text-xs">Vendas</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="pb-2">
-						<CardTitle className="text-sm font-medium">CS</CardTitle>
+						<CardTitle className="font-medium text-sm">CS</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{allUsers?.filter((u: User) => u.role === 'cs').length ?? 0}
 						</div>
-						<p className="text-xs text-muted-foreground">Customer Success</p>
+						<p className="text-muted-foreground text-xs">Customer Success</p>
 					</CardContent>
 				</Card>
 			</div>

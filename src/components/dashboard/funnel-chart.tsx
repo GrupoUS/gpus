@@ -36,29 +36,20 @@ export function FunnelChart({ data }: FunnelChartProps) {
 	return (
 		<Card className="glass-card">
 			<CardHeader>
-				<CardTitle className="font-display text-2xl font-semibold">Funil de Conversão</CardTitle>
+				<CardTitle className="font-display font-semibold text-2xl">Funil de Conversão</CardTitle>
 			</CardHeader>
 			<CardContent>
-				{!data ? (
-					<div className="space-y-3">
-						<Skeleton className="h-8 w-full" />
-						<Skeleton className="h-8 w-11/12" />
-						<Skeleton className="h-8 w-10/12" />
-						<Skeleton className="h-8 w-9/12" />
-						<Skeleton className="h-8 w-8/12" />
-						<Skeleton className="h-8 w-7/12" />
-					</div>
-				) : (
+				{data ? (
 					<div className="h-[280px]">
-						<ResponsiveContainer width="100%" height="100%" minWidth={0}>
+						<ResponsiveContainer height="100%" minWidth={0} width="100%">
 							<BarChart data={chartData} layout="vertical" margin={{ left: 80, right: 20 }}>
-								<XAxis type="number" hide />
+								<XAxis hide type="number" />
 								<YAxis
-									type="category"
-									dataKey="name"
 									axisLine={false}
-									tickLine={false}
+									dataKey="name"
 									tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+									tickLine={false}
+									type="category"
 									width={75}
 								/>
 								<Tooltip
@@ -71,13 +62,22 @@ export function FunnelChart({ data }: FunnelChartProps) {
 									// biome-ignore lint/suspicious/noExplicitAny: Recharts type compatibility
 									formatter={(value: any) => [value, 'Leads']}
 								/>
-								<Bar dataKey="value" radius={[0, 4, 4, 0]} animationDuration={1000}>
+								<Bar animationDuration={1000} dataKey="value" radius={[0, 4, 4, 0]}>
 									{chartData.map((entry, index) => (
-										<Cell key={`cell-${funnelStages[index]?.id}`} fill={entry.color} />
+										<Cell fill={entry.color} key={`cell-${funnelStages[index]?.id}`} />
 									))}
 								</Bar>
 							</BarChart>
 						</ResponsiveContainer>
+					</div>
+				) : (
+					<div className="space-y-3">
+						<Skeleton className="h-8 w-full" />
+						<Skeleton className="h-8 w-11/12" />
+						<Skeleton className="h-8 w-10/12" />
+						<Skeleton className="h-8 w-9/12" />
+						<Skeleton className="h-8 w-8/12" />
+						<Skeleton className="h-8 w-7/12" />
 					</div>
 				)}
 			</CardContent>

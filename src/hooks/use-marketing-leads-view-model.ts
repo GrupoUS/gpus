@@ -32,8 +32,10 @@ export function useMarketingLeadsViewModel(Route: any) {
 	});
 
 	// Mutations & Queries
-	// biome-ignore lint/suspicious/noExplicitAny: prevent TS deep instantiation error
-	const updateStatus = useMutation((api as any).marketingLeads.updateStatus);
+	// Early cast pattern to break TS deep recursion on Convex api type
+	const updateStatusMutation = (api as { marketingLeads: { updateStatus: unknown } }).marketingLeads
+		.updateStatus;
+	const updateStatus = useMutation(updateStatusMutation as typeof api.marketingLeads.updateStatus);
 
 	// Fetch Options
 	const sourceOptions = useQuery(api.marketingLeads.getSources) || [];
@@ -159,7 +161,8 @@ export function useMarketingLeadsViewModel(Route: any) {
 				source: undefined,
 				startDate: undefined,
 				endDate: undefined,
-			},
+				// biome-ignore lint/suspicious/noExplicitAny: router search params typing workaround
+			} as any,
 		});
 	};
 

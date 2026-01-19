@@ -155,7 +155,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog onOpenChange={setOpen} open={open}>
 			<DialogTrigger asChild>
 				{trigger || (
 					<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
@@ -164,7 +164,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
 				<DialogHeader>
 					<DialogTitle>{isEditMode ? 'Editar Aluno' : 'Novo Aluno'}</DialogTitle>
 					<DialogDescription>
@@ -175,8 +175,8 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							{/* Nome */}
 							<FormField
 								control={form.control}
@@ -200,7 +200,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 									<FormItem>
 										<FormLabel>Email</FormLabel>
 										<FormControl>
-											<Input type="email" placeholder="Ex: joao@email.com" {...field} />
+											<Input placeholder="Ex: joao@email.com" type="email" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -354,7 +354,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 								control={form.control}
 								name="lgpdConsent"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50">
+									<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-muted/50 p-4">
 										<FormControl>
 											<Checkbox checked={field.value} onCheckedChange={field.onChange} />
 										</FormControl>
@@ -372,9 +372,9 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 
 						<div className="flex justify-end pt-4">
 							<Button
-								type="submit"
+								className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
 								disabled={form.formState.isSubmitting}
-								className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+								type="submit"
 							>
 								{form.formState.isSubmitting ? (
 									<>

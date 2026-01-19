@@ -34,58 +34,60 @@ export function RecentLeads({ data }: RecentLeadsProps) {
 	return (
 		<Card className="glass-card">
 			<CardHeader className="flex flex-row items-center justify-between">
-				<CardTitle className="font-display text-2xl font-semibold">Leads Recentes</CardTitle>
+				<CardTitle className="font-display font-semibold text-2xl">Leads Recentes</CardTitle>
 				<Link to="/crm">
-					<Button variant="ghost" size="sm">
-						Ver todos <ArrowRight className="h-4 w-4 ml-1" />
+					<Button size="sm" variant="ghost">
+						Ver todos <ArrowRight className="ml-1 h-4 w-4" />
 					</Button>
 				</Link>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-3">
-					{!data ? (
+					{data ? (
+						data.length > 0 ? (
+							data.map((lead) => {
+								const TempIcon = tempConfig[lead.temperature].icon;
+								return (
+									<div
+										className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+										key={lead._id}
+									>
+										<Avatar className="h-9 w-9">
+											<AvatarFallback className="bg-primary/10 text-primary text-xs">
+												{lead.name
+													.split(' ')
+													.map((n) => n[0])
+													.join('')
+													.slice(0, 2)
+													.toUpperCase()}
+											</AvatarFallback>
+										</Avatar>
+										<div className="min-w-0 flex-1">
+											<p className="truncate font-medium text-sm">{lead.name}</p>
+											<p className="text-muted-foreground text-xs">
+												{productLabels[lead.interestedProduct || 'indefinido'] || 'Indefinido'}
+											</p>
+										</div>
+										<div className={cn('rounded-full p-1.5', tempConfig[lead.temperature].bg)}>
+											<TempIcon className={cn('h-3.5 w-3.5', tempConfig[lead.temperature].color)} />
+										</div>
+										<span className="text-muted-foreground text-xs">
+											{formatDistanceToNow(lead.createdAt, { addSuffix: true, locale: ptBR })}
+										</span>
+									</div>
+								);
+							})
+						) : (
+							<p className="py-4 text-center text-muted-foreground text-sm">
+								Nenhum lead recente encontrado
+							</p>
+						)
+					) : (
 						<>
 							<Skeleton className="h-16 w-full" />
 							<Skeleton className="h-16 w-full" />
 							<Skeleton className="h-16 w-full" />
 						</>
-					) : data.length > 0 ? (
-						data.map((lead) => {
-							const TempIcon = tempConfig[lead.temperature].icon;
-							return (
-								<div
-									key={lead._id}
-									className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-								>
-									<Avatar className="h-9 w-9">
-										<AvatarFallback className="text-xs bg-primary/10 text-primary">
-											{lead.name
-												.split(' ')
-												.map((n) => n[0])
-												.join('')
-												.slice(0, 2)
-												.toUpperCase()}
-										</AvatarFallback>
-									</Avatar>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">{lead.name}</p>
-										<p className="text-xs text-muted-foreground">
-											{productLabels[lead.interestedProduct || 'indefinido'] || 'Indefinido'}
-										</p>
-									</div>
-									<div className={cn('p-1.5 rounded-full', tempConfig[lead.temperature].bg)}>
-										<TempIcon className={cn('h-3.5 w-3.5', tempConfig[lead.temperature].color)} />
-									</div>
-									<span className="text-xs text-muted-foreground">
-										{formatDistanceToNow(lead.createdAt, { addSuffix: true, locale: ptBR })}
-									</span>
-								</div>
-							);
-						})
-					) : (
-						<p className="text-sm text-muted-foreground text-center py-4">
-							Nenhum lead recente encontrado
-						</p>
 					)}
 				</div>
 			</CardContent>

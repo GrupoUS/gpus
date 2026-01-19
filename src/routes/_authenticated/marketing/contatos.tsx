@@ -39,7 +39,7 @@ function ContactsPage() {
 		<div className="space-y-6 p-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Contatos de Email</h1>
+					<h1 className="font-bold text-2xl tracking-tight">Contatos de Email</h1>
 					<p className="text-muted-foreground">Gerencie seus contatos e sincronize com o Brevo.</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -51,24 +51,24 @@ function ContactsPage() {
 
 			<div className="space-y-4">
 				<ContactFilters
-					search={filters.search}
-					onSearchChange={(v) => handleFilterChange('search', v)}
-					status={filters.status}
-					onStatusChange={(v) => handleFilterChange('status', v)}
-					sourceType={filters.sourceType}
-					onSourceTypeChange={(v) => handleFilterChange('sourceType', v)}
 					onClear={clearFilters}
+					onSearchChange={(v) => handleFilterChange('search', v)}
+					onSourceTypeChange={(v) => handleFilterChange('sourceType', v)}
+					onStatusChange={(v) => handleFilterChange('status', v)}
+					search={filters.search}
+					sourceType={filters.sourceType}
+					status={filters.status}
 				/>
 
 				<ContactTable contacts={contacts} onSync={handleSyncContact} />
 
 				{/* Server-side cursor-based pagination */}
 				{canLoadMore && (
-					<div className="flex justify-center mt-4">
+					<div className="mt-4 flex justify-center">
 						<Button
-							variant="outline"
-							onClick={handleLoadMore}
 							disabled={paginationStatus === 'LoadingMore'}
+							onClick={handleLoadMore}
+							variant="outline"
 						>
 							{paginationStatus === 'LoadingMore' ? (
 								<>
@@ -83,7 +83,7 @@ function ContactsPage() {
 				)}
 
 				{isLoading && contacts.length === 0 && (
-					<div className="flex justify-center items-center h-32">
+					<div className="flex h-32 items-center justify-center">
 						<Loader2 className="h-8 w-8 animate-spin text-primary" />
 					</div>
 				)}

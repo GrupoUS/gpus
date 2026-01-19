@@ -52,9 +52,9 @@ function NotificationsSettingsPage() {
 	};
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<Bell className="h-6 w-6 text-purple-500" />
 					Notificações
 				</h1>
@@ -74,48 +74,48 @@ function NotificationsSettingsPage() {
 				<CardContent className="space-y-6">
 					<div className="flex items-center justify-between space-y-0">
 						<div className="space-y-1">
-							<Label htmlFor={emailLeadsId} className="text-base font-medium">
+							<Label className="font-medium text-base" htmlFor={emailLeadsId}>
 								Novos Leads
 							</Label>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Seja notificado quando um novo lead for atribuído a você.
 							</p>
 						</div>
 						<Switch
-							id={emailLeadsId}
 							checked={prefs.email_leads}
+							id={emailLeadsId}
 							onCheckedChange={(c) => handleToggle('email_leads', c)}
 						/>
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between space-y-0">
 						<div className="space-y-1">
-							<Label htmlFor={emailConversionsId} className="text-base font-medium">
+							<Label className="font-medium text-base" htmlFor={emailConversionsId}>
 								Conversões (Vendas)
 							</Label>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Alerta instantâneo quando uma venda for confirmada.
 							</p>
 						</div>
 						<Switch
-							id={emailConversionsId}
 							checked={prefs.email_conversions}
+							id={emailConversionsId}
 							onCheckedChange={(c) => handleToggle('email_conversions', c)}
 						/>
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between space-y-0">
 						<div className="space-y-1">
-							<Label htmlFor={weeklyDigestId} className="text-base font-medium">
+							<Label className="font-medium text-base" htmlFor={weeklyDigestId}>
 								Resumo Semanal
 							</Label>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Receba um relatório de desempenho toda segunda-feira.
 							</p>
 						</div>
 						<Switch
-							id={weeklyDigestId}
 							checked={prefs.weekly_digest}
+							id={weeklyDigestId}
 							onCheckedChange={(c) => handleToggle('weekly_digest', c)}
 						/>
 					</div>
@@ -133,32 +133,32 @@ function NotificationsSettingsPage() {
 				<CardContent className="space-y-6">
 					<div className="flex items-center justify-between space-y-0">
 						<div className="space-y-1">
-							<Label htmlFor={chatAlertsId} className="text-base font-medium">
+							<Label className="font-medium text-base" htmlFor={chatAlertsId}>
 								Mensagens de Chat
 							</Label>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Som e popup quando chegar uma nova mensagem de cliente.
 							</p>
 						</div>
 						<Switch
-							id={chatAlertsId}
 							checked={prefs.chat_alerts}
+							id={chatAlertsId}
 							onCheckedChange={(c) => handleToggle('chat_alerts', c)}
 						/>
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between space-y-0">
 						<div className="space-y-1">
-							<Label htmlFor={churnAlertsId} className="text-base font-medium">
+							<Label className="font-medium text-base" htmlFor={churnAlertsId}>
 								Risco de Churn
 							</Label>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Alertar quando um aluno apresentar alto risco de cancelamento.
 							</p>
 						</div>
 						<Switch
-							id={churnAlertsId}
 							checked={prefs.churn_alerts}
+							id={churnAlertsId}
 							onCheckedChange={(c) => handleToggle('churn_alerts', c)}
 						/>
 					</div>

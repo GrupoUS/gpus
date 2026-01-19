@@ -21,44 +21,44 @@ export function ContactStats({ stats }: ContactStatsProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-sm font-medium">Total de Contatos</CardTitle>
+					<CardTitle className="font-medium text-sm">Total de Contatos</CardTitle>
 					<Users className="h-4 w-4 text-muted-foreground" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold">{stats.total}</div>
-					<p className="text-xs text-muted-foreground">Base completa de contatos</p>
+					<div className="font-bold text-2xl">{stats.total}</div>
+					<p className="text-muted-foreground text-xs">Base completa de contatos</p>
 				</CardContent>
 			</Card>
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-sm font-medium">Inscritos Ativos</CardTitle>
+					<CardTitle className="font-medium text-sm">Inscritos Ativos</CardTitle>
 					<UserCheck className="h-4 w-4 text-green-500" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold">{stats.subscribed}</div>
-					<p className="text-xs text-muted-foreground">Recebem comunicações</p>
+					<div className="font-bold text-2xl">{stats.subscribed}</div>
+					<p className="text-muted-foreground text-xs">Recebem comunicações</p>
 				</CardContent>
 			</Card>
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-sm font-medium">Não Inscritos</CardTitle>
+					<CardTitle className="font-medium text-sm">Não Inscritos</CardTitle>
 					<UserX className="h-4 w-4 text-red-500" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold">{stats.unsubscribed}</div>
-					<p className="text-xs text-muted-foreground">
+					<div className="font-bold text-2xl">{stats.unsubscribed}</div>
+					<p className="text-muted-foreground text-xs">
 						Taxa de cancelamento: {stats.unsubscribeRate}%
 					</p>
 				</CardContent>
 			</Card>
 			<Card>
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-					<CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+					<CardTitle className="font-medium text-sm">Pendentes</CardTitle>
 					<Activity className="h-4 w-4 text-yellow-500" />
 				</CardHeader>
 				<CardContent>
-					<div className="text-2xl font-bold">{stats.pending}</div>
-					<p className="text-xs text-muted-foreground">Aguardando confirmação</p>
+					<div className="font-bold text-2xl">{stats.pending}</div>
+					<p className="text-muted-foreground text-xs">Aguardando confirmação</p>
 				</CardContent>
 			</Card>
 		</div>

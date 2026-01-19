@@ -82,52 +82,52 @@ function DraggableLeadCard({
 
 	return (
 		<Reorder.Item
-			value={lead}
-			id={lead._id}
-			layoutId={lead._id}
-			layout="position"
+			animate="animate"
+			className="relative touch-none rounded-lg will-change-transform"
 			drag
 			dragElastic={0.1}
 			dragTransition={dragTransition}
-			onDragStart={() => setIsDragging(true)}
-			onDragEnd={handleDragEnd}
-			initial="initial"
-			animate="animate"
 			exit="exit"
+			id={lead._id}
+			initial="initial"
+			layout="position"
+			layoutId={lead._id}
+			onDragEnd={handleDragEnd}
+			onDragStart={() => setIsDragging(true)}
+			transition={layoutTransition}
+			value={lead}
+			variants={cardVariants}
 			whileDrag={{
 				scale: 1.05,
 				boxShadow: '0 25px 50px -12px hsl(var(--primary) / 0.4)',
 				zIndex: 50,
 				cursor: 'grabbing',
 			}}
-			variants={cardVariants}
-			transition={layoutTransition}
-			className="relative rounded-lg touch-none will-change-transform"
 		>
 			<div className="relative w-full">
 				<LeadCard lead={lead} />
 				<button
-					type="button"
-					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg bg-transparent border-none p-0"
 					aria-label="Abrir lead"
+					className="absolute inset-0 h-full w-full cursor-pointer rounded-lg border-none bg-transparent p-0 opacity-0 focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2"
 					onClick={() => {
 						if (!isDragging) {
 							onLeadClick?.(lead._id);
 						}
 					}}
+					type="button"
 				/>
 			</div>
 			{lead.phone && (
 				<motion.button
-					type="button"
+					className="mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md bg-green-50 px-3 py-1.5 font-medium text-green-700 text-xs transition-colors hover:bg-green-100"
 					onClick={(e) => {
 						e.stopPropagation();
 						if (lead.phone) {
 							window.open(`https://wa.me/${lead.phone}`, '_blank');
 						}
 					}}
-					className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-medium cursor-pointer"
 					onPointerDown={(e) => e.stopPropagation()}
+					type="button"
 					whileHover={{ scale: 1.02 }}
 					whileTap={{ scale: 0.98 }}
 				>
@@ -164,29 +164,29 @@ function KanbanColumn({
 }) {
 	return (
 		<motion.div
-			ref={(el) => registerColumn(stage.id, el)}
-			className="shrink-0 w-[300px] snap-start"
+			className="w-[300px] shrink-0 snap-start"
 			layout
+			ref={(el) => registerColumn(stage.id, el)}
 			transition={SPRING_SMOOTH}
 		>
 			<Card
+				className="kanban-column flex h-[calc(100vh-200px)] min-h-[400px] flex-col"
 				variant="glass"
-				className="h-[calc(100vh-200px)] min-h-[400px] flex flex-col kanban-column"
 			>
-				<CardHeader className="pb-3 shrink-0 kanban-column-header">
+				<CardHeader className="kanban-column-header shrink-0 pb-3">
 					<div className="flex items-center justify-between">
-						<CardTitle className="text-sm font-medium flex items-center gap-2 font-display">
+						<CardTitle className="flex items-center gap-2 font-display font-medium text-sm">
 							<motion.div
 								className={`h-2 w-2 rounded-full ${stage.color}`}
 								layoutId={`stage-dot-${stage.id}`}
 							/>
 							{stage.label}
 						</CardTitle>
-						<Badge variant="secondary" className="font-display tabular-nums">
+						<Badge className="font-display tabular-nums" variant="secondary">
 							<motion.span
-								key={leads.length}
-								initial={{ scale: 1.2 }}
 								animate={{ scale: 1 }}
+								initial={{ scale: 1.2 }}
+								key={leads.length}
 								transition={SPRING_SMOOTH}
 							>
 								{leads.length}
@@ -194,32 +194,32 @@ function KanbanColumn({
 						</Badge>
 					</div>
 				</CardHeader>
-				<CardContent className="flex-1 min-h-0 flex flex-col">
+				<CardContent className="flex min-h-0 flex-1 flex-col">
 					{headerAction}
 					<ScrollArea className="h-full">
 						<Reorder.Group
 							axis="y"
-							values={leads}
-							onReorder={(newOrder) => onReorder(stage.id, newOrder)}
-							layoutScroll
 							className="space-y-3 pr-4 pb-4"
+							layoutScroll
+							onReorder={(newOrder) => onReorder(stage.id, newOrder)}
+							values={leads}
 						>
-							<AnimatePresence mode="popLayout" initial={false}>
+							<AnimatePresence initial={false} mode="popLayout">
 								{leads.map((lead) => (
 									<DraggableLeadCard
+										columnRefs={columnRefs}
 										key={lead._id}
 										lead={lead}
-										onLeadClick={onLeadClick}
 										onDragToColumn={onDragToColumn}
-										columnRefs={columnRefs}
+										onLeadClick={onLeadClick}
 									/>
 								))}
 							</AnimatePresence>
 							{leads.length === 0 && (
 								<motion.div
-									className="h-20 border-2 border-dashed border-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs"
-									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
+									className="flex h-20 items-center justify-center rounded-lg border-2 border-muted border-dashed text-muted-foreground text-xs"
+									initial={{ opacity: 0 }}
 									transition={{ delay: 0.2 }}
 								>
 									Arraste para cá
@@ -295,18 +295,18 @@ export function PipelineKanban({ leads, onDragEnd, onLeadClick }: PipelineKanban
 
 	return (
 		<LayoutGroup>
-			<div className="flex gap-4 overflow-x-auto pb-4 h-full snap-x snap-mandatory scroll-smooth">
+			<div className="flex h-full snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4">
 				{stages.map((stage) => (
 					<KanbanColumn
+						columnRefs={columnRefs}
+						headerAction={stage.id === 'novo' ? <LeadForm /> : null}
 						key={stage.id}
-						stage={stage}
 						leads={leadsByStage[stage.id] || []}
+						onDragToColumn={handleDragToColumn}
 						onLeadClick={onLeadClick}
 						onReorder={handleReorder}
-						onDragToColumn={handleDragToColumn}
-						columnRefs={columnRefs}
 						registerColumn={registerColumn}
-						headerAction={stage.id === 'novo' ? <LeadForm /> : null}
+						stage={stage}
 					/>
 				))}
 			</div>

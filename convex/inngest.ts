@@ -1,16 +1,17 @@
-import { inngest } from './lib/inngest';
 import { z } from 'zod';
+
 import {
-	processPDF,
-	processSpreadsheet,
-	processAPI,
-	processDatabase,
+	type ContextSource,
 	calculateRelevance,
+	classifyContext,
 	compressContext,
 	factCheckContext,
-	classifyContext,
-	type ContextSource,
+	processAPI,
+	processDatabase,
+	processPDF,
+	processSpreadsheet,
 } from './lib/contextProcessor';
+import { inngest } from './lib/inngest';
 
 // Define schemas for our context gathering functions
 const ContextGatherEventSchema = z.object({
@@ -91,7 +92,7 @@ export const gatherContext = inngest.createFunction(
 					});
 
 				case 'database':
-					return await step.run(`process-database`, async () => {
+					return await step.run('process-database', async () => {
 						const data = await processDatabase(source.query, filters);
 						return {
 							type: 'database',

@@ -45,7 +45,7 @@ function CampaignsPage() {
 		<div className="space-y-6 p-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Campanhas</h1>
+					<h1 className="font-bold text-2xl tracking-tight">Campanhas</h1>
 					<p className="text-muted-foreground">Gerencie suas campanhas de email marketing.</p>
 				</div>
 				<Link to="/marketing/nova">
@@ -58,46 +58,48 @@ function CampaignsPage() {
 
 			{/* Stats Cards */}
 			<CampaignStats
-				totalCampaigns={totalCampaigns}
+				avgOpenRate={avgOpenRate}
 				draftCount={draftCount}
 				sentCount={sentCount}
-				avgOpenRate={avgOpenRate}
+				totalCampaigns={totalCampaigns}
 			/>
 
 			{/* Filters */}
 			<CampaignFilters
-				search={search || ''}
-				onSearchChange={(v) => handleFilterChange('search', v)}
-				status={status || 'all'}
-				onStatusChange={(v) => handleFilterChange('status', v)}
 				onClear={clearFilters}
+				onSearchChange={(v) => handleFilterChange('search', v)}
+				onStatusChange={(v) => handleFilterChange('status', v)}
+				search={search || ''}
+				status={status || 'all'}
 			/>
 
 			{/* Campaigns List */}
-			{!campaigns ? (
+			{campaigns ? (
+				campaigns.length === 0 ? (
+					<div className="py-12 text-center text-muted-foreground">
+						<Mail className="mx-auto mb-4 h-16 w-16 opacity-30" />
+						<h2 className="font-medium text-lg">Nenhuma campanha encontrada</h2>
+						<p className="text-sm">Crie uma nova campanha para começar</p>
+					</div>
+				) : view === 'table' ? (
+					/* Table View */
+					<CampaignTable campaigns={paginatedCampaigns} onCampaignClick={navigateToCampaign} />
+				) : (
+					/* Grid View */
+					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
+							<CampaignCard
+								campaign={campaign}
+								key={campaign._id}
+								onClick={() => navigateToCampaign(campaign._id)}
+							/>
+						))}
+					</div>
+				)
+			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{[1, 2, 3, 4, 5, 6].map((i) => (
-						<div key={i} className="h-40 bg-muted/20 animate-pulse rounded-lg" />
-					))}
-				</div>
-			) : campaigns.length === 0 ? (
-				<div className="text-center py-12 text-muted-foreground">
-					<Mail className="h-16 w-16 mx-auto mb-4 opacity-30" />
-					<h2 className="text-lg font-medium">Nenhuma campanha encontrada</h2>
-					<p className="text-sm">Crie uma nova campanha para começar</p>
-				</div>
-			) : view === 'table' ? (
-				/* Table View */
-				<CampaignTable campaigns={paginatedCampaigns} onCampaignClick={navigateToCampaign} />
-			) : (
-				/* Grid View */
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
-						<CampaignCard
-							key={campaign._id}
-							campaign={campaign}
-							onClick={() => navigateToCampaign(campaign._id)}
-						/>
+						<div className="h-40 animate-pulse rounded-lg bg-muted/20" key={i} />
 					))}
 				</div>
 			)}
@@ -105,14 +107,12 @@ function CampaignsPage() {
 			{/* Pagination */}
 			{campaigns && campaigns.length > PAGE_SIZE && (
 				<div className="flex items-center justify-between">
-					<p className="text-sm text-muted-foreground">
+					<p className="text-muted-foreground text-sm">
 						Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalCampaigns)} de{' '}
 						{totalCampaigns} campanhas
 					</p>
 					<div className="flex items-center gap-2">
 						<Button
-							variant="outline"
-							size="sm"
 							disabled={page === 1}
 							onClick={() => {
 								void navigate({
@@ -120,16 +120,16 @@ function CampaignsPage() {
 									search: { search, status, view, page: page - 1 },
 								});
 							}}
+							size="sm"
+							variant="outline"
 						>
-							<ChevronLeft className="h-4 w-4 mr-1" />
+							<ChevronLeft className="mr-1 h-4 w-4" />
 							Anterior
 						</Button>
-						<span className="text-sm text-muted-foreground">
+						<span className="text-muted-foreground text-sm">
 							{page} / {totalPages}
 						</span>
 						<Button
-							variant="outline"
-							size="sm"
 							disabled={page === totalPages}
 							onClick={() => {
 								void navigate({
@@ -137,9 +137,11 @@ function CampaignsPage() {
 									search: { search, status, view, page: page + 1 },
 								});
 							}}
+							size="sm"
+							variant="outline"
 						>
 							Próximo
-							<ChevronRight className="h-4 w-4 ml-1" />
+							<ChevronRight className="ml-1 h-4 w-4" />
 						</Button>
 					</div>
 				</div>

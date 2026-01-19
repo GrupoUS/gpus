@@ -44,16 +44,16 @@ export function ScrollFloatText({
 	const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 0.8, 1]);
 
 	return (
-		<div ref={containerRef} className={`relative overflow-hidden ${containerClassName}`}>
+		<div className={`relative overflow-hidden ${containerClassName}`} ref={containerRef}>
 			<motion.div
+				className="space-y-4 text-center"
 				style={{ y, opacity }}
 				transition={{ duration }}
-				className="space-y-4 text-center"
 			>
 				<motion.h2
 					className={
 						textClassName ||
-						'text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/50'
+						'bg-linear-to-r from-foreground to-foreground/50 bg-clip-text font-bold text-4xl text-transparent md:text-5xl lg:text-6xl'
 					}
 				>
 					{heading}
@@ -61,7 +61,7 @@ export function ScrollFloatText({
 
 				<motion.p
 					className={
-						subNoteClassName || 'text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto'
+						subNoteClassName || 'mx-auto max-w-3xl text-lg text-muted-foreground md:text-xl'
 					}
 				>
 					{subheading}

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 // Mock dependencies BEFORE imports
 vi.mock('../lib/auth', () => ({
@@ -13,7 +13,7 @@ vi.mock('../_generated/server', () => ({
 	internalQuery: (args: any) => ({ ...args, isMock: true }),
 }));
 
-import { getFinancialSummary, getAllPayments } from './queries';
+import { getAllPayments, getFinancialSummary } from './queries';
 
 // Helper to access the handler whether it's mocked or the real internal property
 const getHandler = (queryObj: any) => {

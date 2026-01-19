@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { action, internalMutation } from '../_generated/server';
+
 import { internal } from '../_generated/api';
+import { action, internalMutation } from '../_generated/server';
 
 export const sync = action({
 	args: {
@@ -19,8 +20,6 @@ export const sync = action({
 		if (args.cursor) {
 			url.searchParams.append('offset', args.cursor);
 		}
-
-		console.log(`Fetching users from Clerk...`);
 		const response = await fetch(url.toString(), {
 			headers: {
 				Authorization: `Bearer ${clerkSecretKey}`,
@@ -33,7 +32,6 @@ export const sync = action({
 		}
 
 		const users = await response.json();
-		console.log(`Fetched ${users.length} users from Clerk`);
 
 		const stats = {
 			total: users.length,
@@ -53,13 +51,11 @@ export const sync = action({
 				const role = user.public_metadata?.role || 'sdr';
 
 				if (!email) {
-					console.warn(`User ${clerkId} has no email, skipping`);
 					stats.skipped++;
 					continue;
 				}
 
 				if (args.dryRun) {
-					console.log(`[DRY RUN] Would sync user: ${email} (${clerkId})`);
 					continue;
 				}
 
@@ -76,8 +72,7 @@ export const sync = action({
 				if (result === 'created') stats.created++;
 				else if (result === 'updated') stats.updated++;
 				else stats.skipped++;
-			} catch (err) {
-				console.error(`Error syncing user ${user.id}:`, err);
+			} catch (_err) {
 				stats.errors++;
 			}
 		}

@@ -87,78 +87,78 @@ export function ChatInput({
 
 	return (
 		<form
+			className="border-t bg-background/95 p-4 backdrop-blur supports-backdrop-filter:bg-background/60"
 			onSubmit={handleSubmit}
-			className="border-t p-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
 		>
 			<div className="flex items-end gap-2">
-				<Button type="button" variant="ghost" size="icon" className="shrink-0" disabled={disabled}>
+				<Button className="shrink-0" disabled={disabled} size="icon" type="button" variant="ghost">
 					<Paperclip className="h-5 w-5 text-muted-foreground" />
 				</Button>
 
-				<div className="flex-1 relative">
+				<div className="relative flex-1">
 					<Textarea
-						value={message}
+						className={cn(
+							'max-h-[120px] min-h-[44px] resize-none pr-10',
+							'focus-visible:ring-purple-500',
+						)}
+						disabled={disabled || isSending}
 						onChange={(e) => setMessage(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder={placeholder}
-						disabled={disabled || isSending}
 						rows={1}
-						className={cn(
-							'min-h-[44px] max-h-[120px] resize-none pr-10',
-							'focus-visible:ring-purple-500',
-						)}
+						value={message}
 					/>
 
-					<Popover open={open} onOpenChange={setOpen}>
+					<Popover onOpenChange={setOpen} open={open}>
 						<PopoverTrigger asChild>
 							<Button
+								className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
+								disabled={disabled}
+								size="icon"
 								type="button"
 								variant="ghost"
-								size="icon"
-								className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-								disabled={disabled}
 							>
 								<Smile className="h-5 w-5 text-muted-foreground" />
 							</Button>
 						</PopoverTrigger>
-						<PopoverContent className="w-80 p-0" align="end">
-							<div className="p-3 border-b">
+						<PopoverContent align="end" className="w-80 p-0">
+							<div className="border-b p-3">
 								<div className="relative">
-									<Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+									<Search className="absolute top-1/2 left-2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
 									<Input
-										placeholder="Buscar modelos..."
 										className="h-8 pl-8 text-xs"
-										value={templateSearch}
 										onChange={(e) => setTemplateSearch(e.target.value)}
+										placeholder="Buscar modelos..."
+										value={templateSearch}
 									/>
 								</div>
 							</div>
 							<ScrollArea className="h-64">
 								{conversationTemplates === undefined ? (
-									<div className="p-4 text-center text-xs text-muted-foreground">Carregando...</div>
+									<div className="p-4 text-center text-muted-foreground text-xs">Carregando...</div>
 								) : filteredTemplates?.length === 0 ? (
-									<div className="p-4 text-center text-xs text-muted-foreground">
+									<div className="p-4 text-center text-muted-foreground text-xs">
 										Nenhum modelo encontrado
 									</div>
 								) : (
 									<div className="p-1">
 										{filteredTemplates?.map((template: MessageTemplate) => (
 											<button
-												type="button"
+												className="group w-full rounded-md p-2 text-left text-sm transition-colors hover:bg-muted"
 												key={template._id}
-												className="w-full text-left p-2 rounded-md hover:bg-muted transition-colors text-sm group"
 												onClick={() => {
 													handleTemplateSelect(template.content);
 													setOpen(false);
 												}}
+												type="button"
 											>
-												<div className="flex items-center justify-between mb-1">
+												<div className="mb-1 flex items-center justify-between">
 													<span className="font-medium text-xs">{template.name}</span>
-													<Badge variant="outline" className="text-[10px] py-0 px-1">
+													<Badge className="px-1 py-0 text-[10px]" variant="outline">
 														{template.category}
 													</Badge>
 												</div>
-												<p className="text-xs text-muted-foreground line-clamp-2">
+												<p className="line-clamp-2 text-muted-foreground text-xs">
 													{template.content}
 												</p>
 											</button>
@@ -171,16 +171,16 @@ export function ChatInput({
 				</div>
 
 				<Button
-					type="submit"
-					size="icon"
-					disabled={!message.trim() || isSending || disabled}
 					className="shrink-0 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+					disabled={!message.trim() || isSending || disabled}
+					size="icon"
+					type="submit"
 				>
 					{isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
 				</Button>
 			</div>
 
-			<p className="text-xs text-muted-foreground mt-2 text-center">
+			<p className="mt-2 text-center text-muted-foreground text-xs">
 				Pressione Enter para enviar, Shift + Enter para nova linha
 			</p>
 		</form>

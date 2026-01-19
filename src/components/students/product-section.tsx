@@ -36,31 +36,31 @@ export function ProductSection({
 
 	return (
 		<Collapsible
-			open={isExpanded}
-			onOpenChange={onToggle}
 			className={cn(
-				'border rounded-lg bg-card text-card-foreground shadow-sm overflow-hidden transition-all duration-200',
+				'overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200',
 				isExpanded ? 'mb-6' : 'mb-2',
 				className,
 			)}
+			onOpenChange={onToggle}
+			open={isExpanded}
 		>
 			<ProductHeader
-				productId={productId}
 				count={count}
-				totalCount={totalCount}
 				isExpanded={isExpanded}
+				productId={productId}
+				totalCount={totalCount}
 			/>
 
-			<CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-				<div className="p-4 pt-0 border-t bg-muted/5">
+			<CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+				<div className="border-t bg-muted/5 p-4 pt-0">
 					{students.length > 0 ? (
-						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pt-4">
+						<div className="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-3">
 							{students.map((student) => (
 								<StudentCard
 									key={student._id}
-									student={student}
 									onClick={() => onStudentClick(student._id)}
 									searchTerm={searchTerm}
+									student={student}
 								/>
 							))}
 						</div>

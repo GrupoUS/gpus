@@ -145,7 +145,7 @@ export function PaymentCalendar() {
 				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 					<CardTitle>Calendário de Pagamentos</CardTitle>
 					<div className="flex items-center gap-2">
-						<Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+						<Button onClick={goToPreviousMonth} size="icon" variant="outline">
 							<ChevronLeft className="h-4 w-4" />
 						</Button>
 						<span className="min-w-35 text-center font-medium">
@@ -154,26 +154,14 @@ export function PaymentCalendar() {
 								year: 'numeric',
 							})}
 						</span>
-						<Button variant="outline" size="icon" onClick={goToNextMonth}>
+						<Button onClick={goToNextMonth} size="icon" variant="outline">
 							<ChevronRight className="h-4 w-4" />
 						</Button>
 					</div>
 				</CardHeader>
 				<CardContent>
 					<Calendar
-						mode="single"
-						month={displayedMonth}
-						onMonthChange={(date) => {
-							setMonth(date.getMonth());
-							setYear(date.getFullYear());
-						}}
-						modifiers={{
-							hasPayments: (date) => datesWithPayments.has(date.toISOString().split('T')[0]),
-						}}
-						modifiersClassNames={{
-							hasPayments: 'relative cursor-pointer hover:bg-accent',
-						}}
-						onDayClick={handleDayClick}
+						className="rounded-md border p-3"
 						components={{
 							DayButton: ({ day, modifiers }) => {
 								const dateKey = day.date.toISOString().split('T')[0];
@@ -181,7 +169,6 @@ export function PaymentCalendar() {
 
 								return (
 									<button
-										type="button"
 										className={`relative flex h-9 w-9 flex-col items-center justify-center rounded-md text-sm ${
 											hasPayments
 												? 'cursor-pointer font-semibold hover:bg-accent'
@@ -193,6 +180,7 @@ export function PaymentCalendar() {
 												handleDayClick(day.date);
 											}
 										}}
+										type="button"
 									>
 										{day.date.getDate()}
 										{renderDayContent(day.date)}
@@ -200,11 +188,23 @@ export function PaymentCalendar() {
 								);
 							},
 						}}
-						className="rounded-md border p-3"
+						mode="single"
+						modifiers={{
+							hasPayments: (date) => datesWithPayments.has(date.toISOString().split('T')[0]),
+						}}
+						modifiersClassNames={{
+							hasPayments: 'relative cursor-pointer hover:bg-accent',
+						}}
+						month={displayedMonth}
+						onDayClick={handleDayClick}
+						onMonthChange={(date) => {
+							setMonth(date.getMonth());
+							setYear(date.getFullYear());
+						}}
 					/>
 
 					{/* Legend */}
-					<div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+					<div className="mt-4 flex items-center justify-center gap-4 text-muted-foreground text-xs">
 						<div className="flex items-center gap-1">
 							<span className="h-2.5 w-2.5 rounded-full bg-green-500" />
 							<span>Pago</span>
@@ -222,7 +222,7 @@ export function PaymentCalendar() {
 			</Card>
 
 			{/* Payment Details Sheet */}
-			<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+			<Sheet onOpenChange={setIsSheetOpen} open={isSheetOpen}>
 				<SheetContent className="sm:max-w-lg">
 					<SheetHeader>
 						<SheetTitle>

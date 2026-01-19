@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
-import { mutation, query, internalQuery } from './_generated/server';
-import { requireAuth, hasPermission } from './lib/auth';
-import { encrypt, decrypt, isEncrypted } from './lib/encryption';
+
+import { internalQuery, mutation, query } from './_generated/server';
+import { hasPermission, requireAuth } from './lib/auth';
+import { decrypt, encrypt, isEncrypted } from './lib/encryption';
 import { PERMISSIONS } from './lib/permissions';
 
 // Keys that should always be encrypted
@@ -51,7 +52,7 @@ function validateAsaasApiKey(key: string): {
 	}
 
 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
-	const validPattern = /^[\$a-zA-Z0-9_]+$/;
+	const validPattern = /^[$a-zA-Z0-9_]+$/;
 	if (!validPattern.test(cleanKey)) {
 		return {
 			valid: false,

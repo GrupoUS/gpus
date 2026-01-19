@@ -111,11 +111,11 @@ export function AdminSyncControls() {
 				<CardContent className="space-y-4">
 					{syncStatus && (
 						<div className="text-sm">
-							<div className="flex items-center justify-between mb-2">
+							<div className="mb-2 flex items-center justify-between">
 								<span className="text-muted-foreground">Tipo:</span>
 								<span className="font-medium capitalize">{syncStatus.syncType}</span>
 							</div>
-							<div className="flex items-center justify-between mb-2">
+							<div className="mb-2 flex items-center justify-between">
 								<span className="text-muted-foreground">Iniciado:</span>
 								<span className="font-medium">
 									{new Date(syncStatus.startedAt).toLocaleString('pt-BR')}
@@ -127,7 +127,7 @@ export function AdminSyncControls() {
 										<span className="text-muted-foreground">Progresso:</span>
 										<span className="font-medium">{progress}%</span>
 									</div>
-									<Progress value={progress} className="h-2" />
+									<Progress className="h-2" value={progress} />
 								</div>
 							)}
 							{syncStatus.recordsProcessed > 0 && (
@@ -156,10 +156,10 @@ export function AdminSyncControls() {
 				<CardContent>
 					<div className="grid gap-3 md:grid-cols-2">
 						<Button
-							variant="outline"
-							onClick={() => handleSync('customers')}
-							disabled={loading.customers || isRunning}
 							className="h-auto py-3"
+							disabled={loading.customers || isRunning}
+							onClick={() => handleSync('customers')}
+							variant="outline"
 						>
 							{loading.customers ? (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -168,14 +168,14 @@ export function AdminSyncControls() {
 							)}
 							<div className="text-left">
 								<div className="font-medium">Clientes</div>
-								<div className="text-xs text-muted-foreground">Import customers from Asaas</div>
+								<div className="text-muted-foreground text-xs">Import customers from Asaas</div>
 							</div>
 						</Button>
 						<Button
-							variant="outline"
-							onClick={() => handleSync('payments')}
-							disabled={loading.payments || isRunning}
 							className="h-auto py-3"
+							disabled={loading.payments || isRunning}
+							onClick={() => handleSync('payments')}
+							variant="outline"
 						>
 							{loading.payments ? (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -184,14 +184,14 @@ export function AdminSyncControls() {
 							)}
 							<div className="text-left">
 								<div className="font-medium">Pagamentos</div>
-								<div className="text-xs text-muted-foreground">Import payments from Asaas</div>
+								<div className="text-muted-foreground text-xs">Import payments from Asaas</div>
 							</div>
 						</Button>
 						<Button
-							variant="outline"
-							onClick={() => handleSync('subscriptions')}
-							disabled={loading.subscriptions || isRunning}
 							className="h-auto py-3"
+							disabled={loading.subscriptions || isRunning}
+							onClick={() => handleSync('subscriptions')}
+							variant="outline"
 						>
 							{loading.subscriptions ? (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -200,13 +200,13 @@ export function AdminSyncControls() {
 							)}
 							<div className="text-left">
 								<div className="font-medium">Assinaturas</div>
-								<div className="text-xs text-muted-foreground">Import subscriptions from Asaas</div>
+								<div className="text-muted-foreground text-xs">Import subscriptions from Asaas</div>
 							</div>
 						</Button>
 						<Button
-							onClick={() => handleSync('all')}
-							disabled={loading.all || isRunning}
 							className="h-auto py-3"
+							disabled={loading.all || isRunning}
+							onClick={() => handleSync('all')}
 						>
 							{loading.all ? (
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -215,13 +215,13 @@ export function AdminSyncControls() {
 							)}
 							<div className="text-left">
 								<div className="font-medium">Sincronizar Tudo</div>
-								<div className="text-xs text-muted-foreground">Import all data from Asaas</div>
+								<div className="text-muted-foreground text-xs">Import all data from Asaas</div>
 							</div>
 						</Button>
 					</div>
 					{isRunning && (
-						<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-							<div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+						<div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+							<div className="flex items-center gap-2 text-blue-700 text-sm dark:text-blue-300">
 								<Loader2 className="h-4 w-4 animate-spin" />
 								<span>Uma sincronização está em andamento. Aguarde a conclusão.</span>
 							</div>
@@ -243,13 +243,13 @@ export function AdminSyncControls() {
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
 							<Label htmlFor="auto-sync-enable">Ativar Auto-Sync</Label>
-							<div className="text-sm text-muted-foreground">
+							<div className="text-muted-foreground text-sm">
 								Sincronize automaticamente com o Asaas em intervalos regulares
 							</div>
 						</div>
 						<Switch
-							id={autoSyncEnableId}
 							checked={autoSyncConfig.enabled}
+							id={autoSyncEnableId}
 							onCheckedChange={(checked) =>
 								setAutoSyncConfig({ ...autoSyncConfig, enabled: checked })
 							}
@@ -261,13 +261,13 @@ export function AdminSyncControls() {
 							<div className="space-y-2">
 								<Label htmlFor={syncIntervalId}>Intervalo de Sincronização</Label>
 								<Select
-									value={autoSyncConfig.intervalHours.toString()}
 									onValueChange={(value) =>
 										setAutoSyncConfig({
 											...autoSyncConfig,
 											intervalHours: Number.parseInt(value, 10),
 										})
 									}
+									value={autoSyncConfig.intervalHours.toString()}
 								>
 									<SelectTrigger id={syncIntervalId}>
 										<SelectValue />
@@ -290,17 +290,17 @@ export function AdminSyncControls() {
 										{ value: 'subscriptions', label: 'Assinaturas' },
 									].map((type) => (
 										<div
+											className="flex items-center justify-between rounded-lg border p-3"
 											key={type.value}
-											className="flex items-center justify-between p-3 rounded-lg border"
 										>
-											<Label htmlFor={`sync-${type.value}`} className="cursor-pointer">
+											<Label className="cursor-pointer" htmlFor={`sync-${type.value}`}>
 												{type.label}
 											</Label>
 											<Switch
-												id={`sync-${type.value}`}
 												checked={autoSyncConfig.syncTypes.includes(
 													type.value as 'customers' | 'payments' | 'subscriptions',
 												)}
+												id={`sync-${type.value}`}
 												onCheckedChange={(checked) => {
 													if (checked) {
 														setAutoSyncConfig({
@@ -323,7 +323,7 @@ export function AdminSyncControls() {
 								</div>
 							</div>
 
-							<Button onClick={handleSaveAutoSync} className="w-full">
+							<Button className="w-full" onClick={handleSaveAutoSync}>
 								Salvar Configurações
 							</Button>
 						</>
@@ -342,29 +342,29 @@ function SyncStatusBadge({ status }: SyncStatusBadgeProps) {
 	switch (status) {
 		case 'completed':
 			return (
-				<Badge variant="outline" className="text-green-600 border-green-600">
-					<CheckCircle2 className="h-3 w-3 mr-1" />
+				<Badge className="border-green-600 text-green-600" variant="outline">
+					<CheckCircle2 className="mr-1 h-3 w-3" />
 					Concluído
 				</Badge>
 			);
 		case 'failed':
 			return (
-				<Badge variant="outline" className="text-red-600 border-red-600">
-					<AlertCircle className="h-3 w-3 mr-1" />
+				<Badge className="border-red-600 text-red-600" variant="outline">
+					<AlertCircle className="mr-1 h-3 w-3" />
 					Falhou
 				</Badge>
 			);
 		case 'running':
 			return (
-				<Badge variant="outline" className="text-blue-600 border-blue-600">
-					<Loader2 className="h-3 w-3 mr-1 animate-spin" />
+				<Badge className="border-blue-600 text-blue-600" variant="outline">
+					<Loader2 className="mr-1 h-3 w-3 animate-spin" />
 					Em Andamento
 				</Badge>
 			);
 		default:
 			return (
-				<Badge variant="outline" className="text-yellow-600 border-yellow-600">
-					<Clock className="h-3 w-3 mr-1" />
+				<Badge className="border-yellow-600 text-yellow-600" variant="outline">
+					<Clock className="mr-1 h-3 w-3" />
 					Aguardando
 				</Badge>
 			);

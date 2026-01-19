@@ -34,7 +34,7 @@ export function EmailMetricsChart({ data }: EmailMetricsChartProps) {
 			</CardHeader>
 			<CardContent className="pl-2">
 				<div className="h-[300px] w-full">
-					<ResponsiveContainer width="100%" height="100%" minWidth={0}>
+					<ResponsiveContainer height="100%" minWidth={0} width="100%">
 						<LineChart
 							data={data}
 							margin={{
@@ -44,20 +44,20 @@ export function EmailMetricsChart({ data }: EmailMetricsChartProps) {
 								bottom: 0,
 							}}
 						>
-							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+							<CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
 							<XAxis
-								dataKey="name"
-								stroke="#888888"
-								fontSize={12}
-								tickLine={false}
 								axisLine={false}
+								dataKey="name"
+								fontSize={12}
+								stroke="#888888"
+								tickLine={false}
 							/>
 							<YAxis
-								stroke="#888888"
-								fontSize={12}
-								tickLine={false}
 								axisLine={false}
+								fontSize={12}
+								stroke="#888888"
 								tickFormatter={(value) => `${value}`}
+								tickLine={false}
 							/>
 							<Tooltip
 								contentStyle={{
@@ -69,28 +69,28 @@ export function EmailMetricsChart({ data }: EmailMetricsChartProps) {
 							/>
 							<Legend />
 							<Line
-								type="monotone"
+								activeDot={{ r: 4 }}
 								dataKey="enviados"
+								name="Enviados"
 								stroke="#3b82f6"
 								strokeWidth={2}
-								activeDot={{ r: 4 }}
-								name="Enviados"
+								type="monotone"
 							/>
 							<Line
-								type="monotone"
+								activeDot={{ r: 4 }}
 								dataKey="abertos"
+								name="Abertos"
 								stroke="#22c55e"
 								strokeWidth={2}
-								activeDot={{ r: 4 }}
-								name="Abertos"
+								type="monotone"
 							/>
 							<Line
-								type="monotone"
+								activeDot={{ r: 4 }}
 								dataKey="cliques"
+								name="Cliques"
 								stroke="#eab308"
 								strokeWidth={2}
-								activeDot={{ r: 4 }}
-								name="Cliques"
+								type="monotone"
 							/>
 						</LineChart>
 					</ResponsiveContainer>

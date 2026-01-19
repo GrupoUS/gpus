@@ -31,7 +31,7 @@ vi.mock('@/components/ui/flip-button', async () => {
 				}: React.ComponentProps<'button'> & { initial?: unknown },
 				ref: React.Ref<HTMLButtonElement>,
 			) => (
-				<button ref={ref} className={className} {...props} type="button">
+				<button className={className} ref={ref} {...props} type="button">
 					{children}
 				</button>
 			),

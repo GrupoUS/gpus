@@ -1,9 +1,10 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+
 import { internal } from './_generated/api';
-import { encrypt, encryptCPF, decrypt, decryptCPF } from './lib/encryption';
+import { mutation, query } from './_generated/server';
 import { logAudit } from './lgpd';
 import { getOrganizationId, requirePermission } from './lib/auth';
+import { decrypt, decryptCPF, encrypt, encryptCPF } from './lib/encryption';
 import { PERMISSIONS } from './lib/permissions';
 
 // Queries
@@ -44,7 +45,7 @@ export const list = query({
 		if (args.search) {
 			const searchLower = args.search.toLowerCase();
 			// Note: Substring search still filtered in memory for now
-			return students.filter((s) => s.name && s.name.toLowerCase().includes(searchLower));
+			return students.filter((s) => s.name?.toLowerCase().includes(searchLower));
 		}
 
 		return students;
@@ -62,22 +63,19 @@ export const getById = query({
 		// Decrypt sensitive fields for authorized view (with graceful degradation)
 		try {
 			if (student.encryptedCPF) student.cpf = await decryptCPF(student.encryptedCPF);
-		} catch (e) {
-			console.warn(`Failed to decrypt CPF for student ${args.id}:`, e);
+		} catch (_e) {
 			student.cpf = student.cpf || '[CPF criptografado - falha na decriptação]';
 		}
 
 		try {
 			if (student.encryptedEmail) student.email = await decrypt(student.encryptedEmail);
-		} catch (e) {
-			console.warn(`Failed to decrypt email for student ${args.id}:`, e);
+		} catch (_e) {
 			student.email = student.email || '[Email criptografado - falha na decriptação]';
 		}
 
 		try {
 			if (student.encryptedPhone) student.phone = await decrypt(student.encryptedPhone);
-		} catch (e) {
-			console.warn(`Failed to decrypt phone for student ${args.id}:`, e);
+		} catch (_e) {
 			student.phone = student.phone || '[Telefone criptografado - falha na decriptação]';
 		}
 
@@ -145,7 +143,7 @@ export const checkEncryptionHealth = query({
 		const samples: Array<{ id: string; initials: string; failures: string[] }> = [];
 
 		for (const student of students) {
-			let failures: string[] = [];
+			const failures: string[] = [];
 
 			if (student.encryptedCPF) {
 				try {
@@ -179,7 +177,7 @@ export const checkEncryptionHealth = query({
 				const nameParts = (student.name || '').split(' ');
 				const initials =
 					nameParts.length > 1
-						? `${nameParts[0]?.[0] || ''}${nameParts[nameParts.length - 1]?.[0] || ''}`.toUpperCase()
+						? `${nameParts[0]?.[0] || ''}${nameParts.at(-1)?.[0] || ''}`.toUpperCase()
 						: (nameParts[0]?.[0] || '?').toUpperCase();
 
 				samples.push({
@@ -255,8 +253,7 @@ export const getChurnAlerts = query({
 			}
 
 			return alerts;
-		} catch (error) {
-			console.error('Error in getChurnAlerts:', error);
+		} catch (_error) {
 			return [];
 		}
 	},
@@ -411,10 +408,7 @@ export const create = mutation({
 					studentId,
 				},
 			);
-		} catch (error: any) {
-			// Log scheduling error (rare)
-			console.error('Failed to schedule Asaas sync:', error);
-		}
+		} catch (_error: any) {}
 
 		// Auto-sync to email marketing (if student has email)
 		if (args.email) {
@@ -423,10 +417,7 @@ export const create = mutation({
 					studentId,
 					organizationId,
 				});
-			} catch (error) {
-				// Log but don't fail student creation if email sync fails
-				console.error('Failed to schedule email marketing sync:', error);
-			}
+			} catch (_error) {}
 		}
 
 		return studentId;
@@ -495,10 +486,7 @@ export const update = mutation({
 						studentId: args.studentId,
 					},
 				);
-			} catch (error: any) {
-				// Log scheduling error - actual sync errors are handled inside syncStudentAsCustomerInternal
-				console.error('Failed to schedule Asaas sync:', error);
-			}
+			} catch (_error: any) {}
 		}
 	},
 });

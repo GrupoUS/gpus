@@ -126,82 +126,57 @@ export async function processBatch<T, R>(
 	// Adaptive batch sizing state
 	let currentBatchSize = fullConfig.batchSize;
 	let consecutiveErrors = 0;
+	// Process items in batches
+	for (let i = 0; i < items.length; i += currentBatchSize) {
+		currentBatch++;
+		const batch = items.slice(i, i + currentBatchSize);
 
-	try {
-		// Process items in batches
-		for (let i = 0; i < items.length; i += currentBatchSize) {
-			currentBatch++;
-			const batch = items.slice(i, i + currentBatchSize);
+		// Process batch with concurrency control
+		const batchResults = await processConcurrentBatch(
+			batch,
+			worker,
+			fullConfig.concurrency,
+			fullConfig.maxRetries,
+		);
 
-			// Process batch with concurrency control
-			const batchResults = await processConcurrentBatch(
-				batch,
-				worker,
-				fullConfig.concurrency,
-				fullConfig.maxRetries,
-			);
+		// Aggregate results
+		for (const result of batchResults) {
+			totalProcessed++;
 
-			// Aggregate results
-			for (const result of batchResults) {
-				totalProcessed++;
-
-				if (result.success && result.data) {
-					successful.push(result.data);
-					if (result.created) createdCount++;
-					if (result.updated) updatedCount++;
-				} else if (result.skipped) {
-					skipped.push({
-						item: batch[batchResults.indexOf(result)],
-						reason: result.reason || 'Skipped',
-					});
-				} else if (!result.success) {
-					failed.push({
-						item: batch[batchResults.indexOf(result)],
-						error: result.error || 'Unknown error',
-					});
-					consecutiveErrors++;
-				} else {
-					consecutiveErrors = 0;
-				}
-			}
-
-			// Adaptive batch sizing
-			if (fullConfig.adaptiveBatching) {
-				const errorRate = consecutiveErrors / batch.length;
-				if (errorRate > 0.5) {
-					// Reduce batch size if error rate is high
-					currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
-					console.log(
-						`[BatchProcessor] High error rate (${(errorRate * 100).toFixed(1)}%), reducing batch size to ${currentBatchSize}`,
-					);
-				} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
-					// Increase batch size if error rate is low
-					currentBatchSize = Math.min(fullConfig.batchSize * 2, currentBatchSize + 2);
-				}
-			}
-
-			// Progress callback
-			if (onProgress && totalProcessed % fullConfig.checkpointInterval === 0) {
-				await onProgress({
-					totalProcessed,
-					successful: successful.length,
-					failed: failed.length,
-					skipped: skipped.length,
-					created: createdCount,
-					updated: updatedCount,
-					currentBatch,
-					totalBatches,
+			if (result.success && result.data) {
+				successful.push(result.data);
+				if (result.created) createdCount++;
+				if (result.updated) updatedCount++;
+			} else if (result.skipped) {
+				skipped.push({
+					item: batch[batchResults.indexOf(result)],
+					reason: result.reason || 'Skipped',
 				});
-			}
-
-			// Delay between batches to avoid rate limiting
-			if (i + currentBatchSize < items.length) {
-				await sleep(fullConfig.delayBetweenBatches);
+			} else if (result.success) {
+				consecutiveErrors = 0;
+			} else {
+				failed.push({
+					item: batch[batchResults.indexOf(result)],
+					error: result.error || 'Unknown error',
+				});
+				consecutiveErrors++;
 			}
 		}
 
-		// Final progress update
-		if (onProgress) {
+		// Adaptive batch sizing
+		if (fullConfig.adaptiveBatching) {
+			const errorRate = consecutiveErrors / batch.length;
+			if (errorRate > 0.5) {
+				// Reduce batch size if error rate is high
+				currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
+			} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
+				// Increase batch size if error rate is low
+				currentBatchSize = Math.min(fullConfig.batchSize * 2, currentBatchSize + 2);
+			}
+		}
+
+		// Progress callback
+		if (onProgress && totalProcessed % fullConfig.checkpointInterval === 0) {
 			await onProgress({
 				totalProcessed,
 				successful: successful.length,
@@ -214,19 +189,35 @@ export async function processBatch<T, R>(
 			});
 		}
 
-		return {
-			successful,
-			failed,
-			skipped,
+		// Delay between batches to avoid rate limiting
+		if (i + currentBatchSize < items.length) {
+			await sleep(fullConfig.delayBetweenBatches);
+		}
+	}
+
+	// Final progress update
+	if (onProgress) {
+		await onProgress({
 			totalProcessed,
-			duration: Date.now() - startTime,
+			successful: successful.length,
+			failed: failed.length,
+			skipped: skipped.length,
 			created: createdCount,
 			updated: updatedCount,
-		};
-	} catch (error) {
-		// Re-throw any errors that occur during batch processing
-		throw error;
+			currentBatch,
+			totalBatches,
+		});
 	}
+
+	return {
+		successful,
+		failed,
+		skipped,
+		totalProcessed,
+		duration: Date.now() - startTime,
+		created: createdCount,
+		updated: updatedCount,
+	};
 }
 
 /**
@@ -263,7 +254,7 @@ async function processConcurrentBatch<T, R>(
 						}
 
 						// Exponential backoff for retries
-						const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+						const delay = Math.min(1000 * 2 ** attempt, 5000);
 						await sleep(delay);
 					}
 				}
@@ -295,13 +286,13 @@ export function calculateETR(startTime: number, processed: number, total: number
 	const remaining = total - processed;
 	const etrMs = avgTimePerItem * remaining;
 
-	if (etrMs < 60000) {
+	if (etrMs < 60_000) {
 		return `${Math.round(etrMs / 1000)}s`;
-	} else if (etrMs < 3600000) {
-		return `${Math.round(etrMs / 60000)}m`;
-	} else {
-		return `${Math.round(etrMs / 3600000)}h`;
 	}
+	if (etrMs < 3_600_000) {
+		return `${Math.round(etrMs / 60_000)}m`;
+	}
+	return `${Math.round(etrMs / 3_600_000)}h`;
 }
 
 /**

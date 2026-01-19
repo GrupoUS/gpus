@@ -49,11 +49,11 @@ export function AsaasImportButton() {
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button
-						variant="outline"
-						size="sm"
-						onClick={handleImport}
-						disabled={isLoading}
 						className="gap-2 border-purple-200 hover:border-purple-500 hover:text-purple-600 dark:border-purple-800 dark:hover:border-purple-400 dark:hover:text-purple-400"
+						disabled={isLoading}
+						onClick={handleImport}
+						size="sm"
+						variant="outline"
 					>
 						{isLoading ? (
 							<Loader2 className="h-4 w-4 animate-spin" />

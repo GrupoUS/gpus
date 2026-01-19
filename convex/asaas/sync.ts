@@ -5,9 +5,10 @@
  */
 
 import { v } from 'convex/values';
-import { internalMutation, mutation, query } from '../_generated/server';
-import { api } from '../_generated/api';
+
+import { api, internal } from '../_generated/api';
 import type { Doc } from '../_generated/dataModel';
+import { internalMutation, mutation, query } from '../_generated/server';
 import { requirePermission } from '../lib/auth';
 import { PERMISSIONS } from '../lib/permissions';
 
@@ -172,29 +173,33 @@ export const getSyncLogs = query({
 
 		// If both syncType and status are specified
 		if (args.syncType && args.status) {
+			const syncType = args.syncType;
+			const status = args.status;
 			// Use by_sync_type index with filter for status
 			return await ctx.db
 				.query('asaasSyncLogs')
-				.withIndex('by_sync_type', (q) => q.eq('syncType', args.syncType!))
-				.filter((q) => q.eq(q.field('status'), args.status!))
+				.withIndex('by_sync_type', (q) => q.eq('syncType', syncType))
+				.filter((q) => q.eq(q.field('status'), status))
 				.order('desc')
 				.take(limit);
 		}
 
 		// If only status is specified, use the by_status index
 		if (args.status) {
+			const statusFilter = args.status;
 			return await ctx.db
 				.query('asaasSyncLogs')
-				.withIndex('by_status', (q) => q.eq('status', args.status!))
+				.withIndex('by_status', (q) => q.eq('status', statusFilter))
 				.order('desc')
 				.take(limit);
 		}
 
 		// If only syncType is specified (existing behavior)
 		if (args.syncType) {
+			const syncTypeFilter = args.syncType;
 			return await ctx.db
 				.query('asaasSyncLogs')
-				.withIndex('by_sync_type', (q) => q.eq('syncType', args.syncType!))
+				.withIndex('by_sync_type', (q) => q.eq('syncType', syncTypeFilter))
 				.order('desc')
 				.take(limit);
 		}
@@ -284,10 +289,10 @@ export const getFailedSyncDetails = query({
 		failedSyncs = failedSyncs.slice(0, limit);
 
 		return failedSyncs.map((sync) => {
-			let parsedLastError = null;
+			let parsedLastError: { message: string } | Record<string, unknown> | null = null;
 			if (sync.lastError) {
 				try {
-					parsedLastError = JSON.parse(sync.lastError);
+					parsedLastError = JSON.parse(sync.lastError) as Record<string, unknown>;
 				} catch {
 					parsedLastError = { message: sync.lastError };
 				}
@@ -311,13 +316,30 @@ export const getFailedSyncDetails = query({
 });
 
 /**
+ * Helper function for circuit breaker recommendation message
+ */
+function getCircuitBreakerRecommendation(
+	circuitState: 'open' | 'closed' | 'half-open',
+	timeUntilRetry: number,
+	halfOpenTestCalls: number,
+): string {
+	if (circuitState === 'open') {
+		return `Circuit breaker está ABERTO. Aguarde ${Math.ceil(timeUntilRetry / 1000)}s antes de tentar novamente.`;
+	}
+	if (circuitState === 'half-open') {
+		return `Circuit breaker está em TESTE. ${halfOpenTestCalls} chamadas de teste realizadas.`;
+	}
+	return 'Circuit breaker está SAUDÁVEL. Todas as requisições estão sendo processadas normalmente.';
+}
+
+/**
  * Get circuit breaker state for monitoring (public query)
  */
 export const getCircuitBreakerStatus = query({
 	args: {},
 	handler: async () => {
-		const { getCircuitBreakerState } = await import('../lib/asaas');
-		const state = getCircuitBreakerState();
+		const { getCircuitBreakerState: getState } = await import('../lib/asaas');
+		const state = getState();
 
 		const now = Date.now();
 		const timeUntilRetry = state.state === 'open' ? Math.max(0, state.nextAttemptTime - now) : 0;
@@ -340,12 +362,11 @@ export const getCircuitBreakerStatus = query({
 			timeUntilRetryFormatted: timeUntilRetry > 0 ? `${Math.ceil(timeUntilRetry / 1000)}s` : 'N/A',
 			halfOpenTestCalls: state.halfOpenTestCalls,
 			// Add actionable recommendations
-			recommendation:
-				state.state === 'open'
-					? `Circuit breaker está ABERTO. Aguarde ${Math.ceil(timeUntilRetry / 1000)}s antes de tentar novamente.`
-					: state.state === 'half-open'
-						? `Circuit breaker está em TESTE. ${state.halfOpenTestCalls} chamadas de teste realizadas.`
-						: 'Circuit breaker está SAUDÁVEL. Todas as requisições estão sendo processadas normalmente.',
+			recommendation: getCircuitBreakerRecommendation(
+				state.state,
+				timeUntilRetry,
+				state.halfOpenTestCalls,
+			),
 		};
 	},
 });
@@ -432,12 +453,6 @@ export const resetCircuitBreakerManual = mutation({
 		const { resetCircuitBreaker } = await import('../lib/asaas');
 		resetCircuitBreaker();
 
-		const identity = await ctx.auth.getUserIdentity();
-		console.log(
-			`[${new Date().toISOString()}] [CircuitBreaker] Manual reset triggered by admin`,
-			`| User: ${identity?.email || 'unknown'}`,
-		);
-
 		return {
 			success: true,
 			message:
@@ -454,8 +469,29 @@ import { internalAction, internalQuery } from '../_generated/server';
 export const getCircuitBreakerState = internalQuery({
 	args: {},
 	handler: async () => {
-		const { getCircuitBreakerState } = await import('../lib/asaas');
-		return getCircuitBreakerState();
+		const { getCircuitBreakerState: getStateInternal } = await import('../lib/asaas');
+		return getStateInternal();
+	},
+});
+
+/**
+ * Get auto sync config (internal query for cron - no auth required)
+ */
+export const getAutoSyncConfigInternal = internalQuery({
+	args: {},
+	handler: async (ctx) => {
+		const config = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', 'asaas_auto_sync_config'))
+			.first();
+
+		return (
+			config?.value || {
+				enabled: false,
+				intervalHours: 1,
+				updateExisting: true,
+			}
+		);
 	},
 });
 
@@ -465,17 +501,15 @@ export const getCircuitBreakerState = internalQuery({
 export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		// @ts-ignore - Deep type instantiation error
-		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig);
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+		const config = await ctx.runQuery((internal as any).asaas.sync.getAutoSyncConfigInternal);
 
 		if (!config.enabled) {
-			console.log('Asaas auto-sync is disabled, skipping.');
 			return { skipped: true };
 		}
 
-		console.log('Starting Asaas auto-sync...');
-
-		// 2. Call import action
+		// Call import action
+		// @ts-expect-error TS2589: Deep type instantiation workaround
 		await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
 			initiatedBy: 'system_auto_sync',
 		});
@@ -490,17 +524,15 @@ export const runAutoSyncCustomersAction = internalAction({
 export const runAutoSyncPaymentsAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		// @ts-ignore - Deep type instantiation error
-		const config = await ctx.runQuery(api.asaas.sync.getAutoSyncConfig);
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+		const config = await ctx.runQuery((internal as any).asaas.sync.getAutoSyncConfigInternal);
 
 		if (!config.enabled) {
-			console.log('Asaas payments auto-sync is disabled, skipping.');
 			return { skipped: true };
 		}
 
-		console.log('Starting Asaas payments auto-sync...');
-
-		await ctx.runAction(api.asaas.actions.importPaymentsFromAsaas, {
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+		await ctx.runAction((api as any).asaas.actions.importPaymentsFromAsaas, {
 			initiatedBy: 'cron_auto_sync',
 		});
 

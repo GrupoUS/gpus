@@ -43,30 +43,30 @@ export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCar
 			<CardHeader className="pb-3">
 				<div className="flex items-start justify-between">
 					<div className="flex items-center gap-3">
-						<div className="p-2 bg-primary/10 rounded-lg shrink-0">
+						<div className="shrink-0 rounded-lg bg-primary/10 p-2">
 							<FileCode className="h-5 w-5 text-primary" />
 						</div>
 						<div className="min-w-0">
-							<CardTitle className="text-base truncate">{template.name}</CardTitle>
-							<CardDescription className="text-xs truncate">{template.subject}</CardDescription>
+							<CardTitle className="truncate text-base">{template.name}</CardTitle>
+							<CardDescription className="truncate text-xs">{template.subject}</CardDescription>
 						</div>
 					</div>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="icon" className="h-8 w-8">
+							<Button className="h-8 w-8" size="icon" variant="ghost">
 								<span className="sr-only">Abrir menu</span>
 								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
+									aria-label="Menu de opções"
 									fill="none"
+									height="16"
+									role="img"
 									stroke="currentColor"
-									strokeWidth="2"
 									strokeLinecap="round"
 									strokeLinejoin="round"
-									role="img"
-									aria-label="Menu de opções"
+									strokeWidth="2"
+									viewBox="0 0 24 24"
+									width="16"
+									xmlns="http://www.w3.org/2000/svg"
 								>
 									<circle cx="12" cy="12" r="1" />
 									<circle cx="12" cy="5" r="1" />
@@ -85,8 +85,8 @@ export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCar
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
-								onClick={() => onDelete(template._id)}
 								className="text-destructive focus:text-destructive"
+								onClick={() => onDelete(template._id)}
 							>
 								<Trash2 className="mr-2 h-4 w-4" />
 								Excluir
@@ -96,15 +96,15 @@ export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCar
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				<div className="flex items-center gap-2 flex-wrap">
+				<div className="flex flex-wrap items-center gap-2">
 					{template.category && (
-						<Badge variant="secondary" className="text-xs">
+						<Badge className="text-xs" variant="secondary">
 							{categoryLabels[template.category] || template.category}
 						</Badge>
 					)}
 					<Badge
-						variant={template.isActive ? 'default' : 'outline'}
 						className={`text-xs ${template.isActive ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}`}
+						variant={template.isActive ? 'default' : 'outline'}
 					>
 						{template.isActive ? (
 							<>
@@ -119,12 +119,12 @@ export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCar
 						)}
 					</Badge>
 					{template.brevoTemplateId && (
-						<Badge variant="outline" className="text-xs text-blue-600 border-blue-300">
+						<Badge className="border-blue-300 text-blue-600 text-xs" variant="outline">
 							Brevo
 						</Badge>
 					)}
 				</div>
-				<p className="text-xs text-muted-foreground">
+				<p className="text-muted-foreground text-xs">
 					Atualizado {formatDistanceToNow(template.updatedAt, { addSuffix: true, locale: ptBR })}
 				</p>
 			</CardContent>

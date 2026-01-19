@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+
 import { internalMutation, mutation, query } from './_generated/server';
 import { requireAuth } from './lib/auth';
 
@@ -54,7 +55,7 @@ export const send = mutation({
 
 		const messageId = await ctx.db.insert('messages', {
 			...args,
-			sender: sender,
+			sender,
 			senderId: user._id,
 			status: 'enviando',
 			createdAt: Date.now(),
@@ -89,7 +90,6 @@ export const updateStatusInternal = internalMutation({
 	handler: async (ctx, args) => {
 		const message = await ctx.db.get(args.messageId);
 		if (!message) {
-			console.error(`Message not found: ${args.messageId}`);
 			return;
 		}
 

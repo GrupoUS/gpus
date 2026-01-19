@@ -541,23 +541,23 @@ const validateNameField: FieldValidator = (value, rowNumber, errors, _warnings, 
 const validateEmailField: FieldValidator = (value, rowNumber, errors, _warnings, data) => {
 	// Email is now optional - only validate format if provided
 	if (value) {
-		if (!validateEmail(String(value))) {
-			errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
-		} else {
+		if (validateEmail(String(value))) {
 			data.email = normalizeEmail(String(value));
+		} else {
+			errors.push(`Linha ${rowNumber}: Email inválido: ${value}`);
 		}
 	}
 	// If value is empty/undefined, email is simply not set (optional field)
 };
 
 const validatePhoneField: FieldValidator = (value, rowNumber, errors, warnings, data) => {
-	if (!value) {
-		errors.push(`Linha ${rowNumber}: Telefone é obrigatório`);
-	} else {
+	if (value) {
 		if (!validatePhone(String(value))) {
 			warnings.push(`Linha ${rowNumber}: Telefone pode estar em formato inválido: ${value}`);
 		}
 		data.phone = normalizePhone(String(value));
+	} else {
+		errors.push(`Linha ${rowNumber}: Telefone é obrigatório`);
 	}
 };
 

@@ -13,9 +13,9 @@ function AppearanceSettingsPage() {
 	const { theme, setTheme } = useTheme();
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<Palette className="h-6 w-6 text-purple-500" />
 					Aparência
 				</h1>
@@ -30,48 +30,48 @@ function AppearanceSettingsPage() {
 				<CardContent>
 					<div className="grid grid-cols-3 gap-4">
 						<button
-							type="button"
-							onClick={() => setTheme('light')}
 							className={cn(
-								'flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all',
+								'flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all',
 								theme === 'light'
 									? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
 									: 'border-transparent bg-muted/20 hover:bg-muted/40',
 							)}
+							onClick={() => setTheme('light')}
+							type="button"
 						>
-							<div className="h-24 w-full bg-white border rounded-lg mb-4 shadow-sm flex items-center justify-center">
+							<div className="mb-4 flex h-24 w-full items-center justify-center rounded-lg border bg-white shadow-sm">
 								<Sun className="h-8 w-8 text-orange-500" />
 							</div>
 							<span className="font-medium">Claro</span>
 						</button>
 
 						<button
-							type="button"
-							onClick={() => setTheme('dark')}
 							className={cn(
-								'flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all',
+								'flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all',
 								theme === 'dark'
 									? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
 									: 'border-transparent bg-muted/20 hover:bg-muted/40',
 							)}
+							onClick={() => setTheme('dark')}
+							type="button"
 						>
-							<div className="h-24 w-full bg-slate-950 border border-slate-800 rounded-lg mb-4 shadow-sm flex items-center justify-center">
+							<div className="mb-4 flex h-24 w-full items-center justify-center rounded-lg border border-slate-800 bg-slate-950 shadow-sm">
 								<Moon className="h-8 w-8 text-blue-400" />
 							</div>
 							<span className="font-medium">Escuro</span>
 						</button>
 
 						<button
-							type="button"
-							onClick={() => setTheme('system')}
 							className={cn(
-								'flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all',
+								'flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all',
 								theme === 'system'
 									? 'border-purple-500 bg-purple-50/50 dark:bg-purple-900/10'
 									: 'border-transparent bg-muted/20 hover:bg-muted/40',
 							)}
+							onClick={() => setTheme('system')}
+							type="button"
 						>
-							<div className="h-24 w-full bg-linear-to-r from-white to-slate-950 border rounded-lg mb-4 shadow-sm flex items-center justify-center">
+							<div className="mb-4 flex h-24 w-full items-center justify-center rounded-lg border bg-linear-to-r from-white to-slate-950 shadow-sm">
 								<Laptop className="h-8 w-8 text-slate-500" />
 							</div>
 							<span className="font-medium">Sistema</span>

@@ -1,12 +1,13 @@
 import { v } from 'convex/values';
+
 import { mutation, query } from './_generated/server';
 import { getIdentity, hasOrgRole, requireAuth } from './lib/auth';
-import { encrypt, decrypt, isEncrypted } from './lib/encryption';
+import { decrypt, encrypt, isEncrypted } from './lib/encryption';
 
 // Helper to mask keys
 function maskKey(key: string) {
 	if (!key || key.length < 8) return '********';
-	return '••••••••' + key.slice(-4);
+	return `••••••••${key.slice(-4)}`;
 }
 
 const integrationArgs = v.union(v.literal('asaas'), v.literal('evolution'), v.literal('dify'));
@@ -25,7 +26,6 @@ export const getIntegrationConfig = query({
 			// Validate integration argument
 			const validIntegrations = ['asaas', 'evolution', 'dify'] as const;
 			if (!validIntegrations.includes(args.integration as any)) {
-				console.error(`Invalid integration type: ${args.integration}`);
 				return {};
 			}
 
@@ -39,8 +39,7 @@ export const getIntegrationConfig = query({
 			const relevantFields = fields[args.integration as keyof typeof fields];
 
 			// Validate that relevantFields exists
-			if (!relevantFields || !Array.isArray(relevantFields)) {
-				console.error(`No fields defined for integration: ${args.integration}`);
+			if (!(relevantFields && Array.isArray(relevantFields))) {
 				return {};
 			}
 
@@ -59,17 +58,13 @@ export const getIntegrationConfig = query({
 						let value = setting.value;
 
 						// Decrypt if encrypted - with proper error handling
-						if (typeof value === 'string' && value.length > 0) {
-							if (isEncrypted(value)) {
-								try {
-									value = await decrypt(value);
-								} catch (decryptError) {
-									// Log error but continue with masked value
-									console.error(`Failed to decrypt value for ${key}:`, decryptError);
-									// If decryption fails, use the encrypted value but mask it
-									// This prevents the query from failing completely
-									value = typeof value === 'string' ? value : String(value);
-								}
+						if (typeof value === 'string' && value.length > 0 && isEncrypted(value)) {
+							try {
+								value = await decrypt(value);
+							} catch (_decryptError) {
+								// If decryption fails, use the encrypted value but mask it
+								// This prevents the query from failing completely
+								value = typeof value === 'string' ? value : String(value);
 							}
 						}
 
@@ -84,12 +79,7 @@ export const getIntegrationConfig = query({
 							config[field] = stringValue;
 						}
 					}
-				} catch (fieldError) {
-					// Log error for this specific field but continue processing other fields
-					console.error(
-						`Error processing field ${field} for integration ${args.integration}:`,
-						fieldError,
-					);
+				} catch (_fieldError) {
 					// Continue to next field instead of breaking the entire query
 				}
 			}
@@ -115,9 +105,7 @@ export const getIntegrationConfig = query({
 			}
 
 			return mappedConfig;
-		} catch (error) {
-			// Catch any unexpected errors and return empty object instead of throwing
-			console.error(`Error in getIntegrationConfig for ${args.integration}:`, error);
+		} catch (_error) {
 			return {};
 		}
 	},
@@ -192,7 +180,7 @@ export const saveIntegrationConfig = mutation({
 				.query('users')
 				.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
 				.unique();
-			if (user && user.organizationId) {
+			if (user?.organizationId) {
 				await ctx.db.insert('activities', {
 					type: 'integracao_configurada',
 					description: `Configuração de ${integration} atualizada`,
@@ -227,7 +215,7 @@ export const listIntegrations = query({
 					.query('settings')
 					.withIndex('by_key', (q) => q.eq('key', key))
 					.unique();
-				if (!setting || !setting.value) {
+				if (!setting?.value) {
 					isConfigured = false;
 					break;
 				}

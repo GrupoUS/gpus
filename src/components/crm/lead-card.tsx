@@ -55,18 +55,18 @@ export function LeadCard({ lead }: LeadCardProps) {
 
 	return (
 		<MotionCard
+			className="lead-card cursor-grab p-3 will-change-transform active:cursor-grabbing"
+			transition={SPRING_SMOOTH}
 			variant="glass"
-			className="p-3 cursor-grab active:cursor-grabbing lead-card will-change-transform"
 			whileHover={{
 				scale: 1.02,
 				boxShadow: '0 20px 40px -12px hsl(var(--primary) / 0.3)',
 			}}
 			whileTap={{ scale: 0.98 }}
-			transition={SPRING_SMOOTH}
 		>
 			<div className="flex items-start gap-3">
-				<Avatar className="h-9 w-9 lead-avatar">
-					<AvatarFallback className="text-xs bg-primary/10 text-primary font-display">
+				<Avatar className="lead-avatar h-9 w-9">
+					<AvatarFallback className="bg-primary/10 font-display text-primary text-xs">
 						{lead.name
 							.split(' ')
 							.map((n) => n[0])
@@ -74,66 +74,66 @@ export function LeadCard({ lead }: LeadCardProps) {
 							.slice(0, 2)}
 					</AvatarFallback>
 				</Avatar>
-				<div className="flex-1 min-w-0">
+				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<p className="font-medium text-sm truncate font-sans">{lead.name}</p>
+						<p className="truncate font-medium font-sans text-sm">{lead.name}</p>
 						<motion.span
-							variants={hotIconVariants}
-							initial="idle"
 							animate={isHot ? 'hot' : 'idle'}
 							className="shrink-0"
+							initial="idle"
+							variants={hotIconVariants}
 						>
 							<TempIcon
-								className={`h-3.5 w-3.5 temperature-icon ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-muted-foreground'}`}
+								className={`temperature-icon h-3.5 w-3.5 ${isHot ? 'hot' : ''} ${temperatureIcons[lead.temperature]?.color || 'text-muted-foreground'}`}
 							/>
 						</motion.span>
 					</div>
 					{lead.profession && (
-						<p className="text-xs text-muted-foreground truncate">{lead.profession}</p>
+						<p className="truncate text-muted-foreground text-xs">{lead.profession}</p>
 					)}
 					{lead.clinicName && (
-						<p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+						<p className="flex items-center gap-1 truncate text-muted-foreground text-xs">
 							<Building className="h-3 w-3" />
 							{lead.clinicName}
 						</p>
 					)}
-					<div className="flex items-center gap-2 mt-2">
+					<div className="mt-2 flex items-center gap-2">
 						{lead.interestedProduct && (
-							<Badge variant="outline" className="text-[10px] px-1.5 py-0">
+							<Badge className="px-1.5 py-0 text-[10px]" variant="outline">
 								{productLabels[lead.interestedProduct] || lead.interestedProduct}
 							</Badge>
 						)}
 					</div>
-					<div className="flex items-center gap-3 mt-2 text-muted-foreground">
+					<div className="mt-2 flex items-center gap-3 text-muted-foreground">
 						{/* Botão de ligar - usando button para acessibilidade */}
 						<button
-							type="button"
+							aria-label="Ligar"
+							className="action-button relative z-10 flex min-h-[44px] min-w-[44px] cursor-pointer appearance-none items-center justify-center border-none bg-transparent transition-colors hover:text-primary"
 							onClick={(e) => {
 								e.stopPropagation();
 								// Lógica de ligar aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none relative z-10"
-							aria-label="Ligar"
+							type="button"
 						>
 							<Phone className="h-4 w-4" />
 						</button>
 						{/* Botão de mensagem - usando button para acessibilidade */}
 						<button
-							type="button"
+							aria-label="Mensagem"
+							className="action-button relative z-10 flex min-h-[44px] min-w-[44px] cursor-pointer appearance-none items-center justify-center border-none bg-transparent transition-colors hover:text-primary"
 							onClick={(e) => {
 								e.stopPropagation();
 								// Lógica de mensagem aqui
 							}}
-							className="action-button hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer bg-transparent border-none appearance-none relative z-10"
-							aria-label="Mensagem"
+							type="button"
 						>
 							<MessageSquare className="h-4 w-4" />
 						</button>
 						{lead.lastContactAt && (
 							<motion.span
-								className="text-[10px] ml-auto font-sans"
-								initial={{ opacity: 0, y: 5 }}
 								animate={{ opacity: 1, y: 0 }}
+								className="ml-auto font-sans text-[10px]"
+								initial={{ opacity: 0, y: 5 }}
 								transition={{ delay: 0.1 }}
 							>
 								{formatDistanceToNow(lead.lastContactAt, {

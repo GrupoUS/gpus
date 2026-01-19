@@ -5,10 +5,11 @@
  */
 
 import { v } from 'convex/values';
+
 import { mutation } from './_generated/server';
-import { encrypt, encryptCPF } from './lib/encryption';
 import { logAudit } from './lgpd';
 import { getOrganizationId } from './lib/auth';
+import { encrypt, encryptCPF } from './lib/encryption';
 
 /**
  * Validate Brazilian CPF using the official algorithm
@@ -184,7 +185,7 @@ export const bulkImport = mutation({
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 		const emailToStudent = new Map(
-			existingStudents.filter((s) => s.email).map((s) => [s.email!.toLowerCase(), s]),
+			existingStudents.filter((s) => s.email).map((s) => [s.email?.toLowerCase(), s]),
 		);
 		const cpfToStudent = new Map(
 			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(/\D/g, ''), s]),
@@ -287,9 +288,9 @@ export const bulkImport = mutation({
 				}
 
 				// Find existing student - priority: CPF > Phone > Email
-				let existingStudent = undefined;
-				let existingByCP = undefined;
-				let existingByPhone = undefined;
+				let existingStudent;
+				let existingByCP;
+				let existingByPhone;
 
 				// Check by CPF first (most reliable identifier)
 				if (student.cpf) {
@@ -573,7 +574,7 @@ export const validateImport = mutation({
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 		const existingEmails = new Set(
-			existingStudents.filter((s) => s.email).map((s) => s.email!.toLowerCase()),
+			existingStudents.filter((s) => s.email).map((s) => s.email?.toLowerCase()),
 		);
 		const existingCPFs = new Set(
 			existingStudents.filter((s) => s.cpf).map((s) => s.cpf?.replace(/\D/g, '')),

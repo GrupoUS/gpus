@@ -95,22 +95,22 @@ function StudentsPage() {
 
 			{/* Stats Cards */}
 			<StudentStats
-				totalStudents={totalStudents}
 				activeStudents={activeStudents}
 				highRiskStudents={highRiskStudents}
+				totalStudents={totalStudents}
 			/>
 
 			{/* Filters */}
 			<StudentFilters
-				search={search || ''}
-				onSearchChange={(v) => handleFilterChange('search', v)}
-				status={status || 'all'}
-				onStatusChange={(v) => handleFilterChange('status', v)}
 				churnRisk={churnRisk || 'all'}
 				onChurnRiskChange={(v) => handleFilterChange('churnRisk', v)}
-				product={product || 'all'}
-				onProductChange={(v) => handleFilterChange('product', v)}
 				onClear={clearFilters}
+				onProductChange={(v) => handleFilterChange('product', v)}
+				onSearchChange={(v) => handleFilterChange('search', v)}
+				onStatusChange={(v) => handleFilterChange('status', v)}
+				product={product || 'all'}
+				search={search || ''}
+				status={status || 'all'}
 			/>
 
 			{/* Students List */}
@@ -124,7 +124,7 @@ function StudentsPage() {
 				<StudentListEmptyState isFiltering={true} search={search} />
 			) : view === 'table' ? (
 				/* Table View */
-				<StudentsTable students={paginatedStudents} onStudentClick={handleStudentClick} />
+				<StudentsTable onStudentClick={handleStudentClick} students={paginatedStudents} />
 			) : (
 				/* Grid View (Product Sections) - ALL products rendered, including empty ones */
 				<div className="space-y-2">
@@ -134,14 +134,14 @@ function StudentsPage() {
 						// Always render product sections - empty sections show ProductEmptyState
 						return (
 							<ProductSection
-								key={productId}
-								productId={productId}
 								count={groupStudents.length}
 								isExpanded={!!expandedSections[productId]}
-								onToggle={() => toggleSection(productId)}
-								students={groupStudents}
+								key={productId}
 								onStudentClick={handleStudentClick}
+								onToggle={() => toggleSection(productId)}
+								productId={productId}
 								searchTerm={search}
+								students={groupStudents}
 							/>
 						);
 					})}
@@ -151,15 +151,15 @@ function StudentsPage() {
 			{/* Pagination - Only show in Table view */}
 			{view === 'table' && students && students.length > PAGE_SIZE && (
 				<StudentPagination
+					onPageChange={handlePageChange}
 					page={page}
+					pageSize={PAGE_SIZE}
 					totalPages={totalPages}
 					totalStudents={totalStudents}
-					pageSize={PAGE_SIZE}
-					onPageChange={handlePageChange}
 				/>
 			)}
 
-			<StudentDetail studentId={params.studentId ?? null} onClose={handleCloseDetail} />
+			<StudentDetail onClose={handleCloseDetail} studentId={params.studentId ?? null} />
 		</div>
 	);
 }

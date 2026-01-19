@@ -22,9 +22,9 @@ function SecuritySettingsPage() {
 	};
 
 	return (
-		<div className="space-y-6 p-6 max-w-4xl">
+		<div className="max-w-4xl space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold flex items-center gap-2">
+				<h1 className="flex items-center gap-2 font-bold text-2xl">
 					<Shield className="h-6 w-6 text-purple-500" />
 					Segurança da Conta
 				</h1>
@@ -40,22 +40,22 @@ function SecuritySettingsPage() {
 					<CardDescription>Informações sobre como você acessa sua conta.</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					<div className="flex items-center justify-between p-4 border rounded-lg">
+					<div className="flex items-center justify-between rounded-lg border p-4">
 						<div className="space-y-1">
 							<p className="font-medium">Senha</p>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Sua senha é gerenciada de forma segura pelo nosso provedor de identidade.
 							</p>
 						</div>
-						<Button variant="outline" onClick={openUserProfile}>
+						<Button onClick={openUserProfile} variant="outline">
 							Mudar Senha
 						</Button>
 					</div>
 
-					<div className="flex items-center justify-between p-4 border rounded-lg">
+					<div className="flex items-center justify-between rounded-lg border p-4">
 						<div className="space-y-1">
 							<p className="font-medium">Multi-Fator de Autenticação (MFA)</p>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Adicione uma camada extra de segurança.
 							</p>
 						</div>
@@ -77,22 +77,22 @@ function SecuritySettingsPage() {
 				<CardContent className="space-y-4">
 					{/* Note: Getting active sessions requires Clerk backend API or usage of useSessionList hook/component */}
 					{/* For now, we show a static placeholder or generic info */}
-					<div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+					<div className="flex items-center justify-between rounded-lg border bg-muted/20 p-4">
 						<div className="flex items-center gap-4">
-							<div className="h-10 w-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-								<div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
+							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+								<div className="h-3 w-3 animate-pulse rounded-full bg-green-500" />
 							</div>
 							<div>
 								<p className="font-medium">Sessão Atual</p>
-								<p className="text-xs text-muted-foreground flex items-center gap-1">
+								<p className="flex items-center gap-1 text-muted-foreground text-xs">
 									<Clock className="h-3 w-3" /> Agora
 								</p>
 							</div>
 						</div>
 						<Button
-							variant="ghost"
-							className="text-destructive hover:text-destructive hover:bg-destructive/10"
+							className="text-destructive hover:bg-destructive/10 hover:text-destructive"
 							onClick={() => signOut()}
+							variant="ghost"
 						>
 							Sair
 						</Button>

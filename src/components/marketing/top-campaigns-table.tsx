@@ -47,10 +47,10 @@ export function TopCampaignsTable({ campaigns }: TopCampaignsTableProps) {
 								<TableRow key={campaign._id}>
 									<TableCell className="font-medium">
 										<div className="flex flex-col">
-											<span className="truncate max-w-[200px]" title={campaign.name}>
+											<span className="max-w-[200px] truncate" title={campaign.name}>
 												{campaign.name}
 											</span>
-											<span className="text-xs text-muted-foreground truncate max-w-[200px]">
+											<span className="max-w-[200px] truncate text-muted-foreground text-xs">
 												{campaign.subject}
 											</span>
 										</div>
@@ -63,10 +63,10 @@ export function TopCampaignsTable({ campaigns }: TopCampaignsTableProps) {
 									</TableCell>
 									<TableCell className="text-right">
 										<Badge
-											variant="outline"
 											className="bg-green-500/10 text-green-500 hover:bg-green-500/20"
+											variant="outline"
 										>
-											<Eye className="h-3 w-3 mr-1" />
+											<Eye className="mr-1 h-3 w-3" />
 											{openRate.toFixed(1)}%
 										</Badge>
 									</TableCell>
@@ -81,7 +81,7 @@ export function TopCampaignsTable({ campaigns }: TopCampaignsTableProps) {
 						})}
 						{campaigns.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+								<TableCell className="h-24 text-center text-muted-foreground" colSpan={4}>
 									Nenhuma campanha enviada ainda.
 								</TableCell>
 							</TableRow>

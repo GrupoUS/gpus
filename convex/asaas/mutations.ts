@@ -1,8 +1,9 @@
-import { internalMutation, mutation, action, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
-import { getOrganizationId, requireAuth } from '../lib/auth';
-import { hashCPF, encryptCPF } from '../lib/encryption';
+
 import { internal } from '../_generated/api';
+import { action, internalMutation, internalQuery, mutation } from '../_generated/server';
+import { getOrganizationId, requireAuth } from '../lib/auth';
+import { encryptCPF, hashCPF } from '../lib/encryption';
 import { dateStringToTimestamp } from './client';
 import { getEnrollmentIdOrDefault } from './helpers';
 
@@ -11,7 +12,7 @@ import { getEnrollmentIdOrDefault } from './helpers';
  */
 const PAYMENT_VALIDATION = {
 	MIN_AMOUNT: 0.01, // Minimum payment amount (1 cent)
-	MAX_AMOUNT: 1000000, // Maximum payment amount (1 million BRL)
+	MAX_AMOUNT: 1_000_000, // Maximum payment amount (1 million BRL)
 	MAX_INSTALLMENTS: 120, // Maximum number of installments (10 years)
 } as const;
 
@@ -68,7 +69,7 @@ const subscriptionStatusSchema = v.union(
  * @throws Error if amount is invalid
  */
 function validatePaymentAmount(amount: number): void {
-	if (typeof amount !== 'number' || isNaN(amount)) {
+	if (typeof amount !== 'number' || Number.isNaN(amount)) {
 		throw new Error('Invalid payment amount: must be a number');
 	}
 
@@ -690,7 +691,6 @@ export const updateSubscriptionStatusInternal = internalMutation({
 			.first();
 
 		if (!subscription) {
-			console.warn(`Subscription with Asaas ID ${args.asaasSubscriptionId} not found`);
 			return null;
 		}
 

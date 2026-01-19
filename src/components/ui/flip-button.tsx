@@ -30,18 +30,18 @@ export const FlipButton = React.forwardRef<HTMLButtonElement, FlipButtonProps>(
 						className,
 					)}
 					initial="initial"
+					onBlur={() => handleInteraction(false)}
+					onFocus={() => handleInteraction(true)}
+					onHoverEnd={() => handleInteraction(false)}
+					onHoverStart={() => handleInteraction(true)}
+					ref={ref}
 					whileHover="flipped"
 					whileTap="flipped"
-					onHoverStart={() => handleInteraction(true)}
-					onHoverEnd={() => handleInteraction(false)}
-					onFocus={() => handleInteraction(true)}
-					onBlur={() => handleInteraction(false)}
-					ref={ref}
 					{...props}
 				>
-					<div className="relative h-full w-full preserve-3d transition-transform duration-500">
+					<div className="preserve-3d relative h-full w-full transition-transform duration-500">
 						<motion.div
-							className="absolute inset-0 h-full w-full backface-hidden"
+							className="backface-hidden absolute inset-0 h-full w-full"
 							transition={{
 								type: 'spring',
 								stiffness: 260,
@@ -61,7 +61,7 @@ export const FlipButton = React.forwardRef<HTMLButtonElement, FlipButtonProps>(
 						</motion.div>
 
 						<motion.div
-							className="absolute inset-0 h-full w-full backface-hidden"
+							className="backface-hidden absolute inset-0 h-full w-full"
 							style={{ rotateX: 180 }}
 							transition={{
 								type: 'spring',
@@ -97,7 +97,7 @@ export const FlipButtonFront = ({ children, className, ...props }: FlipButtonFro
 	return (
 		<motion.div
 			className={cn(
-				'flex h-full w-full items-center justify-center rounded-md bg-white text-black backface-hidden',
+				'backface-hidden flex h-full w-full items-center justify-center rounded-md bg-white text-black',
 				className,
 			)}
 			{...props}
@@ -115,7 +115,7 @@ export const FlipButtonBack = ({ children, className, ...props }: FlipButtonBack
 	return (
 		<motion.div
 			className={cn(
-				'flex h-full w-full items-center justify-center rounded-md bg-black text-white backface-hidden',
+				'backface-hidden flex h-full w-full items-center justify-center rounded-md bg-black text-white',
 				className,
 			)}
 			{...props}

@@ -40,10 +40,10 @@ function TemplatesListPage() {
 		<div className="space-y-6 p-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Templates de Email</h1>
+					<h1 className="font-bold text-2xl tracking-tight">Templates de Email</h1>
 					<p className="text-muted-foreground">Gerencie seus modelos de email reutilizáveis.</p>
 				</div>
-				<Link to="/marketing/templates/novo" search={{ search: '', category: 'all' }}>
+				<Link search={{ search: '', category: 'all' }} to="/marketing/templates/novo">
 					<Button>
 						<Plus className="mr-2 h-4 w-4" />
 						Novo Template
@@ -51,17 +51,17 @@ function TemplatesListPage() {
 				</Link>
 			</div>
 
-			<div className="flex flex-col sm:flex-row gap-4 items-center">
+			<div className="flex flex-col items-center gap-4 sm:flex-row">
 				<div className="relative w-full sm:w-72">
-					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+					<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
+						className="pl-9"
+						onChange={(e) => handleFilterChange('search', e.target.value)}
 						placeholder="Buscar templates..."
 						value={filters.search}
-						onChange={(e) => handleFilterChange('search', e.target.value)}
-						className="pl-9"
 					/>
 				</div>
-				<Select value={filters.category} onValueChange={(v) => handleFilterChange('category', v)}>
+				<Select onValueChange={(v) => handleFilterChange('category', v)} value={filters.category}>
 					<SelectTrigger className="w-full sm:w-[180px]">
 						<SelectValue placeholder="Categoria" />
 					</SelectTrigger>
@@ -77,15 +77,15 @@ function TemplatesListPage() {
 			</div>
 
 			{isLoading ? (
-				<div className="flex justify-center items-center h-64">
+				<div className="flex h-64 items-center justify-center">
 					<Loader2 className="h-8 w-8 animate-spin text-primary" />
 				</div>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 					{templates?.map((template: Doc<'emailTemplates'>) => (
 						<TemplateCard
 							key={template._id}
-							template={template}
+							onDelete={handleDeleteTemplate}
 							onEdit={(id) => {
 								void navigate({
 									to: '/marketing/templates/$templateId',
@@ -93,22 +93,22 @@ function TemplatesListPage() {
 									search: { search: '', category: 'all' },
 								});
 							}}
-							onDelete={handleDeleteTemplate}
 							onSync={handleSyncTemplate}
+							template={template}
 						/>
 					))}
 					{templates?.length === 0 && (
-						<div className="col-span-full text-center py-12 border-2 border-dashed rounded-lg bg-muted/50">
-							<h3 className="text-lg font-medium text-muted-foreground">
+						<div className="col-span-full rounded-lg border-2 border-dashed bg-muted/50 py-12 text-center">
+							<h3 className="font-medium text-lg text-muted-foreground">
 								Nenhum template encontrado
 							</h3>
-							<p className="text-sm text-muted-foreground mt-2">
+							<p className="mt-2 text-muted-foreground text-sm">
 								Crie seu primeiro template para começar.
 							</p>
 							<Link
-								to="/marketing/templates/novo"
-								search={{ search: '', category: 'all' }}
 								className="mt-4 inline-block"
+								search={{ search: '', category: 'all' }}
+								to="/marketing/templates/novo"
 							>
 								<Button variant="outline">Criar Template</Button>
 							</Link>

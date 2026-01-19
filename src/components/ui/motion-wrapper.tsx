@@ -25,24 +25,24 @@ export function MotionWrapper({
 
 	return (
 		<motion.div
-			ref={ref}
-			initial="hidden"
 			animate={isInView ? 'visible' : 'hidden'}
-			variants={staggerContainer}
 			className={cn(className)}
+			initial="hidden"
+			ref={ref}
 			style={{
 				transitionDelay: `${delay}ms`,
 			}}
+			variants={staggerContainer}
 			{...props}
 		>
 			{React.Children.map(children, (child, index) => {
 				if (React.isValidElement(child)) {
 					return (
 						<motion.div
-							variants={fadeInUp}
 							transition={{
 								delay: delay + index * (stagger / 1000),
 							}}
+							variants={fadeInUp}
 						>
 							{child}
 						</motion.div>

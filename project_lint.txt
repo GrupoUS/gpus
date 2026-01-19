@@ -1,0 +1,1087 @@
+convex\asaas\batch_processor.ts:105:23 lint/complexity/noExcessiveCognitiveComplexity ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! Excessive complexity of 35 detected (max: 20).
+  
+    103 Ôöé  * @returns Batch result with successful, failed, and skipped items
+    104 Ôöé  */
+  > 105 Ôöé export async function processBatch<T, R>(
+        Ôöé                       ^^^^^^^^^^^^
+    106 Ôöé 	items: T[],
+    107 Ôöé 	worker: (item: T) => Promise<WorkerResult<R>>,
+  
+  i Please refactor this function to reduce its complexity score from 35 to the max allowed complexity 20.
+  
+
+convex\asaas\batch_processor.ts lint/style/useFilenamingConvention ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! The filename should be in camelCase or kebab-case or PascalCase.
+  
+  i The filename could be renamed to one of the following names:
+    BatchProcessor.ts
+    batch-processor.ts
+    batchProcessor.ts
+  
+
+convex\asaas\batch_processor.ts:174:6 lint/suspicious/noConsole  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! Don't use console.
+  
+    172 Ôöé 					// Reduce batch size if error rate is high
+    173 Ôöé 					currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
+  > 174 Ôöé 					console.log(
+        Ôöé 					^^^^^^^^^^^
+    175 Ôöé 						`[BatchProcessor] High error rate (${(errorRate * 100).toFixed(1)}%), reducing batch size to ${currentBatchSize}`,
+    176 Ôöé 					);
+  
+  i The use of console is often reserved for debugging.
+  
+  i Unsafe fix: Remove console.
+  
+    172 172 Ôöé   					// Reduce batch size if error rate is high
+    173 173 Ôöé   					currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
+    174     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ console.log(
+    175     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ `[BatchProcessor]┬ÀHigh┬Àerror┬Àrate┬À(${(errorRate┬À*┬À100).toFixed(1)}%),┬Àreducing┬Àbatch┬Àsize┬Àto┬À${currentBatchSize}`,
+    176     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ );
+    177 174 Ôöé   				} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
+    178 175 Ôöé   					// Increase batch size if error rate is low
+  
+
+convex\asaas\config.ts:168:57 lint/style/noNonNullAssertion ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! Forbidden non-null assertion.
+  
+    166 Ôöé 	// Check environment variable
+    167 Ôöé 	const envKeyExists = !!process.env.ASAAS_API_KEY;
+  > 168 Ôöé 	const envKeyValid = envKeyExists ? validateAsaasApiKey(process.env.ASAAS_API_KEY!).valid : false;
+        Ôöé 	                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    169 Ôöé 
+    170 Ôöé 	// Check database settings
+  
+
+convex\asaas\conflict_resolution.ts:298:51 lint/style/noNonNullAssertion ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! Forbidden non-null assertion.
+  
+    296 Ôöé 			conflicts = await ctx.db
+    297 Ôöé 				.query('asaasConflicts')
+  > 298 Ôöé 				.withIndex('by_status', (q) => q.eq('status', args.status!))
+        Ôöé 				                                              ^^^^^^^^^^^^
+    299 Ôöé 				.order('desc')
+    300 Ôöé 				.take(limit);
+  
+
+convex\asaas\conflict_resolution.ts lint/style/useFilenamingConvention ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ! The filename should be in camelCase or kebab-case or PascalCase.
+  
+  i The filename could be renamed to one of the following names:
+    ConflictResolution.ts
+    conflict-resolution.ts
+    conflictResolution.ts
+  
+
+convex\activities.ts:1:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+  > 1 Ôöé import { v } from 'convex/values';
+      Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 Ôöé import { mutation, query } from './_generated/server';
+    3 Ôöé import { getOrganizationId, requireAuth } from './lib/auth';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1  1 Ôöé   import { v } from 'convex/values';
+        2 Ôöé + 
+     2  3 Ôöé   import { mutation, query } from './_generated/server';
+     3  4 Ôöé   import { getOrganizationId, requireAuth } from './lib/auth';
+  
+
+convex\asaas\audit.ts:1:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+  > 1 Ôöé import { internalMutation } from '../_generated/server';
+      Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 Ôöé import { v } from 'convex/values';
+    3 Ôöé 
+  
+  i Safe fix: Organize Imports (Biome)
+  
+     1    Ôöé - import┬À{┬ÀinternalMutation┬À}┬Àfrom┬À'../_generated/server';
+     2    Ôöé - import┬À{┬Àv┬À}┬Àfrom┬À'convex/values';
+        1 Ôöé + import┬À{┬Àv┬À}┬Àfrom┬À'convex/values';
+        2 Ôöé + 
+        3 Ôöé + import┬À{┬ÀinternalMutation┬À}┬Àfrom┬À'../_generated/server';
+     3  4 Ôöé   
+     4  5 Ôöé   export const logApiUsage = internalMutation({
+  
+
+convex\asaas\batch_processor.ts:157:12 lint/style/noNegationElse  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Invert blocks when performing a negation test.
+  
+    155 Ôöé 						reason: result.reason || 'Skipped',
+    156 Ôöé 					});
+  > 157 Ôöé 				} else if (!result.success) {
+        Ôöé 				       ^^^^^^^^^^^^^^^^^^^^^^
+  > 158 Ôöé 					failed.push({
+         ...
+  > 164 Ôöé 					consecutiveErrors = 0;
+  > 165 Ôöé 				}
+        Ôöé 				^
+    166 Ôöé 			}
+    167 Ôöé 
+  
+  i Safe fix: Invert the condition and the blocks.
+  
+    155 155 Ôöé   						reason: result.reason || 'Skipped',
+    156 156 Ôöé   					});
+    157     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ }┬Àelse┬Àif┬À(!result.success)┬À{
+    158     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ failed.push({
+        157 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ }┬Àelse┬Àif┬À(result.success)┬À{
+        158 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ consecutiveErrors┬À=┬À0;
+        159 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ }┬Àelse┬À{
+        160 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ failed.push({
+    159 161 Ôöé   						item: batch[batchResults.indexOf(result)],
+    160 162 Ôöé   						error: result.error || 'Unknown error',
+    161 163 Ôöé   					});
+    162     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ consecutiveErrors++;
+    163     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ }┬Àelse┬À{
+    164     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ consecutiveErrors┬À=┬À0;
+        164 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ consecutiveErrors++;
+    165 165 Ôöé   				}
+    166 166 Ôöé   			}
+  
+
+convex\asaas\batch_processor.ts:228:3 lint/complexity/noUselessCatch  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The catch clause that only rethrows the original error is useless.
+  
+    226 Ôöé 	} catch (error) {
+    227 Ôöé 		// Re-throw any errors that occur during batch processing
+  > 228 Ôöé 		throw error;
+        Ôöé 		^^^^^^^^^^^^
+    229 Ôöé 	}
+    230 Ôöé }
+  
+  i An unnecessary catch clause can be confusing.
+  
+  i Unsafe fix: Remove the try/catch clause.
+  
+    127 127 Ôöé   	let currentBatchSize = fullConfig.batchSize;
+    128 128 Ôöé   	let consecutiveErrors = 0;
+    129     Ôöé - 
+    130     Ôöé - ÔåÆ try┬À{
+    131     Ôöé - ÔåÆ ÔåÆ //┬ÀProcess┬Àitems┬Àin┬Àbatches
+        129 Ôöé + ÔåÆ ÔåÆ //┬ÀProcess┬Àitems┬Àin┬Àbatches
+    132 130 Ôöé   		for (let i = 0; i < items.length; i += currentBatchSize) {
+    133 131 Ôöé   			currentBatch++;
+    ┬À┬À┬À┬À┬À┬À┬À Ôöé 
+    223 221 Ôöé   			created: createdCount,
+    224 222 Ôöé   			updated: updatedCount,
+    225     Ôöé - ÔåÆ ÔåÆ };
+    226     Ôöé - ÔåÆ }┬Àcatch┬À(error)┬À{
+    227     Ôöé - ÔåÆ ÔåÆ //┬ÀRe-throw┬Àany┬Àerrors┬Àthat┬Àoccur┬Àduring┬Àbatch┬Àprocessing
+    228     Ôöé - ÔåÆ ÔåÆ throw┬Àerror;
+    229     Ôöé - ÔåÆ }
+        223 Ôöé + ÔåÆ ÔåÆ };
+    230 224 Ôöé   }
+    231 225 Ôöé   
+  
+
+convex\asaas\batch_processor.ts:298:14 lint/style/useNumericSeparators  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Long numeric literal lacks separators.
+  
+    296 Ôöé 	const etrMs = avgTimePerItem * remaining;
+    297 Ôöé 
+  > 298 Ôöé 	if (etrMs < 60000) {
+        Ôöé 	            ^^^^^
+    299 Ôöé 		return `${Math.round(etrMs / 1000)}s`;
+    300 Ôöé 	} else if (etrMs < 3600000) {
+  
+  i Adding separators helps improve readability and clarity for long numbers.
+  
+  i Safe fix: Add numeric separators.
+  
+    296 296 Ôöé   	const etrMs = avgTimePerItem * remaining;
+    297 297 Ôöé   
+    298     Ôöé - ÔåÆ if┬À(etrMs┬À<┬À60000)┬À{
+        298 Ôöé + ÔåÆ if┬À(etrMs┬À<┬À60_000)┬À{
+    299 299 Ôöé   		return `${Math.round(etrMs / 1000)}s`;
+    300 300 Ôöé   	} else if (etrMs < 3600000) {
+  
+
+convex\asaas\batch_processor.ts:300:4 lint/style/noUselessElse  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This else clause can be omitted because previous branches break early.
+  
+    298 Ôöé 	if (etrMs < 60000) {
+    299 Ôöé 		return `${Math.round(etrMs / 1000)}s`;
+  > 300 Ôöé 	} else if (etrMs < 3600000) {
+        Ôöé 	  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 301 Ôöé 		return `${Math.round(etrMs / 60000)}m`;
+  > 302 Ôöé 	} else {
+  > 303 Ôöé 		return `${Math.round(etrMs / 3600000)}h`;
+  > 304 Ôöé 	}
+        Ôöé 	^
+    305 Ôöé }
+    306 Ôöé 
+  
+  i Safe fix: Omit the else clause.
+  
+    300 Ôöé ÔåÆ }┬Àelse┬Àif┬À(etrMs┬À<┬À3600000)┬À{
+        Ôöé    ------                      
+
+convex\asaas\batch_processor.ts:300:21 lint/style/useNumericSeparators  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Long numeric literal lacks separators.
+  
+    298 Ôöé 	if (etrMs < 60000) {
+    299 Ôöé 		return `${Math.round(etrMs / 1000)}s`;
+  > 300 Ôöé 	} else if (etrMs < 3600000) {
+        Ôöé 	                   ^^^^^^^
+    301 Ôöé 		return `${Math.round(etrMs / 60000)}m`;
+    302 Ôöé 	} else {
+  
+  i Adding separators helps improve readability and clarity for long numbers.
+  
+  i Safe fix: Add numeric separators.
+  
+    298 298 Ôöé   	if (etrMs < 60000) {
+    299 299 Ôöé   		return `${Math.round(etrMs / 1000)}s`;
+    300     Ôöé - ÔåÆ }┬Àelse┬Àif┬À(etrMs┬À<┬À3600000)┬À{
+        300 Ôöé + ÔåÆ }┬Àelse┬Àif┬À(etrMs┬À<┬À3_600_000)┬À{
+    301 301 Ôöé   		return `${Math.round(etrMs / 60000)}m`;
+    302 302 Ôöé   	} else {
+  
+
+convex\asaas\batch_processor.ts:301:32 lint/style/useNumericSeparators  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Long numeric literal lacks separators.
+  
+    299 Ôöé 		return `${Math.round(etrMs / 1000)}s`;
+    300 Ôöé 	} else if (etrMs < 3600000) {
+  > 301 Ôöé 		return `${Math.round(etrMs / 60000)}m`;
+        Ôöé 		                             ^^^^^
+    302 Ôöé 	} else {
+    303 Ôöé 		return `${Math.round(etrMs / 3600000)}h`;
+  
+  i Adding separators helps improve readability and clarity for long numbers.
+  
+  i Safe fix: Add numeric separators.
+  
+    299 299 Ôöé   		return `${Math.round(etrMs / 1000)}s`;
+    300 300 Ôöé   	} else if (etrMs < 3600000) {
+    301     Ôöé - ÔåÆ ÔåÆ return┬À`${Math.round(etrMs┬À/┬À60000)}m`;
+        301 Ôöé + ÔåÆ ÔåÆ return┬À`${Math.round(etrMs┬À/┬À60_000)}m`;
+    302 302 Ôöé   	} else {
+    303 303 Ôöé   		return `${Math.round(etrMs / 3600000)}h`;
+  
+
+convex\asaas\batch_processor.ts:302:4 lint/style/noUselessElse ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This else clause can be omitted because previous branches break early.
+  
+    300 Ôöé 	} else if (etrMs < 3600000) {
+    301 Ôöé 		return `${Math.round(etrMs / 60000)}m`;
+  > 302 Ôöé 	} else {
+        Ôöé 	  ^^^^^^
+  > 303 Ôöé 		return `${Math.round(etrMs / 3600000)}h`;
+  > 304 Ôöé 	}
+        Ôöé 	^
+    305 Ôöé }
+    306 Ôöé 
+  
+
+convex\asaas\batch_processor.ts:303:32 lint/style/useNumericSeparators  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Long numeric literal lacks separators.
+  
+    301 Ôöé 		return `${Math.round(etrMs / 60000)}m`;
+    302 Ôöé 	} else {
+  > 303 Ôöé 		return `${Math.round(etrMs / 3600000)}h`;
+        Ôöé 		                             ^^^^^^^
+    304 Ôöé 	}
+    305 Ôöé }
+  
+  i Adding separators helps improve readability and clarity for long numbers.
+  
+  i Safe fix: Add numeric separators.
+  
+    301 301 Ôöé   		return `${Math.round(etrMs / 60000)}m`;
+    302 302 Ôöé   	} else {
+    303     Ôöé - ÔåÆ ÔåÆ return┬À`${Math.round(etrMs┬À/┬À3600000)}h`;
+        303 Ôöé + ÔåÆ ÔåÆ return┬À`${Math.round(etrMs┬À/┬À3_600_000)}h`;
+    304 304 Ôöé   	}
+    305 305 Ôöé   }
+  
+
+convex\asaas\batch_processor.ts:266:37 lint/style/useExponentiationOperator  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Use the '**' operator instead of 'Math.pow'.
+  
+    265 Ôöé 						// Exponential backoff for retries
+  > 266 Ôöé 						const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        Ôöé 						                              ^^^^^^^^^^^^^^^^^^^^
+    267 Ôöé 						await sleep(delay);
+    268 Ôöé 					}
+  
+  i Safe fix: Use the '**' operator instead of 'Math.pow'.
+  
+    264 264 Ôöé   
+    265 265 Ôöé   						// Exponential backoff for retries
+    266     Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ const┬Àdelay┬À=┬ÀMath.min(1000┬À*┬ÀMath.pow(2,┬Àattempt),┬À5000);
+        266 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ const┬Àdelay┬À=┬ÀMath.min(1000┬À*┬À2┬À**┬Àattempt,┬À5000);
+    267 267 Ôöé   						await sleep(delay);
+    268 268 Ôöé   					}
+  
+
+convex\asaas\config.ts:51:23 lint/performance/useTopLevelRegex ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This regex literal is not defined in the top level scope. This can lead to performance issues if this function is called frequently.
+  
+    50 Ôöé 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
+  > 51 Ôöé 	const validPattern = /^[\$a-zA-Z0-9_]+$/;
+       Ôöé 	                     ^^^^^^^^^^^^^^^^^^^
+    52 Ôöé 	if (!validPattern.test(cleanKey)) {
+    53 Ôöé 		return {
+  
+  i Move the regex literal outside of this scope, and place it at the top level of this module, as a constant.
+  
+
+convex\asaas\config.ts:9:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+     7 Ôöé  */
+     8 Ôöé 
+   > 9 Ôöé import { internal } from '../_generated/api';
+       Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    10 Ôöé import { createAsaasClient, type AsaasClient } from './client';
+    11 Ôöé import { AsaasConfigurationError } from './errors';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      8   8 Ôöé   
+      9   9 Ôöé   import { internal } from '../_generated/api';
+     10     Ôöé - import┬À{┬ÀcreateAsaasClient,┬Àtype┬ÀAsaasClient┬À}┬Àfrom┬À'./client';
+         10 Ôöé + import┬À{┬Àtype┬ÀAsaasClient,┬ÀcreateAsaasClient┬À}┬Àfrom┬À'./client';
+     11  11 Ôöé   import { AsaasConfigurationError } from './errors';
+     12  12 Ôöé   
+  
+
+convex\asaas\config.ts:51:26 lint/complexity/noUselessEscapeInRegex  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The character doesn't need to be escaped.
+  
+    50 Ôöé 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
+  > 51 Ôöé 	const validPattern = /^[\$a-zA-Z0-9_]+$/;
+       Ôöé 	                        ^^
+    52 Ôöé 	if (!validPattern.test(cleanKey)) {
+    53 Ôöé 		return {
+  
+  i The character should only be escaped if it is outside a character class.
+  
+  i Safe fix: Unescape the character.
+  
+    51 Ôöé ÔåÆ const┬ÀvalidPattern┬À=┬À/^[\$a-zA-Z0-9_]+$/;
+       Ôöé                           -                
+
+convex\asaas\config.ts:75:55 lint/suspicious/noExplicitAny ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unexpected any. Specify a different type.
+  
+    73 Ôöé  * @throws AsaasConfigurationError if API key is not configured or invalid
+    74 Ôöé  */
+  > 75 Ôöé export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
+       Ôöé                                                       ^^^
+    76 Ôöé 	console.log('[AsaasConfig] Checking database settings...');
+    77 Ôöé 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+convex\asaas\config.ts:79:31 lint/suspicious/noExplicitAny ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unexpected any. Specify a different type.
+  
+    78 Ôöé 	// Try to get settings from database first
+  > 79 Ôöé 	const config: Record<string, any> | null = await ctx.runQuery(
+       Ôöé 	                             ^^^
+    80 Ôöé 		// @ts-ignore - Deep type instantiation error with Convex internal references
+    81 Ôöé 		internal.settings.internalGetIntegrationConfig,
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+convex\asaas\config.ts:80:6 lint/suspicious/noTsIgnore  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unsafe use of the @ts-ignore directive found in this comment.
+  
+    78 Ôöé 	// Try to get settings from database first
+    79 Ôöé 	const config: Record<string, any> | null = await ctx.runQuery(
+  > 80 Ôöé 		// @ts-ignore - Deep type instantiation error with Convex internal references
+       Ôöé 		   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    81 Ôöé 		internal.settings.internalGetIntegrationConfig,
+    82 Ôöé 		{ integrationName: 'asaas' },
+  
+  i The directive is applied to this line.
+  
+    79 Ôöé 	const config: Record<string, any> | null = await ctx.runQuery(
+    80 Ôöé 		// @ts-ignore - Deep type instantiation error with Convex internal references
+  > 81 Ôöé 		internal.settings.internalGetIntegrationConfig,
+       Ôöé 		^^^^^^^^
+    82 Ôöé 		{ integrationName: 'asaas' },
+    83 Ôöé 	);
+  
+  i The @ts-ignore directive suppresses any kind of error, even possible errors that might be fixed by upstream libraries or the compiler itself.
+  
+  i Safe fix: Use the @ts-expect-error directive instead.
+  
+     78  78 Ôöé   	// Try to get settings from database first
+     79  79 Ôöé   	const config: Record<string, any> | null = await ctx.runQuery(
+     80     Ôöé - ÔåÆ ÔåÆ //┬À@ts-ignore┬À-┬ÀDeep┬Àtype┬Àinstantiation┬Àerror┬Àwith┬ÀConvex┬Àinternal┬Àreferences
+         80 Ôöé + ÔåÆ ÔåÆ //┬À@ts-expect-error┬À-┬ÀDeep┬Àtype┬Àinstantiation┬Àerror┬Àwith┬ÀConvex┬Àinternal┬Àreferences
+     81  81 Ôöé   		internal.settings.internalGetIntegrationConfig,
+     82  82 Ôöé   		{ integrationName: 'asaas' },
+  
+
+convex\asaas\config.ts:105:47 lint/style/noNestedTernary ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Do not nest ternary expressions.
+  
+    104 Ôöé 	// Log the source of the API key
+  > 105 Ôöé 	const apiKeySource = dbApiKey ? 'database' : envApiKey ? 'env var' : 'none';
+        Ôöé 	                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    106 Ôöé 	console.log('[AsaasConfig] API Key source:', apiKey ? apiKeySource : 'not found');
+    107 Ôöé 	console.log('[AsaasConfig] Base URL:', baseUrl);
+  
+  i Nesting ternary expressions can make code more difficult to understand.
+  
+  i Convert nested ternary expression into if-else statements or separate the conditions to make the logic easier to understand.
+  
+
+convex\asaas\config.ts:147:51 lint/suspicious/noExplicitAny ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unexpected any. Specify a different type.
+  
+    145 Ôöé  * @returns Configuration status object
+    146 Ôöé  */
+  > 147 Ôöé export async function getConfigurationStatus(ctx: any): Promise<{
+        Ôöé                                                   ^^^
+    148 Ôöé 	isConfigured: boolean;
+    149 Ôöé 	isValid: boolean;
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+convex\asaas\conflict_resolution.ts:8:1 assist/source/organizeImports  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The imports and exports are not sorted.
+  
+     6 Ôöé  */
+     7 Ôöé 
+   > 8 Ôöé import { v } from 'convex/values';
+       Ôöé ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     9 Ôöé import { internalMutation, internalQuery, mutation, query } from '../_generated/server';
+    10 Ôöé import { internal } from '../_generated/api';
+  
+  i Safe fix: Organize Imports (Biome)
+  
+      7   7 Ôöé   
+      8   8 Ôöé   import { v } from 'convex/values';
+      9     Ôöé - import┬À{┬ÀinternalMutation,┬ÀinternalQuery,┬Àmutation,┬Àquery┬À}┬Àfrom┬À'../_generated/server';
+     10     Ôöé - import┬À{┬Àinternal┬À}┬Àfrom┬À'../_generated/api';
+     11     Ôöé - import┬Àtype┬À{┬ÀDoc┬À}┬Àfrom┬À'../_generated/dataModel';
+          9 Ôöé + 
+         10 Ôöé + import┬À{┬Àinternal┬À}┬Àfrom┬À'../_generated/api';
+         11 Ôöé + import┬Àtype┬À{┬ÀDoc┬À}┬Àfrom┬À'../_generated/dataModel';
+         12 Ôöé + import┬À{┬ÀinternalMutation,┬ÀinternalQuery,┬Àmutation,┬Àquery┬À}┬Àfrom┬À'../_generated/server';
+     12  13 Ôöé   
+     13  14 Ôöé   // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  
+
+convex\asaas\conflict_resolution.ts:95:7 lint/suspicious/noTsIgnore  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unsafe use of the @ts-ignore directive found in this comment.
+  
+    94 Ôöé 			// Update student with Asaas customer ID
+  > 95 Ôöé 			// @ts-ignore - Deep type instantiation
+       Ôöé 			   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    96 Ôöé 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+    97 Ôöé 				studentId: conflict.studentId,
+  
+  i The directive is applied to this line.
+  
+    94 Ôöé 			// Update student with Asaas customer ID
+    95 Ôöé 			// @ts-ignore - Deep type instantiation
+  > 96 Ôöé 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+       Ôöé 			^^^^^
+    97 Ôöé 				studentId: conflict.studentId,
+    98 Ôöé 				asaasCustomerId: conflict.asaasCustomerId,
+  
+  i The @ts-ignore directive suppresses any kind of error, even possible errors that might be fixed by upstream libraries or the compiler itself.
+  
+  i Safe fix: Use the @ts-expect-error directive instead.
+  
+     93  93 Ôöé   
+     94  94 Ôöé   			// Update student with Asaas customer ID
+     95     Ôöé - ÔåÆ ÔåÆ ÔåÆ //┬À@ts-ignore┬À-┬ÀDeep┬Àtype┬Àinstantiation
+         95 Ôöé + ÔåÆ ÔåÆ ÔåÆ //┬À@ts-expect-error┬À-┬ÀDeep┬Àtype┬Àinstantiation
+     96  96 Ôöé   			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+     97  97 Ôöé   				studentId: conflict.studentId,
+  
+
+convex\asaas\conflict_resolution.ts:151:6 lint/suspicious/noTsIgnore  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unsafe use of the @ts-ignore directive found in this comment.
+  
+    149 Ôöé 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
+    150 Ôöé 		// Call internal mutation
+  > 151 Ôöé 		// @ts-ignore - Deep type instantiation
+        Ôöé 		   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    152 Ôöé 		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
+    153 Ôöé 			conflictId: args.conflictId,
+  
+  i The directive is applied to this line.
+  
+    150 Ôöé 		// Call internal mutation
+    151 Ôöé 		// @ts-ignore - Deep type instantiation
+  > 152 Ôöé 		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
+        Ôöé 		^^^^^^
+    153 Ôöé 			conflictId: args.conflictId,
+    154 Ôöé 			action: args.action,
+  
+  i The @ts-ignore directive suppresses any kind of error, even possible errors that might be fixed by upstream libraries or the compiler itself.
+  
+  i Safe fix: Use the @ts-expect-error directive instead.
+  
+    149 149 Ôöé   	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
+    150 150 Ôöé   		// Call internal mutation
+    151     Ôöé - ÔåÆ ÔåÆ //┬À@ts-ignore┬À-┬ÀDeep┬Àtype┬Àinstantiation
+        151 Ôöé + ÔåÆ ÔåÆ //┬À@ts-expect-error┬À-┬ÀDeep┬Àtype┬Àinstantiation
+    152 152 Ôöé   		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
+    153 153 Ôöé   			conflictId: args.conflictId,
+  
+
+convex\asaas\conflict_resolution.ts:35:3 lint/style/useConst  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This let declares a variable that is only assigned once.
+  
+    33 Ôöé 	handler: async (ctx, args) => {
+    34 Ôöé 		// Use indexed query to filter by status first
+  > 35 Ôöé 		let queryBuilder = ctx.db
+       Ôöé 		^^^
+    36 Ôöé 			.query('asaasConflicts')
+    37 Ôöé 			.withIndex('by_status', (q) => q.eq('status', 'pending'));
+  
+  i 'queryBuilder' is never reassigned.
+  
+    33 Ôöé 	handler: async (ctx, args) => {
+    34 Ôöé 		// Use indexed query to filter by status first
+  > 35 Ôöé 		let queryBuilder = ctx.db
+       Ôöé 		    ^^^^^^^^^^^^
+    36 Ôöé 			.query('asaasConflicts')
+    37 Ôöé 			.withIndex('by_status', (q) => q.eq('status', 'pending'));
+  
+  i Safe fix: Use const instead.
+  
+     33  33 Ôöé   	handler: async (ctx, args) => {
+     34  34 Ôöé   		// Use indexed query to filter by status first
+     35     Ôöé - ÔåÆ ÔåÆ let┬ÀqueryBuilder┬À=┬Àctx.db
+         35 Ôöé + ÔåÆ ÔåÆ const┬ÀqueryBuilder┬À=┬Àctx.db
+     36  36 Ôöé   			.query('asaasConflicts')
+     37  37 Ôöé   			.withIndex('by_status', (q) => q.eq('status', 'pending'));
+  
+
+convex\asaas\errors.ts:18:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+    16 Ôöé 	public readonly isTransient: boolean;
+    17 Ôöé 	public readonly isRetryable: boolean;
+  > 18 Ôöé 	public readonly statusCode?: number;
+       Ôöé 	^^^^^^
+    19 Ôöé 	public readonly originalError?: unknown;
+    20 Ôöé 
+  
+  i Remove the accessibility modifier.
+  
+
+convex\asaas\errors.ts:19:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+    17 Ôöé 	public readonly isRetryable: boolean;
+    18 Ôöé 	public readonly statusCode?: number;
+  > 19 Ôöé 	public readonly originalError?: unknown;
+       Ôöé 	^^^^^^
+    20 Ôöé 
+    21 Ôöé 	constructor(
+  
+  i Remove the accessibility modifier.
+  
+
+convex\asaas\errors.ts:24:14 lint/style/noInferrableTypes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This type annotation is trivially inferred from its initialization.
+  
+    22 Ôöé 		message: string,
+    23 Ôöé 		code: string,
+  > 24 Ôöé 		isTransient: boolean = false,
+       Ôöé 		           ^^^^^^^^^
+    25 Ôöé 		isRetryable: boolean = false,
+    26 Ôöé 		statusCode?: number,
+  
+  i Safe fix: Remove the type annotation.
+  
+     22  22 Ôöé   		message: string,
+     23  23 Ôöé   		code: string,
+     24     Ôöé - ÔåÆ ÔåÆ isTransient:┬Àboolean┬À=┬Àfalse,
+         24 Ôöé + ÔåÆ ÔåÆ isTransient┬À=┬Àfalse,
+     25  25 Ôöé   		isRetryable: boolean = false,
+     26  26 Ôöé   		statusCode?: number,
+  
+
+convex\asaas\errors.ts:25:14 lint/style/noInferrableTypes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This type annotation is trivially inferred from its initialization.
+  
+    23 Ôöé 		code: string,
+    24 Ôöé 		isTransient: boolean = false,
+  > 25 Ôöé 		isRetryable: boolean = false,
+       Ôöé 		           ^^^^^^^^^
+    26 Ôöé 		statusCode?: number,
+    27 Ôöé 		originalError?: unknown,
+  
+  i Safe fix: Remove the type annotation.
+  
+     23  23 Ôöé   		code: string,
+     24  24 Ôöé   		isTransient: boolean = false,
+     25     Ôöé - ÔåÆ ÔåÆ isRetryable:┬Àboolean┬À=┬Àfalse,
+         25 Ôöé + ÔåÆ ÔåÆ isRetryable┬À=┬Àfalse,
+     26  26 Ôöé   		statusCode?: number,
+     27  27 Ôöé   		originalError?: unknown,
+  
+
+convex\asaas\errors.ts:101:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+     99 Ôöé 	}
+    100 Ôöé 
+  > 101 Ôöé 	public retryAfter?: number;
+        Ôöé 	^^^^^^
+    102 Ôöé }
+    103 Ôöé 
+  
+  i Remove the accessibility modifier.
+  
+
+convex\asaas\errors.ts:153:28 lint/suspicious/noExplicitAny ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Unexpected any. Specify a different type.
+  
+    152 Ôöé 	// API errors with response
+  > 153 Ôöé 	const apiError = error as any;
+        Ôöé 	                          ^^^
+    154 Ôöé 	const statusCode = apiError.response?.status;
+    155 Ôöé 	const responseData = apiError.response?.data;
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+convex\asaas\errors.ts:178:56 lint/correctness/useParseIntRadix  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Missing radix parameter
+  
+    176 Ôöé 		const message = responseData?.errors?.[0]?.description || 'Limite de requisi├º├Áes excedido';
+    177 Ôöé 		const retryAfter = apiError.response?.headers?.['retry-after'];
+  > 178 Ôöé 		return new AsaasRateLimitError(message, retryAfter ? parseInt(retryAfter) : undefined, error);
+        Ôöé 		                                                     ^^^^^^^^^^^^^^^^^^^^
+    179 Ôöé 	}
+    180 Ôöé 
+  
+  i Add a non-fractional number between 2 and 36
+  
+  i Unsafe fix: Add a radix of 10
+  
+    178 Ôöé ÔåÆ ÔåÆ return┬Ànew┬ÀAsaasRateLimitError(message,┬ÀretryAfter┬À?┬ÀparseInt(retryAfter,┬À10)┬À:┬Àundefined,┬Àerror);
+        Ôöé                                                                             ++++                      
+
+convex\asaas\errors.ts:252:57 lint/performance/useTopLevelRegex ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù This regex literal is not defined in the top level scope. This can lead to performance issues if this function is called frequently.
+  
+    250 Ôöé 	// Remove any potential API keys or tokens
+    251 Ôöé 	return JSON.stringify(json, (_key, value) => {
+  > 252 Ôöé 		if (typeof value === 'string' && value.length > 32 && /^[a-zA-Z0-9]+$/.test(value)) {
+        Ôöé 		                                                      ^^^^^^^^^^^^^^^^
+    253 Ôöé 			return '[REDACTED]';
+    254 Ôöé 		}
+  
+  i Move the regex literal outside of this scope, and place it at the top level of this module, as a constant.
+  
+
+convex\asaas\errors.ts:178:56 lint/style/useNumberNamespace  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Use Number.parseInt instead of the equivalent global.
+  
+    176 Ôöé 		const message = responseData?.errors?.[0]?.description || 'Limite de requisi├º├Áes excedido';
+    177 Ôöé 		const retryAfter = apiError.response?.headers?.['retry-after'];
+  > 178 Ôöé 		return new AsaasRateLimitError(message, retryAfter ? parseInt(retryAfter) : undefined, error);
+        Ôöé 		                                                     ^^^^^^^^
+    179 Ôöé 	}
+    180 Ôöé 
+  
+  i ES2015 moved some globals into the Number namespace for consistency.
+  
+  i Safe fix: Use Number.parseInt instead.
+  
+    176 176 Ôöé   		const message = responseData?.errors?.[0]?.description || 'Limite de requisi├º├Áes excedido';
+    177 177 Ôöé   		const retryAfter = apiError.response?.headers?.['retry-after'];
+    178     Ôöé - ÔåÆ ÔåÆ return┬Ànew┬ÀAsaasRateLimitError(message,┬ÀretryAfter┬À?┬ÀparseInt(retryAfter)┬À:┬Àundefined,┬Àerror);
+        178 Ôöé + ÔåÆ ÔåÆ return┬Ànew┬ÀAsaasRateLimitError(message,┬ÀretryAfter┬À?┬ÀNumber.parseInt(retryAfter)┬À:┬Àundefined,┬Àerror);
+    179 179 Ôöé   	}
+    180 180 Ôöé   
+  
+
+convex\asaas\errors.ts:15:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+    13 Ôöé  */
+    14 Ôöé export class AsaasError extends Error {
+  > 15 Ôöé 	public readonly code: string;
+       Ôöé 	^^^^^^
+    16 Ôöé 	public readonly isTransient: boolean;
+    17 Ôöé 	public readonly isRetryable: boolean;
+  
+  i Remove the accessibility modifier.
+  
+
+convex\asaas\errors.ts:16:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+    14 Ôöé export class AsaasError extends Error {
+    15 Ôöé 	public readonly code: string;
+  > 16 Ôöé 	public readonly isTransient: boolean;
+       Ôöé 	^^^^^^
+    17 Ôöé 	public readonly isRetryable: boolean;
+    18 Ôöé 	public readonly statusCode?: number;
+  
+  i Remove the accessibility modifier.
+  
+
+convex\asaas\errors.ts:17:2 lint/style/useConsistentMemberAccessibility ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The public modifier is disallowed.
+  
+    15 Ôöé 	public readonly code: string;
+    16 Ôöé 	public readonly isTransient: boolean;
+  > 17 Ôöé 	public readonly isRetryable: boolean;
+       Ôöé 	^^^^^^
+    18 Ôöé 	public readonly statusCode?: number;
+    19 Ôöé 	public readonly originalError?: unknown;
+  
+  i Remove the accessibility modifier.
+  
+
+src\routes\sign-up\index.tsx:15:18 lint/nursery/useSortedClasses  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù These CSS classes should be sorted.
+  
+    13 Ôöé function SignUpPage() {
+    14 Ôöé 	return (
+  > 15 Ôöé 		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise relative overflow-hidden">
+       Ôöé 		               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    16 Ôöé 			{/* Background effects */}
+    17 Ôöé 			<div className="absolute inset-0 pointer-events-none">
+  
+  i This rule is still being actively worked on, so it may be missing features or have rough edges. Visit https://github.com/biomejs/biome/issues/1274 for more information or to report possible bugs.
+  
+  i This rule belongs to the nursery group, which means it is not yet stable and may change in the future. Visit https://biomejs.dev/linter/#nursery for more information.
+  
+  i Safe fix: Sort the classes.
+  
+    13 13 Ôöé   function SignUpPage() {
+    14 14 Ôöé   	return (
+    15    Ôöé - ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-center┬Àmin-h-screen┬Àbg-mesh┬Àbg-noise┬Àrelative┬Àoverflow-hidden">
+       15 Ôöé + ÔåÆ ÔåÆ <div┬ÀclassName="relative┬Àflex┬Àmin-h-screen┬Àitems-center┬Àjustify-center┬Àoverflow-hidden┬Àbg-mesh┬Àbg-noise">
+    16 16 Ôöé   			{/* Background effects */}
+    17 17 Ôöé   			<div className="absolute inset-0 pointer-events-none">
+  
+
+src\routes\sign-up\index.tsx:17:19 lint/nursery/useSortedClasses  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù These CSS classes should be sorted.
+  
+    15 Ôöé 		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise relative overflow-hidden">
+    16 Ôöé 			{/* Background effects */}
+  > 17 Ôöé 			<div className="absolute inset-0 pointer-events-none">
+       Ôöé 			               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    18 Ôöé 				<motion.div
+    19 Ôöé 					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+  
+  i This rule is still being actively worked on, so it may be missing features or have rough edges. Visit https://github.com/biomejs/biome/issues/1274 for more information or to report possible bugs.
+  
+  i This rule belongs to the nursery group, which means it is not yet stable and may change in the future. Visit https://biomejs.dev/linter/#nursery for more information.
+  
+  i Safe fix: Sort the classes.
+  
+    15 15 Ôöé   		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise relative overflow-hidden">
+    16 16 Ôöé   			{/* Background effects */}
+    17    Ôöé - ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="absolute┬Àinset-0┬Àpointer-events-none">
+       17 Ôöé + ÔåÆ ÔåÆ ÔåÆ <div┬ÀclassName="pointer-events-none┬Àabsolute┬Àinset-0">
+    18 18 Ôöé   				<motion.div
+    19 19 Ôöé   					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+  
+
+src\routes\sign-up\index.tsx:18:5 assist/source/useSortedAttributes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The attributes are not sorted. 
+  
+    16 Ôöé 			{/* Background effects */}
+    17 Ôöé 			<div className="absolute inset-0 pointer-events-none">
+  > 18 Ôöé 				<motion.div
+       Ôöé 				^^^^^^^^^^^
+  > 19 Ôöé 					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+        ...
+  > 28 Ôöé 					}}
+  > 29 Ôöé 				/>
+       Ôöé 				^^
+    30 Ôöé 				<motion.div
+    31 Ôöé 					className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-us-gold/10 rounded-full blur-3xl"
+  
+  i Safe fix: Sort the JSX props.
+  
+    17 17 Ôöé   			<div className="absolute inset-0 pointer-events-none">
+    18 18 Ôöé   				<motion.div
+    19    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àtop-1/4┬Àleft-1/4┬Àw-96┬Àh-96┬Àbg-primary/10┬Àrounded-full┬Àblur-3xl"
+    20    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate={{
+    21    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ scale:┬À[1,┬À1.2,┬À1],
+    22    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ opacity:┬À[0.3,┬À0.5,┬À0.3],
+    23    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       19 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate={{
+       20 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ scale:┬À[1,┬À1.2,┬À1],
+       21 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ opacity:┬À[0.3,┬À0.5,┬À0.3],
+       22 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       23 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àtop-1/4┬Àleft-1/4┬Àw-96┬Àh-96┬Àbg-primary/10┬Àrounded-full┬Àblur-3xl"
+    24 24 Ôöé   					transition={{
+    25 25 Ôöé   						duration: 8,
+  
+
+src\routes\sign-up\index.tsx:19:16 lint/nursery/useSortedClasses  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù These CSS classes should be sorted.
+  
+    17 Ôöé 			<div className="absolute inset-0 pointer-events-none">
+    18 Ôöé 				<motion.div
+  > 19 Ôöé 					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+       Ôöé 					          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    20 Ôöé 					animate={{
+    21 Ôöé 						scale: [1, 1.2, 1],
+  
+  i This rule is still being actively worked on, so it may be missing features or have rough edges. Visit https://github.com/biomejs/biome/issues/1274 for more information or to report possible bugs.
+  
+  i This rule belongs to the nursery group, which means it is not yet stable and may change in the future. Visit https://biomejs.dev/linter/#nursery for more information.
+  
+  i Safe fix: Sort the classes.
+  
+    17 17 Ôöé   			<div className="absolute inset-0 pointer-events-none">
+    18 18 Ôöé   				<motion.div
+    19    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àtop-1/4┬Àleft-1/4┬Àw-96┬Àh-96┬Àbg-primary/10┬Àrounded-full┬Àblur-3xl"
+       19 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àtop-1/4┬Àleft-1/4┬Àh-96┬Àw-96┬Àrounded-full┬Àbg-primary/10┬Àblur-3xl"
+    20 20 Ôöé   					animate={{
+    21 21 Ôöé   						scale: [1, 1.2, 1],
+  
+
+src\routes\sign-up\index.tsx:30:5 assist/source/useSortedAttributes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The attributes are not sorted. 
+  
+    28 Ôöé 					}}
+    29 Ôöé 				/>
+  > 30 Ôöé 				<motion.div
+       Ôöé 				^^^^^^^^^^^
+  > 31 Ôöé 					className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-us-gold/10 rounded-full blur-3xl"
+        ...
+  > 41 Ôöé 					}}
+  > 42 Ôöé 				/>
+       Ôöé 				^^
+    43 Ôöé 			</div>
+    44 Ôöé 
+  
+  i Safe fix: Sort the JSX props.
+  
+    29 29 Ôöé   				/>
+    30 30 Ôöé   				<motion.div
+    31    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àbottom-1/4┬Àright-1/4┬Àw-96┬Àh-96┬Àbg-us-gold/10┬Àrounded-full┬Àblur-3xl"
+    32    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate={{
+    33    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ scale:┬À[1.2,┬À1,┬À1.2],
+    34    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ opacity:┬À[0.2,┬À0.4,┬À0.2],
+    35    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       31 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate={{
+       32 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ scale:┬À[1.2,┬À1,┬À1.2],
+       33 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ opacity:┬À[0.2,┬À0.4,┬À0.2],
+       34 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       35 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àbottom-1/4┬Àright-1/4┬Àw-96┬Àh-96┬Àbg-us-gold/10┬Àrounded-full┬Àblur-3xl"
+    36 36 Ôöé   					transition={{
+    37 37 Ôöé   						duration: 10,
+  
+
+src\routes\sign-up\index.tsx:31:16 lint/nursery/useSortedClasses  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù These CSS classes should be sorted.
+  
+    29 Ôöé 				/>
+    30 Ôöé 				<motion.div
+  > 31 Ôöé 					className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-us-gold/10 rounded-full blur-3xl"
+       Ôöé 					          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    32 Ôöé 					animate={{
+    33 Ôöé 						scale: [1.2, 1, 1.2],
+  
+  i This rule is still being actively worked on, so it may be missing features or have rough edges. Visit https://github.com/biomejs/biome/issues/1274 for more information or to report possible bugs.
+  
+  i This rule belongs to the nursery group, which means it is not yet stable and may change in the future. Visit https://biomejs.dev/linter/#nursery for more information.
+  
+  i Safe fix: Sort the classes.
+  
+    29 29 Ôöé   				/>
+    30 30 Ôöé   				<motion.div
+    31    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àbottom-1/4┬Àright-1/4┬Àw-96┬Àh-96┬Àbg-us-gold/10┬Àrounded-full┬Àblur-3xl"
+       31 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="absolute┬Àright-1/4┬Àbottom-1/4┬Àh-96┬Àw-96┬Àrounded-full┬Àbg-us-gold/10┬Àblur-3xl"
+    32 32 Ôöé   					animate={{
+    33 33 Ôöé   						scale: [1.2, 1, 1.2],
+  
+
+src\routes\sign-up\index.tsx:46:4 assist/source/useSortedAttributes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The attributes are not sorted. 
+  
+    45 Ôöé 			{/* Content */}
+  > 46 Ôöé 			<motion.div
+       Ôöé 			^^^^^^^^^^^
+  > 47 Ôöé 				variants={fadeInUp}
+  > 48 Ôöé 				initial="hidden"
+  > 49 Ôöé 				animate="visible"
+  > 50 Ôöé 				className="relative z-10 w-full max-w-md px-4"
+  > 51 Ôöé 			>
+       Ôöé 			^
+    52 Ôöé 				<div className="glass-card rounded-2xl p-8 shadow-2xl">
+    53 Ôöé 					<SignUp
+  
+  i Safe fix: Sort the JSX props.
+  
+    45 45 Ôöé   			{/* Content */}
+    46 46 Ôöé   			<motion.div
+    47    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ variants={fadeInUp}
+    48    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ initial="hidden"
+    49    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate="visible"
+    50    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="relative┬Àz-10┬Àw-full┬Àmax-w-md┬Àpx-4"
+       47 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ animate="visible"
+       48 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ className="relative┬Àz-10┬Àw-full┬Àmax-w-md┬Àpx-4"
+       49 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ initial="hidden"
+       50 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ variants={fadeInUp}
+    51 51 Ôöé   			>
+    52 52 Ôöé   				<div className="glass-card rounded-2xl p-8 shadow-2xl">
+  
+
+src\routes\sign-up\index.tsx:53:6 assist/source/useSortedAttributes  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù The attributes are not sorted. 
+  
+    51 Ôöé 			>
+    52 Ôöé 				<div className="glass-card rounded-2xl p-8 shadow-2xl">
+  > 53 Ôöé 					<SignUp
+       Ôöé 					^^^^^^^
+  > 54 Ôöé 						routing="path"
+        ...
+  > 71 Ôöé 						}}
+  > 72 Ôöé 					/>
+       Ôöé 					^^
+    73 Ôöé 				</div>
+    74 Ôöé 			</motion.div>
+  
+  i Safe fix: Sort the JSX props.
+  
+    52 52 Ôöé   				<div className="glass-card rounded-2xl p-8 shadow-2xl">
+    53 53 Ôöé   					<SignUp
+    54    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ routing="path"
+    55    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ path="/sign-up"
+    56    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ signInUrl="/sign-in"
+    57    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ forceRedirectUrl="/dashboard"
+    58    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ appearance={{
+    59    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ elements:┬À{
+    60    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ rootBox:┬À'mx-auto',
+    61    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ card:┬À'bg-transparent┬Àshadow-none',
+    62    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ headerTitle:┬À'font-display┬Àtext-2xl┬Àfont-bold',
+    63    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ headerSubtitle:┬À'font-sans┬Àtext-muted-foreground',
+    64    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ socialButtonsBlockButton:┬À'bg-background/50┬Àborder-border┬Àhover:bg-background/70',
+    65    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ formButtonPrimary:
+    66    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ 'bg-primary┬Àhover:bg-primary/90┬Àtext-primary-foreground┬Àrounded-lg',
+    67    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ formFieldInput:
+    68    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ 'bg-background/50┬Àborder-border┬Àfocus:border-primary┬Àfocus:ring-primary',
+    69    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ footerActionLink:┬À'text-primary┬Àhover:text-primary/80',
+    70    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ },
+    71    Ôöé - ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       54 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ appearance={{
+       55 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ elements:┬À{
+       56 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ rootBox:┬À'mx-auto',
+       57 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ card:┬À'bg-transparent┬Àshadow-none',
+       58 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ headerTitle:┬À'font-display┬Àtext-2xl┬Àfont-bold',
+       59 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ headerSubtitle:┬À'font-sans┬Àtext-muted-foreground',
+       60 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ socialButtonsBlockButton:┬À'bg-background/50┬Àborder-border┬Àhover:bg-background/70',
+       61 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ formButtonPrimary:
+       62 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ 'bg-primary┬Àhover:bg-primary/90┬Àtext-primary-foreground┬Àrounded-lg',
+       63 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ formFieldInput:
+       64 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ 'bg-background/50┬Àborder-border┬Àfocus:border-primary┬Àfocus:ring-primary',
+       65 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ footerActionLink:┬À'text-primary┬Àhover:text-primary/80',
+       66 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ },
+       67 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ }}
+       68 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ forceRedirectUrl="/dashboard"
+       69 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ path="/sign-up"
+       70 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ routing="path"
+       71 Ôöé + ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ ÔåÆ signInUrl="/sign-in"
+    72 72 Ôöé   					/>
+    73 73 Ôöé   				</div>
+  
+
+src\routes\sign-up\sso-callback.tsx:13:18 lint/nursery/useSortedClasses  FIXABLE  ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù These CSS classes should be sorted.
+  
+    11 Ôöé function SSOCallbackPage() {
+    12 Ôöé 	return (
+  > 13 Ôöé 		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise">
+       Ôöé 		               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    14 Ôöé 			<AuthenticateWithRedirectCallback
+    15 Ôöé 				signInForceRedirectUrl="/dashboard"
+  
+  i This rule is still being actively worked on, so it may be missing features or have rough edges. Visit https://github.com/biomejs/biome/issues/1274 for more information or to report possible bugs.
+  
+  i This rule belongs to the nursery group, which means it is not yet stable and may change in the future. Visit https://biomejs.dev/linter/#nursery for more information.
+  
+  i Safe fix: Sort the classes.
+  
+    11 11 Ôöé   function SSOCallbackPage() {
+    12 12 Ôöé   	return (
+    13    Ôöé - ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àitems-center┬Àjustify-center┬Àmin-h-screen┬Àbg-mesh┬Àbg-noise">
+       13 Ôöé + ÔåÆ ÔåÆ <div┬ÀclassName="flex┬Àmin-h-screen┬Àitems-center┬Àjustify-center┬Àbg-mesh┬Àbg-noise">
+    14 14 Ôöé   			<AuthenticateWithRedirectCallback
+    15 15 Ôöé   				signInForceRedirectUrl="/dashboard"
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 3102.
+Checked 313 files in 938ms. No fixes applied.
+Found 2769 errors.
+Found 383 warnings.
+check ÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü
+
+  ├ù Some errors were emitted while running checks.
+  
+

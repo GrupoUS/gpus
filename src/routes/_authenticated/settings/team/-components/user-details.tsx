@@ -18,21 +18,21 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 	if (!user) return null;
 
 	return (
-		<Sheet open={!!user} onOpenChange={(open) => !open && onClose()}>
+		<Sheet onOpenChange={(open) => !open && onClose()} open={!!user}>
 			<SheetContent className="w-[400px] sm:w-[540px]">
 				<SheetHeader className="mb-6">
 					<SheetTitle>Detalhes do Membro</SheetTitle>
 				</SheetHeader>
 
-				<div className="flex flex-col items-center mb-8">
-					<Avatar className="h-24 w-24 mb-4">
+				<div className="mb-8 flex flex-col items-center">
+					<Avatar className="mb-4 h-24 w-24">
 						<AvatarFallback className="text-2xl">
 							{user.name.slice(0, 2).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
-					<h2 className="text-xl font-bold">{user.name}</h2>
+					<h2 className="font-bold text-xl">{user.name}</h2>
 					<p className="text-muted-foreground">{user.email}</p>
-					<div className="flex gap-2 mt-3">
+					<div className="mt-3 flex gap-2">
 						<Badge variant="outline">{user.role}</Badge>
 						<Badge variant={user.isActive ? 'default' : 'secondary'}>
 							{user.isActive ? 'Ativo' : 'Inativo'}
@@ -41,49 +41,49 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 				</div>
 
 				<Tabs defaultValue="info">
-					<TabsList className="w-full mb-4">
-						<TabsTrigger value="info" className="flex-1">
+					<TabsList className="mb-4 w-full">
+						<TabsTrigger className="flex-1" value="info">
 							Informações
 						</TabsTrigger>
-						<TabsTrigger value="audit" className="flex-1">
+						<TabsTrigger className="flex-1" value="audit">
 							Auditoria
 						</TabsTrigger>
 					</TabsList>
 
-					<TabsContent value="info" className="space-y-6">
+					<TabsContent className="space-y-6" value="info">
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-1">
-								<span className="text-xs text-muted-foreground flex items-center gap-1">
+								<span className="flex items-center gap-1 text-muted-foreground text-xs">
 									<Clock className="h-3 w-3" />
 									Criado em
 								</span>
 								<p className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</p>
 							</div>
 							<div className="space-y-1">
-								<span className="text-xs text-muted-foreground flex items-center gap-1">
+								<span className="flex items-center gap-1 text-muted-foreground text-xs">
 									<Shield className="h-3 w-3" />
 									ID do Sistema
 								</span>
-								<p className="font-mono text-xs truncate" title={user._id}>
+								<p className="truncate font-mono text-xs" title={user._id}>
 									{user._id}
 								</p>
 							</div>
 						</div>
 
-						<div className="pt-4 border-t space-y-3">
-							<h3 className="font-semibold mb-2">Ações</h3>
+						<div className="space-y-3 border-t pt-4">
+							<h3 className="mb-2 font-semibold">Ações</h3>
 							<Button
-								variant="outline"
 								className="w-full justify-start gap-2"
 								onClick={() => onEditRole(user)}
+								variant="outline"
 							>
 								<UserCog className="h-4 w-4" />
 								Alterar Função
 							</Button>
 							<Button
-								variant="destructive"
 								className="w-full justify-start gap-2"
 								onClick={() => onRemove(user)}
+								variant="destructive"
 							>
 								<Trash2 className="h-4 w-4" />
 								Remover Membro
@@ -92,7 +92,7 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 					</TabsContent>
 
 					<TabsContent value="audit">
-						<div className="rounded-md border p-4 bg-muted/50 text-center text-muted-foreground text-sm">
+						<div className="rounded-md border bg-muted/50 p-4 text-center text-muted-foreground text-sm">
 							Histórico de auditoria disponível no painel global.
 							<br />
 							(Funcionalidade de log específico em breve)

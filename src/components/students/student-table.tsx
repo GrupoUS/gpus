@@ -84,9 +84,9 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 	const getSortIcon = (field: SortField) => {
 		if (sort.field !== field) return null;
 		return sort.direction === 'asc' ? (
-			<ChevronUp className="h-4 w-4 ml-1" />
+			<ChevronUp className="ml-1 h-4 w-4" />
 		) : (
-			<ChevronDown className="h-4 w-4 ml-1" />
+			<ChevronDown className="ml-1 h-4 w-4" />
 		);
 	};
 
@@ -97,10 +97,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 					<TableRow>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('name')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por nome"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('name')}
+								type="button"
 							>
 								Aluno
 								{getSortIcon('name')}
@@ -109,10 +109,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 						<TableHead>Produto</TableHead>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('status')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por status"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('status')}
+								type="button"
 							>
 								Status
 								{getSortIcon('status')}
@@ -120,10 +120,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 						</TableHead>
 						<TableHead>
 							<button
-								type="button"
-								onClick={() => handleSort('churnRisk')}
-								className="flex items-center hover:text-foreground transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
 								aria-label="Ordenar por risco de churn"
+								className="flex items-center rounded font-medium transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+								onClick={() => handleSort('churnRisk')}
+								type="button"
 							>
 								Risco
 								{getSortIcon('churnRisk')}
@@ -136,8 +136,9 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 					{sortedStudents.map((student) => {
 						return (
 							<TableRow
+								aria-label={`Ver detalhes de ${student.name}`}
+								className="cursor-pointer transition-colors hover:bg-muted/50"
 								key={student._id}
-								className="cursor-pointer hover:bg-muted/50 transition-colors"
 								onClick={() => onStudentClick(student._id)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
@@ -145,18 +146,17 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 										onStudentClick(student._id);
 									}
 								}}
-								tabIndex={0}
 								role="button"
-								aria-label={`Ver detalhes de ${student.name}`}
+								tabIndex={0}
 							>
 								<TableCell>
 									<div className="flex items-center gap-3">
-										<div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
+										<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-indigo-500">
 											<User className="h-4 w-4 text-white" />
 										</div>
 										<div>
 											<p className="font-medium text-sm">{student.name}</p>
-											<p className="text-xs text-muted-foreground">{student.profession}</p>
+											<p className="text-muted-foreground text-xs">{student.profession}</p>
 										</div>
 									</div>
 								</TableCell>
@@ -180,10 +180,10 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 											className={cn('flex items-center gap-1', churnRiskColors[student.churnRisk])}
 										>
 											<AlertTriangle className="h-3 w-3" />
-											<span className="text-xs font-medium capitalize">{student.churnRisk}</span>
+											<span className="font-medium text-xs capitalize">{student.churnRisk}</span>
 										</div>
 									) : (
-										<span className="text-green-500 text-xs font-medium">Baixo</span>
+										<span className="font-medium text-green-500 text-xs">Baixo</span>
 									)}
 								</TableCell>
 								<TableCell>

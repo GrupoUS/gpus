@@ -366,8 +366,7 @@ export async function brevoFetch<T>(
 					error.message.includes('fetch failed'));
 
 			if (attempt < retries && isRetryable) {
-				const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-				console.warn(`[BrevoAPI] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`, error);
+				const delay = 2 ** attempt * 1000; // 1s, 2s, 4s
 				await new Promise((resolve) => setTimeout(resolve, delay));
 				continue;
 			}
@@ -849,7 +848,6 @@ export function validateWebhookSecret(providedSecret: string | null): boolean {
 	const expectedSecret = process.env.BREVO_WEBHOOK_SECRET;
 
 	if (!expectedSecret) {
-		console.warn('BREVO_WEBHOOK_SECRET not configured - skipping validation');
 		return true; // Skip validation if not configured
 	}
 

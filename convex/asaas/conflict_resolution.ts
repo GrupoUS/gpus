@@ -6,9 +6,10 @@
  */
 
 import { v } from 'convex/values';
-import { internalMutation, internalQuery, mutation, query } from '../_generated/server';
+
 import { internal } from '../_generated/api';
 import type { Doc } from '../_generated/dataModel';
+import { internalMutation, internalQuery, mutation, query } from '../_generated/server';
 
 // ═══════════════════════════════════════════════════════
 // INTERNAL QUERIES (for workers and actions)
@@ -32,7 +33,7 @@ export const getPendingConflicts = internalQuery({
 	},
 	handler: async (ctx, args) => {
 		// Use indexed query to filter by status first
-		let queryBuilder = ctx.db
+		const queryBuilder = ctx.db
 			.query('asaasConflicts')
 			.withIndex('by_status', (q) => q.eq('status', 'pending'));
 
@@ -92,7 +93,7 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
@@ -148,7 +149,7 @@ export const resolveConflictManually = mutation({
 	},
 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
 		// Call internal mutation
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
 			conflictId: args.conflictId,
 			action: args.action,

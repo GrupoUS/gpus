@@ -64,7 +64,7 @@ export function EnrollmentCard({ enrollment, onClick }: EnrollmentCardProps) {
 					</Badge>
 				</div>
 				{enrollment.cohort && (
-					<p className="text-xs text-muted-foreground">Turma: {enrollment.cohort}</p>
+					<p className="text-muted-foreground text-xs">Turma: {enrollment.cohort}</p>
 				)}
 			</CardHeader>
 
@@ -75,25 +75,25 @@ export function EnrollmentCard({ enrollment, onClick }: EnrollmentCardProps) {
 						<span className="text-muted-foreground">Progresso</span>
 						<span className="font-medium">{progress}%</span>
 					</div>
-					<Progress value={progress} className="h-2" />
+					<Progress className="h-2" value={progress} />
 					{enrollment.modulesCompleted !== undefined && enrollment.totalModules && (
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{enrollment.modulesCompleted} de {enrollment.totalModules} módulos
 						</p>
 					)}
 				</div>
 
 				{/* Payment Info */}
-				<div className="flex items-center justify-between pt-2 border-t">
+				<div className="flex items-center justify-between border-t pt-2">
 					<div className="space-y-0.5">
-						<p className="text-xs text-muted-foreground">Pagamento</p>
-						<p className={cn('text-sm font-medium', paymentStatusColors[enrollment.paymentStatus])}>
+						<p className="text-muted-foreground text-xs">Pagamento</p>
+						<p className={cn('font-medium text-sm', paymentStatusColors[enrollment.paymentStatus])}>
 							{paidInstallments}/{enrollment.installments} parcelas
 						</p>
 					</div>
 					<div className="text-right">
-						<p className="text-xs text-muted-foreground">Valor Total</p>
-						<p className="text-sm font-medium">
+						<p className="text-muted-foreground text-xs">Valor Total</p>
+						<p className="font-medium text-sm">
 							{new Intl.NumberFormat('pt-BR', {
 								style: 'currency',
 								currency: 'BRL',

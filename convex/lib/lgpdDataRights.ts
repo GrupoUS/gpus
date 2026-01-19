@@ -10,22 +10,14 @@
  * - Objection (Art. 18)
  */
 
-import type { MutationCtx, QueryCtx } from '../_generated/server';
-// getIdentity available for identity checks, getClerkId used
-import { getClerkId, getIdentity as _getIdentity } from './auth';
-import { createAuditLog } from './auditLogging';
-// encrypt, decrypt, hashSensitiveData available for data processing
-import {
-	encrypt as _encrypt,
-	decrypt as _decrypt,
-	hashSensitiveData as _hashSensitiveData,
-} from './encryption';
-import {
-	generateDataExport,
-	hasConsentForDataCategory as _hasConsentForDataCategory,
-} from './lgpdCompliance';
-import { validateInput } from './validation';
 import { z } from 'zod';
+
+import type { MutationCtx, QueryCtx } from '../_generated/server';
+import { createAuditLog } from './auditLogging';
+// getIdentity available for identity checks, getClerkId used
+import { getClerkId } from './auth';
+import { generateDataExport } from './lgpdCompliance';
+import { validateInput } from './validation';
 
 /**
  * Request types for LGPD data subject rights

@@ -43,41 +43,41 @@ export function ProductHeader({ productId, count, totalCount, isExpanded }: Prod
 	return (
 		<CollapsibleTrigger asChild>
 			<button
-				type="button"
+				aria-expanded={isExpanded}
+				aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} seção de ${label}`}
 				className={cn(
-					'w-full flex items-center justify-between p-4 h-16 group transition-colors duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+					'group flex h-16 w-full cursor-pointer items-center justify-between p-4 outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 					colors.bg,
 				)}
-				aria-label={`${isExpanded ? 'Recolher' : 'Expandir'} seção de ${label}`}
-				aria-expanded={isExpanded}
+				type="button"
 			>
 				<div className="flex items-center gap-3">
 					<div
 						className={cn(
-							'w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105',
+							'flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm transition-transform group-hover:scale-105',
 							colors.color,
 						)}
 					>
-						<Icon className="w-5 h-5" />
+						<Icon className="h-5 w-5" />
 					</div>
 					<div className="flex flex-col items-start gap-0.5">
-						<h2 className="text-lg font-semibold tracking-tight text-foreground">{label}</h2>
-						<Badge variant="secondary" className="text-xs font-normal h-5 px-1.5">
+						<h2 className="font-semibold text-foreground text-lg tracking-tight">{label}</h2>
+						<Badge className="h-5 px-1.5 font-normal text-xs" variant="secondary">
 							{totalCount ? `${count} de ${totalCount} alunos` : `${count} alunos`}
 						</Badge>
 					</div>
 				</div>
 
 				<div className="flex items-center gap-3">
-					<div className="h-8 px-2 text-xs text-muted-foreground group-hover:text-foreground flex items-center border border-muted-foreground/20 rounded-md">
+					<div className="flex h-8 items-center rounded-md border border-muted-foreground/20 px-2 text-muted-foreground text-xs group-hover:text-foreground">
 						{isExpanded ? (
 							<>
-								<ChevronUp className="h-3.5 w-3.5 mr-1" />
+								<ChevronUp className="mr-1 h-3.5 w-3.5" />
 								Recolher
 							</>
 						) : (
 							<>
-								<ChevronDown className="h-3.5 w-3.5 mr-1" />
+								<ChevronDown className="mr-1 h-3.5 w-3.5" />
 								Expandir
 							</>
 						)}

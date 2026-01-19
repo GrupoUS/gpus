@@ -170,7 +170,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	// Default trigger button
 	const defaultTrigger = (
 		<Button variant="outline">
-			<Plus className="w-4 h-4 mr-2" />
+			<Plus className="mr-2 h-4 w-4" />
 			Criar Cobrança
 		</Button>
 	);
@@ -179,7 +179,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	const canCreatePayment = !!asaasCustomerId && !!studentCpf;
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog onOpenChange={setOpen} open={open}>
 			<DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
@@ -187,28 +187,12 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 					<DialogDescription>Crie uma cobrança para {studentName}</DialogDescription>
 				</DialogHeader>
 
-				{!canCreatePayment ? (
-					<div className="bg-yellow-500/10 text-yellow-600 p-4 rounded-md border border-yellow-500/20 text-sm">
-						<p className="font-medium mb-1">Aluno não pode receber cobranças</p>
-						<p className="text-xs">
-							{!studentCpf
-								? 'Cadastre o CPF do aluno primeiro.'
-								: syncError
-									? `Erro na sincronização: ${syncError}. Clique em "Sincronizar" para tentar novamente.`
-									: 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.'}
-						</p>
-						{syncError && (
-							<Button size="sm" variant="outline" className="mt-2" onClick={handleManualSync}>
-								Sincronizar Agora
-							</Button>
-						)}
-					</div>
-				) : (
+				{canCreatePayment ? (
 					<div className="space-y-4">
 						{/* Billing Type */}
 						<div className="space-y-2">
 							<Label htmlFor={billingTypeId}>Forma de Pagamento</Label>
-							<Select value={billingType} onValueChange={(v) => setBillingType(v as BillingType)}>
+							<Select onValueChange={(v) => setBillingType(v as BillingType)} value={billingType}>
 								<SelectTrigger id={billingTypeId}>
 									<SelectValue placeholder="Selecione" />
 								</SelectTrigger>
@@ -225,19 +209,19 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 							<Label htmlFor={valueInputId}>Valor Total (R$)</Label>
 							<Input
 								id={valueInputId}
-								type="number"
 								min="0.01"
-								step="0.01"
-								value={value}
 								onChange={(e) => setValue(e.target.value)}
 								placeholder="0,00"
+								step="0.01"
+								type="number"
+								value={value}
 							/>
 						</div>
 
 						{/* Installments */}
 						<div className="space-y-2">
 							<Label htmlFor={installmentsId}>Parcelas</Label>
-							<Select value={installmentCount} onValueChange={setInstallmentCount}>
+							<Select onValueChange={setInstallmentCount} value={installmentCount}>
 								<SelectTrigger id={installmentsId}>
 									<SelectValue placeholder="Selecione" />
 								</SelectTrigger>
@@ -259,10 +243,10 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 							<Label htmlFor={dueDateInputId}>Data de Vencimento</Label>
 							<Input
 								id={dueDateInputId}
+								min={new Date().toISOString().split('T')[0]}
+								onChange={(e) => setDueDate(e.target.value)}
 								type="date"
 								value={dueDate}
-								onChange={(e) => setDueDate(e.target.value)}
-								min={new Date().toISOString().split('T')[0]}
 							/>
 						</div>
 
@@ -271,20 +255,36 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 							<Label htmlFor={descriptionInputId}>Descrição (opcional)</Label>
 							<Textarea
 								id={descriptionInputId}
-								value={description}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="Mensalidade, Matrícula, etc."
 								rows={2}
+								value={description}
 							/>
 						</div>
+					</div>
+				) : (
+					<div className="rounded-md border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-600">
+						<p className="mb-1 font-medium">Aluno não pode receber cobranças</p>
+						<p className="text-xs">
+							{studentCpf
+								? syncError
+									? `Erro na sincronização: ${syncError}. Clique em "Sincronizar" para tentar novamente.`
+									: 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.'
+								: 'Cadastre o CPF do aluno primeiro.'}
+						</p>
+						{syncError && (
+							<Button className="mt-2" onClick={handleManualSync} size="sm" variant="outline">
+								Sincronizar Agora
+							</Button>
+						)}
 					</div>
 				)}
 
 				<DialogFooter>
-					<Button variant="outline" onClick={() => setOpen(false)}>
+					<Button onClick={() => setOpen(false)} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} disabled={isSubmitting || !canCreatePayment}>
+					<Button disabled={isSubmitting || !canCreatePayment} onClick={handleSubmit}>
 						{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 						Gerar Cobrança
 					</Button>

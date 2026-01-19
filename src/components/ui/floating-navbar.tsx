@@ -29,30 +29,30 @@ export const FloatingNavbar = ({ className }: { className?: string }) => {
 	return (
 		<AnimatePresence mode="wait">
 			<motion.nav
-				initial={{
-					opacity: 1,
-					y: -100,
-				}}
 				animate={{
 					y: visible ? 0 : -100,
 					opacity: visible ? 1 : 0,
 				}}
+				className={cn(
+					'fixed inset-x-0 top-10 z-5000 mx-auto flex max-w-fit items-center justify-center rounded-full',
+					className,
+				)}
+				initial={{
+					opacity: 1,
+					y: -100,
+				}}
 				transition={{
 					duration: 0.2,
 				}}
-				className={cn(
-					'flex max-w-fit fixed top-10 inset-x-0 mx-auto rounded-full z-5000 items-center justify-center',
-					className,
-				)}
 			>
 				<Link to="/sign-in">
 					<HoverBorderGradient
-						containerClassName="rounded-full"
 						as="div"
-						className="bg-background text-foreground flex items-center space-x-2"
+						className="flex items-center space-x-2 bg-background text-foreground"
+						containerClassName="rounded-full"
 					>
 						<RippleButton
-							className="bg-transparent hover:bg-transparent text-amber-400 font-bold px-8 py-2 text-lg hover:scale-105 transition-transform"
+							className="bg-transparent px-8 py-2 font-bold text-amber-400 text-lg transition-transform hover:scale-105 hover:bg-transparent"
 							rippleColor="rgba(217, 119, 6, 0.2)"
 						>
 							Login

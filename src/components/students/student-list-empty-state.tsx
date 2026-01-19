@@ -7,12 +7,12 @@ interface StudentListEmptyStateProps {
 
 export function StudentListEmptyState({ isFiltering, search }: StudentListEmptyStateProps) {
 	return (
-		<div className="text-center py-12 text-muted-foreground">
-			<GraduationCap className="h-16 w-16 mx-auto mb-4 opacity-30" />
-			<h2 className="text-lg font-medium">
+		<div className="py-12 text-center text-muted-foreground">
+			<GraduationCap className="mx-auto mb-4 h-16 w-16 opacity-30" />
+			<h2 className="font-medium text-lg">
 				{isFiltering ? 'Nenhum aluno encontrado' : 'Nenhum aluno cadastrado'}
 			</h2>
-			<p className="text-sm mt-2">
+			<p className="mt-2 text-sm">
 				{isFiltering
 					? search
 						? `Nenhum aluno encontrado para "${search}"`

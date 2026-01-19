@@ -76,31 +76,31 @@ function ChatPage() {
 				setPendingMessage,
 			}}
 		>
-			<div className="h-[calc(100vh-64px)] flex flex-col">
-				<div className="flex-1 flex min-h-0">
+			<div className="flex h-[calc(100vh-64px)] flex-col">
+				<div className="flex min-h-0 flex-1">
 					{/* Sidebar - Conversation List */}
-					<div className="w-80 border-r flex flex-col bg-background/50">
+					<div className="flex w-80 flex-col border-r bg-background/50">
 						{/* Header */}
-						<div className="p-4 border-b space-y-3">
+						<div className="space-y-3 border-b p-4">
 							<div className="flex items-center justify-between">
-								<h1 className="text-lg font-bold flex items-center gap-2">
+								<h1 className="flex items-center gap-2 font-bold text-lg">
 									<MessageSquare className="h-5 w-5 text-purple-500" />
 									Chat
 								</h1>
-								<Button variant="ghost" size="icon">
+								<Button size="icon" variant="ghost">
 									<Settings className="h-4 w-4" />
 								</Button>
 							</div>
 
 							{/* Department Tabs */}
 							<Tabs value={currentDepartment}>
-								<TabsList className="w-full grid grid-cols-3">
+								<TabsList className="grid w-full grid-cols-3">
 									{departments.map((dept) => (
-										<TabsTrigger key={dept.id} value={dept.id} asChild>
+										<TabsTrigger asChild key={dept.id} value={dept.id}>
 											<Link
-												to="/chat/$department"
-												params={{ department: dept.id }}
 												className={cn('data-[state=active]:bg-background')}
+												params={{ department: dept.id }}
+												to="/chat/$department"
 											>
 												{dept.label}
 											</Link>
@@ -111,17 +111,17 @@ function ChatPage() {
 
 							{/* Search */}
 							<div className="relative">
-								<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+								<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 								<Input
+									className="pl-9"
+									onChange={(e) => setSearch(e.target.value)}
 									placeholder="Buscar conversas..."
 									value={search}
-									onChange={(e) => setSearch(e.target.value)}
-									className="pl-9"
 								/>
 							</div>
 
 							{/* Status Filter */}
-							<Select value={statusFilter} onValueChange={setStatusFilter}>
+							<Select onValueChange={setStatusFilter} value={statusFilter}>
 								<SelectTrigger>
 									<SelectValue placeholder="Filtrar por status" />
 								</SelectTrigger>
@@ -137,7 +137,7 @@ function ChatPage() {
 						</div>
 
 						{/* Portal target for ConversationList rendered by child routes */}
-						<div id={portalTargetId} className="flex-1 min-h-0" />
+						<div className="min-h-0 flex-1" id={portalTargetId} />
 					</div>
 
 					{/* Main Chat Area - Child routes render here */}

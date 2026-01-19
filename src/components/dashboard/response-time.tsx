@@ -11,7 +11,7 @@ export function ResponseTime({ avgResponseTime, trend }: ResponseTimeProps) {
 	return (
 		<Card className="glass-card">
 			<CardHeader>
-				<CardTitle className="font-display text-2xl font-semibold">Tempo de Resposta</CardTitle>
+				<CardTitle className="font-display font-semibold text-2xl">Tempo de Resposta</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{avgResponseTime === undefined ? (
@@ -19,22 +19,22 @@ export function ResponseTime({ avgResponseTime, trend }: ResponseTimeProps) {
 				) : (
 					<div className="space-y-4">
 						<div className="text-center">
-							<div className="font-display text-4xl font-bold tabular-nums">
+							<div className="font-bold font-display text-4xl tabular-nums">
 								{avgResponseTime || 0}min
 							</div>
-							<p className="text-sm text-muted-foreground mt-2">Tempo médio de resposta</p>
+							<p className="mt-2 text-muted-foreground text-sm">Tempo médio de resposta</p>
 							{trend !== undefined && trend !== 0 && (
-								<div className="flex items-center justify-center gap-2 mt-2">
+								<div className="mt-2 flex items-center justify-center gap-2">
 									<span
 										className={cn(
-											'text-xs font-medium',
+											'font-medium text-xs',
 											trend > 0 ? 'text-red-500' : 'text-green-500',
 										)}
 									>
 										{trend > 0 ? '+' : ''}
 										{trend}%
 									</span>
-									<span className="text-xs text-muted-foreground">vs. período anterior</span>
+									<span className="text-muted-foreground text-xs">vs. período anterior</span>
 								</div>
 							)}
 						</div>

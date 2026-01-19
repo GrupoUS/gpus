@@ -38,7 +38,7 @@ export const RippleButton = React.forwardRef<HTMLButtonElement, RippleButtonProp
 
 		React.useEffect(() => {
 			if (ripples.length > 0) {
-				const lastRipple = ripples[ripples.length - 1];
+				const lastRipple = ripples.at(-1);
 				const timeout = setTimeout(() => {
 					setRipples((prev) => prev.filter((ripple) => ripple.key !== lastRipple.key));
 				}, duration);
@@ -49,19 +49,19 @@ export const RippleButton = React.forwardRef<HTMLButtonElement, RippleButtonProp
 
 		return (
 			<button
-				ref={ref}
-				className={cn('relative overflow-hidden cursor-pointer', className)}
+				className={cn('relative cursor-pointer overflow-hidden', className)}
 				onClick={(e) => {
 					createRipple(e);
 					onClick?.(e);
 				}}
+				ref={ref}
 				{...props}
 			>
 				<span className="relative z-10">{children}</span>
 				{ripples.map((ripple) => (
 					<span
+						className="pointer-events-none absolute animate-ripple rounded-full"
 						key={ripple.key}
-						className="absolute rounded-full pointer-events-none animate-ripple"
 						style={{
 							top: ripple.y,
 							left: ripple.x,

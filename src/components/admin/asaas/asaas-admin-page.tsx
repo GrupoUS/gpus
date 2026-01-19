@@ -43,17 +43,17 @@ function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 	];
 
 	return (
-		<div className="space-y-6 p-6 max-w-7xl mx-auto">
+		<div className="mx-auto max-w-7xl space-y-6 p-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Administração Asaas</h1>
-					<p className="text-muted-foreground mt-1">
+					<h1 className="font-bold text-3xl tracking-tight">Administração Asaas</h1>
+					<p className="mt-1 text-muted-foreground">
 						Gerencie sincronização, exportação e monitoramento
 					</p>
 				</div>
 				{latestSync && (
-					<div className="flex items-center gap-2 text-sm text-muted-foreground">
+					<div className="flex items-center gap-2 text-muted-foreground text-sm">
 						<Database className="h-4 w-4" />
 						<span>
 							Última sync: {latestSync.syncType} -{' '}
@@ -65,19 +65,19 @@ function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 
 			{/* Tabs Navigation */}
 			<div className="border-b">
-				<nav className="flex gap-1" aria-label="Tabs">
+				<nav aria-label="Tabs" className="flex gap-1">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
 						return (
 							<button
-								key={tab.value}
-								type="button"
-								onClick={() => setActiveTab(tab.value)}
-								className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+								className={`flex items-center gap-2 border-b-2 px-4 py-3 transition-colors ${
 									activeTab === tab.value
-										? 'border-primary text-primary font-medium'
-										: 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+										? 'border-primary font-medium text-primary'
+										: 'border-transparent text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground'
 								}`}
+								key={tab.value}
+								onClick={() => setActiveTab(tab.value)}
+								type="button"
 							>
 								<Icon className="h-4 w-4" />
 								{tab.label}
@@ -108,5 +108,5 @@ export function AsaasAdminPageWrapper() {
 		limit: 10,
 	});
 
-	return <AsaasAdminPage syncStatus={syncStatusResult} recentLogs={recentLogsResult} />;
+	return <AsaasAdminPage recentLogs={recentLogsResult} syncStatus={syncStatusResult} />;
 }

@@ -7,7 +7,7 @@
  */
 
 import { internal } from '../_generated/api';
-import { createAsaasClient, type AsaasClient } from './client';
+import { type AsaasClient, createAsaasClient } from './client';
 import { AsaasConfigurationError } from './errors';
 
 // ═══════════════════════════════════════════════════════
@@ -48,7 +48,7 @@ export function validateAsaasApiKey(key: string): {
 	}
 
 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
-	const validPattern = /^[\$a-zA-Z0-9_]+$/;
+	const validPattern = /^[$a-zA-Z0-9_]+$/;
 	if (!validPattern.test(cleanKey)) {
 		return {
 			valid: false,
@@ -73,23 +73,19 @@ export function validateAsaasApiKey(key: string): {
  * @throws AsaasConfigurationError if API key is not configured or invalid
  */
 export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
-	console.log('[AsaasConfig] Checking database settings...');
-
 	// Try to get settings from database first
 	const config: Record<string, any> | null = await ctx.runQuery(
-		// @ts-ignore - Deep type instantiation error with Convex internal references
+		// @ts-expect-error - Deep type instantiation error with Convex internal references
 		internal.settings.internalGetIntegrationConfig,
 		{ integrationName: 'asaas' },
 	);
 
 	// Log what keys are available in config
 	if (config) {
-		const configKeys = Object.keys(config).filter(
+		const _configKeys = Object.keys(config).filter(
 			(k) => config[k] !== undefined && config[k] !== null,
 		);
-		console.log('[AsaasConfig] Database config keys:', configKeys.join(', '));
 	} else {
-		console.log('[AsaasConfig] No database config found');
 	}
 
 	// Determine API key source
@@ -102,13 +98,10 @@ export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient>
 		config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3';
 
 	// Log the source of the API key
-	const apiKeySource = dbApiKey ? 'database' : envApiKey ? 'env var' : 'none';
-	console.log('[AsaasConfig] API Key source:', apiKey ? apiKeySource : 'not found');
-	console.log('[AsaasConfig] Base URL:', baseUrl);
+	const _apiKeySource = dbApiKey ? 'database' : envApiKey ? 'env var' : 'none';
 
 	// Check if API key exists
 	if (!apiKey) {
-		console.error('[AsaasConfig] API Key not configured');
 		throw new AsaasConfigurationError(
 			'ASAAS_API_KEY não configurada.\n' +
 				'Configure via:\n' +
@@ -121,15 +114,12 @@ export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient>
 	// Validate API key format
 	const validation = validateAsaasApiKey(apiKey);
 	if (!validation.valid) {
-		console.error('[AsaasConfig] API Key validation: FAILED -', validation.error);
 		throw new AsaasConfigurationError(
 			`API Key inválida: ${validation.error}\n` +
 				'Verifique se a key foi copiada corretamente do painel Asaas.\n' +
 				'Gere uma nova key em: https://www.asaas.com > Integrações > API',
 		);
 	}
-
-	console.log('[AsaasConfig] API Key validation: PASSED');
 
 	// Use enhanced client with circuit breaker and retry logic
 	return createAsaasClient({ apiKey, baseUrl });
@@ -169,7 +159,7 @@ export async function getConfigurationStatus(ctx: any): Promise<{
 
 	// Check database settings
 	const config: Record<string, any> | null = await ctx.runQuery(
-		// @ts-ignore - Deep type instantiation error with Convex internal references
+		// @ts-expect-error - Deep type instantiation error with Convex internal references
 		internal.settings.internalGetIntegrationConfig,
 		{ integrationName: 'asaas' },
 	);
@@ -209,7 +199,7 @@ export async function getConfigurationStatus(ctx: any): Promise<{
 			environment: {
 				exists: envKeyExists,
 				valid: envKeyValid,
-				masked: envKeyExists ? `${process.env.ASAAS_API_KEY!.substring(0, 8)}...` : null,
+				masked: envKeyExists ? `${process.env.ASAAS_API_KEY?.substring(0, 8)}...` : null,
 			},
 			database: {
 				exists: dbKeyExists,
@@ -238,7 +228,10 @@ function generateRecommendations(
 		recommendations.push('Configure a API key via Convex Dashboard ou UI Admin');
 		recommendations.push('Acesse: Admin > Configurações > Integrações > Asaas');
 		recommendations.push('Ou adicione ASAAS_API_KEY nas Environment Variables do Convex Dashboard');
-	} else if (!isValid) {
+	} else if (isValid) {
+		recommendations.push('✅ Configuração válida');
+		recommendations.push(`📍 Usando API key de: ${source}`);
+	} else {
 		if (source === 'database' && !dbKeyValid) {
 			recommendations.push('API key no database está inválida');
 		} else if (source === 'environment' && !envKeyValid) {
@@ -246,9 +239,6 @@ function generateRecommendations(
 		}
 		recommendations.push('Verifique se a key foi copiada corretamente do painel Asaas');
 		recommendations.push('Gere uma nova key em: https://www.asaas.com > Integrações > API');
-	} else {
-		recommendations.push('✅ Configuração válida');
-		recommendations.push(`📍 Usando API key de: ${source}`);
 	}
 
 	return recommendations;

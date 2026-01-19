@@ -13,15 +13,15 @@ export const Route = createFileRoute('/sign-in/' as any)({
 
 function SignInPage() {
 	return (
-		<div className="flex items-center justify-center min-h-screen bg-mesh bg-noise relative overflow-hidden">
+		<div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-mesh bg-noise">
 			{/* Background effects */}
-			<div className="absolute inset-0 pointer-events-none">
+			<div className="pointer-events-none absolute inset-0">
 				<motion.div
-					className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
 					animate={{
 						scale: [1, 1.2, 1],
 						opacity: [0.3, 0.5, 0.3],
 					}}
+					className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
 					transition={{
 						duration: 8,
 						repeat: Number.POSITIVE_INFINITY,
@@ -29,11 +29,11 @@ function SignInPage() {
 					}}
 				/>
 				<motion.div
-					className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-us-gold/10 rounded-full blur-3xl"
 					animate={{
 						scale: [1.2, 1, 1.2],
 						opacity: [0.2, 0.4, 0.2],
 					}}
+					className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-us-gold/10 blur-3xl"
 					transition={{
 						duration: 10,
 						repeat: Number.POSITIVE_INFINITY,
@@ -45,17 +45,13 @@ function SignInPage() {
 
 			{/* Content */}
 			<motion.div
-				variants={fadeInUp}
-				initial="hidden"
 				animate="visible"
 				className="relative z-10 w-full max-w-md px-4"
+				initial="hidden"
+				variants={fadeInUp}
 			>
 				<div className="glass-card rounded-2xl p-8 shadow-2xl">
 					<SignIn
-						routing="path"
-						path="/sign-in"
-						signUpUrl="/sign-up"
-						forceRedirectUrl="/dashboard"
 						appearance={{
 							elements: {
 								rootBox: 'mx-auto',
@@ -70,6 +66,10 @@ function SignInPage() {
 								footerActionLink: 'text-primary hover:text-primary/80',
 							},
 						}}
+						forceRedirectUrl="/dashboard"
+						path="/sign-in"
+						routing="path"
+						signUpUrl="/sign-up"
 					/>
 				</div>
 			</motion.div>

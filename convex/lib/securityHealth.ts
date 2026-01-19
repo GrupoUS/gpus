@@ -5,11 +5,9 @@
  * for LGPD compliance and overall system security.
  */
 
-import type { QueryCtx, MutationCtx } from '../_generated/server';
-import { validateEncryptionConfig } from './encryption';
-// securityHealthCheck available for delegating to middleware
-import { securityHealthCheck as _securityHealthCheck } from './securityMiddleware';
+import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { getAuditLogs } from './auditLogging';
+import { validateEncryptionConfig } from './encryption';
 
 /**
  * Health check result interface

@@ -112,15 +112,15 @@ interface CampaignNotFoundProps {
 function CampaignNotFound({ onBack }: CampaignNotFoundProps) {
 	return (
 		<div className="space-y-6">
-			<Button variant="ghost" onClick={onBack}>
+			<Button onClick={onBack} variant="ghost">
 				<ArrowLeft className="mr-2 h-4 w-4" />
 				Voltar para campanhas
 			</Button>
 			<Card>
 				<CardContent className="flex flex-col items-center justify-center py-12">
 					<XCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-					<h2 className="text-lg font-semibold">Campanha não encontrada</h2>
-					<p className="mt-2 text-sm text-muted-foreground">
+					<h2 className="font-semibold text-lg">Campanha não encontrada</h2>
+					<p className="mt-2 text-muted-foreground text-sm">
 						A campanha que você procura não existe ou foi removida.
 					</p>
 					<Button className="mt-6" onClick={onBack}>
@@ -159,15 +159,15 @@ function CampaignStats({ stats }: CampaignStatsProps) {
 							<Send className="h-4 w-4" />
 							<span className="text-sm">Enviados</span>
 						</div>
-						<p className="mt-2 text-2xl font-bold">{stats.sent ?? 0}</p>
+						<p className="mt-2 font-bold text-2xl">{stats.sent ?? 0}</p>
 					</div>
 					<div className="rounded-lg border p-4 text-center">
 						<div className="flex items-center justify-center gap-2 text-muted-foreground">
 							<CheckCircle className="h-4 w-4" />
 							<span className="text-sm">Entregues</span>
 						</div>
-						<p className="mt-2 text-2xl font-bold">{stats.delivered ?? 0}</p>
-						<p className="text-xs text-muted-foreground">
+						<p className="mt-2 font-bold text-2xl">{stats.delivered ?? 0}</p>
+						<p className="text-muted-foreground text-xs">
 							{formatPercentage(stats.delivered, stats.sent)}
 						</p>
 					</div>
@@ -176,8 +176,8 @@ function CampaignStats({ stats }: CampaignStatsProps) {
 							<Eye className="h-4 w-4" />
 							<span className="text-sm">Abertos</span>
 						</div>
-						<p className="mt-2 text-2xl font-bold">{stats.opened ?? 0}</p>
-						<p className="text-xs text-muted-foreground">
+						<p className="mt-2 font-bold text-2xl">{stats.opened ?? 0}</p>
+						<p className="text-muted-foreground text-xs">
 							{formatPercentage(stats.opened, stats.delivered)}
 						</p>
 					</div>
@@ -186,8 +186,8 @@ function CampaignStats({ stats }: CampaignStatsProps) {
 							<MousePointerClick className="h-4 w-4" />
 							<span className="text-sm">Cliques</span>
 						</div>
-						<p className="mt-2 text-2xl font-bold">{stats.clicked ?? 0}</p>
-						<p className="text-xs text-muted-foreground">
+						<p className="mt-2 font-bold text-2xl">{stats.clicked ?? 0}</p>
+						<p className="text-muted-foreground text-xs">
 							{formatPercentage(stats.clicked, stats.opened)}
 						</p>
 					</div>
@@ -196,8 +196,8 @@ function CampaignStats({ stats }: CampaignStatsProps) {
 							<XCircle className="h-4 w-4" />
 							<span className="text-sm">Bounces</span>
 						</div>
-						<p className="mt-2 text-2xl font-bold">{stats.bounced ?? 0}</p>
-						<p className="text-xs text-muted-foreground">
+						<p className="mt-2 font-bold text-2xl">{stats.bounced ?? 0}</p>
+						<p className="text-muted-foreground text-xs">
 							{formatPercentage(stats.bounced, stats.sent)}
 						</p>
 					</div>
@@ -227,7 +227,7 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 					<div className="rounded-lg border border-dashed p-6 text-center">
 						<Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
 						<p className="font-medium">Template vinculado</p>
-						<p className="mt-1 text-sm text-muted-foreground">
+						<p className="mt-1 text-muted-foreground text-sm">
 							Esta campanha usa um template. O conteúdo será carregado do template no momento do
 							envio.
 						</p>
@@ -235,7 +235,7 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 				) : htmlContent ? (
 					<div className="space-y-4">
 						<div className="rounded-lg border bg-muted/50 p-4">
-							<p className="mb-2 text-xs font-medium text-muted-foreground">PRÉVIA DO HTML:</p>
+							<p className="mb-2 font-medium text-muted-foreground text-xs">PRÉVIA DO HTML:</p>
 							<div
 								className="prose prose-sm dark:prose-invert max-w-none"
 								// biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized with DOMPurify
@@ -243,7 +243,7 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 							/>
 						</div>
 						<details className="group">
-							<summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+							<summary className="cursor-pointer text-muted-foreground text-sm hover:text-foreground">
 								Ver código fonte
 							</summary>
 							<pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-4 text-xs">
@@ -284,8 +284,8 @@ function TargetListsCard({ listNames }: TargetListsCardProps) {
 					<div className="space-y-2">
 						{listNames.map((name, index) => (
 							<div
-								key={`${name}-${index}`}
 								className="flex items-center gap-2 rounded-md border p-2"
+								key={`${name}-${index}`}
 							>
 								<Users className="h-4 w-4 text-muted-foreground" />
 								<span className="text-sm">{name}</span>
@@ -348,11 +348,11 @@ function ActionsCard({
 			<CardContent className="space-y-3">
 				{isDraft ? (
 					<>
-						<Button variant="outline" className="w-full" onClick={onEdit}>
+						<Button className="w-full" onClick={onEdit} variant="outline">
 							<Edit className="mr-2 h-4 w-4" />
 							Editar Campanha
 						</Button>
-						<Button className="w-full" onClick={onSend} disabled={isSending}>
+						<Button className="w-full" disabled={isSending} onClick={onSend}>
 							{isSending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -368,7 +368,7 @@ function ActionsCard({
 						<Separator />
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
-								<Button variant="destructive" className="w-full" disabled={isDeleting}>
+								<Button className="w-full" disabled={isDeleting} variant="destructive">
 									{isDeleting ? (
 										<>
 											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -393,8 +393,8 @@ function ActionsCard({
 								<AlertDialogFooter>
 									<AlertDialogCancel>Cancelar</AlertDialogCancel>
 									<AlertDialogAction
-										onClick={onDelete}
 										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+										onClick={onDelete}
 									>
 										Excluir
 									</AlertDialogAction>
@@ -408,7 +408,7 @@ function ActionsCard({
 					</div>
 				)}
 
-				<Button variant="outline" className="w-full" onClick={onBack}>
+				<Button className="w-full" onClick={onBack} variant="outline">
 					<ArrowLeft className="mr-2 h-4 w-4" />
 					Voltar para Campanhas
 				</Button>
@@ -457,12 +457,11 @@ function EventLogs({ campaignId }: EventLogsProps) {
 					<div className="space-y-4">
 						{events.map((event) => (
 							<div
-								key={event._id}
 								className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+								key={event._id}
 							>
 								<div className="flex items-center gap-3">
 									<Badge
-										variant="outline"
 										className={
 											event.eventType === 'delivered'
 												? 'border-green-500 text-green-500'
@@ -474,22 +473,23 @@ function EventLogs({ campaignId }: EventLogsProps) {
 															? 'border-red-500 text-red-500'
 															: 'border-gray-500 text-gray-500'
 										}
+										variant="outline"
 									>
 										{event.eventType}
 									</Badge>
 									<div className="flex flex-col">
-										<span className="text-sm font-medium">{event.email}</span>
-										<span className="text-xs text-muted-foreground">
+										<span className="font-medium text-sm">{event.email}</span>
+										<span className="text-muted-foreground text-xs">
 											{formatDateTime(event.timestamp)}
 										</span>
 									</div>
 								</div>
 								{event.link && (
 									<a
+										className="text-blue-500 text-xs hover:underline"
 										href={event.link}
-										target="_blank"
 										rel="noreferrer"
-										className="text-xs text-blue-500 hover:underline"
+										target="_blank"
 									>
 										Link clicado
 									</a>
@@ -617,13 +617,13 @@ function CampaignDetailPage() {
 			{/* Header */}
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-4">
-					<Button variant="ghost" size="icon" onClick={handleBack}>
+					<Button onClick={handleBack} size="icon" variant="ghost">
 						<ArrowLeft className="h-4 w-4" />
 					</Button>
 					<div>
 						<div className="flex items-center gap-3">
-							<h1 className="text-2xl font-bold tracking-tight">{campaign.name}</h1>
-							<Badge variant={status.variant} className="flex items-center gap-1">
+							<h1 className="font-bold text-2xl tracking-tight">{campaign.name}</h1>
+							<Badge className="flex items-center gap-1" variant={status.variant}>
 								<StatusIcon
 									className={`h-3 w-3 ${campaign.status === 'sending' ? 'animate-spin' : ''}`}
 								/>
@@ -637,11 +637,11 @@ function CampaignDetailPage() {
 				{/* Action buttons */}
 				{isDraft && (
 					<div className="flex gap-2">
-						<Button variant="outline" onClick={handleEdit}>
+						<Button onClick={handleEdit} variant="outline">
 							<Edit className="mr-2 h-4 w-4" />
 							Editar
 						</Button>
-						<Button onClick={handleSend} disabled={isSending}>
+						<Button disabled={isSending} onClick={handleSend}>
 							{isSending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -675,12 +675,12 @@ function CampaignDetailPage() {
 						<CardContent className="space-y-4">
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
-									<p className="text-sm font-medium text-muted-foreground">Assunto</p>
+									<p className="font-medium text-muted-foreground text-sm">Assunto</p>
 									<p className="mt-1">{campaign.subject}</p>
 								</div>
 								<div>
-									<p className="text-sm font-medium text-muted-foreground">Status</p>
-									<Badge variant={status.variant} className="mt-1 flex w-fit items-center gap-1">
+									<p className="font-medium text-muted-foreground text-sm">Status</p>
+									<Badge className="mt-1 flex w-fit items-center gap-1" variant={status.variant}>
 										<StatusIcon
 											className={`h-3 w-3 ${campaign.status === 'sending' ? 'animate-spin' : ''}`}
 										/>
@@ -693,14 +693,14 @@ function CampaignDetailPage() {
 
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div>
-									<p className="text-sm font-medium text-muted-foreground">Criada em</p>
+									<p className="font-medium text-muted-foreground text-sm">Criada em</p>
 									<p className="mt-1 flex items-center gap-2">
 										<CalendarDays className="h-4 w-4 text-muted-foreground" />
 										{formatDateTime(campaign.createdAt)}
 									</p>
 								</div>
 								<div>
-									<p className="text-sm font-medium text-muted-foreground">Atualizada em</p>
+									<p className="font-medium text-muted-foreground text-sm">Atualizada em</p>
 									<p className="mt-1 flex items-center gap-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
 										{formatDateTime(campaign.updatedAt)}
@@ -712,7 +712,7 @@ function CampaignDetailPage() {
 								<>
 									<Separator />
 									<div>
-										<p className="text-sm font-medium text-muted-foreground">Enviada em</p>
+										<p className="font-medium text-muted-foreground text-sm">Enviada em</p>
 										<p className="mt-1 flex items-center gap-2">
 											<Send className="h-4 w-4 text-muted-foreground" />
 											{formatDateTime(campaign.sentAt)}
@@ -725,7 +725,7 @@ function CampaignDetailPage() {
 								<>
 									<Separator />
 									<div>
-										<p className="text-sm font-medium text-muted-foreground">Agendada para</p>
+										<p className="font-medium text-muted-foreground text-sm">Agendada para</p>
 										<p className="mt-1 flex items-center gap-2">
 											<Clock className="h-4 w-4 text-muted-foreground" />
 											{formatDateTime(campaign.scheduledAt)}
@@ -738,7 +738,7 @@ function CampaignDetailPage() {
 								<>
 									<Separator />
 									<div>
-										<p className="text-sm font-medium text-muted-foreground">ID Brevo</p>
+										<p className="font-medium text-muted-foreground text-sm">ID Brevo</p>
 										<p className="mt-1 flex items-center gap-2">
 											<ExternalLink className="h-4 w-4 text-muted-foreground" />
 											<code className="rounded bg-muted px-2 py-0.5 text-sm">
@@ -753,8 +753,8 @@ function CampaignDetailPage() {
 
 					{/* Content Preview */}
 					<CampaignContentPreview
-						templateId={campaign.templateId}
 						htmlContent={campaign.htmlContent}
+						templateId={campaign.templateId}
 					/>
 
 					{/* Event Logs */}
@@ -768,22 +768,22 @@ function CampaignDetailPage() {
 
 					{/* Actions Card */}
 					<ActionsCard
-						isDraft={isDraft}
-						isSending={isSending}
-						isDeleting={isDeleting}
 						campaignName={campaign.name}
 						campaignStatus={campaign.status}
+						isDeleting={isDeleting}
+						isDraft={isDraft}
+						isSending={isSending}
+						onBack={handleBack}
+						onDelete={handleDelete}
 						onEdit={handleEdit}
 						onSend={handleSend}
-						onDelete={handleDelete}
-						onBack={handleBack}
 					/>
 
 					{/* Info Card */}
 					{isDraft && (
 						<Card className="border-primary/20 bg-primary/5">
 							<CardContent className="pt-6">
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									<strong>Dica:</strong> Revise o conteúdo e as listas de destinatários antes de
 									enviar. Após o envio, a campanha não poderá ser editada.
 								</p>

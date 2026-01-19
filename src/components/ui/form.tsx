@@ -17,12 +17,12 @@ import { cn } from '@/lib/utils';
 
 const Form = FormProvider;
 
-type FormFieldContextValue<
+interface FormFieldContextValue<
 	TFieldValues extends FieldValues = FieldValues,
 	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> = {
+> {
 	name: TName;
-};
+}
 
 const FormFieldContext = React.createContext<FormFieldContextValue | null>(null);
 
@@ -66,9 +66,9 @@ const useFormField = () => {
 	};
 };
 
-type FormItemContextValue = {
+interface FormItemContextValue {
 	id: string;
-};
+}
 
 const FormItemContext = React.createContext<FormItemContextValue | null>(null);
 
@@ -78,7 +78,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 
 		return (
 			<FormItemContext.Provider value={{ id }}>
-				<div ref={ref} className={cn('space-y-2', className)} {...props} />
+				<div className={cn('space-y-2', className)} ref={ref} {...props} />
 			</FormItemContext.Provider>
 		);
 	},
@@ -93,9 +93,9 @@ const FormLabel = React.forwardRef<
 
 	return (
 		<Label
-			ref={ref}
 			className={cn(error && 'text-destructive', className)}
 			htmlFor={formItemId}
+			ref={ref}
 			{...props}
 		/>
 	);
@@ -110,10 +110,10 @@ const FormControl = React.forwardRef<
 
 	return (
 		<Slot
-			ref={ref}
-			id={formItemId}
-			aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
+			aria-describedby={error ? `${formDescriptionId} ${formMessageId}` : `${formDescriptionId}`}
 			aria-invalid={!!error}
+			id={formItemId}
+			ref={ref}
 			{...props}
 		/>
 	);
@@ -128,9 +128,9 @@ const FormDescription = React.forwardRef<
 
 	return (
 		<p
-			ref={ref}
-			id={formDescriptionId}
 			className={cn('text-[0.8rem] text-muted-foreground', className)}
+			id={formDescriptionId}
+			ref={ref}
 			{...props}
 		/>
 	);
@@ -150,9 +150,9 @@ const FormMessage = React.forwardRef<
 
 	return (
 		<p
-			ref={ref}
+			className={cn('font-medium text-[0.8rem] text-destructive', className)}
 			id={formMessageId}
-			className={cn('text-[0.8rem] font-medium text-destructive', className)}
+			ref={ref}
 			{...props}
 		>
 			{body}

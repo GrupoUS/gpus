@@ -43,19 +43,19 @@ export function CampaignFilters({
 		<div className="space-y-4">
 			{/* Search */}
 			<div className="relative">
-				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+				<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
+					className="pl-9"
+					onChange={(e) => onSearchChange(e.target.value)}
 					placeholder="Buscar por nome ou assunto..."
 					value={search}
-					onChange={(e) => onSearchChange(e.target.value)}
-					className="pl-9"
 				/>
 			</div>
 
 			{/* Filters Row */}
 			<div className="flex flex-wrap items-center gap-3">
 				{/* Status Filter */}
-				<Select value={status} onValueChange={onStatusChange}>
+				<Select onValueChange={onStatusChange} value={status}>
 					<SelectTrigger className="w-[150px]">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
@@ -71,7 +71,7 @@ export function CampaignFilters({
 
 				{/* Clear Filters */}
 				{hasFilters && (
-					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1">
+					<Button className="gap-1" onClick={onClear} size="sm" variant="ghost">
 						<X className="h-4 w-4" />
 						Limpar
 					</Button>
@@ -82,24 +82,24 @@ export function CampaignFilters({
 			{hasFilters && (
 				<div className="flex flex-wrap gap-2">
 					{search && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Busca: "{search}"
 							<button
-								type="button"
-								onClick={() => onSearchChange('')}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onSearchChange('')}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>
 						</Badge>
 					)}
 					{status !== 'all' && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Status: {statusLabels[status] || status}
 							<button
-								type="button"
-								onClick={() => onStatusChange('all')}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onStatusChange('all')}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>

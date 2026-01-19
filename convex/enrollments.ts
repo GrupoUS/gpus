@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
-import { mutation, query, type MutationCtx } from './_generated/server';
-import type { Id } from './_generated/dataModel';
+
 import { api } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { type MutationCtx, mutation, query } from './_generated/server';
 import { requireAuth } from './lib/auth';
 
 export const create = mutation({
@@ -148,7 +149,7 @@ export const generateAsaasPayments = mutation({
 		await requireAuth(ctx);
 
 		// Use the existing mutation from asaas.ts
-		// @ts-ignore - TypeScript has issues with deep type inference in Convex mutations
+		// @ts-expect-error - TypeScript has issues with deep type inference in Convex mutations
 		const result = (await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
 			enrollmentId: args.enrollmentId,
 			billingType: args.billingType,

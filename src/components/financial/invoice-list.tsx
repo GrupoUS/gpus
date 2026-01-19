@@ -74,7 +74,7 @@ export function InvoiceList() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center gap-2">
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
+				<Select onValueChange={setStatusFilter} value={statusFilter}>
 					<SelectTrigger className="w-45">
 						<SelectValue placeholder="Filtrar por status" />
 					</SelectTrigger>

@@ -46,13 +46,13 @@ function SalesReportPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold flex items-center gap-2">
+					<h1 className="flex items-center gap-2 font-bold text-2xl">
 						<DollarSign className="h-6 w-6 text-green-500" />
 						Relatório de Vendas
 					</h1>
 					<p className="text-muted-foreground">Análise detalhada de conversões e receita</p>
 				</div>
-				<Select value={period} onValueChange={(v: typeof period) => setPeriod(v)}>
+				<Select onValueChange={(v: typeof period) => setPeriod(v)} value={period}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue />
 					</SelectTrigger>
@@ -69,14 +69,14 @@ function SalesReportPage() {
 			<div className="grid gap-4 md:grid-cols-4">
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+						<CardTitle className="font-medium text-sm">Receita Total</CardTitle>
 						<DollarSign className="h-4 w-4 text-green-500" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-green-600">
+						<div className="font-bold text-2xl text-green-600">
 							{formatCurrency(metrics?.revenue ?? 0)}
 						</div>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							{metrics?.revenueTrend && metrics.revenueTrend > 0 ? '+' : ''}
 							{metrics?.revenueTrend?.toFixed(1)}% vs período anterior
 						</p>
@@ -85,12 +85,12 @@ function SalesReportPage() {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Conversões</CardTitle>
+						<CardTitle className="font-medium text-sm">Conversões</CardTitle>
 						<TrendingUp className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{metrics?.funnel?.fechado_ganho ?? 0}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="font-bold text-2xl">{metrics?.funnel?.fechado_ganho ?? 0}</div>
+						<p className="text-muted-foreground text-xs">
 							Taxa: {metrics?.conversionRate?.toFixed(1)}%
 						</p>
 					</CardContent>
@@ -98,27 +98,27 @@ function SalesReportPage() {
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+						<CardTitle className="font-medium text-sm">Ticket Médio</CardTitle>
 						<Package className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="font-bold text-2xl">
 							{formatCurrency(
 								(metrics?.revenue ?? 0) / Math.max(metrics?.funnel?.fechado_ganho ?? 1, 1),
 							)}
 						</div>
-						<p className="text-xs text-muted-foreground">Por conversão</p>
+						<p className="text-muted-foreground text-xs">Por conversão</p>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
+						<CardTitle className="font-medium text-sm">Leads Ativos</CardTitle>
 						<Users className="h-4 w-4 text-primary" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{metrics?.totalLeads ?? 0}</div>
-						<p className="text-xs text-muted-foreground">No pipeline</p>
+						<div className="font-bold text-2xl">{metrics?.totalLeads ?? 0}</div>
+						<p className="text-muted-foreground text-xs">No pipeline</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -131,7 +131,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.dailyMetrics && metrics.dailyMetrics.length > 0 ? (
-							<ResponsiveContainer width="100%" height={300} minWidth={0}>
+							<ResponsiveContainer height={300} minWidth={0} width="100%">
 								<LineChart data={metrics.dailyMetrics}>
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis
@@ -147,16 +147,16 @@ function SalesReportPage() {
 										labelFormatter={(label) => `Data: ${label}`}
 									/>
 									<Line
-										type="monotone"
 										dataKey="conversionValue"
+										name="Receita"
 										stroke="hsl(var(--chart-2))"
 										strokeWidth={2}
-										name="Receita"
+										type="monotone"
 									/>
 								</LineChart>
 							</ResponsiveContainer>
 						) : (
-							<div className="h-[300px] flex items-center justify-center text-muted-foreground">
+							<div className="flex h-[300px] items-center justify-center text-muted-foreground">
 								Sem dados disponíveis
 							</div>
 						)}
@@ -169,7 +169,7 @@ function SalesReportPage() {
 					</CardHeader>
 					<CardContent>
 						{metrics?.leadsByProduct && Object.keys(metrics.leadsByProduct).length > 0 ? (
-							<ResponsiveContainer width="100%" height={300} minWidth={0}>
+							<ResponsiveContainer height={300} minWidth={0} width="100%">
 								<BarChart
 									data={Object.entries(metrics.leadsByProduct).map(([k, v]) => ({
 										name: productLabels[k] || k,
@@ -184,7 +184,7 @@ function SalesReportPage() {
 								</BarChart>
 							</ResponsiveContainer>
 						) : (
-							<div className="h-[300px] flex items-center justify-center text-muted-foreground">
+							<div className="flex h-[300px] items-center justify-center text-muted-foreground">
 								Sem dados disponíveis
 							</div>
 						)}
@@ -214,7 +214,7 @@ function SalesReportPage() {
 									const conversions = Math.round(
 										(count as number) * (metrics.conversionRate / 100),
 									);
-									const revenue = conversions * 18000; // Estimativa baseada no ticket médio
+									const revenue = conversions * 18_000; // Estimativa baseada no ticket médio
 									return (
 										<TableRow key={product}>
 											<TableCell className="font-medium">

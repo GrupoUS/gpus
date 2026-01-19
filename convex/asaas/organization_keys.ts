@@ -6,9 +6,10 @@
  */
 
 import { v } from 'convex/values';
-import { query, mutation, action, internalQuery } from '../_generated/server';
+
+import { action, internalQuery, mutation, query } from '../_generated/server';
 import { getOrganizationId, requirePermission } from '../lib/auth';
-import { encrypt, decrypt } from '../lib/encryption';
+import { decrypt, encrypt } from '../lib/encryption';
 import { PERMISSIONS } from '../lib/permissions';
 import { createAsaasClient } from './client';
 
@@ -109,8 +110,7 @@ export const internalGetOrganizationApiKey = internalQuery({
 		let apiKey: string;
 		try {
 			apiKey = await decrypt(config.encryptedApiKey);
-		} catch (error) {
-			console.error('[AsaasOrgKeys] Failed to decrypt API key:', error);
+		} catch (_error) {
 			return null;
 		}
 

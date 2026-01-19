@@ -63,10 +63,10 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+			<form className="space-y-6" onSubmit={form.handleSubmit(handleFormSubmit)}>
 				<div className="grid gap-6 md:grid-cols-2">
 					<Card>
-						<CardContent className="pt-6 space-y-4">
+						<CardContent className="space-y-4 pt-6">
 							<FormField
 								control={form.control}
 								name="name"
@@ -105,8 +105,8 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 										<FormItem>
 											<FormLabel>Categoria</FormLabel>
 											<Select
-												onValueChange={field.onChange}
 												defaultValue={field.value ?? 'newsletter'}
+												onValueChange={field.onChange}
 											>
 												<FormControl>
 													<SelectTrigger>
@@ -145,17 +145,17 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 						</CardContent>
 					</Card>
 
-					<Card className="h-full flex flex-col">
-						<CardContent className="pt-6 grow flex flex-col h-full">
+					<Card className="flex h-full flex-col">
+						<CardContent className="flex h-full grow flex-col pt-6">
 							<FormField
 								control={form.control}
 								name="htmlContent"
 								render={({ field }) => (
-									<FormItem className="grow flex flex-col h-full">
+									<FormItem className="flex h-full grow flex-col">
 										<FormLabel>Conteúdo HTML</FormLabel>
 										<FormControl>
 											<Textarea
-												className="font-mono text-xs min-h-[250px] grow resize-none bg-muted/50"
+												className="min-h-[250px] grow resize-none bg-muted/50 font-mono text-xs"
 												placeholder="<html>...</html>"
 												{...field}
 											/>
@@ -169,10 +169,10 @@ export function TemplateForm({ initialData, onSubmit, isSubmitting = false }: Te
 				</div>
 
 				<div className="flex justify-end gap-4">
-					<Button type="button" variant="outline" onClick={() => window.history.back()}>
+					<Button onClick={() => window.history.back()} type="button" variant="outline">
 						Cancelar
 					</Button>
-					<Button type="submit" disabled={isSubmitting}>
+					<Button disabled={isSubmitting} type="submit">
 						{isSubmitting ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />

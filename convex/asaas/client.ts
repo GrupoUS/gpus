@@ -5,15 +5,15 @@
  * and security measures for Asaas API v3 integration.
  */
 
-import { classifyError, sanitizeErrorForLogging, AsaasConfigurationError } from './errors';
-import { withTimeoutAndRetry } from './retry';
 import {
 	checkCircuitBreaker,
-	recordSuccess,
-	recordFailure,
 	getCircuitBreakerState,
+	recordFailure,
+	recordSuccess,
 	resetCircuitBreaker,
 } from '../lib/asaas';
+import { AsaasConfigurationError, classifyError } from './errors';
+import { withTimeoutAndRetry } from './retry';
 
 // ═══════════════════════════════════════════════════════
 // TYPES - Asaas API Request/Response Payloads
@@ -228,8 +228,8 @@ export interface AsaasFinancialSummaryResponse {
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════
 
-const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds for normal operations
-const SYNC_TIMEOUT_MS = 60000; // 60 seconds for sync operations (larger data sets)
+const DEFAULT_TIMEOUT_MS = 30_000; // 30 seconds for normal operations
+const SYNC_TIMEOUT_MS = 60_000; // 60 seconds for sync operations (larger data sets)
 const DEFAULT_MAX_RETRIES = 3;
 
 // ═══════════════════════════════════════════════════════
@@ -237,7 +237,7 @@ const DEFAULT_MAX_RETRIES = 3;
 // ═══════════════════════════════════════════════════════
 
 export class AsaasClient {
-	private config: { apiKey: string; baseUrl: string };
+	private readonly config: { apiKey: string; baseUrl: string };
 
 	constructor(config: { apiKey: string; baseUrl?: string }) {
 		if (!config.apiKey || config.apiKey.trim() === '') {
@@ -354,7 +354,6 @@ export class AsaasClient {
 			return { status: 200, success: true };
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] Connection test failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -370,7 +369,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] createCustomer failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -389,7 +387,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] updateCustomer failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -402,7 +399,6 @@ export class AsaasClient {
 			return await this.fetch<AsaasCustomerResponse>(`/customers/${customerId}`);
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] getCustomer failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -432,7 +428,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] listAllCustomers failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -448,7 +443,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] createPayment failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -464,7 +458,6 @@ export class AsaasClient {
 			);
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] getPixQrCode failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -482,7 +475,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] createSubscription failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -520,7 +512,6 @@ export class AsaasClient {
 			});
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] listAllPayments failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -549,7 +540,6 @@ export class AsaasClient {
 			);
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] listAllSubscriptions failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -607,7 +597,6 @@ export class AsaasClient {
 			};
 		} catch (error) {
 			const classified = classifyError(error);
-			console.error('[AsaasClient] getFinancialSummary failed:', sanitizeErrorForLogging(error));
 			throw classified;
 		}
 	}
@@ -638,7 +627,7 @@ export function createAsaasClient(config: { apiKey: string; baseUrl?: string }):
  * Convert date string (YYYY-MM-DD) to timestamp (start of day in UTC)
  */
 export function dateStringToTimestamp(dateStr: string): number {
-	const date = new Date(dateStr + 'T00:00:00.000Z');
+	const date = new Date(`${dateStr}T00:00:00.000Z`);
 	return date.getTime();
 }
 

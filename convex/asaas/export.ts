@@ -5,9 +5,10 @@
  * Uses batch processing for efficient concurrent execution.
  */
 
-import { action } from '../_generated/server';
-import { internal } from '../_generated/api';
 import { v } from 'convex/values';
+
+import { internal } from '../_generated/api';
+import { action } from '../_generated/server';
 import { getOrganizationId } from '../lib/auth';
 import type { BatchResult } from './batch_processor';
 import { getAsaasClientFromSettings } from './config';
@@ -36,7 +37,7 @@ export const exportStudentToAsaas = action({
 		}
 
 		// Get student
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
 			studentId: args.studentId,
 		});
@@ -100,7 +101,7 @@ export const exportPaymentToAsaas = action({
 		}
 
 		// Get payment using internal query (action context doesn't have db.get)
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const payment = await ctx.runQuery(internal.asaas.queries.getPaymentById, {
 			paymentId: args.paymentId,
 		});
@@ -173,7 +174,7 @@ export const bulkExportStudents = action({
 		}
 
 		// Get all students without Asaas customer ID
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents, {
 			organizationId,
 		});
@@ -204,11 +205,7 @@ export const bulkExportStudents = action({
 		const worker = (student: any) => exportStudentWorker(ctx, student, asaasClient);
 
 		// Progress callback
-		const onProgress = async (stats: any) => {
-			console.log(
-				`[BulkExportStudents] Progress: ${stats.totalProcessed}/${studentsToExport.length} students processed`,
-			);
-		};
+		const onProgress = async (_stats: any) => {};
 
 		// Process students in batch
 		const result: BatchResult<{ studentId: string; asaasCustomerId: string }> = await processBatch(
@@ -261,7 +258,7 @@ export const bulkExportPayments = action({
 		}
 
 		// Get payments that need export (no asaasPaymentId)
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const payments = await ctx.runQuery(internal.asaas.queries.getPendingExportPayments, {
 			organizationId,
 			startDate: args.startDate,
@@ -294,11 +291,7 @@ export const bulkExportPayments = action({
 		const worker = (payment: any) => exportPaymentWorker(ctx, payment, asaasClient);
 
 		// Progress callback
-		const onProgress = async (stats: any) => {
-			console.log(
-				`[BulkExportPayments] Progress: ${stats.totalProcessed}/${paymentsToExport.length} payments processed`,
-			);
-		};
+		const onProgress = async (_stats: any) => {};
 
 		// Process payments in batch
 		const result: BatchResult<{ paymentId: string; asaasPaymentId: string }> = await processBatch(

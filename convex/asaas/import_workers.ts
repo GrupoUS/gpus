@@ -11,21 +11,21 @@
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import type { WorkerResult } from './batch_processor';
-import { isId } from './types';
 import type {
 	AsaasCustomerResponse,
 	AsaasPaymentResponse,
 	AsaasSubscriptionResponse,
-	StudentWithAsaas,
 	PaymentDoc,
+	StudentWithAsaas,
 	SubscriptionDoc,
 } from './types';
+import { isId } from './types';
 
 // ═══════════════════════════════════════════════════════
 // WORKER TIMEOUT CONFIGURATION
 // ═══════════════════════════════════════════════════════
 
-const WORKER_TIMEOUT_MS = 10000; // 10 seconds per item
+const WORKER_TIMEOUT_MS = 10_000; // 10 seconds per item
 
 /**
  * Execute function with timeout for individual worker items
@@ -69,19 +69,19 @@ function validateCPF(cpf: string): boolean {
 	// Validate check digits
 	let sum = 0;
 	for (let i = 0; i < 9; i++) {
-		sum += parseInt(clean.charAt(i)) * (10 - i);
+		sum += Number.parseInt(clean.charAt(i), 10) * (10 - i);
 	}
 	let digit = 11 - (sum % 11);
 	if (digit >= 10) digit = 0;
-	if (digit !== parseInt(clean.charAt(9))) return false;
+	if (digit !== Number.parseInt(clean.charAt(9), 10)) return false;
 
 	sum = 0;
 	for (let i = 0; i < 10; i++) {
-		sum += parseInt(clean.charAt(i)) * (11 - i);
+		sum += Number.parseInt(clean.charAt(i), 10) * (11 - i);
 	}
 	digit = 11 - (sum % 11);
 	if (digit >= 10) digit = 0;
-	if (digit !== parseInt(clean.charAt(10))) return false;
+	if (digit !== Number.parseInt(clean.charAt(10), 10)) return false;
 
 	return true;
 }
@@ -111,7 +111,7 @@ function validatePhone(phone: string): boolean {
  * - Remove sensitive data from error messages
  * - Partially mask CPF/phone in logs
  */
-function sanitizeForLog(data: { cpf?: string; phone?: string }): string {
+function _sanitizeForLog(data: { cpf?: string; phone?: string }): string {
 	const parts: string[] = [];
 	if (data.cpf) {
 		parts.push(`CPF: ***${data.cpf.slice(-3)}`);
@@ -169,7 +169,7 @@ export async function processCustomerWorker(
 	try {
 		// Check if student exists with this asaasCustomerId
 		let existingStudent = await ctx.runQuery(
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			internal.asaas.mutations.getStudentByAsaasId,
 			{
 				asaasCustomerId: customer.id,
@@ -179,7 +179,7 @@ export async function processCustomerWorker(
 		// Deduplication: If not found by ID, try to find by Email or CPF
 		if (!existingStudent && (customer.email || customer.cpfCnpj)) {
 			const duplicate = await ctx.runQuery(
-				// @ts-ignore - Deep type instantiation
+				// @ts-expect-error - Deep type instantiation
 				internal.asaas.mutations.getStudentByEmailOrCpf,
 				{
 					// Convert null to undefined (Asaas API may return null, but Convex validators expect undefined)
@@ -189,11 +189,8 @@ export async function processCustomerWorker(
 			);
 
 			if (duplicate) {
-				console.log(
-					`[CustomerWorker] Matched existing student by Email/CPF. Linking Asaas ID ${customer.id}`,
-				);
 				// Link the found student to this Asaas Customer ID
-				// @ts-ignore - Deep type instantiation
+				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 					studentId: duplicate._id,
 					asaasCustomerId: customer.id,
@@ -205,7 +202,7 @@ export async function processCustomerWorker(
 
 		if (existingStudent) {
 			// Update existing student
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
 				studentId: existingStudent._id,
 				name: customer.name,
@@ -222,14 +219,14 @@ export async function processCustomerWorker(
 		}
 
 		// Create new student
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const studentId = await ctx.runMutation(internal.asaas.mutations.createStudentFromAsaas, {
 			name: customer.name,
 			email: customer.email ?? undefined,
 			phone: phone || '',
 			cpf: customer.cpfCnpj ?? undefined,
 			asaasCustomerId: customer.id,
-			organizationId: organizationId,
+			organizationId,
 		});
 
 		return {
@@ -246,11 +243,6 @@ export async function processCustomerWorker(
 			created: true,
 		};
 	} catch (error: any) {
-		console.error(
-			`[${new Date().toISOString()}] [CustomerWorker] Failed to process customer ${customer.id}:`,
-			sanitizeForLog({ cpf: customer.cpfCnpj, phone: customer.phone }),
-			error.message,
-		);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',
@@ -278,14 +270,14 @@ export async function processPaymentWorker(
 ): Promise<WorkerResult<PaymentDoc>> {
 	try {
 		// Check if payment exists
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const existingPayment = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
 			asaasPaymentId: payment.id,
 		});
 
 		if (existingPayment) {
 			// Update existing payment
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updatePaymentFromAsaas, {
 				paymentId: existingPayment._id,
 				status: payment.status,
@@ -301,7 +293,7 @@ export async function processPaymentWorker(
 		}
 
 		// Find student by asaasCustomerId
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		let student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
 			asaasCustomerId: payment.customer,
 		});
@@ -333,7 +325,7 @@ export async function processPaymentWorker(
 		const resolvedOrganizationId = organizationId ?? student.organizationId;
 
 		// Create new payment
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const paymentId = await ctx.runMutation(internal.asaas.mutations.createPaymentFromAsaas, {
 			studentId: student._id,
 			asaasPaymentId: payment.id,
@@ -375,10 +367,6 @@ export async function processPaymentWorker(
 			created: true,
 		};
 	} catch (error: any) {
-		console.error(
-			`[${new Date().toISOString()}] [PaymentWorker] Failed to process payment ${payment.id}:`,
-			error.message,
-		);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',
@@ -406,7 +394,7 @@ export async function processSubscriptionWorker(
 ): Promise<WorkerResult<SubscriptionDoc>> {
 	try {
 		// Check if subscription exists
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const existingSubscription = await ctx.runQuery(
 			internal.asaas.mutations.getSubscriptionByAsaasId,
 			{
@@ -416,7 +404,7 @@ export async function processSubscriptionWorker(
 
 		if (existingSubscription) {
 			// Update existing subscription
-			// @ts-ignore - Deep type instantiation
+			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
 				subscriptionId: existingSubscription._id,
 				status: subscription.status,
@@ -434,7 +422,7 @@ export async function processSubscriptionWorker(
 		}
 
 		// Find student by asaasCustomerId
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		let student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
 			asaasCustomerId: subscription.customer,
 		});
@@ -466,7 +454,7 @@ export async function processSubscriptionWorker(
 		const resolvedOrganizationId = organizationId ?? student.organizationId;
 
 		// Create new subscription
-		// @ts-ignore - Deep type instantiation
+		// @ts-expect-error - Deep type instantiation
 		const subscriptionId = await ctx.runMutation(
 			internal.asaas.mutations.createSubscriptionFromAsaas,
 			{
@@ -501,10 +489,6 @@ export async function processSubscriptionWorker(
 			created: true,
 		};
 	} catch (error: any) {
-		console.error(
-			`[${new Date().toISOString()}] [SubscriptionWorker] Failed to process subscription ${subscription.id}:`,
-			error.message,
-		);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',
@@ -529,9 +513,6 @@ export function createCustomerBatchProcessor(ctx: any, organizationId?: string) 
 				customer.id,
 			);
 		} catch (error: any) {
-			console.error(
-				`[${new Date().toISOString()}] [CustomerWorker] Timeout exceeded for customer ${customer.id}`,
-			);
 			return {
 				success: false,
 				error: error.message || 'Worker timeout',
@@ -553,9 +534,6 @@ export function createPaymentBatchProcessor(ctx: any, organizationId?: string) {
 				payment.id,
 			);
 		} catch (error: any) {
-			console.error(
-				`[${new Date().toISOString()}] [PaymentWorker] Timeout exceeded for payment ${payment.id}`,
-			);
 			return {
 				success: false,
 				error: error.message || 'Worker timeout',
@@ -579,9 +557,6 @@ export function createSubscriptionBatchProcessor(ctx: any, organizationId?: stri
 				subscription.id,
 			);
 		} catch (error: any) {
-			console.error(
-				`[${new Date().toISOString()}] [SubscriptionWorker] Timeout exceeded for subscription ${subscription.id}`,
-			);
 			return {
 				success: false,
 				error: error.message || 'Worker timeout',

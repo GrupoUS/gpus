@@ -26,14 +26,14 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 				{[1, 2, 3, 4].map((i) => (
 					<Card key={i}>
 						<CardContent className="p-4">
-							<div className="flex justify-between items-start">
+							<div className="flex items-start justify-between">
 								<div className="space-y-2">
 									<Skeleton className="h-4 w-24" />
 									<Skeleton className="h-3 w-32" />
 								</div>
-								<div className="text-right space-y-1">
-									<Skeleton className="h-5 w-20 ml-auto" />
-									<Skeleton className="h-3 w-16 ml-auto" />
+								<div className="space-y-1 text-right">
+									<Skeleton className="ml-auto h-5 w-20" />
+									<Skeleton className="ml-auto h-3 w-16" />
 								</div>
 							</div>
 						</CardContent>
@@ -45,8 +45,8 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 
 	if (conversations.length === 0) {
 		return (
-			<div className="text-center py-12 text-muted-foreground">
-				<MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+			<div className="py-12 text-center text-muted-foreground">
+				<MessageSquare className="mx-auto mb-4 h-12 w-12 opacity-50" />
 				<p>Nenhuma conversa registrada</p>
 			</div>
 		);
@@ -55,22 +55,22 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 	return (
 		<div className="space-y-3">
 			{conversations.map((conv: Doc<'conversations'>) => (
-				<Link key={conv._id} to="/chat" search={{ conversationId: conv._id }} className="block">
-					<Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+				<Link className="block" key={conv._id} search={{ conversationId: conv._id }} to="/chat">
+					<Card className="cursor-pointer transition-colors hover:bg-muted/50">
 						<CardContent className="p-4">
-							<div className="flex justify-between items-start">
+							<div className="flex items-start justify-between">
 								<div>
-									<p className="font-medium text-sm flex items-center gap-2">
+									<p className="flex items-center gap-2 font-medium text-sm">
 										{conv.channel === 'whatsapp' && <MessageSquare className="h-4 w-4" />}
 										{conv.department.toUpperCase()}
 									</p>
-									<p className="text-xs text-muted-foreground mt-1">Canal: {conv.channel}</p>
+									<p className="mt-1 text-muted-foreground text-xs">Canal: {conv.channel}</p>
 								</div>
 								<div className="text-right">
 									<Badge variant={conv.status === 'resolvido' ? 'default' : 'secondary'}>
 										{conversationStatusLabels[conv.status] || conv.status}
 									</Badge>
-									<p className="text-xs text-muted-foreground mt-1">
+									<p className="mt-1 text-muted-foreground text-xs">
 										{formatDistanceToNow(conv.lastMessageAt, {
 											addSuffix: true,
 											locale: ptBR,

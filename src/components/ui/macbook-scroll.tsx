@@ -73,23 +73,23 @@ export function MacbookScroll({
 
 	return (
 		<div
-			ref={containerRef}
 			className={cn(
-				'relative w-full py-16 md:py-24 flex flex-col items-center justify-center',
+				'relative flex w-full flex-col items-center justify-center py-16 md:py-24',
 				className,
 			)}
+			ref={containerRef}
 			style={{ perspective: '1200px' }}
 		>
 			{/* Optional gradient background */}
 			{showGradient && (
-				<div className="absolute inset-0 -z-10 bg-linear-to-b from-primary/5 via-transparent to-transparent opacity-50 blur-3xl pointer-events-none" />
+				<div className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-primary/5 via-transparent to-transparent opacity-50 blur-3xl" />
 			)}
 
 			{/* Optional title */}
 			{title && (
-				<motion.div style={{ opacity, y: translateY }} className="text-center mb-12 relative z-20">
+				<motion.div className="relative z-20 mb-12 text-center" style={{ opacity, y: translateY }}>
 					{typeof title === 'string' ? (
-						<h3 className="text-3xl font-bold font-display tracking-tight text-foreground">
+						<h3 className="font-bold font-display text-3xl text-foreground tracking-tight">
 							{title}
 						</h3>
 					) : (
@@ -100,34 +100,34 @@ export function MacbookScroll({
 
 			{/* MacBook container with 3D transforms */}
 			<motion.div
+				className="relative flex flex-col items-center"
 				style={{
 					scale,
 					rotateX,
 					transformStyle: 'preserve-3d',
 				}}
-				className="relative flex flex-col items-center"
 			>
 				{/*
                    MacBook Lid (Screen)
                    bg-zinc-900 (dark) / bg-zinc-200 (light)
                    Dimensions relative to an aspect ratio
                 */}
-				<div className="relative h-80 w-lg md:h-120 md:w-3xl bg-zinc-900 dark:bg-zinc-950 rounded-2xl p-2 shadow-2xl border-4 border-zinc-800 dark:border-zinc-800 z-10 transition-colors duration-300">
+				<div className="relative z-10 h-80 w-lg rounded-2xl border-4 border-zinc-800 bg-zinc-900 p-2 shadow-2xl transition-colors duration-300 md:h-120 md:w-3xl dark:border-zinc-800 dark:bg-zinc-950">
 					{/* Notch */}
-					<div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-32 bg-zinc-900 rounded-b-xl z-20 border-b border-x border-zinc-800/50 flex justify-center items-center">
+					<div className="absolute top-0 left-1/2 z-20 flex h-6 w-32 -translate-x-1/2 items-center justify-center rounded-b-xl border-zinc-800/50 border-x border-b bg-zinc-900">
 						{/* Camera dot */}
-						<div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
+						<div className="h-1.5 w-1.5 rounded-full bg-zinc-800" />
 					</div>
 
 					{/* Screen Area */}
-					<div className="relative h-full w-full bg-zinc-950 rounded-xl overflow-hidden border border-white/5">
+					<div className="relative h-full w-full overflow-hidden rounded-xl border border-white/5 bg-zinc-950">
 						{/* Reflection overlay */}
-						<div className="absolute inset-0 bg-linear-to-tr from-white/5 to-transparent z-10 pointer-events-none opacity-20" />
+						<div className="pointer-events-none absolute inset-0 z-10 bg-linear-to-tr from-white/5 to-transparent opacity-20" />
 
 						{/* Content Container */}
 						<motion.div
-							style={{ opacity: lidScreenOpactity }}
 							className="h-full w-full overflow-hidden"
+							style={{ opacity: lidScreenOpactity }}
 						>
 							{children}
 						</motion.div>
@@ -135,15 +135,15 @@ export function MacbookScroll({
 				</div>
 
 				{/* MacBook Base (Keyboard area implied) */}
-				<div className="relative -mt-2 h-4 w-xl md:w-216 bg-zinc-300 dark:bg-zinc-800 rounded-b-2xl rounded-t-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] flex justify-center items-start border-t border-zinc-400/20">
+				<div className="relative -mt-2 flex h-4 w-xl items-start justify-center rounded-t-sm rounded-b-2xl border-zinc-400/20 border-t bg-zinc-300 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] md:w-216 dark:bg-zinc-800">
 					{/* Trackpad notch/groove */}
-					<div className="mt-1 h-3 w-32 md:w-48 bg-zinc-400/20 rounded-full blur-[1px]" />
+					<div className="mt-1 h-3 w-32 rounded-full bg-zinc-400/20 blur-[1px] md:w-48" />
 				</div>
 			</motion.div>
 
 			{/* Optional badge */}
 			{badge && (
-				<motion.div style={{ opacity }} className="mt-12">
+				<motion.div className="mt-12" style={{ opacity }}>
 					{badge}
 				</motion.div>
 			)}
@@ -165,7 +165,7 @@ export function MacbookScreenContent({
 	return (
 		<div
 			className={cn(
-				'h-full w-full bg-background/5 p-4 md:p-6 lg:p-8 overflow-y-auto no-scrollbar',
+				'no-scrollbar h-full w-full overflow-y-auto bg-background/5 p-4 md:p-6 lg:p-8',
 				className,
 			)}
 		>

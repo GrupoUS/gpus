@@ -38,7 +38,7 @@ interface LeadCaptureFormFieldsProps {
 
 export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFieldsProps) {
 	return (
-		<motion.div className="space-y-4" variants={containerVariants} initial="hidden" animate="show">
+		<motion.div animate="show" className="space-y-4" initial="hidden" variants={containerVariants}>
 			{/* Name */}
 			<motion.div variants={itemVariants}>
 				<FormField
@@ -48,7 +48,7 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 						<FormItem>
 							<FormLabel>Nome Completo</FormLabel>
 							<FormControl>
-								<Input placeholder="Seu nome" disabled={disabled} {...field} />
+								<Input disabled={disabled} placeholder="Seu nome" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -66,15 +66,15 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 							<FormLabel>WhatsApp</FormLabel>
 							<FormControl>
 								<Input
+									disabled={disabled}
 									placeholder="(11) 99999-9999"
 									type="tel"
-									disabled={disabled}
 									{...field}
+									maxLength={15}
 									onChange={(e) => {
 										const formatted = formatPhoneNumber(e.target.value);
 										field.onChange(formatted);
 									}}
-									maxLength={15}
 								/>
 							</FormControl>
 							<FormMessage />
@@ -91,7 +91,7 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel>Tenho interesse em</FormLabel>
-							<Select onValueChange={field.onChange} value={field.value ?? ''} disabled={disabled}>
+							<Select disabled={disabled} onValueChange={field.onChange} value={field.value ?? ''}>
 								<FormControl>
 									<SelectTrigger>
 										<SelectValue placeholder="Selecione uma opção" />
@@ -120,7 +120,7 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 						<FormItem>
 							<FormLabel>Email</FormLabel>
 							<FormControl>
-								<Input placeholder="seu@email.com" type="email" disabled={disabled} {...field} />
+								<Input disabled={disabled} placeholder="seu@email.com" type="email" {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -138,9 +138,9 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 							<FormLabel>Mensagem (Opcional)</FormLabel>
 							<FormControl>
 								<Textarea
-									placeholder="Como podemos ajudar?"
 									className="resize-none"
 									disabled={disabled}
+									placeholder="Como podemos ajudar?"
 									{...field}
 								/>
 							</FormControl>
@@ -150,7 +150,7 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 				/>
 			</motion.div>
 
-			<motion.div variants={itemVariants} className="space-y-3 pt-2">
+			<motion.div className="space-y-3 pt-2" variants={itemVariants}>
 				{/* LGPD Consent */}
 				<FormField
 					control={control}
@@ -160,14 +160,14 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 							<FormControl>
 								<Checkbox
 									checked={field.value}
-									onCheckedChange={field.onChange}
 									disabled={disabled}
+									onCheckedChange={field.onChange}
 								/>
 							</FormControl>
 							<div className="space-y-1 leading-none">
 								<FormLabel>
 									Concordo com a{' '}
-									<Link to="/" className="text-primary hover:underline" target="_blank">
+									<Link className="text-primary hover:underline" target="_blank" to="/">
 										Política de Privacidade
 									</Link>
 								</FormLabel>
@@ -186,8 +186,8 @@ export function LeadCaptureFormFields({ control, disabled }: LeadCaptureFormFiel
 							<FormControl>
 								<Checkbox
 									checked={field.value}
-									onCheckedChange={field.onChange}
 									disabled={disabled}
+									onCheckedChange={field.onChange}
 								/>
 							</FormControl>
 							<div className="space-y-1 leading-none">

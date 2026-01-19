@@ -107,7 +107,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	if (!student) {
 		return (
 			<div className="flex justify-center p-8">
-				<Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+				<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
 			</div>
 		);
 	}
@@ -115,14 +115,14 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	return (
 		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex justify-between items-center">
+			<div className="flex items-center justify-between">
 				<div>
-					<h3 className="text-lg font-medium flex items-center gap-2">
+					<h3 className="flex items-center gap-2 font-medium text-lg">
 						<CreditCard className="h-5 w-5" />
 						Histórico Financeiro (Asaas)
 					</h3>
 					{lastSyncedAt && (
-						<p className="text-xs text-muted-foreground mt-1">
+						<p className="mt-1 text-muted-foreground text-xs">
 							Última sincronização: {formatDateTime(lastSyncedAt)}
 						</p>
 					)}
@@ -133,9 +133,9 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 
 			{/* Asaas Sync Status */}
 			{!asaasCustomerId && (
-				<div className="bg-yellow-500/10 text-yellow-600 p-4 rounded-md border border-yellow-500/20 text-sm">
+				<div className="rounded-md border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-600">
 					<p className="font-medium">Aluno não sincronizado com Asaas</p>
-					<p className="text-xs mt-1">
+					<p className="mt-1 text-xs">
 						A sincronização ocorre automaticamente ao salvar o aluno com CPF/Email válidos.
 					</p>
 				</div>
@@ -150,7 +150,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 							<CardTitle className="text-green-600">{formatCurrency(summary.paid)}</CardTitle>
 						</CardHeader>
 						<CardContent className="pt-0">
-							<p className="text-xs text-muted-foreground">{summary.paidCount} cobrança(s)</p>
+							<p className="text-muted-foreground text-xs">{summary.paidCount} cobrança(s)</p>
 						</CardContent>
 					</Card>
 					<Card>
@@ -159,7 +159,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 							<CardTitle className="text-yellow-600">{formatCurrency(summary.pending)}</CardTitle>
 						</CardHeader>
 						<CardContent className="pt-0">
-							<p className="text-xs text-muted-foreground">{summary.pendingCount} cobrança(s)</p>
+							<p className="text-muted-foreground text-xs">{summary.pendingCount} cobrança(s)</p>
 						</CardContent>
 					</Card>
 					<Card>
@@ -168,7 +168,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 							<CardTitle className="text-red-600">{formatCurrency(summary.overdue)}</CardTitle>
 						</CardHeader>
 						<CardContent className="pt-0">
-							<p className="text-xs text-muted-foreground">{summary.overdueCount} cobrança(s)</p>
+							<p className="text-muted-foreground text-xs">{summary.overdueCount} cobrança(s)</p>
 						</CardContent>
 					</Card>
 				</div>
@@ -191,13 +191,13 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 						<TableBody>
 							{payments === undefined ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center py-8">
-										<Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+									<TableCell className="py-8 text-center" colSpan={6}>
+										<Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
 									</TableCell>
 								</TableRow>
 							) : payments.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+									<TableCell className="py-8 text-center text-muted-foreground" colSpan={6}>
 										Nenhuma cobrança encontrada
 									</TableCell>
 								</TableRow>
@@ -207,7 +207,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 										<TableCell>
 											{payment.description || 'Cobrança'}
 											{payment.installmentNumber && payment.totalInstallments && (
-												<span className="text-xs text-muted-foreground ml-2">
+												<span className="ml-2 text-muted-foreground text-xs">
 													({payment.installmentNumber}/{payment.totalInstallments})
 												</span>
 											)}
@@ -219,24 +219,24 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 										<TableCell className="text-right">
 											<div className="flex justify-end gap-1">
 												<Button
-													variant="ghost"
-													size="sm"
 													onClick={() => setSelectedPayment(payment)}
+													size="sm"
+													variant="ghost"
 												>
 													Detalhes
 												</Button>
 												{payment.boletoUrl && (
-													<Button variant="ghost" size="icon" asChild>
-														<a href={payment.boletoUrl} target="_blank" rel="noopener noreferrer">
+													<Button asChild size="icon" variant="ghost">
+														<a href={payment.boletoUrl} rel="noopener noreferrer" target="_blank">
 															<FileText className="h-4 w-4" />
 														</a>
 													</Button>
 												)}
 												{payment.pixQrCode && (
 													<Button
-														variant="ghost"
-														size="icon"
 														onClick={() => copyToClipboard(payment.pixQrCode ?? '', 'PIX')}
+														size="icon"
+														variant="ghost"
 													>
 														<Copy className="h-4 w-4" />
 													</Button>
@@ -252,7 +252,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 			</Card>
 
 			{/* Payment Detail Dialog */}
-			<Dialog open={!!selectedPayment} onOpenChange={(open) => !open && setSelectedPayment(null)}>
+			<Dialog onOpenChange={(open) => !open && setSelectedPayment(null)} open={!!selectedPayment}>
 				<DialogContent className="max-w-md">
 					<DialogHeader>
 						<DialogTitle>Detalhes da Cobrança</DialogTitle>
@@ -302,30 +302,30 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 							<Separator />
 							<div className="flex flex-wrap gap-2">
 								{selectedPayment.boletoUrl && (
-									<Button variant="outline" size="sm" asChild>
-										<a href={selectedPayment.boletoUrl} target="_blank" rel="noopener noreferrer">
-											<FileText className="h-4 w-4 mr-2" />
+									<Button asChild size="sm" variant="outline">
+										<a href={selectedPayment.boletoUrl} rel="noopener noreferrer" target="_blank">
+											<FileText className="mr-2 h-4 w-4" />
 											Ver Boleto
 										</a>
 									</Button>
 								)}
 								{selectedPayment.pixQrCode && (
 									<Button
-										variant="outline"
-										size="sm"
 										onClick={() => copyToClipboard(selectedPayment.pixQrCode ?? '', 'PIX')}
+										size="sm"
+										variant="outline"
 									>
-										<Copy className="h-4 w-4 mr-2" />
+										<Copy className="mr-2 h-4 w-4" />
 										Copiar PIX
 									</Button>
 								)}
-								<Button variant="outline" size="sm" asChild>
+								<Button asChild size="sm" variant="outline">
 									<a
 										href={`https://www.asaas.com/cobrancas/${selectedPayment.asaasPaymentId}`}
-										target="_blank"
 										rel="noopener noreferrer"
+										target="_blank"
 									>
-										<ExternalLink className="h-4 w-4 mr-2" />
+										<ExternalLink className="mr-2 h-4 w-4" />
 										Abrir no Asaas
 									</a>
 								</Button>

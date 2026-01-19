@@ -12,7 +12,7 @@ import { isRetryableError } from './errors';
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_INITIAL_DELAY_MS = 1000; // 1 second
-const DEFAULT_MAX_DELAY_MS = 30000; // 30 seconds
+const DEFAULT_MAX_DELAY_MS = 30_000; // 30 seconds
 const DEFAULT_BACKOFF_MULTIPLIER = 2;
 
 // ═══════════════════════════════════════════════════════
@@ -34,9 +34,9 @@ export class CircuitBreaker {
 	private halfOpenCallCount = 0;
 
 	constructor(
-		private config: CircuitBreakerConfig = {
+		private readonly config: CircuitBreakerConfig = {
 			failureThreshold: 3, // Reduced from 5 for faster detection
-			resetTimeoutMs: 60000, // 1 minute
+			resetTimeoutMs: 60_000, // 1 minute
 			halfOpenMaxCalls: 3,
 		},
 	) {}
@@ -133,7 +133,7 @@ function addJitter(delayMs: number, jitterMs: number): number {
  * Calculate delay with exponential backoff
  */
 function calculateDelay(attempt: number, config: RetryConfig): number {
-	const exponentialDelay = config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt);
+	const exponentialDelay = config.initialDelayMs * config.backoffMultiplier ** attempt;
 	const cappedDelay = Math.min(exponentialDelay, config.maxDelayMs);
 	return addJitter(cappedDelay, config.jitterMs);
 }
@@ -179,9 +179,6 @@ export async function withRetry<T>(
 
 			// Calculate delay and wait
 			const delay = calculateDelay(attempt, fullConfig);
-			console.warn(
-				`[Retry] Attempt ${attempt + 1}/${fullConfig.maxRetries + 1} failed. Retrying in ${Math.round(delay)}ms...`,
-			);
 
 			await sleep(delay);
 		}
@@ -196,7 +193,7 @@ export async function withRetry<T>(
 export function createCircuitBreaker(config?: Partial<CircuitBreakerConfig>): CircuitBreaker {
 	return new CircuitBreaker({
 		failureThreshold: config?.failureThreshold ?? 3, // Reduced from 5 for faster detection
-		resetTimeoutMs: config?.resetTimeoutMs ?? 60000,
+		resetTimeoutMs: config?.resetTimeoutMs ?? 60_000,
 		halfOpenMaxCalls: config?.halfOpenMaxCalls ?? 3,
 	});
 }

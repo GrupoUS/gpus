@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkProcessingBasis, logAudit } from './lgpd';
+
 import type { MutationCtx, QueryCtx } from './_generated/server';
+import { checkProcessingBasis, logAudit } from './lgpd';
 
 describe('LGPD Audit Logging', () => {
 	it('should insert audit record with correct parameters', async () => {

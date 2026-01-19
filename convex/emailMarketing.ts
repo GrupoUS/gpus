@@ -10,21 +10,23 @@
  * LGPD Compliance: All operations are audited and respect consent settings.
  */
 
-import { v } from 'convex/values';
-import { action, internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
+import { v } from 'convex/values';
+
 import { internal } from './_generated/api';
+import { action, internalMutation, internalQuery, mutation, query } from './_generated/server';
 
 // Type assertion helper for internal functions during code generation bootstrap
 // Once Convex generates types for this file, these can be removed
-// @ts-ignore - Convex type inference is excessively deep for internal API references
+// @ts-expect-error - Convex type inference is excessively deep for internal API references
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const _internalAny: any = internal;
+const InternalAny: any = internal;
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const internalEmailMarketing: Record<string, any> = _internalAny.emailMarketing;
-import { getOrganizationId, requireAuth, getClerkId, getIdentity } from './lib/auth';
-import { brevoCampaigns, brevoContacts, brevoLists, brevoTemplates } from './lib/brevo';
+const internalEmailMarketing: Record<string, any> = InternalAny.emailMarketing;
+
 import { createAuditLog } from './lib/auditLogging';
+import { getClerkId, getIdentity, getOrganizationId, requireAuth } from './lib/auth';
+import { brevoCampaigns, brevoContacts, brevoLists, brevoTemplates } from './lib/brevo';
 
 // ═══════════════════════════════════════════════════════
 // SECTION 1: CONTACT MANAGEMENT
@@ -422,11 +424,9 @@ export const syncLeadAsContactInternal = internalMutation({
 		// Get lead data
 		const lead = await ctx.db.get(args.leadId);
 		if (!lead) {
-			console.log(`[EmailMarketing] Lead ${args.leadId} not found for sync`);
 			return null;
 		}
 		if (!lead.email) {
-			console.log(`[EmailMarketing] Lead ${args.leadId} has no email, skipping sync`);
 			return null;
 		}
 
@@ -437,7 +437,6 @@ export const syncLeadAsContactInternal = internalMutation({
 			.first();
 
 		if (existing) {
-			console.log(`[EmailMarketing] Lead ${args.leadId} already synced as contact ${existing._id}`);
 			return existing._id;
 		}
 
@@ -457,8 +456,6 @@ export const syncLeadAsContactInternal = internalMutation({
 			createdAt: now,
 			updatedAt: now,
 		});
-
-		console.log(`[EmailMarketing] Auto-synced lead ${args.leadId} as contact ${contactId}`);
 		return contactId;
 	},
 });
@@ -476,11 +473,9 @@ export const syncStudentAsContactInternal = internalMutation({
 		// Get student data
 		const student = await ctx.db.get(args.studentId);
 		if (!student) {
-			console.log(`[EmailMarketing] Student ${args.studentId} not found for sync`);
 			return null;
 		}
 		if (!student.email) {
-			console.log(`[EmailMarketing] Student ${args.studentId} has no email, skipping sync`);
 			return null;
 		}
 
@@ -491,9 +486,6 @@ export const syncStudentAsContactInternal = internalMutation({
 			.first();
 
 		if (existing) {
-			console.log(
-				`[EmailMarketing] Student ${args.studentId} already synced as contact ${existing._id}`,
-			);
 			return existing._id;
 		}
 
@@ -518,8 +510,6 @@ export const syncStudentAsContactInternal = internalMutation({
 			createdAt: now,
 			updatedAt: now,
 		});
-
-		console.log(`[EmailMarketing] Auto-synced student ${args.studentId} as contact ${contactId}`);
 		return contactId;
 	},
 });
@@ -537,7 +527,6 @@ export const syncMarketingLeadAsContactInternal = internalMutation({
 		// Get lead data
 		const lead = await ctx.db.get(args.leadId);
 		if (!lead) {
-			console.log(`[EmailMarketing] Marketing Lead ${args.leadId} not found for sync`);
 			return null;
 		}
 
@@ -548,9 +537,6 @@ export const syncMarketingLeadAsContactInternal = internalMutation({
 			.first();
 
 		if (existing) {
-			console.log(
-				`[EmailMarketing] Marketing Lead ${args.leadId} already synced as contact ${existing._id}`,
-			);
 			// Update existing contact source if needed, or just return
 			// We might want to link it if not linked?
 			// For now, simpler is better as per instructions
@@ -582,10 +568,6 @@ export const syncMarketingLeadAsContactInternal = internalMutation({
 			createdAt: now,
 			updatedAt: now,
 		});
-
-		console.log(
-			`[EmailMarketing] Auto-synced marketing lead ${args.leadId} as contact ${contactId}`,
-		);
 		return contactId;
 	},
 });
@@ -639,7 +621,6 @@ export const syncContactToBrevo = action({
 
 			return { success: true, brevoId: result.id };
 		} catch (error) {
-			console.error(`[BrevoSync] Failed to sync contact ${contact.email}:`, error);
 			// Log failure but don't crash the whole app if possible, or throw a clean error
 			throw new Error(
 				`Falha ao sincronizar contato com Brevo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
@@ -1265,9 +1246,7 @@ export const syncListToBrevo = action({
 						updateEnabled: true,
 					});
 					contactEmails.push(contact.email);
-				} catch (error) {
-					console.error(`Failed to sync contact ${contact.email}:`, error);
-				}
+				} catch (_error) {}
 			}
 
 			// Add contacts to list in batches of 150 (Brevo recommendation)
@@ -1276,9 +1255,7 @@ export const syncListToBrevo = action({
 				const batch = contactEmails.slice(i, i + BATCH_SIZE);
 				try {
 					await brevoContacts.addToList(brevoListId, batch);
-				} catch (error) {
-					console.error(`Failed to add batch to list:`, error);
-				}
+				} catch (_error) {}
 			}
 
 			// Update sync status to synced
@@ -1645,7 +1622,6 @@ export const syncCampaignToBrevo = action({
 
 			return { success: true, brevoCampaignId: result.id };
 		} catch (error) {
-			console.error(`[BrevoSync] Failed to sync campaign ${campaign.name}:`, error);
 			throw new Error(
 				`Falha ao sincronizar campanha com Brevo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
 			);
@@ -2067,7 +2043,7 @@ export const getSegmentDataInternal = internalQuery({
 		}> = [];
 
 		if (args.sourceType === 'lead') {
-			let query = ctx.db.query('leads').order('desc');
+			const query = ctx.db.query('leads').order('desc');
 
 			// Apply organization filter if possible (but this is internal, assumes context is managed by action)
 			// Actually internal queries don't typically check org implicitly, but we should if multi-tenant.
@@ -2085,13 +2061,19 @@ export const getSegmentDataInternal = internalQuery({
 				if (!lead.email) continue;
 
 				// Stage filter
-				if (args.filters?.stage && args.filters.stage !== 'all') {
-					if (lead.stage !== args.filters.stage) continue;
-				}
+				if (
+					args.filters?.stage &&
+					args.filters.stage !== 'all' &&
+					lead.stage !== args.filters.stage
+				)
+					continue;
 
-				if (args.filters?.product && args.filters.product !== 'all') {
-					if (lead.interestedProduct !== args.filters.product) continue;
-				}
+				if (
+					args.filters?.product &&
+					args.filters.product !== 'all' &&
+					lead.interestedProduct !== args.filters.product
+				)
+					continue;
 
 				const nameParts = (lead.name || '').split(' ');
 				results.push({
@@ -2104,12 +2086,12 @@ export const getSegmentDataInternal = internalQuery({
 				});
 			}
 		} else if (args.sourceType === 'student') {
-			let query = ctx.db.query('students').order('desc');
+			const query = ctx.db.query('students').order('desc');
 			const students = await query.collect();
 
 			for (const student of students) {
 				// Decrypt email if needed (handling LGPD)
-				let email = student.email;
+				const email = student.email;
 				// If email is missing, check encrypted?
 				// The schema has optional email.
 				// If encryptedEmail exists, we might need to decrypt.
@@ -2120,9 +2102,12 @@ export const getSegmentDataInternal = internalQuery({
 				if (!email) continue;
 
 				// Status filter
-				if (args.filters?.status && args.filters.status !== 'all') {
-					if (student.status !== args.filters.status) continue;
-				}
+				if (
+					args.filters?.status &&
+					args.filters.status !== 'all' &&
+					student.status !== args.filters.status
+				)
+					continue;
 
 				// Product filter via enrollments
 				if (args.filters?.product && args.filters.product !== 'all') {
@@ -2137,7 +2122,7 @@ export const getSegmentDataInternal = internalQuery({
 
 				const nameParts = (student.name || '').split(' ');
 				results.push({
-					email: email,
+					email,
 					firstName: nameParts[0],
 					lastName: nameParts.slice(1).join(' '),
 					sourceId: student._id,
@@ -2179,7 +2164,16 @@ export const bulkSyncContactsInternal = internalMutation({
 				.withIndex('by_email', (q) => q.eq('email', contactData.email))
 				.first();
 
-			if (!existing) {
+			if (existing) {
+				// Update listIds
+				const currentListIds = existing.listIds || [];
+				if (!currentListIds.includes(args.listId)) {
+					await ctx.db.patch(existing._id, {
+						listIds: [...currentListIds, args.listId],
+						updatedAt: now,
+					});
+				}
+			} else {
 				// Create
 				await ctx.db.insert('emailContacts', {
 					email: contactData.email,
@@ -2196,15 +2190,6 @@ export const bulkSyncContactsInternal = internalMutation({
 					createdAt: now,
 					updatedAt: now,
 				});
-			} else {
-				// Update listIds
-				const currentListIds = existing.listIds || [];
-				if (!currentListIds.includes(args.listId)) {
-					await ctx.db.patch(existing._id, {
-						listIds: [...currentListIds, args.listId],
-						updatedAt: now,
-					});
-				}
 			}
 		}
 
@@ -2252,7 +2237,7 @@ export const createListFromSegment = action({
 			phone?: string;
 		}>;
 
-		const filteredContacts = contacts.filter((c) => c.email && c.email.includes('@')); // Basic validation
+		const filteredContacts = contacts.filter((c) => c.email?.includes('@')); // Basic validation
 
 		if (filteredContacts.length === 0) {
 			throw new Error('Nenhum contato encontrado com os filtros selecionados.');
@@ -2296,8 +2281,7 @@ export const createListFromSegment = action({
 				listId,
 				brevoListId,
 			});
-		} catch (error) {
-			console.error('Failed to create list in Brevo:', error);
+		} catch (_error) {
 			// Decide if we abort or continue.
 			// If Brevo fails, we have a local list but no sync.
 			// Let's throw for now as sync is the goal.
@@ -2323,8 +2307,7 @@ export const createListFromSegment = action({
 				listIds: [brevoListId],
 				updateExistingContacts: true,
 			});
-		} catch (error) {
-			console.error('Failed to import contacts to Brevo:', error);
+		} catch (_error) {
 			// We don't delete list here, partial success
 		}
 

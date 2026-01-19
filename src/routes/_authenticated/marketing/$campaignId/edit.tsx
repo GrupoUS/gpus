@@ -115,11 +115,11 @@ function EditCampaignPage() {
 	if (!campaign) {
 		return (
 			<div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-				<Card className="max-w-md w-full">
+				<Card className="w-full max-w-md">
 					<CardContent className="flex flex-col items-center justify-center py-12">
 						<CheckCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-						<h2 className="text-lg font-semibold">Campanha não encontrada</h2>
-						<p className="mt-2 text-sm text-muted-foreground">
+						<h2 className="font-semibold text-lg">Campanha não encontrada</h2>
+						<p className="mt-2 text-muted-foreground text-sm">
 							A campanha que você procura não existe ou foi removida.
 						</p>
 						<Button onClick={() => navigate({ to: '/marketing' })}>Voltar para campanhas</Button>
@@ -133,10 +133,10 @@ function EditCampaignPage() {
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Button variant="ghost" size="icon" onClick={() => navigate({ to: '/marketing' })}>
+				<Button onClick={() => navigate({ to: '/marketing' })} size="icon" variant="ghost">
 					<ArrowLeft className="mr-2 h-4 w-4" />
 				</Button>
-				<h1 className="text-xl font-bold">Editar Campanha</h1>
+				<h1 className="font-bold text-xl">Editar Campanha</h1>
 			</div>
 
 			{/* Form */}
@@ -145,17 +145,17 @@ function EditCampaignPage() {
 					<CardTitle>Informações da Campanha</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-6">
+					<form className="space-y-6" onSubmit={handleSubmit}>
 						{/* Name */}
 						<div className="space-y-2">
 							<Label htmlFor={`${id}-name`}>Nome da Campanha</Label>
 							<Input
 								id={`${id}-name`}
-								type="text"
-								value={formData.name}
 								onChange={(e) => setFormData({ ...formData, name: e.target.value })}
 								placeholder="Ex: Black Friday 2025"
 								required
+								type="text"
+								value={formData.name}
 							/>
 						</div>
 
@@ -164,11 +164,11 @@ function EditCampaignPage() {
 							<Label htmlFor={`${id}-subject`}>Assunto</Label>
 							<Input
 								id={`${id}-subject`}
-								type="text"
-								value={formData.subject}
 								onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
 								placeholder="Ofertas exclusivas para VIPs"
 								required
+								type="text"
+								value={formData.subject}
 							/>
 						</div>
 
@@ -176,12 +176,12 @@ function EditCampaignPage() {
 						<div className="space-y-2">
 							<Label htmlFor={`${id}-status`}>Status</Label>
 							<select
+								className="w-full"
 								id={`${id}-status`}
-								value={formData.status}
 								onChange={(e) =>
 									setFormData({ ...formData, status: e.target.value as CampaignStatus })
 								}
-								className="w-full"
+								value={formData.status}
 							>
 								<option value="draft">Rascunho</option>
 								<option value="scheduled">Agendada</option>
@@ -195,22 +195,22 @@ function EditCampaignPage() {
 						<div className="space-y-2">
 							<Label>Selecione as Listas de E-mail</Label>
 							{isLoading ? (
-								<div className="flex items-center gap-2 text-sm text-muted-foreground">
+								<div className="flex items-center gap-2 text-muted-foreground text-sm">
 									<Loader2 className="h-4 w-4 animate-spin" />
 									Carregando listas...
 								</div>
 							) : (
 								<div className="space-y-2">
 									{lists?.map((list: Doc<'emailLists'>) => (
-										<div key={list._id} className="flex items-center gap-3 p-3 border rounded-lg">
+										<div className="flex items-center gap-3 rounded-lg border p-3" key={list._id}>
 											<input
-												type="checkbox"
-												id={`list-${list._id}`}
 												checked={formData.listIds.includes(list._id)}
-												onChange={() => handleListToggle(list._id)}
 												className="h-5 w-5"
+												id={`list-${list._id}`}
+												onChange={() => handleListToggle(list._id)}
+												type="checkbox"
 											/>
-											<Label htmlFor={`list-${list._id}`} className="flex-1 cursor-pointer">
+											<Label className="flex-1 cursor-pointer" htmlFor={`list-${list._id}`}>
 												{list.name}
 											</Label>
 										</div>
@@ -224,13 +224,13 @@ function EditCampaignPage() {
 						{/* Actions */}
 						<div className="flex items-center justify-end gap-3">
 							<Button
+								onClick={() => navigate({ to: '/marketing' })}
 								type="button"
 								variant="outline"
-								onClick={() => navigate({ to: '/marketing' })}
 							>
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={isPending}>
+							<Button disabled={isPending} type="submit">
 								{isPending ? (
 									<div className="flex items-center gap-2">
 										<Loader2 className="h-4 w-4 animate-spin" />

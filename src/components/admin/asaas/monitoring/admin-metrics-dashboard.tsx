@@ -66,23 +66,24 @@ export function AdminMetricsDashboard() {
 			{/* Status Overview */}
 			<div className="grid gap-4 md:grid-cols-3">
 				<StatusCard
-					title="API Health"
-					status={apiHealthStatus}
-					value={`${apiStats.errorRate}%`}
-					subtitle="Error rate (24h)"
 					metric={apiStats.totalRequests}
 					metricLabel="Total requests"
+					status={apiHealthStatus}
+					subtitle="Error rate (24h)"
+					title="API Health"
+					value={`${apiStats.errorRate}%`}
 				/>
 				<StatusCard
-					title="Sync Health"
-					status={syncHealthStatus}
-					value={`${Math.round(successRate)}%`}
-					subtitle="Success rate"
 					metric={completedSyncs.length}
 					metricLabel="Successful syncs"
+					status={syncHealthStatus}
+					subtitle="Success rate"
+					title="Sync Health"
+					value={`${Math.round(successRate)}%`}
 				/>
 				<StatusCard
-					title="Avg Response Time"
+					metric={apiStats.topEndpoints?.[0]?.count || 0}
+					metricLabel="Top endpoint calls"
 					status={
 						apiStats.avgResponseTime < 500
 							? 'healthy'
@@ -90,10 +91,9 @@ export function AdminMetricsDashboard() {
 								? 'degraded'
 								: 'critical'
 					}
-					value={`${apiStats.avgResponseTime}ms`}
 					subtitle="Average API response"
-					metric={apiStats.topEndpoints?.[0]?.count || 0}
-					metricLabel="Top endpoint calls"
+					title="Avg Response Time"
+					value={`${apiStats.avgResponseTime}ms`}
 				/>
 			</div>
 
@@ -141,9 +141,9 @@ export function AdminMetricsDashboard() {
 				<CardContent>
 					<div className="space-y-3">
 						{apiStats.topEndpoints.slice(0, 5).map((endpoint: EndpointStats, i: number) => (
-							<div key={i} className="flex items-center justify-between text-sm">
-								<div className="flex items-center gap-2 flex-1">
-									<span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+							<div className="flex items-center justify-between text-sm" key={i}>
+								<div className="flex flex-1 items-center gap-2">
+									<span className="rounded bg-muted px-2 py-1 font-mono text-xs">
 										{endpoint.endpoint}
 									</span>
 								</div>
@@ -174,8 +174,8 @@ export function AdminMetricsDashboard() {
 						<div className="space-y-2">
 							{apiStats.errorsByEndpoint.map((error: ErrorStats, i: number) => (
 								<div
+									className="flex items-center justify-between border-b py-2 text-sm last:border-0"
 									key={i}
-									className="flex items-center justify-between text-sm py-2 border-b last:border-0"
 								>
 									<span className="font-mono text-xs">{error.endpoint}</span>
 									<span className="text-red-600">
@@ -215,17 +215,17 @@ function StatusCard({ title, status, value, subtitle, metric, metricLabel }: Sta
 			<CardHeader className="pb-3">
 				<div className="flex items-center justify-between">
 					<CardTitle className="text-base">{title}</CardTitle>
-					<div className={`p-2 rounded-lg ${config.bg}`}>
+					<div className={`rounded-lg p-2 ${config.bg}`}>
 						<Icon className={`h-4 w-4 ${config.color}`} />
 					</div>
 				</div>
 			</CardHeader>
 			<CardContent>
-				<div className={`text-2xl font-bold ${config.color}`}>{value}</div>
-				<p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-				<div className="mt-3 pt-3 border-t">
-					<div className="text-xs text-muted-foreground">{metricLabel}</div>
-					<div className="text-sm font-medium">{metric.toLocaleString()}</div>
+				<div className={`font-bold text-2xl ${config.color}`}>{value}</div>
+				<p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>
+				<div className="mt-3 border-t pt-3">
+					<div className="text-muted-foreground text-xs">{metricLabel}</div>
+					<div className="font-medium text-sm">{metric.toLocaleString()}</div>
 				</div>
 			</CardContent>
 		</Card>
@@ -240,11 +240,11 @@ interface StatItemProps {
 
 function StatItem({ icon, label, value }: StatItemProps) {
 	return (
-		<div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+		<div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
 			{icon}
 			<div>
-				<div className="text-sm text-muted-foreground">{label}</div>
-				<div className="text-lg font-semibold">{value}</div>
+				<div className="text-muted-foreground text-sm">{label}</div>
+				<div className="font-semibold text-lg">{value}</div>
 			</div>
 		</div>
 	);
@@ -260,7 +260,7 @@ function MetricsDashboardSkeleton() {
 							<Skeleton className="h-5 w-24" />
 						</CardHeader>
 						<CardContent>
-							<Skeleton className="h-8 w-16 mb-2" />
+							<Skeleton className="mb-2 h-8 w-16" />
 							<Skeleton className="h-4 w-32" />
 						</CardContent>
 					</Card>
@@ -273,7 +273,7 @@ function MetricsDashboardSkeleton() {
 				<CardContent>
 					<div className="grid gap-4 md:grid-cols-4">
 						{[1, 2, 3, 4].map((i) => (
-							<Skeleton key={i} className="h-16 w-full" />
+							<Skeleton className="h-16 w-full" key={i} />
 						))}
 					</div>
 				</CardContent>

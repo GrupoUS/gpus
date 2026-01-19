@@ -5,8 +5,9 @@
  */
 
 import { v } from 'convex/values';
-import { internalMutation } from './_generated/server';
+
 import { internal } from './_generated/api';
+import { internalMutation } from './_generated/server';
 
 /**
  * Send payment confirmed notification
@@ -20,7 +21,6 @@ export const sendPaymentConfirmed = internalMutation({
 		// Get payment details
 		const payment = await ctx.db.get(args.paymentId);
 		if (!payment) {
-			console.error('sendPaymentConfirmed: Payment not found', args.paymentId);
 			return { sent: false, reason: 'Payment not found' };
 		}
 
@@ -45,16 +45,14 @@ export const sendPaymentConfirmed = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// @ts-ignore - Deep type instantiation workaround
+				// @ts-expect-error - Deep type instantiation workaround
 				await ctx.runMutation(internal.transactionalEmails.sendPaymentConfirmation, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					paymentDescription: payment.description || 'Pagamento',
 				});
-			} catch (error) {
-				console.error('sendPaymentConfirmed: Failed to send email', error);
-			}
+			} catch (_error) {}
 		}
 
 		// Log notification
@@ -90,7 +88,6 @@ export const sendPaymentOverdue = internalMutation({
 		// Get payment details
 		const payment = await ctx.db.get(args.paymentId);
 		if (!payment) {
-			console.error('sendPaymentOverdue: Payment not found', args.paymentId);
 			return { sent: false, reason: 'Payment not found' };
 		}
 
@@ -119,16 +116,14 @@ export const sendPaymentOverdue = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// @ts-ignore - Deep type instantiation workaround
+				// @ts-expect-error - Deep type instantiation workaround
 				await ctx.runMutation(internal.transactionalEmails.sendPaymentReminder, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					dueDate: formattedDueDate,
 				});
-			} catch (error) {
-				console.error('sendPaymentOverdue: Failed to send email', error);
-			}
+			} catch (_error) {}
 		}
 
 		// Log notification

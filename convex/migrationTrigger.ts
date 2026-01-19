@@ -1,6 +1,7 @@
-import { mutation } from './_generated/server';
-import { internal } from './_generated/api';
 import { v } from 'convex/values';
+
+import { internal } from './_generated/api';
+import { mutation } from './_generated/server';
 import { requireAuth } from './lib/auth';
 
 /**
@@ -18,12 +19,10 @@ export const triggerStudentMigration = mutation({
 		remaining: number;
 	}> => {
 		// Only authenticated users can execute migration
-		const identity = await requireAuth(ctx);
+		const _identity = await requireAuth(ctx);
 
 		// Call internal mutation
 		const result = await ctx.runMutation(internal.migrations.migrateStudentOrganizationId, args);
-
-		console.log(`[Migration] Triggered by ${identity.subject}:`, result);
 
 		return result;
 	},

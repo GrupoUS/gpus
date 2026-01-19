@@ -31,7 +31,7 @@ function EditTemplatePage() {
 	// Loading state
 	if (template === undefined) {
 		return (
-			<div className="flex justify-center items-center h-64 p-6">
+			<div className="flex h-64 items-center justify-center p-6">
 				<Loader2 className="h-8 w-8 animate-spin text-primary" />
 			</div>
 		);
@@ -41,10 +41,10 @@ function EditTemplatePage() {
 	if (template === null) {
 		return (
 			<div className="p-6">
-				<h1 className="text-2xl font-bold tracking-tight text-destructive">
+				<h1 className="font-bold text-2xl text-destructive tracking-tight">
 					Template não encontrado
 				</h1>
-				<p className="text-muted-foreground mt-2">
+				<p className="mt-2 text-muted-foreground">
 					O template solicitado não existe ou foi removido.
 				</p>
 			</div>
@@ -54,7 +54,7 @@ function EditTemplatePage() {
 	return (
 		<div className="space-y-6 p-6">
 			<div>
-				<h1 className="text-2xl font-bold tracking-tight">Editar Template</h1>
+				<h1 className="font-bold text-2xl tracking-tight">Editar Template</h1>
 				<p className="text-muted-foreground">
 					Modifique o template "{template.name}" conforme necessário.
 				</p>

@@ -60,15 +60,15 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
 	if (conversation === undefined) {
 		return (
-			<div className="flex items-center justify-center h-full">
-				<div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+			<div className="flex h-full items-center justify-center">
+				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
 			</div>
 		);
 	}
 
 	if (conversation === null) {
 		return (
-			<div className="flex items-center justify-center h-full text-muted-foreground">
+			<div className="flex h-full items-center justify-center text-muted-foreground">
 				Conversa não encontrada
 			</div>
 		);
@@ -79,42 +79,42 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	const displayName = contactName || conversation.channel;
 
 	return (
-		<div className="flex flex-col h-full bg-background">
+		<div className="flex h-full flex-col bg-background">
 			{/* Header */}
-			<div className="border-b px-4 py-3 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
+			<div className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/60">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						{onBack && (
-							<Button variant="ghost" size="icon" onClick={onBack} className="md:hidden">
+							<Button className="md:hidden" onClick={onBack} size="icon" variant="ghost">
 								<ArrowLeft className="h-5 w-5" />
 							</Button>
 						)}
-						<div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white shrink-0">
+						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-indigo-500 text-white">
 							<User className="h-5 w-5" />
 						</div>
 						<div>
 							<div className="flex items-center gap-2">
 								<h3 className="font-semibold text-sm">{displayName}</h3>
-								<Badge variant="secondary" className="text-[10px] h-5 px-1 capitalize">
+								<Badge className="h-5 px-1 text-[10px] capitalize" variant="secondary">
 									{conversation.department}
 								</Badge>
 							</div>
-							<p className="text-xs text-muted-foreground capitalize">
+							<p className="text-muted-foreground text-xs capitalize">
 								{conversation.status.replace(/_/g, ' ')}
 							</p>
 						</div>
 					</div>
 
 					<div className="flex items-center gap-1">
-						<Button variant="ghost" size="icon" className="hidden sm:inline-flex">
+						<Button className="hidden sm:inline-flex" size="icon" variant="ghost">
 							<Phone className="h-4 w-4" />
 						</Button>
-						<Button variant="ghost" size="icon" className="hidden sm:inline-flex">
+						<Button className="hidden sm:inline-flex" size="icon" variant="ghost">
 							<Video className="h-4 w-4" />
 						</Button>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon">
+								<Button size="icon" variant="ghost">
 									<MoreVertical className="h-4 w-4" />
 								</Button>
 							</DropdownMenuTrigger>
@@ -130,17 +130,17 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 			</div>
 
 			{/* Messages */}
-			<ScrollArea ref={scrollRef} className="flex-1 p-4">
+			<ScrollArea className="flex-1 p-4" ref={scrollRef}>
 				{messages === undefined ? (
 					<div className="space-y-4">
 						{[1, 2, 3].map((i) => (
-							<div key={i} className="flex gap-3">
-								<div className="h-12 w-48 bg-muted/20 animate-pulse rounded-lg" />
+							<div className="flex gap-3" key={i}>
+								<div className="h-12 w-48 animate-pulse rounded-lg bg-muted/20" />
 							</div>
 						))}
 					</div>
 				) : messages.length === 0 ? (
-					<div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+					<div className="flex h-full flex-col items-center justify-center text-muted-foreground">
 						<p>Nenhuma mensagem ainda</p>
 						<p className="text-sm">Envie uma mensagem para começar</p>
 					</div>
@@ -148,9 +148,9 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 					<div className="space-y-1 pb-4">
 						{messages.map((message: Doc<'messages'>) => (
 							<MessageBubble
+								isOwn={message.sender === 'agent'}
 								key={message._id}
 								message={message}
-								isOwn={message.sender === 'agent'}
 							/>
 						))}
 					</div>
@@ -159,8 +159,8 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
 			{/* Input */}
 			<ChatInput
-				onSend={handleSendMessage}
 				disabled={conversation === undefined || conversation === null}
+				onSend={handleSendMessage}
 			/>
 		</div>
 	);

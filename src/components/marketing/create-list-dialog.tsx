@@ -144,7 +144,7 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 	}, [open, form]);
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog onOpenChange={setOpen} open={open}>
 			<DialogTrigger asChild>
 				<Button className="gap-2">
 					<Plus className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 						{/* Name */}
 						<FormField
 							control={form.control}
@@ -186,8 +186,8 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 									<FormLabel>Descrição (opcional)</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Descreva o propósito desta lista..."
 											className="resize-none"
+											placeholder="Descreva o propósito desta lista..."
 											rows={2}
 											{...field}
 										/>
@@ -206,20 +206,20 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 									<FormLabel>Origem dos Contatos</FormLabel>
 									<FormControl>
 										<RadioGroup
-											onValueChange={field.onChange}
-											defaultValue={field.value}
 											className="flex gap-4"
+											defaultValue={field.value}
+											onValueChange={field.onChange}
 										>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="students" id={studentsId} />
+												<RadioGroupItem id={studentsId} value="students" />
 												<Label htmlFor={studentsId}>Alunos</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="leads" id={leadsId} />
+												<RadioGroupItem id={leadsId} value="leads" />
 												<Label htmlFor={leadsId}>Leads</Label>
 											</div>
 											<div className="flex items-center space-x-2">
-												<RadioGroupItem value="both" id={bothId} />
+												<RadioGroupItem id={bothId} value="both" />
 												<Label htmlFor={bothId}>Ambos</Label>
 											</div>
 										</RadioGroup>
@@ -235,16 +235,16 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 							<div className="flex flex-wrap gap-2">
 								{PRODUCTS.map((product) => (
 									<Badge
-										key={product.value}
-										variant={products.includes(product.value) ? 'default' : 'outline'}
 										className="cursor-pointer transition-colors hover:bg-primary/80"
+										key={product.value}
 										onClick={() => toggleProduct(product.value)}
+										variant={products.includes(product.value) ? 'default' : 'outline'}
 									>
 										{product.label}
 									</Badge>
 								))}
 							</div>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								{products.length === 0
 									? 'Nenhum produto selecionado (todos serão incluídos)'
 									: `${products.length} produto(s) selecionado(s)`}
@@ -301,10 +301,10 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 						</div>
 
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+							<Button onClick={() => setOpen(false)} type="button" variant="outline">
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={isSubmitting || previewData?.count === 0}>
+							<Button disabled={isSubmitting || previewData?.count === 0} type="submit">
 								{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 								Criar Lista
 							</Button>

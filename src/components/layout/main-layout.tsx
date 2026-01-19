@@ -21,10 +21,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="flex h-screen w-full flex-col md:flex-row">
 			<AppSidebar />
-			<main id={mainContentId} className="flex-1 flex flex-col overflow-hidden bg-mesh bg-noise">
-				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background z-10">
+			<main className="flex flex-1 flex-col overflow-hidden bg-mesh bg-noise" id={mainContentId}>
+				<header className="z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
 					<div className="flex items-center gap-2 px-4">
-						<Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
+						<Separator className="mr-2 hidden h-4 md:block" orientation="vertical" />
 						<Breadcrumb>
 							<BreadcrumbList>
 								<BreadcrumbItem className="hidden md:block">
