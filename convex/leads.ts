@@ -2,6 +2,7 @@ import { type PaginationOptions, paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
@@ -14,6 +15,7 @@ interface ListLeadsArgs {
 	temperature?: string[];
 	products?: string[];
 	source?: string[];
+	tags?: Id<'tags'>[];
 }
 
 // Common args for lead creation/update
@@ -76,6 +78,7 @@ export const listLeads = query({
 		temperature: v.optional(v.array(v.string())),
 		products: v.optional(v.array(v.string())),
 		source: v.optional(v.array(v.string())),
+		tags: v.optional(v.array(v.id('tags'))),
 	},
 	handler: async (ctx, args: ListLeadsArgs) => {
 		// 1. Verify Auth & Permissions
@@ -169,6 +172,31 @@ export const listLeads = query({
 
 		const results = await leadQuery.order('desc').paginate(args.paginationOpts);
 
+		// Filter by tags if provided
+		if (args.tags && args.tags.length > 0) {
+			// Query leadTags table to get all leadIds that have any of the specified tags
+			const leadTagsPromises = args.tags.map((tagId) =>
+				ctx.db
+					.query('leadTags')
+					.withIndex('by_tag', (q) => q.eq('tagId', tagId))
+					.collect(),
+			);
+
+			const leadTagsResults = await Promise.all(leadTagsPromises);
+
+			// Collect unique leadIds that have at least one of the specified tags
+			const leadIdsWithTags = new Set<string>();
+			for (const leadTags of leadTagsResults) {
+				for (const leadTag of leadTags) {
+					leadIdsWithTags.add(leadTag.leadId);
+				}
+			}
+
+			// Filter results to only include leads with matching tags
+			// biome-ignore lint/suspicious/noExplicitAny: Complex lead type
+			results.page = results.page.filter((lead: any) => leadIdsWithTags.has(lead._id));
+		}
+
 		// If search is provided, we still need to filter in memory because
 		// Convex filters don't support substring matching.
 		if (args.search) {
@@ -190,6 +218,7 @@ export const createLead = mutation({
 	args: {
 		...leadArgs,
 		assignedTo: v.optional(v.id('users')),
+		referredById: v.optional(v.id('leads')),
 	},
 	handler: async (ctx, args) => {
 		// Check for auth and permissions
@@ -218,6 +247,7 @@ export const createLead = mutation({
 			organizationId,
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
+			referredById: args.referredById,
 		});
 
 		// Log activity
@@ -374,6 +404,14 @@ export const updateLeadStage = mutation({
 			createdAt: Date.now(),
 			metadata: { from: lead.stage, to: args.newStage },
 		});
+
+		// Trigger Cashback Calculation if Won
+		if (args.newStage === 'fechado_ganho' && lead.referredById) {
+			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+			await (ctx.scheduler as any).runAfter(0, (internal as any).referrals.calculateCashback, {
+				referredLeadId: args.leadId,
+			});
+		}
 	},
 });
 

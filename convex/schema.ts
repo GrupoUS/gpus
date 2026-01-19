@@ -179,6 +179,10 @@ export default defineSchema({
 		// Multi-tenant
 		organizationId: v.optional(v.string()), // Optional for backward compatibility with existing data
 
+		// Referência e Cashback
+		referredById: v.optional(v.id('leads')),
+		cashbackAmount: v.optional(v.number()),
+
 		// Timestamps
 		lastContactAt: v.optional(v.number()),
 		nextFollowUpAt: v.optional(v.number()),
@@ -193,6 +197,7 @@ export default defineSchema({
 		.index('by_temperature', ['temperature'])
 		.index('by_created', ['createdAt'])
 		.index('by_stage', ['stage'])
+		.index('by_referrer', ['referredById'])
 		.index('by_organization_phone', ['organizationId', 'phone']),
 
 	// ═══════════════════════════════════════════════════════
@@ -515,16 +520,7 @@ export default defineSchema({
 
 		// Detalhes
 		description: v.string(),
-		metadata: v.optional(
-			v.object({
-				from: v.optional(v.string()),
-				to: v.optional(v.string()),
-				amount: v.optional(v.number()),
-				reason: v.optional(v.string()),
-				externalId: v.optional(v.string()),
-				fields: v.optional(v.array(v.string())),
-			}),
-		),
+		metadata: v.optional(v.any()),
 
 		// Multi-tenant
 		organizationId: v.string(),
@@ -1479,4 +1475,42 @@ export default defineSchema({
 	})
 		.index('by_identifier_action', ['identifier', 'action'])
 		.index('by_timestamp', ['timestamp']),
+
+	// ═══════════════════════════════════════════════════════
+	// TAGS SYSTEM (Lead Categorization)
+	// ═══════════════════════════════════════════════════════
+	tags: defineTable({
+		name: v.string(),
+		color: v.optional(v.string()),
+		organizationId: v.string(),
+		createdBy: v.string(), // Clerk user ID
+		createdAt: v.number(),
+	})
+		.index('by_organization', ['organizationId'])
+		.index('by_organization_name', ['organizationId', 'name']),
+
+	leadTags: defineTable({
+		leadId: v.id('leads'),
+		tagId: v.id('tags'),
+		organizationId: v.string(),
+		addedBy: v.string(), // Clerk user ID
+		addedAt: v.number(),
+	})
+		.index('by_lead', ['leadId'])
+		.index('by_tag', ['tagId'])
+		.index('by_organization', ['organizationId']),
+
+	// ═══════════════════════════════════════════════════════
+	// SALES OBJECTIONS
+	// ═══════════════════════════════════════════════════════
+	objections: defineTable({
+		leadId: v.id('leads'),
+		objectionText: v.string(),
+		organizationId: v.string(),
+		recordedBy: v.string(), // Clerk user ID
+		recordedAt: v.number(),
+		resolved: v.optional(v.boolean()),
+	})
+		.index('by_lead_recorded', ['leadId', 'recordedAt'])
+		.index('by_organization', ['organizationId']),
 });

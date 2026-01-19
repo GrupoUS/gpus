@@ -79,6 +79,8 @@ import type * as migrations from "../migrations.js";
 import type * as migrations_syncExistingClerkUsers from "../migrations/syncExistingClerkUsers.js";
 import type * as migrations_updateRoles from "../migrations/updateRoles.js";
 import type * as notifications from "../notifications.js";
+import type * as objections from "../objections.js";
+import type * as referrals from "../referrals.js";
 import type * as scripts from "../scripts.js";
 import type * as scripts_syncUsers from "../scripts/syncUsers.js";
 import type * as settings from "../settings.js";
@@ -167,6 +169,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/syncExistingClerkUsers": typeof migrations_syncExistingClerkUsers;
   "migrations/updateRoles": typeof migrations_updateRoles;
   notifications: typeof notifications;
+  objections: typeof objections;
+  referrals: typeof referrals;
   scripts: typeof scripts;
   "scripts/syncUsers": typeof scripts_syncUsers;
   settings: typeof settings;
