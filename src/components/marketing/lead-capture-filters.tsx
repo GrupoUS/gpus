@@ -23,9 +23,12 @@ interface LeadCaptureFiltersProps {
 	onStatusChange: (value: string) => void;
 	interest: string;
 	onInterestChange: (value: string) => void;
+	source: string;
+	onSourceChange: (value: string) => void;
 	date: DateRange | undefined;
 	onDateChange: (date: DateRange | undefined) => void;
 	onClear: () => void;
+	sourceOptions: string[];
 }
 
 export function LeadCaptureFilters({
@@ -35,22 +38,26 @@ export function LeadCaptureFilters({
 	onStatusChange,
 	interest,
 	onInterestChange,
+	source,
+	onSourceChange,
 	date,
 	onDateChange,
 	onClear,
+	sourceOptions,
 }: LeadCaptureFiltersProps) {
-	const hasFilters = search || status !== 'all' || interest !== 'all' || date?.from;
+	const hasFilters =
+		search || status !== 'all' || interest !== 'all' || source !== 'all' || date?.from;
 
 	return (
 		<div className="space-y-4">
 			{/* Search */}
 			<div className="relative">
-				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+				<Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
+					className="pl-9"
+					onChange={(e) => onSearchChange(e.target.value)}
 					placeholder="Buscar por nome, email ou telefone..."
 					value={search}
-					onChange={(e) => onSearchChange(e.target.value)}
-					className="pl-9"
 				/>
 			</div>
 
@@ -60,7 +67,7 @@ export function LeadCaptureFilters({
 				<DatePickerWithRange date={date} setDate={onDateChange} />
 
 				{/* Status Filter */}
-				<Select value={status} onValueChange={onStatusChange}>
+				<Select onValueChange={onStatusChange} value={status}>
 					<SelectTrigger className="w-[160px]">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
@@ -75,7 +82,7 @@ export function LeadCaptureFilters({
 				</Select>
 
 				{/* Interest Filter */}
-				<Select value={interest} onValueChange={onInterestChange}>
+				<Select onValueChange={onInterestChange} value={interest}>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder="Interesse" />
 					</SelectTrigger>
@@ -89,9 +96,24 @@ export function LeadCaptureFilters({
 					</SelectContent>
 				</Select>
 
+				{/* Source Filter */}
+				<Select onValueChange={onSourceChange} value={source}>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Origem" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Todas Origens</SelectItem>
+						{sourceOptions.map((opt) => (
+							<SelectItem key={opt} value={opt}>
+								{opt}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
 				{/* Clear Filters */}
 				{hasFilters && (
-					<Button variant="ghost" size="sm" onClick={onClear} className="gap-1">
+					<Button className="gap-1" onClick={onClear} size="sm" variant="ghost">
 						<X className="h-4 w-4" />
 						Limpar
 					</Button>
@@ -102,49 +124,61 @@ export function LeadCaptureFilters({
 			{hasFilters && (
 				<div className="flex flex-wrap gap-2">
 					{search && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Busca: "{search}"
 							<button
-								type="button"
-								onClick={() => onSearchChange('')}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onSearchChange('')}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>
 						</Badge>
 					)}
 					{date?.from && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Período: {date.from.toLocaleDateString('pt-BR')}
 							{date.to ? ` - ${date.to.toLocaleDateString('pt-BR')}` : ''}
 							<button
-								type="button"
-								onClick={() => onDateChange(undefined)}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onDateChange(undefined)}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>
 						</Badge>
 					)}
 					{status !== 'all' && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Status: {leadStatusLabels[status] || status}
 							<button
-								type="button"
-								onClick={() => onStatusChange('all')}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onStatusChange('all')}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>
 						</Badge>
 					)}
 					{interest !== 'all' && (
-						<Badge variant="secondary" className="gap-1">
+						<Badge className="gap-1" variant="secondary">
 							Interesse: {leadInterestLabels[interest] || interest}
 							<button
-								type="button"
-								onClick={() => onInterestChange('all')}
 								className="ml-1 hover:text-destructive"
+								onClick={() => onInterestChange('all')}
+								type="button"
+							>
+								<X className="h-3 w-3" />
+							</button>
+						</Badge>
+					)}
+					{source !== 'all' && (
+						<Badge className="gap-1" variant="secondary">
+							Origem: {source}
+							<button
+								className="ml-1 hover:text-destructive"
+								onClick={() => onSourceChange('all')}
+								type="button"
 							>
 								<X className="h-3 w-3" />
 							</button>

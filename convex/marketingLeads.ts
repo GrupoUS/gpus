@@ -150,6 +150,102 @@ export const create = mutation({
 });
 
 // ═══════════════════════════════════════════════════════
+// WEBHOOK MUTATION (Internal)
+// ═══════════════════════════════════════════════════════
+
+export const createFromWebhook = internalMutation({
+	args: {
+		email: v.string(),
+		source: v.string(),
+		name: v.optional(v.string()),
+		phone: v.optional(v.string()),
+		interest: v.optional(v.string()),
+		message: v.optional(v.string()),
+		utmSource: v.optional(v.string()),
+		utmCampaign: v.optional(v.string()),
+		utmMedium: v.optional(v.string()),
+		utmContent: v.optional(v.string()),
+		utmTerm: v.optional(v.string()),
+		customFields: v.optional(v.any()),
+		ipAddress: v.optional(v.string()),
+		userAgent: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		// 1. Check for existing lead from this source
+		const existing = await ctx.db
+			.query('marketing_leads')
+			.withIndex('by_email', (q) => q.eq('email', args.email))
+			.filter((q) => q.eq(q.field('source'), args.source))
+			.first();
+
+		if (existing) {
+			// Update only relevant fields if needed, or just return existing ID
+			// For now, we update UTMs and contact info if provided
+			await ctx.db.patch(existing._id, {
+				name: args.name ?? existing.name,
+				phone: args.phone ?? existing.phone,
+				// biome-ignore lint/suspicious/noExplicitAny: dynamic interest field casting
+				interest: (args.interest as any) ?? existing.interest,
+				utmSource: args.utmSource ?? existing.utmSource,
+				utmCampaign: args.utmCampaign ?? existing.utmCampaign,
+				utmMedium: args.utmMedium ?? existing.utmMedium,
+				updatedAt: Date.now(),
+			});
+			return { id: existing._id, action: 'updated' };
+		}
+
+		// 2. Map interest to valid enum if possible, else default
+		const validInterests = [
+			'Harmonização Facial',
+			'Estética Corporal',
+			'Bioestimuladores',
+			'Outros',
+		];
+		const interest = validInterests.includes(args.interest as string)
+			? // biome-ignore lint/suspicious/noExplicitAny: casting validated interest to schema type
+				(args.interest as any)
+			: 'Outros';
+
+		// 3. Create new lead
+		const leadId = await ctx.db.insert('marketing_leads', {
+			email: args.email,
+			source: args.source,
+			name: args.name || 'Unknown',
+			phone: args.phone || '',
+			interest,
+			message: args.message,
+			lgpdConsent: true, // Implied by webhook submission
+			whatsappConsent: false,
+			status: 'new',
+			createdAt: Date.now(),
+			updatedAt: Date.now(),
+			utmSource: args.utmSource,
+			utmCampaign: args.utmCampaign,
+			utmMedium: args.utmMedium,
+			utmContent: args.utmContent,
+			utmTerm: args.utmTerm,
+			// Add metadata as needed
+		});
+
+		// 4. Log Audit
+		await ctx.db.insert('lgpdAudit', {
+			actionType: 'data_creation',
+			dataCategory: 'marketing_leads',
+			description: `Lead capturado via webhook: ${args.email} (${args.source})`,
+			metadata: { entityId: leadId, source: args.source },
+			processingPurpose: 'captura de leads via webhook',
+			legalBasis: 'consentimento',
+			ipAddress: args.ipAddress || 'unknown',
+			actorId: 'system_webhook',
+			actorRole: 'system',
+			createdAt: Date.now(),
+		});
+
+		return { id: leadId, action: 'created' };
+	},
+});
+
+// ═══════════════════════════════════════════════════════
 // ADMIN QUERIES
 // ═══════════════════════════════════════════════════════
 
@@ -159,6 +255,7 @@ export const list = convexQuery({
 		status: v.optional(v.string()),
 		interest: v.optional(v.string()),
 		search: v.optional(v.string()),
+		source: v.optional(v.string()),
 		startDate: v.optional(v.number()),
 		endDate: v.optional(v.number()),
 	},
@@ -183,9 +280,16 @@ export const list = convexQuery({
 				.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
 		}
 
-		if (args.interest) {
+		if (args.interest && args.interest !== 'all') {
 			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
 			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('interest'), args.interest));
+		}
+
+		if (args.source && args.source !== 'all') {
+			// Using the newly added source index if possible, or filter
+			// Since we started with by_organization*, we chain filter
+			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
+			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('source'), args.source));
 		}
 
 		if (args.startDate || args.endDate) {
@@ -213,6 +317,27 @@ export const list = convexQuery({
 		}
 
 		return results;
+	},
+});
+
+export const getSources = convexQuery({
+	handler: async (ctx) => {
+		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
+
+		const leads = await ctx.db
+			.query('marketing_leads')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
+
+		const sources = new Set<string>();
+		for (const lead of leads) {
+			if (lead.source) {
+				sources.add(lead.source);
+			}
+		}
+
+		return Array.from(sources).sort();
 	},
 });
 

@@ -412,4 +412,104 @@ if (typeof setInterval !== 'undefined') {
 	setInterval(() => webhookRateLimiter.cleanup(), 5 * 60 * 1000);
 }
 
+/**
+ * Leads Webhook Endpoint (WordPress/External)
+ *
+ * Receives lead data from landing pages/WordPress.
+ * Mapping: email, name, phone, interest, source, utm params.
+ *
+ * POST /webhook/leads
+ * Headers: X-Webhook-Secret
+ */
+http.route({
+	path: '/webhook/leads',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate Secret
+		const webhookSecret = process.env.WEBHOOK_SECRET;
+		const providedSecret = request.headers.get('X-Webhook-Secret');
+
+		if (!webhookSecret || providedSecret !== webhookSecret) {
+			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		// 2. Parse Body
+		// biome-ignore lint/suspicious/noExplicitAny: External payload
+		let body: any;
+		try {
+			body = await request.json();
+		} catch (_e) {
+			return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		// 3. Validation Summary
+		if (!(body.email && body.source)) {
+			return new Response(JSON.stringify({ error: 'Missing required fields: email, source' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		// 4. Extract IP
+		const ipAddress = request.headers.get('X-Forwarded-For') || 'unknown';
+		const userAgent = request.headers.get('User-Agent') || 'unknown';
+
+		// 5. Call Internal Mutation
+		try {
+			// biome-ignore lint/suspicious/noExplicitAny: prevent deep instantiation
+			const result = await ctx.runMutation((internal as any).marketingLeads.createFromWebhook, {
+				email: body.email,
+				source: body.source,
+				name: body.name,
+				phone: body.phone,
+				interest: body.interest,
+				message: body.message,
+				utmSource: body.utm_source || body.utmSource,
+				utmCampaign: body.utm_campaign || body.utmCampaign,
+				utmMedium: body.utm_medium || body.utmMedium,
+				utmContent: body.utm_content || body.utmContent,
+				utmTerm: body.utm_term || body.utmTerm,
+				ipAddress: ipAddress.split(',')[0].trim(),
+				userAgent,
+				customFields: body.custom_fields,
+			});
+
+			return new Response(JSON.stringify({ success: true, ...result }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			return new Response(
+				JSON.stringify({ error: 'Internal Server Error', details: errorMessage }),
+				{ status: 500, headers: { 'Content-Type': 'application/json' } },
+			);
+		}
+	}),
+});
+
+// Configure CORS for webhooks (optional but good practice)
+http.route({
+	path: '/webhook/leads',
+	method: 'OPTIONS',
+	handler: httpAction(async () => {
+		return await Promise.resolve(
+			new Response(null, {
+				status: 204,
+				headers: {
+					'Access-Control-Allow-Origin': '*',
+					'Access-Control-Allow-Methods': 'POST, OPTIONS',
+					'Access-Control-Allow-Headers': 'Content-Type, X-Webhook-Secret',
+				},
+			}),
+		);
+	}),
+});
+
 export default http;

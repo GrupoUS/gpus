@@ -100,6 +100,7 @@ export const validationSchemas = {
 		}),
 		whatsappConsent: z.boolean().default(false),
 		honeypot: z.string().max(0, 'Invalid submission').optional(), // Must be empty
+		source: z.string().max(50, 'Fonte deve ter no máximo 50 caracteres').optional(),
 		utmSource: z.string().optional(),
 		utmCampaign: z.string().optional(),
 		utmMedium: z.string().optional(),

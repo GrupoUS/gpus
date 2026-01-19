@@ -23,31 +23,20 @@ export const Route = createFileRoute('/_authenticated/marketing/leads')({
 });
 
 function LeadsPage() {
-	const {
-		leads,
-		stats,
-		isLoading,
-		canLoadMore,
-		handleStatusUpdate,
-		filters,
-		handleFilterChange,
-		handleLoadMore,
-		clearFilters,
-		handleDateRangeChange,
-		handleExportCSV,
-	} = useMarketingLeadsViewModel(Route);
+	const { leads, stats, isLoading, canLoadMore, filters, options, handlers } =
+		useMarketingLeadsViewModel(Route);
 
 	return (
 		<div className="flex flex-col gap-6 p-6">
 			{/* Header */}
 			<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Leads de Captura</h1>
+					<h1 className="font-bold text-2xl tracking-tight">Leads de Captura</h1>
 					<p className="text-muted-foreground">
 						Gerencie os leads capturados através do formulário público.
 					</p>
 				</div>
-				<Button variant="outline" onClick={handleExportCSV} className="gap-2">
+				<Button className="gap-2" onClick={handlers.onExport} variant="outline">
 					<Download className="h-4 w-4" />
 					Exportar CSV
 				</Button>
@@ -57,24 +46,26 @@ function LeadsPage() {
 			<LeadCaptureStats stats={stats} />
 
 			{/* Filters */}
-			<LeadCaptureFilters
-				search={filters.search}
-				onSearchChange={(v) => handleFilterChange('search', v)}
-				status={filters.status}
-				onStatusChange={(v) => handleFilterChange('status', v)}
-				interest={filters.interest}
-				onInterestChange={(v) => handleFilterChange('interest', v)}
-				date={{
-					from: filters.startDate,
-					to: filters.endDate,
-				}}
-				onDateChange={handleDateRangeChange}
-				onClear={clearFilters}
-			/>
+			<div className="flex flex-col gap-4">
+				<LeadCaptureFilters
+					date={filters.date}
+					interest={filters.interest}
+					onClear={handlers.onClearFilters}
+					onDateChange={handlers.onDateChange}
+					onInterestChange={handlers.onInterestChange}
+					onSearchChange={handlers.onSearchChange}
+					onSourceChange={handlers.onSourceChange}
+					onStatusChange={handlers.onStatusChange}
+					search={filters.search}
+					source={filters.source}
+					sourceOptions={options.sources}
+					status={filters.status}
+				/>
+			</div>
 
 			{/* Table and Load More */}
 			<div className="space-y-4">
-				<LeadCaptureTable leads={leads} onStatusUpdate={handleStatusUpdate} />
+				<LeadCaptureTable leads={leads} onStatusUpdate={handlers.onStatusUpdate} />
 
 				{isLoading && leads.length === 0 && (
 					<div className="flex justify-center py-10">
@@ -84,7 +75,7 @@ function LeadsPage() {
 
 				<div className="flex justify-center">
 					{canLoadMore && (
-						<Button variant="outline" onClick={handleLoadMore} disabled={isLoading}>
+						<Button disabled={isLoading} onClick={handlers.onLoadMore} variant="outline">
 							{isLoading ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />

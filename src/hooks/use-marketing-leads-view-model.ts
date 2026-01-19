@@ -1,7 +1,10 @@
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
-import { useConvex, useMutation, usePaginatedQuery } from 'convex/react';
+import { useConvex, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
+import { endOfDay, startOfDay } from 'date-fns';
+import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 20;
@@ -10,46 +13,52 @@ const PAGE_SIZE = 20;
 export function useMarketingLeadsViewModel(Route: any) {
 	const navigate = useNavigate();
 	const searchParams = Route.useSearch();
-	const { search, status, interest, startDate, endDate } = searchParams;
+	// Initialize state from URL params if available, else default
+	// Note: In a real app we might want to sync state <-> URL bi-directionally stricter
+	// For now we initialize from URL and update URL on change, which triggers re-render
 
-	// Convert URL string dates to timestamps (start of day / end of day)
-	// Assuming YYYY-MM-DD format from URL or ISO
-	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
-	const endTimestamp = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : undefined;
+	const [search, setSearch] = useState(searchParams.search || '');
+	const [status, setStatus] = useState(searchParams.status || 'all');
+	const [interest, setInterest] = useState(searchParams.interest || 'all');
+	const [source, setSource] = useState(searchParams.source || 'all');
+	const [date, setDate] = useState<DateRange | undefined>(() => {
+		if (searchParams.startDate) {
+			return {
+				from: new Date(searchParams.startDate),
+				to: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+			};
+		}
+		return undefined;
+	});
 
 	// Mutations & Queries
 	// biome-ignore lint/suspicious/noExplicitAny: prevent TS deep instantiation error
 	const updateStatus = useMutation((api as any).marketingLeads.updateStatus);
-	// We don't fetch CSV data automatically, only on demand
+
+	// Fetch Options
+	const sourceOptions = useQuery(api.marketingLeads.getSources) || [];
 
 	// Use paginated query for server-side pagination
 	const {
 		results: leads,
-		status: paginationStatus,
+		status: queryStatus,
 		loadMore,
-		isLoading,
+		isLoading: _isLoadingMore,
 	} = usePaginatedQuery(
 		api.marketingLeads.list,
 		{
+			paginationOpts: { numItems: PAGE_SIZE, cursor: null },
 			status: status === 'all' ? undefined : status,
 			interest: interest === 'all' ? undefined : interest,
+			source: source === 'all' ? undefined : source,
 			search: search || undefined,
-			startDate: startTimestamp,
-			endDate: endTimestamp,
+			startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
+			endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
 		},
 		{ initialNumItems: PAGE_SIZE },
 	);
 
 	// Stats - computed from loaded leads
-	// Note: Ideally stats should come from a separate backend query for accuracy over total dataset
-	// But per instructions, we compute from loaded leads (which might be partial if paginated?)
-	// Actually, the prompt says "Compute stats from loaded leads".
-	// However, usually detailed stats like "Total" should reflect the DB state, not just current page.
-	// Given the prompt, I will stick to computing from loaded leads, but arguably a separate query would be better.
-	// Re-reading usage in contacts: "Stats - computed from all loaded contacts".
-	// The `usePaginatedQuery` returns `results` which accumulates pages as we load more.
-	// So it is "all loaded so far".
-
 	const stats = (() => {
 		if (!leads || leads.length === 0) return null;
 		const total = leads.length;
@@ -87,68 +96,84 @@ export function useMarketingLeadsViewModel(Route: any) {
 		}
 	};
 
-	const handleFilterChange = (key: string, value: string) => {
-		void navigate({
-			to: '/marketing/leads',
-			search: { ...searchParams, [key]: value, page: 1 },
-		});
-	};
-
-	const handleDateRangeChange = (range: { from?: Date; to?: Date } | undefined) => {
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic URL search params
+	const updateUrl = (newParams: Record<string, any>) => {
 		void navigate({
 			to: '/marketing/leads',
 			search: {
 				...searchParams,
-				startDate: range?.from ? range.from.toISOString().split('T')[0] : undefined,
-				endDate: range?.to ? range.to.toISOString().split('T')[0] : undefined,
+				...newParams,
 				page: 1,
 			},
 		});
 	};
 
+	const handleSearchChange = (value: string) => {
+		setSearch(value);
+		updateUrl({ search: value });
+	};
+
+	const handleStatusChange = (value: string) => {
+		setStatus(value);
+		updateUrl({ status: value });
+	};
+
+	const handleInterestChange = (value: string) => {
+		setInterest(value);
+		updateUrl({ interest: value });
+	};
+
+	const handleSourceChange = (value: string) => {
+		setSource(value);
+		updateUrl({ source: value });
+	};
+
+	const handleDateChange = (range: DateRange | undefined) => {
+		setDate(range);
+		updateUrl({
+			startDate: range?.from ? range.from.toISOString().split('T')[0] : undefined,
+			endDate: range?.to ? range.to.toISOString().split('T')[0] : undefined,
+		});
+	};
+
 	const handleLoadMore = () => {
-		if (paginationStatus === 'CanLoadMore') {
+		if (queryStatus === 'CanLoadMore') {
 			loadMore(PAGE_SIZE);
 		}
 	};
 
-	const clearFilters = () => {
+	const handleClearFilters = () => {
+		setSearch('');
+		setStatus('all');
+		setInterest('all');
+		setSource('all');
+		setDate(undefined);
+
 		void navigate({
 			to: '/marketing/leads',
 			search: {
 				page: 1,
-				search: '',
-				status: 'all',
-				interest: 'all',
+				search: undefined,
+				status: undefined,
+				interest: undefined,
+				source: undefined,
 				startDate: undefined,
 				endDate: undefined,
 			},
 		});
 	};
 
-	// CSV Export Logic
-	// We need to query ALL data, not just paginated.
-	// We can use useQuery directly but validly only when we want to export.
-	// Hooks rules prevent conditional hooks.
-	// Instead we can use a "lazy" approach: pass parameters to the View Model,
-	// and rely on a separate query or an action.
-	// The prompt says: "Implement useQuery for api.marketingLeads.exportToCSV (triggered on demand)"
-	// Typically useQuery runs automatically. To make it "on demand" usually involves
-	// skipping the query until a flag is set, or using a convex action/mutation if it was separate.
-	// But `exportToCSV` is a query.
-	// We'll use a `skip` token pattern if Convex supports it or just fetch it via a client client
-	// OR we just use `useQuery` but enabled only when a state is set.
-
-	// Using `conves/react`'s `useConvex` hook allows imperative calls.
-	const convex = useConvex(); // Need to import this
+	const convex = useConvex();
 
 	const handleExportCSV = async () => {
 		try {
-			const data = await convex.query(api.marketingLeads.exportToCSV, {
+			// biome-ignore lint/suspicious/noExplicitAny: prevent TS error on query
+			const data = await convex.query((api as any).marketingLeads.exportToCSV, {
 				status: status === 'all' ? undefined : status,
 				interest: interest === 'all' ? undefined : interest,
-				startDate: startTimestamp,
-				endDate: endTimestamp,
+				source: source === 'all' ? undefined : source,
+				startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
+				endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
 			});
 
 			if (!data || data.length === 0) {
@@ -173,33 +198,21 @@ export function useMarketingLeadsViewModel(Route: any) {
 			];
 			const csvContent = [
 				headers.join(','),
-				...data.map((row: {
-					name: string;
-					email: string | null;
-					phone: string;
-					interest: string | null;
-					message: string | null;
-					lgpdConsent: boolean;
-					whatsappConsent: boolean;
-					status: string;
-					utmSource: string | null;
-					utmCampaign: string | null;
-					utmMedium: string | null;
-					createdAt: number;
-				}) =>
+				// biome-ignore lint/suspicious/noExplicitAny: dynamic CSV row type
+				...data.map((row: any) =>
 					[
-						`"${row.name}"`,
-						`"${row.email}"`,
-						`"${row.phone}"`,
-						`"${row.interest}"`,
+						`"${row.name || ''}"`,
+						`"${row.email || ''}"`,
+						`"${row.phone || ''}"`,
+						`"${row.interest || ''}"`,
 						`"${(row.message || '').replace(/"/g, '""')}"`,
-						row.lgpdConsent,
-						row.whatsappConsent,
+						row.lgpdConsent ? 'Sim' : 'Não',
+						row.whatsappConsent ? 'Sim' : 'Não',
 						row.status,
-						row.utmSource,
-						row.utmCampaign,
-						row.utmMedium,
-						row.createdAt,
+						row.source || '',
+						row.utmCampaign || '',
+						row.utmMedium || '',
+						new Date(row.createdAt).toLocaleString('pt-BR'),
 					].join(','),
 				),
 			].join('\n');
@@ -214,7 +227,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 			document.body.removeChild(link);
 
 			toast.success('Exportação concluída com sucesso');
-		} catch {
+		} catch (_error) {
 			toast.error('Erro ao exportar CSV');
 		}
 	};
@@ -222,21 +235,29 @@ export function useMarketingLeadsViewModel(Route: any) {
 	return {
 		leads: leads ?? [],
 		stats,
-		isLoading,
-		canLoadMore: paginationStatus === 'CanLoadMore',
-		paginationStatus,
+		isLoading: queryStatus === 'LoadingFirstPage',
+		canLoadMore: queryStatus === 'CanLoadMore',
+		paginationStatus: queryStatus,
 		filters: {
 			search,
 			status,
 			interest,
-			startDate: startTimestamp ? new Date(startTimestamp) : undefined,
-			endDate: endDate ? new Date(endDate) : undefined, // pass Date objects to UI
+			source,
+			date,
 		},
-		handleStatusUpdate,
-		handleFilterChange,
-		handleDateRangeChange,
-		handleLoadMore,
-		clearFilters,
-		handleExportCSV,
+		options: {
+			sources: sourceOptions,
+		},
+		handlers: {
+			onStatusUpdate: handleStatusUpdate,
+			onSearchChange: handleSearchChange,
+			onStatusChange: handleStatusChange,
+			onInterestChange: handleInterestChange,
+			onSourceChange: handleSourceChange,
+			onDateChange: handleDateChange,
+			onClearFilters: handleClearFilters,
+			onExport: handleExportCSV,
+			onLoadMore: handleLoadMore,
+		},
 	};
 }
