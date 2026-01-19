@@ -93,7 +93,6 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
-			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
@@ -149,7 +148,6 @@ export const resolveConflictManually = mutation({
 	},
 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
 		// Call internal mutation
-		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
 			conflictId: args.conflictId,
 			action: args.action,

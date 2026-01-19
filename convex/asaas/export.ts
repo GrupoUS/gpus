@@ -37,7 +37,6 @@ export const exportStudentToAsaas = action({
 		}
 
 		// Get student
-		// @ts-expect-error - Deep type instantiation
 		const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
 			studentId: args.studentId,
 		});
@@ -101,7 +100,6 @@ export const exportPaymentToAsaas = action({
 		}
 
 		// Get payment using internal query (action context doesn't have db.get)
-		// @ts-expect-error - Deep type instantiation
 		const payment = await ctx.runQuery(internal.asaas.queries.getPaymentById, {
 			paymentId: args.paymentId,
 		});
@@ -174,7 +172,6 @@ export const bulkExportStudents = action({
 		}
 
 		// Get all students without Asaas customer ID
-		// @ts-expect-error - Deep type instantiation
 		const students = await ctx.runQuery(internal.asaas.queries.listAllStudents, {
 			organizationId,
 		});
@@ -258,7 +255,6 @@ export const bulkExportPayments = action({
 		}
 
 		// Get payments that need export (no asaasPaymentId)
-		// @ts-expect-error - Deep type instantiation
 		const payments = await ctx.runQuery(internal.asaas.queries.getPendingExportPayments, {
 			organizationId,
 			startDate: args.startDate,

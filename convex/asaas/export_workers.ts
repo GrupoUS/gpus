@@ -44,25 +44,7 @@ function validateStudentForExport(student: any): {
 	return { valid: true };
 }
 
-/**
- * Sanitize data for LGPD compliance in logs
- */
-function _sanitizeForLog(data: { cpf?: string; phone?: string; email?: string }): string {
-	const parts: string[] = [];
-	if (data.cpf) {
-		parts.push(`CPF: ***${data.cpf.slice(-3)}`);
-	}
-	if (data.phone) {
-		parts.push(`Phone: ***${data.phone.slice(-3)}`);
-	}
-	if (data.email) {
-		const [username, domain] = data.email.split('@');
-		if (username && domain) {
-			parts.push(`Email: ***@${domain}`);
-		}
-	}
-	return parts.join(', ') || '(no sensitive info)';
-}
+// Helper functions (sanitizeForLog) removed - not currently used
 
 // ═══════════════════════════════════════════════════════
 // STUDENT EXPORT WORKER
@@ -133,7 +115,6 @@ export async function exportStudentWorker(
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
 		// Update student with Asaas customer ID
-		// @ts-expect-error - Deep type instantiation
 		await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 			studentId: student._id,
 			asaasCustomerId: asaasCustomer.id,

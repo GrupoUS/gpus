@@ -174,11 +174,10 @@ export const checkEncryptionHealth = query({
 
 			if (failures.length > 0 && samples.length < 5) {
 				// Generate initials from name (first letter of first/last name) for privacy
-				const nameParts = (student.name || '').split(' ');
-				const initials =
-					nameParts.length > 1
-						? `${nameParts[0]?.[0] || ''}${nameParts.at(-1)?.[0] || ''}`.toUpperCase()
-						: (nameParts[0]?.[0] || '?').toUpperCase();
+				const nameParts = (student.name || '').trim().split(/\s+/);
+				const firstInitial = nameParts[0]?.charAt(0) || '?';
+				const lastInitial = nameParts.length > 1 ? nameParts.at(-1)?.charAt(0) || '' : '';
+				const initials = (firstInitial + lastInitial).toUpperCase();
 
 				samples.push({
 					id: String(student._id),

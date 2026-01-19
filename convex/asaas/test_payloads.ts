@@ -304,7 +304,6 @@ export const sendTestWebhook = action({
 
 		try {
 			// Call internal webhook processor
-			// @ts-expect-error - Deep type instantiation workaround for Convex internal actions
 			const result = await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
 				eventId: (payload.id as string) || `test_${Date.now()}`,
 				eventType: (payload.event as string) || args.eventType,

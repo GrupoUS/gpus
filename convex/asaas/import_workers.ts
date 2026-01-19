@@ -106,21 +106,7 @@ function validatePhone(phone: string): boolean {
 	return clean.length === 10 || clean.length === 11;
 }
 
-/**
- * Sanitize data for LGPD compliance
- * - Remove sensitive data from error messages
- * - Partially mask CPF/phone in logs
- */
-function _sanitizeForLog(data: { cpf?: string; phone?: string }): string {
-	const parts: string[] = [];
-	if (data.cpf) {
-		parts.push(`CPF: ***${data.cpf.slice(-3)}`);
-	}
-	if (data.phone) {
-		parts.push(`Phone: ***${data.phone.slice(-3)}`);
-	}
-	return parts.join(', ') || '(no sensitive info)';
-}
+// Helper functions (sanitizeForLog) removed - not currently used
 
 // ═══════════════════════════════════════════════════════
 // CUSTOMER WORKER
@@ -168,29 +154,20 @@ export async function processCustomerWorker(
 
 	try {
 		// Check if student exists with this asaasCustomerId
-		let existingStudent = await ctx.runQuery(
-			// @ts-expect-error - Deep type instantiation
-			internal.asaas.mutations.getStudentByAsaasId,
-			{
-				asaasCustomerId: customer.id,
-			},
-		);
+		let existingStudent = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
+			asaasCustomerId: customer.id,
+		});
 
 		// Deduplication: If not found by ID, try to find by Email or CPF
 		if (!existingStudent && (customer.email || customer.cpfCnpj)) {
-			const duplicate = await ctx.runQuery(
-				// @ts-expect-error - Deep type instantiation
-				internal.asaas.mutations.getStudentByEmailOrCpf,
-				{
-					// Convert null to undefined (Asaas API may return null, but Convex validators expect undefined)
-					email: customer.email ?? undefined,
-					cpf: customer.cpfCnpj ?? undefined,
-				},
-			);
+			const duplicate = await ctx.runQuery(internal.asaas.mutations.getStudentByEmailOrCpf, {
+				// Convert null to undefined (Asaas API may return null, but Convex validators expect undefined)
+				email: customer.email ?? undefined,
+				cpf: customer.cpfCnpj ?? undefined,
+			});
 
 			if (duplicate) {
 				// Link the found student to this Asaas Customer ID
-				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 					studentId: duplicate._id,
 					asaasCustomerId: customer.id,
@@ -202,7 +179,6 @@ export async function processCustomerWorker(
 
 		if (existingStudent) {
 			// Update existing student
-			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateStudentFromAsaas, {
 				studentId: existingStudent._id,
 				name: customer.name,
@@ -219,7 +195,6 @@ export async function processCustomerWorker(
 		}
 
 		// Create new student
-		// @ts-expect-error - Deep type instantiation
 		const studentId = await ctx.runMutation(internal.asaas.mutations.createStudentFromAsaas, {
 			name: customer.name,
 			email: customer.email ?? undefined,
@@ -270,14 +245,12 @@ export async function processPaymentWorker(
 ): Promise<WorkerResult<PaymentDoc>> {
 	try {
 		// Check if payment exists
-		// @ts-expect-error - Deep type instantiation
 		const existingPayment = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
 			asaasPaymentId: payment.id,
 		});
 
 		if (existingPayment) {
 			// Update existing payment
-			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updatePaymentFromAsaas, {
 				paymentId: existingPayment._id,
 				status: payment.status,
@@ -293,7 +266,6 @@ export async function processPaymentWorker(
 		}
 
 		// Find student by asaasCustomerId
-		// @ts-expect-error - Deep type instantiation
 		let student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
 			asaasCustomerId: payment.customer,
 		});
@@ -325,7 +297,6 @@ export async function processPaymentWorker(
 		const resolvedOrganizationId = organizationId ?? student.organizationId;
 
 		// Create new payment
-		// @ts-expect-error - Deep type instantiation
 		const paymentId = await ctx.runMutation(internal.asaas.mutations.createPaymentFromAsaas, {
 			studentId: student._id,
 			asaasPaymentId: payment.id,
@@ -394,7 +365,6 @@ export async function processSubscriptionWorker(
 ): Promise<WorkerResult<SubscriptionDoc>> {
 	try {
 		// Check if subscription exists
-		// @ts-expect-error - Deep type instantiation
 		const existingSubscription = await ctx.runQuery(
 			internal.asaas.mutations.getSubscriptionByAsaasId,
 			{
@@ -404,7 +374,6 @@ export async function processSubscriptionWorker(
 
 		if (existingSubscription) {
 			// Update existing subscription
-			// @ts-expect-error - Deep type instantiation
 			await ctx.runMutation(internal.asaas.mutations.updateSubscriptionFromAsaas, {
 				subscriptionId: existingSubscription._id,
 				status: subscription.status,
@@ -422,7 +391,6 @@ export async function processSubscriptionWorker(
 		}
 
 		// Find student by asaasCustomerId
-		// @ts-expect-error - Deep type instantiation
 		let student = await ctx.runQuery(internal.asaas.mutations.getStudentByAsaasId, {
 			asaasCustomerId: subscription.customer,
 		});
@@ -454,7 +422,6 @@ export async function processSubscriptionWorker(
 		const resolvedOrganizationId = organizationId ?? student.organizationId;
 
 		// Create new subscription
-		// @ts-expect-error - Deep type instantiation
 		const subscriptionId = await ctx.runMutation(
 			internal.asaas.mutations.createSubscriptionFromAsaas,
 			{

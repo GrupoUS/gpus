@@ -19,7 +19,7 @@ export const triggerStudentMigration = mutation({
 		remaining: number;
 	}> => {
 		// Only authenticated users can execute migration
-		const _identity = await requireAuth(ctx);
+		await requireAuth(ctx);
 
 		// Call internal mutation
 		const result = await ctx.runMutation(internal.migrations.migrateStudentOrganizationId, args);

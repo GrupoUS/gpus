@@ -20,7 +20,6 @@ import { action, internalMutation, internalQuery } from './_generated/server';
 import { brevoSmtp } from './lib/brevo';
 
 // Type assertion helper for internal functions during code generation bootstrap
-// @ts-expect-error - Convex type inference is excessively deep for internal API references
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
 const InternalAny: any = internal;
 // biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap

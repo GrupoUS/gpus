@@ -185,7 +185,6 @@ export const resolveAlertPublic = mutation({
 			throw new Error('Unauthenticated');
 		}
 
-		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.resolveAlert, {
 			alertId: args.alertId,
 			resolvedBy: identity.subject,
@@ -207,7 +206,6 @@ export const acknowledgeAlertPublic = mutation({
 			throw new Error('Unauthenticated');
 		}
 
-		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.acknowledgeAlert, {
 			alertId: args.alertId,
 			acknowledgedBy: identity.subject,
@@ -231,7 +229,6 @@ export const suppressAlertPublic = mutation({
 
 		const suppressUntil = Date.now() + args.suppressForHours * 60 * 60 * 1000;
 
-		// @ts-expect-error - Deep type instantiation
 		return await ctx.runMutation(internal.asaas.alerts.suppressAlert, {
 			alertId: args.alertId,
 			suppressUntil,
@@ -256,7 +253,6 @@ export const checkAndCreateAlerts = internalAction({
 		// 1. Check for high API error rate
 		const apiHealth = await checkApiErrorRate(ctx);
 		if (apiHealth.shouldAlert) {
-			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'api_error',
 				severity: apiHealth.severity,
@@ -270,7 +266,6 @@ export const checkAndCreateAlerts = internalAction({
 		// 2. Check for recent sync failures
 		const syncHealth = await checkRecentSyncFailures(ctx);
 		if (syncHealth.shouldAlert) {
-			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'sync_failure',
 				severity: syncHealth.severity,
@@ -284,7 +279,6 @@ export const checkAndCreateAlerts = internalAction({
 		// 3. Check for rate limit warnings
 		const rateLimitHealth = await checkRateLimitWarnings(ctx);
 		if (rateLimitHealth.shouldAlert) {
-			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'rate_limit',
 				severity: rateLimitHealth.severity,
@@ -298,7 +292,6 @@ export const checkAndCreateAlerts = internalAction({
 		// 4. Check for stale webhooks
 		const webhookHealth = await checkStaleWebhooks(ctx);
 		if (webhookHealth.shouldAlert) {
-			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'webhook_timeout',
 				severity: webhookHealth.severity,
@@ -312,7 +305,6 @@ export const checkAndCreateAlerts = internalAction({
 		// 5. Check for pending conflicts
 		const conflictHealth = await checkPendingConflicts(ctx);
 		if (conflictHealth.shouldAlert) {
-			// @ts-expect-error - Deep type instantiation
 			const alertId = await ctx.runMutation(internal.asaas.alerts.createAlert, {
 				alertType: 'duplicate_detection',
 				severity: conflictHealth.severity,
@@ -377,7 +369,6 @@ async function checkRecentSyncFailures(ctx: any): Promise<{
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	failedCount: number;
 }> {
-	// @ts-expect-error - Deep type instantiation
 	const stats = await ctx.runQuery(internal.asaas.queries.getSyncStatisticsInternal, {});
 
 	const totalFailed =
@@ -413,7 +404,6 @@ async function checkRateLimitWarnings(ctx: any): Promise<{
 	// Get recent API audit logs for 429 status codes
 	const hourAgo = Date.now() - 60 * 60 * 1000;
 
-	// @ts-expect-error - Deep type instantiation
 	const auditLogs = await ctx.runQuery(internal.asaas.queries.getRecentAuditLogs, {
 		since: hourAgo,
 	});
@@ -448,7 +438,6 @@ async function checkStaleWebhooks(ctx: any): Promise<{
 	// Get unprocessed webhooks older than 1 hour
 	const hourAgo = Date.now() - 60 * 60 * 1000;
 
-	// @ts-expect-error - Deep type instantiation
 	const staleWebhooks = await ctx.runQuery(internal.asaas.queries.getStaleWebhooks, {
 		olderThan: hourAgo,
 	});
@@ -480,7 +469,6 @@ async function checkPendingConflicts(ctx: any): Promise<{
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	conflictCount: number;
 }> {
-	// @ts-expect-error - Deep type instantiation
 	const conflicts = await ctx.runQuery(internal.asaas.conflict_resolution.getPendingConflicts, {});
 
 	const conflictCount = conflicts.length;
@@ -513,7 +501,6 @@ async function findExistingAlert(ctx: any, args: any): Promise<Doc<'asaasAlerts'
 	const now = Date.now();
 
 	// Get active alerts of this type
-	// @ts-expect-error - Deep type instantiation
 	const alerts = await ctx.runQuery(internal.asaas.monitoring.getAlertsByTypeInternal, {
 		alertType: args.alertType,
 		organizationId: args.organizationId,

@@ -75,18 +75,12 @@ export function validateAsaasApiKey(key: string): {
 export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
 	// Try to get settings from database first
 	const config: Record<string, any> | null = await ctx.runQuery(
-		// @ts-expect-error - Deep type instantiation error with Convex internal references
 		internal.settings.internalGetIntegrationConfig,
 		{ integrationName: 'asaas' },
 	);
 
 	// Log what keys are available in config
-	if (config) {
-		const _configKeys = Object.keys(config).filter(
-			(k) => config[k] !== undefined && config[k] !== null,
-		);
-	} else {
-	}
+	// Config loaded from database (if available)
 
 	// Determine API key source
 	const dbApiKey = config?.api_key || config?.apiKey;
@@ -97,8 +91,7 @@ export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient>
 	const baseUrl =
 		config?.base_url || config?.baseUrl || process.env.ASAAS_BASE_URL || 'https://api.asaas.com/v3';
 
-	// Log the source of the API key
-	const _apiKeySource = dbApiKey ? 'database' : envApiKey ? 'env var' : 'none';
+	// API key will be sourced from database (priority) or environment variable
 
 	// Check if API key exists
 	if (!apiKey) {
@@ -159,7 +152,6 @@ export async function getConfigurationStatus(ctx: any): Promise<{
 
 	// Check database settings
 	const config: Record<string, any> | null = await ctx.runQuery(
-		// @ts-expect-error - Deep type instantiation error with Convex internal references
 		internal.settings.internalGetIntegrationConfig,
 		{ integrationName: 'asaas' },
 	);

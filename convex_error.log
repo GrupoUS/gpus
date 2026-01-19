@@ -1,0 +1,12 @@
+- Preparing Convex functions...
+
+Ô£û TypeScript typecheck via `tsc` failed.
+To ignore failing typecheck, use `--typecheck=disable`.
+- Collecting TypeScript errors
+
+convex/students.ts:179:58 - error TS2550: Property 'at' does not exist on type 'string[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+
+179     const lastInitial = nameParts.length > 1 ? nameParts.at(-1)?.charAt(0) || '' : '';
+                                                             ~~
+
+Found 1 error in convex/students.ts:179

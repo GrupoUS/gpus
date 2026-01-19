@@ -82,13 +82,11 @@ export const createAsaasCustomer = action({
 			});
 
 			// Save Asaas ID to student record
-			// @ts-expect-error - TypeScript has issues with deep type inference in Convex internal mutations
 			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
 				studentId: args.studentId,
 				asaasCustomerId: customer.id,
 			});
 
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/customers',
 				method: 'POST',
@@ -99,7 +97,6 @@ export const createAsaasCustomer = action({
 
 			return customer;
 		} catch (error: any) {
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/customers',
 				method: 'POST',
@@ -175,7 +172,6 @@ export const createAsaasPayment = action({
 				pixQrCode: pixData.payload, // Save payload string
 			});
 
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/payments',
 				method: 'POST',
@@ -190,7 +186,6 @@ export const createAsaasPayment = action({
 				pixQrCodePayload: pixData.payload,
 			};
 		} catch (error: any) {
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/payments',
 				method: 'POST',
@@ -238,7 +233,6 @@ export const createAsaasSubscription = action({
 				externalReference: args.externalReference,
 			});
 
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/subscriptions',
 				method: 'POST',
@@ -249,7 +243,6 @@ export const createAsaasSubscription = action({
 
 			return subscription;
 		} catch (error: any) {
-			// @ts-expect-error - audit module types not yet generated
 			await ctx.runMutation(internal.asaas.audit.logApiUsage, {
 				endpoint: '/subscriptions',
 				method: 'POST',
@@ -355,7 +348,6 @@ export const syncStudentToAsaas = action({
 		}
 
 		// Get student data
-		// @ts-expect-error - Deep type instantiation error
 		const student = await ctx.runQuery(internal.asaas.queries.getStudentById, {
 			studentId: args.studentId,
 		});
@@ -442,7 +434,6 @@ export const syncAllStudents = action({
 			throw new Error('Organization ID not found.');
 		}
 
-		// @ts-expect-error
 		const students = (await ctx.runQuery(internal.asaas.queries.listAllStudents, {
 			organizationId,
 		})) as any[];
@@ -528,7 +519,6 @@ export const importCustomersFromAsaas = action({
 		} catch (_e) {}
 
 		// Create sync log
-		// @ts-expect-error - TypeScript has issues with deep type inference
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'customers' as const,
 			initiatedBy: args.initiatedBy,
@@ -562,7 +552,6 @@ export const importCustomersFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -597,7 +586,6 @@ export const importCustomersFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -627,7 +615,6 @@ export const importCustomersFromAsaas = action({
 			};
 
 			// Update sync log as failed with detailed error
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -666,7 +653,6 @@ export const importPaymentsFromAsaas = action({
 		} catch (_e) {}
 
 		// Create sync log
-		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'payments' as const,
 			initiatedBy: args.initiatedBy,
@@ -711,7 +697,6 @@ export const importPaymentsFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -746,7 +731,6 @@ export const importPaymentsFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -780,7 +764,6 @@ export const importPaymentsFromAsaas = action({
 				name: error.name,
 			};
 
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -817,7 +800,6 @@ export const importSubscriptionsFromAsaas = action({
 		} catch (_e) {}
 
 		// Create sync log
-		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'subscriptions' as const,
 			initiatedBy: args.initiatedBy,
@@ -859,7 +841,6 @@ export const importSubscriptionsFromAsaas = action({
 
 			// Progress callback to update sync log during processing
 			const onProgress = async (stats: any) => {
-				// @ts-expect-error - Deep type instantiation
 				await ctx.runMutation(internal.asaas.sync.updateSyncLogProgress, {
 					logId,
 					recordsProcessed: stats.totalProcessed,
@@ -894,7 +875,6 @@ export const importSubscriptionsFromAsaas = action({
 			const errors = result.failed.map((f) => f.error).slice(0, 50);
 
 			// Update sync log as completed
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -923,7 +903,6 @@ export const importSubscriptionsFromAsaas = action({
 				name: error.name,
 			};
 
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
@@ -954,7 +933,6 @@ export const syncFinancialDataFromAsaas = action({
 		const client = await getAsaasClientFromSettings(ctx);
 
 		// Create sync log
-		// @ts-expect-error
 		const logId = await ctx.runMutation(internal.asaas.sync.createSyncLog, {
 			syncType: 'financial' as const,
 			initiatedBy: args.initiatedBy,
@@ -972,7 +950,6 @@ export const syncFinancialDataFromAsaas = action({
 			});
 
 			// Update sync log as completed
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'completed' as const,
@@ -988,7 +965,6 @@ export const syncFinancialDataFromAsaas = action({
 				summary,
 			};
 		} catch (error: any) {
-			// @ts-expect-error
 			await ctx.runMutation(internal.asaas.sync.updateSyncLog, {
 				logId,
 				status: 'failed' as const,
