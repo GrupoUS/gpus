@@ -330,6 +330,7 @@ export const checkAndCreateAlerts = internalAction({
 /**
  * Check API error rate
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context requires any to break deep type recursion
 async function checkApiErrorRate(ctx: any): Promise<{
 	shouldAlert: boolean;
 	severity: 'low' | 'medium' | 'high' | 'critical';
@@ -337,8 +338,8 @@ async function checkApiErrorRate(ctx: any): Promise<{
 	errorCount: number;
 	totalRequests: number;
 }> {
-	// @ts-expect-error - Deep type instantiation
-	const logs = await ctx.runQuery(internal.asaas.monitoring.getApiHealthMetricsInternal, {
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+	const logs = await ctx.runQuery((internal as any).asaas.monitoring.getApiHealthMetricsInternal, {
 		hours: 1,
 	});
 
@@ -364,6 +365,7 @@ async function checkApiErrorRate(ctx: any): Promise<{
 /**
  * Check for recent sync failures
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context requires any to break deep type recursion
 async function checkRecentSyncFailures(ctx: any): Promise<{
 	shouldAlert: boolean;
 	severity: 'low' | 'medium' | 'high' | 'critical';
@@ -396,6 +398,7 @@ async function checkRecentSyncFailures(ctx: any): Promise<{
 /**
  * Check for rate limit warnings
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context requires any to break deep type recursion
 async function checkRateLimitWarnings(ctx: any): Promise<{
 	shouldAlert: boolean;
 	severity: 'low' | 'medium' | 'high' | 'critical';
@@ -408,6 +411,7 @@ async function checkRateLimitWarnings(ctx: any): Promise<{
 		since: hourAgo,
 	});
 
+	// biome-ignore lint/suspicious/noExplicitAny: audit log type is dynamic based on query result
 	const rateLimitCount = auditLogs.filter((l: any) => l.statusCode === 429).length;
 
 	// Alert thresholds
@@ -430,6 +434,7 @@ async function checkRateLimitWarnings(ctx: any): Promise<{
 /**
  * Check for stale webhooks
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context requires any to break deep type recursion
 async function checkStaleWebhooks(ctx: any): Promise<{
 	shouldAlert: boolean;
 	severity: 'low' | 'medium' | 'high' | 'critical';
@@ -464,6 +469,7 @@ async function checkStaleWebhooks(ctx: any): Promise<{
 /**
  * Check for pending conflicts
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context requires any to break deep type recursion
 async function checkPendingConflicts(ctx: any): Promise<{
 	shouldAlert: boolean;
 	severity: 'low' | 'medium' | 'high' | 'critical';
@@ -497,6 +503,7 @@ async function checkPendingConflicts(ctx: any): Promise<{
 /**
  * Find existing alert with same type and entity
  */
+// biome-ignore lint/suspicious/noExplicitAny: Convex action context and args require any for flexibility
 async function findExistingAlert(ctx: any, args: any): Promise<Doc<'asaasAlerts'> | null> {
 	const now = Date.now();
 

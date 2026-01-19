@@ -1,11 +1,15 @@
 import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
+import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 import { logAudit } from './lgpd';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { decrypt, decryptCPF, encrypt, encryptCPF } from './lib/encryption';
 import { PERMISSIONS } from './lib/permissions';
+
+// Top-level regex for name parsing (performance optimization)
+const NAME_SPLIT_REGEX = /\s+/;
 
 // Queries
 export const list = query({
@@ -24,23 +28,23 @@ export const list = query({
 		const status = args.status as 'ativo' | 'inativo' | 'pausado' | 'formado' | undefined;
 		const churnRisk = args.churnRisk as 'baixo' | 'medio' | 'alto' | undefined;
 
-		let query = ctx.db
+		let studentsQuery = ctx.db
 			.query('students')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 
 		if (status) {
-			query = ctx.db
+			studentsQuery = ctx.db
 				.query('students')
 				.withIndex('by_status', (q) => q.eq('status', status))
 				.filter((q) => q.eq(q.field('organizationId'), organizationId));
 		} else if (churnRisk) {
-			query = ctx.db
+			studentsQuery = ctx.db
 				.query('students')
 				.withIndex('by_churn_risk', (q) => q.eq('churnRisk', churnRisk))
 				.filter((q) => q.eq(q.field('organizationId'), organizationId));
 		}
 
-		const students = await query.order('desc').take(args.limit ?? 100);
+		const students = await studentsQuery.order('desc').take(args.limit ?? 100);
 
 		if (args.search) {
 			const searchLower = args.search.toLowerCase();
@@ -103,6 +107,7 @@ export const diagnoseOrganizationId = query({
 			studentsWithoutOrganizationId: studentsWithoutOrg.length,
 			studentsMatchingCurrentOrg: studentsMatchingOrg.length,
 			sampleStudentsWithoutOrg: studentsWithoutOrg.slice(0, 5).map((s) => ({
+				// biome-ignore lint/style/useNamingConvention: _id is a Convex system field
 				_id: s._id,
 				name: s.name,
 				email: s.email,
@@ -132,6 +137,7 @@ export const checkEncryptionHealth = query({
 			}),
 		),
 	}),
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: encryption health check requires multiple nested try-catch blocks
 	handler: async (ctx) => {
 		await requirePermission(ctx, PERMISSIONS.STUDENTS_READ);
 		const students = await ctx.db.query('students').collect();
@@ -174,7 +180,7 @@ export const checkEncryptionHealth = query({
 
 			if (failures.length > 0 && samples.length < 5) {
 				// Generate initials from name (first letter of first/last name) for privacy
-				const nameParts = (student.name || '').trim().split(/\s+/);
+				const nameParts = (student.name || '').trim().split(NAME_SPLIT_REGEX);
 				const firstInitial = nameParts[0]?.charAt(0) || '?';
 				const lastInitial = nameParts.length > 1 ? nameParts.at(-1)?.charAt(0) || '' : '';
 				const initials = (firstInitial + lastInitial).toUpperCase();
@@ -216,7 +222,8 @@ export const getChurnAlerts = query({
 			students.sort((a, b) => (a.lastEngagementAt || 0) - (b.lastEngagementAt || 0));
 
 			const alerts: Array<{
-				_id: any;
+				// biome-ignore lint/style/useNamingConvention: _id is a Convex system field
+				_id: Id<'students'>;
 				studentName: string;
 				reason: string;
 				risk: 'alto' | 'medio';
@@ -233,6 +240,7 @@ export const getChurnAlerts = query({
 
 				if (lateEnrollment) {
 					alerts.push({
+						// biome-ignore lint/style/useNamingConvention: _id is a Convex system field
 						_id: student._id,
 						studentName: student.name,
 						reason: 'Pagamento atrasado',
@@ -243,6 +251,7 @@ export const getChurnAlerts = query({
 
 				if (student.lastEngagementAt && student.lastEngagementAt < thirtyDaysAgo) {
 					alerts.push({
+						// biome-ignore lint/style/useNamingConvention: _id is a Convex system field
 						_id: student._id,
 						studentName: student.name,
 						reason: 'Sem engajamento',
@@ -310,7 +319,8 @@ export const getStudentsGroupedByProducts = query({
 
 			if (studentProducts.length === 0) {
 				// Student has no enrollments - add to 'sem_produto'
-				const noProductGroup = groups.find((g) => g.id === 'sem_produto')!;
+				const noProductGroup = groups.find((g) => g.id === 'sem_produto');
+				if (!noProductGroup) continue;
 				noProductGroup.count++;
 				noProductGroup.students.push(student);
 			} else {
@@ -402,12 +412,15 @@ export const create = mutation({
 		try {
 			await ctx.scheduler.runAfter(
 				0,
-				internal.asaas.mutations.syncStudentAsCustomerInternal as any,
+				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+				(internal as any).asaas.mutations.syncStudentAsCustomerInternal,
 				{
 					studentId,
 				},
 			);
-		} catch (_error: any) {}
+		} catch {
+			// Silently ignore - Asaas sync will be retried by background job
+		}
 
 		// Auto-sync to email marketing (if student has email)
 		if (args.email) {
@@ -416,7 +429,9 @@ export const create = mutation({
 					studentId,
 					organizationId,
 				});
-			} catch (_error) {}
+			} catch {
+				// Silently ignore - email sync will be retried by background job
+			}
 		}
 
 		return studentId;
@@ -480,12 +495,15 @@ export const update = mutation({
 			try {
 				await ctx.scheduler.runAfter(
 					0,
-					internal.asaas.mutations.syncStudentAsCustomerInternal as any,
+					// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+					(internal as any).asaas.mutations.syncStudentAsCustomerInternal,
 					{
 						studentId: args.studentId,
 					},
 				);
-			} catch (_error: any) {}
+			} catch {
+				// Silently ignore - Asaas sync will be retried by background job
+			}
 		}
 	},
 });
@@ -509,7 +527,7 @@ export const fixOrganizationId = mutation({
 			.collect();
 
 		// Atualizar cada aluno com o organizationId fornecido
-		const updates = [];
+		const updates: Promise<void>[] = [];
 		for (const student of studentsWithoutOrg) {
 			updates.push(
 				ctx.db.patch(student._id, {

@@ -299,6 +299,7 @@ export const getFailedSyncDetails = query({
 			}
 
 			return {
+				// biome-ignore lint/style/useNamingConvention: _id is a Convex system field
 				_id: sync._id,
 				syncType: sync.syncType,
 				startedAt: sync.startedAt,
@@ -508,9 +509,8 @@ export const runAutoSyncCustomersAction = internalAction({
 			return { skipped: true };
 		}
 
-		// Call import action
-		// @ts-expect-error TS2589: Deep type instantiation workaround
-		await ctx.runAction(api.asaas.actions.importCustomersFromAsaas, {
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on api
+		await ctx.runAction((api as any).asaas.actions.importCustomersFromAsaas, {
 			initiatedBy: 'system_auto_sync',
 		});
 
