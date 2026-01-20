@@ -32,7 +32,7 @@ import type * as asaas_queries from "../asaas/queries.js";
 import type * as asaas_queries_health from "../asaas/queries/health.js";
 import type * as asaas_retry from "../asaas/retry.js";
 import type * as asaas_sync from "../asaas/sync.js";
-import type * as asaas_test_payloads from "../asaas/test_payloads.js";
+import type * as asaas_testPayloads from "../asaas/testPayloads.js";
 import type * as asaas_test_sync from "../asaas/test_sync.js";
 import type * as asaas_types from "../asaas/types.js";
 import type * as asaas_validation from "../asaas/validation.js";
@@ -128,7 +128,7 @@ declare const fullApi: ApiFromModules<{
   "asaas/queries/health": typeof asaas_queries_health;
   "asaas/retry": typeof asaas_retry;
   "asaas/sync": typeof asaas_sync;
-  "asaas/test_payloads": typeof asaas_test_payloads;
+  "asaas/testPayloads": typeof asaas_testPayloads;
   "asaas/test_sync": typeof asaas_test_sync;
   "asaas/types": typeof asaas_types;
   "asaas/validation": typeof asaas_validation;

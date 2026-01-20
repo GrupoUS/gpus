@@ -358,7 +358,7 @@ export const sendTestWebhook = action({
 
 			return {
 				success: true,
-				eventId: payload.id,
+				eventId: (payload.id as string) || `test_${Date.now()}`,
 				eventType: args.eventType,
 				result,
 				processingTime,
@@ -369,7 +369,7 @@ export const sendTestWebhook = action({
 
 			return {
 				success: false,
-				eventId: payload.id,
+				eventId: (payload.id as string) || `test_${Date.now()}`,
 				eventType: args.eventType,
 				error: errorMessage,
 				processingTime: Date.now() - startTime,

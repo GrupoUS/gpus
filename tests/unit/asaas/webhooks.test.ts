@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 // Type alias for branded ID to avoid import issues in tests
-type BrandedId<T> = string & { __brand: T };
+type BrandedId<TBrand> = string & { brand: TBrand };
 
 // Mock data
 const mockPaymentPayload = {
