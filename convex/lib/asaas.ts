@@ -431,10 +431,6 @@ class AsaasRequestError extends Error {
 	}
 }
 
-type TestConnectionResult = {
-	status: number;
-} & AsaasCustomerListResponse;
-
 const isNetworkFailure = (error: Error): boolean =>
 	error.name.includes('TimeoutError') || error.message.includes('fetch');
 
@@ -457,6 +453,31 @@ const parseAsaasResponse = async <T>(response: Response): Promise<T> => {
 	const retriable = response.status === 429 || response.status >= 500;
 
 	throw new AsaasRequestError(`Asaas API Error: ${errorMessage}`, retriable);
+};
+
+const requestAsaas = async <T>(
+	url: string,
+	init: RequestInit,
+	timeoutMs: number,
+): Promise<T> => {
+	const response = await fetch(url, {
+		...init,
+		signal: AbortSignal.timeout(timeoutMs),
+	});
+
+	return parseAsaasResponse<T>(response);
+};
+
+const shouldRetryRequest = (error: Error, attempt: number, retries: number): boolean => {
+	if (error instanceof AsaasRequestError) {
+		return error.retriable && attempt < retries;
+	}
+
+	if (isNetworkFailure(error)) {
+		return attempt < retries;
+	}
+
+	return false;
 };
 
 // ═══════════════════════════════════════════════════════
@@ -494,44 +515,34 @@ async function asaasFetch<T>(
 
 	const url = `${ASAAS_API_BASE}${endpoint}`;
 
+	const requestInit: RequestInit = {
+		method: options.method || 'GET',
+		headers: {
+			access_token: apiKey,
+			'Content-Type': 'application/json',
+			'User-Agent': 'gpus-saas/1.0',
+		},
+		body: options.body ? JSON.stringify(options.body) : undefined,
+	};
+
 	let lastError: Error | null = null;
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
-			const response = await fetch(url, {
-				method: options.method || 'GET',
-				headers: {
-					access_token: apiKey,
-					'Content-Type': 'application/json',
-					'User-Agent': 'gpus-saas/1.0',
-				},
-				body: options.body ? JSON.stringify(options.body) : undefined,
-				signal: AbortSignal.timeout(30_000),
-			});
-
-			const result = await parseAsaasResponse<T>(response);
+			const result = await requestAsaas<T>(url, requestInit, 30_000);
 			recordSuccess();
 			return result;
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
 
-			if (error instanceof AsaasRequestError) {
+			if (lastError instanceof AsaasRequestError || isNetworkFailure(lastError)) {
 				recordFailure();
-				if (error.retriable && attempt < retries) {
-					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-					await sleep(delay);
-					continue;
-				}
-				throw error;
 			}
 
-			if (lastError && isNetworkFailure(lastError)) {
-				recordFailure();
-				if (attempt < retries) {
-					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-					await sleep(delay);
-					continue;
-				}
+			if (shouldRetryRequest(lastError, attempt, retries)) {
+				const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
+				await sleep(delay);
+				continue;
 			}
 
 			throw lastError;
@@ -556,7 +567,7 @@ export const asaasCustomers = {
 	/**
 	 * Create a new customer
 	 */
-	async create(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+	create(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
 		return asaasFetch<AsaasCustomerResponse>('/customers', {
 			method: 'POST',
 			body: payload,
@@ -566,7 +577,7 @@ export const asaasCustomers = {
 	/**
 	 * Update an existing customer
 	 */
-	async update(
+	update(
 		customerId: string,
 		payload: Partial<AsaasCustomerPayload>,
 	): Promise<AsaasCustomerResponse> {
@@ -579,14 +590,14 @@ export const asaasCustomers = {
 	/**
 	 * Get customer by ID
 	 */
-	async get(customerId: string): Promise<AsaasCustomerResponse> {
+	get(customerId: string): Promise<AsaasCustomerResponse> {
 		return asaasFetch<AsaasCustomerResponse>(`/customers/${customerId}`);
 	},
 
 	/**
 	 * List customers with filters
 	 */
-	async list(params?: {
+	list(params?: {
 		name?: string;
 		email?: string;
 		cpfCnpj?: string;
@@ -618,7 +629,7 @@ export const asaasPayments = {
 	/**
 	 * Create a new payment
 	 */
-	async create(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+	create(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
 		return asaasFetch<AsaasPaymentResponse>('/payments', {
 			method: 'POST',
 			body: payload,
@@ -628,14 +639,14 @@ export const asaasPayments = {
 	/**
 	 * Get payment by ID
 	 */
-	async get(paymentId: string): Promise<AsaasPaymentResponse> {
+	get(paymentId: string): Promise<AsaasPaymentResponse> {
 		return asaasFetch<AsaasPaymentResponse>(`/payments/${paymentId}`);
 	},
 
 	/**
 	 * List payments with filters
 	 */
-	async list(params?: {
+	list(params?: {
 		customer?: string;
 		subscription?: string;
 		status?: string;
@@ -660,7 +671,7 @@ export const asaasPayments = {
 	/**
 	 * Delete (cancel) a payment
 	 */
-	async delete(paymentId: string): Promise<void> {
+	delete(paymentId: string): Promise<void> {
 		return asaasFetch<void>(`/payments/${paymentId}`, {
 			method: 'DELETE',
 		});
@@ -669,7 +680,7 @@ export const asaasPayments = {
 	/**
 	 * Get payment identification field (barcode for BOLETO)
 	 */
-	async getIdentificationField(paymentId: string): Promise<{ identificationField: string }> {
+	getIdentificationField(paymentId: string): Promise<{ identificationField: string }> {
 		return asaasFetch<{ identificationField: string }>(
 			`/payments/${paymentId}/identificationField`,
 		);
@@ -684,7 +695,7 @@ export const asaasSubscriptions = {
 	/**
 	 * Create a new subscription
 	 */
-	async create(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
+	create(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
 		return asaasFetch<AsaasSubscriptionResponse>('/subscriptions', {
 			method: 'POST',
 			body: payload,
@@ -694,14 +705,14 @@ export const asaasSubscriptions = {
 	/**
 	 * Get subscription by ID
 	 */
-	async get(subscriptionId: string): Promise<AsaasSubscriptionResponse> {
+	get(subscriptionId: string): Promise<AsaasSubscriptionResponse> {
 		return asaasFetch<AsaasSubscriptionResponse>(`/subscriptions/${subscriptionId}`);
 	},
 
 	/**
 	 * Update subscription
 	 */
-	async update(
+	update(
 		subscriptionId: string,
 		payload: Partial<AsaasSubscriptionPayload>,
 	): Promise<AsaasSubscriptionResponse> {
@@ -714,12 +725,16 @@ export const asaasSubscriptions = {
 	/**
 	 * Delete (cancel) a subscription
 	 */
-	async delete(subscriptionId: string): Promise<void> {
+	delete(subscriptionId: string): Promise<void> {
 		return asaasFetch<void>(`/subscriptions/${subscriptionId}`, {
 			method: 'DELETE',
 		});
 	},
 };
+
+type TestConnectionResult = {
+	status: number;
+} & AsaasCustomerListResponse;
 
 // ═══════════════════════════════════════════════════════
 // INSTANCE CLIENT (For dynamic auth)
@@ -760,51 +775,41 @@ export class AsaasClient {
 
 		const url = `${this.config.baseUrl}${endpoint}`;
 
+		const requestInit: RequestInit = {
+			method: options.method || 'GET',
+			headers: {
+				access_token: apiKey,
+				'Content-Type': 'application/json',
+				'User-Agent': 'gpus-saas/1.0',
+			},
+			body: options.body ? JSON.stringify(options.body) : undefined,
+		};
+
 		let lastError: Error | null = null;
 
-	for (let attempt = 0; attempt <= retries; attempt++) {
-		try {
-			const response = await fetch(url, {
-				method: options.method || 'GET',
-				headers: {
-					access_token: apiKey,
-					'Content-Type': 'application/json',
-					'User-Agent': 'gpus-saas/1.0',
-				},
-				body: options.body ? JSON.stringify(options.body) : undefined,
-				signal: AbortSignal.timeout(30_000), // 30s timeout
-			});
+		for (let attempt = 0; attempt <= retries; attempt++) {
+			try {
+				const result = await requestAsaas<T>(url, requestInit, 30_000);
+				recordSuccess();
+				return result;
+			} catch (error) {
+				lastError = error instanceof Error ? error : new Error(String(error));
 
-			const result = await parseAsaasResponse<T>(response);
-			recordSuccess(); // Circuit breaker: record success
-			return result;
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
+				if (lastError instanceof AsaasRequestError || isNetworkFailure(lastError)) {
+					recordFailure();
+				}
 
-			if (error instanceof AsaasRequestError) {
-				recordFailure();
-				if (error.retriable && attempt < retries) {
+				if (shouldRetryRequest(lastError, attempt, retries)) {
 					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 					await sleep(delay);
 					continue;
 				}
-				throw error;
-			}
 
-			if (lastError && isNetworkFailure(lastError)) {
-				recordFailure();
-				if (attempt < retries) {
-					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-					await sleep(delay);
-					continue;
-				}
+				throw lastError;
 			}
-
-			throw lastError;
 		}
-	}
 
-	throw lastError || new Error('Unknown error in AsaasClient.fetch');
+		throw lastError || new Error('Unknown error in AsaasClient.fetch');
 	}
 
 	async testConnection(): Promise<TestConnectionResult> {

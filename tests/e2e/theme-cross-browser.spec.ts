@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+const ENTER_LABEL_REGEX = /Entrar/i;
+
 /**
  * Theme System Cross-Browser Tests
  *
@@ -13,6 +15,7 @@ import { expect, test } from '@playwright/test';
  * TODO: Add Clerk auth fixtures and move these tests to authenticated E2E suite
  */
 test.describe('Theme System Cross-Browser', () => {
+	// biome-ignore lint/suspicious/noSkippedTests: requires Clerk auth fixtures
 	test.skip('theme toggle requires authentication - toggle not on public pages', async () => {
 		// Theme toggle is only available in authenticated sidebar
 		// These tests need Clerk auth fixtures to work
@@ -58,6 +61,6 @@ test.describe('Landing Page Theme Support', () => {
 
 		// Core elements should be visible
 		await expect(page.locator('body')).toBeVisible();
-		await expect(page.getByRole('link', { name: /Entrar/i })).toBeVisible();
+		await expect(page.getByRole('link', { name: ENTER_LABEL_REGEX })).toBeVisible();
 	});
 });

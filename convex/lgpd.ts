@@ -28,7 +28,7 @@ export async function logAudit(
 		description: string;
 		processingPurpose?: string;
 		legalBasis: string;
-		metadata?: any;
+		metadata?: Record<string, unknown>;
 	},
 ) {
 	// If no actorId provided, try to get from auth

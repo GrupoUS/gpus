@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 
 import { internalQuery, mutation, query } from './_generated/server';
-import { hasPermission, requireAuth } from './lib/auth';
+import { getOrganizationId, hasPermission, requireAuth } from './lib/auth';
 import { decrypt, encrypt, isEncrypted } from './lib/encryption';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -13,13 +13,78 @@ const SENSITIVE_KEYS = [
 	'integration_dify_key',
 ];
 
+export interface CashbackSettings {
+	cashbackAmount: number;
+	cashbackType: 'fixed' | 'percentage';
+}
+
+export interface OrganizationSettings {
+	cashbackAmount?: number;
+	cashbackType?: 'fixed' | 'percentage';
+	[key: string]: any;
+}
+
 function isSensitiveKey(key: string): boolean {
+	// Strip organization prefix if present (org_{orgId}_)
+	// We handle variable length orgIds, assuming they don't contain underscores usually,
+	// but strictly the pattern is 'org_' + part + '_' + rest
+	// A regex replacement is safer: org_[^_]+_(.*)
+	const cleanKey = key.startsWith('org_') ? key.replace(/^org_[^_]+_/, '') : key;
+
 	return (
-		SENSITIVE_KEYS.includes(key) ||
-		key.endsWith('_key') ||
-		key.endsWith('_secret') ||
-		key.endsWith('_token')
+		SENSITIVE_KEYS.includes(cleanKey) ||
+		cleanKey.endsWith('_key') ||
+		cleanKey.endsWith('_secret') ||
+		cleanKey.endsWith('_token')
 	);
+}
+
+function isOrganizationSettingKey(key: string): boolean {
+	return key.startsWith('org_');
+}
+
+function validateCashbackSettings(settings: {
+	cashbackAmount?: number;
+	cashbackType?: 'fixed' | 'percentage';
+}): {
+	valid: boolean;
+	error?: string;
+} {
+	const { cashbackAmount, cashbackType } = settings;
+
+	// Check consistency - if one is present, both must be provided
+	const hasAmount = cashbackAmount !== undefined;
+	const hasType = cashbackType !== undefined;
+
+	if (hasAmount !== hasType) {
+		return {
+			valid: false,
+			error: 'Configurações de cashback devem ser fornecidas juntas (valor e tipo).',
+		};
+	}
+
+	// Validate values if present
+	if (hasAmount && hasType) {
+		if (cashbackType === 'percentage') {
+			if (cashbackAmount < 0 || cashbackAmount > 100) {
+				return {
+					valid: false,
+					error: 'Porcentagem de cashback deve estar entre 0 e 100.',
+				};
+			}
+		} else if (cashbackType === 'fixed') {
+			if (cashbackAmount < 0 || cashbackAmount > 10_000) {
+				return {
+					valid: false,
+					error: 'Valor fixo de cashback deve estar entre 0 e 10000.',
+				};
+			}
+		} else {
+			return { valid: false, error: 'Tipo de cashback inválido.' };
+		}
+	}
+
+	return { valid: true };
 }
 
 // Inline validator to avoid circular dependencies with convex/asaas/config.ts
@@ -262,6 +327,82 @@ export const getUserSetting = query({
 	},
 });
 
+// Get all organization settings (Admin only)
+export const getOrganizationSettings = query({
+	args: { organizationId: v.string() },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx);
+
+		// Only admins can see all settings
+		if (!(await hasPermission(ctx, PERMISSIONS.ALL))) {
+			throw new Error('Unauthorized');
+		}
+
+		const prefix = `org_${args.organizationId}_`;
+		// Use range query to find organization settings
+		const orgSettingsList = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.gte('key', prefix).lt('key', `${prefix}\uffff`))
+			.collect();
+
+		const orgSettings: OrganizationSettings = {};
+
+		for (const setting of orgSettingsList) {
+			if (setting.key.startsWith(prefix)) {
+				const key = setting.key.replace(prefix, '');
+				let value = setting.value;
+
+				// Decrypt sensitive values
+				if (isSensitiveKey(setting.key) && typeof value === 'string' && isEncrypted(value)) {
+					value = await decrypt(value);
+				}
+
+				orgSettings[key] = value;
+			}
+		}
+
+		return Object.keys(orgSettings).length > 0 ? orgSettings : null;
+	},
+});
+
+// Get cashback settings for the organization
+export const getCashbackSettings = query({
+	args: { organizationId: v.string() },
+	handler: async (ctx, args) => {
+		await requireAuth(ctx);
+
+		const userOrgId = await getOrganizationId(ctx);
+
+		// Security check: ensure user belongs to the requested organization
+		// Or allow if user is admin (hasPermission check)
+		if (userOrgId !== args.organizationId && !(await hasPermission(ctx, PERMISSIONS.ALL))) {
+			throw new Error('Unauthorized');
+		}
+
+		const amountKey = `org_${args.organizationId}_cashbackAmount`;
+		const typeKey = `org_${args.organizationId}_cashbackType`;
+
+		const amountSetting = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', amountKey))
+			.unique();
+
+		const typeSetting = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', typeKey))
+			.unique();
+
+		if (amountSetting && typeSetting) {
+			return {
+				cashbackAmount: amountSetting.value,
+				cashbackType: typeSetting.value,
+			};
+		}
+
+		return null;
+	},
+});
+
 // Set user-specific setting
 export const setUserSetting = mutation({
 	args: {
@@ -300,6 +441,81 @@ export const setUserSetting = mutation({
 				updatedAt: Date.now(),
 			});
 		}
+	},
+});
+
+// Update organization settings (Admin only)
+export const updateOrganizationSettings = mutation({
+	args: {
+		organizationId: v.string(),
+		settings: v.any(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await requireAuth(ctx);
+
+		// Only admins can update organization settings
+		if (!(await hasPermission(ctx, PERMISSIONS.ALL))) {
+			throw new Error('Unauthorized: Admin access required');
+		}
+
+		// Verify user belongs to the requested organization
+		const userOrgId = await getOrganizationId(ctx);
+		if (userOrgId !== args.organizationId) {
+			throw new Error('Unauthorized: Organization mismatch');
+		}
+
+		const settings = args.settings as OrganizationSettings;
+
+		// Validate cashback settings
+		const validation = validateCashbackSettings(settings);
+		if (!validation.valid) {
+			throw new Error(validation.error);
+		}
+
+		const keys = Object.keys(settings);
+		for (const key of keys) {
+			const value = settings[key];
+			if (value === undefined) continue;
+
+			const prefixedKey = `org_${args.organizationId}_${key}`;
+			let valueToStore = value;
+
+			// Encrypt sensitive keys
+			if (isSensitiveKey(prefixedKey) && typeof value === 'string') {
+				valueToStore = await encrypt(value);
+			}
+
+			const existing = await ctx.db
+				.query('settings')
+				.withIndex('by_key', (q) => q.eq('key', prefixedKey))
+				.unique();
+
+			if (existing) {
+				await ctx.db.patch(existing._id, {
+					value: valueToStore,
+					updatedAt: Date.now(),
+				});
+			} else {
+				await ctx.db.insert('settings', {
+					key: prefixedKey,
+					value: valueToStore,
+					updatedAt: Date.now(),
+				});
+			}
+		}
+
+		// Log activity
+		await ctx.db.insert('activities', {
+			type: 'integracao_configurada',
+			description: 'Configurações da organização atualizadas',
+			metadata: {
+				organizationId: args.organizationId,
+				changedSettings: keys,
+			},
+			organizationId: args.organizationId,
+			performedBy: identity.subject,
+			createdAt: Date.now(),
+		});
 	},
 });
 

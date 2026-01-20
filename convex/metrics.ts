@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import type { Id } from './_generated/dataModel';
 import { internalMutation, query } from './_generated/server';
 import { getOrganizationId } from './lib/auth';
 
@@ -62,6 +63,7 @@ export const getDashboard = query({
 			v.literal('year'),
 			v.literal('all'),
 		),
+		userId: v.optional(v.id('users')),
 	},
 	returns: v.any(),
 	handler: async (ctx, args) => {
@@ -82,21 +84,54 @@ export const getDashboard = query({
 			previousStartDate = startDate - days * 24 * 60 * 60 * 1000;
 		}
 
-		// 1. Leads Metrics (with Trends)
-		const currentLeads = await (args.period === 'all'
-			? ctx.db.query('leads')
-			: ctx.db.query('leads').withIndex('by_created', (q) => q.gte('createdAt', startDate))
-		).collect();
+		// Role-based filtering logic
+		const currentUser = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+			.unique();
 
-		const previousLeads =
-			args.period === 'all'
-				? []
-				: await ctx.db
-						.query('leads')
-						.withIndex('by_created', (q) =>
-							q.gte('createdAt', previousStartDate).lt('createdAt', startDate),
-						)
-						.collect();
+		let effectiveUserId: Id<'users'> | undefined;
+
+		if (currentUser) {
+			const role = currentUser.role;
+			if (role === 'member' || role === 'sdr') {
+				// Vendors can only see their own data
+				effectiveUserId = currentUser._id;
+			} else if (['manager', 'admin', 'owner'].includes(role)) {
+				// Managers/admins can see all or filter by specific user
+				effectiveUserId = args.userId;
+			}
+		}
+
+		const createQuery = () => {
+			if (effectiveUserId) {
+				return ctx.db
+					.query('leads')
+					.withIndex('by_organization_assigned_to', (q) =>
+						q.eq('organizationId', organizationId).eq('assignedTo', effectiveUserId!),
+					);
+			}
+			return ctx.db
+				.query('leads')
+				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
+		};
+
+		// 1. Leads Metrics (with Trends)
+		const currentLeads = await (async () => {
+			const q = createQuery();
+			if (args.period !== 'all') {
+				return (await q.collect()).filter((l) => l.createdAt >= startDate);
+			}
+			return await q.collect();
+		})();
+
+		const previousLeads = await (async () => {
+			if (args.period === 'all') return [];
+			const q = createQuery();
+			return (await q.collect()).filter(
+				(l) => l.createdAt >= previousStartDate && l.createdAt < startDate,
+			);
+		})();
 
 		const totalLeads = currentLeads.length;
 		const previousTotalLeads = previousLeads.length;
@@ -111,12 +146,11 @@ export const getDashboard = query({
 		const startOfMonth = new Date();
 		startOfMonth.setDate(1);
 		startOfMonth.setHours(0, 0, 0, 0);
-		const leadsThisMonth = (
-			await ctx.db
-				.query('leads')
-				.withIndex('by_created', (q) => q.gte('createdAt', startOfMonth.getTime()))
-				.collect()
-		).length;
+		const startOfMonthIds = await (async () => {
+			const q = createQuery();
+			return (await q.collect()).filter((l) => l.createdAt >= startOfMonth.getTime());
+		})();
+		const leadsThisMonth = startOfMonthIds.length;
 
 		// Conversion Rate (stage = 'fechado_ganho')
 		const currentConversions = currentLeads.filter((l) => l.stage === 'fechado_ganho').length;
@@ -140,20 +174,19 @@ export const getDashboard = query({
 		const revenue = financialMetrics?.totalReceived || 0;
 
 		// Use currentEnrollments for trend calculation until financialMetrics supports history
-		const currentEnrollments = await (args.period === 'all'
-			? ctx.db.query('enrollments')
-			: ctx.db.query('enrollments').withIndex('by_created', (q) => q.gte('createdAt', startDate))
-		).collect();
+		const currentEnrollments = await (async () => {
+			if (args.period === 'all') {
+				return ctx.db.query('enrollments').collect();
+			}
+			return (await ctx.db.query('enrollments').collect()).filter((e) => e.createdAt >= startDate);
+		})();
 
-		const previousEnrollments =
-			args.period === 'all'
-				? []
-				: await ctx.db
-						.query('enrollments')
-						.withIndex('by_created', (q) =>
-							q.gte('createdAt', previousStartDate).lt('createdAt', startDate),
-						)
-						.collect();
+		const previousEnrollments = await (async () => {
+			if (args.period === 'all') return [];
+			return (await ctx.db.query('enrollments').collect()).filter(
+				(e) => e.createdAt >= previousStartDate && e.createdAt < startDate,
+			);
+		})();
 
 		const currentEnrollmentRevenue = currentEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
 		const previousRevenue = previousEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
@@ -164,32 +197,40 @@ export const getDashboard = query({
 				: 0;
 
 		// 3. Messages & Response Time
-		const currentMessages = await (args.period === 'all'
-			? ctx.db.query('messages')
-			: ctx.db.query('messages').withIndex('by_created', (q) => q.gte('createdAt', startDate))
-		).collect();
+		const currentMessages = await (async () => {
+			if (args.period === 'all') {
+				return ctx.db.query('messages').collect();
+			}
+			return (await ctx.db.query('messages').collect()).filter((m) => m.createdAt >= startDate);
+		})();
 
 		const totalMessages = currentMessages.length;
 
 		// Avg Response Time (from Conversations)
-		const currentConversations = await (args.period === 'all'
-			? ctx.db.query('conversations').filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-			: ctx.db
+		const currentConversations = await (async () => {
+			if (args.period === 'all') {
+				return ctx.db
 					.query('conversations')
-					.withIndex('by_created', (q) => q.gte('createdAt', startDate))
 					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-		).collect();
+					.collect();
+			}
+			return (
+				await ctx.db
+					.query('conversations')
+					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+					.collect()
+			).filter((c) => c.createdAt >= startDate);
+		})();
 
-		const previousConversations =
-			args.period === 'all'
-				? []
-				: await ctx.db
-						.query('conversations')
-						.withIndex('by_created', (q) =>
-							q.gte('createdAt', previousStartDate).lt('createdAt', startDate),
-						)
-						.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-						.collect();
+		const previousConversations = await (async () => {
+			if (args.period === 'all') return [];
+			return (
+				await ctx.db
+					.query('conversations')
+					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+					.collect()
+			).filter((c) => c.createdAt >= previousStartDate && c.createdAt < startDate);
+		})();
 
 		const conversationsCount = currentConversations.length;
 
@@ -260,6 +301,54 @@ export const getDashboard = query({
 			dailyMetrics,
 			messagesCount: totalMessages,
 		};
+	},
+});
+
+export const listVendors = query({
+	args: {},
+	returns: v.array(
+		v.object({
+			_id: v.id('users'),
+			name: v.string(),
+			email: v.string(),
+			role: v.string(),
+		}),
+	),
+	handler: async (ctx) => {
+		// Auth check
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return [];
+
+		const organizationId = await getOrganizationId(ctx);
+		if (!organizationId) return [];
+
+		// Get current user to check role
+		const currentUser = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+			.unique();
+
+		// Only managers/admins/owners can see vendor list to filter
+		if (!(currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role))) {
+			return [];
+		}
+
+		// Get all active users with vendor roles
+		const users = await ctx.db
+			.query('users')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
+
+		// Filter for vendor roles (member, sdr) and active status
+		// Also include other roles if needed, but usually we assign leads to sales/members
+		return users
+			.filter((u) => u.isActive && ['member', 'sdr', 'manager', 'admin', 'owner'].includes(u.role))
+			.map((u) => ({
+				_id: u._id,
+				name: u.name,
+				email: u.email,
+				role: u.role,
+			}));
 	},
 });
 

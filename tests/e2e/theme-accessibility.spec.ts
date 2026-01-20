@@ -1,6 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+const MENU_LABEL_REGEX = /menu/i;
+const ENTER_LABEL_REGEX = /Entrar/i;
+
 test.describe('Landing Page Accessibility', () => {
 	test('should not have any automatically detectable accessibility issues', async ({ page }) => {
 		await page.goto('/');
@@ -24,12 +27,12 @@ test.describe('Landing Page Accessibility', () => {
 
 		// On mobile, the sign-in link is inside the hamburger menu
 		if (isMobile) {
-			const menuButton = page.getByRole('button', { name: /menu/i });
+			const menuButton = page.getByRole('button', { name: MENU_LABEL_REGEX });
 			await menuButton.click();
 		}
 
 		// Find the sign-in link and verify it can be focused
-		const signInLink = page.getByRole('link', { name: /Entrar/i });
+		const signInLink = page.getByRole('link', { name: ENTER_LABEL_REGEX });
 		await signInLink.focus();
 		await expect(signInLink).toBeFocused();
 	});
@@ -65,12 +68,12 @@ test.describe('Landing Page Accessibility', () => {
 
 		// On mobile, the sign-in link is inside the hamburger menu
 		if (isMobile) {
-			const menuButton = page.getByRole('button', { name: /menu/i });
+			const menuButton = page.getByRole('button', { name: MENU_LABEL_REGEX });
 			await menuButton.click();
 		}
 
 		// Tab through the page and check that focus is visible
-		const signInLink = page.getByRole('link', { name: /Entrar/i });
+		const signInLink = page.getByRole('link', { name: ENTER_LABEL_REGEX });
 
 		// Focus the element
 		await signInLink.focus();
