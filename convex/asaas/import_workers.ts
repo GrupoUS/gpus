@@ -175,7 +175,6 @@ export async function processCustomerWorker(
 
 			if (duplicate) {
 				// Link the found student to this Asaas Customer ID
-				// @ts-expect-error: break deep type instantiation
 				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 				await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 					studentId: duplicate._id,

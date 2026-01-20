@@ -198,6 +198,18 @@ export interface AsaasCustomerListResponse {
 	data: AsaasCustomerResponse[];
 }
 
+export interface AsaasApiError extends Error {
+	response?: {
+		status: number;
+		data: unknown;
+	};
+	code?: string;
+	errors?: Array<{
+		code: string;
+		description: string;
+	}>;
+}
+
 export interface AsaasSubscriptionListResponse {
 	object: 'list';
 	hasMore: boolean;
@@ -205,14 +217,6 @@ export interface AsaasSubscriptionListResponse {
 	limit: number;
 	offset: number;
 	data: AsaasSubscriptionResponse[];
-}
-
-export interface AsaasApiError {
-	errors?: Array<{
-		code: string;
-		description: string;
-	}>;
-	message?: string;
 }
 
 export interface AsaasFinancialSummaryResponse {

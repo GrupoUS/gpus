@@ -4,16 +4,26 @@ description: Pesquisa multi-fonte com validação cruzada e geração de atomic 
 
 # /research: $ARGUMENTS
 
-Este comando roda em **Plan Mode** (pesquisa + planejamento). Ele **não** implementa.
+Este comando roda em **Plan Mode** (pesquisa + planejamento). Ele **não** implementa sem aprovação explícita.
 
-## Fluxo
+Sempre use a Skill planning (.agent\skills\planning\SKILL.md)
 
-```
-Plan Agent → invoca @apex-researcher
-apex-researcher → pesquisa e retorna YAML (Output Contract)
-apex-researcher → executa todowrite() (cria tasks)
-Plan Agent → apresenta plano para aprovação
-Usuário aprova → Act Mode (/implement)
+## Fluxo de Orquestração Nativo Antigravity
+
+```mermaid
+flowchart TD
+    A[Início /research] --> B[Phase 1: Discovery (Parallel)]
+    B --> C1[Explore: EXP-STRUCT]
+    B --> C2[Explore: EXP-TRACE]
+    B --> C3[Librarian: LIB-DOCS]
+    B --> C4[Librarian: LIB-EXAMPLES]
+    B --> C5[Plan Draft: PLAN-1]
+    C1 & C2 & C3 & C4 & C5 --> D[Barrier: Synthesis]
+    D --> E[Phase 2: Targeted Follow-up]
+    E --> F[Oracle: Architecture Review (L4+)]
+    F --> G[Gerar implementation_plan.md]
+    G --> H[Gerar task.md]
+    H --> I[notify_user: Requisição de Aprovação]
 ```
 
 ## Task
@@ -21,115 +31,89 @@ Usuário aprova → Act Mode (/implement)
 Follow this systematic approach to create a new feature: $ARGUMENTS
 
 1. **Feature Planning**
-   - Define the feature requirements and acceptance criteria
-   - Break down the feature into smaller, manageable tasks
-   - Identify affected components and potential impact areas
-   - Plan the API/interface design before implementation
-   - Advanced search query formulation
-   - Domain-specific searching and filtering
-   - Result quality evaluation and ranking
-   - Information synthesis across sources
-   - Fact verification and cross-referencing
-   - Historical and trend analysis
-   - Use specific phrases in quotes for exact matches
-   - Exclude irrelevant terms with negative keywords
-   - Target specific timeframes for recent/historical data
-   - Formulate multiple query variations
+   - Use `task_boundary` to indicate the start of the planning phase.
+   - Define feature requirements and acceptance criteria.
+   - Break down feature into `task.md` using the `[ ]`, `[/]`, `[x]` convention.
+   - Identify affected components and potential impact areas.
+   - Matriz de Requisitos
+| Categoria | Requisito | Prioridade | Método de Validação |
+|-----------|-----------|------------|---------------------|
+| Funcional | [REQ_1] | Must | [COMO_TESTAR] |
+| Non-Funcional | [PERF_REQ] | Must | [BENCHMARK] |
+   - Avaliação de Estado Atual
+```yaml
+existing_architecture: "[DESCREVA_ESTADO_ATUAL]"
+integration_points: ["[SISTEMA_1]", "[SISTEMA_2]"]
+technical_debt: "[DÉBITO_RELEVANTE]"
+```
 
-2. **Research and Analysis**
-   - Study existing codebase patterns and conventions
-   - Identify similar features for consistency
-   - Research external dependencies or libraries needed
-   - Review any relevant documentation or specifications
-   - Extract full content from promising results
-   - Parse structured data from pages
-   - Follow citation trails and references
-   - Capture data before it changes
-   - Domain knowledge and current best practices
-   - Prompt patterns and anti-patterns
-   - Platform constraints and standards
+2. **Research and Analysis (Background Tasks)**
+   - **Explore Agent**: Contextual grep for codebase patterns and implementations.
+   - **Librarian Agent**: Reference grep for official documentation via `context7`.
+   - **Sequential Thinking**: Structured problem-solving for architectural decisions.
+   - Avaliação de Tecnologias
+| Opção | Prós | Contras | Fit Score |
+|-------|------|---------|-----------|
+| [OPÇÃO_1] | [VANTAGENS] | [DESVANTAGENS] | [1-5] |
+   - Padrões a Considerar
+```yaml
+recommended_patterns:
+  - pattern: "[NOME_PADRÃO]"
+    rationale: "[PORQUE_SE_ENCAIXA]"
+    tradeoffs: "[O_QUE_ABRIMOS_MÃO]"
+```
 
 3. **Architecture Design**
-   - Design the feature architecture and data flow
-   - Plan database schema changes if needed
-   - Define API endpoints and contracts
-   - Consider scalability and performance implications
-   - Ensure development environment is up to date
-   - Install any new dependencies required
+   - Design feature architecture and data flow.
+   - Plan database schema changes if needed (Convex).
+   - Define API endpoints and contracts.
+   - Arquitetura da Solução
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│ Componente  │────▶│ Componente  │────▶│ Componente  │
+│      A      │     │      B      │     │      C      │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+   - Registros de Decisão (ADRs)
+```yaml
+decision_1:
+  context: "[SITUAÇÃO_REQUERENDO_DECISÃO]"
+  options_considered: ["[OPT_1]", "[OPT_2]"]
+  decision: "[ABORDAGEM_ESCOLHIDA]"
+  rationale: "[PORQUE_ESSA_ESCOLHA]"
+  consequences: "[IMPLICAÇÕES]"
+```
 
 4. **Implementation Strategy**
-   - Start with core functionality and build incrementally
-   - Follow the project's coding standards and patterns
-   - Implement proper error handling and validation
-   - Use dependency injection and maintain loose coupling
-   - Layered reasoning with multi-perspective analysis
-   - Validate logic, cover edge cases and errors
+   - Generate `implementation_plan.md` in `<appDataDir>/brain/<conversation-id>/`.
+   - Follow the official schema: Goal Description, User Review Required, Proposed Changes, Verification Plan.
+   - Plan validation with atomic tasks and subtasks (Phase 5).
+   - Roadmap de Implementação
+```yaml
+phase_1_foundation:
+  duration: "[ESTIMATIVA]"
+  deliverables:
+    - "[ENTREGÁVEL_1]"
+    - "[ENTREGÁVEL_2]"
 
-5. **Database Changes (if applicable)**
-   - Create migration scripts for schema changes
-   - Ensure backward compatibility
-   - Plan for rollback scenarios
-   - Test migrations on sample data
+phase_2_core:
+  duration: "[ESTIMATIVA]"
+  deliverables:
+    - "[ENTREGÁVEL_3]"
+  dependencies: ["phase_1_foundation"]
+```
+    - Estrutura de Arquivos
+```
+src/
+├── [module_1]/
+│   ├── [component].ts       # [PROPÓSITO]
+│   ├── [service].ts         # [PROPÓSITO]
+│   └── [types].ts           # [PROPÓSITO]
+└── shared/
+    └── ...
+```
 
-6. **API Development**
-   - Implement API endpoints with proper HTTP status codes
-   - Add request/response validation
-   - Implement proper authentication and authorization
-   - Document API contracts and examples
-
-7. **Frontend Implementation (if applicable)**
-   - Create reusable components following project patterns
-   - Implement responsive design and accessibility
-   - Add proper state management
-   - Handle loading and error states
-
-8. **Testing Implementation**
-   - Write unit tests for core business logic
-   - Create integration tests for API endpoints
-   - Add end-to-end tests for user workflows
-   - Test error scenarios and edge cases
-
-9. **Security Considerations**
-    - Implement proper input validation and sanitization
-    - Add authorization checks for sensitive operations
-    - Review for common security vulnerabilities
-    - Ensure data protection and privacy compliance
-
-10. **Performance Optimization**
-    - Optimize database queries and indexes
-    - Implement caching where appropriate
-    - Monitor memory usage and optimize algorithms
-    - Consider lazy loading and pagination
-
-11. **Documentation**
-    - Add inline code documentation and comments
-    - Update API documentation
-    - Create user documentation if needed
-    - Update project README if applicable
-
-12. **Code Review Preparation**
-    - Run all tests and ensure they pass
-    - Run linting and formatting tools
-    - Check for code coverage and quality metrics
-    - Perform self-review of the changes
-
-Remember to maintain code quality, follow project conventions, and prioritize user experience throughout the development process.
-
----
-
-## Step 1: Invocar o subagent de pesquisa
-
-Use este prompt:
-
-```markdown
-@apex-researcher Pesquise sobre: $ARGUMENTS
-
-## Contexto do Projeto
-- Stack: Bun + Convex + TanStack Router + shadcn/ui + Clerk
-- Domínio: CRM para educação em saúde estética
-- Compliance: LGPD obrigatório para dados de alunos
-
-## 📄 ONE-SHOT PROMPT TEMPLATE (YAML-Structured)
+## 📄 ANTAGRAVITY-NATIVE PROMPT TEMPLATE
 
 ```yaml
 role: "[SPECIFIC EXPERTISE] Developer"
@@ -146,84 +130,80 @@ chain_of_thought_process:
   research:
     checklist:
       - "Framework/library documentation needed: _________"
-      - "Patterns to apply (and anti-patterns to avoid): _________"
-      - "Security and compliance considerations: _________"
+      - "Patterns to apply: _________"
+      - "Security and compliance (LGPD): _________"
   think:
     step_by_step:
       - "First: _________  # initial setup/analysis"
       - "Then: _________   # core design/specification"
-      - "Next: _________   # validation/testing strategy"
-      - "Finally: _________ # optimization/cleanup"
+      - "Next: _________   # validation strategy"
+      - "Finally: _________ # cleanup/polish"
 ```
 
-## Instruções
-1. Detecte complexidade (L1-L10) com justificativa
-2. Priorize repo-first (serena/mgrep) antes de fontes externas
-3. Use context7 para docs oficiais quando necessário
-4. Delegue para @database-specialist (Convex) e/ou @code-reviewer (LGPD/OWASP) se necessário mais informações específicas
-5. Retorne o ONE-SHOT PROMPT TEMPLATE YAML completo no Output Contract do apex-researcher
-6. Execute a tool todowrite para criar as atomic tasks com base no ONE-SHOT PROMPT TEMPLATE YAML (MANDATÓRIO)
-7. Verifique se o todowrite segue a estrutura:
-   - Tasks ordenadas por fase (1-5)
-   - Subtasks imediatamente após o parent
-   - Validation tasks no final (VT-001..VT-003)
-   - Todos os status iniciam como "pending"
+## Background Task Orchestration
 
+```yaml
+orchestration:
+  limits:
+    max_concurrent: 5
+    timeout: 180000
 
-## Step 2: Gerar um arquivo de spec para o `/implement` consumir.
+  phases:
+    - id: "P1"
+      name: "Discovery"
+      parallel: true
+      tasks:
+        - id: "EXP-STRUCT"
+          agent: "explore"
+          prompt: "Map file structure + entrypoints + patterns (routes, hooks, Convex)"
+        - id: "EXP-TRACE"
+          agent: "explore"
+          prompt: "Trace references (api.*, route usage, component composition)"
+        - id: "LIB-DOCS"
+          agent: "librarian"
+          prompt: "Official docs via Context7 (Convex, Clerk, TanStack, shadcn)"
+        - id: "LIB-EXAMPLES"
+          agent: "librarian"
+          prompt: "GitHub/OSS examples for complex patterns"
+        - id: "PLAN-1"
+          agent: "apex-researcher"
+          prompt: "Initial implementation_plan.md draft"
+      barrier: { require_done: ["EXP-STRUCT", "EXP-TRACE", "LIB-DOCS", "LIB-EXAMPLES", "PLAN-1"] }
 
-- Template: `.opencode/specs/_template.md`
-- Destino: `.opencode/specs/[feature-id]/spec.md`
-- `feature-id`: slug (lowercase, hífens, sem caracteres especiais, máx. 30)
+    - id: "P2"
+      name: "Targeted Refinement"
+      parallel: true
+      tasks:
+        - id: "REV-1"
+          agent: "architect-reviewer"
+          prompt: "Validate P1 findings against architecture rules"
+          gate: "informational"
+        - id: "PLAN-REFINE"
+          agent: "apex-researcher"
+          prompt: "Finalize implementation_plan.md and task.md based on Wave 1 evidence"
+          dependencies: ["P1"]
 
-## Step 3: Apresentar plano para aprovação
+  collection:
+    - action: "Write implementation_plan.md to <appDataDir>/brain/<conversation-id>/"
+    - action: "Write task.md to <appDataDir>/brain/<conversation-id>/"
 
-Formato recomendado (compacto):
+  approval_gate:
+    - action: "notify_user(BlockedOnUser=true) with Implementation Plan and Task List"
 
-```markdown
-## 📋 Research Complete: $ARGUMENTS
-
-### Summary
-[research_report.summary]
-
-### Complexity
-L[X] — [research_report.complexity_justification]
-
-### Key Findings
-| # | Finding | Confidence | Source |
-|---|---------|------------|--------|
-| 1 | ... | High | serena |
-
-### Gaps
-- (se houver) ...
-
-### Tasks (high level)
-| ID | Title | Phase | Priority | Dependencies |
-|----|-------|-------|----------|--------------|
-| AT-001 | ... | 3 | high | - |
-
-### Validation
-- VT-001: `bun run build`
-- VT-002: `bun run lint`
-- VT-003: `bun run test`
-- VT-004: `@code-reviewer` (se LGPD)
-- VT-005: `@database-specialist` (se Convex)
-
-### Ready?
-Aprovar: "aprovar" / "implemente"
-Ajustar: "adicionar task para X" / "remover AT-XXX"
+  cleanup:
+    - action: "background_cancel(all=true)"
 ```
 
-## Step 4: Processar resposta do usuário
+## Instruções para @apex-researcher
 
-- **Aprovou**: confirmar e instruir Act Mode (`/implement`).
-- **Pediu ajustes**: atualizar TodoWrite e reapresentar.
-- **Pediu mais pesquisa**: re-invocar `@apex-researcher` com o novo escopo.
-
----
+1. **Detecte complexidade (L1-L10)** com justificativa.
+2. **Priorize repo-first** usando `find_by_name` e `grep_search`.
+3. **Use context7** para documentação oficial de frameworks (Convex, Clerk, etc.).
+4. **Coordenação**: Use `task_boundary` para refletir o status da pesquisa para o usuário.
+5. **Output**: Gere o `implementation_plan.md` seguindo rigorosamente o formato oficial.
+6. **Task List**: Crie o `task.md` com as tarefas atômicas (Phase 1-5).
+7. **NOTIFY**: Chame `notify_user` para travar a execução até a aprovação do plano.
 
 ## Referências
-
-- Constituição (princípios): `.opencode/memory/constitution.md`
-- Execução/rollback/ordenação por fase: `.opencode/command/implement.md`
-- Template de spec: `.opencode/specs/_template.md`
+- Princípios: `code-principles.md`
+- Implementação: `implement.md`

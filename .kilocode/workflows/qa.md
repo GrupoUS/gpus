@@ -9,18 +9,30 @@ Pipeline integrado: **Verificação → Auto-Research → Auto-Fix**
 ## Fluxo Integrado
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[/qa] --> B[Phase 1: Local Checks]
     B --> C{Erros?}
     C -->|Não| D[Phase 2: Deploy]
     D --> E{Erros?}
     E -->|Não| F[✅ QA PASS]
-    C -->|Sim| G[Agregar Erros]
+
+    C -->|Sim| G[Aggregation Protocol]
     E -->|Sim| G
-    G --> H["/research 'Fix: [errors]'"]
-    H --> I[Plano Aprovado]
-    I --> J[/implement]
-    J --> K[Re-run /qa]
+
+    G --> H["/research (Docs & Best Practices)"]
+    H --> I[Atomic Implementation Plan]
+    I --> J[Approval Gate]
+    J --> K[/implement]
+    K --> L[Re-run /qa]
+
+    subgraph "Research & Planning"
+    H
+    I
+    end
+
+    subgraph "Implementation"
+    K
+    end
 ```
 # Code Quality Review
 
@@ -118,6 +130,8 @@ bun run test:coverage
 
 > **✅ PREREQUISITE**: Phase 1 deve passar completamente
 
+### 2.1 Deploy Status Check
+
 ```bash
 # Railway deployment status
 railway status
@@ -126,19 +140,88 @@ railway status
 bunx convex deploy --prod
 ```
 
+### 2.2 Deploy Logs Verification
+
+> **🔍 CRITICAL**: Inspecionar logs para identificar erros de runtime/deploy
+
+```bash
+# Railway: Verificar logs recentes de deploy (últimas 100 linhas)
+railway logs --latest -n 100
+
+# Convex: Verificar logs de produção
+bunx convex logs --prod --success --failure
+```
+
+### 2.3 Deploy Error Analysis
+
+Se erros forem encontrados nos logs:
+
+1. **Railway Errors** - Identificar:
+   - Build failures (dependências, TypeScript, bundling)
+   - Runtime errors (crashes, memory, timeouts)
+   - Environment variable issues
+   - Network/connection problems
+
+2. **Convex Errors** - Identificar:
+   - Function execution errors
+   - Schema validation failures
+   - Authentication/authorization issues
+   - Query/mutation timeouts
+
+3. **Ação**: Agregar todos os erros e prosseguir para Phase 3
+
 ## Phase 3: Error Aggregation & Auto-Research
 
 Se erros forem detectados em qualquer fase:
-1. **Aggrega todos os erros** em um resumo
-2. **Invoca automaticamente**: `/research "Fix QA errors: [errors summary]"`
-3. Aguarda plano detalhado do @apex-researcher
+
+1. **Protocolo de Agregação**: Coletar contexto completo:
+   - Stack trace completo.
+   - Versões de bibliotecas envolvidas.
+   - Código fonte dos arquivos afetados.
+   - Logs de erro do terminal e dashboard (Railway/Convex).
+2. **Invoca automaticamente** o workflow de pesquisa:
+   > `/research "QA Fix: [resumo]. Context: [logs/traces]. GOAL: Research docs/best practices and plan atomic fixes."`
+3. **Gerar Atomic Tasks**: O plano DEVE quebrar cada fix em:
+   - `[ ] Research API/pattern (if unknown)`
+   - `[ ] Apply fix to [file]`
+   - `[ ] Verify fix (unit/build/lint)`
+
+3. **Aguarda Aprovação**: O usuário deve aprovar o `implementation_plan.md` e `task.md` gerados.
+
+### Research Strategy (Docs & Best Practices)
+
+O workflow `/research` garantirá:
+- **Consulta a Docs Oficiais**: Uso obrigatório do `context7` e `librarian` para buscar a fonte da verdade (Convex, Clerk, TanStack, etc.).
+- **Atomic Tasks**: Decomposição do fix em subtasks atômicas verificáveis no `task.md` (ex: "Research Error X", "Fix Component Y", "Verify Z").
+- **Best Practices**: Garantia de que o fix segue os padrões recomendados, não apenas "workarounds".
+
+### Skill Integration Strategy
+
+DEVE incorporar as seguintes skills no plano de correção:
+
+**A. Para Erros de Backend / Banco de Dados (Convex):**
+> **USE SKILL**: `ai-data-analyst`
+> - **Objetivo**: Analisar consistência de dados, schemas e logs de query.
+> - **Ação**: Criar scripts Python para validar estado do banco vs. expectations.
+> - **Comando Exemplo**: "Use ai-data-analyst para verificar se todos os usuários possuem 'stripeId' válido na tabela 'users' do Convex."
+
+**B. Para Erros de Frontend / UI (React/TanStack):**
+> **USE SKILL**: `webapp-testing`
+> - **Objetivo**: Reproduzir bugs visuais, testar fluxos de interação e validar fixes.
+> - **Ação**: Criar scripts Playwright (usando `scripts/with_server.py`) para reprodução controlada.
+> - **Comando Exemplo**: "Use webapp-testing para criar um teste que simula o clique no botão 'Checkout' e captura o erro de console."
 
 ## Phase 4: Auto-Implementation
 
-Após plano aprovado:
-1. **Invoca `/implement`** para executar os fixes
-2. **Re-executa `/qa`** para validação final
-3. Repete até QA PASS
+Após o plano de correção e tarefas serem aprovados:
+
+1. **Invoca `/implement`** para executar o plano:
+   - Consome `implementation_plan.md` e `task.md`.
+   - Executa atomic tasks e subtasks geradas pelo `/research`.
+
+2. **Re-executa `/qa`** para validação final (Loop de Feedback):
+   - Se passar: ✅ Sucesso.
+   - Se falhar: 🔄 Retorna para Phase 3 com novos erros.
 
 ## Success Metrics
 
@@ -149,6 +232,8 @@ Após plano aprovado:
 | Tests | `bun run test:coverage` | All tests pass |
 | Deploy | `railway status` | Healthy |
 | Backend | `bunx convex deploy --prod` | Success |
+| Railway Logs | `railway logs --latest -n 100` | No errors in logs |
+| Convex Logs | `bunx convex logs --prod --failure` | No failures |
 
 ## Quick Reference
 

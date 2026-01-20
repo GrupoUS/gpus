@@ -94,7 +94,6 @@ export const resolveCustomerConflict = internalMutation({
 
 			// Update student with Asaas customer ID
 			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-			// @ts-expect-error: break deep type instantiation
 			await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
@@ -296,6 +295,7 @@ export const getConflicts = query({
 		if (args.status) {
 			conflicts = await ctx.db
 				.query('asaasConflicts')
+				// biome-ignore lint/style/noNonNullAssertion: Guaranteed by check above
 				.withIndex('by_status', (q) => q.eq('status', args.status!))
 				.order('desc')
 				.take(limit);
