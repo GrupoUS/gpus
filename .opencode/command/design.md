@@ -1,7 +1,5 @@
 ---
 description: Orchestrates high-quality frontend design using specialized skills
-agent: apex-ui-ux-designer
-subtask: true
 ---
 
 # Command: /design
@@ -21,7 +19,7 @@ To provide a unified entry point for all design-related tasks, ensuring that eve
 
 ### Phase 2: Theming & Identity
 - **Agent**: `@apex-ui-ux-designer`
-- **Skill**: `@theme-factory`
+- **Skill**: `@theme-factory` + `@ui-ux-pro-max`
 - **Action**: Pick or create a theme (colors/fonts) that matches the aesthetic. Define CSS variables.
 
 ### Phase 3: Asset Generation (Parallel)

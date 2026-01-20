@@ -160,57 +160,77 @@ export const listLeads = query({
 				);
 			}
 
-			// Note: Search is still best handled via filter if not using a search index
-			// but it will be applied during the scan.
-			if (args.search) {
-				// Substring search is handled in memory after pagination
-				// to avoid complex filter logic that Convex doesn't support natively
-			}
-
 			return filters.length > 0 ? q.and(...filters) : true;
 		});
 
-		const results = await leadQuery.order('desc').paginate(args.paginationOpts);
+		// Custom Pagination Loop to handle Post-Query Filtering (Tags & Search)
+		const { numItems, cursor } = args.paginationOpts;
+		// biome-ignore lint/suspicious/noExplicitAny: Result type
+		const accumulatedResults: any[] = [];
+		let currentCursor = cursor;
+		let isDone = false;
 
-		// Filter by tags if provided
-		if (args.tags && args.tags.length > 0) {
-			// Query leadTags table to get all leadIds that have any of the specified tags
-			const leadTagsPromises = args.tags.map((tagId) =>
-				ctx.db
-					.query('leadTags')
-					.withIndex('by_tag', (q) => q.eq('tagId', tagId))
-					.collect(),
-			);
+		// Loop until we have enough items or the query is exhausted
+		// Use a safety break to prevent infinite loops if something goes wrong (e.g. 100 iterations)
+		let iterations = 0;
+		const MAX_ITERATIONS = 50;
 
-			const leadTagsResults = await Promise.all(leadTagsPromises);
+		while (accumulatedResults.length < numItems && !isDone && iterations < MAX_ITERATIONS) {
+			iterations++;
 
-			// Collect unique leadIds that have at least one of the specified tags
-			const leadIdsWithTags = new Set<string>();
-			for (const leadTags of leadTagsResults) {
-				for (const leadTag of leadTags) {
-					leadIdsWithTags.add(leadTag.leadId);
-				}
+			// Fetch a page from the database
+			// We ask for 'numItems' to maximize the chance of filling the page,
+			// assuming some items might be filtered out.
+			const pageResult = await leadQuery.order('desc').paginate({
+				cursor: currentCursor,
+				numItems: numItems,
+			});
+
+			let candidates: any[] = pageResult.page;
+
+			// 1. Memory Search Filter (Convex doesn't support substring search in DB yet)
+			if (args.search) {
+				const searchLower = args.search.toLowerCase();
+				candidates = candidates.filter(
+					(l: any) =>
+						l.name.toLowerCase().includes(searchLower) ||
+						l.phone.includes(searchLower) ||
+						l.email?.toLowerCase().includes(searchLower),
+				);
 			}
 
-			// Filter results to only include leads with matching tags
-			// biome-ignore lint/suspicious/noExplicitAny: Complex lead type
-			results.page = results.page.filter((lead: any) => leadIdsWithTags.has(lead._id));
+			// 2. Tag Filter (using by_lead index)
+			if (args.tags && args.tags.length > 0) {
+				// Check which candidates have at least one of the requested tags
+				// Check which candidates have at least one of the requested tags
+
+				// Process in parallel for checking tags of current batch
+				const tagChecks = await Promise.all(
+					candidates.map(async (lead) => {
+						const hasTag = await ctx.db
+							.query('leadTags')
+							.withIndex('by_lead', (q) => q.eq('leadId', lead._id))
+							.filter((q: any) =>
+								q.or(...(args.tags as Id<'tags'>[]).map((t) => q.eq(q.field('tagId'), t))),
+							)
+							.first();
+						return hasTag ? lead : null;
+					})
+				);
+
+				candidates = tagChecks.filter((lead) => lead !== null);
+			}
+
+			accumulatedResults.push(...candidates);
+			currentCursor = pageResult.continueCursor;
+			isDone = pageResult.isDone;
 		}
 
-		// If search is provided, we still need to filter in memory because
-		// Convex filters don't support substring matching.
-		if (args.search) {
-			const searchLower = args.search.toLowerCase();
-			results.page = results.page.filter(
-				// biome-ignore lint/suspicious/noExplicitAny: Complex lead type
-				(l: any) =>
-					l.name.toLowerCase().includes(searchLower) ||
-					l.phone.includes(searchLower) ||
-					l.email?.toLowerCase().includes(searchLower),
-			);
-		}
-
-		return results;
+		return {
+			page: accumulatedResults,
+			isDone: isDone,
+			continueCursor: currentCursor,
+		};
 	},
 });
 

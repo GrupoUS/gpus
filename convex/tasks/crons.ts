@@ -12,7 +12,7 @@ export const sendTaskReminders = internalAction({
 
 		try {
 			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-			const tasks = await ctx.runQuery((internal as any).tasks.getTasksDueToday);
+			const tasks = (await ctx.runQuery((internal as any).tasks.getTasksDueToday)) as any[];
 
 			const startOfDay = new Date();
 			startOfDay.setHours(0, 0, 0, 0);
@@ -22,7 +22,7 @@ export const sendTaskReminders = internalAction({
 					// Idempotency check handled in query filtering mostly, but double check
 					if (task.remindedAt && task.remindedAt > startOfDay.getTime()) continue;
 
-					let sent = false;
+// sent variable removed as it was unused
 
 					// 1. Notify Assigned User
 					if (task.assignedTo) {
@@ -35,7 +35,6 @@ export const sendTaskReminders = internalAction({
 							dueDate: task.dueDate!,
 						});
 						result.notificationsSent++;
-						sent = true;
 					}
 
 					// 2. Notify Mentioned Users
@@ -50,7 +49,6 @@ export const sendTaskReminders = internalAction({
 								dueDate: task.dueDate!,
 							});
 							result.notificationsSent++;
-							sent = true;
 						}
 					}
 
