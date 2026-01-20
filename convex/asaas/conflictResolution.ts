@@ -93,8 +93,9 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
-			const updateAsaasIdMutation = internal.asaas.mutations.updateStudentAsaasId;
-			await ctx.runMutation(updateAsaasIdMutation, {
+			// @ts-expect-error: break deep type instantiation on internal api
+			// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type chain
+			await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
 			});
@@ -149,12 +150,16 @@ export const resolveConflictManually = mutation({
 	},
 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
 		// Call internal mutation
-		return await ctx.runMutation(internal.asaas.conflictResolution.resolveCustomerConflict, {
-			conflictId: args.conflictId,
-			action: args.action,
-			primaryStudentId: args.primaryStudentId,
-			resolutionNote: args.resolutionNote,
-		});
+		return await ctx.runMutation(
+			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+			(internal as any).asaas.conflictResolution.resolveCustomerConflict,
+			{
+				conflictId: args.conflictId,
+				action: args.action,
+				primaryStudentId: args.primaryStudentId,
+				resolutionNote: args.resolutionNote,
+			},
+		);
 	},
 });
 

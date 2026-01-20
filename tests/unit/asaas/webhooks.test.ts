@@ -6,8 +6,8 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-// Type alias for Id to avoid import issues in tests
-type Id<T> = string & { __brand: T };
+// Type alias for branded ID to avoid import issues in tests
+type BrandedId<T> = string & { __brand: T };
 
 // Mock data
 const mockPaymentPayload = {
@@ -275,13 +275,13 @@ describe('Webhooks - Notification Scheduling', () => {
 		ctx.scheduler.runAfter = vi.fn();
 
 		const paymentRecord = {
-			_id: 'payment_id' as Id<'asaasPayments'>,
-			studentId: 'student_id' as Id<'students'>,
+			id: 'payment_id' as BrandedId<'asaasPayments'>,
+			studentId: 'student_id' as BrandedId<'students'>,
 		};
 
 		// Simulate scheduling notification for confirmed payment
 		await ctx.scheduler.runAfter(0, expect.anything(), {
-			paymentId: paymentRecord._id,
+			paymentId: paymentRecord.id,
 			studentId: paymentRecord.studentId,
 		});
 
@@ -289,7 +289,7 @@ describe('Webhooks - Notification Scheduling', () => {
 			0,
 			expect.anything(),
 			expect.objectContaining({
-				paymentId: paymentRecord._id,
+				paymentId: paymentRecord.id,
 				studentId: paymentRecord.studentId,
 			}),
 		);
@@ -300,13 +300,13 @@ describe('Webhooks - Notification Scheduling', () => {
 		ctx.scheduler.runAfter = vi.fn();
 
 		const paymentRecord = {
-			_id: 'payment_id' as Id<'asaasPayments'>,
-			studentId: 'student_id' as Id<'students'>,
+			id: 'payment_id' as BrandedId<'asaasPayments'>,
+			studentId: 'student_id' as BrandedId<'students'>,
 		};
 
 		// Simulate scheduling notification for overdue payment
 		await ctx.scheduler.runAfter(0, expect.anything(), {
-			paymentId: paymentRecord._id,
+			paymentId: paymentRecord.id,
 			studentId: paymentRecord.studentId,
 		});
 
@@ -321,8 +321,8 @@ describe('Webhooks - Deduplication Cleanup', () => {
 
 		// Mock expired entries
 		const expiredEntries = [
-			{ _id: 'id1', expiresAt: now - 1000 },
-			{ _id: 'id2', expiresAt: now - 5000 },
+			{ id: 'id1', expiresAt: now - 1000 },
+			{ id: 'id2', expiresAt: now - 5000 },
 		];
 
 		const collectMock = vi.fn().mockResolvedValue(expiredEntries);

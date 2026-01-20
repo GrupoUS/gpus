@@ -125,7 +125,7 @@ export async function exportStudentWorker(
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
 		// Update student with Asaas customer ID
-		// @ts-expect-error: break deep type instantiation on internal api
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 			studentId: student._id,
 			asaasCustomerId: asaasCustomer.id,
@@ -151,18 +151,18 @@ export async function exportStudentWorker(
 					e.code?.includes('duplicate') || e.description?.includes('já cadastrado'),
 			)
 		) {
-			// Create conflict record for manual resolution
+			// Handle conflict - student already exists in Asaas but we don't have the ID
 			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 			await ctx.runMutation((internal as any).asaas.conflictResolution.createConflict, {
 				conflictType: 'duplicate_customer',
-				studentId: student._id,
-				localData: {
+				entityType: 'student',
+				entityId: student._id,
+				externalId: '', // We don't have it yet
+				details: {
 					name: student.name,
 					email: student.email,
 					cpf: student.cpf,
 				},
-				remoteData: responseData,
-				organizationId: student.organizationId,
 			});
 
 			return {
@@ -187,14 +187,14 @@ export async function exportStudentWorker(
  * Export a single payment to Asaas
  *
  * This worker:
- * 1. Validates payment data for export
+ * 1. Validates payment data
  * 2. Checks if payment already has an Asaas payment ID
  * 3. Ensures student has Asaas customer ID
  * 4. Creates payment in Asaas API
  * 5. Updates payment record with Asaas payment ID
  */
 export async function exportPaymentWorker(
-	ctx: ActionCtx, // Changed to ActionCtx
+	ctx: ActionCtx,
 	payment: Doc<'asaasPayments'>,
 	asaasClient: { createPayment: (payload: AsaasPaymentPayload) => Promise<AsaasPaymentResponse> },
 ): Promise<WorkerResult<{ paymentId: Id<'asaasPayments'>; asaasPaymentId: string }>> {
@@ -221,34 +221,25 @@ export async function exportPaymentWorker(
 		if (!student) {
 			return {
 				success: false,
-				skipped: true,
-				reason: 'Student not found for this payment',
+				error: 'Student not found for this payment',
 			};
 		}
 
 		if (!student.asaasCustomerId) {
 			return {
 				success: false,
-				skipped: true,
-				reason: 'Student must be exported to Asaas before payments',
+				error: 'Student must be exported to Asaas before payments',
 			};
 		}
 
-		// Prepare payment payload
 		const paymentPayload: AsaasPaymentPayload = {
 			customer: student.asaasCustomerId,
 			billingType: payment.billingType,
 			value: payment.value,
-			dueDate: new Date(payment.dueDate).toISOString().split('T')[0], // YYYY-MM-DD
-			description: payment.description,
+			dueDate: new Date(payment.dueDate).toISOString().split('T')[0], // Convert timestamp to ISO date string
+			description: payment.description || undefined,
 			externalReference: payment._id,
 		};
-
-		// Add installment info if available
-		if (payment.installmentNumber && payment.totalInstallments) {
-			paymentPayload.installmentCount = payment.totalInstallments;
-			paymentPayload.installmentNumber = payment.installmentNumber;
-		}
 
 		// Create payment in Asaas
 		const asaasPayment: AsaasPaymentResponse = await asaasClient.createPayment(paymentPayload);
@@ -278,13 +269,13 @@ export async function exportPaymentWorker(
 }
 
 // ═══════════════════════════════════════════════════════
-// BATCH PROCESSING HELPERS
+// WORKER FACTORIES
 // ═══════════════════════════════════════════════════════
 
 /**
- * Create a batch processing function for students
+ * Create a student export worker for the batch processor
  */
-export function createStudentExportBatchProcessor(
+export function createStudentExportWorker(
 	ctx: ActionCtx,
 	asaasClient: {
 		createCustomer: (payload: AsaasCustomerPayload) => Promise<AsaasCustomerResponse>;
@@ -298,9 +289,9 @@ export function createStudentExportBatchProcessor(
 }
 
 /**
- * Create a batch processing function for payments
+ * Create a payment export worker for the batch processor
  */
-export function createPaymentExportBatchProcessor(
+export function createPaymentExportWorker(
 	ctx: ActionCtx,
 	asaasClient: { createPayment: (payload: AsaasPaymentPayload) => Promise<AsaasPaymentResponse> },
 ) {

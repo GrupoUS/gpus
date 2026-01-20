@@ -65,6 +65,7 @@ export const getOrganizationApiKey = query({
 		}
 
 		return {
+			// biome-ignore lint/style/useNamingConvention: Convex standard field
 			_id: config._id,
 			organizationId: config.organizationId,
 			apiKeyMasked,

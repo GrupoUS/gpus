@@ -15,7 +15,7 @@ import {
 	processCustomerWorker,
 	processPaymentWorker,
 	processSubscriptionWorker,
-} from '../../../convex/asaas/import_workers';
+} from '../../../convex/asaas/importWorkers';
 
 // Mock data
 const mockCustomer = {

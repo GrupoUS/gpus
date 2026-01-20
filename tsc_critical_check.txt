@@ -1,0 +1,27 @@
+convex/asaas/conflictResolution.ts(96,34): error TS2589: Type instantiation is excessively deep and possibly infinite.
+convex/asaas/mutations.ts(76,14): error TS2451: Cannot redeclare block-scoped variable 'getStudentByAsaasId'.
+convex/asaas/mutations.ts(91,14): error TS2451: Cannot redeclare block-scoped variable 'getStudentByEmailOrCpf'.
+convex/asaas/mutations.ts(208,14): error TS2451: Cannot redeclare block-scoped variable 'getPaymentByAsaasId'.
+convex/asaas/mutations.ts(223,14): error TS2451: Cannot redeclare block-scoped variable 'updatePaymentFromAsaas'.
+convex/asaas/mutations.ts(243,14): error TS2451: Cannot redeclare block-scoped variable 'createPaymentFromAsaas'.
+convex/asaas/mutations.ts(349,14): error TS2451: Cannot redeclare block-scoped variable 'getSubscriptionByAsaasId'.
+convex/asaas/mutations.ts(366,14): error TS2451: Cannot redeclare block-scoped variable 'updateSubscriptionFromAsaas'.
+convex/asaas/mutations.ts(386,14): error TS2451: Cannot redeclare block-scoped variable 'createSubscriptionFromAsaas'.
+convex/asaas/mutations.ts(459,14): error TS2451: Cannot redeclare block-scoped variable 'updateStudentFromAsaas'.
+convex/asaas/mutations.ts(487,14): error TS2451: Cannot redeclare block-scoped variable 'createStudentFromAsaas'.
+convex/asaas/mutations.ts(686,14): error TS2451: Cannot redeclare block-scoped variable 'getStudentByAsaasId'.
+convex/asaas/mutations.ts(691,15): error TS2345: Argument of type '"by_asaas_customer_id"' is not assignable to parameter of type '"by_organization" | "by_email" | "by_phone" | "by_cpf_hash" | "by_status" | "by_cs" | "by_churn_risk" | keyof SystemIndexes'.
+convex/asaas/mutations.ts(691,51): error TS2345: Argument of type '"asaasCustomerId"' is not assignable to parameter of type '"email" | "organizationId" | "_creationTime" | "phone" | "cpfHash" | "status" | "assignedCS" | "churnRisk" | "_id"'.
+convex/asaas/mutations.ts(699,14): error TS2451: Cannot redeclare block-scoped variable 'getStudentByEmailOrCpf'.
+convex/asaas/mutations.ts(716,16): error TS2345: Argument of type '"by_cpf"' is not assignable to parameter of type '"by_organization" | "by_email" | "by_phone" | "by_cpf_hash" | "by_status" | "by_cs" | "by_churn_risk" | keyof SystemIndexes'.
+convex/asaas/mutations.ts(716,38): error TS2345: Argument of type '"cpf"' is not assignable to parameter of type '"email" | "organizationId" | "_creationTime" | "phone" | "cpfHash" | "status" | "assignedCS" | "churnRisk" | "_id"'.
+convex/asaas/mutations.ts(728,14): error TS2451: Cannot redeclare block-scoped variable 'getPaymentByAsaasId'.
+convex/asaas/mutations.ts(741,14): error TS2451: Cannot redeclare block-scoped variable 'getSubscriptionByAsaasId'.
+convex/asaas/mutations.ts(760,14): error TS2451: Cannot redeclare block-scoped variable 'createStudentFromAsaas'.
+convex/asaas/mutations.ts(778,4): error TS2322: Type '"active"' is not assignable to type '"ativo" | "inativo" | "pausado" | "formado"'.
+convex/asaas/mutations.ts(788,14): error TS2451: Cannot redeclare block-scoped variable 'updateStudentFromAsaas'.
+convex/asaas/mutations.ts(810,14): error TS2451: Cannot redeclare block-scoped variable 'createPaymentFromAsaas'.
+convex/asaas/mutations.ts(839,4): error TS2322: Type 'string' is not assignable to type '"BOLETO" | "PIX" | "CREDIT_CARD" | "DEBIT_CARD" | "UNDEFINED"'.
+convex/asaas/mutations.ts(854,14): error TS2451: Cannot redeclare block-scoped variable 'updatePaymentFromAsaas'.
+convex/asaas/mutations.ts(875,14): error TS2451: Cannot redeclare block-scoped variable 'createSubscriptionFromAsaas'.
+convex/asaas/mutations.ts(910,14): error TS2451: Cannot redeclare block-scoped variable 'updateSubscriptionFromAsaas'.

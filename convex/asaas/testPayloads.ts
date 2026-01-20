@@ -4,7 +4,7 @@
  * Comprehensive test webhook payloads for validation of Asaas sync integration.
  * Includes realistic payloads for each webhook event type.
  *
- * @module convex/asaas/test_payloads
+ * @module convex/asaas/testPayloads
  */
 
 import { v } from 'convex/values';
@@ -12,6 +12,43 @@ import { v } from 'convex/values';
 import { internal } from '../_generated/api';
 import { action } from '../_generated/server';
 import { requireOrgRole } from '../lib/auth';
+
+// ═══════════════════════════════════════════════════════
+// TYPE DEFINITIONS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Webhook payload structure
+ */
+interface WebhookPayload {
+	id: string;
+	event: string;
+	payment?: {
+		id?: string;
+		customer?: string;
+	};
+	subscription?: {
+		id?: string;
+		customer?: string;
+	};
+	customer?: {
+		id?: string;
+	};
+	[key: string]: unknown;
+}
+
+/**
+ * Test webhook result
+ */
+interface TestWebhookResult {
+	success: boolean;
+	eventId: string;
+	eventType: string;
+	result?: unknown;
+	processingTime: number;
+	message?: string;
+	error?: string;
+}
 
 // ═══════════════════════════════════════════════════════
 // TEST PAYLOAD TEMPLATES
@@ -247,7 +284,7 @@ export const sendTestWebhook = action({
 		paymentId: v.optional(v.string()),
 		subscriptionId: v.optional(v.string()),
 	},
-	handler: async (ctx, args): Promise<any> => {
+	handler: async (ctx, args): Promise<TestWebhookResult> => {
 		// Require admin role for testing
 		await requireOrgRole(ctx, ['org:admin', 'admin']);
 
@@ -304,15 +341,16 @@ export const sendTestWebhook = action({
 
 		try {
 			// Call internal webhook processor
+			const webhookPayload = payload as WebhookPayload;
 			const result = await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
 				eventId: (payload.id as string) || `test_${Date.now()}`,
 				eventType: (payload.event as string) || args.eventType,
-				paymentId: (payload as any).payment?.id,
-				subscriptionId: (payload as any).subscription?.id,
+				paymentId: webhookPayload.payment?.id,
+				subscriptionId: webhookPayload.subscription?.id,
 				customerId:
-					(payload as any).payment?.customer ||
-					(payload as any).subscription?.customer ||
-					(payload as any).customer?.id,
+					webhookPayload.payment?.customer ||
+					webhookPayload.subscription?.customer ||
+					webhookPayload.customer?.id,
 				payload,
 			});
 
@@ -378,18 +416,19 @@ export const generateTestWebhookBatch = action({
 					: { ...(template as Record<string, unknown>) };
 
 			// Override event ID for tracking
-			(payload as any).id = eventId;
+			(payload as WebhookPayload).id = eventId;
 
 			try {
+				const webhookPayload = payload as WebhookPayload;
 				await ctx.runAction(internal.asaas.webhooks.processWebhookIdempotent, {
 					eventId,
 					eventType: args.eventType,
-					paymentId: (payload as any).payment?.id,
-					subscriptionId: (payload as any).subscription?.id,
+					paymentId: webhookPayload.payment?.id,
+					subscriptionId: webhookPayload.subscription?.id,
 					customerId:
-						(payload as any).payment?.customer ||
-						(payload as any).subscription?.customer ||
-						(payload as any).customer?.id,
+						webhookPayload.payment?.customer ||
+						webhookPayload.subscription?.customer ||
+						webhookPayload.customer?.id,
 					payload,
 				});
 

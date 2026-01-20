@@ -7,7 +7,8 @@
 
 import { v } from 'convex/values';
 
-import { internalQuery, query } from '../_generated/server';
+import type { Doc } from '../_generated/dataModel';
+import { internalQuery, type QueryCtx, query } from '../_generated/server';
 import { getOrganizationId, requireAuth } from '../lib/auth';
 
 // ═══════════════════════════════════════════════════════
@@ -17,12 +18,13 @@ import { getOrganizationId, requireAuth } from '../lib/auth';
 /**
  * Shared helper function for calculating API health metrics
  */
-async function calculateApiHealthMetrics(ctx: any, hours: number) {
+async function calculateApiHealthMetrics(ctx: QueryCtx, hours: number) {
 	const since = Date.now() - hours * 60 * 60 * 1000;
 
 	// Get API audit logs
 	const logs = await ctx.db
 		.query('asaasApiAudit')
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		.withIndex('by_timestamp', (q: any) => q.gte('timestamp', since))
 		.collect();
 
@@ -38,12 +40,12 @@ async function calculateApiHealthMetrics(ctx: any, hours: number) {
 	}
 
 	// Calculate metrics
-	const errorLogs = logs.filter((l: any) => l.statusCode >= 400);
+	const errorLogs = logs.filter((l) => l.statusCode >= 400);
 
 	const errorRate = logs.length > 0 ? (errorLogs.length / logs.length) * 100 : 0;
 	const successRate = 100 - errorRate;
 
-	const totalResponseTime = logs.reduce((sum: number, l: any) => sum + l.responseTime, 0);
+	const totalResponseTime = logs.reduce((sum: number, l) => sum + l.responseTime, 0);
 	const avgResponseTime = logs.length > 0 ? totalResponseTime / logs.length : 0;
 
 	// Aggregate by endpoint
@@ -80,7 +82,7 @@ async function calculateApiHealthMetrics(ctx: any, hours: number) {
 
 	// Get unique errors
 	const uniqueErrors = Array.from(
-		new Set(errorLogs.map((l: any) => l.errorMessage).filter(Boolean)),
+		new Set(errorLogs.map((l) => l.errorMessage).filter(Boolean)),
 	).slice(0, 10);
 
 	return {
@@ -139,7 +141,7 @@ export const getApiHealthMetrics = query({
  * Shared helper function for getting alerts by type
  */
 async function getAlertsByTypeHelper(
-	ctx: any,
+	ctx: QueryCtx,
 	alertType: string,
 	organizationId: string | undefined,
 	limit: number,
@@ -147,13 +149,14 @@ async function getAlertsByTypeHelper(
 	// Use index for type lookup
 	let alerts = await ctx.db
 		.query('asaasAlerts')
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		.withIndex('by_type', (q: any) => q.eq('alertType', alertType))
 		.order('desc')
 		.take(limit * 2);
 
 	// Post-index filters
 	if (organizationId) {
-		alerts = alerts.filter((a: any) => a.organizationId === organizationId);
+		alerts = alerts.filter((a) => a.organizationId === organizationId);
 	}
 
 	return alerts.slice(0, limit);
@@ -183,7 +186,7 @@ export const getActiveAlerts = query({
 		// Get active alerts (not suppressed)
 		const now = Date.now();
 		const alertsQuery = ctx.db.query('asaasAlerts');
-		let alerts;
+		let alerts: Doc<'asaasAlerts'>[] = [];
 
 		if (orgId) {
 			const severity = args.severity;
@@ -370,7 +373,7 @@ export const getDashboardSummary = query({
 		// So the fallback "by_active" above is invalid.
 		// Use by_status for fallback.
 
-		let orgActiveAlerts;
+		let orgActiveAlerts: Doc<'asaasAlerts'>[] = [];
 		if (orgId) {
 			orgActiveAlerts = await ctx.db
 				.query('asaasAlerts')

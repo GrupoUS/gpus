@@ -103,6 +103,70 @@ export class AsaasRateLimitError extends AsaasError {
 }
 
 /**
+ * Error thrown when Asaas configuration is missing or invalid
+ */
+export class AsaasConfigurationError extends AsaasError {
+	constructor(message: string, originalError?: unknown) {
+		super(message, 'CONFIGURATION_ERROR', false, false, undefined, originalError);
+		this.name = 'AsaasConfigurationError';
+	}
+}
+
+/**
+ * Classifies unknown errors into appropriate AsaasError types
+ */
+export function classifyError(error: unknown): AsaasError {
+	// If already an AsaasError, return as-is
+	if (error instanceof AsaasError) {
+		return error;
+	}
+
+	// Handle Axios-like errors
+	const apiError = error as {
+		response?: {
+			status?: number;
+			data?: {
+				errors?: Array<{ code: string; description: string }>;
+			};
+		};
+		request?: unknown;
+		message?: string;
+	};
+
+	if (apiError.response) {
+		const statusCode = apiError.response.status;
+		const responseData = apiError.response.data;
+
+		if (statusCode === 401) {
+			return new AsaasConfigurationError('Falha na autenticação com Asaas', error);
+		}
+
+		if (statusCode === 429) {
+			return new AsaasRateLimitError('Limite de requisições excedido', undefined, error);
+		}
+
+		const errors = responseData?.errors || [];
+		const message =
+			errors.length > 0 ? errors[0].description : apiError.message || 'Erro na API do Asaas';
+
+		return new AsaasApiError(message, errors, statusCode, error);
+	}
+
+	if (apiError.request) {
+		return new AsaasNetworkError('Erro de rede ao conectar com Asaas', error);
+	}
+
+	return new AsaasError(
+		apiError.message || 'Erro desconhecido na integração com Asaas',
+		'UNKNOWN_ERROR',
+		false,
+		false,
+		undefined,
+		error,
+	);
+}
+
+/**
  * Maps unknown errors to AsaasError instances
  */
 export function mapToAsaasError(error: unknown): AsaasError {
