@@ -13,6 +13,8 @@ const searchSchema = z.object({
 	search: z.string().catch(''),
 	status: z.string().catch('all'),
 	interest: z.string().catch('all'),
+	source: z.string().catch('all'),
+	landingPage: z.string().catch('all'),
 	startDate: z.string().optional(),
 	endDate: z.string().optional(),
 });
@@ -23,7 +25,7 @@ export const Route = createFileRoute('/_authenticated/marketing/leads')({
 });
 
 function LeadsPage() {
-	const { leads, stats, isLoading, canLoadMore, filters, options, handlers } =
+	const { leads, stats, landingPageStats, isLoading, canLoadMore, filters, options, handlers } =
 		useMarketingLeadsViewModel(Route);
 
 	return (
@@ -43,16 +45,19 @@ function LeadsPage() {
 			</div>
 
 			{/* Stats */}
-			<LeadCaptureStats stats={stats} />
+			<LeadCaptureStats landingPageStats={landingPageStats} stats={stats} />
 
 			{/* Filters */}
 			<div className="flex flex-col gap-4">
 				<LeadCaptureFilters
 					date={filters.date}
 					interest={filters.interest}
+					landingPage={filters.landingPage}
+					landingPageOptions={options.landingPages}
 					onClear={handlers.onClearFilters}
 					onDateChange={handlers.onDateChange}
 					onInterestChange={handlers.onInterestChange}
+					onLandingPageChange={handlers.onLandingPageChange}
 					onSearchChange={handlers.onSearchChange}
 					onSourceChange={handlers.onSourceChange}
 					onStatusChange={handlers.onStatusChange}

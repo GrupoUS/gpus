@@ -21,6 +21,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 	const [status, setStatus] = useState(searchParams.status || 'all');
 	const [interest, setInterest] = useState(searchParams.interest || 'all');
 	const [source, setSource] = useState(searchParams.source || 'all');
+	const [landingPage, setLandingPage] = useState(searchParams.landingPage || 'all');
 	const [date, setDate] = useState<DateRange | undefined>(() => {
 		if (searchParams.startDate) {
 			return {
@@ -39,6 +40,11 @@ export function useMarketingLeadsViewModel(Route: any) {
 
 	// Fetch Options
 	const sourceOptions = useQuery(api.marketingLeads.getSources) || [];
+	const landingPageOptions = useQuery(api.marketingLeads.getDistinctLandingPages) || [];
+	const landingPageStats = useQuery(api.marketingLeads.getStatsByLandingPage, {
+		startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
+		endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
+	});
 
 	// Use paginated query for server-side pagination
 	const {
@@ -53,6 +59,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 			status: status === 'all' ? undefined : status,
 			interest: interest === 'all' ? undefined : interest,
 			source: source === 'all' ? undefined : source,
+			landingPage: landingPage === 'all' ? undefined : landingPage,
 			search: search || undefined,
 			startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
 			endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
@@ -130,6 +137,11 @@ export function useMarketingLeadsViewModel(Route: any) {
 		updateUrl({ source: value });
 	};
 
+	const handleLandingPageChange = (value: string) => {
+		setLandingPage(value);
+		updateUrl({ landingPage: value });
+	};
+
 	const handleDateChange = (range: DateRange | undefined) => {
 		setDate(range);
 		updateUrl({
@@ -149,6 +161,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 		setStatus('all');
 		setInterest('all');
 		setSource('all');
+		setLandingPage('all');
 		setDate(undefined);
 
 		void navigate({
@@ -159,6 +172,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 				status: undefined,
 				interest: undefined,
 				source: undefined,
+				landingPage: undefined,
 				startDate: undefined,
 				endDate: undefined,
 				// biome-ignore lint/suspicious/noExplicitAny: router search params typing workaround
@@ -175,6 +189,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 				status: status === 'all' ? undefined : status,
 				interest: interest === 'all' ? undefined : interest,
 				source: source === 'all' ? undefined : source,
+				landingPage: landingPage === 'all' ? undefined : landingPage,
 				startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
 				endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
 			});
@@ -238,6 +253,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 	return {
 		leads: leads ?? [],
 		stats,
+		landingPageStats: landingPageStats || [],
 		isLoading: queryStatus === 'LoadingFirstPage',
 		canLoadMore: queryStatus === 'CanLoadMore',
 		paginationStatus: queryStatus,
@@ -246,10 +262,12 @@ export function useMarketingLeadsViewModel(Route: any) {
 			status,
 			interest,
 			source,
+			landingPage,
 			date,
 		},
 		options: {
 			sources: sourceOptions,
+			landingPages: landingPageOptions,
 		},
 		handlers: {
 			onStatusUpdate: handleStatusUpdate,
@@ -257,6 +275,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 			onStatusChange: handleStatusChange,
 			onInterestChange: handleInterestChange,
 			onSourceChange: handleSourceChange,
+			onLandingPageChange: handleLandingPageChange,
 			onDateChange: handleDateChange,
 			onClearFilters: handleClearFilters,
 			onExport: handleExportCSV,

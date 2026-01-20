@@ -167,6 +167,8 @@ export const createFromWebhook = internalMutation({
 		utmContent: v.optional(v.string()),
 		utmTerm: v.optional(v.string()),
 		customFields: v.optional(v.any()),
+		landingPage: v.optional(v.string()),
+		landingPageUrl: v.optional(v.string()),
 		ipAddress: v.optional(v.string()),
 		userAgent: v.optional(v.string()),
 	},
@@ -224,6 +226,8 @@ export const createFromWebhook = internalMutation({
 			utmMedium: args.utmMedium,
 			utmContent: args.utmContent,
 			utmTerm: args.utmTerm,
+			landingPage: args.landingPage,
+			landingPageUrl: args.landingPageUrl,
 			// Add metadata as needed
 		});
 
@@ -232,7 +236,11 @@ export const createFromWebhook = internalMutation({
 			actionType: 'data_creation',
 			dataCategory: 'marketing_leads',
 			description: `Lead capturado via webhook: ${args.email} (${args.source})`,
-			metadata: { entityId: leadId, source: args.source },
+			metadata: {
+				entityId: leadId,
+				source: args.source,
+				landingPage: args.landingPage,
+			},
 			processingPurpose: 'captura de leads via webhook',
 			legalBasis: 'consentimento',
 			ipAddress: args.ipAddress || 'unknown',
@@ -256,6 +264,7 @@ export const list = convexQuery({
 		interest: v.optional(v.string()),
 		search: v.optional(v.string()),
 		source: v.optional(v.string()),
+		landingPage: v.optional(v.string()),
 		startDate: v.optional(v.number()),
 		endDate: v.optional(v.number()),
 	},
@@ -290,6 +299,20 @@ export const list = convexQuery({
 			// Since we started with by_organization*, we chain filter
 			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
 			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('source'), args.source));
+		}
+
+		if (args.landingPage && args.landingPage !== 'all') {
+			// Using the newly added index if possible (by_organization_landing_page)
+			if (leadQuery.toString().includes('by_organization_created')) {
+				// switch to by_organization_landing_page if possible, otherwise just filter
+				// Actually, we can't easily switch index mid-stream with this logic structure without refactoring
+				// So we append filter
+				// biome-ignore lint/suspicious/noExplicitAny: complex query filter
+				leadQuery = leadQuery.filter((q: any) => q.eq(q.field('landingPage'), args.landingPage));
+			} else {
+				// biome-ignore lint/suspicious/noExplicitAny: complex query filter
+				leadQuery = leadQuery.filter((q: any) => q.eq(q.field('landingPage'), args.landingPage));
+			}
 		}
 
 		if (args.startDate || args.endDate) {
@@ -338,6 +361,78 @@ export const getSources = convexQuery({
 		}
 
 		return Array.from(sources).sort();
+	},
+});
+
+export const getDistinctLandingPages = convexQuery({
+	handler: async (ctx) => {
+		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
+
+		const leads = await ctx.db
+			.query('marketing_leads')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.filter((q) => q.neq(q.field('landingPage'), undefined))
+			.collect();
+
+		const landingPages = new Set<string>();
+		for (const lead of leads) {
+			if (lead.landingPage) {
+				landingPages.add(lead.landingPage);
+			}
+		}
+
+		return Array.from(landingPages).sort();
+	},
+});
+
+export const getStatsByLandingPage = convexQuery({
+	args: {
+		startDate: v.optional(v.number()),
+		endDate: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
+
+		let leadQuery = ctx.db
+			.query('marketing_leads')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
+
+		if (args.startDate || args.endDate) {
+			// biome-ignore lint/suspicious/noExplicitAny: complex filter
+			leadQuery = leadQuery.filter((q: any) => {
+				const conditions: any[] = [];
+				if (args.startDate) conditions.push(q.gte(q.field('createdAt'), args.startDate));
+				if (args.endDate) conditions.push(q.lte(q.field('createdAt'), args.endDate));
+				// biome-ignore lint/suspicious/noExplicitAny: spread
+				return q.and(...(conditions as any));
+			});
+		}
+
+		// Optimization: If many leads, this aggregation might be slow.
+		// For now, it's acceptable. In future, use aggregate table.
+		const leads = await leadQuery.collect();
+
+		const stats: Record<string, { total: number; converted: number; new: number }> = {};
+
+		for (const lead of leads) {
+			const page = lead.landingPage || '(not set)';
+			if (!stats[page]) {
+				stats[page] = { total: 0, converted: 0, new: 0 };
+			}
+			stats[page].total++;
+			if (lead.status === 'converted') stats[page].converted++;
+			if (lead.status === 'new') stats[page].new++;
+		}
+
+		return Object.entries(stats)
+			.map(([name, data]) => ({
+				name,
+				...data,
+				conversionRate: data.total > 0 ? (data.converted / data.total) * 100 : 0,
+			}))
+			.sort((a, b) => b.total - a.total);
 	},
 });
 

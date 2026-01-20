@@ -1,4 +1,5 @@
-// @ts-nocheck
+// type-check enabled
+
 /**
  * Asaas Export Workers
  *
@@ -11,7 +12,7 @@
 
 import { internal } from '../_generated/api';
 import type { Doc, Id } from '../_generated/dataModel';
-import type { MutationCtx } from '../_generated/server';
+import type { ActionCtx } from '../_generated/server'; // Import ActionCtx
 import type { WorkerResult } from './batch_processor';
 import type {
 	AsaasCustomerPayload,
@@ -68,8 +69,7 @@ function validateStudentForExport(student: Doc<'students'>): {
  * 5. Handles conflicts and errors
  */
 export async function exportStudentWorker(
-	// biome-ignore lint/suspicious/noExplicitAny: ActionCtx or MutationCtx compatibility
-	ctx: any, // ActionCtx or MutationCtx
+	ctx: ActionCtx, // Changed to ActionCtx
 	student: Doc<'students'>,
 	asaasClient: {
 		createCustomer: (payload: AsaasCustomerPayload) => Promise<AsaasCustomerResponse>;
@@ -195,8 +195,7 @@ export async function exportStudentWorker(
  * 5. Updates payment record with Asaas payment ID
  */
 export async function exportPaymentWorker(
-	// biome-ignore lint/suspicious/noExplicitAny: ActionCtx or MutationCtx compatibility
-	ctx: any, // ActionCtx or MutationCtx
+	ctx: ActionCtx, // Changed to ActionCtx
 	payment: Doc<'asaasPayments'>,
 	asaasClient: { createPayment: (payload: AsaasPaymentPayload) => Promise<AsaasPaymentResponse> },
 ): Promise<WorkerResult<{ paymentId: Id<'asaasPayments'>; asaasPaymentId: string }>> {
@@ -215,7 +214,6 @@ export async function exportPaymentWorker(
 
 	try {
 		// Get student to ensure they have Asaas customer ID
-		// @ts-expect-error: break deep type instantiation
 		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		const student = await ctx.runQuery((internal as any).asaas.queries.getStudentById, {
 			studentId: payment.studentId,
@@ -258,7 +256,6 @@ export async function exportPaymentWorker(
 		const asaasPayment: AsaasPaymentResponse = await asaasClient.createPayment(paymentPayload);
 
 		// Update payment record with Asaas payment ID
-		// @ts-expect-error: break deep type instantiation
 		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		await ctx.runMutation((internal as any).asaas.mutations.updatePaymentAsaasId, {
 			paymentId: payment._id,
@@ -290,7 +287,7 @@ export async function exportPaymentWorker(
  * Create a batch processing function for students
  */
 export function createStudentExportBatchProcessor(
-	ctx: MutationCtx,
+	ctx: ActionCtx,
 	asaasClient: {
 		createCustomer: (payload: AsaasCustomerPayload) => Promise<AsaasCustomerResponse>;
 	},
@@ -306,7 +303,7 @@ export function createStudentExportBatchProcessor(
  * Create a batch processing function for payments
  */
 export function createPaymentExportBatchProcessor(
-	ctx: MutationCtx,
+	ctx: ActionCtx,
 	asaasClient: { createPayment: (payload: AsaasPaymentPayload) => Promise<AsaasPaymentResponse> },
 ) {
 	return (

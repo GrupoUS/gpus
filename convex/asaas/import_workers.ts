@@ -1,4 +1,4 @@
-// @ts-nocheck
+// type-check enabled
 /**
  * Asaas Import Workers
  *
@@ -11,6 +11,7 @@
 
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
+import type { ActionCtx } from '../_generated/server';
 import { maskCPF } from '../lib/masking';
 import type { WorkerResult } from './batch_processor';
 import type {
@@ -128,8 +129,7 @@ function validatePhone(phone: string): boolean {
  */
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Worker validation logic requires linear checks
 export async function processCustomerWorker(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
+	ctx: ActionCtx,
 	customer: AsaasCustomerResponse,
 	organizationId?: string,
 ): Promise<WorkerResult<StudentWithAsaas>> {
@@ -227,8 +227,8 @@ export async function processCustomerWorker(
 			},
 			created: true,
 		};
-		// biome-ignore lint/suspicious/noExplicitAny: Error handling
-	} catch (error: any) {
+	} catch (err: unknown) {
+		const error = err as Error;
 		const maskedCpf = customer.cpfCnpj ? maskCPF(customer.cpfCnpj) : 'N/A';
 		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
 		console.error(
@@ -255,8 +255,7 @@ export async function processCustomerWorker(
  * 4. Creates or updates payment record
  */
 export async function processPaymentWorker(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
+	ctx: ActionCtx,
 	payment: AsaasPaymentResponse,
 	organizationId?: string,
 ): Promise<WorkerResult<PaymentDoc>> {
@@ -355,7 +354,8 @@ export async function processPaymentWorker(
 			},
 			created: true,
 		};
-	} catch (error: any) {
+	} catch (err: unknown) {
+		const error = err as Error;
 		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
 		console.error(`Error processing payment ${payment.id}: ${error.message}`);
 		return {
@@ -379,8 +379,7 @@ export async function processPaymentWorker(
  * 4. Creates or updates subscription record
  */
 export async function processSubscriptionWorker(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
+	ctx: ActionCtx,
 	subscription: AsaasSubscriptionResponse,
 	organizationId?: string,
 ): Promise<WorkerResult<SubscriptionDoc>> {
@@ -477,7 +476,8 @@ export async function processSubscriptionWorker(
 			},
 			created: true,
 		};
-	} catch (error: any) {
+	} catch (err: unknown) {
+		const error = err as Error;
 		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
 		console.error(`Error processing subscription ${subscription.id}: ${error.message}`);
 		return {
@@ -495,11 +495,7 @@ export async function processSubscriptionWorker(
  * Create a batch processing function for customers
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createCustomerBatchProcessor(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
-	organizationId?: string,
-) {
+export function createCustomerBatchProcessor(ctx: ActionCtx, organizationId?: string) {
 	return async (customer: AsaasCustomerResponse): Promise<WorkerResult<StudentWithAsaas>> => {
 		try {
 			return await withItemTimeout(
@@ -521,11 +517,7 @@ export function createCustomerBatchProcessor(
  * Create a batch processing function for payments
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createPaymentBatchProcessor(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
-	organizationId?: string,
-) {
+export function createPaymentBatchProcessor(ctx: ActionCtx, organizationId?: string) {
 	return async (payment: AsaasPaymentResponse): Promise<WorkerResult<PaymentDoc>> => {
 		try {
 			return await withItemTimeout(
@@ -547,11 +539,7 @@ export function createPaymentBatchProcessor(
  * Create a batch processing function for subscriptions
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createSubscriptionBatchProcessor(
-	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
-	ctx: any,
-	organizationId?: string,
-) {
+export function createSubscriptionBatchProcessor(ctx: ActionCtx, organizationId?: string) {
 	return async (
 		subscription: AsaasSubscriptionResponse,
 	): Promise<WorkerResult<SubscriptionDoc>> => {

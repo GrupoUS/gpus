@@ -233,6 +233,10 @@ const DEFAULT_TIMEOUT_MS = 30_000; // 30 seconds for normal operations
 const SYNC_TIMEOUT_MS = 60_000; // 60 seconds for sync operations (larger data sets)
 const DEFAULT_MAX_RETRIES = 3;
 
+// Pattern to match sensitive key names
+const SENSITIVE_KEY_PATTERN =
+	/^(api[_-]?key|access[_-]?token|secret|password|credential|auth[_-]?token|bearer|private[_-]?key)$/i;
+
 // ═══════════════════════════════════════════════════════
 // ASAAS API CLIENT
 // ═══════════════════════════════════════════════════════
@@ -269,7 +273,7 @@ export class AsaasClient {
 		const sanitizedBody = this.sanitizeBody(options.body);
 
 		// Execute with retry logic and shared circuit breaker
-		return withTimeoutAndRetry(
+		return await withTimeoutAndRetry(
 			async () => {
 				// Check shared circuit breaker before request
 				if (!checkCircuitBreaker()) {
@@ -331,14 +335,10 @@ export class AsaasClient {
 
 		const sanitized = { ...(body as Record<string, unknown>) };
 
-		// Pattern to match sensitive key names
-		const sensitiveKeyPattern =
-			/^(api[_-]?key|access[_-]?token|secret|password|credential|auth[_-]?token|bearer|private[_-]?key)$/i;
-
 		// Only redact values where key name indicates a secret
 		Object.keys(sanitized).forEach((key) => {
 			const value = sanitized[key];
-			if (typeof value === 'string' && sensitiveKeyPattern.test(key)) {
+			if (typeof value === 'string' && SENSITIVE_KEY_PATTERN.test(key)) {
 				sanitized[key] = '[REDACTED]';
 			}
 		});

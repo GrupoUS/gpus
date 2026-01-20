@@ -962,6 +962,10 @@ export default defineSchema({
 		resultId: v.optional(v.string()), // result_id
 		externalTimestamp: v.optional(v.number()), // timestamp
 
+		// Landing Page Tracking
+		landingPage: v.optional(v.string()), // e.g. "trintae3", "promo-janeiro"
+		landingPageUrl: v.optional(v.string()), // full URL
+
 		// Multi-tenant (optional for public submissions)
 		organizationId: v.optional(v.string()),
 
@@ -979,7 +983,9 @@ export default defineSchema({
 		.index('by_organization', ['organizationId'])
 		.index('by_organization_status', ['organizationId', 'status'])
 		.index('by_organization_created', ['organizationId', 'createdAt'])
-		.index('by_source', ['source']),
+		.index('by_source', ['source'])
+		.index('by_landing_page', ['landingPage'])
+		.index('by_organization_landing_page', ['organizationId', 'landingPage']),
 
 	// ═══════════════════════════════════════════════════════
 	// EMAIL MARKETING (Brevo Integration)

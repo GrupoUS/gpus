@@ -13,9 +13,15 @@ interface LeadStats {
 
 interface LeadCaptureStatsProps {
 	stats: LeadStats | null;
+	landingPageStats?: Array<{
+		name: string;
+		total: number;
+		converted: number;
+		conversionRate: number;
+	}>;
 }
 
-export function LeadCaptureStats({ stats }: LeadCaptureStatsProps) {
+export function LeadCaptureStats({ stats, landingPageStats = [] }: LeadCaptureStatsProps) {
 	if (!stats) return null;
 
 	return (
@@ -65,6 +71,28 @@ export function LeadCaptureStats({ stats }: LeadCaptureStatsProps) {
 					</p>
 				</CardContent>
 			</Card>
+			{landingPageStats.length > 0 && (
+				<Card className="col-span-full mt-4">
+					<CardHeader>
+						<CardTitle className="font-medium text-sm">Top Landing Pages</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-4">
+							{landingPageStats.slice(0, 5).map((page) => (
+								<div className="flex items-center" key={page.name}>
+									<div className="ml-4 space-y-1">
+										<p className="font-medium text-sm leading-none">{page.name}</p>
+										<p className="text-muted-foreground text-xs">
+											{page.converted} conversões ({page.conversionRate.toFixed(1)}%)
+										</p>
+									</div>
+									<div className="ml-auto font-medium">{page.total}</div>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</Card>
+			)}
 		</div>
 	);
 }

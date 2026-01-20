@@ -1,4 +1,4 @@
-// @ts-nocheck
+// type-check enabled
 /**
  * Asaas Export Actions
  *
@@ -9,6 +9,7 @@
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
+import type { Doc } from '../_generated/dataModel';
 import { action } from '../_generated/server';
 import { getOrganizationId } from '../lib/auth';
 import type { BatchResult } from './batch_processor';
@@ -54,21 +55,20 @@ export const exportStudentToAsaas = action({
 		const { exportStudentWorker } = await import('./export_workers');
 
 		// Create worker function
-		const worker = (studentData: any) => exportStudentWorker(ctx, studentData, asaasClient);
+		const worker = (studentData: Doc<'students'>) =>
+			// biome-ignore lint/suspicious/noExplicitAny: Context type mismatch resolution
+			exportStudentWorker(ctx as any, studentData, asaasClient);
 
 		// Process single student
-		const result: BatchResult<{ studentId: string; asaasCustomerId: string }> = await processBatch(
-			[student],
-			worker,
-			{
+		const result: BatchResult<{ studentId: Id<'students'>; asaasCustomerId: string }> =
+			await processBatch([student], worker, {
 				batchSize: 1,
 				concurrency: 1,
 				delayBetweenBatches: 0,
 				maxRetries: 3,
 				checkpointInterval: 1,
 				adaptiveBatching: false,
-			},
-		);
+			});
 
 		if (result.failed.length > 0) {
 			throw new Error(`Failed to export student: ${result.failed[0].error}`);
@@ -122,21 +122,20 @@ export const exportPaymentToAsaas = action({
 		const { exportPaymentWorker } = await import('./export_workers');
 
 		// Create worker function
-		const worker = (paymentData: any) => exportPaymentWorker(ctx, paymentData, asaasClient);
+		const worker = (paymentData: Doc<'asaasPayments'>) =>
+			// biome-ignore lint/suspicious/noExplicitAny: Context type mismatch resolution
+			exportPaymentWorker(ctx as any, paymentData, asaasClient);
 
 		// Process single payment
-		const result: BatchResult<{ paymentId: string; asaasPaymentId: string }> = await processBatch(
-			[payment],
-			worker,
-			{
+		const result: BatchResult<{ paymentId: Id<'asaasPayments'>; asaasPaymentId: string }> =
+			await processBatch([payment], worker, {
 				batchSize: 1,
 				concurrency: 1,
 				delayBetweenBatches: 0,
 				maxRetries: 3,
 				checkpointInterval: 1,
 				adaptiveBatching: false,
-			},
-		);
+			});
 
 		if (result.failed.length > 0) {
 			throw new Error(`Failed to export payment: ${result.failed[0].error}`);
@@ -152,6 +151,7 @@ export const exportPaymentToAsaas = action({
 /**
  * Bulk export students to Asaas
  */
+// @ts-expect-error: break deep type instantiation
 export const bulkExportStudents = action({
 	args: {
 		limit: v.optional(v.number()),
@@ -178,9 +178,7 @@ export const bulkExportStudents = action({
 		});
 
 		// Filter for students that need export (no asaasCustomerId)
-		const studentsToExport = students
-			.filter((s: any) => !s.asaasCustomerId)
-			.slice(0, args.limit || 100);
+		const studentsToExport = students.filter((s) => !s.asaasCustomerId).slice(0, args.limit || 100);
 
 		if (studentsToExport.length === 0) {
 			return {
@@ -200,32 +198,37 @@ export const bulkExportStudents = action({
 		const { exportStudentWorker } = await import('./export_workers');
 
 		// Create worker function
-		const worker = (student: any) => exportStudentWorker(ctx, student, asaasClient);
+		const worker = (student: Doc<'students'>) =>
+			// biome-ignore lint/suspicious/noExplicitAny: Context type mismatch resolution
+			exportStudentWorker(ctx as any, student, asaasClient);
 
 		// Progress callback
-		const onProgress = async (_stats: any) => {};
+		const onProgress = async (_stats: unknown) => {
+			// Intentional empty callback
+		};
 
 		// Process students in batch
-		const result: BatchResult<{ studentId: string; asaasCustomerId: string }> = await processBatch(
-			studentsToExport,
-			worker,
-			{
-				batchSize: 10,
-				concurrency: 5,
-				delayBetweenBatches: 100,
-				maxRetries: 3,
-				checkpointInterval: 20,
-				adaptiveBatching: true,
-			},
-			onProgress,
-		);
+		const result: BatchResult<{ studentId: Id<'students'>; asaasCustomerId: string }> =
+			await processBatch(
+				studentsToExport,
+				worker,
+				{
+					batchSize: 10,
+					concurrency: 5,
+					delayBetweenBatches: 100,
+					maxRetries: 3,
+					checkpointInterval: 20,
+					adaptiveBatching: true,
+				},
+				onProgress,
+			);
 
 		return {
 			success: result.failed.length < studentsToExport.length,
 			exported: result.successful.length,
 			skipped: result.skipped.length,
 			failed: result.failed.length,
-			errors: result.failed.slice(0, 10).map((f: any) => f.error),
+			errors: result.failed.slice(0, 10).map((f) => f.error),
 		};
 	},
 });
@@ -263,9 +266,7 @@ export const bulkExportPayments = action({
 		});
 
 		// Filter for payments that need export
-		const paymentsToExport = payments
-			.filter((p: any) => !p.asaasPaymentId)
-			.slice(0, args.limit || 100);
+		const paymentsToExport = payments.filter((p) => !p.asaasPaymentId).slice(0, args.limit || 100);
 
 		if (paymentsToExport.length === 0) {
 			return {
@@ -285,32 +286,37 @@ export const bulkExportPayments = action({
 		const { exportPaymentWorker } = await import('./export_workers');
 
 		// Create worker function
-		const worker = (payment: any) => exportPaymentWorker(ctx, payment, asaasClient);
+		const worker = (payment: Doc<'asaasPayments'>) =>
+			// biome-ignore lint/suspicious/noExplicitAny: Context type mismatch resolution
+			exportPaymentWorker(ctx as any, payment, asaasClient);
 
 		// Progress callback
-		const onProgress = async (_stats: any) => {};
+		const onProgress = async (_stats: unknown) => {
+			// Intentional empty callback
+		};
 
 		// Process payments in batch
-		const result: BatchResult<{ paymentId: string; asaasPaymentId: string }> = await processBatch(
-			paymentsToExport,
-			worker,
-			{
-				batchSize: 10,
-				concurrency: 5,
-				delayBetweenBatches: 100,
-				maxRetries: 3,
-				checkpointInterval: 20,
-				adaptiveBatching: true,
-			},
-			onProgress,
-		);
+		const result: BatchResult<{ paymentId: Id<'asaasPayments'>; asaasPaymentId: string }> =
+			await processBatch(
+				paymentsToExport,
+				worker,
+				{
+					batchSize: 10,
+					concurrency: 5,
+					delayBetweenBatches: 100,
+					maxRetries: 3,
+					checkpointInterval: 20,
+					adaptiveBatching: true,
+				},
+				onProgress,
+			);
 
 		return {
 			success: result.failed.length < paymentsToExport.length,
 			exported: result.successful.length,
 			skipped: result.skipped.length,
 			failed: result.failed.length,
-			errors: result.failed.slice(0, 10).map((f: any) => f.error),
+			errors: result.failed.slice(0, 10).map((f) => f.error),
 		};
 	},
 });

@@ -476,6 +476,8 @@ http.route({
 				utmMedium: body.utm_medium || body.utmMedium,
 				utmContent: body.utm_content || body.utmContent,
 				utmTerm: body.utm_term || body.utmTerm,
+				landingPage: body.landingPage || body.landing_page, // Accept both snake and camel case
+				landingPageUrl: body.landingPageUrl || body.landing_page_url,
 				ipAddress: ipAddress.split(',')[0].trim(),
 				userAgent,
 				customFields: body.custom_fields,
@@ -509,6 +511,63 @@ http.route({
 					'Access-Control-Allow-Headers': 'Content-Type, X-Webhook-Secret',
 				},
 			}),
+		);
+	}),
+});
+
+/**
+ * Test Webhook Endpoint
+ *
+ * Validates the webhook configuration without creating a lead.
+ *
+ * GET /webhook/leads/test
+ * Headers: X-Webhook-Secret
+ */
+http.route({
+	path: '/webhook/leads/test',
+	method: 'GET',
+	handler: httpAction(async (ctx, request) => {
+		// 1. Validate Secret
+		const webhookSecret = process.env.WEBHOOK_SECRET;
+		const providedSecret = request.headers.get('X-Webhook-Secret');
+
+		if (!webhookSecret || providedSecret !== webhookSecret) {
+			return new Response(
+				JSON.stringify({
+					status: 'error',
+					message: 'Unauthorized: Invalid or missing X-Webhook-Secret',
+				}),
+				{
+					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				},
+			);
+		}
+
+		// 2. Return success
+		return new Response(
+			JSON.stringify({
+				status: 'ok',
+				message: 'Webhook configured correctly',
+				timestamp: new Date().toISOString(),
+				expectedPayload: {
+					email: 'string (required)',
+					source: "string (required, e.g. 'wordpress', 'landing_page')",
+					landingPage: "string (optional, e.g. 'trintae3')",
+					landingPageUrl: 'string (optional)',
+					name: 'string (optional)',
+					phone: 'string (optional)',
+					interest: 'string (optional)',
+					message: 'string (optional)',
+					utmSource: 'string (optional)',
+					utmCampaign: 'string (optional)',
+					utmMedium: 'string (optional)',
+				},
+			}),
+			{
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			},
 		);
 	}),
 });

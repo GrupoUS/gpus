@@ -1,4 +1,4 @@
-// @ts-nocheck
+// type-check enabled
 /**
  * Asaas Configuration Utilities
  * Centralized configuration management for Asaas integration
@@ -8,8 +8,11 @@
  */
 
 import { internal } from '../_generated/api';
+import type { ActionCtx, QueryCtx } from '../_generated/server';
 import { type AsaasClient, createAsaasClient } from './client';
 import { AsaasConfigurationError } from './errors';
+
+const API_KEY_VALIDATION_REGEX = /^[$a-zA-Z0-9_]+$/;
 
 // ═══════════════════════════════════════════════════════
 // API KEY VALIDATION
@@ -49,8 +52,7 @@ export function validateAsaasApiKey(key: string): {
 	}
 
 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
-	const validPattern = /^[$a-zA-Z0-9_]+$/;
-	if (!validPattern.test(cleanKey)) {
+	if (!API_KEY_VALIDATION_REGEX.test(cleanKey)) {
 		return {
 			valid: false,
 			error: 'API Key contém caracteres inválidos',
@@ -73,14 +75,11 @@ export function validateAsaasApiKey(key: string): {
  * @returns Configured AsaasClient instance
  * @throws AsaasConfigurationError if API key is not configured or invalid
  */
-export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
+export async function getAsaasClientFromSettings(ctx: ActionCtx | QueryCtx): Promise<AsaasClient> {
 	// Try to get settings from database first
-	// @ts-expect-error: break deep type recursion
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion
-	const config: Record<string, any> | null = await ctx.runQuery(
-		(internal as any).settings.internalGetIntegrationConfig,
-		{ integrationName: 'asaas' },
-	);
+	const config = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+		integrationName: 'asaas',
+	});
 
 	// Log what keys are available in config
 	// Config loaded from database (if available)
@@ -130,7 +129,7 @@ export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient>
  * @param ctx - Convex query context
  * @returns Configuration status object
  */
-export async function getConfigurationStatus(ctx: any): Promise<{
+export async function getConfigurationStatus(ctx: ActionCtx | QueryCtx): Promise<{
 	isConfigured: boolean;
 	isValid: boolean;
 	activeSource: 'database' | 'environment' | 'none';
@@ -150,25 +149,29 @@ export async function getConfigurationStatus(ctx: any): Promise<{
 	recommendations: string[];
 }> {
 	// Check environment variable
+
 	const envKeyExists = !!process.env.ASAAS_API_KEY;
-	const envKeyValid = envKeyExists ? validateAsaasApiKey(process.env.ASAAS_API_KEY!).valid : false;
+	const envKeyValid =
+		envKeyExists && process.env.ASAAS_API_KEY
+			? validateAsaasApiKey(process.env.ASAAS_API_KEY).valid
+			: false;
 
 	// Check database settings
-	const config: Record<string, any> | null = await ctx.runQuery(
-		internal.settings.internalGetIntegrationConfig,
-		{ integrationName: 'asaas' },
-	);
+	const config = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+		integrationName: 'asaas',
+	});
 
 	const dbKey = config?.api_key || config?.apiKey;
 	const dbKeyExists = !!dbKey;
 	const dbKeyValid = dbKeyExists ? validateAsaasApiKey(dbKey).valid : false;
 
 	// Determine which source is being used
-	const activeSource: 'database' | 'environment' | 'none' = dbKeyExists
-		? 'database'
-		: envKeyExists
-			? 'environment'
-			: 'none';
+	let activeSource: 'database' | 'environment' | 'none' = 'none';
+	if (dbKeyExists) {
+		activeSource = 'database';
+	} else if (envKeyExists) {
+		activeSource = 'environment';
+	}
 
 	const isConfigured = dbKeyExists || envKeyExists;
 	const isValid = (dbKeyExists && dbKeyValid) || (envKeyExists && envKeyValid);

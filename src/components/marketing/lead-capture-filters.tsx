@@ -25,10 +25,13 @@ interface LeadCaptureFiltersProps {
 	onInterestChange: (value: string) => void;
 	source: string;
 	onSourceChange: (value: string) => void;
+	landingPage: string;
+	onLandingPageChange: (value: string) => void;
 	date: DateRange | undefined;
 	onDateChange: (date: DateRange | undefined) => void;
 	onClear: () => void;
 	sourceOptions: string[];
+	landingPageOptions: string[];
 }
 
 export function LeadCaptureFilters({
@@ -40,13 +43,21 @@ export function LeadCaptureFilters({
 	onInterestChange,
 	source,
 	onSourceChange,
+	landingPage,
+	onLandingPageChange,
 	date,
 	onDateChange,
 	onClear,
 	sourceOptions,
+	landingPageOptions,
 }: LeadCaptureFiltersProps) {
 	const hasFilters =
-		search || status !== 'all' || interest !== 'all' || source !== 'all' || date?.from;
+		search ||
+		status !== 'all' ||
+		interest !== 'all' ||
+		source !== 'all' ||
+		landingPage !== 'all' ||
+		date?.from;
 
 	return (
 		<div className="space-y-4">
@@ -104,6 +115,21 @@ export function LeadCaptureFilters({
 					<SelectContent>
 						<SelectItem value="all">Todas Origens</SelectItem>
 						{sourceOptions.map((opt) => (
+							<SelectItem key={opt} value={opt}>
+								{opt}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+
+				{/* Landing Page Filter */}
+				<Select onValueChange={onLandingPageChange} value={landingPage}>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Landing Page" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Todas LP's</SelectItem>
+						{landingPageOptions.map((opt) => (
 							<SelectItem key={opt} value={opt}>
 								{opt}
 							</SelectItem>
@@ -178,6 +204,18 @@ export function LeadCaptureFilters({
 							<button
 								className="ml-1 hover:text-destructive"
 								onClick={() => onSourceChange('all')}
+								type="button"
+							>
+								<X className="h-3 w-3" />
+							</button>
+						</Badge>
+					)}
+					{landingPage !== 'all' && (
+						<Badge className="gap-1" variant="secondary">
+							Landing Page: {landingPage}
+							<button
+								className="ml-1 hover:text-destructive"
+								onClick={() => onLandingPageChange('all')}
 								type="button"
 							>
 								<X className="h-3 w-3" />

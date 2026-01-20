@@ -32,6 +32,7 @@ interface MarketingLead {
 	whatsappConsent: boolean;
 	status: 'new' | 'contacted' | 'converted' | 'unsubscribed';
 	utmSource?: string;
+	landingPage?: string;
 	createdAt: number;
 }
 
@@ -58,6 +59,7 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 						<TableHead>Interesse</TableHead>
 						<TableHead>Status</TableHead>
 						<TableHead>Origem (UTM)</TableHead>
+						<TableHead>Landing Page</TableHead>
 						<TableHead>Data</TableHead>
 						<TableHead className="text-right">Ações</TableHead>
 					</TableRow>
@@ -84,6 +86,11 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 							<TableCell>{getStatusBadge(lead.status)}</TableCell>
 							<TableCell>
 								<span className="text-muted-foreground text-sm">{lead.utmSource || '-'}</span>
+							</TableCell>
+							<TableCell>
+								<Badge className="font-mono text-xs" variant="outline">
+									{lead.landingPage || '-'}
+								</Badge>
 							</TableCell>
 							<TableCell>
 								<div className="flex flex-col text-muted-foreground text-sm">
