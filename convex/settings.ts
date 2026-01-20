@@ -9,7 +9,7 @@ import { PERMISSIONS } from './lib/permissions';
 const SENSITIVE_KEYS = [
 	'integration_asaas_api_key',
 	'integration_asaas_webhook_secret',
-	'integration_evolution_key',
+	'integration_evolution_api_key',
 	'integration_dify_key',
 ];
 

@@ -182,6 +182,7 @@ export default defineSchema({
 		// Referência e Cashback
 		referredById: v.optional(v.id('leads')),
 		cashbackAmount: v.optional(v.number()),
+		cashbackPaidAt: v.optional(v.number()),
 
 		// Timestamps
 		lastContactAt: v.optional(v.number()),
@@ -198,7 +199,8 @@ export default defineSchema({
 		.index('by_created', ['createdAt'])
 		.index('by_stage', ['stage'])
 		.index('by_referrer', ['referredById'])
-		.index('by_organization_phone', ['organizationId', 'phone']),
+		.index('by_organization_phone', ['organizationId', 'phone'])
+		.index('by_organization_assigned_to', ['organizationId', 'assignedTo']),
 
 	// ═══════════════════════════════════════════════════════
 	// OBJEÇÕES (Objeções de vendas estruturadas)
@@ -656,6 +658,21 @@ export default defineSchema({
 
 		createdAt: v.number(),
 	}).index('by_date', ['date']),
+
+	// ═══════════════════════════════════════════════════════
+	// ORGANIZATION SETTINGS (Configurações por Organização)
+	// ═══════════════════════════════════════════════════════
+	organizationSettings: defineTable({
+		// Identificador único da organização
+		organizationId: v.string(),
+
+		// Configurações de Cashback
+		cashbackAmount: v.number(), // Valor do cashback (padrão: 500 para R$ 500)
+		cashbackType: v.union(v.literal('fixed'), v.literal('percentage')), // Tipo: fixo ou percentual
+
+		// Timestamp
+		updatedAt: v.number(),
+	}).index('by_organization', ['organizationId']),
 
 	// ═══════════════════════════════════════════════════════
 	// LGPD COMPLIANCE (Lei Geral de Proteção de Dados)
@@ -1540,6 +1557,39 @@ export default defineSchema({
 		.index('by_timestamp', ['timestamp']),
 
 	// ═══════════════════════════════════════════════════════
+	// EVOLUTION API INTEGRATION (WhatsApp Queue)
+	// ═══════════════════════════════════════════════════════
+	evolutionApiQueue: defineTable({
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Referência ao lead
+		leadId: v.id('leads'),
+
+		// Conteúdo da mensagem
+		message: v.string(),
+
+		// Status da mensagem na fila
+		status: v.union(v.literal('pending'), v.literal('sent'), v.literal('failed')),
+
+		// Controle de tentativas
+		attempts: v.number(),
+		lastAttemptAt: v.optional(v.number()),
+
+		// Agendamento
+		scheduledFor: v.number(), // Timestamp para envio
+
+		// Erro (se falhou)
+		errorMessage: v.optional(v.string()),
+
+		// Timestamp de criação
+		createdAt: v.number(),
+	})
+		.index('by_organization_status', ['organizationId', 'status'])
+		.index('by_scheduled_for', ['scheduledFor'])
+		.index('by_lead', ['leadId']),
+
+	// ═══════════════════════════════════════════════════════
 	// TAGS SYSTEM (Lead Categorization)
 	// ═══════════════════════════════════════════════════════
 	tags: defineTable({
@@ -1551,6 +1601,59 @@ export default defineSchema({
 	})
 		.index('by_organization', ['organizationId'])
 		.index('by_organization_name', ['organizationId', 'name']),
+
+	// ═══════════════════════════════════════════════════════
+	// CUSTOM FIELDS SYSTEM (EAV Pattern)
+	// ═══════════════════════════════════════════════════════
+	customFields: defineTable({
+		// Field definition
+		name: v.string(),
+		fieldType: v.union(
+			v.literal('text'),
+			v.literal('number'),
+			v.literal('date'),
+			v.literal('select'),
+			v.literal('multiselect'),
+			v.literal('boolean'),
+		),
+		entityType: v.union(v.literal('lead'), v.literal('student')),
+
+		// Configuration
+		required: v.boolean(),
+		options: v.optional(v.array(v.string())), // For select/multiselect
+
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Status
+		active: v.boolean(),
+
+		// Audit
+		createdBy: v.string(), // Clerk user ID
+		createdAt: v.number(),
+	})
+		.index('by_organization', ['organizationId'])
+		.index('by_organization_entity', ['organizationId', 'entityType']),
+
+	customFieldValues: defineTable({
+		// References
+		customFieldId: v.id('customFields'),
+		entityId: v.string(), // Polymorphic ID (lead or student)
+		entityType: v.union(v.literal('lead'), v.literal('student')),
+
+		// Flexible value storage
+		value: v.any(),
+
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Audit
+		updatedBy: v.string(), // Clerk user ID
+		updatedAt: v.number(),
+	})
+		.index('by_entity', ['entityId', 'entityType'])
+		.index('by_custom_field', ['customFieldId'])
+		.index('by_organization', ['organizationId']),
 
 	leadTags: defineTable({
 		leadId: v.id('leads'),

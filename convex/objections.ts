@@ -35,13 +35,13 @@ export const listObjections = query({
 // Aggregate objection analytics for organization-wide insights
 export const getObjectionStats = query({
 	args: {
-		organizationId: v.optional(v.string()), // Optional override, otherwise from context
 		period: v.optional(v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'))),
 	},
 	handler: async (ctx, args) => {
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
 
-		const organizationId = args.organizationId ?? (await getOrganizationId(ctx));
+		// Always scope to authenticated organization (multi-tenant isolation)
+		const organizationId = await getOrganizationId(ctx);
 
 		const period = args.period ?? '30d';
 		let days = 30;
