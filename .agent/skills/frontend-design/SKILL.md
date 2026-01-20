@@ -48,7 +48,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 **Color not specified?** Ask:
 > "What color palette do you prefer? (blue/green/orange/neutral/other?)"
 
-**Style not specified?** Ask: 
+**Style not specified?** Ask:
 > "What style are you going for? (minimal/bold/retro/futuristic/organic?)"
 
 **Layout not specified?** Ask:
@@ -288,6 +288,17 @@ Duration based on:
 - Test on low-end devices
 
 For animation patterns: [animation-guide.md](animation-guide.md), for advanced: [motion-graphics.md](motion-graphics.md)
+
+## Visual Assets: Nano Banana System
+
+When the design requires unique images or placeholders, use the integrated Gemini image generation:
+
+### Local Generation Script
+Use the Python generator to create high-fidelity assets using Gemini 3 Pro:
+```bash
+python .agent/skills/frontend-design/scripts/generate_images.py "Your prompt here" "output_filename"
+```
+- **Reference**: See [nanobananaskill.md](file:///d:/gpus/.agent/skills/frontend-design/nanobananaskill.md) for advanced prompting strategies.
 
 ---
 

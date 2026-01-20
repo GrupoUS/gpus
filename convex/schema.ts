@@ -1601,29 +1601,30 @@ export default defineSchema({
 		leadId: v.optional(v.id('leads')),
 		studentId: v.optional(v.id('students')),
 
-		// Agendamento
-		dueDate: v.optional(v.number()), // Unix timestamp
-		remindedAt: v.optional(v.number()),
+		// Detalhes de execução
+		dueDate: v.optional(v.number()),
+		assignedTo: v.optional(v.id('users')),
+		mentionedUserIds: v.optional(v.array(v.id('users'))),
 
-		// Status de conclusão
+		// Status e rastreamento
 		completed: v.boolean(),
 		completedAt: v.optional(v.number()),
 
-		// Colaboração
-		mentionedUserIds: v.optional(v.array(v.id('users'))),
-		assignedTo: v.optional(v.id('users')), // User responsible for the task
+		// Reminder tracking
+		remindedAt: v.optional(v.number()),
 
 		// Multi-tenant
 		organizationId: v.string(),
+		createdBy: v.string(), // clerkId
 
-		// Auditoria
-		createdBy: v.string(), // Clerk user ID
+		// Timestamps
 		createdAt: v.number(),
 		updatedAt: v.number(),
 	})
 		.index('by_lead', ['leadId'])
-		.index('by_organization', ['organizationId'])
+		.index('by_student', ['studentId'])
 		.index('by_assigned_to', ['assignedTo'])
+		.index('by_organization', ['organizationId'])
 		.index('by_due_date', ['dueDate'])
 		.index('by_mentioned_user', ['mentionedUserIds'])
 		.index('by_completed', ['completed'])

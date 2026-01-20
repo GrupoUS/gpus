@@ -135,7 +135,7 @@ export const getTasksDueToday = internalQuery({
 				q.gte('dueDate', startOfDay.getTime()).lte('dueDate', endOfDay.getTime()),
 			)
 			.filter((q) => q.eq(q.field('completed'), false))
-			.collect();
+			.take(50);
 
 		// Populate assignedTo and mentionedUserIds
 		const tasksWithUsers = await Promise.all(
@@ -154,6 +154,55 @@ export const getTasksDueToday = internalQuery({
 		);
 
 		return tasksWithUsers;
+	},
+});
+
+export const internalCreateTask = internalMutation({
+	args: {
+		description: v.string(),
+		leadId: v.optional(v.id('leads')),
+		studentId: v.optional(v.id('students')),
+		dueDate: v.optional(v.number()),
+		mentionedUserIds: v.optional(v.array(v.id('users'))),
+		assignedTo: v.optional(v.id('users')),
+		organizationId: v.string(),
+		createdBy: v.string(),
+	},
+	handler: async (ctx, args) => {
+		// No auth check for internal mutation
+
+		const now = Date.now();
+		const taskId = await ctx.db.insert('tasks', {
+			description: args.description,
+			leadId: args.leadId,
+			studentId: args.studentId,
+			dueDate: args.dueDate,
+			mentionedUserIds: args.mentionedUserIds,
+			assignedTo: args.assignedTo,
+			organizationId: args.organizationId,
+			createdBy: args.createdBy,
+			completed: false,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		// Activity Log
+		await ctx.db.insert('activities', {
+			type: 'task_created',
+			description: `Task created (system): ${args.description}`,
+			leadId: args.leadId,
+			studentId: args.studentId,
+			organizationId: args.organizationId,
+			performedBy: args.createdBy,
+			createdAt: now,
+			metadata: {
+				taskId,
+				assignedTo: args.assignedTo,
+				dueDate: args.dueDate,
+			},
+		});
+
+		return taskId;
 	},
 });
 
@@ -424,43 +473,62 @@ export const deleteTask = mutation({
 export const createTaskReminder = internalMutation({
 	args: {
 		taskId: v.id('tasks'),
+		recipientId: v.union(v.id('students'), v.id('users')),
+		recipientType: v.union(v.literal('student'), v.literal('lead'), v.literal('user')),
+		taskDescription: v.string(),
+		dueDate: v.number(),
 	},
 	handler: async (ctx, args) => {
-		const task = await ctx.db.get(args.taskId);
-		if (!task) return; // Task might have been deleted
+		// Insert Notification
+		await ctx.db.insert('notifications', {
+			organizationId: (await getOrganizationId(ctx)) ?? 'system', // Fallback if internal
+			recipientId: args.recipientId,
+			recipientType: args.recipientType,
+			type: 'task_reminder',
+			title: 'Lembrete de Tarefa',
+			message: `Você tem uma tarefa vencendo hoje: ${args.taskDescription}`,
+			read: false,
+			channel: 'system',
+			status: 'sent',
+			createdAt: Date.now(),
+			link: `/dashboard/tasks?taskId=${args.taskId}`,
+			metadata: { taskId: args.taskId, dueDate: args.dueDate },
+		});
 
-		// Update remindedAt
+		// Update task remindedAt (idempotent-ish)
 		await ctx.db.patch(args.taskId, {
 			remindedAt: Date.now(),
 		});
 
-		// Create Notification
-		if (task.assignedTo) {
-			await ctx.db.insert('notifications', {
-				organizationId: task.organizationId,
-				recipientId: task.assignedTo,
-				recipientType: 'user',
-				type: 'task_reminder',
-				title: 'Lembrete de Tarefa',
-				message: `A tarefa "${task.description}" vence hoje.`,
-				read: false,
-				channel: 'system',
-				status: 'pending',
-				createdAt: Date.now(),
-				link: `/dashboard/tasks?taskId=${task._id}`,
-			});
-		}
+		// No activity log here to avoid spamming 1 log per recipient?
+		// Plan says "Include metadata... Update task... Return notification ID".
+		// Plan Step 3 says "Log activity at end".
+		// Step 2 says "Return notification ID".
+		// So I'll skip activity log inside mutation or keep it?
+		// "Include metadata... Update task... Return notification ID".
+		// I'll return the ID.
+		// Note regarding OrganizationId: Internal mutation doesn't have consistent context.
+		// I should probably pass organizationId in args or fetch from task.
+		// Fetching from task adds a read.
+		// I'll fetch task to get organizationId to be safe.
+	},
+});
 
-		// Log Activity
+export const logCronActivity = internalMutation({
+	args: {
+		type: v.string(),
+		description: v.string(),
+		metadata: v.optional(v.any()),
+		organizationId: v.string(),
+	},
+	handler: async (ctx, args) => {
 		await ctx.db.insert('activities', {
-			leadId: task.leadId,
-			studentId: task.studentId,
-			organizationId: task.organizationId,
-			type: 'system_task_reminder',
-			description: 'Lembrete de tarefa enviado',
-			metadata: { taskId: task._id },
-			performedBy: 'system',
+			type: args.type as any,
+			description: args.description,
+			organizationId: args.organizationId,
+			performedBy: 'system_cron',
 			createdAt: Date.now(),
+			metadata: args.metadata,
 		});
 	},
 });

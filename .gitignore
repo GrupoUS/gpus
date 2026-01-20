@@ -28,18 +28,5 @@ coverage
 app.config.timestamp_*.js
 docs/Aura-Connect/
 
-# Auto Claude data directory
-.auto-claude/
-
-# Factory templates (AI generated)
-.factory/
-
-# AI agent directories
-.kilocode/
-.agent/
-.claude/
-.gemini/
-
 .mcp/
 .mcp.json
-.mcp.lock

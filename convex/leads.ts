@@ -659,11 +659,22 @@ export const reactivateLead = internalMutation({
 			metadata: { previousStage: lead.stage },
 		});
 
+		// Create follow-up task
+		// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+		await ctx.runMutation((internal as any).tasks.internalCreateTask, {
+			description: `Follow-up: Lead reativado automaticamente de ${lead.stage}`,
+			leadId: lead._id,
+			assignedTo: lead.assignedTo,
+			dueDate: Date.now() + 24 * 60 * 60 * 1000, // +1 day
+			organizationId: lead.organizationId ?? 'system',
+			createdBy: 'system_cron',
+		});
+
 		if (lead.assignedTo) {
 			await ctx.db.insert('notifications', {
 				type: 'lead_reactivated',
 				title: 'Lead Reativado',
-				message: `O lead ${lead.name} foi reativado para o estágio inicial.`,
+				message: `O lead ${lead.name} foi reativado para o estágio inicial e uma tarefa de follow-up foi criada.`,
 				recipientId: lead.assignedTo,
 				recipientType: 'user',
 				organizationId: lead.organizationId ?? 'system',

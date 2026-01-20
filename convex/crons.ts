@@ -32,12 +32,26 @@ crons.interval(
 	{},
 );
 
-// Process queued WhatsApp messages every 5 minutes
+// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion on internal
+(internal as any).whatsapp.processQueuedMessages,
+	{},
+)
+
+// Task Reminders (Daily 8 AM UTC)
+// @ts-expect-error - Deep type instantiation workaround
 crons.interval(
-	'whatsapp-process-queue',
-	{ minutes: 5 },
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion on internal
-	(internal as any).whatsapp.processQueuedMessages,
+	'task-reminders',
+	{ hours: 24, hourUTC: 8 },
+	internal.tasks.crons.sendTaskReminders,
+	{},
+);
+
+// Idle Lead Reactivation (Daily 8 AM UTC)
+// @ts-expect-error - Deep type instantiation workaround
+crons.interval(
+	'reactivate-idle-leads',
+	{ hours: 24, hourUTC: 8 },
+	internal.tasks.crons.reactivateIdleLeads,
 	{},
 );
 
