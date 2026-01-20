@@ -17,7 +17,7 @@ export const getReferralStats = query({
 		// Find all leads referred by this leadId
 		const referrals = await ctx.db
 			.query('leads')
-			.withIndex('by_referrer', (q) => q.eq('referredById', args.leadId))
+			.withIndex('by_referred_by', (q) => q.eq('referredById', args.leadId))
 			.filter((q) => q.eq(q.field('organizationId'), organizationId))
 			.collect();
 
@@ -29,7 +29,7 @@ export const getReferralStats = query({
 
 		// Get the referrer's current cashback balance
 		const referrer = await ctx.db.get(args.leadId);
-		const totalCashback = referrer?.cashbackAmount ?? 0;
+		const totalCashback = referrer?.cashbackEarned ?? 0;
 
 		return {
 			totalReferrals,
@@ -53,7 +53,7 @@ export const getMyReferrals = query({
 
 		const referrals = await ctx.db
 			.query('leads')
-			.withIndex('by_referrer', (q) => q.eq('referredById', args.leadId))
+			.withIndex('by_referred_by', (q) => q.eq('referredById', args.leadId))
 			.filter((q) => q.eq(q.field('organizationId'), organizationId))
 			.order('desc')
 			.take(limit);
@@ -65,7 +65,7 @@ export const getMyReferrals = query({
 			phone: r.phone,
 			stage: r.stage,
 			createdAt: r.createdAt,
-			cashbackAmount: r.cashbackAmount,
+			cashbackEarned: r.cashbackEarned,
 		}));
 	},
 });
@@ -234,7 +234,7 @@ export const calculateCashback = internalMutation({
 
 			// 6. Apply to Referrer
 			await ctx.db.patch(referrer._id, {
-				cashbackAmount: (referrer.cashbackAmount ?? 0) + cashback,
+				cashbackEarned: (referrer.cashbackEarned ?? 0) + cashback,
 				updatedAt: Date.now(),
 			});
 
@@ -249,7 +249,7 @@ export const calculateCashback = internalMutation({
 				createdAt: Date.now(),
 				metadata: {
 					referredLeadId: args.referredLeadId,
-					cashbackAmount: cashback,
+					cashbackEarned: cashback,
 					source: 'referral_bonus',
 				},
 			});
@@ -264,7 +264,7 @@ export const calculateCashback = internalMutation({
 				createdAt: Date.now(),
 				metadata: {
 					referrerId: referrer._id,
-					cashbackAmount: cashback,
+					cashbackEarned: cashback,
 				},
 			});
 		} catch (error) {

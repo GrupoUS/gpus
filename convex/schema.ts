@@ -181,7 +181,7 @@ export default defineSchema({
 
 		// Referência e Cashback
 		referredById: v.optional(v.id('leads')),
-		cashbackAmount: v.optional(v.number()),
+		cashbackEarned: v.optional(v.number()),
 		cashbackPaidAt: v.optional(v.number()),
 
 		// Timestamps
@@ -198,7 +198,7 @@ export default defineSchema({
 		.index('by_temperature', ['temperature'])
 		.index('by_created', ['createdAt'])
 		.index('by_stage', ['stage'])
-		.index('by_referrer', ['referredById'])
+		.index('by_referred_by', ['referredById'])
 		.index('by_organization_phone', ['organizationId', 'phone'])
 		.index('by_organization_assigned_to', ['organizationId', 'assignedTo']),
 
