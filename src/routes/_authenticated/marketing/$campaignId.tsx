@@ -696,14 +696,14 @@ function CampaignDetailPage() {
 									<p className="font-medium text-muted-foreground text-sm">Criada em</p>
 									<p className="mt-1 flex items-center gap-2">
 										<CalendarDays className="h-4 w-4 text-muted-foreground" />
-										{formatDateTime(campaign.createdAt)}
+										{formatDateTime(campaign._creationTime)}
 									</p>
 								</div>
 								<div>
 									<p className="font-medium text-muted-foreground text-sm">Atualizada em</p>
 									<p className="mt-1 flex items-center gap-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
-										{formatDateTime(campaign.updatedAt)}
+										{formatDateTime(campaign._creationTime)}
 									</p>
 								</div>
 							</div>

@@ -4,8 +4,9 @@
  * Tests for CPF validation and Asaas customer payload validation
  */
 
-import { describe, it, expect } from 'vitest';
-import { validateCPF, validateAsaasCustomerPayload } from '../../../convex/lib/validators';
+import { describe, expect, it } from 'vitest';
+
+import { validateAsaasCustomerPayload, validateCPF } from '../../../convex/lib/validators';
 
 describe('CPF Validation', () => {
 	describe('validateCPF', () => {

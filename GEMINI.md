@@ -156,18 +156,6 @@ Before creating a PR:
 | `tavily_tavily-map` | Map website structure and discover content |
 | `sequentialthinking` | Step-by-step deep reasoning (research/Plan mode only) |
 
-### Agent Invocation
-
-```bash
-# Invoke primary agents
-@apex-dev      # For implementation tasks
-
-# Invoke subagents (from apex-dev)
-@code-reviewer        # Security/compliance review
-@database-specialist  # Convex database tasks
-@apex-ui-ux-designer  # UI/UX components
-```
-
 ### MCP Activation Protocol (MANDATORY)
 
 > **Regra**: MCPs devem ser usados AUTOMATICAMENTE quando as condições abaixo forem satisfeitas.

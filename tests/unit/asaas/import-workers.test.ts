@@ -4,16 +4,17 @@
  * Tests for customer, payment, and subscription processing workers
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { Id } from '../../../convex/_generated/dataModel';
 import {
-	processCustomerWorker,
-	processPaymentWorker,
-	processSubscriptionWorker,
 	createCustomerBatchProcessor,
 	createPaymentBatchProcessor,
 	createSubscriptionBatchProcessor,
+	processCustomerWorker,
+	processPaymentWorker,
+	processSubscriptionWorker,
 } from '../../../convex/asaas/import_workers';
-import type { Id } from '../../../convex/_generated/dataModel';
 
 // Mock data
 const mockCustomer = {
@@ -479,7 +480,7 @@ describe('Import Workers - LGPD Compliance', () => {
 		await processCustomerWorker(ctx, mockCustomer);
 
 		expect(consoleSpy).toHaveBeenCalled();
-		const logMessage = consoleSpy.mock.calls[0][1] as string;
+		const logMessage = consoleSpy.mock.calls[0][0] as string;
 		// Should mask CPF in logs
 		expect(logMessage).toContain('***');
 		expect(logMessage).not.toContain(mockCustomer.cpfCnpj);

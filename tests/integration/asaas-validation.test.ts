@@ -7,8 +7,9 @@
  * Run with `bun test` from project root.
  */
 
-import { describe, it, expect } from 'vitest';
 import { convexTest } from 'convex-test';
+import { describe, expect, it } from 'vitest';
+
 import { api } from '../../convex/_generated/api';
 import schema from '../../convex/schema';
 
@@ -155,7 +156,7 @@ describe('Asaas Sync - Unit Tests', () => {
 			// Test CPF generation logic (simplified)
 			const generateTestCPF = (seed: number): string => {
 				const seededRnd = (n: number, offset: number) =>
-					Math.round(((((seed + offset) * 9301 + 49297) % 233280) / 233280) * n);
+					Math.round(((((seed + offset) * 9301 + 49_297) % 233_280) / 233_280) * n);
 				const mod = (dividend: number, divisor: number) =>
 					Math.round(dividend - Math.floor(dividend / divisor) * divisor);
 

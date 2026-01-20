@@ -1,3 +1,5 @@
+import { api } from '@convex/_generated/api';
+import { useQuery } from 'convex/react';
 import { Filter, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -15,6 +17,7 @@ interface FilterState {
 	temperature: string[];
 	products: string[];
 	source: string[];
+	tags: string[];
 }
 
 interface LeadFiltersProps {
@@ -22,12 +25,17 @@ interface LeadFiltersProps {
 }
 
 export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
+	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
+	const listTags = (api as any).tags.listTags;
+	const tags = useQuery(listTags);
+
 	const [filters, setFilters] = useState<FilterState>({
 		search: '',
 		stages: [],
 		temperature: [],
 		products: [],
 		source: [],
+		tags: [],
 	});
 
 	// Debounce search
@@ -59,6 +67,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 			temperature: [],
 			products: [],
 			source: [],
+			tags: [],
 		});
 	};
 
@@ -66,7 +75,8 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 		filters.stages.length +
 		filters.temperature.length +
 		filters.products.length +
-		filters.source.length;
+		filters.source.length +
+		filters.tags.length;
 
 	return (
 		<div className="flex w-full flex-col gap-3 rounded-lg border border-border/50 bg-card/50 p-2 sm:flex-row">
@@ -212,6 +222,39 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 										</Label>
 									</div>
 								))}
+							</div>
+						</div>
+
+						<Separator />
+
+						{/* Etiquetas */}
+						<div className="space-y-2">
+							<h5 className="font-medium text-muted-foreground text-sm">Etiquetas</h5>
+							<div className="grid grid-cols-2 gap-2">
+								{tags?.map((tag: any) => (
+									<div className="flex items-center space-x-2" key={tag._id}>
+										<Checkbox
+											checked={filters.tags?.includes(tag._id)}
+											id={`tag-${tag._id}`}
+											onCheckedChange={() => toggleFilter('tags', tag._id)}
+										/>
+										<Label
+											className="flex items-center gap-2 font-normal text-sm"
+											htmlFor={`tag-${tag._id}`}
+										>
+											<div
+												className="h-2 w-2 rounded-full"
+												style={{ backgroundColor: tag.color || '#ccc' }}
+											/>
+											{tag.name}
+										</Label>
+									</div>
+								))}
+								{(!tags || tags.length === 0) && (
+									<p className="col-span-2 text-muted-foreground text-xs italic">
+										Nenhuma etiqueta encontrada.
+									</p>
+								)}
 							</div>
 						</div>
 					</div>

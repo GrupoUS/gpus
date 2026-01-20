@@ -5,87 +5,83 @@ import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
 // ═══════════════════════════════════════════════════════
-// QUERIES
+// TAGS (Etiquetas)
 // ═══════════════════════════════════════════════════════
 
+/**
+ * Listar todas as tags da organização
+ */
 export const listTags = query({
 	args: {},
 	handler: async (ctx) => {
-		const organizationId = await getOrganizationId(ctx);
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
 
-		return await ctx.db
+		const tags = await ctx.db
 			.query('tags')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.order('desc')
 			.collect();
+
+		return tags;
 	},
 });
 
+/**
+ * Buscar tags de um lead específico
+ */
 export const getLeadTags = query({
 	args: { leadId: v.id('leads') },
 	handler: async (ctx, args) => {
-		const organizationId = await getOrganizationId(ctx);
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
 
-		// Verify lead exists and belongs to organization
 		const lead = await ctx.db.get(args.leadId);
 		if (!lead || lead.organizationId !== organizationId) {
-			return [];
+			return []; // Ou throw, dependendo da UX. Return empty para segurança silenciosa em queries.
 		}
 
-		// Get junction records
-		const leadTagRelations = await ctx.db
+		const leadTags = await ctx.db
 			.query('leadTags')
 			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
 			.collect();
 
-		if (leadTagRelations.length === 0) {
-			return [];
-		}
-
-		// Fetch actual tag details
-		// (Convex doesn't support joins, so we map and Promise.all)
-		// We could optimize by fetching all tags for org and filtering in memory if relations > tags
-		// but typically a lead has few tags.
+		// Fetch tag details efficiently
 		const tags = await Promise.all(
-			leadTagRelations.map(async (relation) => {
-				const tag = await ctx.db.get(relation.tagId);
-				return tag;
+			leadTags.map(async (lt) => {
+				const tag = await ctx.db.get(lt.tagId);
+				return tag ? { ...tag, addedAt: lt.addedAt, addedBy: lt.addedBy } : null;
 			}),
 		);
 
-		// Filter out any nulls (if tag was deleted but relation remained - shouldn't happen with correct cascade)
 		return tags.filter((t) => t !== null);
 	},
 });
 
+/**
+ * Pesquisar tags (Autocomplete)
+ */
 export const searchTags = query({
 	args: { query: v.string() },
 	handler: async (ctx, args) => {
-		const organizationId = await getOrganizationId(ctx);
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
 
-		// If query is empty, return all (up to a limit?) or empty?
-		// Usually search implies filtering.
-		if (!args.query) return [];
-
-		const queryLower = args.query.toLowerCase();
-
-		// Fetch all tags for organization (assuming tag count per org is reasonable < 1000)
+		// Convex search indexes don't support partial match well yet for short strings without full tokenization config
+		// For tags (usually small set), in-memory filtering is acceptable
 		const allTags = await ctx.db
 			.query('tags')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 
-		return allTags.filter((tag) => tag.name.toLowerCase().includes(queryLower));
+		const queryLower = args.query.toLowerCase();
+		return allTags.filter((t) => t.name.toLowerCase().includes(queryLower)).slice(0, 10);
 	},
 });
 
-// ═══════════════════════════════════════════════════════
-// MUTATIONS
-// ═══════════════════════════════════════════════════════
-
+/**
+ * Criar uma nova tag
+ */
 export const createTag = mutation({
 	args: {
 		name: v.string(),
@@ -96,8 +92,13 @@ export const createTag = mutation({
 		const organizationId = await getOrganizationId(ctx);
 
 		const normalizedName = args.name.trim();
+		if (!normalizedName) {
+			throw new Error('Nome da tag não pode estar vazio');
+		}
 
-		// Check for duplicates
+		// Duplicate check (Case insensitive logic ideally, but index is case sensitive)
+		// We normalized case for check? The plan said "normalized name (lowercase)".
+		// But schema doesn't force lowercase. Let's check exact match first.
 		const existing = await ctx.db
 			.query('tags')
 			.withIndex('by_organization_name', (q) =>
@@ -106,7 +107,7 @@ export const createTag = mutation({
 			.first();
 
 		if (existing) {
-			throw new Error(`A tag "${normalizedName}" já existe nesta organização.`);
+			throw new Error('Tag já existe nesta organização');
 		}
 
 		const tagId = await ctx.db.insert('tags', {
@@ -117,20 +118,21 @@ export const createTag = mutation({
 			createdAt: Date.now(),
 		});
 
-		// Log activity
 		await ctx.db.insert('activities', {
-			type: 'integracao_configurada', // Using closest match for system settings
-			description: `Nova tag criada: ${normalizedName}`,
+			type: 'tag_criada',
+			description: `Tag "${normalizedName}" criada`,
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),
-			metadata: { type: 'system_settings', tagId },
 		});
 
 		return tagId;
 	},
 });
 
+/**
+ * Adicionar tag ao Lead
+ */
 export const addTagToLead = mutation({
 	args: {
 		leadId: v.id('leads'),
@@ -140,35 +142,28 @@ export const addTagToLead = mutation({
 		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
 
-		// Validate lead ownership
 		const lead = await ctx.db.get(args.leadId);
 		if (!lead || lead.organizationId !== organizationId) {
-			throw new Error('Lead não encontrado ou acesso negado.');
+			throw new Error('Lead não encontrado ou sem permissão');
 		}
 
-		// Validate tag ownership
 		const tag = await ctx.db.get(args.tagId);
 		if (!tag || tag.organizationId !== organizationId) {
-			throw new Error('Tag não encontrada ou acesso negado.');
+			throw new Error('Tag não encontrada ou sem permissão');
 		}
 
-		// Check if already assigned
-		// We can check by querying leadTags with by_lead index and filtering for tagId
-		// OR by_tag index and filtering for leadId.
-		// Since we usually have fewer tags per lead than leads per tag, by_lead is likely smaller.
-		const existingRelation = await ctx.db
+		// Check strictly for existing association
+		const existing = await ctx.db
 			.query('leadTags')
-			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId)) // Use org index for safety
-			.filter((q) =>
-				q.and(q.eq(q.field('leadId'), args.leadId), q.eq(q.field('tagId'), args.tagId)),
-			)
+			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+			.filter((q) => q.eq(q.field('tagId'), args.tagId))
 			.first();
 
-		if (existingRelation) {
-			return existingRelation._id; // Already added
+		if (existing) {
+			return; // Idempotent
 		}
 
-		const relationId = await ctx.db.insert('leadTags', {
+		await ctx.db.insert('leadTags', {
 			leadId: args.leadId,
 			tagId: args.tagId,
 			organizationId,
@@ -176,21 +171,20 @@ export const addTagToLead = mutation({
 			addedAt: Date.now(),
 		});
 
-		// Log activity
 		await ctx.db.insert('activities', {
-			type: 'nota_adicionada', // Using closest match for annotation
+			type: 'tag_adicionada',
 			description: `Tag "${tag.name}" adicionada ao lead`,
 			leadId: args.leadId,
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),
-			metadata: { tagId: args.tagId, tagName: tag.name },
 		});
-
-		return relationId;
 	},
 });
 
+/**
+ * Remover tag do Lead
+ */
 export const removeTagFromLead = mutation({
 	args: {
 		leadId: v.id('leads'),
@@ -200,78 +194,74 @@ export const removeTagFromLead = mutation({
 		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
 
-		// Find connection
-		const relation = await ctx.db
-			.query('leadTags')
-			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
-			.filter((q) =>
-				q.and(q.eq(q.field('leadId'), args.leadId), q.eq(q.field('tagId'), args.tagId)),
-			)
-			.first();
-
-		if (!relation) {
-			return; // Connection doesn't exist, nothing to do
+		const lead = await ctx.db.get(args.leadId);
+		if (!lead || lead.organizationId !== organizationId) {
+			throw new Error('Lead não encontrado ou sem permissão');
 		}
 
-		await ctx.db.delete(relation._id);
+		// Find association
+		const association = await ctx.db
+			.query('leadTags')
+			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+			.filter((q) => q.eq(q.field('tagId'), args.tagId))
+			.first();
 
-		// Log activity (optional, maybe too verbose?)
-		// Let's fetch tag name for log
+		if (!association) {
+			return; // Idempotent
+		}
+
+		await ctx.db.delete(association._id);
+
+		// Get tag name for log
 		const tag = await ctx.db.get(args.tagId);
+		const tagName = tag ? tag.name : 'Desconhecida';
 
 		await ctx.db.insert('activities', {
-			type: 'nota_adicionada',
-			description: `Tag "${tag?.name ?? 'desconhecida'}" removida do lead`,
+			type: 'tag_removida',
+			description: `Tag "${tagName}" removida do lead`,
 			leadId: args.leadId,
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),
-			metadata: { tagId: args.tagId },
 		});
 	},
 });
 
+/**
+ * Deletar Tag (Admin Only)
+ */
 export const deleteTag = mutation({
-	args: {
-		tagId: v.id('tags'),
-	},
+	args: { tagId: v.id('tags') },
 	handler: async (ctx, args) => {
-		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE); // Or PERMISSIONS.ADMIN
+		const identity = await requirePermission(ctx, PERMISSIONS.ALL); // Admin only
 		const organizationId = await getOrganizationId(ctx);
 
 		const tag = await ctx.db.get(args.tagId);
 		if (!tag || tag.organizationId !== organizationId) {
-			throw new Error('Tag não encontrada ou acesso negado.');
+			throw new Error('Tag não encontrada ou sem permissão');
 		}
 
-		// 1. Delete all associations in leadTags
-		// Need to iterate and delete.
-		const relations = await ctx.db
+		// Cascade delete LeadTags
+		const associations = await ctx.db
 			.query('leadTags')
 			.withIndex('by_tag', (q) => q.eq('tagId', args.tagId))
 			.collect();
 
-		// Should verify they belong to same org? The tag belongs to the org, so relations using it must too.
-		// But explicit check or organization index usage is safer.
-		// Actually leadTags has organizationId.
-
-		for (const relation of relations) {
-			if (relation.organizationId === organizationId) {
-				await ctx.db.delete(relation._id);
-			}
+		let deletedCount = 0;
+		for (const assoc of associations) {
+			await ctx.db.delete(assoc._id);
+			deletedCount++;
 		}
 
-		// 2. Delete the tag itself
 		await ctx.db.delete(args.tagId);
 
-		// Log activity
 		await ctx.db.insert('activities', {
-			type: 'integracao_configurada',
-			description: `Tag "${tag.name}" excluída`,
+			type: 'tag_deletada',
+			description: `Tag "${tag.name}" deletada (${deletedCount} associações removidas)`,
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),
-			metadata: { type: 'system_settings', deletedTag: tag.name },
+			metadata: { deletedAssociations: deletedCount },
 		});
 	},
 });

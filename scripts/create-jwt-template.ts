@@ -25,7 +25,11 @@ async function createJwtTemplate() {
 		console.log(`📋 Claims: ${JSON.stringify(template.claims, null, 2)}\n`);
 		return template;
 	} catch (error: any) {
-		if (error.message.includes('already exists') || error.message.includes('409') || error.message.includes('422')) {
+		if (
+			error.message.includes('already exists') ||
+			error.message.includes('409') ||
+			error.message.includes('422')
+		) {
 			console.log('⏭️ JWT Template "convex" já existe. Atualizando...\n');
 			return await updateJwtTemplate();
 		}

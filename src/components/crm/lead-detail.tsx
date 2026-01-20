@@ -3,8 +3,9 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone } from 'lucide-react';
+import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone, Tag } from 'lucide-react';
 
+import { TagSelector } from './tag-selector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -196,10 +197,29 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 							{lead.yearsInAesthetics ? `${lead.yearsInAesthetics} anos` : 'N/A'}
 						</span>
 					</div>
+
 					<div className="rounded-lg border border-border/50 bg-card p-3">
 						<span className="mb-1 block text-muted-foreground text-xs">Faturamento</span>
 						<span className="font-medium">{lead.currentRevenue || 'N/A'}</span>
 					</div>
+				</div>
+			</section>
+
+			<section className="space-y-3">
+				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
+					<Tag className="h-4 w-4" /> Etiquetas
+				</h3>
+				<div className="rounded-lg border border-border/50 bg-card p-4">
+					<TagSelector leadId={lead._id} />
+				</div>
+			</section>
+
+			<section className="space-y-3">
+				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
+					<Tag className="h-4 w-4" /> Etiquetas
+				</h3>
+				<div className="rounded-lg border border-border/50 bg-card p-4">
+					<TagSelector leadId={lead._id} />
 				</div>
 			</section>
 
@@ -236,12 +256,12 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 						<span className="text-muted-foreground text-xs">Dor Principal</span>
 						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
 					</div>
-					{lead.mainDesire && (
-						<div className="space-y-1 border-border/30 border-t pt-2">
-							<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
-							<p className="text-sm">{lead.mainDesire}</p>
-						</div>
-					)}
+					lead.mainDesire && (
+					<div className="space-y-1 border-border/30 border-t pt-2">
+						<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
+						<p className="text-sm">{lead.mainDesire}</p>
+					</div>
+					)
 				</div>
 			</section>
 		</>

@@ -579,6 +579,10 @@ export default defineSchema({
 			v.literal('atribuicao_alterada'),
 			v.literal('integracao_configurada'),
 			v.literal('user_created'),
+			v.literal('tag_criada'),
+			v.literal('tag_adicionada'),
+			v.literal('tag_removida'),
+			v.literal('tag_deletada'),
 		),
 
 		// Detalhes
@@ -1358,7 +1362,6 @@ export default defineSchema({
 				status: v.optional(v.string()),
 			}),
 		),
-
 		// Quem iniciou
 		initiatedBy: v.string(), // clerkId
 
@@ -1588,6 +1591,10 @@ export default defineSchema({
 		.index('by_organization_status', ['organizationId', 'status'])
 		.index('by_scheduled_for', ['scheduledFor'])
 		.index('by_lead', ['leadId']),
+
+	// ═══════════════════════════════════════════════════════
+	// TAGS (Sistema de etiquetas)
+	// ═══════════════════════════════════════════════════════
 
 	// ═══════════════════════════════════════════════════════
 	// TAGS SYSTEM (Lead Categorization)

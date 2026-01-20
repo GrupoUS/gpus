@@ -9,8 +9,9 @@
  * - Error recovery scenarios
  */
 
-import { test, expect, vi, describe, beforeEach } from 'vitest';
-import { validateCPF, validateAsaasCustomerPayload } from '../../convex/lib/validators';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { validateAsaasCustomerPayload, validateCPF } from '../../convex/lib/validators';
 
 // Type alias for Id to avoid import issues in tests
 type Id<T> = string & { __brand: T };
@@ -354,7 +355,7 @@ describe('Integration - Conflict Resolution', () => {
 			};
 
 			const now = Date.now();
-			const oneHourAgo = now - 3600000;
+			const oneHourAgo = now - 3_600_000;
 
 			const localStudent = {
 				_id: 'student_123' as Id<'students'>,
@@ -496,7 +497,7 @@ describe('Integration - Webhook Processing', () => {
 				await ctx.db.insert('asaasWebhookDeduplication' as any, {
 					idempotencyKey,
 					processedAt: Date.now(),
-					expiresAt: Date.now() + 86400000, // 24h
+					expiresAt: Date.now() + 86_400_000, // 24h
 				});
 
 				// Update payment status
@@ -537,7 +538,7 @@ describe('Integration - Webhook Processing', () => {
 				_id: 'dedup_123',
 				idempotencyKey,
 				processedAt: Date.now() - 1000,
-				expiresAt: Date.now() + 86400000,
+				expiresAt: Date.now() + 86_400_000,
 			});
 
 			ctx.db.query = vi.fn().mockReturnValue({
@@ -600,7 +601,7 @@ describe('Integration - Error Recovery', () => {
 				} catch (error) {
 					lastError = error as Error;
 					// Exponential backoff: 100ms, 200ms, 400ms
-					await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, attempt)));
+					await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
 				}
 			}
 
@@ -619,14 +620,14 @@ describe('Integration - Error Recovery', () => {
 			const stuckSync = {
 				_id: 'sync_123' as Id<'asaasSyncLogs'>,
 				status: 'running',
-				startedAt: Date.now() - 3600000, // Started 1 hour ago
+				startedAt: Date.now() - 3_600_000, // Started 1 hour ago
 			};
 
 			ctx.runQuery.mockResolvedValue(stuckSync);
 			ctx.runMutation.mockResolvedValue(undefined);
 
 			// Simulate stuck sync check
-			const oneHourAgo = Date.now() - 3600000;
+			const oneHourAgo = Date.now() - 3_600_000;
 
 			const sync = await ctx.runQuery('api.asaas.queries.getRunningSyncs');
 
@@ -650,8 +651,8 @@ describe('Integration - Error Recovery', () => {
 			const circuitState = {
 				state: 'open',
 				failureCount: 5,
-				lastFailureTime: Date.now() - 60000, // 1 minute ago
-				cooldownPeriod: 60000, // 1 minute
+				lastFailureTime: Date.now() - 60_000, // 1 minute ago
+				cooldownPeriod: 60_000, // 1 minute
 			};
 
 			// Simulate circuit breaker state check

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Student Creation Flow', () => {
 	// Note: This test assumes the user is authenticated.
@@ -24,7 +24,7 @@ test.describe('Student Creation Flow', () => {
 		await page.getByLabel(/Email/i).fill(`teste.e2e.${uniqueId}@grupous.com.br`);
 		await page.getByLabel(/Telefone/i).fill(
 			'119' +
-				Math.floor(Math.random() * 100000000)
+				Math.floor(Math.random() * 100_000_000)
 					.toString()
 					.padStart(8, '0'),
 		);
@@ -47,7 +47,7 @@ test.describe('Student Creation Flow', () => {
 		const successToast = page.getByText(/Aluno criado com sucesso!/i);
 		const errorToast = page.getByText(/Erro ao criar aluno/i);
 
-		await expect(successToast.or(errorToast)).toBeVisible({ timeout: 15000 });
+		await expect(successToast.or(errorToast)).toBeVisible({ timeout: 15_000 });
 		await expect(successToast).toBeVisible();
 	});
 

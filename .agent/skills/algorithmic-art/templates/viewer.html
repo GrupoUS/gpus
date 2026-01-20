@@ -496,12 +496,13 @@
 		</div>
 
 		<script>
+		'use strict';
 		// ═══════════════════════════════════════════════════════════════════════
 		// GENERATIVE ART PARAMETERS - CUSTOMIZE FOR YOUR ALGORITHM
 		// ═══════════════════════════════════════════════════════════════════════
 
 		let params = {
-			seed: 12345,
+			seed: 12_345,
 			particleCount: 5000,
 			flowSpeed: 0.5,
 			noiseScale: 0.005,
@@ -509,19 +510,19 @@
 			colorPalette: ['#d97757', '#6a9bcc', '#788c5d'],
 		};
 
-		let defaultParams = { ...params }; // Store defaults for reset
+		const defaultParams = { ...params }; // Store defaults for reset
 
 		// ═══════════════════════════════════════════════════════════════════════
 		// P5.JS GENERATIVE ART ALGORITHM - REPLACE WITH YOUR VISION
 		// ═══════════════════════════════════════════════════════════════════════
 
 		let particles = [];
-		let flowField = [];
+		const flowField = [];
 		let cols, rows;
-		let scl = 10; // Flow field resolution
+		const scl = 10; // Flow field resolution
 
 		function setup() {
-			let canvas = createCanvas(1200, 1200);
+			const canvas = createCanvas(1200, 1200);
 			canvas.parent('canvas-container');
 
 			initializeSystem();
@@ -594,8 +595,8 @@
 		}
 
 		function updateSeed() {
-			let input = document.getElementById('seed-input');
-			let newSeed = parseInt(input.value);
+			const input = document.getElementById('seed-input');
+			const newSeed = Number.parseInt(input.value);
 			if (newSeed && newSeed > 0) {
 				params.seed = newSeed;
 				initializeSystem();
@@ -618,7 +619,7 @@
 		}
 
 		function randomSeedAndUpdate() {
-			params.seed = Math.floor(Math.random() * 999999) + 1;
+			params.seed = Math.floor(Math.random() * 999_999) + 1;
 			updateSeedDisplay();
 			initializeSystem();
 		}
@@ -649,7 +650,7 @@
 		}
 
 		// Initialize UI on load
-		window.addEventListener('load', function () {
+		window.addEventListener('load', () => {
 			updateSeedDisplay();
 		});
 		</script>

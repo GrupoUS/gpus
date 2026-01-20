@@ -338,7 +338,6 @@ async function checkApiErrorRate(ctx: any): Promise<{
 	errorCount: number;
 	totalRequests: number;
 }> {
-	// @ts-expect-error: deep type instantiation on internal api
 	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 	const logs = await ctx.runQuery((internal as any).asaas.monitoring.getApiHealthMetricsInternal, {
 		hours: 1,

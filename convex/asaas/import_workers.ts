@@ -10,6 +10,7 @@
 
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
+import { maskCPF } from '../lib/masking';
 import type { WorkerResult } from './batch_processor';
 import type {
 	AsaasCustomerResponse,
@@ -20,6 +21,9 @@ import type {
 	SubscriptionDoc,
 } from './types';
 import { isId } from './types';
+
+const CPF_REGEX = /^(\d)\1{10}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ═══════════════════════════════════════════════════════
 // WORKER TIMEOUT CONFIGURATION
@@ -64,7 +68,7 @@ function validateCPF(cpf: string): boolean {
 	if (clean.length !== 11) return false;
 
 	// All same digits is invalid
-	if (/^(\d)\1{10}$/.test(clean)) return false;
+	if (CPF_REGEX.test(clean)) return false;
 
 	// Validate check digits
 	let sum = 0;
@@ -91,8 +95,8 @@ function validateCPF(cpf: string): boolean {
  */
 function validateEmail(email: string): boolean {
 	if (!email) return false; // Email is optional
-	const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	return regex.test(email);
+	if (!email) return false; // Email is optional
+	return EMAIL_REGEX.test(email);
 }
 
 /**
@@ -122,10 +126,12 @@ function validatePhone(phone: string): boolean {
  * 4. Returns structured result with appropriate flags
  */
 export async function processCustomerWorker(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
 	ctx: any,
 	customer: AsaasCustomerResponse,
 	organizationId?: string,
 ): Promise<WorkerResult<StudentWithAsaas>> {
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Worker validation logic requires linear checks
 	// Validation
 	if (customer.cpfCnpj && !validateCPF(customer.cpfCnpj)) {
 		return {
@@ -218,6 +224,11 @@ export async function processCustomerWorker(
 			created: true,
 		};
 	} catch (error: any) {
+		const maskedCpf = customer.cpfCnpj ? maskCPF(customer.cpfCnpj) : 'N/A';
+		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
+		console.error(
+			`Error processing customer ${customer.name} (CPF: ${maskedCpf}): ${error.message}`,
+		);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',
@@ -239,6 +250,7 @@ export async function processCustomerWorker(
  * 4. Creates or updates payment record
  */
 export async function processPaymentWorker(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
 	ctx: any,
 	payment: AsaasPaymentResponse,
 	organizationId?: string,
@@ -338,6 +350,8 @@ export async function processPaymentWorker(
 			created: true,
 		};
 	} catch (error: any) {
+		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
+		console.error(`Error processing payment ${payment.id}: ${error.message}`);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',
@@ -359,6 +373,7 @@ export async function processPaymentWorker(
  * 4. Creates or updates subscription record
  */
 export async function processSubscriptionWorker(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
 	ctx: any,
 	subscription: AsaasSubscriptionResponse,
 	organizationId?: string,
@@ -456,6 +471,8 @@ export async function processSubscriptionWorker(
 			created: true,
 		};
 	} catch (error: any) {
+		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
+		console.error(`Error processing subscription ${subscription.id}: ${error.message}`);
 		return {
 			success: false,
 			error: error.message || 'Unknown error',

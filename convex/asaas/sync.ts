@@ -509,7 +509,6 @@ export const runAutoSyncCustomersAction = internalAction({
 			return { skipped: true };
 		}
 
-		// @ts-expect-error: deep type instantiation on api
 		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on api
 		await ctx.runAction((api as any).asaas.actions.importCustomersFromAsaas, {
 			initiatedBy: 'system_auto_sync',

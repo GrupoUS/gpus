@@ -1,3 +1,5 @@
+import { api } from '@convex/_generated/api';
+import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -143,8 +145,47 @@ export function LeadCard({ lead }: LeadCardProps) {
 							</motion.span>
 						)}
 					</div>
+					<div className="mt-3 flex flex-wrap gap-1">
+						<LeadTags leadId={lead._id as any} />
+					</div>
 				</div>
 			</div>
 		</MotionCard>
+	);
+}
+
+function LeadTags({ leadId }: { leadId: string }) {
+	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
+	const getLeadTags = (api as any).tags.getLeadTags;
+	const tags = useQuery(getLeadTags, { leadId: leadId as any });
+
+	if (!tags) return null;
+
+	const displayedTags = tags.slice(0, 3);
+	const remaining = tags.length - 3;
+
+	return (
+		<>
+			{displayedTags.map((tag: any) => (
+				<Badge
+					className="h-5 px-1.5 text-[10px]"
+					key={tag._id}
+					style={{
+						backgroundColor: tag.color ? `${tag.color}15` : undefined,
+						color: tag.color,
+						borderColor: tag.color ? `${tag.color}30` : undefined,
+						borderWidth: '1px',
+					}}
+					variant="secondary"
+				>
+					{tag.name}
+				</Badge>
+			))}
+			{remaining > 0 && (
+				<Badge className="h-5 px-1.5 text-[10px] text-muted-foreground" variant="outline">
+					+{remaining}
+				</Badge>
+			)}
+		</>
 	);
 }

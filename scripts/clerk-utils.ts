@@ -19,7 +19,7 @@ export const USER_ID = 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6';
 export const USER_EMAIL = 'msm.jur@gmail.com';
 export const ORGANIZATION_ID = 'org_3744yWknE4NtI6EtvJqYT8h0MLN';
 
-export async function clerkRequest(endpoint: string, method: string = 'GET', body?: any) {
+export async function clerkRequest(endpoint: string, method = 'GET', body?: any) {
 	const response = await fetch(`${CLERK_API_URL}${endpoint}`, {
 		method,
 		headers: {

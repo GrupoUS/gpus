@@ -46,7 +46,7 @@ async function runMigration() {
 		const result = await client.mutation('migrations.executeMigration', {});
 
 		console.log('✅ Migration completed successfully!');
-		console.log(`📊 Result:`, result);
+		console.log('📊 Result:', result);
 	} catch (error) {
 		console.error('❌ Migration failed:', error.message);
 		process.exit(1);

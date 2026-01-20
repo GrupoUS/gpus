@@ -4,8 +4,9 @@
  * Tests for adaptive batching, checkpoint progress, and error isolation
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { processBatch, calculateETR, formatProgress } from '../../../convex/asaas/batch_processor';
+import { describe, expect, it, vi } from 'vitest';
+
+import { calculateETR, formatProgress, processBatch } from '../../../convex/asaas/batch_processor';
 
 describe('BatchProcessor', () => {
 	describe('Adaptive Batching', () => {
@@ -219,7 +220,7 @@ describe('BatchProcessor', () => {
 				// Fixed time calculation: 10 seconds elapsed, 50 items processed, 50 remaining
 				// avgTimePerItem = 10000/50 = 200ms per item
 				// etr = 200 * 50 = 10000ms = 10s
-				const etr = calculateETR(Date.now() - 10000, 50, 100);
+				const etr = calculateETR(Date.now() - 10_000, 50, 100);
 				expect(etr).toContain('s');
 			});
 
@@ -228,7 +229,7 @@ describe('BatchProcessor', () => {
 				// etr = 300 * 100 = 30000ms = 0.5m = ~30s -> should show seconds
 				// Let's adjust to ensure minutes: 60 seconds elapsed, 60 items, 60 remaining
 				// avg = 1000ms/item, etr = 1000 * 60 = 60000ms = 1m
-				const etr = calculateETR(Date.now() - 60000, 60, 120);
+				const etr = calculateETR(Date.now() - 60_000, 60, 120);
 				expect(etr).toContain('m');
 			});
 
@@ -237,7 +238,7 @@ describe('BatchProcessor', () => {
 				// avg = 1800ms/item, etr = 1800 * 1000 = 1800000ms = 30m -> should show minutes
 				// For hours: 3600 seconds elapsed, 1000 items, 2000 total
 				// avg = 3600ms/item, etr = 3600 * 1000 = 3600000ms = 60m = 1h
-				const etr = calculateETR(Date.now() - 3600000, 1000, 2000);
+				const etr = calculateETR(Date.now() - 3_600_000, 1000, 2000);
 				expect(etr).toContain('h');
 			});
 		});

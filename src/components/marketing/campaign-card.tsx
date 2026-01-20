@@ -105,7 +105,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 							<>
 								<Calendar className="h-3 w-3" />
 								<span>
-									Criada {formatDistanceToNow(campaign.createdAt, { locale: ptBR })} atrás
+									Criada {formatDistanceToNow(campaign._creationTime, { locale: ptBR })} atrás
 								</span>
 							</>
 						)}

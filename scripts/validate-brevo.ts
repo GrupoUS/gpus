@@ -46,7 +46,7 @@ async function validateBrevo() {
 			if (found) {
 				console.log(`✅ Sender "${BREVO_SENDER_EMAIL}" is verified.`);
 				if (!found.active) {
-					console.warn(`⚠️ Sender is found but NOT ACTIVE.`);
+					console.warn('⚠️ Sender is found but NOT ACTIVE.');
 				}
 			} else {
 				console.warn(`⚠️ Sender "${BREVO_SENDER_EMAIL}" NOT FOUND in verified senders list.`);

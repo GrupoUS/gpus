@@ -62,6 +62,7 @@ import type * as lib_index from "../lib/index.js";
 import type * as lib_inngest from "../lib/inngest.js";
 import type * as lib_lgpdCompliance from "../lib/lgpdCompliance.js";
 import type * as lib_lgpdDataRights from "../lib/lgpdDataRights.js";
+import type * as lib_masking from "../lib/masking.js";
 import type * as lib_messaging from "../lib/messaging.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
@@ -153,6 +154,7 @@ declare const fullApi: ApiFromModules<{
   "lib/inngest": typeof lib_inngest;
   "lib/lgpdCompliance": typeof lib_lgpdCompliance;
   "lib/lgpdDataRights": typeof lib_lgpdDataRights;
+  "lib/masking": typeof lib_masking;
   "lib/messaging": typeof lib_messaging;
   "lib/permissions": typeof lib_permissions;
   "lib/rateLimit": typeof lib_rateLimit;

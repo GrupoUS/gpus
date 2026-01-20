@@ -5,6 +5,7 @@
  */
 
 import { vi } from 'vitest';
+
 import type { Id } from '../../convex/_generated/dataModel';
 
 /**
@@ -78,7 +79,7 @@ export function createTestEnrollment(overrides: Partial<any> = {}) {
 		studentId: 'test_student_id' as Id<'students'>,
 		product: 'trintae3' as const,
 		status: 'ativo',
-		totalValue: 10000,
+		totalValue: 10_000,
 		installments: 12,
 		installmentValue: 833.33,
 		paymentStatus: 'em_dia',
@@ -118,7 +119,7 @@ export function createTestSyncLog(overrides: Partial<any> = {}) {
 		_id: 'test_sync_log_id' as Id<'asaasSyncLogs'>,
 		syncType: 'customers' as const,
 		status: 'completed' as const,
-		startedAt: Date.now() - 10000,
+		startedAt: Date.now() - 10_000,
 		completedAt: Date.now(),
 		recordsProcessed: 100,
 		recordsCreated: 50,

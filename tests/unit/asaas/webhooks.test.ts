@@ -4,7 +4,7 @@
  * Tests for webhook processing, idempotency, and deduplication
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Type alias for Id to avoid import issues in tests
 type Id<T> = string & { __brand: T };
@@ -79,7 +79,7 @@ describe('Webhooks - Idempotency', () => {
 			// to allow re-processing after expiration
 			const event = 'PAYMENT_CONFIRMED';
 			const paymentId = 'pay_test123';
-			const time1 = Math.floor(Date.now() / 60000); // 1-minute window
+			const time1 = Math.floor(Date.now() / 60_000); // 1-minute window
 			const time2 = time1 + 1; // Next minute
 
 			const key1 = `${event}:${paymentId}:${time1}`;
@@ -145,10 +145,10 @@ describe('Webhooks - Idempotency', () => {
 	describe('Deduplication entry TTL', () => {
 		it('should set 24h expiration on deduplication entries', () => {
 			const now = Date.now();
-			const expiresAt = now + 86400000; // 24 hours in ms
+			const expiresAt = now + 86_400_000; // 24 hours in ms
 
 			expect(expiresAt).toBeGreaterThan(now);
-			expect(expiresAt - now).toBe(86400000);
+			expect(expiresAt - now).toBe(86_400_000);
 		});
 	});
 });

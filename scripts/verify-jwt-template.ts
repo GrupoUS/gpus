@@ -85,12 +85,14 @@ async function main() {
 		console.log('\n📋 Detalhes do Template:');
 		console.log(`   Nome: ${templateDetails.name}`);
 		console.log(`   Slug: ${templateDetails.slug}`);
-		console.log(`   Claims: ${templateDetails.claims ? JSON.stringify(templateDetails.claims, null, 2) : 'Nenhum claim customizado'}`);
+		console.log(
+			`   Claims: ${templateDetails.claims ? JSON.stringify(templateDetails.claims, null, 2) : 'Nenhum claim customizado'}`,
+		);
 
 		// Verificar claims necessários
 		const requiredClaims = ['org_id', 'org_role', 'org_slug', 'org_permissions'];
 		const claims = templateDetails.claims || {};
-		const missingClaims = requiredClaims.filter(claim => !claims[claim]);
+		const missingClaims = requiredClaims.filter((claim) => !claims[claim]);
 
 		if (missingClaims.length > 0) {
 			console.log(`\n⚠️ Claims faltando: ${missingClaims.join(', ')}`);
@@ -117,7 +119,9 @@ async function main() {
 
 	console.log('\n✅ Verificação concluída!');
 	console.log('\n📝 Próximos passos:');
-	console.log('   1. Se o JWT Template não estiver configurado, configure-o conforme instruções acima');
+	console.log(
+		'   1. Se o JWT Template não estiver configurado, configure-o conforme instruções acima',
+	);
 	console.log('   2. Faça logout e login novamente com msm.jur@gmail.com');
 	console.log('   3. No console do navegador, execute para verificar o token:');
 	console.log('      ```javascript');

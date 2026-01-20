@@ -41,9 +41,13 @@ async function addUserToOrganization() {
 
 			// Atualizar role para admin
 			console.log('🔄 Atualizando role para Admin...');
-			await clerkRequest(`/organizations/${ORGANIZATION_ID}/memberships/${existingMembership.id}`, 'PATCH', {
-				role: ROLE,
-			});
+			await clerkRequest(
+				`/organizations/${ORGANIZATION_ID}/memberships/${existingMembership.id}`,
+				'PATCH',
+				{
+					role: ROLE,
+				},
+			);
 			console.log('✅ Role atualizada para Admin com sucesso!');
 			return;
 		}

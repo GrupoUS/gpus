@@ -9,6 +9,7 @@ import {
 	Plug,
 	Settings as SettingsIcon,
 	Shield,
+	Tag,
 	User,
 	Users,
 } from 'lucide-react';
@@ -232,6 +233,14 @@ function SettingsPage() {
 					Icon={SettingsIcon}
 					title="Sistema"
 				>
+					<SettingItem
+						colorClass="from-green-500/20 to-green-600/20"
+						description="Gerencie etiquetas para leads"
+						href="/settings/tags"
+						Icon={Tag}
+						iconColorClass="text-green-500"
+						title="Etiquetas"
+					/>
 					<SettingItem
 						colorClass="from-green-500/20 to-green-600/20"
 						description="Gerencie templates para chat"
