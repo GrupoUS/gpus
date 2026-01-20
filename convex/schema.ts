@@ -576,6 +576,45 @@ export default defineSchema({
 		.index('by_created', ['createdAt']),
 
 	// ═══════════════════════════════════════════════════════
+	// TAREFAS (CRM Task Manager)
+	// ═══════════════════════════════════════════════════════
+	tasks: defineTable({
+		description: v.string(),
+		leadId: v.optional(v.id('leads')),
+		studentId: v.optional(v.id('students')),
+		dueDate: v.optional(v.number()),
+		mentionedUserIds: v.optional(v.array(v.id('users'))), // Keep for display, but unindexed
+		assignedTo: v.optional(v.id('users')),
+		completed: v.boolean(),
+		completedAt: v.optional(v.number()),
+		remindedAt: v.optional(v.number()),
+
+		// Multi-tenant
+		organizationId: v.string(),
+		createdBy: v.string(), // clerkId
+
+		// Timestamp
+		createdAt: v.number(),
+		updatedAt: v.number(),
+	})
+		.index('by_lead', ['leadId'])
+		.index('by_student', ['studentId'])
+		.index('by_organization', ['organizationId'])
+		.index('by_assigned_to', ['assignedTo'])
+		.index('by_due_date', ['dueDate'])
+		.index('by_created', ['createdAt']),
+
+	taskMentions: defineTable({
+		taskId: v.id('tasks'),
+		userId: v.id('users'),
+		organizationId: v.string(),
+		createdAt: v.number(),
+	})
+		.index('by_user', ['userId'])
+		.index('by_task', ['taskId'])
+		.index('by_organization', ['organizationId']),
+
+	// ═══════════════════════════════════════════════════════
 	// CAMPOS PERSONALIZADOS (Custom Fields)
 	// ═══════════════════════════════════════════════════════
 	customFields: defineTable({
@@ -1589,46 +1628,6 @@ export default defineSchema({
 	})
 		.index('by_identifier_action', ['identifier', 'action'])
 		.index('by_timestamp', ['timestamp']),
-
-	// ═══════════════════════════════════════════════════════
-	// TAREFAS (Itens acionáveis com menções)
-	// ═══════════════════════════════════════════════════════
-	tasks: defineTable({
-		// Descrição da tarefa
-		description: v.string(),
-
-		// Referências opcionais (tarefa pode ser geral ou específica)
-		leadId: v.optional(v.id('leads')),
-		studentId: v.optional(v.id('students')),
-
-		// Detalhes de execução
-		dueDate: v.optional(v.number()),
-		assignedTo: v.optional(v.id('users')),
-		mentionedUserIds: v.optional(v.array(v.id('users'))),
-
-		// Status e rastreamento
-		completed: v.boolean(),
-		completedAt: v.optional(v.number()),
-
-		// Reminder tracking
-		remindedAt: v.optional(v.number()),
-
-		// Multi-tenant
-		organizationId: v.string(),
-		createdBy: v.string(), // clerkId
-
-		// Timestamps
-		createdAt: v.number(),
-		updatedAt: v.number(),
-	})
-		.index('by_lead', ['leadId'])
-		.index('by_student', ['studentId'])
-		.index('by_assigned_to', ['assignedTo'])
-		.index('by_organization', ['organizationId'])
-		.index('by_due_date', ['dueDate'])
-		.index('by_mentioned_user', ['mentionedUserIds'])
-		.index('by_completed', ['completed'])
-		.index('by_organization_assigned_completed', ['organizationId', 'assignedTo', 'completed']),
 
 	// ═══════════════════════════════════════════════════════
 	// EVOLUTION API INTEGRATION (WhatsApp Queue)

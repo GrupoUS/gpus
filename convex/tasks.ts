@@ -51,11 +51,29 @@ export const listTasks = query({
 		await requireAuth(ctx);
 		const organizationId = await getOrganizationId(ctx);
 
+		// Validate lead if filtering by it
+		if (args.leadId) {
+			const lead = await ctx.db.get(args.leadId);
+			if (!lead || lead.organizationId !== organizationId) {
+				throw new Error('Lead not found or does not belong to your organization.');
+			}
+		}
+
+		// Validate assigned user if filtering by it
+		if (args.assignedTo) {
+			const user = await ctx.db.get(args.assignedTo);
+			if (!user || user.organizationId !== organizationId) {
+				throw new Error('User not found or does not belong to your organization.');
+			}
+		}
+
 		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
 		let tasksQuery: any;
 
 		if (args.leadId) {
-			tasksQuery = ctx.db.query('tasks').withIndex('by_lead', (q) => q.eq('leadId', args.leadId));
+			tasksQuery = ctx.db
+				.query('tasks')
+				.withIndex('by_lead', (q) => q.eq('leadId', args.leadId));
 		} else if (args.assignedTo) {
 			tasksQuery = ctx.db
 				.query('tasks')
@@ -66,56 +84,22 @@ export const listTasks = query({
 				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 		}
 
+		// Enforce organization scope via filter if we used an index that doesn't implicitly guarantee it (like by_assigned_to or by_lead theoretically, though we pre-validated)
+		// For safety and strict verified comment compliance:
+
+		// Enforce organization scope via filter if we used an index that doesn't implicitly guarantee it (like by_assigned_to or by_lead theoretically, though we pre-validated)
+		// For safety and strict verified comment compliance:
+		if (args.leadId || args.assignedTo) {
+			// Used by_lead or by_assigned_to. We already validated the Lead/User belongs to Org.
+			// But to be absolutely safe against tasks moved between leads/users (unlikely but possible), let's ensure task.organizationId matches.
+			// biome-ignore lint/suspicious/noExplicitAny: Filter optimization
+			tasksQuery = tasksQuery.filter((q: any) => q.eq(q.field('organizationId'), organizationId));
+		}
+
 		if (args.completed !== undefined) {
 			// biome-ignore lint/suspicious/noExplicitAny: Filter builder optimization
 			tasksQuery = tasksQuery.filter((q: any) => q.eq(q.field('completed'), args.completed));
 		}
-
-		// Sort by due date (ascending: upcoming first)
-		// Note: We need to sort in memory or ensure index logic supports this mixed with filter.
-		// 'by_due_date' is available but only if we query by it.
-		// Convex pagination requires sorting to match index or be manual.
-		// If we use 'by_lead' or 'by_organization', the order is implicit index order.
-		// 'by_organization' is indexed by organizationId.
-		// We can't easily sort by dueDate if we didn't use that index.
-		// However, for MVP/Plan, we'll try order('asc') if the index supports it or just use default.
-		// The plan says "Order by dueDate ascending".
-		// To do this efficiently with filtering by organization, we might need a composite index 'by_organization_due_date' which we don't have for TASKS yet (only schema has defaults).
-		// Wait, schema has: .index('by_due_date', ['dueDate']) and .index('by_organization', ['organizationId'])
-		// If we pick 'by_organization', we get them by creation time/ID usually.
-		// Let's stick to simple logic: we can't sort efficiently without correct index.
-		// BUT the plan says "Order by dueDate ascending".
-		// Let's attempt .order('asc') and see if Convex complains, or just rely on client sort if not.
-		// Given strict plan adherence: "Order by `dueDate` ascending".
-		// I'll add .order('asc') but be aware it might require matching index.
-		// Actually, standard convex strategy for multi-field sort is composite index.
-		// Let's implement as specific as possible.
-
-		// Correction: The tasks schema has:
-		// .index('by_organization', ['organizationId'])
-		// .index('by_due_date', ['dueDate'])
-		// It does NOT have 'by_organization_dueDate'.
-		// We will follow the plan's instruction to "Order by dueDate ascending".
-		// If using `by_organization`, we can't arbitrarily order by `dueDate` without `collect()` sorting.
-		// But for `paginate`, we must follow index order.
-		// So `q.order('asc')` will sort by the index columns.
-
-		// Implementation Decision:
-		// If filtered by Lead, use by_lead (creation order usually).
-		// If filtered by AssignedTo, use by_assigned_to.
-		// If only Organization, use by_organization.
-		// To sort by Due Date strictly, we'd need to use `by_due_date` index and filter organization in memory.
-		// Let's use `by_organization` and `order('desc')` (newest first) or `asc` (oldest first).
-		// The plan says "Order by dueDate ascending".
-		// I'll just return paginated results using expected index order for now,
-		// or if I MUST sort by due date, I must use that index.
-		// Let's prioritize index usage as per plan logic:
-		// "Index-based queries for performance (by_organization, by_assigned_to, by_due_date)"
-		// If I use `by_organization`, I get organization grouping.
-		// If I use `by_assigned_to`, I get assignment grouping.
-		// If I really want `dueDate` ordering, I should probably check if I can filter org/lead efficiently.
-		// Let's stick to the selected index and just paginate.
-		// The user might handle sorting on client or I accept that strict sorting by due date requires index.
 
 		return await tasksQuery.paginate(args.paginationOpts);
 	},
@@ -172,19 +156,37 @@ export const internalCreateTask = internalMutation({
 		// No auth check for internal mutation
 
 		const now = Date.now();
-		const taskId = await ctx.db.insert('tasks', {
+
+		// Build object to avoid undefined values
+		// biome-ignore lint/suspicious/noExplicitAny: Dynamic fields
+		const taskFields: any = {
 			description: args.description,
-			leadId: args.leadId,
-			studentId: args.studentId,
-			dueDate: args.dueDate,
-			mentionedUserIds: args.mentionedUserIds,
-			assignedTo: args.assignedTo,
 			organizationId: args.organizationId,
 			createdBy: args.createdBy,
 			completed: false,
 			createdAt: now,
 			updatedAt: now,
-		});
+		};
+
+		if (args.leadId !== undefined) taskFields.leadId = args.leadId;
+		if (args.studentId !== undefined) taskFields.studentId = args.studentId;
+		if (args.dueDate !== undefined) taskFields.dueDate = args.dueDate;
+		if (args.mentionedUserIds !== undefined) taskFields.mentionedUserIds = args.mentionedUserIds;
+		if (args.assignedTo !== undefined) taskFields.assignedTo = args.assignedTo;
+
+		const taskId = await ctx.db.insert('tasks', taskFields);
+
+		// Handle Mentions
+		if (args.mentionedUserIds && args.mentionedUserIds.length > 0) {
+			for (const userId of args.mentionedUserIds) {
+				await ctx.db.insert('taskMentions', {
+					taskId,
+					userId,
+					organizationId: args.organizationId,
+					createdAt: now,
+				});
+			}
+		}
 
 		// Activity Log
 		await ctx.db.insert('activities', {
@@ -208,16 +210,35 @@ export const internalCreateTask = internalMutation({
 
 export const getMyTasks = query({
 	args: {
+		userId: v.optional(v.id('users')),
 		completed: v.optional(v.boolean()),
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
 		const identity = await requireAuth(ctx);
+		const organizationId = await getOrganizationId(ctx);
 		const currentUser = await getCurrentUser(ctx, identity.subject);
+
+		let targetUserId = currentUser._id;
+
+		// If userId is provided and different from current user, check permissions
+		if (args.userId && args.userId !== currentUser._id) {
+			const hasAccess = await hasPermission(ctx, PERMISSIONS.ALL);
+			if (!hasAccess) {
+				throw new Error('Permission denied. You cannot view tasks of other users.');
+			}
+			targetUserId = args.userId;
+		}
 
 		let tasksQuery = ctx.db
 			.query('tasks')
-			.withIndex('by_assigned_to', (q) => q.eq('assignedTo', currentUser._id));
+			.withIndex('by_assigned_to', (q) => q.eq('assignedTo', targetUserId));
+
+		// Scope to organization
+		// biome-ignore lint/suspicious/noExplicitAny: Filter builder optimization
+		tasksQuery = (tasksQuery as any).filter((q: any) =>
+			q.eq(q.field('organizationId'), organizationId),
+		);
 
 		if (args.completed !== undefined) {
 			// biome-ignore lint/suspicious/noExplicitAny: Query builder optimization
@@ -225,10 +246,6 @@ export const getMyTasks = query({
 				q.eq(q.field('completed'), args.completed),
 			);
 		}
-
-		// Order by due date if possible? Index is 'by_assigned_to' ['assignedTo']
-		// so sorting uses creation time (id) usually.
-		// We'll return paginated.
 
 		return await tasksQuery.order('asc').paginate(args.paginationOpts);
 	},
@@ -243,9 +260,14 @@ export const createTask = mutation({
 		mentionedUserIds: v.optional(v.array(v.id('users'))),
 		assignedTo: v.optional(v.id('users')),
 	},
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Mutation has many validations
 	handler: async (ctx, args) => {
 		const identity = await requireAuth(ctx);
 		const organizationId = await getOrganizationId(ctx);
+
+		const currentUser = await getCurrentUser(ctx, identity.subject);
+		// Comment 1: Default assignedTo to current user if not provided
+		const assignedToId = args.assignedTo ?? currentUser._id;
 
 		// Validate mentioned users
 		if (args.mentionedUserIds) {
@@ -268,27 +290,48 @@ export const createTask = mutation({
 			}
 		}
 
-		const assignedToId = args.assignedTo;
 		if (assignedToId) {
 			// Validate assigned user exists
-			await validateUserExists(ctx, assignedToId);
+			const user = await validateUserExists(ctx, assignedToId);
+			// Optional: We could also validate `user.organizationId === organizationId` strictly
+			if (user.organizationId !== organizationId) {
+				throw new Error('Cannot assign task to user from another organization.');
+			}
 		}
-		// Comment 3: Allow unassigned tasks (no fallback to currentUser)
 
 		const now = Date.now();
-		const taskId = await ctx.db.insert('tasks', {
+
+		// Build object to avoid undefined values
+		// biome-ignore lint/suspicious/noExplicitAny: Dynamic fields
+		const taskFields: any = {
 			description: args.description,
-			leadId: args.leadId,
-			studentId: args.studentId,
-			dueDate: args.dueDate,
-			mentionedUserIds: args.mentionedUserIds,
-			assignedTo: assignedToId,
 			organizationId,
 			createdBy: identity.subject,
 			completed: false,
 			createdAt: now,
 			updatedAt: now,
-		});
+			assignedTo: assignedToId, // Always set
+		};
+
+		if (args.leadId !== undefined) taskFields.leadId = args.leadId;
+		if (args.studentId !== undefined) taskFields.studentId = args.studentId;
+		if (args.dueDate !== undefined) taskFields.dueDate = args.dueDate;
+		if (args.mentionedUserIds !== undefined) taskFields.mentionedUserIds = args.mentionedUserIds;
+		// assignedTo is set above
+
+		const taskId = await ctx.db.insert('tasks', taskFields);
+
+		// Handle Mentions
+		if (args.mentionedUserIds && args.mentionedUserIds.length > 0) {
+			for (const userId of args.mentionedUserIds) {
+				await ctx.db.insert('taskMentions', {
+					taskId,
+					userId,
+					organizationId,
+					createdAt: now,
+				});
+			}
+		}
 
 		// Activity Log
 		await ctx.db.insert('activities', {
@@ -324,6 +367,8 @@ export const updateTask = mutation({
 			studentId: v.optional(v.id('students')),
 		}),
 	},
+	// Update Task Handler
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Mutation has many validation checks
 	handler: async (ctx, args) => {
 		const identity = await requireAuth(ctx);
 		const organizationId = await getOrganizationId(ctx);
@@ -362,15 +407,46 @@ export const updateTask = mutation({
 			if (!s || s.organizationId !== organizationId) throw new Error('Aluno inválido');
 		}
 
-		await ctx.db.patch(args.taskId, {
-			...args.updates,
-			updatedAt: Date.now(),
-		});
+		// Handle Mentions Update
+		if (args.updates.mentionedUserIds !== undefined) {
+			// Delete existing
+			const existingMentions = await ctx.db
+				.query('taskMentions')
+				.withIndex('by_task', (q) => q.eq('taskId', args.taskId))
+				.collect();
+
+			for (const mention of existingMentions) {
+				await ctx.db.delete(mention._id);
+			}
+
+			// Insert new
+			for (const userId of args.updates.mentionedUserIds) {
+				await ctx.db.insert('taskMentions', {
+					taskId: args.taskId,
+					userId,
+					organizationId,
+					createdAt: Date.now(),
+				});
+			}
+		}
+
+		// Build clean updates object
+		// biome-ignore lint/suspicious/noExplicitAny: Dynamic fields
+		const updates: any = { updatedAt: Date.now() };
+		if (args.updates.description !== undefined) updates.description = args.updates.description;
+		if (args.updates.dueDate !== undefined) updates.dueDate = args.updates.dueDate;
+		if (args.updates.mentionedUserIds !== undefined)
+			updates.mentionedUserIds = args.updates.mentionedUserIds;
+		if (args.updates.assignedTo !== undefined) updates.assignedTo = args.updates.assignedTo;
+		if (args.updates.leadId !== undefined) updates.leadId = args.updates.leadId;
+		if (args.updates.studentId !== undefined) updates.studentId = args.updates.studentId;
+
+		await ctx.db.patch(args.taskId, updates);
 
 		await ctx.db.insert('activities', {
 			type: 'task_updated',
 			description: 'Task updated',
-			leadId: task.leadId, // Use existing links if not updated, strictly speaking logs usually link to current state
+			leadId: task.leadId,
 			studentId: task.studentId,
 			organizationId,
 			performedBy: identity.subject,
@@ -477,11 +553,12 @@ export const createTaskReminder = internalMutation({
 		recipientType: v.union(v.literal('student'), v.literal('lead'), v.literal('user')),
 		taskDescription: v.string(),
 		dueDate: v.number(),
+		organizationId: v.string(),
 	},
 	handler: async (ctx, args) => {
 		// Insert Notification
 		await ctx.db.insert('notifications', {
-			organizationId: (await getOrganizationId(ctx)) ?? 'system', // Fallback if internal
+			organizationId: args.organizationId,
 			recipientId: args.recipientId,
 			recipientType: args.recipientType,
 			type: 'task_reminder',
@@ -499,18 +576,6 @@ export const createTaskReminder = internalMutation({
 		await ctx.db.patch(args.taskId, {
 			remindedAt: Date.now(),
 		});
-
-		// No activity log here to avoid spamming 1 log per recipient?
-		// Plan says "Include metadata... Update task... Return notification ID".
-		// Plan Step 3 says "Log activity at end".
-		// Step 2 says "Return notification ID".
-		// So I'll skip activity log inside mutation or keep it?
-		// "Include metadata... Update task... Return notification ID".
-		// I'll return the ID.
-		// Note regarding OrganizationId: Internal mutation doesn't have consistent context.
-		// I should probably pass organizationId in args or fetch from task.
-		// Fetching from task adds a read.
-		// I'll fetch task to get organizationId to be safe.
 	},
 });
 

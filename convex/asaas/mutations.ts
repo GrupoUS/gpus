@@ -65,6 +65,18 @@ const subscriptionStatusSchema = v.union(
 );
 
 /**
+ * Subscription cycle from Asaas
+ */
+const subscriptionCycleSchema = v.union(
+	v.literal('WEEKLY'),
+	v.literal('BIWEEKLY'),
+	v.literal('MONTHLY'),
+	v.literal('QUARTERLY'),
+	v.literal('SEMIANNUALLY'),
+	v.literal('YEARLY'),
+);
+
+/**
  * Validates payment amount according to business rules
  * @throws Error if amount is invalid
  */

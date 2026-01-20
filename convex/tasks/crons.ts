@@ -3,6 +3,7 @@ import { internalAction } from '../_generated/server';
 
 export const sendTaskReminders = internalAction({
 	args: {},
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Cron job has complex nested logic
 	handler: async (ctx) => {
 		const result = {
 			tasksProcessed: 0,
@@ -21,8 +22,9 @@ export const sendTaskReminders = internalAction({
 				try {
 					// Idempotency check handled in query filtering mostly, but double check
 					if (task.remindedAt && task.remindedAt > startOfDay.getTime()) continue;
+					if (!task.dueDate) continue;
 
-// sent variable removed as it was unused
+					// sent variable removed as it was unused
 
 					// 1. Notify Assigned User
 					if (task.assignedTo) {
@@ -32,7 +34,8 @@ export const sendTaskReminders = internalAction({
 							recipientId: task.assignedTo,
 							recipientType: 'user',
 							taskDescription: task.description,
-							dueDate: task.dueDate!,
+							dueDate: task.dueDate,
+							organizationId: task.organizationId,
 						});
 						result.notificationsSent++;
 					}
@@ -46,16 +49,18 @@ export const sendTaskReminders = internalAction({
 								recipientId: userId,
 								recipientType: 'user',
 								taskDescription: task.description,
-								dueDate: task.dueDate!,
+								dueDate: task.dueDate,
+								organizationId: task.organizationId,
 							});
 							result.notificationsSent++;
 						}
 					}
 
 					result.tasksProcessed++;
-				} catch (err: any) {
-					console.error(`Error processing task reminder ${task._id}:`, err);
-					result.errors.push(`Task ${task._id}: ${err.message}`);
+				} catch (err: unknown) {
+					const msg = err instanceof Error ? err.message : String(err);
+					console.error(`Error processing task reminder ${task._id}:`, msg);
+					result.errors.push(`Task ${task._id}: ${msg}`);
 				}
 			}
 
@@ -69,9 +74,10 @@ export const sendTaskReminders = internalAction({
 			});
 
 			return result;
-		} catch (err: any) {
-			console.error('Fatal error in sendTaskReminders:', err);
-			throw new Error(`Cron failed: ${err.message}`);
+		} catch (err: unknown) {
+			const msg = err instanceof Error ? err.message : String(err);
+			console.error('Fatal error in sendTaskReminders:', msg);
+			throw new Error(`Cron failed: ${msg}`);
 		}
 	},
 });
@@ -100,9 +106,10 @@ export const reactivateIdleLeads = internalAction({
 						leadId: lead._id,
 					});
 					result.leadsReactivated++;
-				} catch (err: any) {
-					console.error(`Error reactivating lead ${lead._id}:`, err);
-					result.errors.push(`Lead ${lead._id}: ${err.message}`);
+				} catch (err: unknown) {
+					const msg = err instanceof Error ? err.message : String(err);
+					console.error(`Error reactivating lead ${lead._id}:`, msg);
+					result.errors.push(`Lead ${lead._id}: ${msg}`);
 				}
 			}
 
@@ -115,9 +122,10 @@ export const reactivateIdleLeads = internalAction({
 			});
 
 			return result;
-		} catch (err: any) {
-			console.error('Fatal error in reactivateIdleLeads:', err);
-			throw new Error(`Cron failed: ${err.message}`);
+		} catch (err: unknown) {
+			const msg = err instanceof Error ? err.message : String(err);
+			console.error('Fatal error in reactivateIdleLeads:', msg);
+			throw new Error(`Cron failed: ${msg}`);
 		}
 	},
 });
