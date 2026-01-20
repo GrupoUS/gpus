@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { validateAsaasCustomerPayload, validateCPF } from '../../convex/lib/validators';
 
 // Type alias for Id to avoid import issues in tests
-type Id<T> = string & { __brand: T };
+type Id<T> = string & { brand: T };
 
 describe('Asaas Sync Integration', () => {
 	describe('Validação de CPF', () => {
@@ -110,7 +110,8 @@ describe('Asaas Sync Integration', () => {
 		test('Deve verificar customer existente antes de criar', async () => {
 			// Simular syncStudentAsCustomerInternal
 			const student = {
-				_id: 'student123',
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'student123',
 				name: 'Test',
 				email: 'test@example.com',
 				cpf: '52998224725',
@@ -216,7 +217,8 @@ describe('Integration - Complete Import Flow', () => {
 			};
 
 			const existingStudent = {
-				_id: 'student_existing' as Id<'students'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'student_existing' as Id<'students'>,
 				name: 'João Silva',
 				email: 'joao@example.com',
 				asaasCustomerId: undefined,
@@ -264,7 +266,8 @@ describe('Integration - Complete Import Flow', () => {
 			};
 
 			const student = {
-				_id: 'student_123' as Id<'students'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 			};
 
@@ -313,7 +316,8 @@ describe('Integration - Conflict Resolution', () => {
 			};
 
 			const localStudent = {
-				_id: 'student_123' as Id<'students'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 				name: 'João Silva Atualizado',
 				email: 'joao.novo@example.com',
@@ -358,7 +362,8 @@ describe('Integration - Conflict Resolution', () => {
 			const oneHourAgo = now - 3_600_000;
 
 			const localStudent = {
-				_id: 'student_123' as Id<'students'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 				name: 'João Local',
 				updatedAt: oneHourAgo, // Older
@@ -465,7 +470,8 @@ describe('Integration - Webhook Processing', () => {
 			};
 
 			const paymentRecord = {
-				_id: 'payment_123' as Id<'asaasPayments'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'payment_123' as Id<'asaasPayments'>,
 				studentId: 'student_123' as Id<'students'>,
 				status: 'PENDING',
 			};
@@ -535,7 +541,8 @@ describe('Integration - Webhook Processing', () => {
 
 			// Existing deduplication entry
 			const firstMock = vi.fn().mockResolvedValue({
-				_id: 'dedup_123',
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'dedup_123',
 				idempotencyKey,
 				processedAt: Date.now() - 1000,
 				expiresAt: Date.now() + 86_400_000,
@@ -580,7 +587,7 @@ describe('Integration - Error Recovery', () => {
 			const maxRetries = 3;
 
 			// Simulate API failure then success
-			ctx.runAction.mockImplementation(async () => {
+			ctx.runAction.mockImplementation(() => {
 				attempts.push(attempts.length + 1);
 				if (attempts.length < maxRetries) {
 					throw new Error('API temporary error');
@@ -618,7 +625,8 @@ describe('Integration - Error Recovery', () => {
 			};
 
 			const stuckSync = {
-				_id: 'sync_123' as Id<'asaasSyncLogs'>,
+				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
+				'_id': 'sync_123' as Id<'asaasSyncLogs'>,
 				status: 'running',
 				startedAt: Date.now() - 3_600_000, // Started 1 hour ago
 			};
@@ -647,7 +655,7 @@ describe('Integration - Error Recovery', () => {
 	});
 
 	describe('Circuit breaker recovery', () => {
-		test('should transition from open to half-open after cooldown', async () => {
+		test('should transition from open to half-open after cooldown', () => {
 			const circuitState = {
 				state: 'open',
 				failureCount: 5,
@@ -712,7 +720,12 @@ describe('Integration - Batch Processing', () => {
 			{ id: 3, name: 'Item 3' },
 		];
 
-		const results = [];
+		const results: Array<{
+			success: boolean;
+			item: { id: number; name: string };
+			data?: unknown;
+			error?: string;
+		}> = [];
 
 		// Simulate batch processing with error isolation
 		for (const item of items) {

@@ -299,6 +299,37 @@ export interface BrevoTransactionalEmailResponse {
 
 const BREVO_API_BASE = 'https://api.brevo.com/v3';
 
+const isRetryableError = (error: unknown): boolean =>
+	error instanceof Error &&
+	(error.message.includes('429') ||
+		error.message.includes('500') ||
+		error.message.includes('502') ||
+		error.message.includes('503') ||
+		error.message.includes('504') ||
+		error.message.includes('fetch failed'));
+
+const parseBrevoResponse = async <T>(response: Response): Promise<T> => {
+	// Handle no content responses
+	if (response.status === 204) {
+		return undefined as T;
+	}
+
+	// If rate limited or server error, throw to trigger retry
+	if (response.status === 429 || response.status >= 500) {
+		const text = await response.text();
+		throw new Error(`Brevo API Error ${response.status}: ${text}`);
+	}
+
+	const data = (await response.json()) as unknown;
+
+	if (!response.ok) {
+		const error = data as BrevoApiError;
+		throw new Error(`Brevo API Error: ${error.code} - ${error.message}`);
+	}
+
+	return data as T;
+};
+
 /**
  * Generic fetch wrapper for Brevo API
  * Handles authentication, error handling, and response parsing
@@ -335,37 +366,11 @@ export async function brevoFetch<T>(
 				body: options.body ? JSON.stringify(options.body) : undefined,
 			});
 
-			// Handle no content responses
-			if (response.status === 204) {
-				return undefined as T;
-			}
-
-			// If rate limited or server error, throw to trigger retry
-			if (response.status === 429 || response.status >= 500) {
-				const text = await response.text();
-				throw new Error(`Brevo API Error ${response.status}: ${text}`);
-			}
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				const error = data as BrevoApiError;
-				throw new Error(`Brevo API Error: ${error.code} - ${error.message}`);
-			}
-
-			return data as T;
+			return await parseBrevoResponse<T>(response);
 		} catch (error) {
 			lastError = error;
-			const isRetryable =
-				error instanceof Error &&
-				(error.message.includes('429') ||
-					error.message.includes('500') ||
-					error.message.includes('502') ||
-					error.message.includes('503') ||
-					error.message.includes('504') ||
-					error.message.includes('fetch failed'));
 
-			if (attempt < retries && isRetryable) {
+			if (attempt < retries && isRetryableError(error)) {
 				const delay = 2 ** attempt * 1000; // 1s, 2s, 4s
 				await new Promise((resolve) => setTimeout(resolve, delay));
 				continue;
@@ -385,7 +390,7 @@ export const brevoContacts = {
 	/**
 	 * Create a new contact
 	 */
-	async create(payload: BrevoContactPayload): Promise<{ id: number }> {
+	create(payload: BrevoContactPayload): Promise<{ id: number }> {
 		return brevoFetch<{ id: number }>('/contacts', {
 			method: 'POST',
 			body: payload,
@@ -395,7 +400,7 @@ export const brevoContacts = {
 	/**
 	 * Update an existing contact by email
 	 */
-	async update(email: string, payload: Omit<BrevoContactPayload, 'email'>): Promise<void> {
+	update(email: string, payload: Omit<BrevoContactPayload, 'email'>): Promise<void> {
 		return brevoFetch<void>(`/contacts/${encodeURIComponent(email)}`, {
 			method: 'PUT',
 			body: payload,
@@ -405,7 +410,7 @@ export const brevoContacts = {
 	/**
 	 * Get contact by email or ID
 	 */
-	async get(identifier: string | number): Promise<BrevoContactResponse> {
+	get(identifier: string | number): Promise<BrevoContactResponse> {
 		const id = typeof identifier === 'number' ? identifier : encodeURIComponent(identifier);
 		return brevoFetch<BrevoContactResponse>(`/contacts/${id}`);
 	},
@@ -413,7 +418,7 @@ export const brevoContacts = {
 	/**
 	 * Delete a contact by email or ID
 	 */
-	async delete(identifier: string | number): Promise<void> {
+	delete(identifier: string | number): Promise<void> {
 		const id = typeof identifier === 'number' ? identifier : encodeURIComponent(identifier);
 		return brevoFetch<void>(`/contacts/${id}`, {
 			method: 'DELETE',
@@ -423,7 +428,7 @@ export const brevoContacts = {
 	/**
 	 * Create or update contact (upsert)
 	 */
-	async upsert(payload: BrevoContactPayload): Promise<{ id: number }> {
+	upsert(payload: BrevoContactPayload): Promise<{ id: number }> {
 		return brevoFetch<{ id: number }>('/contacts', {
 			method: 'POST',
 			body: { ...payload, updateEnabled: true },
@@ -433,7 +438,7 @@ export const brevoContacts = {
 	/**
 	 * Add contacts to a list
 	 */
-	async addToList(
+	addToList(
 		listId: number,
 		emails: string[],
 	): Promise<{ contacts: { success: string[]; failure: string[] } }> {
@@ -446,7 +451,7 @@ export const brevoContacts = {
 	/**
 	 * Remove contacts from a list
 	 */
-	async removeFromList(
+	removeFromList(
 		listId: number,
 		emails: string[],
 	): Promise<{ contacts: { success: string[]; failure: string[] } }> {
@@ -459,11 +464,11 @@ export const brevoContacts = {
 	/**
 	 * Import contacts in bulk
 	 */
-	async import(payload: {
+	import(payload: {
 		fileBody?: string;
 		jsonBody?: Array<{
 			email: string;
-			attributes?: Record<string, any>;
+			attributes?: Record<string, unknown>;
 			sms?: string;
 		}>;
 		listIds?: number[];
@@ -487,7 +492,7 @@ export const brevoLists = {
 	/**
 	 * Create a new contact list
 	 */
-	async create(payload: BrevoListPayload): Promise<{ id: number }> {
+	create(payload: BrevoListPayload): Promise<{ id: number }> {
 		return brevoFetch<{ id: number }>('/contacts/lists', {
 			method: 'POST',
 			body: payload,
@@ -497,7 +502,7 @@ export const brevoLists = {
 	/**
 	 * Get list by ID
 	 */
-	async get(listId: number): Promise<BrevoListResponse> {
+	get(listId: number): Promise<BrevoListResponse> {
 		return brevoFetch<BrevoListResponse>(`/contacts/lists/${listId}`);
 	},
 
@@ -519,7 +524,7 @@ export const brevoLists = {
 	/**
 	 * Update a list
 	 */
-	async update(listId: number, payload: { name?: string; folderId?: number }): Promise<void> {
+	update(listId: number, payload: { name?: string; folderId?: number }): Promise<void> {
 		return brevoFetch<void>(`/contacts/lists/${listId}`, {
 			method: 'PUT',
 			body: payload,
@@ -529,7 +534,7 @@ export const brevoLists = {
 	/**
 	 * Delete a list
 	 */
-	async delete(listId: number): Promise<void> {
+	delete(listId: number): Promise<void> {
 		return brevoFetch<void>(`/contacts/lists/${listId}`, {
 			method: 'DELETE',
 		});
@@ -561,7 +566,7 @@ export const brevoCampaigns = {
 	/**
 	 * Create a new email campaign
 	 */
-	async create(payload: BrevoCampaignPayload): Promise<{ id: number }> {
+	create(payload: BrevoCampaignPayload): Promise<{ id: number }> {
 		return brevoFetch<{ id: number }>('/emailCampaigns', {
 			method: 'POST',
 			body: payload,
@@ -571,7 +576,7 @@ export const brevoCampaigns = {
 	/**
 	 * Get campaign by ID
 	 */
-	async get(campaignId: number): Promise<BrevoCampaignResponse> {
+	get(campaignId: number): Promise<BrevoCampaignResponse> {
 		return brevoFetch<BrevoCampaignResponse>(`/emailCampaigns/${campaignId}`);
 	},
 
@@ -600,7 +605,7 @@ export const brevoCampaigns = {
 	/**
 	 * Update a campaign (only draft campaigns)
 	 */
-	async update(campaignId: number, payload: Partial<BrevoCampaignPayload>): Promise<void> {
+	update(campaignId: number, payload: Partial<BrevoCampaignPayload>): Promise<void> {
 		return brevoFetch<void>(`/emailCampaigns/${campaignId}`, {
 			method: 'PUT',
 			body: payload,
@@ -610,7 +615,7 @@ export const brevoCampaigns = {
 	/**
 	 * Delete a campaign
 	 */
-	async delete(campaignId: number): Promise<void> {
+	delete(campaignId: number): Promise<void> {
 		return brevoFetch<void>(`/emailCampaigns/${campaignId}`, {
 			method: 'DELETE',
 		});
@@ -661,7 +666,7 @@ export const brevoTemplates = {
 	/**
 	 * Create a new email template
 	 */
-	async create(payload: BrevoTemplatePayload): Promise<{ id: number }> {
+	create(payload: BrevoTemplatePayload): Promise<{ id: number }> {
 		return brevoFetch<{ id: number }>('/smtp/templates', {
 			method: 'POST',
 			body: payload,
@@ -671,7 +676,7 @@ export const brevoTemplates = {
 	/**
 	 * Get template by ID
 	 */
-	async get(templateId: number): Promise<BrevoTemplateResponse> {
+	get(templateId: number): Promise<BrevoTemplateResponse> {
 		return brevoFetch<BrevoTemplateResponse>(`/smtp/templates/${templateId}`);
 	},
 
@@ -695,7 +700,7 @@ export const brevoTemplates = {
 	/**
 	 * Update a template
 	 */
-	async update(templateId: number, payload: Partial<BrevoTemplatePayload>): Promise<void> {
+	update(templateId: number, payload: Partial<BrevoTemplatePayload>): Promise<void> {
 		return brevoFetch<void>(`/smtp/templates/${templateId}`, {
 			method: 'PUT',
 			body: payload,
@@ -705,7 +710,7 @@ export const brevoTemplates = {
 	/**
 	 * Delete a template
 	 */
-	async delete(templateId: number): Promise<void> {
+	delete(templateId: number): Promise<void> {
 		return brevoFetch<void>(`/smtp/templates/${templateId}`, {
 			method: 'DELETE',
 		});

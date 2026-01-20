@@ -16,8 +16,7 @@ Antigravity Kit is a modular system consisting of:
 ## 🏗️ Directory Structure
 
 ```
-.agent/
-├── ARCHITECTURE.md          # This file
+.claude/
 ├── agents/                  # 16 Specialist Agents
 ├── skills/                  # 40 Skills
 ├── workflows/               # 11 Slash Commands

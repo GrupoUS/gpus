@@ -1,8 +1,8 @@
 ---
 name: database-specialist
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise for Portal Grupo US
-color: orange
 model: inherit
+mode: subagent
 ---
 
 # DATABASE SPECIALIST - CONVEX EXPERT
@@ -124,11 +124,11 @@ export const listLeads = query({
   })),
   handler: async (ctx, args) => {
     let query = ctx.db.query('leads')
-    
+
     if (args.stage) {
       query = query.withIndex('by_stage', q => q.eq('stage', args.stage))
     }
-    
+
     return await query.take(args.limit ?? 50)
   },
 })
@@ -151,7 +151,7 @@ export const createLead = mutation({
   returns: v.id('leads'),
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx)
-    
+
     return await ctx.db.insert('leads', {
       ...args,
       stage: 'novo',
@@ -175,7 +175,7 @@ export const syncWithDify = action({
   handler: async (ctx, args) => {
     // Call external API
     const response = await fetch('https://api.dify.ai/...')
-    
+
     // Write back via mutation
     await ctx.runMutation(internal.conversations.updateFromDify, {
       id: args.conversationId,

@@ -7,9 +7,9 @@
  * - Webhook payloads are encrypted before storage to protect PII
  * - Automatic 90-day retention policy for webhook logs
  */
+import type { FunctionReference, SchedulableFunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
 import { internalAction, internalMutation, internalQuery } from '../_generated/server';
 import { decrypt, encrypt } from '../lib/encryption';
 import {
@@ -35,8 +35,37 @@ const RETRY_JITTER_MS = 5000;
 const RETRY_MAX_DELAY_MS = 30 * 60 * 1000;
 
 type WebhookResult =
-	| { processed: true; webhookId: string }
+	| { processed: true; webhookId: string; reason?: string }
 	| { processed: false; reason: string; webhookId?: string };
+
+interface InternalApi {
+	asaas: {
+		webhooks: {
+			getWebhookByEventId: FunctionReference<'query', 'internal'>;
+			getWebhookById: FunctionReference<'query', 'internal'>;
+			createWebhookEvent: FunctionReference<'mutation', 'internal'>;
+			updateWebhookStatus: FunctionReference<'mutation', 'internal'>;
+			getFailedWebhooks: FunctionReference<'query', 'internal'>;
+			processWebhookEvent: SchedulableFunctionReference;
+		};
+		alerts: {
+			createAlert: FunctionReference<'mutation', 'internal'>;
+		};
+		mutations: {
+			getPaymentByAsaasId: FunctionReference<'query', 'internal'>;
+		};
+	};
+	notifications: {
+		sendPaymentConfirmed: SchedulableFunctionReference;
+		sendPaymentReceived: SchedulableFunctionReference;
+		sendPaymentOverdue: SchedulableFunctionReference;
+	};
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('../_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
 
 function calculateRetryDelay(attempt: number): number {
 	const exponent = Math.max(0, attempt - 1);
@@ -87,7 +116,9 @@ export const createWebhookEvent = internalMutation({
 		let encryptedPayload: string | undefined;
 		try {
 			encryptedPayload = await encrypt(JSON.stringify(args.payload));
-		} catch (_error) {}
+		} catch (_error) {
+			// Store without encrypted payload when encryption fails.
+		}
 
 		const webhookId = await ctx.db.insert('asaasWebhooks', {
 			eventId: args.eventId,
@@ -157,7 +188,8 @@ export const processWebhookIdempotent = internalAction({
 		payload: v.any(),
 	},
 	handler: async (ctx, args): Promise<WebhookResult> => {
-		const existing = await ctx.runQuery(internal.asaas.webhooks.getWebhookByEventId, {
+		const internalApi = getInternalApi();
+		const existing = await ctx.runQuery(internalApi.asaas.webhooks.getWebhookByEventId, {
 			eventId: args.eventId,
 		});
 
@@ -165,7 +197,7 @@ export const processWebhookIdempotent = internalAction({
 			return { processed: false, reason: 'Already received', webhookId: existing._id };
 		}
 
-		const created = await ctx.runMutation(internal.asaas.webhooks.createWebhookEvent, {
+		const created = await ctx.runMutation(internalApi.asaas.webhooks.createWebhookEvent, {
 			eventId: args.eventId,
 			eventType: args.eventType,
 			paymentId: args.paymentId,
@@ -174,7 +206,7 @@ export const processWebhookIdempotent = internalAction({
 			payload: args.payload,
 		});
 
-		await ctx.scheduler.runAfter(0, internal.asaas.webhooks.processWebhookEvent, {
+		await ctx.scheduler.runAfter(0, internalApi.asaas.webhooks.processWebhookEvent, {
 			webhookId: created.webhookId,
 			rawPayload: created.storedPayload ? undefined : args.payload,
 		});
@@ -192,7 +224,8 @@ export const processWebhookEvent = internalAction({
 		rawPayload: v.optional(v.any()),
 	},
 	handler: async (ctx, args) => {
-		const webhook = await ctx.runQuery(internal.asaas.webhooks.getWebhookById, {
+		const internalApi = getInternalApi();
+		const webhook = await ctx.runQuery(internalApi.asaas.webhooks.getWebhookById, {
 			id: args.webhookId,
 		});
 
@@ -205,7 +238,7 @@ export const processWebhookEvent = internalAction({
 		}
 
 		const retryCount = (webhook.retryCount ?? 0) + 1;
-		await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+		await ctx.runMutation(internalApi.asaas.webhooks.updateWebhookStatus, {
 			id: args.webhookId,
 			status: 'processing',
 			processed: false,
@@ -214,31 +247,53 @@ export const processWebhookEvent = internalAction({
 			error: undefined,
 		});
 
-		let payload = args.rawPayload;
-		if (!payload && webhook.payload) {
-			try {
-				const decrypted = await decrypt(webhook.payload);
-				payload = JSON.parse(decrypted);
-			} catch (error) {
-				const message = error instanceof Error ? error.message : 'Failed to decrypt payload';
-				await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-					id: args.webhookId,
-					status: 'failed',
-					processed: true,
-					error: message,
-				});
-				return { processed: false, reason: message };
-			}
-		}
-
-		if (!payload || typeof payload !== 'object') {
-			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
+		const markFailed = async (message: string): Promise<WebhookResult> => {
+			await ctx.runMutation(internalApi.asaas.webhooks.updateWebhookStatus, {
 				id: args.webhookId,
 				status: 'failed',
 				processed: true,
-				error: 'Missing webhook payload',
+				error: message,
 			});
-			return { processed: false, reason: 'Missing webhook payload' };
+			return { processed: false, reason: message };
+		};
+
+		const markDone = async (reason?: string): Promise<WebhookResult> => {
+			await ctx.runMutation(internalApi.asaas.webhooks.updateWebhookStatus, {
+				id: args.webhookId,
+				status: 'done',
+				processed: true,
+				processedAt: Date.now(),
+				error: undefined,
+			});
+			return reason
+				? { processed: true, webhookId: args.webhookId, reason }
+				: { processed: true, webhookId: args.webhookId };
+		};
+
+		const resolvePayload = async (): Promise<unknown> => {
+			if (args.rawPayload) return args.rawPayload;
+			if (!webhook.payload) return undefined;
+			const decrypted = await decrypt(webhook.payload);
+			return JSON.parse(decrypted) as unknown;
+		};
+
+		const createWebhookAlert = async (alert: {
+			severity: 'low' | 'medium';
+			title: string;
+			message: string;
+			details: Record<string, unknown>;
+		}) =>
+			ctx.runMutation(internalApi.asaas.alerts.createAlert, {
+				alertType: 'data_integrity',
+				severity: alert.severity,
+				title: alert.title,
+				message: alert.message,
+				details: alert.details,
+			});
+
+		const payload = await resolvePayload();
+		if (!payload || typeof payload !== 'object') {
+			return markFailed('Missing webhook payload');
 		}
 
 		const eventType =
@@ -246,127 +301,146 @@ export const processWebhookEvent = internalAction({
 				? (payload as { event: string }).event
 				: webhook.event;
 
-		try {
-			if (eventType.startsWith('PAYMENT_')) {
-				const payment = (payload as { payment?: AsaasPaymentResponse }).payment;
-				if (!payment || typeof payment.id !== 'string') {
-					throw new Error('Missing payment data in webhook payload');
-				}
-
-				const result = await processPaymentWorker(ctx, payment, undefined);
-				if (!result.success) {
-					const reason = result.error || result.reason || 'Payment processing failed';
-					await ctx.runMutation(internal.asaas.alerts.createAlert, {
-						alertType: 'data_integrity',
-						severity: 'medium',
-						title: 'Webhook payment processing failed',
-						message: reason,
-						details: {
-							eventType,
-							eventId: webhook.eventId,
-							paymentId: payment.id,
-						},
-					});
-					throw new Error(reason);
-				}
-
-				const paymentRecord = await ctx.runQuery(internal.asaas.mutations.getPaymentByAsaasId, {
-					asaasPaymentId: payment.id,
+		const handlePaymentEvent = async (
+			payment: AsaasPaymentResponse,
+		): Promise<WebhookResult> => {
+			const result = await processPaymentWorker(ctx, payment, undefined);
+			if (!result.success) {
+				const reason = result.error || result.reason || 'Payment processing failed';
+				await createWebhookAlert({
+					severity: 'medium',
+					title: 'Webhook payment processing failed',
+					message: reason,
+					details: {
+						eventType,
+						eventId: webhook.eventId,
+						paymentId: payment.id,
+					},
 				});
-
-				if (paymentRecord?.studentId) {
-					if (payment.status === 'CONFIRMED') {
-						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentConfirmed, {
-							paymentId: paymentRecord._id,
-							studentId: paymentRecord.studentId,
-						});
-					} else if (payment.status === 'RECEIVED' || payment.status === 'RECEIVED_IN_CASH') {
-						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentReceived, {
-							paymentId: paymentRecord._id,
-							studentId: paymentRecord.studentId,
-						});
-					} else if (payment.status === 'OVERDUE') {
-						await ctx.scheduler.runAfter(0, internal.notifications.sendPaymentOverdue, {
-							paymentId: paymentRecord._id,
-							studentId: paymentRecord.studentId,
-						});
-					}
-				}
-			} else if (eventType.startsWith('SUBSCRIPTION_')) {
-				const subscription = (payload as { subscription?: AsaasSubscriptionResponse }).subscription;
-				if (!subscription || typeof subscription.id !== 'string') {
-					throw new Error('Missing subscription data in webhook payload');
-				}
-
-				const result = await processSubscriptionWorker(ctx, subscription, undefined);
-				if (!result.success) {
-					const reason = result.error || result.reason || 'Subscription processing failed';
-					await ctx.runMutation(internal.asaas.alerts.createAlert, {
-						alertType: 'data_integrity',
-						severity: 'medium',
-						title: 'Webhook subscription processing failed',
-						message: reason,
-						details: {
-							eventType,
-							eventId: webhook.eventId,
-							subscriptionId: subscription.id,
-						},
-					});
-					throw new Error(reason);
-				}
-			} else if (eventType.startsWith('CUSTOMER_')) {
-				const customer = (payload as { customer?: AsaasCustomerResponse }).customer;
-				if (!customer || typeof customer.id !== 'string') {
-					throw new Error('Missing customer data in webhook payload');
-				}
-
-				const result = await processCustomerWorker(ctx, customer, undefined);
-				if (!result.success) {
-					const reason = result.error || result.reason || 'Customer processing failed';
-					await ctx.runMutation(internal.asaas.alerts.createAlert, {
-						alertType: 'data_integrity',
-						severity: 'low',
-						title: 'Webhook customer processing failed',
-						message: reason,
-						details: {
-							eventType,
-							eventId: webhook.eventId,
-							customerId: customer.id,
-						},
-					});
-					throw new Error(reason);
-				}
-			} else {
-				await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-					id: args.webhookId,
-					status: 'done',
-					processed: true,
-					processedAt: Date.now(),
-				});
-				return { processed: true, reason: 'Ignored event type' };
+				throw new Error(reason);
 			}
 
-			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-				id: args.webhookId,
-				status: 'done',
-				processed: true,
-				processedAt: Date.now(),
-				error: undefined,
+			const paymentRecord = await ctx.runQuery(internalApi.asaas.mutations.getPaymentByAsaasId, {
+				asaasPaymentId: payment.id,
 			});
 
-			return { processed: true };
+			if (!paymentRecord?.studentId) {
+				return markDone();
+			}
+
+			if (payment.status === 'CONFIRMED') {
+				await ctx.scheduler.runAfter(0, internalApi.notifications.sendPaymentConfirmed, {
+					paymentId: paymentRecord._id,
+					studentId: paymentRecord.studentId,
+				});
+				return markDone();
+			}
+
+			if (payment.status === 'RECEIVED' || payment.status === 'RECEIVED_IN_CASH') {
+				await ctx.scheduler.runAfter(0, internalApi.notifications.sendPaymentReceived, {
+					paymentId: paymentRecord._id,
+					studentId: paymentRecord.studentId,
+				});
+				return markDone();
+			}
+
+			if (payment.status === 'OVERDUE') {
+				await ctx.scheduler.runAfter(0, internalApi.notifications.sendPaymentOverdue, {
+					paymentId: paymentRecord._id,
+					studentId: paymentRecord.studentId,
+				});
+			}
+
+			return markDone();
+		};
+		const handleSubscriptionEvent = async (
+			subscription: AsaasSubscriptionResponse,
+		): Promise<WebhookResult> => {
+			const result = await processSubscriptionWorker(ctx, subscription, undefined);
+			if (!result.success) {
+				const reason = result.error || result.reason || 'Subscription processing failed';
+				await createWebhookAlert({
+					severity: 'medium',
+					title: 'Webhook subscription processing failed',
+					message: reason,
+					details: {
+						eventType,
+						eventId: webhook.eventId,
+						subscriptionId: subscription.id,
+					},
+				});
+				throw new Error(reason);
+			}
+
+			return markDone();
+		};
+
+		const handleCustomerEvent = async (
+			customer: AsaasCustomerResponse,
+		): Promise<WebhookResult> => {
+			const result = await processCustomerWorker(ctx, customer, undefined);
+			if (!result.success) {
+				const reason = result.error || result.reason || 'Customer processing failed';
+				await createWebhookAlert({
+					severity: 'low',
+					title: 'Webhook customer processing failed',
+					message: reason,
+					details: {
+						eventType,
+						eventId: webhook.eventId,
+						customerId: customer.id,
+					},
+				});
+				throw new Error(reason);
+			}
+
+			return markDone();
+		};
+
+		const handlers = [
+			{
+				match: (type: string) => type.startsWith('PAYMENT_'),
+				handler: (): Promise<WebhookResult> => {
+					const payment = (payload as { payment?: AsaasPaymentResponse }).payment;
+					if (!payment || typeof payment.id !== 'string') {
+						throw new Error('Missing payment data in webhook payload');
+					}
+
+					return handlePaymentEvent(payment);
+				},
+			},
+			{
+				match: (type: string) => type.startsWith('SUBSCRIPTION_'),
+				handler: (): Promise<WebhookResult> => {
+					const subscription = (payload as { subscription?: AsaasSubscriptionResponse })
+						.subscription;
+					if (!subscription || typeof subscription.id !== 'string') {
+						throw new Error('Missing subscription data in webhook payload');
+					}
+
+					return handleSubscriptionEvent(subscription);
+				},
+			},
+			{
+				match: (type: string) => type.startsWith('CUSTOMER_'),
+				handler: (): Promise<WebhookResult> => {
+					const customer = (payload as { customer?: AsaasCustomerResponse }).customer;
+					if (!customer || typeof customer.id !== 'string') {
+						throw new Error('Missing customer data in webhook payload');
+					}
+
+					return handleCustomerEvent(customer);
+				},
+			},
+		];
+
+		try {
+			const matched = handlers.find((item) => item.match(eventType));
+			return matched ? await matched.handler() : await markDone('Ignored event type');
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown webhook processing error';
-
-			await ctx.runMutation(internal.asaas.webhooks.updateWebhookStatus, {
-				id: args.webhookId,
-				status: 'failed',
-				processed: true,
-				error: errorMessage,
-			});
-
-			return { processed: false, reason: errorMessage };
+			return markFailed(errorMessage);
 		}
 	},
 });
@@ -380,15 +454,16 @@ export const retryFailedWebhooks = internalAction({
 	},
 	handler: async (ctx, args) => {
 		const limit = args.limit ?? 50;
+		const internalApi = getInternalApi();
 
-		const failed = await ctx.runQuery(internal.asaas.webhooks.getFailedWebhooks, {
+		const failed = await ctx.runQuery(internalApi.asaas.webhooks.getFailedWebhooks, {
 			limit,
 		});
 
 		let queued = 0;
 		for (const webhook of failed) {
 			if ((webhook.retryCount ?? 0) >= MAX_WEBHOOK_RETRIES) {
-				await ctx.runMutation(internal.asaas.alerts.createAlert, {
+				await ctx.runMutation(internalApi.asaas.alerts.createAlert, {
 					alertType: 'webhook_timeout',
 					severity: 'high',
 					title: 'Webhook permanently failed',
@@ -403,7 +478,7 @@ export const retryFailedWebhooks = internalAction({
 			}
 
 			const delay = calculateRetryDelay(webhook.retryCount ?? 0);
-			await ctx.scheduler.runAfter(delay, internal.asaas.webhooks.processWebhookEvent, {
+			await ctx.scheduler.runAfter(delay, internalApi.asaas.webhooks.processWebhookEvent, {
 				webhookId: webhook._id,
 			});
 			queued++;

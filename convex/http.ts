@@ -526,7 +526,7 @@ http.route({
 http.route({
 	path: '/webhook/leads/test',
 	method: 'GET',
-	handler: httpAction(async (ctx, request) => {
+	handler: httpAction((_ctx, request) => {
 		// 1. Validate Secret
 		const webhookSecret = process.env.WEBHOOK_SECRET;
 		const providedSecret = request.headers.get('X-Webhook-Secret');

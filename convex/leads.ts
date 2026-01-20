@@ -2,7 +2,7 @@ import { type PaginationOptions, paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import { internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
@@ -165,8 +165,7 @@ export const listLeads = query({
 
 		// Custom Pagination Loop to handle Post-Query Filtering (Tags & Search)
 		const { numItems, cursor } = args.paginationOpts;
-		// biome-ignore lint/suspicious/noExplicitAny: Result type
-		const accumulatedResults: any[] = [];
+		const accumulatedResults: Doc<'leads'>[] = [];
 		let currentCursor = cursor;
 		let isDone = false;
 
@@ -183,19 +182,19 @@ export const listLeads = query({
 			// assuming some items might be filtered out.
 			const pageResult = await leadQuery.order('desc').paginate({
 				cursor: currentCursor,
-				numItems: numItems,
+				numItems,
 			});
 
-			let candidates: any[] = pageResult.page;
+			let candidates: Doc<'leads'>[] = pageResult.page;
 
 			// 1. Memory Search Filter (Convex doesn't support substring search in DB yet)
 			if (args.search) {
 				const searchLower = args.search.toLowerCase();
 				candidates = candidates.filter(
-					(l: any) =>
-						l.name.toLowerCase().includes(searchLower) ||
-						l.phone.includes(searchLower) ||
-						l.email?.toLowerCase().includes(searchLower),
+					(lead) =>
+						lead.name.toLowerCase().includes(searchLower) ||
+						lead.phone.includes(searchLower) ||
+						lead.email?.toLowerCase().includes(searchLower),
 				);
 			}
 
@@ -207,18 +206,17 @@ export const listLeads = query({
 				// Process in parallel for checking tags of current batch
 				const tagChecks = await Promise.all(
 					candidates.map(async (lead) => {
+						const tags = args.tags ?? [];
 						const hasTag = await ctx.db
 							.query('leadTags')
 							.withIndex('by_lead', (q) => q.eq('leadId', lead._id))
-							.filter((q: any) =>
-								q.or(...(args.tags as Id<'tags'>[]).map((t) => q.eq(q.field('tagId'), t))),
-							)
+							.filter((q) => q.or(...tags.map((tagId) => q.eq(q.field('tagId'), tagId))))
 							.first();
 						return hasTag ? lead : null;
 					}),
 				);
 
-				candidates = tagChecks.filter((lead) => lead !== null);
+				candidates = tagChecks.filter((lead): lead is Doc<'leads'> => lead !== null);
 			}
 
 			accumulatedResults.push(...candidates);
@@ -228,7 +226,7 @@ export const listLeads = query({
 
 		return {
 			page: accumulatedResults,
-			isDone: isDone,
+			isDone,
 			continueCursor: currentCursor,
 		};
 	},

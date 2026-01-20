@@ -76,6 +76,22 @@ const subscriptionCycleSchema = v.union(
 	v.literal('YEARLY'),
 );
 
+const getProductKeyFromDescription = (description?: string): string | null => {
+	if (!description) {
+		return null;
+	}
+
+	const desc = description.toLowerCase();
+	if (desc.includes('trinta') || desc.includes('30e3')) return 'trintae3';
+	if (desc.includes('otb') || desc.includes('outside')) return 'otb';
+	if (desc.includes('black') || desc.includes('neon')) return 'black_neon';
+	if (desc.includes('comunidade') || desc.includes('club')) return 'comunidade';
+	if (desc.includes('auriculo')) return 'auriculo';
+	if (desc.includes('mesa')) return 'na_mesa_certa';
+
+	return null;
+};
+
 /**
  * Validates payment amount according to business rules
  * @throws Error if amount is invalid
@@ -121,9 +137,12 @@ export const syncStudentAsCustomer = action({
 	args: { studentId: v.id('students') },
 	handler: async (ctx, args) => {
 		await requireAuth(ctx);
-		const { internal: internalApi } = (await import('../_generated/api')) as unknown as {
-			internal: Record<string, Record<string, Record<string, unknown>>>;
-		};
+		const apiModule = require('../_generated/api') as unknown;
+		const internalApi = (
+			apiModule as {
+				internal: Record<string, Record<string, Record<string, unknown>>>;
+			}
+		).internal;
 		const syncStudentAsCustomerInternal = internalApi.asaas.mutations
 			.syncStudentAsCustomerInternal as FunctionReference<'mutation', 'internal'>;
 		await ctx.runMutation(syncStudentAsCustomerInternal, {
@@ -638,27 +657,16 @@ export const createSubscriptionFromAsaas = internalMutation({
 		});
 
 		// Map description to product and update student
-		if (args.description) {
-			const desc = args.description.toLowerCase();
-			let productKey: string | null = null;
-
-			if (desc.includes('trinta') || desc.includes('30e3')) productKey = 'trintae3';
-			else if (desc.includes('otb') || desc.includes('outside')) productKey = 'otb';
-			else if (desc.includes('black') || desc.includes('neon')) productKey = 'black_neon';
-			else if (desc.includes('comunidade') || desc.includes('club')) productKey = 'comunidade';
-			else if (desc.includes('auriculo')) productKey = 'auriculo';
-			else if (desc.includes('mesa')) productKey = 'na_mesa_certa';
-
-			if (productKey) {
-				const student = await ctx.db.get(args.studentId);
-				if (student) {
-					const currentProducts = student.products || [];
-					if (!currentProducts.includes(productKey)) {
-						await ctx.db.patch(args.studentId, {
-							products: [...currentProducts, productKey],
-							updatedAt: now,
-						});
-					}
+		const productKey = getProductKeyFromDescription(args.description);
+		if (productKey) {
+			const student = await ctx.db.get(args.studentId);
+			if (student) {
+				const currentProducts = student.products || [];
+				if (!currentProducts.includes(productKey)) {
+					await ctx.db.patch(args.studentId, {
+						products: [...currentProducts, productKey],
+						updatedAt: now,
+					});
 				}
 			}
 		}

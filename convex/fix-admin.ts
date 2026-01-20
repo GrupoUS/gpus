@@ -51,7 +51,9 @@ export const addAdmin = internalMutation({
 				'critical',
 				[args.clerkId],
 			);
-		} catch (_error) {}
+		} catch (_error) {
+			// Ignore audit logging errors during bootstrap.
+		}
 
 		return message;
 	},

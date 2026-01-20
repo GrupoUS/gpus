@@ -7,14 +7,25 @@
  * Run with `bun test` from project root.
  */
 
+import type { FunctionReference } from 'convex/server';
 import { convexTest } from 'convex-test';
 import { describe, expect, it } from 'vitest';
 
-import { api } from '../../convex/_generated/api';
 import schema from '../../convex/schema';
 
 // Import all modules for convex-test (required for function resolution)
 const modules = import.meta.glob('../../convex/**/*.ts');
+
+const api = (require('../../convex/_generated/api') as { api: unknown }).api as {
+	asaas: {
+		sync: {
+			getCircuitBreakerStatus: FunctionReference<'query', 'public'>;
+			getSyncLogs?: FunctionReference<'query', 'public'>;
+		};
+		getValidationReport: FunctionReference<'query', 'public'>;
+		getApiHealthMetrics?: FunctionReference<'query', 'public'>;
+	};
+};
 
 // Mock admin identity for tests
 const mockAdminIdentity = {
@@ -24,6 +35,9 @@ const mockAdminIdentity = {
 	tokenIdentifier: 'test|user_test_admin_123',
 	issuer: 'https://test.clerk.accounts.dev',
 };
+
+const TEST_EVENT_ID_REGEX = /^TEST_PAYMENT_\d+_[a-z0-9]+$/;
+const CPF_REGEX = /^\d{11}$/;
 
 describe('Asaas Sync - End-to-End Validation', () => {
 	// Note: convex-test creates isolated test environment
@@ -145,8 +159,8 @@ describe('Asaas Sync - Unit Tests', () => {
 			const id1 = generateTestEventId('PAYMENT');
 			const id2 = generateTestEventId('PAYMENT');
 
-			expect(id1).toMatch(/^TEST_PAYMENT_\d+_[a-z0-9]+$/);
-			expect(id2).toMatch(/^TEST_PAYMENT_\d+_[a-z0-9]+$/);
+			expect(id1).toMatch(TEST_EVENT_ID_REGEX);
+			expect(id2).toMatch(TEST_EVENT_ID_REGEX);
 			expect(id1).not.toBe(id2);
 		});
 	});
@@ -186,8 +200,8 @@ describe('Asaas Sync - Unit Tests', () => {
 			const cpf2 = generateTestCPF(2);
 
 			// Should be 11 digits
-			expect(cpf1).toMatch(/^\d{11}$/);
-			expect(cpf2).toMatch(/^\d{11}$/);
+			expect(cpf1).toMatch(CPF_REGEX);
+			expect(cpf2).toMatch(CPF_REGEX);
 
 			// Different seeds should produce different CPFs
 			expect(cpf1).not.toBe(cpf2);

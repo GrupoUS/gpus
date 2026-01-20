@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 
-import { mutation, query } from './_generated/server';
+import { mutation, query, type MutationCtx, type QueryCtx } from './_generated/server';
 import { getIdentity, hasOrgRole, requireAuth } from './lib/auth';
 import { decrypt, encrypt, isEncrypted } from './lib/encryption';
 
@@ -11,6 +11,148 @@ function maskKey(key: string) {
 }
 
 const integrationArgs = v.union(v.literal('asaas'), v.literal('evolution'), v.literal('dify'));
+
+type IntegrationKey = 'asaas' | 'evolution' | 'dify';
+type IntegrationConfig = Record<string, string>;
+
+const integrationFields: Record<IntegrationKey, string[]> = {
+	asaas: ['api_key', 'base_url', 'environment', 'webhook_secret'],
+	evolution: ['api_key', 'base_url', 'instance'],
+	dify: ['api_key', 'base_url', 'app_id'],
+};
+
+const readMaskedSetting = async (
+	ctx: QueryCtx,
+	integration: IntegrationKey,
+	field: string,
+): Promise<string | null> => {
+	const key = `integration_${integration}_${field}`;
+	const setting = await ctx.db
+		.query('settings')
+		.withIndex('by_key', (q) => q.eq('key', key))
+		.unique();
+
+	if (!setting || setting.value === null || setting.value === undefined) {
+		return null;
+	}
+
+	let value = setting.value;
+	if (typeof value === 'string' && value.length > 0 && isEncrypted(value)) {
+		try {
+			value = await decrypt(value);
+		} catch (_decryptError) {
+			value = typeof value === 'string' ? value : String(value);
+		}
+	}
+
+	const stringValue = typeof value === 'string' ? value : String(value);
+	if (field.includes('api_key') || field.includes('secret') || field.includes('token')) {
+		return maskKey(stringValue);
+	}
+
+	return stringValue;
+};
+
+const mapConfigForIntegration = (
+	integration: IntegrationKey,
+	config: IntegrationConfig,
+): Record<string, string> => {
+	const mapped: Record<string, string> = {};
+
+	if (config.api_key) mapped.apiKey = config.api_key;
+	if (config.base_url) {
+		mapped.baseUrl = config.base_url;
+		mapped.url = config.base_url;
+	}
+	if (config.webhook_secret) mapped.webhookSecret = config.webhook_secret;
+	if (config.environment) mapped.environment = config.environment;
+
+	if (integration === 'evolution') {
+		if (config.instance) mapped.instanceName = config.instance;
+		if (config.base_url) mapped.url = config.base_url;
+	}
+	if (integration === 'dify') {
+		if (config.app_id) mapped.appId = config.app_id;
+		if (config.base_url) mapped.url = config.base_url;
+	}
+
+	return mapped;
+};
+
+const mapIntegrationKey = (key: string) => {
+	if (key === 'apiKey') return 'api_key';
+	if (key === 'baseUrl') return 'base_url';
+	if (key === 'url') return 'base_url';
+	if (key === 'webhookSecret') return 'webhook_secret';
+	if (key === 'instanceName') return 'instance';
+	if (key === 'appId') return 'app_id';
+	return key;
+};
+
+const updateIntegrationSettings = async (
+	ctx: MutationCtx,
+	integration: string,
+	config: Record<string, unknown>,
+): Promise<string[]> => {
+	const keysToUpdate: string[] = [];
+
+	for (const [key, value] of Object.entries(config)) {
+		if (value === undefined || value === null || value === '') continue;
+
+		const suffix = mapIntegrationKey(key);
+		const settingsKey = `integration_${integration}_${suffix}`;
+
+		let valueToStore = value;
+		if (suffix.includes('api_key') || suffix.includes('secret') || suffix.includes('token')) {
+			if (typeof value === 'string' && !value.includes('••••')) {
+				valueToStore = await encrypt(value);
+			} else if (typeof value === 'string' && value.includes('••••')) {
+				continue;
+			}
+		}
+
+		const existing = await ctx.db
+			.query('settings')
+			.withIndex('by_key', (q) => q.eq('key', settingsKey))
+			.unique();
+		if (existing) {
+			await ctx.db.patch(existing._id, { value: valueToStore, updatedAt: Date.now() });
+		} else {
+			await ctx.db.insert('settings', {
+				key: settingsKey,
+				value: valueToStore,
+				updatedAt: Date.now(),
+			});
+		}
+		keysToUpdate.push(suffix);
+	}
+
+	return keysToUpdate;
+};
+
+const logIntegrationUpdate = async (
+	ctx: MutationCtx,
+	integration: string,
+	keysToUpdate: string[],
+) => {
+	const identity = await ctx.auth.getUserIdentity();
+	if (!identity) return;
+
+	const user = await ctx.db
+		.query('users')
+		.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+		.unique();
+	if (!user?.organizationId) return;
+
+	await ctx.db.insert('activities', {
+		type: 'integracao_configurada',
+		description: `Configuração de ${integration} atualizada`,
+		metadata: { fields: keysToUpdate },
+		performedBy: identity.subject,
+		organizationId: user.organizationId,
+		createdAt: Date.now(),
+	});
+};
 
 export const getIntegrationConfig = query({
 	args: { integration: integrationArgs },
@@ -23,88 +165,17 @@ export const getIntegrationConfig = query({
 				return {};
 			}
 
-			// Validate integration argument
-			const validIntegrations = ['asaas', 'evolution', 'dify'] as const;
-			if (!validIntegrations.includes(args.integration as any)) {
-				return {};
-			}
+			const integration: IntegrationKey = args.integration;
+			const config: IntegrationConfig = {};
 
-			const fields = {
-				asaas: ['api_key', 'base_url', 'environment', 'webhook_secret'],
-				evolution: ['api_key', 'base_url', 'instance'],
-				dify: ['api_key', 'base_url', 'app_id'],
-			};
-
-			const config: any = {};
-			const relevantFields = fields[args.integration as keyof typeof fields];
-
-			// Validate that relevantFields exists
-			if (!(relevantFields && Array.isArray(relevantFields))) {
-				return {};
-			}
-
-			for (const field of relevantFields) {
-				try {
-					// Map fields to settings keys:
-					// evolution base_url -> integration_evolution_base_url
-					// evolution instance -> integration_evolution_instance
-					const key = `integration_${args.integration}_${field}`;
-					const setting = await ctx.db
-						.query('settings')
-						.withIndex('by_key', (q) => q.eq('key', key))
-						.unique();
-
-					if (setting && setting.value !== null && setting.value !== undefined) {
-						let value = setting.value;
-
-						// Decrypt if encrypted - with proper error handling
-						if (typeof value === 'string' && value.length > 0 && isEncrypted(value)) {
-							try {
-								value = await decrypt(value);
-							} catch (_decryptError) {
-								// If decryption fails, use the encrypted value but mask it
-								// This prevents the query from failing completely
-								value = typeof value === 'string' ? value : String(value);
-							}
-						}
-
-						// Ensure value is a string for masking
-						const stringValue = typeof value === 'string' ? value : String(value);
-
-						// Mask sensitive fields for frontend display
-						// We do NOT return the full API key to the frontend ever for security reasons
-						if (field.includes('api_key') || field.includes('secret') || field.includes('token')) {
-							config[field] = maskKey(stringValue);
-						} else {
-							config[field] = stringValue;
-						}
-					}
-				} catch (_fieldError) {
-					// Continue to next field instead of breaking the entire query
+			for (const field of integrationFields[integration]) {
+				const value = await readMaskedSetting(ctx, integration, field);
+				if (value !== null) {
+					config[field] = value;
 				}
 			}
 
-			// Map snake_case back to camelCase for frontend
-			const mappedConfig: any = {};
-			if (config.api_key) mappedConfig.apiKey = config.api_key;
-			if (config.base_url) {
-				mappedConfig.baseUrl = config.base_url;
-				mappedConfig.url = config.base_url; // Alias
-			}
-			if (config.webhook_secret) mappedConfig.webhookSecret = config.webhook_secret;
-			if (config.environment) mappedConfig.environment = config.environment;
-
-			// Specifics
-			if (args.integration === 'evolution') {
-				if (config.instance) mappedConfig.instanceName = config.instance;
-				if (config.base_url) mappedConfig.url = config.base_url; // Evolution schema uses `url`
-			}
-			if (args.integration === 'dify') {
-				if (config.app_id) mappedConfig.appId = config.app_id;
-				if (config.base_url) mappedConfig.url = config.base_url; // Dify schema uses `url`
-			}
-
-			return mappedConfig;
+			return mapConfigForIntegration(integration, config);
 		} catch (_error) {
 			return {};
 		}
@@ -123,74 +194,12 @@ export const saveIntegrationConfig = mutation({
 		}
 
 		const { integration, config } = args;
-
-		// Map camelCase (frontend) to snake_case (settings)
-		const mapKey = (k: string) => {
-			if (k === 'apiKey') return 'api_key';
-			if (k === 'baseUrl') return 'base_url';
-			if (k === 'url') return 'base_url';
-			if (k === 'webhookSecret') return 'webhook_secret';
-			if (k === 'instanceName') return 'instance';
-			if (k === 'appId') return 'app_id';
-			return k;
-		};
-
-		const keysToUpdate = [];
-
-		for (const [key, value] of Object.entries(config)) {
-			if (value === undefined || value === null || value === '') continue;
-
-			const suffix = mapKey(key);
-			// Validate suffix is valid for safety?
-			// We will just store it.
-			const settingsKey = `integration_${integration}_${suffix}`;
-
-			let valueToStore = value;
-
-			// Check if sensitive
-			if (suffix.includes('api_key') || suffix.includes('secret') || suffix.includes('token')) {
-				if (typeof value === 'string' && !value.includes('••••')) {
-					valueToStore = await encrypt(value);
-				} else if (typeof value === 'string' && value.includes('••••')) {
-					continue; // Don't update if masked
-				}
-			}
-
-			// Upsert
-			const existing = await ctx.db
-				.query('settings')
-				.withIndex('by_key', (q) => q.eq('key', settingsKey))
-				.unique();
-			if (existing) {
-				await ctx.db.patch(existing._id, { value: valueToStore, updatedAt: Date.now() });
-			} else {
-				await ctx.db.insert('settings', {
-					key: settingsKey,
-					value: valueToStore,
-					updatedAt: Date.now(),
-				});
-			}
-			keysToUpdate.push(suffix);
-		}
-
-		// Audit log
-		const identity = await ctx.auth.getUserIdentity();
-		if (identity) {
-			const user = await ctx.db
-				.query('users')
-				.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-				.unique();
-			if (user?.organizationId) {
-				await ctx.db.insert('activities', {
-					type: 'integracao_configurada',
-					description: `Configuração de ${integration} atualizada`,
-					metadata: { fields: keysToUpdate },
-					performedBy: identity.subject,
-					organizationId: user.organizationId,
-					createdAt: Date.now(),
-				});
-			}
-		}
+		const keysToUpdate = await updateIntegrationSettings(
+			ctx,
+			integration,
+			config as Record<string, unknown>,
+		);
+		await logIntegrationUpdate(ctx, integration, keysToUpdate);
 
 		return { success: true };
 	},
@@ -206,7 +215,12 @@ export const listIntegrations = query({
 			{ id: 'dify', name: 'Dify AI', required: ['api_key', 'base_url', 'app_id'] },
 		];
 
-		const result = [];
+		const result: Array<{
+			id: string;
+			name: string;
+			required: string[];
+			status: 'active' | 'inactive';
+		}> = [];
 		for (const integ of integrations) {
 			let isConfigured = true;
 			for (const req of integ.required) {

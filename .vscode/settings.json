@@ -112,7 +112,7 @@
 	"typescript.suggest.autoImports": true,
 	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
 	"workbench.colorTheme": "One Dark Pro Darker",
-	"workbench.iconTheme": "catppuccin-mocha",
+	"workbench.iconTheme": "symbols",
 	"editor.fontFamily": "Cousine Nerd Font",
 	"files.autoSave": "afterDelay",
 	"files.watcherExclude": {

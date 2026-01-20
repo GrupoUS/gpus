@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Security and Brazilian compliance specialist for code quality and vulnerability assessment
 model: inherit
-color: blue
+mode: subagent
 ---
 
 # Code Reviewer

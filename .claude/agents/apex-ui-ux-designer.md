@@ -1,8 +1,8 @@
 ---
 name: apex-ui-ux-designer
 description: Modern UI/UX design specialist creating accessible, responsive interfaces with WCAG 2.1 AA+ compliance. Works with React, Vue, Angular, and modern design systems.
-color: purple
-model: inherit
+model: gemini-3-pro-high
+mode: subagent
 ---
 
 # APEX UI/UX DESIGNER

@@ -1,9 +1,29 @@
 import axios from 'axios';
+import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
 import { action } from '../_generated/server';
 import { createAsaasClient } from '../lib/asaas';
+
+const TRAILING_SLASH_REGEX = /\/$/;
+
+interface IntegrationConfig {
+	base_url?: string;
+	baseUrl?: string;
+	api_key?: string;
+	apiKey?: string;
+}
+
+interface InternalApi {
+	settings: {
+		internalGetIntegrationConfig: FunctionReference<'query', 'internal'>;
+	};
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('../_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
 
 export const testAsaasConnection = action({
 	args: {
@@ -11,12 +31,12 @@ export const testAsaasConnection = action({
 		baseUrl: v.string(),
 	},
 	returns: v.any(),
-	handler: async (_ctx, args) => {
-		try {
-			const client = createAsaasClient({
-				apiKey: args.apiKey,
-				baseUrl: args.baseUrl,
-			});
+		handler: async (_ctx, args) => {
+			try {
+				const client = createAsaasClient({
+					apiKey: args.apiKey,
+					baseUrl: args.baseUrl,
+				});
 
 			// testConnection makes a lightweight call (e.g. list customers limit=1)
 			await client.testConnection();
@@ -25,27 +45,30 @@ export const testAsaasConnection = action({
 				success: true,
 				message: 'Conexão com Asaas estabelecida com sucesso.',
 			};
-		} catch (error: any) {
+		} catch (error) {
 			let message = 'Falha na conexão com Asaas.';
+			const axiosError = axios.isAxiosError(error) ? error : null;
 
-			if (error.response) {
-				if (error.response.status === 401) {
+			if (axiosError?.response) {
+				if (axiosError.response.status === 401) {
 					message = 'Erro de autenticação: API Key inválida.';
-				} else if (error.response.status === 404) {
+				} else if (axiosError.response.status === 404) {
 					message = 'URL base incorreta ou endpoint não encontrado.';
 				} else {
-					message = `Erro na API (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+					message = `Erro na API (${axiosError.response.status}): ${JSON.stringify(
+						axiosError.response.data,
+					)}`;
 				}
-			} else if (error.code === 'ECONNABORTED') {
+			} else if (axiosError?.code === 'ECONNABORTED') {
 				message = 'Timeout na conexão.';
-			} else if (error.code === 'ENOTFOUND') {
+			} else if (axiosError?.code === 'ENOTFOUND') {
 				message = 'URL base inalcançável.';
 			}
 
 			return {
 				success: false,
 				message,
-				details: error.message,
+				details: error instanceof Error ? error.message : String(error),
 			};
 		}
 	},
@@ -58,49 +81,54 @@ export const sendMessageToDify = action({
 		user: v.string(),
 	},
 	returns: v.any(),
-	handler: async (ctx, args) => {
-		const config: any = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
-			integrationName: 'dify',
-		});
+		handler: async (ctx, args) => {
+			const internalApi = getInternalApi();
+			const config = (await ctx.runQuery(internalApi.settings.internalGetIntegrationConfig, {
+				integrationName: 'dify',
+			})) as IntegrationConfig | null;
 
-		const baseUrl: any = config?.base_url || config?.baseUrl;
-		const apiKey: any = config?.api_key || config?.apiKey;
+			const baseUrl = config?.base_url || config?.baseUrl;
+			const apiKey = config?.api_key || config?.apiKey;
 
 		if (!(baseUrl && apiKey)) {
 			throw new Error('Dify configuration missing in settings.');
 		}
 
-		const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
-		const url = `${sanitizedBaseUrl}/chat-messages`;
+			const sanitizedBaseUrl = baseUrl.replace(TRAILING_SLASH_REGEX, '');
+			const url = `${sanitizedBaseUrl}/chat-messages`;
 
-		try {
-			const response: any = await axios.post(
-				url,
-				{
-					query: args.query,
-					user: args.user,
-					inputs: {},
-					response_mode: 'blocking',
-					conversation_id: args.conversationId,
-				},
-				{
-					headers: {
-						Authorization: `Bearer ${apiKey}`,
-						'Content-Type': 'application/json',
+			try {
+				const response = await axios.post(
+					url,
+					{
+						query: args.query,
+						user: args.user,
+						inputs: {},
+						response_mode: 'blocking',
+						conversation_id: args.conversationId,
 					},
-				},
-			);
+					{
+						headers: {
+							authorization: `Bearer ${apiKey}`,
+							'Content-Type': 'application/json',
+						},
+					},
+				);
 
-			return response.data;
-		} catch (error: any) {
-			if (error.response) {
+				return response.data;
+			} catch (error) {
+				if (axios.isAxiosError(error) && error.response) {
+					throw new Error(
+						`Dify API Error: ${error.response.status} - ${JSON.stringify(
+							error.response.data,
+						)}`,
+					);
+				}
 				throw new Error(
-					`Dify API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`,
+					`Dify Connection Error: ${error instanceof Error ? error.message : String(error)}`,
 				);
 			}
-			throw new Error(`Dify Connection Error: ${error.message}`);
-		}
-	},
+		},
 });
 
 export const testEvolutionConnection = action({
@@ -114,10 +142,10 @@ export const testEvolutionConnection = action({
 		try {
 			// Endpoint: GET /instance/connectionState/{instanceName}
 			// Need to construct full URL carefully
-			const baseUrl = args.apiUrl.replace(/\/$/, '');
+			const baseUrl = args.apiUrl.replace(TRAILING_SLASH_REGEX, '');
 			const url = `${baseUrl}/instance/connectionState/${args.instanceName}`;
 
-			const response: any = await axios.get(url, {
+			const response = await axios.get(url, {
 				headers: {
 					apikey: args.apiKey,
 				},
@@ -137,13 +165,14 @@ export const testEvolutionConnection = action({
 				success: false,
 				message: `Status inesperado: ${response.status}`,
 			};
-		} catch (error: any) {
+		} catch (error) {
 			let message = 'Falha na conexão com Evolution API.';
+			const axiosError = axios.isAxiosError(error) ? error : null;
 
-			if (error.response) {
-				if (error.response.status === 401 || error.response.status === 403) {
+			if (axiosError?.response) {
+				if (axiosError.response.status === 401 || axiosError.response.status === 403) {
 					message = 'Acesso negado: Verifique sua API Key.';
-				} else if (error.response.status === 404) {
+				} else if (axiosError.response.status === 404) {
 					message = 'Instância não encontrada ou URL incorreta.';
 				}
 			}
@@ -151,7 +180,7 @@ export const testEvolutionConnection = action({
 			return {
 				success: false,
 				message,
-				details: error.message,
+				details: error instanceof Error ? error.message : String(error),
 			};
 		}
 	},
@@ -169,7 +198,7 @@ export const testDifyConnection = action({
 			// Endpoint: GET /info or /parameters?
 			// Dify API usually requires "Authorization: Bearer " + apiKey
 
-			const baseUrl = args.apiUrl.replace(/\/$/, '');
+			const baseUrl = args.apiUrl.replace(TRAILING_SLASH_REGEX, '');
 
 			// Use appId in the request to ensure it's valid as per verification comment
 			// "build the URL with the app id path or query according to Dify’s API, such as `${baseUrl}/apps/${appId}/parameters`"
@@ -198,7 +227,7 @@ export const testDifyConnection = action({
 
 			await axios.get(url, {
 				headers: {
-					Authorization: `Bearer ${args.apiKey}`,
+					authorization: `Bearer ${args.apiKey}`,
 				},
 				timeout: 10_000,
 			});
@@ -208,28 +237,31 @@ export const testDifyConnection = action({
 				success: true,
 				message: 'Conexão com Dify AI estabelecida com sucesso.',
 			};
-		} catch (error: any) {
+		} catch (error) {
 			let message = 'Falha na conexão com Dify AI.';
+			const axiosError = axios.isAxiosError(error) ? error : null;
 
-			if (error.response) {
-				if (error.response.status === 401) {
+			if (axiosError?.response) {
+				if (axiosError.response.status === 401) {
 					message = 'Erro de autenticação: API Key inválida.';
-				} else if (error.response.status === 404) {
+				} else if (axiosError.response.status === 404) {
 					// Distinct error for App ID as requested
 					message = 'App ID inválido ou URL incorreta (404).';
 				} else {
-					message = `Erro na API (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+					message = `Erro na API (${axiosError.response.status}): ${JSON.stringify(
+						axiosError.response.data,
+					)}`;
 				}
-			} else if (error.code === 'ECONNABORTED') {
+			} else if (axiosError?.code === 'ECONNABORTED') {
 				message = 'Timeout na conexão.';
-			} else if (error.code === 'ENOTFOUND') {
+			} else if (axiosError?.code === 'ENOTFOUND') {
 				message = 'URL base inalcançável.';
 			}
 
 			return {
 				success: false,
 				message,
-				details: error.message,
+				details: error instanceof Error ? error.message : String(error),
 			};
 		}
 	},

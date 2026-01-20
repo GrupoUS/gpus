@@ -16,11 +16,13 @@ Perform comprehensive data analysis, statistical modeling, and data visualizatio
 - You're doing **exploratory data analysis** (EDA) to understand data structure and quality.
 - You need to **clean, transform, or merge** datasets for analysis.
 - You want **reproducible analysis** with documented methodology and code.
+- You are performing **Convex Backend Engineering** (schema design, query optimization, log analysis).
 
 ## Key capabilities
 
 Unlike point-solution data analysis tools:
 
+- **Convex Engineering Integration**: Native support for Convex MCP tools (`mcp_convex`) and CLI.
 - **Full Python ecosystem**: Access to pandas, numpy, scikit-learn, statsmodels, matplotlib, seaborn, plotly, and more.
 - **Runs locally**: Your data stays on your machine; no uploads to third-party services.
 - **Reproducible**: All analysis is code-based and version controllable.
@@ -143,6 +145,32 @@ Unlike point-solution data analysis tools:
 - [ ] Document all dependencies
 - [ ] Add comments explaining non-obvious code
 - [ ] Include instructions for running analysis
+
+## Convex Engineering Workflow
+
+When working with Convex (backend, database, schemas), you **MUST** follow this specialized workflow:
+
+### 1. Protocols & Rules
+- **READ FIRST**: Always read `resources/convex_rules.md` before writing any Convex code.
+  - Command: `view_file(AbsolutePath=".../resources/convex_rules.md")`
+- **MCP Integration**: Use `mcp_convex` tools to inspect CURRENT state before proposing changes.
+  - `mcp_convex_tables`: Check table schemas.
+  - `mcp_convex_functionSpec`: Check existing functions.
+  - `mcp_convex_logs`: Analyze recent failures.
+
+### 2. Implementation & fix
+- **CLI First**: Use `bunx convex` for all operations.
+  - DO NOT use generic SQL or other DB commands.
+  - Example: `bunx convex run serena/actions:doSomething`
+- **Log Analysis**:
+  - When debugging, pull logs via `bunx convex logs --prod --failure` OR `mcp_convex_logs`.
+  - Analyze stack traces using Python scripts if text analysis is insufficient.
+
+### 3. Code Generation
+- **Schema**: Define in `convex/schema.ts` using `defineSchema` and `defineTable`.
+- **Functions**: Use `query`, `mutation`, `action` from `_generated/server`.
+- **Validation**: Ensure `args` and `returns` validators (e.g., `v.string()`, `v.id()`) are strictly typed.
+
 
 ## Verification
 

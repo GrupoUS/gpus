@@ -7,7 +7,7 @@
 import { v } from 'convex/values';
 
 import type { Doc } from '../_generated/dataModel';
-import { internalQuery, query, type QueryCtx } from '../_generated/server';
+import { internalQuery, type QueryCtx, query } from '../_generated/server';
 import { getOrganizationId, requireAuth, requireOrgRole } from '../lib/auth';
 import { getConfigurationStatus } from './config';
 
@@ -379,10 +379,10 @@ async function calculateSyncStatistics(ctx: QueryCtx) {
 
 	for (const syncType of syncTypes) {
 		const typeLogs = byType[syncType] || [];
-	const successful = typeLogs.filter((log) => log.status === 'completed');
-	const failed = typeLogs.filter((log) => log.status === 'failed');
-	const running = typeLogs.filter((log) => log.status === 'running');
-	const totalRecords = typeLogs.reduce((sum, log) => sum + log.recordsProcessed, 0);
+		const successful = typeLogs.filter((log) => log.status === 'completed');
+		const failed = typeLogs.filter((log) => log.status === 'failed');
+		const running = typeLogs.filter((log) => log.status === 'running');
+		const totalRecords = typeLogs.reduce((sum, log) => sum + log.recordsProcessed, 0);
 		const avgRecords = typeLogs.length > 0 ? totalRecords / typeLogs.length : 0;
 
 		stats[syncType] = {
@@ -748,33 +748,36 @@ export const getAllPayments = query({
 		// Build query using appropriate index
 		let payments: Doc<'asaasPayments'>[];
 
-	if (args.status) {
-		// Use organization_status index
-		payments = await ctx.db
-			.query('asaasPayments')
-			.withIndex('by_organization_status', (q) =>
-				q.eq('organizationId', orgId).eq('status', args.status as Doc<'asaasPayments'>['status']),
-			)
-			.order('desc')
-			.collect();
+		if (args.status) {
+			// Use organization_status index
+			payments = await ctx.db
+				.query('asaasPayments')
+				.withIndex('by_organization_status', (q) =>
+					q.eq('organizationId', orgId).eq('status', args.status as Doc<'asaasPayments'>['status']),
+				)
+				.order('desc')
+				.collect();
 		} else if (args.studentId) {
+			const studentId = args.studentId;
 			// Use organization_student index
 			payments = await ctx.db
 				.query('asaasPayments')
 				.withIndex('by_organization_student', (q) =>
-					q.eq('organizationId', orgId).eq('studentId', args.studentId!),
+					q.eq('organizationId', orgId).eq('studentId', studentId),
 				)
 				.order('desc')
 				.collect();
 		} else if (args.startDate && args.endDate) {
+			const startDate = args.startDate;
+			const endDate = args.endDate;
 			// Use organization_due_date index for date range queries
 			payments = await ctx.db
 				.query('asaasPayments')
 				.withIndex('by_organization_due_date', (q) =>
 					q
 						.eq('organizationId', orgId)
-						.gte('dueDate', args.startDate!)
-						.lte('dueDate', args.endDate!),
+						.gte('dueDate', startDate)
+						.lte('dueDate', endDate),
 				)
 				.order('desc')
 				.collect();
@@ -798,13 +801,15 @@ export const getAllPayments = query({
 		if (args.startDate && !args.status && !args.studentId) {
 			// Already applied via index
 		} else if (args.startDate) {
-			filtered = filtered.filter((p) => p.dueDate >= args.startDate!);
+			const startDate = args.startDate;
+			filtered = filtered.filter((p) => p.dueDate >= startDate);
 		}
 
 		if (args.endDate && !args.status && !args.studentId) {
 			// Already applied via index
 		} else if (args.endDate) {
-			filtered = filtered.filter((p) => p.dueDate <= args.endDate!);
+			const endDate = args.endDate;
+			filtered = filtered.filter((p) => p.dueDate <= endDate);
 		}
 
 		// Get total before pagination

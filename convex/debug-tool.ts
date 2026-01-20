@@ -63,9 +63,9 @@ export const checkAuth = mutation({
 						name: identity.name,
 
 						// Custom claims from Clerk JWT Template
-					org_id: orgId,
-					org_role: orgRole,
-					org_slug: orgSlug,
+						org_id: orgId,
+						org_role: orgRole,
+						org_slug: orgSlug,
 					}
 				: null,
 
@@ -110,7 +110,7 @@ export const testCreate = mutation({
 				source: 'outro',
 				stage: 'novo',
 				temperature: 'frio',
-			organizationId: orgId ?? identity.subject,
+				organizationId: orgId ?? identity.subject,
 				lgpdConsent: false,
 				whatsappConsent: false,
 				message: 'Debug lead',

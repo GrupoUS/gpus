@@ -1,14 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
 
+const SHA256_HEX_REGEX = /^[a-f0-9]{64}$/;
+
 // Set encryption key BEFORE any imports that use it
 process.env.ENCRYPTION_KEY = 'test-encryption-key-at-least-16-chars';
 
 import { createStudentFromAsaas } from './asaas/mutations';
 import { encryptLegacyCpfs } from './migrations';
 
+type ConvexHandler = (ctx: unknown, args: unknown) => Promise<unknown> | unknown;
+
 // Helper to access handler from Convex mutation object
-const getHandler = (mutation: any) => {
-	return mutation.handler || mutation._handler;
+const getHandler = (mutation: unknown): ConvexHandler => {
+	if (mutation && typeof mutation === 'object') {
+		const handler = (mutation as { handler?: unknown }).handler;
+		if (typeof handler === 'function') return handler as ConvexHandler;
+		// biome-ignore lint/style/useNamingConvention: Convex internal handler uses _handler
+		const internalHandler = (mutation as { _handler?: unknown })._handler;
+		if (typeof internalHandler === 'function') return internalHandler as ConvexHandler;
+	}
+	throw new Error('Could not resolve handler from mutation object');
 };
 
 describe('LGPD CPF Encryption & Migration (Unit)', () => {
@@ -33,10 +44,10 @@ describe('LGPD CPF Encryption & Migration (Unit)', () => {
 		// But this is an internalMutation, so it might not call them (or we mock them if it does)
 		// createStudentFromAsaas does NOT call requireAuth (it's internal).
 
-		const mockCtx = {
+		const mockCtx: { db: typeof mockDb; auth: { getUserIdentity: () => unknown } } = {
 			db: mockDb,
 			auth: { getUserIdentity: vi.fn() },
-		} as any;
+		};
 
 		const handler = getHandler(createStudentFromAsaas);
 		if (typeof handler !== 'function') {
@@ -59,13 +70,14 @@ describe('LGPD CPF Encryption & Migration (Unit)', () => {
 		expect(data.encryptedCPF).not.toBe(args.cpf); // Should be encrypted
 		expect(data.cpfHash).toBeDefined();
 		// Verify hash format (SHA-256 hex is 64 chars)
-		expect(data.cpfHash).toMatch(/^[a-f0-9]{64}$/);
+		expect(data.cpfHash).toMatch(SHA256_HEX_REGEX);
 	});
 
 	it('should migrate legacy students with plaintext CPF', async () => {
 		const limit = 10;
 
 		const legacyStudent = {
+			// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 			_id: 'student_legacy',
 			name: 'Legacy Student',
 			cpf: '111.222.333-44',
@@ -83,13 +95,17 @@ describe('LGPD CPF Encryption & Migration (Unit)', () => {
 			patch: vi.fn().mockResolvedValue(undefined),
 		};
 
-		const mockCtx = {
+		const mockCtx: { db: typeof mockDb } = {
 			db: mockDb,
-		} as any;
+		};
 
 		const handler = getHandler(encryptLegacyCpfs);
 
-		const result = await handler(mockCtx, { limit });
+		const result = (await handler(mockCtx, { limit })) as {
+			processed: number;
+			updated: number;
+			remaining: number;
+		};
 
 		expect(result.processed).toBe(1);
 		expect(result.updated).toBe(1);

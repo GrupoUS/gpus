@@ -41,143 +41,143 @@ export const testAsaasSyncFlow = action({
 			results.logs.push(msg);
 		};
 
-		try {
-			if (args.testScenario === 'happy_path') {
-				// 1. Create a test customer
-				const testCustomer = {
-					name: 'Test Happy Path User',
-					email: `happy_${Date.now()}@test.com`,
-					cpfCnpj: '44962402030', // Valid algorithm CPF
-					phone: '11999999999',
-					externalReference: `test_happy_${Date.now()}`,
-				};
+		const dryRun = args.dryRun ?? false;
 
-				log('Starting happy path test');
+		const handleHappyPath = async () => {
+			// 1. Create a test customer
+			const testCustomer = {
+				name: 'Test Happy Path User',
+				email: `happy_${Date.now()}@test.com`,
+				cpfCnpj: '44962402030', // Valid algorithm CPF
+				phone: '11999999999',
+				externalReference: `test_happy_${Date.now()}`,
+			};
 
-				let customer: { id: string } | null = null;
-				if (args.dryRun) {
-					log('Dry run: Simulated customer creation');
-					results.details.customerCreated = true;
-					results.details.customerId = 'cus_simulated_123';
-				} else {
-					const client = await getAsaasClientFromSettings(ctx);
-					log('Creating customer in Asaas...');
-					customer = await client.createCustomer(testCustomer);
-					log(`Customer created: ${customer.id}`);
+			log('Starting happy path test');
 
-					// Verify existence
-					results.details.customerCreated = true;
-					results.details.customerId = customer.id;
+			let customer: { id: string } | null = null;
+			if (dryRun) {
+				log('Dry run: Simulated customer creation');
+				results.details.customerCreated = true;
+				results.details.customerId = 'cus_simulated_123';
+			} else {
+				const client = await getAsaasClientFromSettings(ctx);
+				log('Creating customer in Asaas...');
+				customer = await client.createCustomer(testCustomer);
+				log(`Customer created: ${customer.id}`);
 
-					// Cleanup: Delete the customer immediately to avoid clutter
-					// Not all Asaas environments allow deletion if there are charges.
-					// If deletion becomes available, add a guarded cleanup call here.
-				}
+				// Verify existence
+				results.details.customerCreated = true;
+				results.details.customerId = customer.id;
 
-				results.success = true;
-			} else if (args.testScenario === 'invalid_api_key') {
-				// Simulate invalid key by using a bad client (mock or specific call)
-				// Since we can't easily change the env var for the whole system dynamically safely in parallel,
-				// we might test the error handling of the connection tester with a forced bad key
+				// Cleanup: Delete the customer immediately to avoid clutter
+				// Not all Asaas environments allow deletion if there are charges.
+				// If deletion becomes available, add a guarded cleanup call here.
+			}
 
-				log('Testing invalid API key scenario');
+			results.success = true;
+		};
 
-				// This is tricky to verify without changing global config.
-				// We will call testAsaasConnection and expect it to work (as we assume valid env),
-				// effectively validating the *checker* works, or we simulate a bad call if possible.
-				// BETTER: We can instantiate a client with a bad key manually since AsaasClient class is exported?
-				// But AsaasClient is in lib/asaas.ts. We can try to import it.
+		const handleInvalidApiKey = async () => {
+			log('Testing invalid API key scenario');
 
-				try {
-					const { AsaasClient } = await import('../lib/asaas');
-					const badClient = new AsaasClient({
-						apiKey: 'invalid_key',
-						baseUrl: process.env.ASAAS_BASE_URL,
-					});
-
-					await badClient.testConnection();
-					results.success = false;
-					results.details.error = 'Should have failed with invalid key';
-				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : String(error);
-					log(`Caught expected error: ${errorMessage}`);
-					if (
-						errorMessage.includes('401') ||
-						errorMessage.includes('Unauthorized') ||
-						errorMessage.includes('inválida')
-					) {
-						results.success = true;
-						results.details.errorMessage = errorMessage;
-					} else {
-						results.success = false;
-						results.details.error = `Unexpected error: ${errorMessage}`;
-					}
-				}
-			} else if (args.testScenario === 'duplicate_customer') {
-				log('Testing duplicate customer detection');
-
-				// Check if `checkExistingAsaasCustomer` works
-				// We need a known email/cpf. Let's use one we just "created" or a random one and assume it definitely does NOT exist first, then one that does.
-
-				// 1. Check non-existent
-				const checks1 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
-					email: `nonexistent_${Date.now()}@test.com`,
+			try {
+				const { AsaasClient } = await import('../lib/asaas');
+				const badClient = new AsaasClient({
+					apiKey: 'invalid_key',
+					baseUrl: process.env.ASAAS_BASE_URL,
 				});
 
-				if (checks1.exists) {
-					results.success = false;
-					results.details.error = 'Found non-existent customer';
-					return results;
-				}
-
-				// 2. We can't easily guarantee a Duplicate exists without creating it first.
-				// If dryRun, we just simulate.
-				if (args.dryRun) {
+				await badClient.testConnection();
+				results.success = false;
+				results.details.error = 'Should have failed with invalid key';
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				log(`Caught expected error: ${errorMessage}`);
+				if (
+					errorMessage.includes('401') ||
+					errorMessage.includes('Unauthorized') ||
+					errorMessage.includes('inválida')
+				) {
 					results.success = true;
-					results.details.duplicateDetected = true;
-					results.details.linkedToExisting = true;
-				} else {
-					// Need to create one to find it? Or assume checkExisting works if it returns false on random.
-					// Let's create one temporarily
-					const client = await getAsaasClientFromSettings(ctx);
-					const uniqueEmail = `dup_test_${Date.now()}@test.com`;
-					const customer = await client.createCustomer({
-						name: 'Duplicate Test',
-						email: uniqueEmail,
-						cpfCnpj: '51576081098',
-					});
-
-					// Now check
-					const checks2 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
-						email: uniqueEmail,
-					});
-
-					if (checks2.exists && checks2.customerId === customer.id) {
-						results.success = true;
-						results.details.duplicateDetected = true;
-						results.details.linkedToExisting = true;
-					} else {
-						results.success = false;
-						results.details.error = 'Failed to detect created duplicate';
-					}
+					results.details.errorMessage = errorMessage;
+					return;
 				}
-			} else if (args.testScenario === 'timeout_simulation') {
-				log('Testing timeout simulation');
-				// This requires mocking fetch or network conditions which is hard in live action.
-				// We will test strict timeout settings if possible, or simulate logic.
-				// For now, we will assume if we can make a call that *would* fails appropriately.
 
-				// To properly test timeout, we might need to access an endpoint that hangs (not available usually)
-				// OR we just verify that we have a timeout config.
+				results.success = false;
+				results.details.error = `Unexpected error: ${errorMessage}`;
+			}
+		};
 
-				// Let's force a "failure" that triggers the circuit breaker if we repeat it
-				// But we shouldn't break production circuit breaker.
+		const handleDuplicateCustomer = async () => {
+			log('Testing duplicate customer detection');
 
-				log('Simulating timeout logic checks');
+			const checks1 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
+				email: `nonexistent_${Date.now()}@test.com`,
+			});
+
+			if (checks1.exists) {
+				results.success = false;
+				results.details.error = 'Found non-existent customer';
+				return;
+			}
+
+			if (dryRun) {
 				results.success = true;
-				results.details.timeoutTested = true;
-				results.details.note =
-					'Real network timeout simulation skipped in live env to protect circuit breaker';
+				results.details.duplicateDetected = true;
+				results.details.linkedToExisting = true;
+				return;
+			}
+
+			const client = await getAsaasClientFromSettings(ctx);
+			const uniqueEmail = `dup_test_${Date.now()}@test.com`;
+			const customer = await client.createCustomer({
+				name: 'Duplicate Test',
+				email: uniqueEmail,
+				cpfCnpj: '51576081098',
+			});
+
+			const checks2 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
+				email: uniqueEmail,
+			});
+
+			if (checks2.exists && checks2.customerId === customer.id) {
+				results.success = true;
+				results.details.duplicateDetected = true;
+				results.details.linkedToExisting = true;
+				return;
+			}
+
+			results.success = false;
+			results.details.error = 'Failed to detect created duplicate';
+		};
+
+		const handleTimeoutSimulation = () => {
+			log('Testing timeout simulation');
+			log('Simulating timeout logic checks');
+			results.success = true;
+			results.details.timeoutTested = true;
+			results.details.note =
+				'Real network timeout simulation skipped in live env to protect circuit breaker';
+		};
+
+		try {
+			switch (args.testScenario) {
+				case 'happy_path':
+					await handleHappyPath();
+					break;
+				case 'invalid_api_key':
+					await handleInvalidApiKey();
+					break;
+				case 'duplicate_customer':
+					await handleDuplicateCustomer();
+					break;
+				case 'timeout_simulation':
+					handleTimeoutSimulation();
+					break;
+				default:
+					results.success = false;
+					results.details.error = 'Unknown test scenario';
 			}
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);

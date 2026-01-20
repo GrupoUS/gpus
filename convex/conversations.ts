@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import type { Doc, Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 import { requireAuth } from './lib/auth';
 
@@ -22,12 +23,13 @@ export const list = query({
 	handler: async (ctx, args) => {
 		await requireAuth(ctx);
 
-		let conversations;
+		let conversations: Doc<'conversations'>[] = [];
 
 		if (args.department) {
+			const department = args.department;
 			conversations = await ctx.db
 				.query('conversations')
-				.withIndex('by_department', (q) => q.eq('department', args.department!))
+				.withIndex('by_department', (q) => q.eq('department', department))
 				.order('desc')
 				.take(50);
 		} else {
@@ -42,8 +44,8 @@ export const list = query({
 		}
 
 		// Collect unique IDs for batch lookup
-		const leadIds = new Set<string>();
-		const studentIds = new Set<string>();
+		const leadIds = new Set<Id<'leads'>>();
+		const studentIds = new Set<Id<'students'>>();
 		conversations.forEach((c) => {
 			if (c.leadId) leadIds.add(c.leadId);
 			if (c.studentId) studentIds.add(c.studentId);
@@ -53,11 +55,11 @@ export const list = query({
 		const uniqueLeadIds = Array.from(leadIds);
 		const uniqueStudentIds = Array.from(studentIds);
 
-		const leads = await Promise.all(uniqueLeadIds.map((id) => ctx.db.get(id as any)));
-		const students = await Promise.all(uniqueStudentIds.map((id) => ctx.db.get(id as any)));
+		const leads = await Promise.all(uniqueLeadIds.map((id) => ctx.db.get(id)));
+		const students = await Promise.all(uniqueStudentIds.map((id) => ctx.db.get(id)));
 
-		const leadsMap = new Map<string, any>();
-		const studentsMap = new Map<string, any>();
+		const leadsMap = new Map<Id<'leads'>, Doc<'leads'>>();
+		const studentsMap = new Map<Id<'students'>, Doc<'students'>>();
 
 		leads.forEach((l, i) => {
 			if (l) leadsMap.set(uniqueLeadIds[i], l);
@@ -115,8 +117,8 @@ export const getById = query({
 		if (!conversation) return null;
 
 		let contactName = 'Desconhecido';
-		let lead = null;
-		let student = null;
+		let lead: Doc<'leads'> | null = null;
+		let student: Doc<'students'> | null = null;
 
 		if (conversation.leadId) {
 			lead = await ctx.db.get(conversation.leadId);

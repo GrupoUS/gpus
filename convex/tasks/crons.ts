@@ -21,7 +21,7 @@ export const sendTaskReminders = internalAction({
 			const queryResult = (await ctx.runQuery(getTasksDueToday, {
 				cursor: args.cursor,
 				limit: 50,
-			// biome-ignore lint/suspicious/noExplicitAny: Internal query result
+				// biome-ignore lint/suspicious/noExplicitAny: Internal query result
 			})) as { tasks: any[]; continueCursor: string; isDone: boolean };
 
 			const startOfDay = new Date();
