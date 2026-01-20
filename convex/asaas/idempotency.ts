@@ -7,7 +7,8 @@
 
 import { v } from 'convex/values';
 
-import { internalMutation, internalQuery } from '../_generated/server';
+import { internal } from '../_generated/api';
+import { internalMutation, internalQuery, type MutationCtx } from '../_generated/server';
 
 // ═══════════════════════════════════════════════════════
 // TYPES
@@ -177,14 +178,16 @@ export function generateSubscriptionImportKey(asaasSubscriptionId: string): stri
  * Returns true if the operation should proceed (not already processed)
  */
 export async function withIdempotency<T>(
-	ctx: any,
+	ctx: MutationCtx,
 	key: string,
 	fn: () => Promise<T>,
 	ttlMs?: number,
 ): Promise<{ proceeded: boolean; result?: T; existingResult?: unknown }> {
 	// Check if already processed
-	// @ts-expect-error - Deep type instantiation error
-	const existing = await ctx.runQuery(internal.asaas.idempotency.checkIdempotency, { key });
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+	const existing = await ctx.runQuery((internal as any).asaas.idempotency.checkIdempotency, {
+		key,
+	});
 
 	if (existing.exists) {
 		return { proceeded: false, existingResult: existing.result };
@@ -194,8 +197,8 @@ export async function withIdempotency<T>(
 	const result = await fn();
 
 	// Mark as processed
-	// @ts-expect-error - Deep type instantiation error
-	await ctx.runMutation(internal.asaas.idempotency.markIdempotency, {
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+	await ctx.runMutation((internal as any).asaas.idempotency.markIdempotency, {
 		key,
 		result,
 		ttlMs,

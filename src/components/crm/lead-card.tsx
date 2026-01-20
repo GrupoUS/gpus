@@ -146,6 +146,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="mt-3 flex flex-wrap gap-1">
+						{/* biome-ignore lint/suspicious/noExplicitAny: Temporary cast */}
 						<LeadTags leadId={lead._id as any} />
 					</div>
 				</div>
@@ -157,6 +158,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 function LeadTags({ leadId }: { leadId: string }) {
 	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
 	const getLeadTags = (api as any).tags.getLeadTags;
+	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
 	const tags = useQuery(getLeadTags, { leadId: leadId as any });
 
 	if (!tags) return null;

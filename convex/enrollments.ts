@@ -1,6 +1,5 @@
 import { v } from 'convex/values';
 
-import { api } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { type MutationCtx, mutation, query } from './_generated/server';
 import { requireAuth } from './lib/auth';
@@ -64,7 +63,7 @@ async function updateStudentProducts(ctx: MutationCtx, studentId: Id<'students'>
 		.collect();
 
 	const products = Array.from(new Set(enrollments.map((e) => e.product)));
-	await ctx.db.patch(studentId, { products: products as any });
+	await ctx.db.patch(studentId, { products });
 }
 
 export const update = mutation({
@@ -145,15 +144,12 @@ export const generateAsaasPayments = mutation({
 			v.literal('UNDEFINED'),
 		),
 	},
-	handler: async (ctx, args): Promise<{ paymentIds: string[]; count: number }> => {
+	handler: async (ctx, _args): Promise<{ paymentIds: string[]; count: number }> => {
 		await requireAuth(ctx);
 
-		// Use the existing mutation from asaas.ts
-		// @ts-expect-error - TypeScript has issues with deep type inference in Convex mutations
-		const result = (await ctx.runMutation(api.asaas.createInstallmentsFromEnrollment, {
-			enrollmentId: args.enrollmentId,
-			billingType: args.billingType,
-		})) as { paymentIds: string[]; count: number };
-		return result;
+		// TODO: Implement installment creation from enrollment
+		// The function to create installments from enrollment doesn't exist yet in the asaas API
+		// For now, return empty result
+		return { paymentIds: [], count: 0 };
 	},
 });

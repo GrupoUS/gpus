@@ -140,6 +140,7 @@ export interface AsaasPaymentResponse {
 		creditCardBrand?: string;
 		creditCardToken?: string;
 	};
+	installmentCount?: number;
 }
 
 export interface AsaasSubscriptionPayload {
@@ -348,7 +349,7 @@ export class AsaasClient {
 	/**
 	 * Test connection to Asaas API
 	 */
-	public async testConnection(): Promise<{ status: number; success: boolean }> {
+	async testConnection(): Promise<{ status: number; success: boolean }> {
 		try {
 			await this.fetch<{ object: string; totalCount: number }>('/customers?limit=1');
 			return { status: 200, success: true };
@@ -361,7 +362,7 @@ export class AsaasClient {
 	/**
 	 * Create a new customer
 	 */
-	public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+	async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
 		try {
 			return await this.fetch<AsaasCustomerResponse>('/customers', {
 				method: 'POST',
@@ -376,7 +377,7 @@ export class AsaasClient {
 	/**
 	 * Update an existing customer
 	 */
-	public async updateCustomer(
+	async updateCustomer(
 		customerId: string,
 		payload: Partial<AsaasCustomerPayload>,
 	): Promise<AsaasCustomerResponse> {
@@ -394,7 +395,7 @@ export class AsaasClient {
 	/**
 	 * Get customer by ID
 	 */
-	public async getCustomer(customerId: string): Promise<AsaasCustomerResponse> {
+	async getCustomer(customerId: string): Promise<AsaasCustomerResponse> {
 		try {
 			return await this.fetch<AsaasCustomerResponse>(`/customers/${customerId}`);
 		} catch (error) {
@@ -406,7 +407,7 @@ export class AsaasClient {
 	/**
 	 * List all customers with pagination
 	 */
-	public async listAllCustomers(params?: {
+	async listAllCustomers(params?: {
 		name?: string;
 		email?: string;
 		cpfCnpj?: string;
@@ -435,7 +436,7 @@ export class AsaasClient {
 	/**
 	 * Create a new payment
 	 */
-	public async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+	async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
 		try {
 			return await this.fetch<AsaasPaymentResponse>('/payments', {
 				method: 'POST',
@@ -450,7 +451,7 @@ export class AsaasClient {
 	/**
 	 * Get PIX QR Code for a payment
 	 */
-	public async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
+	async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
 		try {
 			return await this.fetch<{ encodedImage: string; payload: string }>(
 				`/payments/${paymentId}/pixQrCode`,
@@ -465,9 +466,7 @@ export class AsaasClient {
 	/**
 	 * Create a new subscription
 	 */
-	public async createSubscription(
-		payload: AsaasSubscriptionPayload,
-	): Promise<AsaasSubscriptionResponse> {
+	async createSubscription(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
 		try {
 			return await this.fetch<AsaasSubscriptionResponse>('/subscriptions', {
 				method: 'POST',
@@ -482,7 +481,7 @@ export class AsaasClient {
 	/**
 	 * List all payments with filters
 	 */
-	public async listAllPayments(params?: {
+	async listAllPayments(params?: {
 		customer?: string;
 		status?: string;
 		billingType?: string;
@@ -519,7 +518,7 @@ export class AsaasClient {
 	/**
 	 * List all subscriptions with filters
 	 */
-	public async listAllSubscriptions(params?: {
+	async listAllSubscriptions(params?: {
 		customer?: string;
 		status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 		offset?: number;
@@ -547,7 +546,7 @@ export class AsaasClient {
 	/**
 	 * Get financial summary for a period
 	 */
-	public async getFinancialSummary(params?: {
+	async getFinancialSummary(params?: {
 		startDate?: string;
 		endDate?: string;
 	}): Promise<AsaasFinancialSummaryResponse> {
@@ -604,14 +603,14 @@ export class AsaasClient {
 	/**
 	 * Get circuit breaker state (for monitoring)
 	 */
-	public getCircuitBreakerState(): string {
+	getCircuitBreakerState(): string {
 		return getCircuitBreakerState().state;
 	}
 
 	/**
 	 * Reset circuit breaker (for recovery)
 	 */
-	public resetCircuitBreaker(): void {
+	resetCircuitBreaker(): void {
 		resetCircuitBreaker();
 	}
 }

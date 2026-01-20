@@ -82,7 +82,7 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 						style={{ backgroundColor: tag.color ? `${tag.color}20` : undefined, color: tag.color }}
 						variant="secondary"
 					>
-						{tag.name}
+						{tag.displayName || tag.name}
 					</Badge>
 				))}
 			</div>
@@ -99,7 +99,7 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 					style={{ backgroundColor: tag.color ? `${tag.color}20` : undefined, color: tag.color }}
 					variant="secondary"
 				>
-					{tag.name}
+					{tag.displayName || tag.name}
 					<button
 						className="ml-1 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
 						onClick={() => handleRemoveTag(tag._id)}
@@ -144,7 +144,7 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 												className="h-3 w-3 rounded-full"
 												style={{ backgroundColor: tag.color || '#ccc' }}
 											/>
-											{tag.name}
+											{tag.displayName || tag.name}
 											{isSelected && <Check className="ml-auto h-4 w-4 opacity-50" />}
 										</CommandItem>
 									);

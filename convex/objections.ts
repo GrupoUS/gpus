@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 
 import { mutation, query } from './_generated/server';
-import { getOrganizationId, requirePermission } from './lib/auth';
+import { getOrganizationId, hasPermission, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
 const SPLIT_REGEX = /\s+/;
@@ -35,13 +35,21 @@ export const listObjections = query({
 // Aggregate objection analytics for organization-wide insights
 export const getObjectionStats = query({
 	args: {
+		organizationId: v.optional(v.string()),
 		period: v.optional(v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'))),
 	},
 	handler: async (ctx, args) => {
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
 
 		// Always scope to authenticated organization (multi-tenant isolation)
-		const organizationId = await getOrganizationId(ctx);
+		// Enable override only for admins (PERMISSIONS.ALL)
+		let organizationId = await getOrganizationId(ctx);
+		if (args.organizationId) {
+			const hasAdminPerm = await hasPermission(ctx, PERMISSIONS.ALL);
+			if (hasAdminPerm) {
+				organizationId = args.organizationId;
+			}
+		}
 
 		const period = args.period ?? '30d';
 		let days = 30;
@@ -138,6 +146,7 @@ export const addObjection = mutation({
 			organizationId,
 			recordedBy: identity.subject,
 			recordedAt: Date.now(),
+			resolved: false,
 		});
 
 		const description =
@@ -163,6 +172,8 @@ export const updateObjection = mutation({
 	args: {
 		objectionId: v.id('objections'),
 		objectionText: v.string(),
+		resolved: v.optional(v.boolean()),
+		resolution: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
@@ -178,8 +189,8 @@ export const updateObjection = mutation({
 		}
 
 		const isCreator = objection.recordedBy === identity.subject;
-		const adminRoles = ['org:admin', 'org:owner', 'admin', 'owner'];
-		const isAdmin = adminRoles.includes(identity.org_role ?? '');
+		// Admin permission check aligned with auth model
+		const isAdmin = await hasPermission(ctx, PERMISSIONS.ALL);
 
 		if (!(isCreator || isAdmin)) {
 			throw new Error(
@@ -192,9 +203,15 @@ export const updateObjection = mutation({
 			throw new Error('Texto da objeção não pode estar vazio');
 		}
 
-		await ctx.db.patch(args.objectionId, {
+		// biome-ignore lint/suspicious/noExplicitAny: Dynamic patch
+		const updates: any = {
 			objectionText: text,
-		});
+		};
+		if (args.resolved !== undefined) updates.resolved = args.resolved;
+		if (args.resolution !== undefined) updates.resolution = args.resolution;
+
+		// biome-ignore lint/suspicious/noExplicitAny: Dynamic patch
+		await ctx.db.patch(args.objectionId, updates);
 
 		await ctx.db.insert('activities', {
 			type: 'nota_adicionada',
@@ -207,6 +224,7 @@ export const updateObjection = mutation({
 				objectionId: args.objectionId,
 				previousText: objection.objectionText.substring(0, 50),
 				newText: text.substring(0, 50),
+				changes: Object.keys(updates),
 			},
 		});
 	},
@@ -230,8 +248,8 @@ export const deleteObjection = mutation({
 		}
 
 		const isCreator = objection.recordedBy === identity.subject;
-		const adminRoles = ['org:admin', 'org:owner', 'admin', 'owner'];
-		const isAdmin = adminRoles.includes(identity.org_role ?? '');
+		// Admin permission check aligned with auth model
+		const isAdmin = await hasPermission(ctx, PERMISSIONS.ALL);
 
 		if (!(isCreator || isAdmin)) {
 			throw new Error(

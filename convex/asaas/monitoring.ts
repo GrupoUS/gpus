@@ -182,11 +182,36 @@ export const getActiveAlerts = query({
 
 		// Get active alerts (not suppressed)
 		const now = Date.now();
-		let alerts = await ctx.db
-			.query('asaasAlerts')
-			.withIndex('by_active', (q) => q.eq('status', 'active'))
-			.order('desc')
-			.take(limit * 2); // Get more initially to filter
+		const alertsQuery = ctx.db.query('asaasAlerts');
+		let alerts;
+
+		if (orgId) {
+			const severity = args.severity;
+			if (severity) {
+				alerts = await alertsQuery
+					.withIndex('by_organization_active', (q) =>
+						q
+							.eq('organizationId', orgId)
+							.eq('status', 'active')
+							.eq('severity', args.severity as 'low' | 'medium' | 'high' | 'critical'),
+					)
+					.order('desc')
+					.take(limit * 2);
+			} else {
+				alerts = await alertsQuery
+					.withIndex('by_organization_active', (q) =>
+						q.eq('organizationId', orgId).eq('status', 'active'),
+					)
+					.order('desc')
+					.take(limit * 2);
+			}
+		} else {
+			// Fallback if no organization context (using status index)
+			alerts = await alertsQuery
+				.withIndex('by_status', (q) => q.eq('status', 'active'))
+				.order('desc')
+				.take(limit * 2);
+		}
 
 		// Filter out suppressed alerts
 		alerts = alerts.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
@@ -340,17 +365,32 @@ export const getDashboardSummary = query({
 			.order('desc')
 			.take(10);
 
-		// Get active alerts count
-		const activeAlerts = await ctx.db
-			.query('asaasAlerts')
-			.withIndex('by_active', (q) => q.eq('status', 'active'))
-			.collect();
+		// If not, we fallback to by_status or empty?
+		// Note from plan: "by_active" was renamed to "by_organization_active".
+		// So the fallback "by_active" above is invalid.
+		// Use by_status for fallback.
 
-		const orgActiveAlerts = orgId
-			? activeAlerts.filter(
-					(a) => a.organizationId === orgId && (!a.suppressedUntil || a.suppressedUntil < now),
+		let orgActiveAlerts;
+		if (orgId) {
+			orgActiveAlerts = await ctx.db
+				.query('asaasAlerts')
+				.withIndex('by_organization_active', (q) =>
+					q.eq('organizationId', orgId).eq('status', 'active'),
 				)
-			: activeAlerts.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
+				.collect();
+
+			// Apply suppression filter
+			orgActiveAlerts = orgActiveAlerts.filter(
+				(a) => !a.suppressedUntil || a.suppressedUntil < now,
+			);
+		} else {
+			// Fallback if no orgId
+			const all = await ctx.db
+				.query('asaasAlerts')
+				.withIndex('by_status', (q) => q.eq('status', 'active'))
+				.collect();
+			orgActiveAlerts = all.filter((a) => !a.suppressedUntil || a.suppressedUntil < now);
+		}
 
 		// Get API metrics (last hour)
 		const hourAgo = now - 60 * 60 * 1000;

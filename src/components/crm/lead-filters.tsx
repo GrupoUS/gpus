@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Doc } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { Filter, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -25,7 +26,6 @@ interface LeadFiltersProps {
 }
 
 export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
 	const listTags = (api as any).tags.listTags;
 	const tags = useQuery(listTags);
 
@@ -231,7 +231,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 						<div className="space-y-2">
 							<h5 className="font-medium text-muted-foreground text-sm">Etiquetas</h5>
 							<div className="grid grid-cols-2 gap-2">
-								{tags?.map((tag: any) => (
+								{tags?.map((tag: Doc<'tags'>) => (
 									<div className="flex items-center space-x-2" key={tag._id}>
 										<Checkbox
 											checked={filters.tags?.includes(tag._id)}
@@ -246,7 +246,7 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 												className="h-2 w-2 rounded-full"
 												style={{ backgroundColor: tag.color || '#ccc' }}
 											/>
-											{tag.name}
+											{tag.displayName || tag.name}
 										</Label>
 									</div>
 								))}

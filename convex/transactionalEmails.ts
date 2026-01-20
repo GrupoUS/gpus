@@ -392,3 +392,95 @@ export const sendTemplateEmail = action({
 		return { success: true, messageId: result.messageId };
 	},
 });
+
+/**
+ * Send payment confirmation email
+ */
+export const sendPaymentConfirmation = action({
+	args: {
+		studentId: v.id('students'),
+		paymentId: v.id('asaasPayments'),
+		paymentValue: v.string(),
+		paymentDescription: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const student = await ctx.runQuery(internalTransactionalEmails.getStudentForEmail, {
+			studentId: args.studentId,
+		});
+
+		if (!student?.email) return { success: false, reason: 'No email' };
+
+		const htmlContent = `
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Pagamento Confirmado! ✅</h1>
+  <p>Olá ${student.name?.split(' ')[0] || 'Aluno(a)'},</p>
+  <p>Seu pagamento de <strong>${args.paymentValue}</strong> referente a "${args.paymentDescription}" foi confirmado com sucesso.</p>
+  <p>Obrigado!</p>
+</body>
+</html>`;
+
+		const result = await brevoSmtp.sendHtml(
+			{ email: student.email, name: student.name || undefined },
+			'Pagamento Confirmado ✅',
+			htmlContent,
+			{ tags: ['payment', 'confirmation'] },
+		);
+
+		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
+			email: student.email,
+			emailType: 'payment_confirmation',
+			messageId: result.messageId,
+			metadata: { paymentId: args.paymentId },
+		});
+
+		return { success: true, messageId: result.messageId };
+	},
+});
+
+/**
+ * Send payment reminder email
+ */
+export const sendPaymentReminder = action({
+	args: {
+		studentId: v.id('students'),
+		paymentId: v.id('asaasPayments'),
+		paymentValue: v.string(),
+		dueDate: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const student = await ctx.runQuery(internalTransactionalEmails.getStudentForEmail, {
+			studentId: args.studentId,
+		});
+
+		if (!student?.email) return { success: false, reason: 'No email' };
+
+		const htmlContent = `
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Lembrete de Pagamento ⏰</h1>
+  <p>Olá ${student.name?.split(' ')[0] || 'Aluno(a)'},</p>
+  <p>Lembramos que o pagamento de <strong>${args.paymentValue}</strong> vence em <strong>${args.dueDate}</strong>.</p>
+  <p>Caso já tenha efetuado o pagamento, desconsidere este aviso.</p>
+</body>
+</html>`;
+
+		const result = await brevoSmtp.sendHtml(
+			{ email: student.email, name: student.name || undefined },
+			'Lembrete de Pagamento ⏰',
+			htmlContent,
+			{ tags: ['payment', 'reminder'] },
+		);
+
+		await ctx.runMutation(internalTransactionalEmails.logTransactionalEmailSend, {
+			email: student.email,
+			emailType: 'payment_reminder',
+			messageId: result.messageId,
+			metadata: { paymentId: args.paymentId },
+		});
+
+		return { success: true, messageId: result.messageId };
+	},
+});

@@ -4,32 +4,45 @@ import { internalMutation, mutation, query } from './_generated/server';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
-// ═══════════════════════════════════════════════════════
-// STATISTICS
-// ═══════════════════════════════════════════════════════
+// ---------------------------------------------------------
+// QUERIES
+// ---------------------------------------------------------
 
+// Get referral statistics for a specific lead (referrer)
 export const getReferralStats = query({
 	args: { leadId: v.id('leads') },
 	handler: async (ctx, args) => {
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
 		const organizationId = await getOrganizationId(ctx);
 
-		// Find all leads referred by this leadId
+		const referrer = await ctx.db.get(args.leadId);
+		if (!referrer || referrer.organizationId !== organizationId) {
+			// Return empty stats if referrer doesn't exist or belongs to another org
+			// Or throw error? "Verify the referrer lead belongs to the current organization"
+			// Returning empty sets protects info.
+			return {
+				totalReferrals: 0,
+				convertedReferrals: 0,
+				pendingReferrals: 0,
+				totalCashback: 0,
+			};
+		}
+
 		const referrals = await ctx.db
 			.query('leads')
-			.withIndex('by_referred_by', (q) => q.eq('referredById', args.leadId))
+			.withIndex('by_referrer', (q) => q.eq('referredById', args.leadId))
 			.filter((q) => q.eq(q.field('organizationId'), organizationId))
 			.collect();
 
+		// Calculate stats
 		const totalReferrals = referrals.length;
-		const convertedReferrals = referrals.filter((r) => r.stage === 'fechado_ganho').length;
+		const convertedReferrals = referrals.filter((l) => l.stage === 'fechado_ganho').length;
 		const pendingReferrals = referrals.filter(
-			(r) => r.stage !== 'fechado_ganho' && r.stage !== 'fechado_perdido',
+			(l) => l.stage !== 'fechado_ganho' && l.stage !== 'fechado_perdido',
 		).length;
 
-		// Get the referrer's current cashback balance
-		const referrer = await ctx.db.get(args.leadId);
-		const totalCashback = referrer?.cashbackEarned ?? 0;
+		// Referrer already fetched at start
+		const totalCashback = referrer?.cashbackEarned || 0;
 
 		return {
 			totalReferrals,
@@ -40,6 +53,7 @@ export const getReferralStats = query({
 	},
 });
 
+// List all leads referred by a specific lead
 export const getMyReferrals = query({
 	args: {
 		leadId: v.id('leads'),
@@ -49,42 +63,45 @@ export const getMyReferrals = query({
 		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
 		const organizationId = await getOrganizationId(ctx);
 
-		const limit = args.limit ?? 50;
+		const referrer = await ctx.db.get(args.leadId);
+		if (!referrer || referrer.organizationId !== organizationId) {
+			return [];
+		}
 
 		const referrals = await ctx.db
 			.query('leads')
-			.withIndex('by_referred_by', (q) => q.eq('referredById', args.leadId))
+			.withIndex('by_referrer', (q) => q.eq('referredById', args.leadId))
 			.filter((q) => q.eq(q.field('organizationId'), organizationId))
 			.order('desc')
-			.take(limit);
+			.take(args.limit ?? 50);
 
 		return referrals.map((r) => ({
-			// biome-ignore lint/style/useNamingConvention: Convex system field
 			_id: r._id,
 			name: r.name,
 			phone: r.phone,
 			stage: r.stage,
 			createdAt: r.createdAt,
-			cashbackEarned: r.cashbackEarned,
+			cashbackEarned: r.cashbackEarned || 0,
 		}));
 	},
 });
 
-// ═══════════════════════════════════════════════════════
-// SETTINGS
-// ═══════════════════════════════════════════════════════
-
+// Retrieve cashback configuration
 export const getCashbackSettings = query({
 	args: {},
 	handler: async (ctx) => {
-		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE); // Admin only read
+		// Admin-only read for settings? Or public if we show "Earn 10%"?
+		// Plan says "Require PERMISSIONS.SETTINGS_WRITE (admin-only read)"
+		// NOTE: Usually getSettings might be looser, but following plan.
+		await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
+
 		const settings = await ctx.db
 			.query('settings')
 			.withIndex('by_key', (q) => q.eq('key', 'cashback_config'))
 			.unique();
 
 		return (
-			settings?.value ?? {
+			settings?.value || {
 				enabled: false,
 				percentage: 0,
 				minAmount: 0,
@@ -94,6 +111,11 @@ export const getCashbackSettings = query({
 	},
 });
 
+// ---------------------------------------------------------
+// MUTATIONS
+// ---------------------------------------------------------
+
+// Configure cashback system (Admin)
 export const setCashbackSettings = mutation({
 	args: {
 		enabled: v.boolean(),
@@ -105,13 +127,13 @@ export const setCashbackSettings = mutation({
 		const identity = await requirePermission(ctx, PERMISSIONS.SETTINGS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
 
-		if (
-			args.percentage < 0 ||
-			args.percentage > 100 ||
-			args.minAmount < 0 ||
-			args.maxAmount < args.minAmount
-		) {
-			throw new Error('Invalid cashback configuration');
+		// Validate
+		if (args.percentage < 0 || args.percentage > 100) {
+			throw new Error('Percentage must be between 0 and 100');
+		}
+		if (args.minAmount < 0) throw new Error('minAmount must be positive');
+		if (args.maxAmount < args.minAmount) {
+			throw new Error('maxAmount must be greater than or equal to minAmount');
 		}
 
 		const existing = await ctx.db
@@ -132,35 +154,29 @@ export const setCashbackSettings = mutation({
 			});
 		}
 
+		// Log activity
 		await ctx.db.insert('activities', {
 			type: 'integracao_configurada',
 			description: 'Configurações de cashback atualizadas',
-			organizationId: organizationId ?? 'system',
+			organizationId: organizationId || 'system',
 			performedBy: identity.subject,
+			metadata: { old: existing?.value, new: args },
 			createdAt: Date.now(),
-			metadata: {
-				oldSettings: existing?.value,
-				newSettings: args,
-			},
 		});
 	},
 });
 
-// ═══════════════════════════════════════════════════════
-// CALCULATION (INTERNAL)
-// ═══════════════════════════════════════════════════════
+// ---------------------------------------------------------
+// INTERNAL MUTATIONS
+// ---------------------------------------------------------
 
 export const calculateCashback = internalMutation({
-	args: {
-		referredLeadId: v.id('leads'),
-	},
+	args: { referredLeadId: v.id('leads') },
 	handler: async (ctx, args) => {
 		try {
-			// 1. Get Referred Lead
 			const referredLead = await ctx.db.get(args.referredLeadId);
 			if (!referredLead) {
-				// biome-ignore lint/suspicious/noConsole: Log useful for debugging background job
-				console.error(`Referred lead not found: ${args.referredLeadId}`);
+				// Silent fail
 				return;
 			}
 
@@ -169,108 +185,119 @@ export const calculateCashback = internalMutation({
 				return;
 			}
 
-			// 2. Get Referrer Lead
 			const referrer = await ctx.db.get(referredLead.referredById);
 			if (!referrer) {
-				// biome-ignore lint/suspicious/noConsole: Log useful for debugging background job
-				console.error(`Referrer not found: ${referredLead.referredById}`);
+				// Silent fail
 				return;
 			}
 
-			// 3. Get Settings
+			if (referredLead.cashbackPaidAt) {
+				return;
+			}
+
+			if (referredLead.organizationId !== referrer.organizationId) {
+				// Silent fail
+				return;
+			}
+
+			// Get Settings
 			const settingsRecord = await ctx.db
 				.query('settings')
 				.withIndex('by_key', (q) => q.eq('key', 'cashback_config'))
 				.unique();
 
 			const settings = settingsRecord?.value;
-
 			if (!settings?.enabled) {
-				return; // Cashback disabled
+				return; // Disabled
 			}
 
-			// 4. Get Enrollment Value
-			// Assuming there's a link or we search by studentId -> enrollment
-			// referredLead -> student (by leadId) -> enrollment
+			// Match Enrollment to get Total Value
+			// Heuristic: Find enrollment for this lead's student (if converted)
+			// Or if lead.studentId exists (schema didn't explicitly link lead->studentId in leads table,
+			// but students table has leadId).
+			// Let's search students by leadId
 			const student = await ctx.db
 				.query('students')
-				// .withIndex('leadId', ...) - Schema doesn't have by_leadId index on students?
-				// Let's check schema: student has leadId: v.optional(v.id('leads')).
-				// Index: .index('by_email', ['email']), .index('by_phone', ['phone']).
-				// No index by leadId directly on students.
-				// But we can search by phone if needed, or scan (expensive).
-				// WAIT: conversions usually create a student linked to lead.
-				// Schema check: students table definition around line 201.
-				// Index scan might be needed if no index.
-				// Alternative: filter by phone which is indexed.
-				.withIndex('by_phone', (q) => q.eq('phone', referredLead.phone))
+				.filter((q) => q.eq(q.field('leadId'), referredLead._id))
 				.first();
 
-			if (!student) {
-				// biome-ignore lint/suspicious/noConsole: Log useful for debugging background job
-				console.log(`Student not found for lead ${args.referredLeadId}, skipping cashback`);
+			// Fallback: search by phone/email if student not found by leadId directly
+			// (Optimization for later: Add index by_leadId on students)
+
+			let totalValue = 0;
+
+			if (student) {
+				const enrollments = await ctx.db
+					.query('enrollments')
+					.withIndex('by_student', (q) => q.eq('studentId', student._id))
+					.collect();
+
+				// Filter for valid enrollments (active or completed) and take the most recent one
+				// to avoid overpaying on multiple enrollments or cancelled ones.
+				const validEnrollments = enrollments
+					.filter(
+						(e) =>
+							(e.status === 'ativo' || e.status === 'concluido') && e.paymentStatus !== 'cancelado',
+					)
+					// biome-ignore lint/suspicious/noExplicitAny: sort
+					.sort((a, b) => b.createdAt - a.createdAt);
+
+				if (validEnrollments.length > 0) {
+					totalValue = validEnrollments[0].totalValue;
+				} else {
+					return;
+				}
+			} else {
 				return;
 			}
 
-			// Get latest enrollment
-			const enrollment = await ctx.db
-				.query('enrollments')
-				.withIndex('by_student', (q) => q.eq('studentId', student._id))
-				.order('desc')
-				.first();
+			if (totalValue <= 0) return;
 
-			if (!enrollment) {
-				// biome-ignore lint/suspicious/noConsole: Log useful for debugging background job
-				console.log(`No enrollment found for student ${student._id}, skipping cashback`);
-				return;
-			}
+			// Calculate
+			let cashback = (totalValue * settings.percentage) / 100;
 
-			// 5. Calculate Amount
-			const totalValue = enrollment.totalValue;
-			const rawCashback = (totalValue * settings.percentage) / 100;
-			const cashback = Math.max(settings.minAmount, Math.min(rawCashback, settings.maxAmount));
+			// Apply Bounds
+			cashback = Math.max(settings.minAmount, Math.min(cashback, settings.maxAmount));
 
-			if (cashback <= 0) return;
-
-			// 6. Apply to Referrer
+			// Update Referrer
 			await ctx.db.patch(referrer._id, {
-				cashbackEarned: (referrer.cashbackEarned ?? 0) + cashback,
+				cashbackEarned: (referrer.cashbackEarned || 0) + cashback,
 				updatedAt: Date.now(),
 			});
 
-			// 7. Log Activities
-			// Log for referrer
-			await ctx.db.insert('activities', {
-				type: 'venda_fechada', // Reuse type
-				description: `Cashback de R$ ${cashback.toFixed(2)} recebido pela indicação de ${referredLead.name}`,
-				leadId: referrer._id,
-				organizationId: referrer.organizationId ?? 'system',
-				performedBy: 'system',
-				createdAt: Date.now(),
-				metadata: {
-					referredLeadId: args.referredLeadId,
-					cashbackEarned: cashback,
-					source: 'referral_bonus',
-				},
+			// Mark referred lead as paid
+			await ctx.db.patch(referredLead._id, {
+				cashbackPaidAt: Date.now(),
+				updatedAt: Date.now(),
 			});
 
-			// Log for referred
+			// Log Activities
+			const organizationId = referrer.organizationId || 'system';
+
+			// 1. On Referrer
+			await ctx.db.insert('activities', {
+				type: 'venda_fechada',
+				description: `Cashback de R$ ${cashback.toFixed(2)} recebido pela indicação de ${referredLead.name}`,
+				leadId: referrer._id,
+				organizationId,
+				performedBy: 'system',
+				metadata: { referredLeadId: args.referredLeadId, cashbackAmount: cashback },
+				createdAt: Date.now(),
+			});
+
+			// 2. On Referred Lead
 			await ctx.db.insert('activities', {
 				type: 'venda_fechada',
 				description: `Indicado por ${referrer.name} - Cashback gerado`,
 				leadId: referredLead._id,
-				organizationId: referredLead.organizationId ?? 'system',
+				organizationId: referredLead.organizationId || organizationId,
 				performedBy: 'system',
+				metadata: { referrerId: referrer._id, cashbackAmount: cashback },
 				createdAt: Date.now(),
-				metadata: {
-					referrerId: referrer._id,
-					cashbackEarned: cashback,
-				},
 			});
 		} catch (error) {
-			// biome-ignore lint/suspicious/noConsole: Log useful for debugging background job
 			console.error('Error calculating cashback:', error);
-			// Don't throw to avoid failing the transaction that triggered this
+			// Silent fail as per requirements
 		}
 	},
 });

@@ -80,6 +80,7 @@ function TagsSettingsPage() {
 		if (!selectedTag) return;
 
 		try {
+			// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
 			await deleteTag({ tagId: selectedTag._id as any });
 			toast.success('Tag removida com sucesso');
 			setIsDeleteOpen(false);

@@ -6,7 +6,6 @@
  */
 
 import type { Id } from '../_generated/dataModel';
-import type { ActionCtx } from '../_generated/server';
 
 // ═════════════════════════════════════════════════════════════════
 // WRAPPER TYPES FOR INTERNAL FUNCTIONS
@@ -87,7 +86,7 @@ export interface AsaasWebhookPayload {
 	event: AsaasEventType;
 	payment?: AsaasPaymentData;
 	subscription?: AsaasSubscriptionData;
-	[key: string]: any; // Additional fields
+	[key: string]: unknown; // Additional fields
 }
 
 /**
@@ -132,7 +131,7 @@ export interface AsaasSubscriptionData {
  * Student document with Asaas sync fields
  */
 export interface StudentWithAsaas {
-	_id: Id<'students'>;
+	_id: Id<'students'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
 	name: string;
 	email?: string;
 	phone: string;
@@ -148,7 +147,7 @@ export interface StudentWithAsaas {
  * Payment document
  */
 export interface PaymentDoc {
-	_id: Id<'asaasPayments'>;
+	_id: Id<'asaasPayments'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
 	studentId: Id<'students'>;
 	asaasPaymentId: string;
 	asaasCustomerId: string;
@@ -172,7 +171,7 @@ export interface PaymentDoc {
  * Subscription document
  */
 export interface SubscriptionDoc {
-	_id: Id<'asaasSubscriptions'>;
+	_id: Id<'asaasSubscriptions'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
 	studentId: Id<'students'>;
 	asaasSubscriptionId: string;
 	asaasCustomerId: string;
@@ -386,6 +385,7 @@ export interface SyncLogSummary {
 /**
  * Type guard for Id
  */
+// biome-ignore lint/suspicious/noExplicitAny: generic Id
 export function isId(value: unknown): value is Id<any> {
 	return (
 		typeof value === 'string' && value.length === 28 // Convex IDs are 28 characters
@@ -395,7 +395,9 @@ export function isId(value: unknown): value is Id<any> {
 /**
  * Safely extract ID from a document
  */
+// biome-ignore lint/suspicious/noExplicitAny: generic Id
 export function getIdFromDoc<T extends { _id: Id<any> }>(doc: T): Id<any> {
+	// biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
 	return doc._id;
 }
 
@@ -403,26 +405,7 @@ export function getIdFromDoc<T extends { _id: Id<any> }>(doc: T): Id<any> {
 // ORGANIZATION HELPERS
 // ═══════════════════════════════════════════════════════
 
-/**
- * Get organization ID from context
- * This helper tries multiple methods to determine the org ID
- */
-export async function getOrganizationId(ctx: ActionCtx): Promise<string | undefined> {
-	try {
-		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) return undefined;
-
-		// Try to get user from Clerk subject
-		// @ts-expect-error - Deep type instantiation
-		const user = await ctx.runQuery((internal as any).users.getUserByClerkId, {
-			clerkId: identity.subject,
-		});
-
-		return user?.organizationId;
-	} catch {
-		return undefined;
-	}
-}
+// getOrganizationId is imported from lib/auth
 
 // ═══════════════════════════════════════════════════════
 // API RESPONSE WRAPPERS

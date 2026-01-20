@@ -45,8 +45,8 @@ export const sendPaymentConfirmed = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// @ts-expect-error - Deep type instantiation workaround
-				await ctx.runMutation(internal.transactionalEmails.sendPaymentConfirmation, {
+				// Deep type instantiation workaround
+				await ctx.runMutation((internal as any).transactionalEmails.sendPaymentConfirmation, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,
@@ -116,8 +116,8 @@ export const sendPaymentOverdue = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// @ts-expect-error - Deep type instantiation workaround
-				await ctx.runMutation(internal.transactionalEmails.sendPaymentReminder, {
+				// Deep type instantiation workaround
+				await ctx.runMutation((internal as any).transactionalEmails.sendPaymentReminder, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,

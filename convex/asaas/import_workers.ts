@@ -39,7 +39,7 @@ async function withItemTimeout<T>(
 	timeoutMs: number,
 	itemId: string,
 ): Promise<T> {
-	return Promise.race([
+	return await Promise.race([
 		fn(),
 		new Promise<never>((_, reject) =>
 			setTimeout(
@@ -125,13 +125,13 @@ function validatePhone(phone: string): boolean {
  * 3. Creates or updates student record
  * 4. Returns structured result with appropriate flags
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Worker validation logic requires linear checks
 export async function processCustomerWorker(
 	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
 	ctx: any,
 	customer: AsaasCustomerResponse,
 	organizationId?: string,
 ): Promise<WorkerResult<StudentWithAsaas>> {
-	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Worker validation logic requires linear checks
 	// Validation
 	if (customer.cpfCnpj && !validateCPF(customer.cpfCnpj)) {
 		return {
@@ -213,6 +213,7 @@ export async function processCustomerWorker(
 		return {
 			success: true,
 			data: {
+				// biome-ignore lint/style/useNamingConvention: Convex naming
 				_id: studentId as Id<'students'>,
 				name: customer.name,
 				email: customer.email ?? undefined,
@@ -223,6 +224,7 @@ export async function processCustomerWorker(
 			},
 			created: true,
 		};
+		// biome-ignore lint/suspicious/noExplicitAny: Error handling
 	} catch (error: any) {
 		const maskedCpf = customer.cpfCnpj ? maskCPF(customer.cpfCnpj) : 'N/A';
 		// biome-ignore lint/suspicious/noConsole: Expected error logging for workers
@@ -329,6 +331,7 @@ export async function processPaymentWorker(
 		return {
 			success: true,
 			data: {
+				// biome-ignore lint/style/useNamingConvention: Convex naming
 				_id: paymentId as Id<'asaasPayments'>,
 				studentId: student._id,
 				asaasPaymentId: payment.id,
@@ -455,6 +458,7 @@ export async function processSubscriptionWorker(
 		return {
 			success: true,
 			data: {
+				// biome-ignore lint/style/useNamingConvention: Convex naming
 				_id: subscriptionId as Id<'asaasSubscriptions'>,
 				studentId: student._id,
 				asaasSubscriptionId: subscription.id,
@@ -488,7 +492,11 @@ export async function processSubscriptionWorker(
  * Create a batch processing function for customers
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createCustomerBatchProcessor(ctx: any, organizationId?: string) {
+export function createCustomerBatchProcessor(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
+	ctx: any,
+	organizationId?: string,
+) {
 	return async (customer: AsaasCustomerResponse): Promise<WorkerResult<StudentWithAsaas>> => {
 		try {
 			return await withItemTimeout(
@@ -496,6 +504,7 @@ export function createCustomerBatchProcessor(ctx: any, organizationId?: string) 
 				WORKER_TIMEOUT_MS,
 				customer.id,
 			);
+			// biome-ignore lint/suspicious/noExplicitAny: Error handling
 		} catch (error: any) {
 			return {
 				success: false,
@@ -509,7 +518,11 @@ export function createCustomerBatchProcessor(ctx: any, organizationId?: string) 
  * Create a batch processing function for payments
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createPaymentBatchProcessor(ctx: any, organizationId?: string) {
+export function createPaymentBatchProcessor(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
+	ctx: any,
+	organizationId?: string,
+) {
 	return async (payment: AsaasPaymentResponse): Promise<WorkerResult<PaymentDoc>> => {
 		try {
 			return await withItemTimeout(
@@ -517,6 +530,7 @@ export function createPaymentBatchProcessor(ctx: any, organizationId?: string) {
 				WORKER_TIMEOUT_MS,
 				payment.id,
 			);
+			// biome-ignore lint/suspicious/noExplicitAny: Error handling
 		} catch (error: any) {
 			return {
 				success: false,
@@ -530,7 +544,11 @@ export function createPaymentBatchProcessor(ctx: any, organizationId?: string) {
  * Create a batch processing function for subscriptions
  * Wraps worker with 10s timeout to prevent blocking
  */
-export function createSubscriptionBatchProcessor(ctx: any, organizationId?: string) {
+export function createSubscriptionBatchProcessor(
+	// biome-ignore lint/suspicious/noExplicitAny: Worker context is dynamic
+	ctx: any,
+	organizationId?: string,
+) {
 	return async (
 		subscription: AsaasSubscriptionResponse,
 	): Promise<WorkerResult<SubscriptionDoc>> => {
@@ -540,6 +558,7 @@ export function createSubscriptionBatchProcessor(ctx: any, organizationId?: stri
 				WORKER_TIMEOUT_MS,
 				subscription.id,
 			);
+			// biome-ignore lint/suspicious/noExplicitAny: Error handling
 		} catch (error: any) {
 			return {
 				success: false,

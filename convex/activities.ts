@@ -26,6 +26,12 @@ const activityArgs = {
 		v.literal('ticket_resolvido'),
 		v.literal('nota_adicionada'),
 		v.literal('atribuicao_alterada'),
+		// New types
+		v.literal('task_created'),
+		v.literal('task_completed'),
+		v.literal('task_updated'),
+		v.literal('whatsapp_sent'),
+		v.literal('lead_reactivated'),
 	),
 	description: v.string(),
 	metadata: v.optional(v.any()),

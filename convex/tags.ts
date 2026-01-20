@@ -91,14 +91,14 @@ export const createTag = mutation({
 		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
 
-		const normalizedName = args.name.trim();
+		const displayName = args.name.trim();
+		const normalizedName = displayName.toLowerCase();
+
 		if (!normalizedName) {
 			throw new Error('Nome da tag não pode estar vazio');
 		}
 
-		// Duplicate check (Case insensitive logic ideally, but index is case sensitive)
-		// We normalized case for check? The plan said "normalized name (lowercase)".
-		// But schema doesn't force lowercase. Let's check exact match first.
+		// Duplicate check using normalized name
 		const existing = await ctx.db
 			.query('tags')
 			.withIndex('by_organization_name', (q) =>
@@ -112,6 +112,7 @@ export const createTag = mutation({
 
 		const tagId = await ctx.db.insert('tags', {
 			name: normalizedName,
+			displayName,
 			color: args.color,
 			organizationId,
 			createdBy: identity.subject,
@@ -120,7 +121,7 @@ export const createTag = mutation({
 
 		await ctx.db.insert('activities', {
 			type: 'tag_criada',
-			description: `Tag "${normalizedName}" criada`,
+			description: `Tag "${displayName}" criada`,
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),

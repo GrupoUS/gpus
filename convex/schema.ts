@@ -180,8 +180,8 @@ export default defineSchema({
 		organizationId: v.optional(v.string()), // Optional for backward compatibility with existing data
 
 		// Referência e Cashback
-		referredById: v.optional(v.id('leads')),
-		cashbackEarned: v.optional(v.number()),
+		referredById: v.optional(v.id('leads')), // Lead that referred this one
+		cashbackEarned: v.optional(v.number()), // Cashback earned from referrals
 		cashbackPaidAt: v.optional(v.number()),
 
 		// Timestamps
@@ -198,7 +198,7 @@ export default defineSchema({
 		.index('by_temperature', ['temperature'])
 		.index('by_created', ['createdAt'])
 		.index('by_stage', ['stage'])
-		.index('by_referred_by', ['referredById'])
+		.index('by_referrer', ['referredById'])
 		.index('by_organization_phone', ['organizationId', 'phone'])
 		.index('by_organization_assigned_to', ['organizationId', 'assignedTo']),
 
@@ -226,42 +226,6 @@ export default defineSchema({
 		.index('by_lead', ['leadId'])
 		.index('by_organization', ['organizationId'])
 		.index('by_lead_recorded', ['leadId', 'recordedAt']),
-
-	// ═══════════════════════════════════════════════════════
-	// TAREFAS (Itens acionáveis com menções)
-	// ═══════════════════════════════════════════════════════
-	tasks: defineTable({
-		// Descrição da tarefa
-		description: v.string(),
-
-		// Referências opcionais (tarefa pode ser geral ou específica)
-		leadId: v.optional(v.id('leads')),
-		studentId: v.optional(v.id('students')),
-
-		// Agendamento
-		dueDate: v.optional(v.number()), // Unix timestamp
-
-		// Status de conclusão
-		completed: v.boolean(),
-		completedAt: v.optional(v.number()),
-
-		// Colaboração
-		mentionedUserIds: v.optional(v.array(v.id('users'))),
-		assignedTo: v.optional(v.string()), // Clerk user ID
-
-		// Multi-tenant
-		organizationId: v.string(),
-
-		// Auditoria
-		createdBy: v.string(), // Clerk user ID
-		createdAt: v.number(),
-		updatedAt: v.number(),
-	})
-		.index('by_lead', ['leadId'])
-		.index('by_organization', ['organizationId'])
-		.index('by_assigned_to', ['assignedTo'])
-		.index('by_due_date', ['dueDate'])
-		.index('by_mentioned_user', ['mentionedUserIds']),
 
 	// ═══════════════════════════════════════════════════════
 	// ALUNOS (Clientes convertidos) - LGPD COMPLIANT
@@ -583,6 +547,12 @@ export default defineSchema({
 			v.literal('tag_adicionada'),
 			v.literal('tag_removida'),
 			v.literal('tag_deletada'),
+			// New types
+			v.literal('task_created'),
+			v.literal('task_completed'),
+			v.literal('task_updated'),
+			v.literal('whatsapp_sent'),
+			v.literal('lead_reactivated'),
 		),
 
 		// Detalhes
@@ -614,9 +584,16 @@ export default defineSchema({
 			v.literal('payment_reminder'),
 			v.literal('enrollment_created'),
 			v.literal('system'),
+			// New types
+			v.literal('task_created'),
+			v.literal('task_completed'),
+			v.literal('task_updated'),
+			v.literal('task_reminder'),
+			v.literal('whatsapp_sent'),
+			v.literal('lead_reactivated'),
 		),
-		recipientId: v.id('students'),
-		recipientType: v.union(v.literal('student'), v.literal('lead')),
+		recipientId: v.union(v.id('students'), v.id('users')),
+		recipientType: v.union(v.literal('student'), v.literal('lead'), v.literal('user')),
 		title: v.string(),
 		message: v.string(),
 		channel: v.union(v.literal('email'), v.literal('whatsapp'), v.literal('system')),
@@ -877,7 +854,7 @@ export default defineSchema({
 
 		// Responsáveis
 		detectedBy: v.string(), // clerkId de quem detectou
-		resolvedBy: v.optional(v.string()), // clerkId de quem resolveu
+		assignedTo: v.optional(v.id('users')), // clerkId de quem resolveu
 
 		// Timestamps
 		createdAt: v.number(),
@@ -1235,8 +1212,8 @@ export default defineSchema({
 		.index('by_asaas_payment_id', ['asaasPaymentId'])
 		.index('by_status', ['status'])
 		.index('by_due_date', ['dueDate'])
-		.index('by_student_status', ['studentId', 'status'])
-		.index('by_due_date_status', ['dueDate', 'status']) // Para encontrar cobranças vencidas
+		.index('by_organization_student_status', ['organizationId', 'studentId', 'status'])
+		.index('by_organization_due_date_status', ['organizationId', 'dueDate', 'status']) // Para encontrar cobranças vencidas
 		.index('by_organization_status', ['organizationId', 'status'])
 		.index('by_organization_due_date', ['organizationId', 'dueDate'])
 		.index('by_organization_student', ['organizationId', 'studentId'])
@@ -1512,7 +1489,7 @@ export default defineSchema({
 		.index('by_severity', ['severity'])
 		.index('by_type', ['alertType'])
 		.index('by_organization', ['organizationId'])
-		.index('by_active', ['status', 'severity'])
+		.index('by_organization_active', ['organizationId', 'status', 'severity'])
 		.index('by_last_seen', ['lastSeenAt'])
 		.index('by_suppressed', ['suppressedUntil']),
 
@@ -1560,6 +1537,44 @@ export default defineSchema({
 		.index('by_timestamp', ['timestamp']),
 
 	// ═══════════════════════════════════════════════════════
+	// TAREFAS (Itens acionáveis com menções)
+	// ═══════════════════════════════════════════════════════
+	tasks: defineTable({
+		// Descrição da tarefa
+		description: v.string(),
+
+		// Referências opcionais (tarefa pode ser geral ou específica)
+		leadId: v.optional(v.id('leads')),
+		studentId: v.optional(v.id('students')),
+
+		// Agendamento
+		dueDate: v.optional(v.number()), // Unix timestamp
+
+		// Status de conclusão
+		completed: v.boolean(),
+		completedAt: v.optional(v.number()),
+
+		// Colaboração
+		mentionedUserIds: v.optional(v.array(v.id('users'))),
+		assignedTo: v.optional(v.id('users')), // User responsible for the task
+
+		// Multi-tenant
+		organizationId: v.string(),
+
+		// Auditoria
+		createdBy: v.string(), // Clerk user ID
+		createdAt: v.number(),
+		updatedAt: v.number(),
+	})
+		.index('by_lead', ['leadId'])
+		.index('by_organization', ['organizationId'])
+		.index('by_assigned_to', ['assignedTo'])
+		.index('by_due_date', ['dueDate'])
+		.index('by_mentioned_user', ['mentionedUserIds'])
+		.index('by_completed', ['completed'])
+		.index('by_organization_assigned_completed', ['organizationId', 'assignedTo', 'completed']),
+
+	// ═══════════════════════════════════════════════════════
 	// EVOLUTION API INTEGRATION (WhatsApp Queue)
 	// ═══════════════════════════════════════════════════════
 	evolutionApiQueue: defineTable({
@@ -1573,7 +1588,12 @@ export default defineSchema({
 		message: v.string(),
 
 		// Status da mensagem na fila
-		status: v.union(v.literal('pending'), v.literal('sent'), v.literal('failed')),
+		status: v.union(
+			v.literal('pending'),
+			v.literal('processing'),
+			v.literal('sent'),
+			v.literal('failed'),
+		),
 
 		// Controle de tentativas
 		attempts: v.number(),
@@ -1588,8 +1608,10 @@ export default defineSchema({
 		// Timestamp de criação
 		createdAt: v.number(),
 	})
+		.index('by_organization', ['organizationId'])
+		.index('by_status', ['status'])
+		.index('by_scheduled', ['scheduledFor'])
 		.index('by_organization_status', ['organizationId', 'status'])
-		.index('by_scheduled_for', ['scheduledFor'])
 		.index('by_lead', ['leadId']),
 
 	// ═══════════════════════════════════════════════════════
@@ -1601,6 +1623,7 @@ export default defineSchema({
 	// ═══════════════════════════════════════════════════════
 	tags: defineTable({
 		name: v.string(),
+		displayName: v.optional(v.string()),
 		color: v.optional(v.string()),
 		organizationId: v.string(),
 		createdBy: v.string(), // Clerk user ID
@@ -1614,7 +1637,9 @@ export default defineSchema({
 	// ═══════════════════════════════════════════════════════
 	customFields: defineTable({
 		// Field definition
-		name: v.string(),
+		key: v.string(), // Machine-readable key (e.g. "marketing_source")
+		label: v.string(), // Human-readable label (e.g. "Marketing Source")
+		description: v.optional(v.string()), // Tooltip/help text
 		fieldType: v.union(
 			v.literal('text'),
 			v.literal('number'),
@@ -1626,8 +1651,8 @@ export default defineSchema({
 		entityType: v.union(v.literal('lead'), v.literal('student')),
 
 		// Configuration
-		required: v.boolean(),
 		options: v.optional(v.array(v.string())), // For select/multiselect
+		required: v.boolean(),
 
 		// Multi-tenant
 		organizationId: v.string(),

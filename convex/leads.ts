@@ -238,6 +238,14 @@ export const createLead = mutation({
 			return existingLead._id;
 		}
 
+		// Check referred lead ownership if provided
+		if (args.referredById) {
+			const referrer = await ctx.db.get(args.referredById);
+			if (!referrer || referrer.organizationId !== organizationId) {
+				throw new Error('Invalid referrer: Lead not found or belongs to another organization');
+			}
+		}
+
 		const leadId = await ctx.db.insert('leads', {
 			stage: 'novo',
 			temperature: 'frio',
@@ -406,7 +414,7 @@ export const updateLeadStage = mutation({
 		});
 
 		// Trigger Cashback Calculation if Won
-		if (args.newStage === 'fechado_ganho' && lead.referredById) {
+		if (args.newStage === 'fechado_ganho' && lead.referredById && !lead.cashbackPaidAt) {
 			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
 			await (ctx.scheduler as any).runAfter(0, (internal as any).referrals.calculateCashback, {
 				referredLeadId: args.leadId,

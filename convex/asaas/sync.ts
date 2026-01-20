@@ -502,15 +502,14 @@ export const getAutoSyncConfigInternal = internalQuery({
 export const runAutoSyncCustomersAction = internalAction({
 	args: {},
 	handler: async (ctx) => {
-		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		const config = await ctx.runQuery((internal as any).asaas.sync.getAutoSyncConfigInternal);
 
 		if (!config.enabled) {
 			return { skipped: true };
 		}
 
-		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on api
-		await ctx.runAction((api as any).asaas.actions.importCustomersFromAsaas, {
+		// @ts-expect-error: break deep type instantiation
+		await ctx.runAction((api as any).asaas.actions.importCustomersFromAsaas as any, {
 			initiatedBy: 'system_auto_sync',
 		});
 
@@ -532,7 +531,7 @@ export const runAutoSyncPaymentsAction = internalAction({
 		}
 
 		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-		await ctx.runAction((api as any).asaas.actions.importPaymentsFromAsaas, {
+		await ctx.runAction((api as any).asaas.actions.importPaymentsFromAsaas as any, {
 			initiatedBy: 'cron_auto_sync',
 		});
 

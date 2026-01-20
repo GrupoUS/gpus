@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { useEffect, useMemo } from 'react';
 
-import type { Id } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
 
 const PAGE_SIZE = 12;
 
@@ -31,7 +31,8 @@ export function useCampaignsViewModel(Route: any) {
 	}, [navigate]);
 
 	// Fetch campaigns with optional status filter
-	const campaigns = useQuery(api.emailMarketing.getCampaigns, {
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+	const campaigns = useQuery((api as any).emailMarketing.getCampaigns, {
 		status: status === 'all' ? undefined : status,
 	});
 
@@ -42,7 +43,7 @@ export function useCampaignsViewModel(Route: any) {
 
 		const searchLower = search.toLowerCase();
 		return campaigns.filter(
-			(c: { name: string; subject: string }) =>
+			(c: Doc<'emailCampaigns'>) =>
 				c.name.toLowerCase().includes(searchLower) || c.subject.toLowerCase().includes(searchLower),
 		);
 	}, [campaigns, search]);
@@ -62,9 +63,9 @@ export function useCampaignsViewModel(Route: any) {
 	// Stats
 	const totalCampaigns = filteredCampaigns?.length ?? 0;
 	const draftCount =
-		filteredCampaigns?.filter((c: { status: string }) => c.status === 'draft').length ?? 0;
+		filteredCampaigns?.filter((c: Doc<'emailCampaigns'>) => c.status === 'draft').length ?? 0;
 	const sentCount =
-		filteredCampaigns?.filter((c: { status: string }) => c.status === 'sent').length ?? 0;
+		filteredCampaigns?.filter((c: Doc<'emailCampaigns'>) => c.status === 'sent').length ?? 0;
 
 	// Calculate average open rate from sent campaigns
 	const avgOpenRate = useMemo(() => {
@@ -75,13 +76,10 @@ export function useCampaignsViewModel(Route: any) {
 		);
 		if (sentCampaigns.length === 0) return 0;
 
-		const totalRate = sentCampaigns.reduce(
-			(acc: number, c: { stats?: { opened: number; delivered: number } }) => {
-				const rate = c.stats ? (c.stats.opened / c.stats.delivered) * 100 : 0;
-				return acc + rate;
-			},
-			0,
-		);
+		const totalRate = sentCampaigns.reduce((acc: number, c: Doc<'emailCampaigns'>) => {
+			const rate = c.stats ? (c.stats.opened / c.stats.delivered) * 100 : 0;
+			return acc + rate;
+		}, 0);
 		return totalRate / sentCampaigns.length;
 	}, [filteredCampaigns]);
 

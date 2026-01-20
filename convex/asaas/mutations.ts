@@ -714,11 +714,15 @@ export const updatePaymentAsaasId = internalMutation({
 	args: {
 		paymentId: v.id('asaasPayments'),
 		asaasPaymentId: v.string(),
+		boletoUrl: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		await ctx.db.patch(args.paymentId, {
+		const patch: any = {
 			asaasPaymentId: args.asaasPaymentId,
 			updatedAt: Date.now(),
-		});
+		};
+		if (args.boletoUrl) patch.boletoUrl = args.boletoUrl;
+
+		await ctx.db.patch(args.paymentId, patch);
 	},
 });
