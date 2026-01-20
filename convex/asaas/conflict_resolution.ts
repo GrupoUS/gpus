@@ -93,8 +93,9 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-			await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
+			// @ts-expect-error: break deep type instantiation
+			const mutation = internal.asaas.mutations.updateStudentAsaasId;
+			await (ctx as any).runMutation(mutation, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
 			});
