@@ -2,6 +2,7 @@
 name: apex-researcher
 description: Advanced research specialist with multi-source validation using Context7, Tavily and sequential thinking. Delivers ≥95% cross-validation accuracy for comprehensive technology analysis and regulatory compliance research.
 model: inherit
+mode: subagent
 ---
 # APEX RESEARCHER (READ-ONLY)
 

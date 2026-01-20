@@ -1,513 +1,499 @@
-import { v } from 'convex/values';
+import { v } from "convex/values";
+import { internalMutation, mutation, query } from "./_generated/server"; // biome-ignore lint/style/useImportType: Convex conventions
+import { getOrganizationId, requireAuth, requirePermission } from "./lib/auth";
+import { PERMISSIONS } from "./lib/permissions";
+import { sanitizeSearchQuery } from "./lib/validation";
+import type { Id } from "./_generated/dataModel";
 
-import type { Id } from './_generated/dataModel';
-import { internalMutation, mutation, query } from './_generated/server';
-import { getOrganizationId, requireAuth, requirePermission } from './lib/auth';
-import { PERMISSIONS } from './lib/permissions';
-import { sanitizeSearchQuery } from './lib/validation';
+// -------------------------------------------------------------------------
+// Validators & Constants
+// -------------------------------------------------------------------------
 
-// Validators
 const fieldTypeValidator = v.union(
-	v.literal('text'),
-	v.literal('number'),
-	v.literal('date'),
-	v.literal('select'),
-	v.literal('multiselect'),
-	v.literal('boolean'),
+  v.literal("text"),
+  v.literal("number"),
+  v.literal("boolean"),
+  v.literal("date"),
+  v.literal("select"),
+  v.literal("multiselect")
 );
 
-const entityTypeValidator = v.union(v.literal('lead'), v.literal('student'));
+// Restricted to schema-supported types to ensure type safety
+const entityTypeValidator = v.union(v.literal("lead"), v.literal("student"));
+
+// -------------------------------------------------------------------------
+// Queries
+// -------------------------------------------------------------------------
 
 export const listCustomFields = query({
-	args: {
-		entityType: entityTypeValidator,
-		includeInactive: v.optional(v.boolean()),
-	},
-	handler: async (ctx, args) => {
-		const organizationId = await getOrganizationId(ctx);
+  args: {
+    entityType: entityTypeValidator,
+    includeInactive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const organizationId = await getOrganizationId(ctx);
 
-		const fields = await ctx.db
-			.query('customFields')
-			.withIndex('by_organization_entity', (q) =>
-				q.eq('organizationId', organizationId).eq('entityType', args.entityType),
-			)
-			.collect();
+    let fields = await ctx.db
+      .query("customFields")
+      .withIndex("by_organization_entity", (q) =>
+        q.eq("organizationId", organizationId).eq("entityType", args.entityType)
+      )
+      .collect();
 
-		if (args.includeInactive) {
-			return fields;
-		}
+    if (!args.includeInactive) {
+      fields = fields.filter((f) => f.active === true);
+    }
 
-		return fields.filter((field) => field.active);
-	},
+    return fields.sort((a, b) => a.createdAt - b.createdAt);
+  },
 });
 
 export const getCustomFieldValues = query({
-	args: {
-		entityId: v.id('leads'), // using leads as generic ID type, validation happens below
-		entityType: entityTypeValidator,
-	},
-	handler: async (ctx, args) => {
-		const organizationId = await getOrganizationId(ctx);
-		await requireAuth(ctx);
+  args: {
+    entityId: v.string(),
+    entityType: entityTypeValidator,
+  },
+  handler: async (ctx, args) => {
+    const organizationId = await getOrganizationId(ctx);
+    await requireAuth(ctx);
 
-		// Verify entity exists and belongs to organization
-		const entity = await ctx.db.get(args.entityId as Id<'leads'> | Id<'students'>);
-		if (!entity || entity.organizationId !== organizationId) {
-			return {};
-		}
+    // 1. Verify entity exists and belongs to organization
+    // We cast to any or a union of IDs because we don't handle table selection dynamically for typing
+    const entity = await ctx.db.get(args.entityId as Id<"leads"> | Id<"students">);
 
-		// Get all values for this entity
-		// We use the generic 'by_entity' index. Note that keys in index are strings or IDs?
-		// In schema: by_entity: ['entityId', 'entityType'] where entityId is v.string()
-		const values = await ctx.db
-			.query('customFieldValues')
-			.withIndex('by_entity', (q) =>
-				q.eq('entityId', args.entityId).eq('entityType', args.entityType),
-			)
-			.collect();
+    if (!entity) {
+      return null;
+    }
 
-		// Get field definitions to include metadata
-		const fieldIds = values.map((v) => v.customFieldId);
-		const fields = await Promise.all(fieldIds.map((id) => ctx.db.get(id)));
+    if (entity.organizationId !== organizationId) {
+      return null;
+    }
 
-		const result: Record<string, { value: unknown; name: string; fieldType: string }> = {};
+    // 2. Get all values for this entity
+    const values = await ctx.db
+      .query("customFieldValues")
+      .withIndex("by_entity", (q) =>
+        q.eq("entityId", args.entityId).eq("entityType", args.entityType)
+      )
+      .collect();
 
-		for (const val of values) {
-			const field = fields.find((f) => f?._id === val.customFieldId);
-			if (field && field.organizationId === organizationId) {
-				result[val.customFieldId] = {
-					value: val.value,
-					name: field.name,
-					fieldType: field.fieldType,
-				};
-			}
-		}
+    // 3. Get field definitions to include metadata
+    // Fetch all for this org/entityType (optimization over N gets)
+    const allFields = await ctx.db
+        .query("customFields")
+        .withIndex("by_organization_entity", (q) =>
+            q.eq("organizationId", organizationId).eq("entityType", args.entityType)
+        )
+        .collect();
 
-		return result;
-	},
+    const fieldMap = new Map(allFields.map(f => [f._id, f]));
+
+    // 4. Transform result
+    // biome-ignore lint/suspicious/noExplicitAny: Value comes from database as any
+    const result: Record<string, { value: any, name: string, fieldType: string, fieldId: string }> = {};
+    for (const val of values) {
+      const fieldDef = fieldMap.get(val.customFieldId);
+      if (fieldDef) {
+        result[val.customFieldId] = {
+            value: val.value,
+            name: fieldDef.name,
+            fieldType: fieldDef.fieldType,
+            fieldId: fieldDef._id
+        };
+      }
+    }
+
+    return result;
+  },
 });
 
 export const batchGetCustomFieldValues = query({
-	args: {
-		entityIds: v.array(v.string()), // Generic string IDs
-		entityType: entityTypeValidator,
-	},
-	handler: async (ctx, args) => {
-		const organizationId = await getOrganizationId(ctx);
-		await requireAuth(ctx);
+  args: {
+    entityIds: v.array(v.string()), // Generic string IDs
+    entityType: entityTypeValidator,
+  },
+  handler: async (ctx, args) => {
+    const organizationId = await getOrganizationId(ctx);
+    await requireAuth(ctx); // Ensure auth
 
-		if (args.entityIds.length > 100) {
-			throw new Error('Batch size limit exceeded. Max 100 entities per request.');
-		}
+    if (args.entityIds.length > 100) {
+      throw new Error("Batch size limited to 100 entities");
+    }
 
-		// Fetch all values for the organization and entity type??
-		// Plan says: "Use by_organization index on customFieldValues, filter by entityIds in memory"
-		// This is potentially heavy but requested verbatim.
-		// Optimizing: We can filter by entityType if the index supported it, but 'by_organization' is just ['organizationId'].
-		// Assuming 'customFieldValues' table isn't massive per org, or we should use 'by_entity' per ID.
-		// Given the specific instruction to use 'by_organization' and memory filter:
+    // 1. Fetch all custom field definitions for this type/org
+    const fieldDefs = await ctx.db
+      .query("customFields")
+      .withIndex("by_organization_entity", (q) =>
+        q.eq("organizationId", organizationId).eq("entityType", args.entityType)
+      )
+      .collect();
 
-		const allValues = await ctx.db
-			.query('customFieldValues')
-			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
-			.collect();
+    const fieldDefMap = new Map(fieldDefs.map(fd => [fd._id, fd]));
 
-		// Filter for the requested entities and type
-		const headerSet = new Set(args.entityIds);
-		const relevantValues = allValues.filter(
-			(v) => v.entityType === args.entityType && headerSet.has(v.entityId),
-		);
+    // 2. Fetch value strategy: Use by_organization index as requested and filter in memory
+    // Note: If dataset is large, this is slow. But following plan verbatim.
+    // "Use by_organization index on customFieldValues"
+    const allOrgValues = await ctx.db
+        .query("customFieldValues")
+        .withIndex("by_organization", q => q.eq("organizationId", organizationId))
+        .collect();
 
-		// Group by entityId
-		const result: Record<string, Record<string, unknown>> = {};
+    // Filter in memory
+    const entityIdSet = new Set(args.entityIds);
+    const relevantValues = allOrgValues.filter(
+        val => val.entityType === args.entityType && entityIdSet.has(val.entityId)
+    );
 
-		// Initialize result objects
-		for (const id of args.entityIds) {
-			result[id] = {};
-		}
+    // 3. Map results
+    // biome-ignore lint/suspicious/noExplicitAny: Result values are any
+    const results: Record<string, Record<string, any>> = {};
 
-		for (const val of relevantValues) {
-			result[val.entityId][val.customFieldId] = val.value;
-		}
+    // Initialize
+    for (const id of args.entityIds) {
+        results[id] = {};
+    }
 
-		return result;
-	},
+    for (const val of relevantValues) {
+         const fd = fieldDefMap.get(val.customFieldId);
+         if (fd) {
+             results[val.entityId][val.customFieldId] = {
+                 value: val.value,
+                 name: fd.name,
+                 fieldType: fd.fieldType
+             };
+         }
+    }
+
+    return results;
+  },
 });
 
+// -------------------------------------------------------------------------
+// Mutations
+// -------------------------------------------------------------------------
+
 export const createCustomField = mutation({
-	args: {
-		name: v.string(),
-		fieldType: fieldTypeValidator,
-		entityType: entityTypeValidator,
-		required: v.boolean(),
-		options: v.optional(v.array(v.string())),
-		description: v.optional(v.string()),
-	},
-	handler: async (ctx, args) => {
-		const identity = await requirePermission(ctx, PERMISSIONS.ALL);
-		const organizationId = await getOrganizationId(ctx);
+  args: {
+    name: v.string(),
+    fieldType: fieldTypeValidator,
+    entityType: entityTypeValidator,
+    required: v.boolean(),
+    options: v.optional(v.array(v.string())),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requirePermission(ctx, PERMISSIONS.ALL); // Admin only
+    const organizationId = await getOrganizationId(ctx);
 
-		// Validation
-		const sanitizedName = sanitizeSearchQuery(args.name);
-		if (sanitizedName.length < 2 || sanitizedName.length > 50) {
-			throw new Error('Nome do campo deve ter entre 2 e 50 caracteres.');
-		}
+    // Validation
+    const safeName = sanitizeSearchQuery(args.name);
+    if (safeName.length < 2 || safeName.length > 50) {
+      throw new Error("Name must be between 2 and 50 characters");
+    }
 
-		if (
-			(args.fieldType === 'select' || args.fieldType === 'multiselect') &&
-			(!args.options || args.options.length === 0)
-		) {
-			throw new Error('Campos de seleção requerem pelo menos uma opção.');
-		}
+    let sanitizedOptions = args.options;
+    if ((args.fieldType === "select" || args.fieldType === "multiselect")) {
+      if (!args.options || args.options.length === 0) {
+        throw new Error("Options required for select/multiselect fields");
+      }
+      if (args.options.length > 50) {
+        throw new Error("Max 50 options allowed");
+      }
+      sanitizedOptions = args.options.map(o => sanitizeSearchQuery(o));
+    }
 
-		if (args.options && args.options.length > 50) {
-			throw new Error('Máximo de 50 opções permitidas.');
-		}
+    // Check duplicates
+    const existing = await ctx.db
+      .query("customFields")
+      .withIndex("by_organization_entity", (q) =>
+        q.eq("organizationId", organizationId).eq("entityType", args.entityType)
+      )
+      .filter((q) => q.eq(q.field("name"), safeName))
+      .first();
 
-		// Check duplicates
-		const existing = await ctx.db
-			.query('customFields')
-			.withIndex('by_organization_entity', (q) =>
-				q.eq('organizationId', organizationId).eq('entityType', args.entityType),
-			)
-			.filter((q) => q.eq(q.field('name'), sanitizedName))
-			.first();
+    if (existing && existing.active) {
+        throw new Error(`Field '${safeName}' already exists for ${args.entityType}`);
+    }
 
-		if (existing?.active) {
-			throw new Error('Já existe um campo com este nome para esta entidade.');
-		}
+    // Insert
+    const fieldId = await ctx.db.insert("customFields", {
+      name: safeName,
+      fieldType: args.fieldType,
+      entityType: args.entityType,
+      required: args.required,
+      options: sanitizedOptions,
+      description: args.description,
+      organizationId,
+      createdBy: identity.subject,
+      createdAt: Date.now(),
+      active: true,
+    });
 
-		const fieldId = await ctx.db.insert('customFields', {
-			name: sanitizedName,
-			fieldType: args.fieldType,
-			entityType: args.entityType,
-			required: args.required,
-			options: args.options?.map((o) => sanitizeSearchQuery(o)),
-			organizationId,
-			createdBy: identity.subject,
-			createdAt: Date.now(),
-			active: true,
-		});
+    // Activity Log
+    await ctx.db.insert("activities", {
+      type: "nota_adicionada",
+      description: `Custom field '${safeName}' created for ${args.entityType}`,
+      metadata: {
+        fieldName: safeName,
+        fieldType: args.fieldType,
+        entityType: args.entityType,
+        fieldId,
+      },
+      organizationId,
+      performedBy: identity.subject,
+      createdAt: Date.now(),
+    });
 
-		await ctx.db.insert('activities', {
-			type: 'nota_adicionada', // Using existing type as requested
-			description: `Campo personalizado '${sanitizedName}' criado para ${args.entityType}`,
-			organizationId,
-			performedBy: identity.subject,
-			createdAt: Date.now(),
-			metadata: {
-				fieldName: sanitizedName,
-				fieldType: args.fieldType,
-				entityType: args.entityType,
-				customFieldId: fieldId,
-			},
-		});
-
-		return fieldId;
-	},
+    return fieldId;
+  },
 });
 
 export const updateCustomField = mutation({
-	args: {
-		fieldId: v.id('customFields'),
-		patch: v.object({
-			name: v.optional(v.string()),
-			required: v.optional(v.boolean()),
-			options: v.optional(v.array(v.string())),
-			description: v.optional(v.string()),
-			active: v.optional(v.boolean()),
-		}),
-	},
-	handler: async (ctx, args) => {
-		const identity = await requirePermission(ctx, PERMISSIONS.ALL);
-		const organizationId = await getOrganizationId(ctx);
+  args: {
+    fieldId: v.id("customFields"),
+    patch: v.object({
+        name: v.optional(v.string()),
+        required: v.optional(v.boolean()),
+        options: v.optional(v.array(v.string())),
+        description: v.optional(v.string()),
+        active: v.optional(v.boolean())
+    }),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requirePermission(ctx, PERMISSIONS.ALL);
+    const organizationId = await getOrganizationId(ctx);
 
-		const field = await ctx.db.get(args.fieldId);
-		if (!field || field.organizationId !== organizationId) {
-			throw new Error('Campo não encontrado.');
-		}
+    const field = await ctx.db.get(args.fieldId);
+    if (!field || field.organizationId !== organizationId) {
+      throw new Error("Field not found or access denied");
+    }
 
-		const updateData: Partial<{
-			name: string;
-			required: boolean;
-			options: string[];
-			active: boolean;
-		}> = {};
-		if (args.patch.name) {
-			const name = sanitizeSearchQuery(args.patch.name);
-			if (name.length < 2 || name.length > 50) throw new Error('Nome inválido.');
-			updateData.name = name;
-		}
-		if (args.patch.required !== undefined) updateData.required = args.patch.required;
-		if (args.patch.options && (field.fieldType === 'select' || field.fieldType === 'multiselect')) {
-			if (args.patch.options.length === 0 || args.patch.options.length > 50) {
-				throw new Error('Opções inválidas.');
-			}
-			updateData.options = args.patch.options.map((o) => sanitizeSearchQuery(o));
-		}
-		if (args.patch.active !== undefined) updateData.active = args.patch.active;
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic update object
+    const updates: any = {};
 
-		await ctx.db.patch(args.fieldId, updateData);
+    if (args.patch.name !== undefined) {
+        const safeName = sanitizeSearchQuery(args.patch.name);
+        if (safeName.length < 2 || safeName.length > 50) throw new Error("Invalid name length");
 
-		await ctx.db.insert('activities', {
-			type: 'nota_adicionada',
-			description: `Campo personalizado '${field.name}' atualizado`,
-			organizationId,
-			performedBy: identity.subject,
-			createdAt: Date.now(),
-			metadata: {
-				fieldId: args.fieldId,
-				changes: args.patch,
-			},
-		});
+        if (safeName !== field.name) {
+            const existing = await ctx.db
+                .query("customFields")
+                .withIndex("by_organization_entity", (q) =>
+                    q.eq("organizationId", organizationId).eq("entityType", field.entityType)
+                )
+                .filter((q) => q.eq(q.field("name"), safeName))
+                .first();
+            if (existing && existing._id !== args.fieldId && existing.active) {
+                throw new Error("Field name already exists");
+            }
+        }
+        updates.name = safeName;
+    }
 
-		return true;
-	},
+    if (args.patch.options !== undefined && (field.fieldType === 'select' || field.fieldType === 'multiselect')) {
+        if (args.patch.options.length === 0 || args.patch.options.length > 50) {
+            throw new Error("Invalid options count");
+        }
+        updates.options = args.patch.options.map((o: string) => sanitizeSearchQuery(o));
+    }
+
+    if (args.patch.required !== undefined) updates.required = args.patch.required;
+    if (args.patch.description !== undefined) updates.description = args.patch.description;
+    if (args.patch.active !== undefined) updates.active = args.patch.active;
+
+    await ctx.db.patch(args.fieldId, updates);
+
+    await ctx.db.insert("activities", {
+      type: "nota_adicionada",
+      description: `Custom field '${field.name}' updated`,
+      metadata: { fieldId: field._id, changes: Object.keys(updates) },
+      organizationId,
+      performedBy: identity.subject,
+      createdAt: Date.now(),
+    });
+
+    return true;
+  },
 });
 
 export const deleteCustomField = mutation({
-	args: {
-		fieldId: v.id('customFields'),
-	},
-	handler: async (ctx, args) => {
-		const identity = await requirePermission(ctx, PERMISSIONS.ALL);
-		const organizationId = await getOrganizationId(ctx);
+  args: {
+    fieldId: v.id("customFields"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requirePermission(ctx, PERMISSIONS.ALL);
+    const organizationId = await getOrganizationId(ctx);
 
-		const field = await ctx.db.get(args.fieldId);
-		if (!field || field.organizationId !== organizationId) {
-			throw new Error('Campo não encontrado.');
-		}
+    const field = await ctx.db.get(args.fieldId);
+    if (!field || field.organizationId !== organizationId) {
+      throw new Error("Field not found");
+    }
 
-		// Soft delete
-		await ctx.db.patch(args.fieldId, { active: false });
+    // Soft delete
+    await ctx.db.patch(args.fieldId, { active: false });
 
-		await ctx.db.insert('activities', {
-			type: 'nota_adicionada',
-			description: `Campo personalizado '${field.name}' desativado`,
-			organizationId,
-			performedBy: identity.subject,
-			createdAt: Date.now(),
-			metadata: {
-				fieldName: field.name,
-				entityType: field.entityType,
-			},
-		});
+    await ctx.db.insert("activities", {
+      type: "nota_adicionada",
+      description: `Custom field '${field.name}' deleted (soft)`,
+      metadata: { fieldId: field._id, entityType: field.entityType },
+      organizationId,
+      performedBy: identity.subject,
+      createdAt: Date.now(),
+    });
 
-		return true;
-	},
-});
-
-export const validateCustomFieldValue = internalMutation({
-	args: {
-		fieldType: fieldTypeValidator,
-		value: v.any(),
-		required: v.boolean(),
-		options: v.optional(v.array(v.string())),
-	},
-	handler: async (_ctx, args) => {
-		if (args.required && (args.value === null || args.value === undefined || args.value === '')) {
-			throw new Error('Este campo é obrigatório.');
-		}
-
-		if (args.value === null || args.value === undefined || args.value === '') {
-			return null;
-		}
-
-		switch (args.fieldType) {
-			case 'text':
-				if (typeof args.value !== 'string') throw new Error('Valor deve ser texto.');
-				if (args.value.length > 1000) throw new Error('Texto muito longo.');
-				return sanitizeSearchQuery(args.value);
-
-			case 'number': {
-				const num = Number(args.value);
-				if (Number.isNaN(num)) throw new Error('Valor deve ser numérico.');
-				return num;
-			}
-
-			case 'boolean':
-				if (typeof args.value !== 'boolean') throw new Error('Valor deve ser booleano.');
-				return args.value;
-
-			case 'date': {
-				const date = Number(args.value);
-				if (Number.isNaN(date)) throw new Error('Data inválida.');
-				if (date < 0 || date > 4_102_444_800_000) throw new Error('Data fora do intervalo.'); // ~2100
-				return date;
-			}
-
-			case 'select':
-				if (!args.options?.includes(String(args.value))) {
-					throw new Error('Opção inválida.');
-				}
-				return String(args.value);
-
-			case 'multiselect':
-				if (!Array.isArray(args.value)) throw new Error('Valor deve ser lista.');
-				for (const item of args.value) {
-					if (!args.options?.includes(String(item))) throw new Error(`Opção inválida: ${item}`);
-				}
-				return args.value.map(String);
-
-			default:
-				return args.value;
-		}
-	},
+    return true;
+  },
 });
 
 export const setCustomFieldValue = mutation({
-	args: {
-		customFieldId: v.id('customFields'),
-		entityId: v.string(),
-		entityType: entityTypeValidator,
-		value: v.any(),
-	},
-	handler: async (ctx, args) => {
-		const identity = await requireAuth(ctx);
-		const organizationId = await getOrganizationId(ctx);
+  args: {
+    customFieldId: v.id("customFields"),
+    entityId: v.string(),
+    entityType: entityTypeValidator,
+    value: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx);
+    const organizationId = await getOrganizationId(ctx);
 
-		const field = await ctx.db.get(args.customFieldId);
-		if (!field || field.organizationId !== organizationId || !field.active) {
-			throw new Error('Campo inválido.');
-		}
+    // 1. Verify access to entityType
+    const requiredPerm = args.entityType === 'lead' ? PERMISSIONS.LEADS_WRITE : PERMISSIONS.STUDENTS_WRITE;
+    await requirePermission(ctx, requiredPerm);
 
-		if (field.entityType !== args.entityType) {
-			throw new Error('Mismatch de tipo de entidade.');
-		}
+    // 2. Verify Field
+    const field = await ctx.db.get(args.customFieldId);
+    if (!field || field.organizationId !== organizationId || !field.active) {
+      throw new Error("Field not active or not found");
+    }
+    if (field.entityType !== args.entityType) {
+      throw new Error("Field type mismatch");
+    }
 
-		// Verify permission
-		const requiredPermission =
-			args.entityType === 'lead' ? PERMISSIONS.LEADS_WRITE : PERMISSIONS.STUDENTS_WRITE;
-		await requirePermission(ctx, requiredPermission); // This throws if false
+    // 3. Verify Entity exists in Org
+    const entity = await ctx.db.get(args.entityId as Id<"leads"> | Id<"students">);
+    if (!entity || entity.organizationId !== organizationId) {
+       throw new Error("Entity not found in organization");
+    }
 
-		// Verify entity exists
-		const entity = await ctx.db.get(args.entityId as Id<'leads'> | Id<'students'>);
-		if (!entity || entity.organizationId !== organizationId) {
-			throw new Error('Entidade não encontrada.');
-		}
+    // 4. Validate Value using shared helper logic
+    const validatedValue = validateValueLogic(field.fieldType, args.value, field.required, field.options);
 
-		// Validate value via internal mutation? Using internal mutation inside mutation is not standard.
-		// Usually internalMutation is called via ctx.runMutation, but that's for other mutation contexts or scheduled jobs.
-		// Inside the same transaction, we can just run the logic.
-		// The plan says "Call internal `validateCustomFieldValue` mutation".
-		// But in Convex you should avoid `ctx.runMutation` inside a mutation if possible because it splits transactions?
-		// Actually, standard Convex pattern is fine calling internal functions if organizing logic.
-		// But here I'll just inline the logic or use a helper function to keep it atomic in one transaction easily.
-		// Wait, `internalMutation` is an entry point.
-		// I will extract the logic to a helper function within this file or just call it if I must.
-		// Calling `ctx.scheduler.runAfter(0, ...)` is async. `ctx.runMutation` is not available in MutationCtx?
-		// Ah, standard mutations cannot call other mutations synchronously in the same transaction easily without `ctx.runMutation` which generally implies a separate transaction or specific handling.
-		// PROPOSAL: I will implementing the validation logic HERE to ensure atomicity, or move `validateCustomFieldValue` to a helper function that is exported but not a mutation.
-		// However, plan says "Internal Mutation: validateCustomFieldValue".
-		// If I must ensure it is available as a reusable unit, I will keep it as internalMutation but I will duplicate the logic or call a shared helper.
-		// Better: Create a plain function `validateValue` and use it in both places.
+    // 5. Upsert
+    const existing = await ctx.db
+        .query("customFieldValues")
+        .withIndex("by_entity", q => q.eq("entityId", args.entityId).eq("entityType", args.entityType))
+        .filter(q => q.eq(q.field("customFieldId"), args.customFieldId))
+        .first();
 
-		const validatedValue = await validateValue(
-			field.fieldType,
-			args.value,
-			field.required,
-			field.options,
-		);
+    let valueId;
+    if (existing) {
+        await ctx.db.patch(existing._id, {
+            value: validatedValue,
+            updatedBy: identity.subject,
+            updatedAt: Date.now()
+        });
+        valueId = existing._id;
+    } else {
+        valueId = await ctx.db.insert("customFieldValues", {
+            customFieldId: args.customFieldId,
+            entityId: args.entityId,
+            entityType: args.entityType,
+            value: validatedValue,
+            organizationId,
+            updatedBy: identity.subject,
+            updatedAt: Date.now()
+        });
+    }
 
-		// Upsert
-		const existing = await ctx.db
-			.query('customFieldValues')
-			.withIndex('by_entity', (q) =>
-				q.eq('entityId', args.entityId).eq('entityType', args.entityType),
-			)
-			.filter((q) => q.eq(q.field('customFieldId'), args.customFieldId))
-			.first();
+    // 6. Log
+    await ctx.db.insert("activities", {
+        type: "nota_adicionada",
+        description: `Value updated for field '${field.name}'`,
+        metadata: {
+            fieldName: field.name,
+            entityId: args.entityId,
+            previousValue: existing?.value,
+            newValue: validatedValue
+        },
+        organizationId,
+        performedBy: identity.subject,
+        createdAt: Date.now()
+    });
 
-		let valueId: string;
-		if (existing) {
-			await ctx.db.patch(existing._id, {
-				value: validatedValue,
-				updatedBy: identity.subject,
-				updatedAt: Date.now(),
-			});
-			valueId = existing._id;
-		} else {
-			valueId = await ctx.db.insert('customFieldValues', {
-				customFieldId: args.customFieldId,
-				entityId: args.entityId, // stored as string
-				entityType: args.entityType,
-				value: validatedValue,
-				organizationId,
-				updatedBy: identity.subject,
-				updatedAt: Date.now(),
-			});
-		}
-
-		await ctx.db.insert('activities', {
-			type: 'nota_adicionada',
-			description: `Valor atualizado para '${field.name}'`,
-			organizationId,
-			performedBy: identity.subject,
-			createdAt: Date.now(),
-			metadata: {
-				fieldId: field._id,
-				entityId: args.entityId,
-				oldValue: existing?.value,
-				newValue: validatedValue,
-			},
-		});
-
-		return valueId;
-	},
+    return valueId;
+  },
 });
 
-// Helper validation function
-function validateValue(
-	fieldType: string,
-	value: unknown,
-	required: boolean,
-	options?: string[],
-): unknown {
-	if (required && (value === null || value === undefined || value === '')) {
-		throw new Error('Este campo é obrigatório.');
-	}
+export const validateCustomFieldValue = internalMutation({
+  args: {
+    fieldType: fieldTypeValidator,
+    value: v.any(),
+    required: v.boolean(),
+    options: v.optional(v.array(v.string())),
+  },
+  handler: async (_ctx, args) => {
+    return validateValueLogic(args.fieldType, args.value, args.required, args.options);
+  },
+});
 
-	if (value === null || value === undefined || value === '') {
-		return null;
-	}
+// -------------------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------------------
 
-	switch (fieldType) {
-		case 'text':
-			if (typeof value !== 'string') throw new Error('Valor deve ser texto.');
-			if (value.length > 1000) throw new Error('Texto muito longo.');
-			return sanitizeSearchQuery(value);
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic requires switch
+function validateValueLogic(
+    fieldType: string,
+    // biome-ignore lint/suspicious/noExplicitAny: Validation logic allows any input
+    value: any,
+    required: boolean,
+    options?: string[]
+    // biome-ignore lint/suspicious/noExplicitAny: Returns sanitized value of any type
+): any {
+    // Required check
+    if (required && (value === null || value === undefined || value === "")) {
+        throw new Error("Field is required");
+    }
 
-		case 'number': {
-			const num = Number(value);
-			if (Number.isNaN(num)) throw new Error('Valor deve ser numérico.');
-			return num;
-		}
+    // Allow clearing value if not required
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
 
-		case 'boolean':
-			if (typeof value !== 'boolean') throw new Error('Valor deve ser booleano.');
-			return value;
+    switch (fieldType) {
+        case "text":
+            if (typeof value !== "string") throw new Error("Value must be text");
+            if (value.length > 1000) throw new Error("Text too long (max 1000)");
+            return sanitizeSearchQuery(value);
 
-		case 'date': {
-			const date = Number(value);
-			if (Number.isNaN(date)) throw new Error('Data inválida.');
-			if (date < 0 || date > 4_102_444_800_000) throw new Error('Data fora do intervalo.');
-			return date;
-		}
+        case "number": {
+            const num = Number(value);
+            if (Number.isNaN(num) || !Number.isFinite(num)) throw new Error("Invalid number");
+            return num;
+        }
 
-		case 'select':
-			if (!options?.includes(String(value))) {
-				throw new Error('Opção inválida.');
-			}
-			return String(value);
+        case "boolean":
+            if (typeof value !== "boolean") throw new Error("Value must be boolean");
+            return value;
 
-		case 'multiselect':
-			if (!Array.isArray(value)) throw new Error('Valor deve ser lista.');
-			for (const item of value) {
-				if (!options?.includes(String(item))) throw new Error(`Opção inválida: ${item}`);
-			}
-			return value.map(String);
+        case "date": {
+            const dateNum = Number(value);
+            if (Number.isNaN(dateNum)) throw new Error("Invalid date timestamp");
+            if (dateNum < 0 || dateNum > 4102444800000) throw new Error("Date out of range");
+            return dateNum;
+        }
 
-		default:
-			return value;
-	}
+        case "select":
+            if (!options?.includes(String(value))) throw new Error("Invalid option selected");
+            return String(value);
+
+        case "multiselect":
+            if (!Array.isArray(value)) throw new Error("Value must be array");
+            for (const item of value) {
+                if (!options?.includes(String(item))) throw new Error(`Invalid option: ${item}`);
+            }
+            return value.map(String);
+
+        default:
+            return value;
+    }
 }

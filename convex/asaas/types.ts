@@ -397,6 +397,7 @@ export function isId(value: unknown): value is Id<TableNames> {
 /**
  * Safely extract ID from a document
  */
+// biome-ignore lint/style/useNamingConvention: Convex document IDs use _id
 export function getIdFromDoc<T extends { _id: Id<TableNames> }>(doc: T): Id<TableNames> {
 	return doc._id;
 }

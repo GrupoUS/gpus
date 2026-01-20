@@ -2,6 +2,7 @@
 name: apex-dev
 description: Advanced development specialist for complex implementations with TDD methodology
 model: inherit
+mode: subagent
 ---
 
 # APEX DEV - Implementation Subagent

@@ -1,7 +1,8 @@
 ---
 name: frontend-specialist
 description: Senior Frontend Architect who builds maintainable React/Next.js systems with performance-first mindset. Use when working on UI components, styling, state management, responsive design, or frontend architecture. Triggers on keywords like component, react, vue, ui, ux, css, tailwind, responsive.
-model: inherit
+model: gemini-3-pro-high
+mode: subagent
 skills: clean-code, react-patterns, nextjs-best-practices, tailwind-patterns, frontend-design, lint-and-validate
 ---
 

@@ -1,5 +1,15 @@
 import { mutation, query } from './_generated/server';
 
+const getIdentityStringClaim = (identity: unknown, key: string): string | null => {
+	if (!identity || typeof identity !== 'object') {
+		return null;
+	}
+
+	const claims = identity as Record<string, unknown>;
+	const value = claims[key];
+	return typeof value === 'string' ? value : null;
+};
+
 /**
  * DEBUG: Investigate encrypted data in students table
  * Returns info about encrypted fields without attempting decryption
@@ -36,6 +46,9 @@ export const checkAuth = mutation({
 	args: {},
 	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity();
+		const orgId = getIdentityStringClaim(identity, 'org_id');
+		const orgRole = getIdentityStringClaim(identity, 'org_role');
+		const orgSlug = getIdentityStringClaim(identity, 'org_slug');
 
 		const debug = {
 			timestamp: new Date().toISOString(),
@@ -50,9 +63,9 @@ export const checkAuth = mutation({
 						name: identity.name,
 
 						// Custom claims from Clerk JWT Template
-						org_id: (identity as any).org_id || null,
-						org_role: (identity as any).org_role || null,
-						org_slug: (identity as any).org_slug || null,
+					org_id: orgId,
+					org_role: orgRole,
+					org_slug: orgSlug,
 					}
 				: null,
 
@@ -79,6 +92,7 @@ export const testCreate = mutation({
 	args: {},
 	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity();
+		const orgId = getIdentityStringClaim(identity, 'org_id');
 
 		if (!identity) {
 			return {
@@ -96,7 +110,7 @@ export const testCreate = mutation({
 				source: 'outro',
 				stage: 'novo',
 				temperature: 'frio',
-				organizationId: (identity as any).org_id || identity.subject,
+			organizationId: orgId ?? identity.subject,
 				lgpdConsent: false,
 				whatsappConsent: false,
 				message: 'Debug lead',

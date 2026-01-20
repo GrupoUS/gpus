@@ -630,6 +630,7 @@ export default defineSchema({
 		entityType: v.union(v.literal('lead'), v.literal('student')),
 		required: v.boolean(),
 		options: v.optional(v.array(v.string())),
+		description: v.optional(v.string()),
 		organizationId: v.string(),
 		createdBy: v.string(),
 		createdAt: v.number(),

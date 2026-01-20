@@ -1,10 +1,14 @@
+import { v } from 'convex/values';
+
 import { internal } from '../_generated/api';
 import { internalAction } from '../_generated/server';
 
 export const sendTaskReminders = internalAction({
-	args: {},
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Cron job has complex nested logic
-	handler: async (ctx) => {
+	args: {
+		cursor: v.optional(v.string()),
+	},
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Cron job has complex nested logic
+	handler: async (ctx, args) => {
 		const result = {
 			tasksProcessed: 0,
 			notificationsSent: 0,
@@ -12,56 +16,87 @@ export const sendTaskReminders = internalAction({
 		};
 
 		try {
-			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-			const tasks = (await ctx.runQuery((internal as any).tasks.getTasksDueToday)) as any[];
+			// biome-ignore lint/suspicious/noExplicitAny: Break type instantiation recursion
+			const getTasksDueToday = (internal as any).tasks.getTasksDueToday;
+			const queryResult = (await ctx.runQuery(getTasksDueToday, {
+				cursor: args.cursor,
+				limit: 50,
+			// biome-ignore lint/suspicious/noExplicitAny: Internal query result
+			})) as { tasks: any[]; continueCursor: string; isDone: boolean };
 
 			const startOfDay = new Date();
 			startOfDay.setHours(0, 0, 0, 0);
 
-			for (const task of tasks) {
+			for (const task of queryResult.tasks) {
 				try {
-					// Idempotency check handled in query filtering mostly, but double check
+					// Idempotency check
 					if (task.remindedAt && task.remindedAt > startOfDay.getTime()) continue;
 					if (!task.dueDate) continue;
 
-					// sent variable removed as it was unused
-
-					// 1. Notify Assigned User
-					if (task.assignedTo) {
-						// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-						await ctx.runMutation((internal as any).tasks.createTaskReminder, {
-							taskId: task._id,
-							recipientId: task.assignedTo,
-							recipientType: 'user',
-							taskDescription: task.description,
-							dueDate: task.dueDate,
-							organizationId: task.organizationId,
-						});
-						result.notificationsSent++;
+					// Collect unique recipients for this task
+					const recipientIds = new Set<string>();
+					if (task.assignedTo) recipientIds.add(task.assignedTo);
+					if (task.mentionedUserIds) {
+						for (const userId of task.mentionedUserIds) {
+							recipientIds.add(userId);
+						}
 					}
 
-					// 2. Notify Mentioned Users
-					if (task.mentionedUserIds && task.mentionedUserIds.length > 0) {
-						for (const userId of task.mentionedUserIds) {
+					if (recipientIds.size === 0) {
+						result.tasksProcessed++;
+						continue;
+					}
+
+					// Track success for all recipients
+					let allSucceeded = true;
+
+					for (const recipientId of recipientIds) {
+						try {
 							// biome-ignore lint/suspicious/noExplicitAny: internal api typing
 							await ctx.runMutation((internal as any).tasks.createTaskReminder, {
 								taskId: task._id,
-								recipientId: userId,
+								recipientId,
 								recipientType: 'user',
 								taskDescription: task.description,
 								dueDate: task.dueDate,
 								organizationId: task.organizationId,
 							});
 							result.notificationsSent++;
+						} catch (err: unknown) {
+							allSucceeded = false;
+							const msg = err instanceof Error ? err.message : String(err);
+							// biome-ignore lint/suspicious/noConsole: Cron logging
+							console.error(
+								`Error sending notification to ${recipientId} for task ${task._id}:`,
+								msg,
+							);
+							result.errors.push(`Task ${task._id} recipient ${recipientId}: ${msg}`);
 						}
+					}
+
+					// Only mark remindedAt if all recipients were successfully notified
+					if (allSucceeded) {
+						// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+						await ctx.runMutation((internal as any).tasks.markTaskReminded, {
+							taskId: task._id,
+						});
 					}
 
 					result.tasksProcessed++;
 				} catch (err: unknown) {
 					const msg = err instanceof Error ? err.message : String(err);
+					// biome-ignore lint/suspicious/noConsole: Cron logging
 					console.error(`Error processing task reminder ${task._id}:`, msg);
 					result.errors.push(`Task ${task._id}: ${msg}`);
 				}
+			}
+
+			// Schedule continuation if more tasks remain
+			if (!queryResult.isDone && queryResult.continueCursor) {
+				// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+				await ctx.scheduler.runAfter(0, (internal as any).tasks.crons.sendTaskReminders, {
+					cursor: queryResult.continueCursor,
+				});
 			}
 
 			// Log Activity
@@ -70,13 +105,25 @@ export const sendTaskReminders = internalAction({
 				type: 'system_task_reminder',
 				description: `Sent ${result.notificationsSent} reminders for ${result.tasksProcessed} tasks`,
 				organizationId: 'system',
-				metadata: { transform: result },
+				metadata: { transform: result, hasMore: !queryResult.isDone },
 			});
 
 			return result;
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
+			const stack = err instanceof Error ? err.stack : undefined;
+			// biome-ignore lint/suspicious/noConsole: Cron logging
 			console.error('Fatal error in sendTaskReminders:', msg);
+
+			// Log failure activity before rethrow
+			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+			await ctx.runMutation((internal as any).tasks.logCronActivity, {
+				type: 'system_task_reminder_failed',
+				description: `Cron failed: ${msg}`,
+				organizationId: 'system',
+				metadata: { error: msg, stack },
+			});
+
 			throw new Error(`Cron failed: ${msg}`);
 		}
 	},
@@ -108,6 +155,7 @@ export const reactivateIdleLeads = internalAction({
 					result.leadsReactivated++;
 				} catch (err: unknown) {
 					const msg = err instanceof Error ? err.message : String(err);
+					// biome-ignore lint/suspicious/noConsole: Cron logging
 					console.error(`Error reactivating lead ${lead._id}:`, msg);
 					result.errors.push(`Lead ${lead._id}: ${msg}`);
 				}
@@ -124,7 +172,19 @@ export const reactivateIdleLeads = internalAction({
 			return result;
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
+			const stack = err instanceof Error ? err.stack : undefined;
+			// biome-ignore lint/suspicious/noConsole: Cron logging
 			console.error('Fatal error in reactivateIdleLeads:', msg);
+
+			// Log failure activity before rethrow
+			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
+			await ctx.runMutation((internal as any).tasks.logCronActivity, {
+				type: 'system_lead_reactivation_failed',
+				description: `Cron failed: ${msg}`,
+				organizationId: 'system',
+				metadata: { error: msg, stack },
+			});
+
 			throw new Error(`Cron failed: ${msg}`);
 		}
 	},

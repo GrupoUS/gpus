@@ -2,6 +2,7 @@
 name: database-specialist
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise for Portal Grupo US
 model: inherit
+mode: subagent
 ---
 
 # DATABASE SPECIALIST - CONVEX EXPERT

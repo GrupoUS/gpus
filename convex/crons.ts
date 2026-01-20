@@ -1,6 +1,25 @@
-import { cronJobs } from 'convex/server';
+import { cronJobs, type SchedulableFunctionReference } from 'convex/server';
 
-import { internal } from './_generated/api';
+const apiModule = await import(`./_generated/${'api'}`);
+const internalApi = (apiModule as unknown as {
+	internal: Record<string, Record<string, Record<string, unknown>>>;
+}).internal;
+
+const runAutoSyncCustomersAction =
+	internalApi.asaas.sync.runAutoSyncCustomersAction as SchedulableFunctionReference;
+const runAutoSyncPaymentsAction =
+	internalApi.asaas.sync.runAutoSyncPaymentsAction as SchedulableFunctionReference;
+const checkAndCreateAlerts =
+	internalApi.asaas.alerts.checkAndCreateAlerts as SchedulableFunctionReference;
+const retryFailedWebhooks =
+	internalApi.asaas.webhooks.retryFailedWebhooks as SchedulableFunctionReference;
+const processQueuedMessages =
+	internalApi.whatsapp.processQueuedMessages as SchedulableFunctionReference;
+const sendTaskReminders =
+	internalApi.tasks.crons.sendTaskReminders as SchedulableFunctionReference;
+const reactivateIdleLeads =
+	internalApi.tasks.crons.reactivateIdleLeads as SchedulableFunctionReference;
+
 
 const crons = cronJobs();
 
@@ -8,7 +27,7 @@ const crons = cronJobs();
 crons.interval(
 	'asaas-auto-sync-customers',
 	{ hours: 1 },
-	internal.asaas.sync.runAutoSyncCustomersAction,
+	runAutoSyncCustomersAction,
 	{},
 );
 
@@ -16,27 +35,31 @@ crons.interval(
 crons.interval(
 	'asaas-auto-sync-payments',
 	{ minutes: 30 },
-	internal.asaas.sync.runAutoSyncPaymentsAction,
+	runAutoSyncPaymentsAction,
 	{},
 );
 
 // Verificação de alertas a cada 5 minutos
 // Checks API health, sync failures, rate limits, webhook issues, and conflicts
-crons.interval('asaas-alert-check', { minutes: 5 }, internal.asaas.alerts.checkAndCreateAlerts, {});
+crons.interval(
+	'asaas-alert-check',
+	{ minutes: 5 },
+	checkAndCreateAlerts,
+	{},
+);
 
 // Retry failed Asaas webhooks every 5 minutes
 crons.interval(
 	'asaas-webhook-retry',
 	{ minutes: 5 },
-	internal.asaas.webhooks.retryFailedWebhooks,
+	retryFailedWebhooks,
 	{},
 );
 
-// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion on internal
 crons.interval(
 	'whatsapp-process-queue',
 	{ minutes: 1 },
-	(internal as any).whatsapp.processQueuedMessages,
+	processQueuedMessages,
 	{},
 );
 
@@ -44,7 +67,7 @@ crons.interval(
 crons.daily(
 	'task-reminders',
 	{ hourUTC: 8, minuteUTC: 0 },
-	internal.tasks.crons.sendTaskReminders,
+	sendTaskReminders,
 	{},
 );
 
@@ -52,7 +75,7 @@ crons.daily(
 crons.daily(
 	'reactivate-idle-leads',
 	{ hourUTC: 8, minuteUTC: 0 },
-	internal.tasks.crons.reactivateIdleLeads,
+	reactivateIdleLeads,
 	{},
 );
 

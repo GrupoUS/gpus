@@ -29,7 +29,7 @@ export const testAsaasSyncFlow = action({
 	handler: async (ctx, args) => {
 		const results: {
 			success: boolean;
-			details: Record<string, any>;
+			details: Record<string, unknown>;
 			logs: string[];
 		} = {
 			success: false,
@@ -54,7 +54,7 @@ export const testAsaasSyncFlow = action({
 
 				log('Starting happy path test');
 
-				let customer;
+				let customer: { id: string } | null = null;
 				if (args.dryRun) {
 					log('Dry run: Simulated customer creation');
 					results.details.customerCreated = true;
@@ -70,12 +70,8 @@ export const testAsaasSyncFlow = action({
 					results.details.customerId = customer.id;
 
 					// Cleanup: Delete the customer immediately to avoid clutter
-					try {
-						// Not all Asaas environments allow deletion if there are charges, but this is new
-						// await client.deleteCustomer(customer.id); // Assuming client has this or implementation matches
-					} catch (_e) {
-						log('Cleanup warning: could not delete test customer');
-					}
+					// Not all Asaas environments allow deletion if there are charges.
+					// If deletion becomes available, add a guarded cleanup call here.
 				}
 
 				results.success = true;
@@ -102,18 +98,19 @@ export const testAsaasSyncFlow = action({
 					await badClient.testConnection();
 					results.success = false;
 					results.details.error = 'Should have failed with invalid key';
-				} catch (error: any) {
-					log(`Caught expected error: ${error.message}`);
+				} catch (error) {
+					const errorMessage = error instanceof Error ? error.message : String(error);
+					log(`Caught expected error: ${errorMessage}`);
 					if (
-						error.message.includes('401') ||
-						error.message.includes('Unauthorized') ||
-						error.message.includes('inválida')
+						errorMessage.includes('401') ||
+						errorMessage.includes('Unauthorized') ||
+						errorMessage.includes('inválida')
 					) {
 						results.success = true;
-						results.details.errorMessage = error.message;
+						results.details.errorMessage = errorMessage;
 					} else {
 						results.success = false;
-						results.details.error = `Unexpected error: ${error.message}`;
+						results.details.error = `Unexpected error: ${errorMessage}`;
 					}
 				}
 			} else if (args.testScenario === 'duplicate_customer') {
@@ -123,13 +120,9 @@ export const testAsaasSyncFlow = action({
 				// We need a known email/cpf. Let's use one we just "created" or a random one and assume it definitely does NOT exist first, then one that does.
 
 				// 1. Check non-existent
-				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-				const checks1 = await ctx.runAction(
-					(api as any).asaas.actions.checkExistingAsaasCustomer as any,
-					{
-						email: `nonexistent_${Date.now()}@test.com`,
-					},
-				);
+				const checks1 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
+					email: `nonexistent_${Date.now()}@test.com`,
+				});
 
 				if (checks1.exists) {
 					results.success = false;
@@ -155,12 +148,9 @@ export const testAsaasSyncFlow = action({
 					});
 
 					// Now check
-					const checks2 = await ctx.runAction(
-						(api as any).asaas.actions.checkExistingAsaasCustomer,
-						{
-							email: uniqueEmail,
-						},
-					);
+					const checks2 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
+						email: uniqueEmail,
+					});
 
 					if (checks2.exists && checks2.customerId === customer.id) {
 						results.success = true;
@@ -189,10 +179,11 @@ export const testAsaasSyncFlow = action({
 				results.details.note =
 					'Real network timeout simulation skipped in live env to protect circuit breaker';
 			}
-		} catch (error: any) {
-			log(`Error: ${error.message}`);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log(`Error: ${errorMessage}`);
 			results.success = false;
-			results.details.error = error.message;
+			results.details.error = errorMessage;
 		}
 
 		return results;
@@ -269,8 +260,8 @@ export const loadTestSync = action({
 						const client = await getAsaasClientFromSettings(ctx);
 						await client.createCustomer(customer);
 						return true;
-					} catch (error: any) {
-						return error;
+					} catch (error) {
+						return error instanceof Error ? error.message : String(error);
 					}
 				});
 

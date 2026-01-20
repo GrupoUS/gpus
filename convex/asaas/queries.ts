@@ -7,7 +7,7 @@
 import { v } from 'convex/values';
 
 import type { Doc } from '../_generated/dataModel';
-import { internalQuery, query } from '../_generated/server';
+import { internalQuery, query, type QueryCtx } from '../_generated/server';
 import { getOrganizationId, requireAuth, requireOrgRole } from '../lib/auth';
 import { getConfigurationStatus } from './config';
 
@@ -57,24 +57,32 @@ export const getPendingExportPaymentsPublic = query({
 	},
 });
 
-async function getPendingExportPaymentsLogic(ctx: any, orgId: string, args: any) {
+async function getPendingExportPaymentsLogic(
+	ctx: QueryCtx,
+	orgId: string,
+	args: {
+		startDate?: number;
+		endDate?: number;
+	},
+): Promise<Doc<'asaasPayments'>[]> {
 	// Get all payments
 	let payments = await ctx.db
 		.query('asaasPayments')
-		.withIndex('by_organization', (q: any) => q.eq('organizationId', orgId))
+		.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 		.order('desc')
 		.take(1000);
 
 	// Post-index filters
-	if (args.startDate !== undefined) {
-		payments = payments.filter((p: any) => p.dueDate >= args.startDate!);
+	const { startDate, endDate } = args;
+	if (startDate !== undefined) {
+		payments = payments.filter((payment) => payment.dueDate >= startDate);
 	}
-	if (args.endDate !== undefined) {
-		payments = payments.filter((p: any) => p.dueDate <= args.endDate!);
+	if (endDate !== undefined) {
+		payments = payments.filter((payment) => payment.dueDate <= endDate);
 	}
 
 	// Filter for payments without Asaas payment ID
-	return payments.filter((p: any) => !p.asaasPaymentId);
+	return payments.filter((payment) => !payment.asaasPaymentId);
 }
 
 /**
@@ -340,7 +348,7 @@ export const getSyncStatistics = query({
 	},
 });
 
-async function calculateSyncStatistics(ctx: any) {
+async function calculateSyncStatistics(ctx: QueryCtx) {
 	// Get all sync logs
 	const logs = await ctx.db.query('asaasSyncLogs').withIndex('by_created').order('desc').take(100);
 
@@ -371,10 +379,10 @@ async function calculateSyncStatistics(ctx: any) {
 
 	for (const syncType of syncTypes) {
 		const typeLogs = byType[syncType] || [];
-		const successful = typeLogs.filter((l: any) => l.status === 'completed');
-		const failed = typeLogs.filter((l: any) => l.status === 'failed');
-		const running = typeLogs.filter((l: any) => l.status === 'running');
-		const totalRecords = typeLogs.reduce((sum: number, l: any) => sum + l.recordsProcessed, 0);
+	const successful = typeLogs.filter((log) => log.status === 'completed');
+	const failed = typeLogs.filter((log) => log.status === 'failed');
+	const running = typeLogs.filter((log) => log.status === 'running');
+	const totalRecords = typeLogs.reduce((sum, log) => sum + log.recordsProcessed, 0);
 		const avgRecords = typeLogs.length > 0 ? totalRecords / typeLogs.length : 0;
 
 		stats[syncType] = {
@@ -740,16 +748,15 @@ export const getAllPayments = query({
 		// Build query using appropriate index
 		let payments: Doc<'asaasPayments'>[];
 
-		if (args.status) {
-			// Use organization_status index
-			// biome-ignore lint/suspicious/noExplicitAny: Status string needs casting for index query
-			payments = await ctx.db
-				.query('asaasPayments')
-				.withIndex('by_organization_status', (q) =>
-					q.eq('organizationId', orgId).eq('status', args.status as any),
-				)
-				.order('desc')
-				.collect();
+	if (args.status) {
+		// Use organization_status index
+		payments = await ctx.db
+			.query('asaasPayments')
+			.withIndex('by_organization_status', (q) =>
+				q.eq('organizationId', orgId).eq('status', args.status as Doc<'asaasPayments'>['status']),
+			)
+			.order('desc')
+			.collect();
 		} else if (args.studentId) {
 			// Use organization_student index
 			payments = await ctx.db
@@ -1022,9 +1029,16 @@ export const getValidationReport = query({
 			);
 		}
 
+		let status: 'healthy' | 'degraded' | 'critical' = 'critical';
+		if (healthScore >= 80) {
+			status = 'healthy';
+		} else if (healthScore >= 50) {
+			status = 'degraded';
+		}
+
 		return {
 			healthScore: Math.max(0, healthScore),
-			status: healthScore >= 80 ? 'healthy' : healthScore >= 50 ? 'degraded' : 'critical',
+			status,
 			timestamp: Date.now(),
 
 			syncStats: {

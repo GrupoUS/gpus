@@ -2,6 +2,7 @@
 name: product-architect
 description: Comprehensive product architecture specialist combining documentation, PRD generation, and rules creation
 model: inherit
+mode: subagent
 ---
 
 # PRODUCT ARCHITECT

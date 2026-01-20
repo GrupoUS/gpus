@@ -7,6 +7,10 @@
 
 import { z } from 'zod';
 
+const NON_DIGIT_REGEX = /\D/g;
+const REPEATED_DIGIT_REGEX = /^(\d)\1+$/;
+const API_KEY_REGEX = /[a-zA-Z0-9]{32,}/g;
+
 // ═══════════════════════════════════════════════════════
 // VALIDATION UTILITIES
 // ═══════════════════════════════════════════════════════
@@ -16,42 +20,42 @@ import { z } from 'zod';
  */
 export function sanitizeErrorMessage(message: string): string {
 	// Remove potential API keys (32+ character alphanumeric strings)
-	return message.replace(/[a-zA-Z0-9]{32,}/g, '[REDACTED]');
+	return message.replace(API_KEY_REGEX, '[REDACTED]');
 }
 
 /**
  * Validate and sanitize CPF/CNPJ
  */
 export function validateCpfCnpj(cpfCnpj: string): string {
-	const cleaned = cpfCnpj.replace(/\D/g, '');
+	const sanitized = cpfCnpj.replace(NON_DIGIT_REGEX, '');
 
-	if (cleaned.length === 11) {
+	if (sanitized.length === 11) {
 		// CPF validation
-		if (!validateCPF(cleaned)) {
+		if (!validateCPF(sanitized)) {
 			throw new Error('CPF inválido');
 		}
-	} else if (cleaned.length === 14) {
+	} else if (sanitized.length === 14) {
 		// CNPJ validation
-		if (!validateCNPJ(cleaned)) {
+		if (!validateCNPJ(sanitized)) {
 			throw new Error('CNPJ inválido');
 		}
 	} else {
 		throw new Error('CPF ou CNPJ deve ter 11 ou 14 dígitos');
 	}
 
-	return cleaned;
+	return sanitized;
 }
 
 /**
  * Validate CPF (Brazilian Individual Tax ID)
  */
 function validateCPF(cpf: string): boolean {
-	if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+	if (cpf.length !== 11 || REPEATED_DIGIT_REGEX.test(cpf)) {
 		return false;
 	}
 
 	let sum = 0;
-	let remainder;
+	let remainder = 0;
 
 	for (let i = 1; i <= 9; i++) {
 		sum += Number.parseInt(cpf.substring(i - 1, i), 10) * (11 - i);
@@ -77,7 +81,7 @@ function validateCPF(cpf: string): boolean {
  * Validate CNPJ (Brazilian Company Tax ID)
  */
 function validateCNPJ(cnpj: string): boolean {
-	if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) {
+	if (cnpj.length !== 14 || REPEATED_DIGIT_REGEX.test(cnpj)) {
 		return false;
 	}
 

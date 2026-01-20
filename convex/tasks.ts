@@ -71,9 +71,7 @@ export const listTasks = query({
 		let tasksQuery: any;
 
 		if (args.leadId) {
-			tasksQuery = ctx.db
-				.query('tasks')
-				.withIndex('by_lead', (q) => q.eq('leadId', args.leadId));
+			tasksQuery = ctx.db.query('tasks').withIndex('by_lead', (q) => q.eq('leadId', args.leadId));
 		} else if (args.assignedTo) {
 			tasksQuery = ctx.db
 				.query('tasks')
@@ -106,24 +104,29 @@ export const listTasks = query({
 });
 
 export const getTasksDueToday = internalQuery({
-	args: {},
-	handler: async (ctx) => {
+	args: {
+		cursor: v.optional(v.string()),
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
 		const startOfDay = new Date();
 		startOfDay.setHours(0, 0, 0, 0);
 		const endOfDay = new Date();
 		endOfDay.setHours(23, 59, 59, 999);
 
-		const tasks = await ctx.db
+		const limit = args.limit ?? 50;
+
+		const result = await ctx.db
 			.query('tasks')
 			.withIndex('by_due_date', (q) =>
 				q.gte('dueDate', startOfDay.getTime()).lte('dueDate', endOfDay.getTime()),
 			)
 			.filter((q) => q.eq(q.field('completed'), false))
-			.take(50);
+			.paginate({ cursor: args.cursor ?? null, numItems: limit });
 
 		// Populate assignedTo and mentionedUserIds
 		const tasksWithUsers = await Promise.all(
-			tasks.map(async (task) => {
+			result.page.map(async (task) => {
 				const assignedToUser = task.assignedTo ? await ctx.db.get(task.assignedTo) : null;
 				const mentionedUsers = task.mentionedUserIds
 					? await Promise.all(task.mentionedUserIds.map((id) => ctx.db.get(id)))
@@ -137,7 +140,22 @@ export const getTasksDueToday = internalQuery({
 			}),
 		);
 
-		return tasksWithUsers;
+		return {
+			tasks: tasksWithUsers,
+			continueCursor: result.continueCursor,
+			isDone: result.isDone,
+		};
+	},
+});
+
+export const markTaskReminded = internalMutation({
+	args: {
+		taskId: v.id('tasks'),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.taskId, {
+			remindedAt: Date.now(),
+		});
 	},
 });
 
@@ -556,7 +574,7 @@ export const createTaskReminder = internalMutation({
 		organizationId: v.string(),
 	},
 	handler: async (ctx, args) => {
-		// Insert Notification
+		// Insert Notification only - remindedAt is updated per-task in cron after all recipients succeed
 		await ctx.db.insert('notifications', {
 			organizationId: args.organizationId,
 			recipientId: args.recipientId,
@@ -571,11 +589,6 @@ export const createTaskReminder = internalMutation({
 			link: `/dashboard/tasks?taskId=${args.taskId}`,
 			metadata: { taskId: args.taskId, dueDate: args.dueDate },
 		});
-
-		// Update task remindedAt (idempotent-ish)
-		await ctx.db.patch(args.taskId, {
-			remindedAt: Date.now(),
-		});
 	},
 });
 
@@ -588,6 +601,7 @@ export const logCronActivity = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.insert('activities', {
+			// biome-ignore lint/suspicious/noExplicitAny: generic log type
 			type: args.type as any,
 			description: args.description,
 			organizationId: args.organizationId,

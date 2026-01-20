@@ -1,6 +1,6 @@
+import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
 import { action, internalMutation, internalQuery, mutation } from '../_generated/server';
 import { getOrganizationId, requireAuth } from '../lib/auth';
 import { encryptCPF, hashCPF } from '../lib/encryption';
@@ -121,7 +121,12 @@ export const syncStudentAsCustomer = action({
 	args: { studentId: v.id('students') },
 	handler: async (ctx, args) => {
 		await requireAuth(ctx);
-		await ctx.runMutation(internal.asaas.mutations.syncStudentAsCustomerInternal as any, {
+		const { internal: internalApi } = (await import('../_generated/api')) as unknown as {
+			internal: Record<string, Record<string, Record<string, unknown>>>;
+		};
+		const syncStudentAsCustomerInternal = internalApi.asaas.mutations
+			.syncStudentAsCustomerInternal as FunctionReference<'mutation', 'internal'>;
+		await ctx.runMutation(syncStudentAsCustomerInternal, {
 			studentId: args.studentId,
 		});
 	},
@@ -534,7 +539,7 @@ export const createPaymentFromAsaas = internalMutation({
 		asaasCustomerId: v.string(),
 		value: v.number(),
 		netValue: v.optional(v.number()),
-		status: v.string(),
+		status: paymentStatusSchema,
 		dueDate: v.number(),
 		billingType: billingTypeSchema,
 		description: v.optional(v.string()),
@@ -565,7 +570,7 @@ export const createPaymentFromAsaas = internalMutation({
 			organizationId: args.organizationId,
 			value: args.value,
 			netValue: args.netValue,
-			status: args.status as any, // Trust the status from Asaas
+			status: args.status, // Trust the status from Asaas
 			dueDate: args.dueDate,
 			billingType: args.billingType,
 			description: args.description,
@@ -585,7 +590,7 @@ export const createPaymentFromAsaas = internalMutation({
 export const updatePaymentFromAsaas = internalMutation({
 	args: {
 		paymentId: v.id('asaasPayments'),
-		status: v.optional(v.string()),
+		status: v.optional(paymentStatusSchema),
 		netValue: v.optional(v.number()),
 		confirmedDate: v.optional(v.number()),
 	},
@@ -610,8 +615,8 @@ export const createSubscriptionFromAsaas = internalMutation({
 		asaasSubscriptionId: v.string(),
 		asaasCustomerId: v.string(),
 		value: v.number(),
-		cycle: v.string(),
-		status: v.string(),
+		cycle: subscriptionCycleSchema,
+		status: subscriptionStatusSchema,
 		nextDueDate: v.number(),
 		description: v.optional(v.string()), // Added description
 		organizationId: v.optional(v.string()),
@@ -624,8 +629,8 @@ export const createSubscriptionFromAsaas = internalMutation({
 			asaasCustomerId: args.asaasCustomerId,
 			organizationId: args.organizationId,
 			value: args.value,
-			cycle: args.cycle as any,
-			status: args.status as any,
+			cycle: args.cycle,
+			status: args.status,
 			nextDueDate: args.nextDueDate,
 			description: args.description,
 			createdAt: now,
@@ -706,7 +711,12 @@ export const updateSubscriptionStatusInternal = internalMutation({
 			return null;
 		}
 
-		const patch: any = {
+		const patch: {
+			status: typeof args.status;
+			updatedAt: number;
+			nextDueDate?: number;
+			value?: number;
+		} = {
 			status: args.status,
 			updatedAt: Date.now(),
 		};
@@ -729,7 +739,11 @@ export const updatePaymentAsaasId = internalMutation({
 		boletoUrl: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		const patch: any = {
+		const patch: {
+			asaasPaymentId: string;
+			updatedAt: number;
+			boletoUrl?: string;
+		} = {
 			asaasPaymentId: args.asaasPaymentId,
 			updatedAt: Date.now(),
 		};

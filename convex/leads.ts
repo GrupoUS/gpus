@@ -215,7 +215,7 @@ export const listLeads = query({
 							)
 							.first();
 						return hasTag ? lead : null;
-					})
+					}),
 				);
 
 				candidates = tagChecks.filter((lead) => lead !== null);
@@ -645,13 +645,13 @@ export const getIdleLeads = internalQuery({
 	},
 	handler: async (ctx, args) => {
 		const cutoff = Date.now() - args.days * 24 * 60 * 60 * 1000;
-		// Fetch leads not updated recently and not closed
-		// Note: Ideally needs index on updatedAt. Using scan for MVP or limited set.
+		// Fetch idle leads only in eligible reactivation stages: 'primeiro_contato' or 'qualificado'
 		return await ctx.db
 			.query('leads')
 			.filter((q) => q.lt(q.field('updatedAt'), cutoff))
-			.filter((q) => q.neq(q.field('stage'), 'fechado_ganho'))
-			.filter((q) => q.neq(q.field('stage'), 'fechado_perdido'))
+			.filter((q) =>
+				q.or(q.eq(q.field('stage'), 'primeiro_contato'), q.eq(q.field('stage'), 'qualificado')),
+			)
 			.take(args.limit);
 	},
 });
@@ -663,6 +663,10 @@ export const reactivateLead = internalMutation({
 	handler: async (ctx, args) => {
 		const lead = await ctx.db.get(args.leadId);
 		if (!lead) return;
+
+		// Guard: Only reactivate leads in eligible stages
+		const eligibleStages = ['primeiro_contato', 'qualificado'];
+		if (!eligibleStages.includes(lead.stage)) return;
 
 		await ctx.db.patch(args.leadId, {
 			stage: 'novo',
