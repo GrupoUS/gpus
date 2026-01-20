@@ -34,6 +34,11 @@ docs/Aura-Connect/
 # Factory templates (AI generated)
 .factory/
 
+# AI agent directories
+.agent/
+.claude/
+.gemini/
+
 .mcp/
 .mcp.json
 .mcp.lock

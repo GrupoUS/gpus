@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Asaas Configuration Utilities
  * Centralized configuration management for Asaas integration
@@ -74,8 +75,10 @@ export function validateAsaasApiKey(key: string): {
  */
 export async function getAsaasClientFromSettings(ctx: any): Promise<AsaasClient> {
 	// Try to get settings from database first
+	// @ts-expect-error: break deep type recursion
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion
 	const config: Record<string, any> | null = await ctx.runQuery(
-		internal.settings.internalGetIntegrationConfig,
+		(internal as any).settings.internalGetIntegrationConfig,
 		{ integrationName: 'asaas' },
 	);
 

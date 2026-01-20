@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { v } from 'convex/values';
 
 import { api } from '../_generated/api';
@@ -122,9 +123,13 @@ export const testAsaasSyncFlow = action({
 				// We need a known email/cpf. Let's use one we just "created" or a random one and assume it definitely does NOT exist first, then one that does.
 
 				// 1. Check non-existent
-				const checks1 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
-					email: `nonexistent_${Date.now()}@test.com`,
-				});
+				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+				const checks1 = await ctx.runAction(
+					(api as any).asaas.actions.checkExistingAsaasCustomer as any,
+					{
+						email: `nonexistent_${Date.now()}@test.com`,
+					},
+				);
 
 				if (checks1.exists) {
 					results.success = false;
@@ -150,9 +155,12 @@ export const testAsaasSyncFlow = action({
 					});
 
 					// Now check
-					const checks2 = await ctx.runAction(api.asaas.actions.checkExistingAsaasCustomer, {
-						email: uniqueEmail,
-					});
+					const checks2 = await ctx.runAction(
+						(api as any).asaas.actions.checkExistingAsaasCustomer,
+						{
+							email: uniqueEmail,
+						},
+					);
 
 					if (checks2.exists && checks2.customerId === customer.id) {
 						results.success = true;

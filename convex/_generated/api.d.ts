@@ -39,6 +39,7 @@ import type * as asaas_validation from "../asaas/validation.js";
 import type * as asaas_webhooks from "../asaas/webhooks.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
+import type * as customFields from "../customFields.js";
 import type * as debug_access from "../debug_access.js";
 import type * as debug_tool from "../debug_tool.js";
 import type * as debug_users from "../debug_users.js";
@@ -89,10 +90,12 @@ import type * as students from "../students.js";
 import type * as studentsImport from "../studentsImport.js";
 import type * as tags from "../tags.js";
 import type * as tasks from "../tasks.js";
+import type * as tasks_crons from "../tasks/crons.js";
 import type * as templates from "../templates.js";
 import type * as test_helpers from "../test/helpers.js";
 import type * as transactionalEmails from "../transactionalEmails.js";
 import type * as users from "../users.js";
+import type * as whatsapp from "../whatsapp.js";
 
 import type {
   ApiFromModules,
@@ -132,6 +135,7 @@ declare const fullApi: ApiFromModules<{
   "asaas/webhooks": typeof asaas_webhooks;
   conversations: typeof conversations;
   crons: typeof crons;
+  customFields: typeof customFields;
   debug_access: typeof debug_access;
   debug_tool: typeof debug_tool;
   debug_users: typeof debug_users;
@@ -182,10 +186,12 @@ declare const fullApi: ApiFromModules<{
   studentsImport: typeof studentsImport;
   tags: typeof tags;
   tasks: typeof tasks;
+  "tasks/crons": typeof tasks_crons;
   templates: typeof templates;
   "test/helpers": typeof test_helpers;
   transactionalEmails: typeof transactionalEmails;
   users: typeof users;
+  whatsapp: typeof whatsapp;
 }>;
 
 /**

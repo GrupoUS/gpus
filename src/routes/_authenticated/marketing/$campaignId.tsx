@@ -259,7 +259,7 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 							Adicione conteúdo HTML ou selecione um template para esta campanha.
 						</p>
 					</div>
-				)}
+				)}{' '}
 			</CardContent>
 		</Card>
 	);
@@ -331,14 +331,16 @@ function ActionsCard({
 	onDelete,
 	onBack,
 }: ActionsCardProps) {
-	const statusMessage =
-		campaignStatus === 'sent'
-			? 'Esta campanha já foi enviada e não pode ser modificada.'
-			: campaignStatus === 'sending'
-				? 'Esta campanha está sendo enviada.'
-				: campaignStatus === 'scheduled'
-					? 'Esta campanha está agendada para envio.'
-					: 'Esta campanha falhou no envio.';
+	let statusMessage: string;
+	if (campaignStatus === 'sent') {
+		statusMessage = 'Esta campanha já foi enviada e não pode ser modificada.';
+	} else if (campaignStatus === 'sending') {
+		statusMessage = 'Esta campanha está sendo enviada.';
+	} else if (campaignStatus === 'scheduled') {
+		statusMessage = 'Esta campanha está agendada para envio.';
+	} else {
+		statusMessage = 'Esta campanha falhou no envio.';
+	}
 
 	return (
 		<Card>
@@ -425,7 +427,7 @@ interface EventLogsProps {
 
 function EventLogs({ campaignId }: EventLogsProps) {
 	// Type workaround for deep instantiation issue
-	const getCampaignEventsQuery = api.emailMarketing.getCampaignEvents;
+	const getCampaignEventsQuery = (api as any).emailMarketing.getCampaignEvents;
 	const events = useQuery(getCampaignEventsQuery, {
 		campaignId,
 		limit: 20,
@@ -462,17 +464,14 @@ function EventLogs({ campaignId }: EventLogsProps) {
 							>
 								<div className="flex items-center gap-3">
 									<Badge
-										className={
-											event.eventType === 'delivered'
-												? 'border-green-500 text-green-500'
-												: event.eventType === 'opened'
-													? 'border-blue-500 text-blue-500'
-													: event.eventType === 'clicked'
-														? 'border-yellow-500 text-yellow-500'
-														: event.eventType === 'bounced' || event.eventType === 'spam'
-															? 'border-red-500 text-red-500'
-															: 'border-gray-500 text-gray-500'
-										}
+										className={(() => {
+											if (event.eventType === 'delivered') return 'border-green-500 text-green-500';
+											if (event.eventType === 'opened') return 'border-blue-500 text-blue-500';
+											if (event.eventType === 'clicked') return 'border-yellow-500 text-yellow-500';
+											if (event.eventType === 'bounced' || event.eventType === 'spam')
+												return 'border-red-500 text-red-500';
+											return 'border-gray-500 text-gray-500';
+										})()}
 										variant="outline"
 									>
 										{event.eventType}

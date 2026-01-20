@@ -2,7 +2,7 @@ import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
 import type { Id } from './_generated/dataModel';
-import { internalQuery, mutation, query } from './_generated/server';
+import { internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { getOrganizationId, hasPermission, requireAuth } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -417,6 +417,50 @@ export const deleteTask = mutation({
 				taskId: args.taskId,
 				deletedBy: identity.subject,
 			},
+		});
+	},
+});
+
+export const createTaskReminder = internalMutation({
+	args: {
+		taskId: v.id('tasks'),
+	},
+	handler: async (ctx, args) => {
+		const task = await ctx.db.get(args.taskId);
+		if (!task) return; // Task might have been deleted
+
+		// Update remindedAt
+		await ctx.db.patch(args.taskId, {
+			remindedAt: Date.now(),
+		});
+
+		// Create Notification
+		if (task.assignedTo) {
+			await ctx.db.insert('notifications', {
+				organizationId: task.organizationId,
+				recipientId: task.assignedTo,
+				recipientType: 'user',
+				type: 'task_reminder',
+				title: 'Lembrete de Tarefa',
+				message: `A tarefa "${task.description}" vence hoje.`,
+				read: false,
+				channel: 'system',
+				status: 'pending',
+				createdAt: Date.now(),
+				link: `/dashboard/tasks?taskId=${task._id}`,
+			});
+		}
+
+		// Log Activity
+		await ctx.db.insert('activities', {
+			leadId: task.leadId,
+			studentId: task.studentId,
+			organizationId: task.organizationId,
+			type: 'system_task_reminder',
+			description: 'Lembrete de tarefa enviado',
+			metadata: { taskId: task._id },
+			performedBy: 'system',
+			createdAt: Date.now(),
 		});
 	},
 });

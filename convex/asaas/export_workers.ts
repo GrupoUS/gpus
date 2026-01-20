@@ -125,6 +125,8 @@ export async function exportStudentWorker(
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
 		// Update student with Asaas customer ID
+		// @ts-expect-error: break deep type instantiation
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 			studentId: student._id,
 			asaasCustomerId: asaasCustomer.id,
@@ -152,7 +154,6 @@ export async function exportStudentWorker(
 		) {
 			// Create conflict record for manual resolution
 			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-			// @ts-expect-error
 			await ctx.runMutation((internal as any).asaas.conflict_resolution.createConflict, {
 				conflictType: 'duplicate_customer',
 				studentId: student._id,
@@ -214,8 +215,9 @@ export async function exportPaymentWorker(
 
 	try {
 		// Get student to ensure they have Asaas customer ID
+		// @ts-expect-error: break deep type instantiation
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		const student = await ctx.runQuery((internal as any).asaas.queries.getStudentById, {
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 			studentId: payment.studentId,
 		});
 
@@ -256,8 +258,9 @@ export async function exportPaymentWorker(
 		const asaasPayment: AsaasPaymentResponse = await asaasClient.createPayment(paymentPayload);
 
 		// Update payment record with Asaas payment ID
+		// @ts-expect-error: break deep type instantiation
+		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
 		await ctx.runMutation((internal as any).asaas.mutations.updatePaymentAsaasId, {
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 			paymentId: payment._id,
 			asaasPaymentId: asaasPayment.id,
 			boletoUrl: asaasPayment.bankSlipUrl || payment.boletoUrl,
@@ -292,7 +295,7 @@ export function createStudentExportBatchProcessor(
 		createCustomer: (payload: AsaasCustomerPayload) => Promise<AsaasCustomerResponse>;
 	},
 ) {
-	return async (
+	return (
 		student: Doc<'students'>,
 	): Promise<WorkerResult<{ studentId: Id<'students'>; asaasCustomerId: string }>> => {
 		return exportStudentWorker(ctx, student, asaasClient);
@@ -306,7 +309,7 @@ export function createPaymentExportBatchProcessor(
 	ctx: MutationCtx,
 	asaasClient: { createPayment: (payload: AsaasPaymentPayload) => Promise<AsaasPaymentResponse> },
 ) {
-	return async (
+	return (
 		payment: Doc<'asaasPayments'>,
 	): Promise<WorkerResult<{ paymentId: Id<'asaasPayments'>; asaasPaymentId: string }>> => {
 		return exportPaymentWorker(ctx, payment, asaasClient);

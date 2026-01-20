@@ -32,4 +32,13 @@ crons.interval(
 	{},
 );
 
+// Process queued WhatsApp messages every 5 minutes
+crons.interval(
+	'whatsapp-process-queue',
+	{ minutes: 5 },
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type recursion on internal
+	(internal as any).whatsapp.processQueuedMessages,
+	{},
+);
+
 export default crons;

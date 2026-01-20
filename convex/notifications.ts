@@ -7,6 +7,7 @@
 import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
+import type { Doc } from './_generated/dataModel';
 import { internalMutation } from './_generated/server';
 
 /**
@@ -25,7 +26,7 @@ export const sendPaymentConfirmed = internalMutation({
 		}
 
 		// Get student details if available
-		let student = null;
+		let student: Doc<'students'> | null = null;
 		if (args.studentId) {
 			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
@@ -45,14 +46,16 @@ export const sendPaymentConfirmed = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// Deep type instantiation workaround
-				await ctx.runMutation((internal as any).transactionalEmails.sendPaymentConfirmation, {
+				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+				await ctx.runMutation((internal as any).transactionalEmails.send_payment_confirmation, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					paymentDescription: payment.description || 'Pagamento',
 				});
-			} catch (_error) {}
+			} catch (_error) {
+				// Error already logged by transactional email function
+			}
 		}
 
 		// Log notification
@@ -69,6 +72,8 @@ export const sendPaymentConfirmed = internalMutation({
 				asaasPaymentId: payment.asaasPaymentId,
 				value: payment.value,
 			},
+			organizationId: 'system', // TODO: Fetch from student or payment? student.organizationId usually
+			read: false,
 			createdAt: Date.now(),
 		});
 
@@ -92,7 +97,7 @@ export const sendPaymentOverdue = internalMutation({
 		}
 
 		// Get student details
-		let student = null;
+		let student: Doc<'students'> | null = null;
 		if (args.studentId) {
 			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
@@ -116,14 +121,16 @@ export const sendPaymentOverdue = internalMutation({
 		// Send email via Brevo if student has email
 		if (student.email) {
 			try {
-				// Deep type instantiation workaround
-				await ctx.runMutation((internal as any).transactionalEmails.sendPaymentReminder, {
+				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+				await ctx.runMutation((internal as any).transactionalEmails.send_payment_reminder, {
 					studentId: student._id,
 					paymentId: payment._id,
 					paymentValue: formattedValue,
 					dueDate: formattedDueDate,
 				});
-			} catch (_error) {}
+			} catch (_error) {
+				// Error already logged by transactional email function
+			}
 		}
 
 		// Log notification
@@ -141,6 +148,8 @@ export const sendPaymentOverdue = internalMutation({
 				value: payment.value,
 				dueDate: payment.dueDate,
 			},
+			organizationId: 'system',
+			read: false,
 			createdAt: Date.now(),
 		});
 
@@ -163,7 +172,7 @@ export const sendPaymentReceived = internalMutation({
 			return { sent: false, reason: 'Payment not found' };
 		}
 
-		let student = null;
+		let student: Doc<'students'> | null = null;
 		if (args.studentId) {
 			student = await ctx.db.get(args.studentId);
 		} else if (payment.studentId) {
@@ -193,6 +202,8 @@ export const sendPaymentReceived = internalMutation({
 				asaasPaymentId: payment.asaasPaymentId,
 				value: payment.value,
 			},
+			organizationId: 'system',
+			read: false,
 			createdAt: Date.now(),
 		});
 

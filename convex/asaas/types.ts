@@ -5,7 +5,7 @@
  * and reduce the need for @ts-expect-error throughout the codebase.
  */
 
-import type { Id } from '../_generated/dataModel';
+import type { Id, TableNames } from '../_generated/dataModel';
 
 // ═════════════════════════════════════════════════════════════════
 // WRAPPER TYPES FOR INTERNAL FUNCTIONS
@@ -131,7 +131,8 @@ export interface AsaasSubscriptionData {
  * Student document with Asaas sync fields
  */
 export interface StudentWithAsaas {
-	_id: Id<'students'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	// biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	_id: Id<'students'>;
 	name: string;
 	email?: string;
 	phone: string;
@@ -147,7 +148,8 @@ export interface StudentWithAsaas {
  * Payment document
  */
 export interface PaymentDoc {
-	_id: Id<'asaasPayments'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	// biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	_id: Id<'asaasPayments'>;
 	studentId: Id<'students'>;
 	asaasPaymentId: string;
 	asaasCustomerId: string;
@@ -171,7 +173,8 @@ export interface PaymentDoc {
  * Subscription document
  */
 export interface SubscriptionDoc {
-	_id: Id<'asaasSubscriptions'>; // biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	// biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+	_id: Id<'asaasSubscriptions'>;
 	studentId: Id<'students'>;
 	asaasSubscriptionId: string;
 	asaasCustomerId: string;
@@ -385,8 +388,7 @@ export interface SyncLogSummary {
 /**
  * Type guard for Id
  */
-// biome-ignore lint/suspicious/noExplicitAny: generic Id
-export function isId(value: unknown): value is Id<any> {
+export function isId(value: unknown): value is Id<TableNames> {
 	return (
 		typeof value === 'string' && value.length === 28 // Convex IDs are 28 characters
 	);
@@ -395,9 +397,7 @@ export function isId(value: unknown): value is Id<any> {
 /**
  * Safely extract ID from a document
  */
-// biome-ignore lint/suspicious/noExplicitAny: generic Id
-export function getIdFromDoc<T extends { _id: Id<any> }>(doc: T): Id<any> {
-	// biome-ignore lint/style/useNamingConvention: Convex uses _id for document IDs
+export function getIdFromDoc<T extends { _id: Id<TableNames> }>(doc: T): Id<TableNames> {
 	return doc._id;
 }
 

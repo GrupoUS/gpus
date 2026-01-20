@@ -553,6 +553,8 @@ export default defineSchema({
 			v.literal('task_updated'),
 			v.literal('whatsapp_sent'),
 			v.literal('lead_reactivated'),
+			v.literal('system_task_reminder'),
+			v.literal('system_lead_reactivation'),
 		),
 
 		// Detalhes
@@ -574,6 +576,43 @@ export default defineSchema({
 		.index('by_created', ['createdAt']),
 
 	// ═══════════════════════════════════════════════════════
+	// CAMPOS PERSONALIZADOS (Custom Fields)
+	// ═══════════════════════════════════════════════════════
+	customFields: defineTable({
+		name: v.string(),
+		fieldType: v.union(
+			v.literal('text'),
+			v.literal('number'),
+			v.literal('date'),
+			v.literal('select'),
+			v.literal('multiselect'),
+			v.literal('boolean'),
+		),
+		entityType: v.union(v.literal('lead'), v.literal('student')),
+		required: v.boolean(),
+		options: v.optional(v.array(v.string())),
+		organizationId: v.string(),
+		createdBy: v.string(),
+		createdAt: v.number(),
+		active: v.boolean(),
+	})
+		.index('by_organization_entity', ['organizationId', 'entityType'])
+		.index('by_organization', ['organizationId']),
+
+	customFieldValues: defineTable({
+		customFieldId: v.id('customFields'),
+		entityId: v.string(),
+		entityType: v.union(v.literal('lead'), v.literal('student')),
+		value: v.any(),
+		organizationId: v.string(),
+		updatedBy: v.string(),
+		updatedAt: v.number(),
+	})
+		.index('by_entity', ['entityId', 'entityType'])
+		.index('by_custom_field', ['customFieldId'])
+		.index('by_organization', ['organizationId']),
+
+	// ═══════════════════════════════════════════════════════
 	// NOTIFICAÇÕES (Payment notifications, etc.)
 	// ═══════════════════════════════════════════════════════
 	notifications: defineTable({
@@ -591,6 +630,7 @@ export default defineSchema({
 			v.literal('task_reminder'),
 			v.literal('whatsapp_sent'),
 			v.literal('lead_reactivated'),
+			v.literal('task_assigned'),
 		),
 		recipientId: v.union(v.id('students'), v.id('users')),
 		recipientType: v.union(v.literal('student'), v.literal('lead'), v.literal('user')),
@@ -600,11 +640,19 @@ export default defineSchema({
 		status: v.union(v.literal('pending'), v.literal('sent'), v.literal('failed')),
 		metadata: v.optional(v.any()),
 		createdAt: v.number(),
+
+		// New Fields
+		organizationId: v.string(),
+		read: v.boolean(),
+		link: v.optional(v.string()), // Action link
 	})
 		.index('by_recipient', ['recipientId'])
+		.index('by_organization', ['organizationId'])
 		.index('by_type', ['type'])
 		.index('by_status', ['status'])
-		.index('by_created', ['createdAt']),
+		.index('by_created', ['createdAt'])
+		// optimization for "unread by user"
+		.index('by_recipient_read', ['recipientId', 'read']),
 
 	// ═══════════════════════════════════════════════════════
 	// CONFIGURAÇÕES E MÉTRICAS
@@ -1549,6 +1597,7 @@ export default defineSchema({
 
 		// Agendamento
 		dueDate: v.optional(v.number()), // Unix timestamp
+		remindedAt: v.optional(v.number()),
 
 		// Status de conclusão
 		completed: v.boolean(),
@@ -1631,61 +1680,6 @@ export default defineSchema({
 	})
 		.index('by_organization', ['organizationId'])
 		.index('by_organization_name', ['organizationId', 'name']),
-
-	// ═══════════════════════════════════════════════════════
-	// CUSTOM FIELDS SYSTEM (EAV Pattern)
-	// ═══════════════════════════════════════════════════════
-	customFields: defineTable({
-		// Field definition
-		key: v.string(), // Machine-readable key (e.g. "marketing_source")
-		label: v.string(), // Human-readable label (e.g. "Marketing Source")
-		description: v.optional(v.string()), // Tooltip/help text
-		fieldType: v.union(
-			v.literal('text'),
-			v.literal('number'),
-			v.literal('date'),
-			v.literal('select'),
-			v.literal('multiselect'),
-			v.literal('boolean'),
-		),
-		entityType: v.union(v.literal('lead'), v.literal('student')),
-
-		// Configuration
-		options: v.optional(v.array(v.string())), // For select/multiselect
-		required: v.boolean(),
-
-		// Multi-tenant
-		organizationId: v.string(),
-
-		// Status
-		active: v.boolean(),
-
-		// Audit
-		createdBy: v.string(), // Clerk user ID
-		createdAt: v.number(),
-	})
-		.index('by_organization', ['organizationId'])
-		.index('by_organization_entity', ['organizationId', 'entityType']),
-
-	customFieldValues: defineTable({
-		// References
-		customFieldId: v.id('customFields'),
-		entityId: v.string(), // Polymorphic ID (lead or student)
-		entityType: v.union(v.literal('lead'), v.literal('student')),
-
-		// Flexible value storage
-		value: v.any(),
-
-		// Multi-tenant
-		organizationId: v.string(),
-
-		// Audit
-		updatedBy: v.string(), // Clerk user ID
-		updatedAt: v.number(),
-	})
-		.index('by_entity', ['entityId', 'entityType'])
-		.index('by_custom_field', ['customFieldId'])
-		.index('by_organization', ['organizationId']),
 
 	leadTags: defineTable({
 		leadId: v.id('leads'),

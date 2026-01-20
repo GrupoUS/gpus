@@ -82,7 +82,8 @@ export const createAsaasCustomer = action({
 			});
 
 			// Save Asaas ID to student record
-			await ctx.runMutation(internal.asaas.mutations.updateStudentAsaasId, {
+			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
+			await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 				studentId: args.studentId,
 				asaasCustomerId: customer.id,
 			});

@@ -26,6 +26,7 @@ interface LeadFiltersProps {
 }
 
 export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
+	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on api
 	const listTags = (api as any).tags.listTags;
 	const tags = useQuery(listTags);
 

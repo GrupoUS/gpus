@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 
 import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { mutation, query } from './_generated/server';
+import { internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -615,5 +615,64 @@ export const deduplicateLeads = mutation({
 			deletedCount,
 			remainingLeads: allLeads.length - deletedCount,
 		};
+	},
+});
+
+export const getIdleLeads = internalQuery({
+	args: {
+		days: v.number(),
+		limit: v.number(),
+	},
+	handler: async (ctx, args) => {
+		const cutoff = Date.now() - args.days * 24 * 60 * 60 * 1000;
+		// Fetch leads not updated recently and not closed
+		// Note: Ideally needs index on updatedAt. Using scan for MVP or limited set.
+		return await ctx.db
+			.query('leads')
+			.filter((q) => q.lt(q.field('updatedAt'), cutoff))
+			.filter((q) => q.neq(q.field('stage'), 'fechado_ganho'))
+			.filter((q) => q.neq(q.field('stage'), 'fechado_perdido'))
+			.take(args.limit);
+	},
+});
+
+export const reactivateLead = internalMutation({
+	args: {
+		leadId: v.id('leads'),
+	},
+	handler: async (ctx, args) => {
+		const lead = await ctx.db.get(args.leadId);
+		if (!lead) return;
+
+		await ctx.db.patch(args.leadId, {
+			stage: 'novo',
+			updatedAt: Date.now(),
+		});
+
+		await ctx.db.insert('activities', {
+			type: 'lead_reactivated',
+			description: 'Lead reativado por inatividade',
+			leadId: args.leadId,
+			organizationId: lead.organizationId ?? 'system',
+			performedBy: 'system', // Clerk ID placeholder for system
+			createdAt: Date.now(),
+			metadata: { previousStage: lead.stage },
+		});
+
+		if (lead.assignedTo) {
+			await ctx.db.insert('notifications', {
+				type: 'lead_reactivated',
+				title: 'Lead Reativado',
+				message: `O lead ${lead.name} foi reativado para o estágio inicial.`,
+				recipientId: lead.assignedTo,
+				recipientType: 'user',
+				organizationId: lead.organizationId ?? 'system',
+				read: false,
+				status: 'sent',
+				channel: 'system',
+				createdAt: Date.now(),
+				link: `/dashboard/leads/${lead._id}`,
+			});
+		}
 	},
 });
