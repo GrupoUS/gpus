@@ -361,7 +361,7 @@ export async function brevoFetch<T>(
 				headers: {
 					'api-key': apiKey,
 					'Content-Type': 'application/json',
-					Accept: 'application/json',
+					accept: 'application/json',
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined,
 			});
@@ -509,7 +509,7 @@ export const brevoLists = {
 	/**
 	 * Get all lists
 	 */
-	async getAll(
+	getAll(
 		options: { limit?: number; offset?: number } = {},
 	): Promise<{ lists: BrevoListResponse[]; count: number }> {
 		const params = new URLSearchParams();
@@ -543,7 +543,7 @@ export const brevoLists = {
 	/**
 	 * Get contacts in a list
 	 */
-	async getContacts(
+	getContacts(
 		listId: number,
 		options: { limit?: number; offset?: number; modifiedSince?: string } = {},
 	): Promise<{ contacts: BrevoContactResponse[]; count: number }> {
@@ -583,7 +583,7 @@ export const brevoCampaigns = {
 	/**
 	 * Get all campaigns
 	 */
-	async getAll(
+	getAll(
 		options: {
 			type?: 'classic' | 'trigger';
 			status?: 'draft' | 'sent' | 'archive' | 'queued' | 'suspended' | 'in_process';
@@ -624,7 +624,7 @@ export const brevoCampaigns = {
 	/**
 	 * Send a campaign immediately
 	 */
-	async sendNow(campaignId: number): Promise<void> {
+	sendNow(campaignId: number): Promise<void> {
 		return brevoFetch<void>(`/emailCampaigns/${campaignId}/sendNow`, {
 			method: 'POST',
 		});
@@ -633,7 +633,7 @@ export const brevoCampaigns = {
 	/**
 	 * Schedule a campaign
 	 */
-	async schedule(campaignId: number, scheduledAt: string): Promise<void> {
+	schedule(campaignId: number, scheduledAt: string): Promise<void> {
 		return brevoFetch<void>(`/emailCampaigns/${campaignId}/schedule`, {
 			method: 'POST',
 			body: { scheduledAt },
@@ -643,14 +643,14 @@ export const brevoCampaigns = {
 	/**
 	 * Get campaign statistics
 	 */
-	async getStats(campaignId: number): Promise<BrevoCampaignStats> {
+	getStats(campaignId: number): Promise<BrevoCampaignStats> {
 		return brevoFetch<BrevoCampaignStats>(`/emailCampaigns/${campaignId}/statistics`);
 	},
 
 	/**
 	 * Send a test email
 	 */
-	async sendTest(campaignId: number, emailTo: string[]): Promise<void> {
+	sendTest(campaignId: number, emailTo: string[]): Promise<void> {
 		return brevoFetch<void>(`/emailCampaigns/${campaignId}/sendTest`, {
 			method: 'POST',
 			body: { emailTo },
@@ -683,7 +683,7 @@ export const brevoTemplates = {
 	/**
 	 * Get all templates
 	 */
-	async getAll(
+	getAll(
 		options: { templateStatus?: boolean; limit?: number; offset?: number } = {},
 	): Promise<{ templates: BrevoTemplateResponse[]; count: number }> {
 		const params = new URLSearchParams();
@@ -719,7 +719,7 @@ export const brevoTemplates = {
 	/**
 	 * Send a test template
 	 */
-	async sendTest(templateId: number, emailTo: string[]): Promise<void> {
+	sendTest(templateId: number, emailTo: string[]): Promise<void> {
 		return brevoFetch<void>(`/smtp/templates/${templateId}/sendTest`, {
 			method: 'POST',
 			body: { emailTo },
@@ -736,7 +736,7 @@ export const brevoSmtp = {
 	 * Send a transactional email (immediate delivery)
 	 * Use this for welcome emails, confirmations, password resets, etc.
 	 */
-	async send(payload: BrevoTransactionalEmailPayload): Promise<BrevoTransactionalEmailResponse> {
+	send(payload: BrevoTransactionalEmailPayload): Promise<BrevoTransactionalEmailResponse> {
 		return brevoFetch<BrevoTransactionalEmailResponse>('/smtp/email', {
 			method: 'POST',
 			body: payload,
@@ -752,7 +752,7 @@ export const brevoSmtp = {
 	 * @param params - Variables to inject into the template (e.g., { firstName: 'John' })
 	 * @param options - Additional options (sender, tags, replyTo)
 	 */
-	async sendTemplate(
+	sendTemplate(
 		templateId: number,
 		to: { email: string; name?: string },
 		params: Record<string, unknown>,
@@ -784,7 +784,7 @@ export const brevoSmtp = {
 	 * Send a simple HTML email (no template)
 	 * Useful for quick one-off emails or when templates aren't configured
 	 */
-	async sendHtml(
+	sendHtml(
 		to: { email: string; name?: string },
 		subject: string,
 		htmlContent: string,

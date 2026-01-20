@@ -422,6 +422,43 @@ function addJitter(delayMs: number): number {
 	return delayMs + jitter;
 }
 
+class AsaasRequestError extends Error {
+	readonly retriable: boolean;
+
+	constructor(message: string, retriable: boolean) {
+		super(message);
+		this.retriable = retriable;
+	}
+}
+
+type TestConnectionResult = {
+	status: number;
+} & AsaasCustomerListResponse;
+
+const isNetworkFailure = (error: Error): boolean =>
+	error.name.includes('TimeoutError') || error.message.includes('fetch');
+
+const parseAsaasResponse = async <T>(response: Response): Promise<T> => {
+	if (response.status === 204) {
+		return undefined as T;
+	}
+
+	const data = (await response.json()) as unknown;
+
+	if (response.ok) {
+		return data as T;
+	}
+
+	const error = data as AsaasApiError;
+	const errorMessage =
+		error.errors?.map((e) => `${e.code}: ${e.description}`).join(', ') ||
+		error.message ||
+		`HTTP ${response.status}`;
+	const retriable = response.status === 429 || response.status >= 500;
+
+	throw new AsaasRequestError(`Asaas API Error: ${errorMessage}`, retriable);
+};
+
 // ═══════════════════════════════════════════════════════
 // ASAAS API CLIENT
 // ═══════════════════════════════════════════════════════
@@ -461,9 +498,6 @@ async function asaasFetch<T>(
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
 		try {
-			if (attempt > 0) {
-			}
-
 			const response = await fetch(url, {
 				method: options.method || 'GET',
 				headers: {
@@ -472,77 +506,32 @@ async function asaasFetch<T>(
 					'User-Agent': 'gpus-saas/1.0',
 				},
 				body: options.body ? JSON.stringify(options.body) : undefined,
-				signal: AbortSignal.timeout(30_000), // 30s timeout
+				signal: AbortSignal.timeout(30_000),
 			});
 
-			// Handle no content responses
-			if (response.status === 204) {
-				return undefined as T;
-			}
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				const error = data as AsaasApiError;
-				const errorMessage =
-					error.errors?.map((e) => `${e.code}: ${e.description}`).join(', ') ||
-					error.message ||
-					`HTTP ${response.status}`;
-
-				// Don't retry on client errors (4xx)
-				if (response.status >= 400 && response.status < 500) {
-					// 429 is Too Many Requests, which IS retriable
-					if (response.status !== 429) {
-						throw new Error(`Asaas API Error: ${errorMessage}`);
-					}
-				}
-
-				// Retry on server errors (5xx) or rate limiting (429)
-				if (response.status >= 500 || response.status === 429) {
-					lastError = new Error(`Asaas API Error: ${errorMessage}`);
-					recordFailure(); // Circuit breaker: record server error
-					if (attempt < retries) {
-						const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-						await sleep(delay);
-						continue;
-					}
-					throw lastError;
-				}
-
-				// Client error (non-retriable 4xx)
-				recordFailure(); // Circuit breaker: record client error
-				throw new Error(`Asaas API Error: ${errorMessage}`);
-			}
-
-			// Success
-			recordSuccess(); // Circuit breaker: record success
-			return data as T;
+			const result = await parseAsaasResponse<T>(response);
+			recordSuccess();
+			return result;
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
 
-			// Circuit breaker: record network/timeout errors
-			if (
-				error instanceof Error &&
-				(error.name.includes('TimeoutError') || error.message.includes('fetch'))
-			) {
+			if (error instanceof AsaasRequestError) {
 				recordFailure();
-			}
-
-			// Don't retry on non-network errors (unless it's a 5xx handled above)
-			if (
-				error instanceof Error &&
-				!error.message.includes('Asaas API Error') &&
-				!error.name.includes('TimeoutError') &&
-				!error.message.includes('fetch')
-			) {
+				if (error.retriable && attempt < retries) {
+					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
+					await sleep(delay);
+					continue;
+				}
 				throw error;
 			}
 
-			// Retry on network errors or server errors
-			if (attempt < retries) {
-				const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-				await sleep(delay);
-				continue;
+			if (lastError && isNetworkFailure(lastError)) {
+				recordFailure();
+				if (attempt < retries) {
+					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
+					await sleep(delay);
+					continue;
+				}
 			}
 
 			throw lastError;
@@ -773,107 +762,59 @@ export class AsaasClient {
 
 		let lastError: Error | null = null;
 
-		for (let attempt = 0; attempt <= retries; attempt++) {
-			try {
-				if (attempt > 0) {
+	for (let attempt = 0; attempt <= retries; attempt++) {
+		try {
+			const response = await fetch(url, {
+				method: options.method || 'GET',
+				headers: {
+					access_token: apiKey,
+					'Content-Type': 'application/json',
+					'User-Agent': 'gpus-saas/1.0',
+				},
+				body: options.body ? JSON.stringify(options.body) : undefined,
+				signal: AbortSignal.timeout(30_000), // 30s timeout
+			});
+
+			const result = await parseAsaasResponse<T>(response);
+			recordSuccess(); // Circuit breaker: record success
+			return result;
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
+
+			if (error instanceof AsaasRequestError) {
+				recordFailure();
+				if (error.retriable && attempt < retries) {
+					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
+					await sleep(delay);
+					continue;
 				}
+				throw error;
+			}
 
-				const response = await fetch(url, {
-					method: options.method || 'GET',
-					headers: {
-						access_token: apiKey,
-						'Content-Type': 'application/json',
-						'User-Agent': 'gpus-saas/1.0',
-					},
-					body: options.body ? JSON.stringify(options.body) : undefined,
-					signal: AbortSignal.timeout(30_000), // 30s timeout
-				});
-
-				// Handle no content responses
-				if (response.status === 204) {
-					return undefined as T;
-				}
-
-				const data = await response.json();
-
-				if (!response.ok) {
-					const error = data as AsaasApiError;
-					const errorMessage =
-						error.errors?.map((e) => `${e.code}: ${e.description}`).join(', ') ||
-						error.message ||
-						`HTTP ${response.status}`;
-
-					// Don't retry on client errors (4xx)
-					if (response.status >= 400 && response.status < 500) {
-						// 429 is Too Many Requests, which IS retriable
-						if (response.status !== 429) {
-							throw new Error(`Asaas API Error: ${errorMessage}`);
-						}
-					}
-
-					// Retry on server errors (5xx) or rate limiting (429)
-					if (response.status >= 500 || response.status === 429) {
-						lastError = new Error(`Asaas API Error: ${errorMessage}`);
-						recordFailure(); // Circuit breaker: record server error
-						if (attempt < retries) {
-							const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-							await sleep(delay);
-							continue;
-						}
-						throw lastError;
-					}
-
-					// Client error (non-retriable 4xx)
-					recordFailure(); // Circuit breaker: record client error
-					throw new Error(`Asaas API Error: ${errorMessage}`);
-				}
-
-				// Success
-				recordSuccess(); // Circuit breaker: record success
-				return data as T;
-			} catch (error) {
-				lastError = error instanceof Error ? error : new Error(String(error));
-
-				// Circuit breaker: record network/timeout errors
-				if (
-					error instanceof Error &&
-					(error.name.includes('TimeoutError') || error.message.includes('fetch'))
-				) {
-					recordFailure();
-				}
-
-				// Don't retry on non-network errors (unless it's a 5xx handled above)
-				if (
-					error instanceof Error &&
-					!error.message.includes('Asaas API Error') &&
-					!error.name.includes('TimeoutError') &&
-					!error.message.includes('fetch')
-				) {
-					throw error;
-				}
-
-				// Retry on network errors or server errors
+			if (lastError && isNetworkFailure(lastError)) {
+				recordFailure();
 				if (attempt < retries) {
 					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
 					await sleep(delay);
 					continue;
 				}
-
-				throw lastError;
 			}
-		}
 
-		throw lastError || new Error('Unknown error in AsaasClient.fetch');
+			throw lastError;
+		}
 	}
 
-	public async testConnection(): Promise<any> {
-		const response = await this.fetch<any>('/customers?limit=1');
+	throw lastError || new Error('Unknown error in AsaasClient.fetch');
+	}
+
+	async testConnection(): Promise<TestConnectionResult> {
+		const response = await this.fetch<AsaasCustomerListResponse>('/customers?limit=1');
 		// Return a mocked response-like object or the data, adapted for actions.ts usage
 		// actions.ts expects response.status
 		return { status: 200, ...response };
 	}
 
-	public async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+	async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
 		// Strict CPF normalization before sending to Asaas
 		if (payload.cpfCnpj) {
 			payload.cpfCnpj = payload.cpfCnpj.replace(/\D/g, '');
@@ -884,14 +825,14 @@ export class AsaasClient {
 		});
 	}
 
-	public async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+	async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
 		return this.fetch<AsaasPaymentResponse>('/payments', {
 			method: 'POST',
 			body: payload,
 		});
 	}
 
-	public async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
+	async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
 		return this.fetch<{ encodedImage: string; payload: string }>(
 			`/payments/${paymentId}/pixQrCode`,
 			{
@@ -900,7 +841,7 @@ export class AsaasClient {
 		);
 	}
 
-	public async createSubscription(
+	async createSubscription(
 		payload: AsaasSubscriptionPayload,
 	): Promise<AsaasSubscriptionResponse> {
 		return this.fetch<AsaasSubscriptionResponse>('/subscriptions', {
@@ -912,7 +853,7 @@ export class AsaasClient {
 	/**
 	 * List all customers with pagination
 	 */
-	public async listAllCustomers(params?: {
+	async listAllCustomers(params?: {
 		name?: string;
 		email?: string;
 		cpfCnpj?: string;
@@ -933,7 +874,7 @@ export class AsaasClient {
 	/**
 	 * List all payments with filters
 	 */
-	public async listAllPayments(params?: {
+	async listAllPayments(params?: {
 		customer?: string;
 		status?: string;
 		billingType?: string;
@@ -962,14 +903,14 @@ export class AsaasClient {
 	/**
 	 * Get a single payment by ID
 	 */
-	public async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
+	async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
 		return this.fetch<AsaasPaymentResponse>(`/payments/${paymentId}`);
 	}
 
 	/**
 	 * List all subscriptions with filters
 	 */
-	public async listAllSubscriptions(params?: {
+	async listAllSubscriptions(params?: {
 		customer?: string;
 		status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 		offset?: number;
@@ -990,7 +931,7 @@ export class AsaasClient {
 	 * Note: Asaas doesn't have a direct financial summary endpoint,
 	 * so we aggregate from payments list
 	 */
-	public async getFinancialSummary(params?: {
+	async getFinancialSummary(params?: {
 		startDate?: string; // YYYY-MM-DD
 		endDate?: string; // YYYY-MM-DD
 	}): Promise<AsaasFinancialSummaryResponse> {

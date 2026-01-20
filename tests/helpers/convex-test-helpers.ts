@@ -13,8 +13,9 @@ import type { Id } from '../../convex/_generated/dataModel';
  * @param overrides - Partial student data to override defaults
  * @returns Test student object
  */
-export function createTestStudent(overrides: Partial<any> = {}) {
+export function createTestStudent(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
+		// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 		_id: 'test_student_id' as Id<'students'>,
 		name: 'Test Student',
 		email: 'test@example.com',
@@ -35,7 +36,7 @@ export function createTestStudent(overrides: Partial<any> = {}) {
  * @param overrides - Partial customer data to override defaults
  * @returns Test Asaas customer object
  */
-export function mockAsaasCustomer(overrides: Partial<any> = {}) {
+export function mockAsaasCustomer(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'cus_test123',
 		name: 'Test Customer',
@@ -52,8 +53,9 @@ export function mockAsaasCustomer(overrides: Partial<any> = {}) {
  * @param overrides - Partial payment data to override defaults
  * @returns Test payment object
  */
-export function createTestPayment(overrides: Partial<any> = {}) {
+export function createTestPayment(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
+		// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 		_id: 'test_payment_id' as Id<'asaasPayments'>,
 		studentId: 'test_student_id' as Id<'students'>,
 		asaasPaymentId: 'pay_test123',
@@ -73,8 +75,9 @@ export function createTestPayment(overrides: Partial<any> = {}) {
  * @param overrides - Partial enrollment data to override defaults
  * @returns Test enrollment object
  */
-export function createTestEnrollment(overrides: Partial<any> = {}) {
+export function createTestEnrollment(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
+		// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 		_id: 'test_enrollment_id' as Id<'enrollments'>,
 		studentId: 'test_student_id' as Id<'students'>,
 		product: 'trintae3' as const,
@@ -94,8 +97,9 @@ export function createTestEnrollment(overrides: Partial<any> = {}) {
  * @param overrides - Partial lead data to override defaults
  * @returns Test lead object
  */
-export function createTestLead(overrides: Partial<any> = {}) {
+export function createTestLead(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
+		// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 		_id: 'test_lead_id' as Id<'leads'>,
 		name: 'Test Lead',
 		email: 'lead@example.com',
@@ -114,8 +118,9 @@ export function createTestLead(overrides: Partial<any> = {}) {
  * @param overrides - Partial sync log data to override defaults
  * @returns Test sync log object
  */
-export function createTestSyncLog(overrides: Partial<any> = {}) {
+export function createTestSyncLog(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
+		// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 		_id: 'test_sync_log_id' as Id<'asaasSyncLogs'>,
 		syncType: 'customers' as const,
 		status: 'completed' as const,
@@ -140,12 +145,13 @@ export function createMockDb() {
 
 	return {
 		get: vi.fn((id: string) => db.get(id)),
-		insert: vi.fn((_table: string, doc: any) => {
+		insert: vi.fn((_table: string, doc: Record<string, unknown>) => {
 			const id = `table_${Date.now()}`;
+			// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
 			db.set(id, { _id: id, ...doc });
 			return id;
 		}),
-		patch: vi.fn((id: string, _updates: any) => {
+		patch: vi.fn((id: string, _updates: Record<string, unknown>) => {
 			const existing = db.get(id);
 			if (existing) {
 				db.set(id, { ...existing, ..._updates });
@@ -155,7 +161,7 @@ export function createMockDb() {
 			db.delete(id);
 		}),
 		query: vi.fn((_table: string) => ({
-			withIndex: vi.fn((_index: string, _fn: any) => ({
+			withIndex: vi.fn((_index: string, _fn: (query: unknown) => unknown) => ({
 				first: vi.fn(() => null),
 				collect: vi.fn(() => []),
 			})),
@@ -168,7 +174,7 @@ export function createMockDb() {
  * @param overrides - Partial auth data to override defaults
  * @returns Mock auth context
  */
-export function createMockAuth(overrides: Partial<any> = {}) {
+export function createMockAuth(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		getUserIdentity: vi.fn().mockResolvedValue({
 			subject: 'test_user_123',
@@ -194,7 +200,7 @@ export function createMockScheduler() {
  * @param overrides - Partial context data to override defaults
  * @returns Complete mock context
  */
-export function createMockContext(overrides: Partial<any> = {}) {
+export function createMockContext(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		db: createMockDb(),
 		auth: createMockAuth(),
@@ -219,7 +225,7 @@ export function wait(ms: number): Promise<void> {
  * @param overrides - Partial payload data to override defaults
  * @returns Test webhook payload
  */
-export function createTestWebhookPayload(overrides: Partial<any> = {}) {
+export function createTestWebhookPayload(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		event: 'PAYMENT_CONFIRMED',
 		paymentId: 'pay_test123',

@@ -1,2 +1,0 @@
-convex/asaas/exportWorkers.ts(129,26): error TS2589: Type instantiation is excessively deep and possibly infinite.
-convex/asaas/exportWorkers.ts(155,4): error TS2578: Unused '@ts-expect-error' directive.

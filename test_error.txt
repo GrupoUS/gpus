@@ -1,3 +1,0 @@
-[91m[1mError: [0mUnexpected error, check log file at C:\Users\Mauri\.local\share\opencode\log\2026-01-04T184037.log for more details
-
-error: Cannot find module './key/export.js' from 'C:\Users\Mauri\.cache\opencode\node_modules\@openauthjs\openauth\node_modules\jose\dist\browser\index.js'
