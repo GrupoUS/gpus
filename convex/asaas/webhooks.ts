@@ -16,7 +16,7 @@ import {
 	processCustomerWorker,
 	processPaymentWorker,
 	processSubscriptionWorker,
-} from './import_workers';
+} from './importWorkers';
 import type {
 	AsaasCustomerResponse,
 	AsaasPaymentResponse,

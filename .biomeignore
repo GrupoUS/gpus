@@ -7,3 +7,5 @@ node_modules
 .git
 .vscode
 .agent
+convex/_generated
+src/routeTree.gen.ts

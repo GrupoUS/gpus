@@ -6,7 +6,7 @@ import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { action } from '../_generated/server';
 import { getOrganizationId } from '../lib/auth';
-import type { ProgressStats } from './batch_processor';
+import type { ProgressStats } from './batchProcessor';
 import type {
 	AsaasApiError,
 	AsaasClient,
@@ -22,7 +22,6 @@ const DIGIT_REGEX = /\D/g;
 /**
  * Check if a customer already exists in Asaas by CPF or Email
  */
-// @ts-expect-error: break deep type instantiation
 export const checkExistingAsaasCustomer = action({
 	args: {
 		cpf: v.optional(v.string()),
@@ -93,9 +92,8 @@ export const createAsaasCustomer = action({
 			});
 
 			// Save Asaas ID to student record
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-			const mutation = (internal as any).asaas.mutations.updateStudentAsaasId;
-			await (ctx as any).runMutation(mutation, {
+			const mutation = internal.asaas.mutations.updateStudentAsaasId;
+			await ctx.runMutation(mutation, {
 				studentId: args.studentId,
 				asaasCustomerId: customer.id,
 			});
@@ -567,8 +565,8 @@ export const importCustomersFromAsaas = action({
 			}
 
 			// Import batch processor and workers dynamically to avoid circular imports
-			const { processBatch } = await import('./batch_processor');
-			const { createCustomerBatchProcessor } = await import('./import_workers');
+			const { processBatch } = await import('./batchProcessor');
+			const { createCustomerBatchProcessor } = await import('./importWorkers');
 
 			// Create worker function with context and organizationId
 			// createCustomerBatchProcessor wraps the worker with timeout and try/catch logic
@@ -716,8 +714,8 @@ export const importPaymentsFromAsaas = action({
 			}
 
 			// Import batch processor and workers dynamically
-			const { processBatch } = await import('./batch_processor');
-			const { processPaymentWorker } = await import('./import_workers');
+			const { processBatch } = await import('./batchProcessor');
+			const { processPaymentWorker } = await import('./importWorkers');
 
 			// Create worker function with context and organizationId
 			const worker = (payment: AsaasPaymentResponse) =>
@@ -862,8 +860,8 @@ export const importSubscriptionsFromAsaas = action({
 			}
 
 			// Import batch processor and workers dynamically
-			const { processBatch } = await import('./batch_processor');
-			const { processSubscriptionWorker } = await import('./import_workers');
+			const { processBatch } = await import('./batchProcessor');
+			const { processSubscriptionWorker } = await import('./importWorkers');
 
 			// Create worker function with context and organizationId
 			const worker = (subscription: AsaasSubscriptionResponse) =>
@@ -1070,9 +1068,9 @@ export const importAllFromAsaas = action({
 		}
 
 		// Import batch processor and workers dynamically to avoid circular dependencies
-		const { processBatch } = await import('./batch_processor');
+		const { processBatch } = await import('./batchProcessor');
 		const { processCustomerWorker, processPaymentWorker, processSubscriptionWorker } = await import(
-			'./import_workers'
+			'./importWorkers'
 		);
 
 		const BATCH_CONFIG = {

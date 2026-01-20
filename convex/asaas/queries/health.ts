@@ -164,8 +164,8 @@ export const getEventTypeDistribution = internalQuery({
 export const checkWebhookSystemHealth = internalQuery({
 	args: {},
 	returns: v.null(),
-	handler: async () => {
-		return null;
+	handler: () => {
+		return Promise.resolve(null);
 	},
 });
 

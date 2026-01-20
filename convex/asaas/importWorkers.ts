@@ -13,7 +13,7 @@ import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import type { ActionCtx } from '../_generated/server';
 import { maskCPF } from '../lib/masking';
-import type { WorkerResult } from './batch_processor';
+import type { WorkerResult } from './batchProcessor';
 import type {
 	AsaasCustomerResponse,
 	AsaasPaymentResponse,

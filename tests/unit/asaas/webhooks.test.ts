@@ -154,7 +154,7 @@ describe('Webhooks - Idempotency', () => {
 });
 
 describe('Webhooks - Payment Processing', () => {
-	it('should process PAYMENT_CONFIRMED event', async () => {
+	it('should process PAYMENT_CONFIRMED event', () => {
 		const ctx = createMockContext();
 		ctx.db.insert = vi.fn().mockResolvedValue('webhook-id');
 		ctx.db.query = vi.fn().mockReturnValue({
@@ -202,9 +202,9 @@ describe('Webhooks - Payment Processing', () => {
 			CANCELLED: 'CANCELLED',
 		};
 
-		expect(statusMap['CONFIRMED']).toBe('CONFIRMED');
-		expect(statusMap['RECEIVED']).toBe('RECEIVED');
-		expect(statusMap['OVERDUE']).toBe('OVERDUE');
+		expect(statusMap.CONFIRMED).toBe('CONFIRMED');
+		expect(statusMap.RECEIVED).toBe('RECEIVED');
+		expect(statusMap.OVERDUE).toBe('OVERDUE');
 	});
 
 	it('should skip webhook without payment ID', () => {

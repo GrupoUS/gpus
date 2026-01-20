@@ -340,7 +340,6 @@ async function checkApiErrorRate(ctx: any): Promise<{
 	totalRequests: number;
 }> {
 	// check health
-	// @ts-expect-error
 	const logs = await ctx.runQuery(
 		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 		(internal as any).asaas.monitoring.getApiHealthMetricsInternal as any,
@@ -481,7 +480,7 @@ async function checkPendingConflicts(ctx: any): Promise<{
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	conflictCount: number;
 }> {
-	const conflicts = await ctx.runQuery(internal.asaas.conflict_resolution.getPendingConflicts, {});
+	const conflicts = await ctx.runQuery(internal.asaas.conflictResolution.getPendingConflicts, {});
 
 	const conflictCount = conflicts.length;
 

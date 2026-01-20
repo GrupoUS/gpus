@@ -31,7 +31,6 @@ export function useCampaignsViewModel(Route: any) {
 	}, [navigate]);
 
 	// Fetch campaigns with optional status filter
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
 	const campaigns = useQuery((api as any).emailMarketing.getCampaigns, {
 		status: status === 'all' ? undefined : status,
 	});

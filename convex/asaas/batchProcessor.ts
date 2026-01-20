@@ -125,7 +125,7 @@ export async function processBatch<T, R>(
 
 	// Adaptive batch sizing state
 	let currentBatchSize = fullConfig.batchSize;
-	let consecutiveErrors = 0;
+
 	// Process items in batches
 	for (let i = 0; i < items.length; i += currentBatchSize) {
 		currentBatch++;
@@ -140,39 +140,22 @@ export async function processBatch<T, R>(
 		);
 
 		// Aggregate results
-		for (const result of batchResults) {
-			totalProcessed++;
-
-			if (result.success && result.data) {
-				successful.push(result.data);
-				if (result.created) createdCount++;
-				if (result.updated) updatedCount++;
-			} else if (result.skipped) {
-				skipped.push({
-					item: batch[batchResults.indexOf(result)],
-					reason: result.reason || 'Skipped',
-				});
-			} else if (result.success) {
-				consecutiveErrors = 0;
-			} else {
-				failed.push({
-					item: batch[batchResults.indexOf(result)],
-					error: result.error || 'Unknown error',
-				});
-				consecutiveErrors++;
-			}
-		}
+		const aggregation = aggregateBatchResults(batch, batchResults);
+		successful.push(...aggregation.successful);
+		failed.push(...aggregation.failed);
+		skipped.push(...aggregation.skipped);
+		createdCount += aggregation.createdCount;
+		updatedCount += aggregation.updatedCount;
+		totalProcessed += batchResults.length;
 
 		// Adaptive batch sizing
 		if (fullConfig.adaptiveBatching) {
-			const errorRate = consecutiveErrors / batch.length;
-			if (errorRate > 0.5) {
-				// Reduce batch size if error rate is high
-				currentBatchSize = Math.max(3, Math.floor(currentBatchSize / 2));
-			} else if (errorRate < 0.1 && currentBatchSize < fullConfig.batchSize * 2) {
-				// Increase batch size if error rate is low
-				currentBatchSize = Math.min(fullConfig.batchSize * 2, currentBatchSize + 2);
-			}
+			currentBatchSize = calculateNextBatchSize(
+				currentBatchSize,
+				aggregation.consecutiveErrors,
+				batch.length,
+				fullConfig.batchSize,
+			);
 		}
 
 		// Progress callback
@@ -221,6 +204,29 @@ export async function processBatch<T, R>(
 }
 
 /**
+ * Calculate next batch size based on error rate
+ */
+function calculateNextBatchSize(
+	currentSize: number,
+	consecutiveErrors: number,
+	batchLength: number,
+	maxSize: number,
+): number {
+	const errorRate = consecutiveErrors / batchLength;
+	if (errorRate > 0.5) {
+		// Reduce batch size if error rate is high
+		return Math.max(3, Math.floor(currentSize / 2));
+	}
+
+	if (errorRate < 0.1 && currentSize < maxSize * 2) {
+		// Increase batch size if error rate is low
+		return Math.min(maxSize * 2, currentSize + 2);
+	}
+
+	return currentSize;
+}
+
+/**
  * Process a single batch with concurrency control
  */
 async function processConcurrentBatch<T, R>(
@@ -237,40 +243,48 @@ async function processConcurrentBatch<T, R>(
 
 		// Execute all items in chunk concurrently
 		const chunkResults = await Promise.all(
-			chunk.map(async (item) => {
-				let lastError: string | undefined;
-
-				// Retry logic for individual items
-				for (let attempt = 0; attempt <= maxRetries; attempt++) {
-					try {
-						const result = await worker(item);
-						return result;
-					} catch (error) {
-						lastError = error instanceof Error ? error.message : String(error);
-
-						// Don't retry on last attempt
-						if (attempt === maxRetries) {
-							break;
-						}
-
-						// Exponential backoff for retries
-						const delay = Math.min(1000 * 2 ** attempt, 5000);
-						await sleep(delay);
-					}
-				}
-
-				// All retries failed
-				return {
-					success: false,
-					error: lastError || 'Max retries exceeded',
-				} as WorkerResult<R>;
-			}),
+			chunk.map((item) => processItemWithRetry(item, worker, maxRetries)),
 		);
 
 		results.push(...chunkResults);
 	}
 
 	return results;
+}
+
+/**
+ * Process a single item with retry logic
+ */
+async function processItemWithRetry<T, R>(
+	item: T,
+	worker: (input: T) => Promise<WorkerResult<R>>,
+	maxRetries: number,
+): Promise<WorkerResult<R>> {
+	let lastError: string | undefined;
+
+	// Retry logic for individual items
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			return await worker(item);
+		} catch (error) {
+			lastError = error instanceof Error ? error.message : String(error);
+
+			// Don't retry on last attempt
+			if (attempt === maxRetries) {
+				break;
+			}
+
+			// Exponential backoff for retries
+			const delay = Math.min(1000 * 2 ** attempt, 5000);
+			await sleep(delay);
+		}
+	}
+
+	// All retries failed
+	return {
+		success: false,
+		error: lastError || 'Max retries exceeded',
+	} as WorkerResult<R>;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -300,4 +314,49 @@ export function calculateETR(startTime: number, processed: number, total: number
  */
 export function formatProgress(processed: number, total: number): string {
 	return `${((processed / total) * 100).toFixed(1)}%`;
+}
+
+/**
+ * Aggregate results from a batch
+ */
+function aggregateBatchResults<T, R>(batch: T[], batchResults: WorkerResult<R>[]) {
+	const successful: R[] = [];
+	const failed: Array<{ item: unknown; error: string }> = [];
+	const skipped: Array<{ item: unknown; reason: string }> = [];
+	let createdCount = 0;
+	let updatedCount = 0;
+	let consecutiveErrors = 0;
+
+	for (let i = 0; i < batchResults.length; i++) {
+		const result = batchResults[i];
+		const item = batch[i];
+
+		if (result.success && result.data) {
+			successful.push(result.data);
+			if (result.created) createdCount++;
+			if (result.updated) updatedCount++;
+			consecutiveErrors = 0;
+		} else if (result.skipped) {
+			skipped.push({
+				item,
+				reason: result.reason || 'Skipped',
+			});
+			consecutiveErrors = 0;
+		} else {
+			failed.push({
+				item,
+				error: result.error || 'Unknown error',
+			});
+			consecutiveErrors++;
+		}
+	}
+
+	return {
+		successful,
+		failed,
+		skipped,
+		createdCount,
+		updatedCount,
+		consecutiveErrors,
+	};
 }

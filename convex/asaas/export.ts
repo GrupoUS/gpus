@@ -50,8 +50,8 @@ export const exportStudentToAsaas = action({
 		const asaasClient = await getAsaasClientFromSettings(ctx);
 
 		// Import batch processor and workers dynamically
-		const { processBatch } = await import('./batch_processor');
-		const { exportStudentWorker } = await import('./export_workers');
+		const { processBatch } = await import('./batchProcessor');
+		const { exportStudentWorker } = await import('./exportWorkers');
 
 		// Create worker function
 		const worker = (studentData: Doc<'students'>) =>
@@ -122,8 +122,8 @@ export const exportPaymentToAsaas = action({
 		const asaasClient = await getAsaasClientFromSettings(ctx);
 
 		// Import batch processor and workers dynamically
-		const { processBatch } = await import('./batch_processor');
-		const { exportPaymentWorker } = await import('./export_workers');
+		const { processBatch } = await import('./batchProcessor');
+		const { exportPaymentWorker } = await import('./exportWorkers');
 
 		// Create worker function
 		const worker = (paymentData: Doc<'asaasPayments'>) =>
@@ -160,7 +160,6 @@ export const exportPaymentToAsaas = action({
 /**
  * Bulk export students to Asaas
  */
-// @ts-expect-error: break deep type instantiation
 export const bulkExportStudents = action({
 	args: {
 		limit: v.optional(v.number()),
@@ -204,8 +203,8 @@ export const bulkExportStudents = action({
 		const asaasClient = await getAsaasClientFromSettings(ctx);
 
 		// Import batch processor and workers dynamically
-		const { processBatch } = await import('./batch_processor');
-		const { exportStudentWorker } = await import('./export_workers');
+		const { processBatch } = await import('./batchProcessor');
+		const { exportStudentWorker } = await import('./exportWorkers');
 
 		// Create worker function
 		const worker = (student: Doc<'students'>) =>
@@ -294,8 +293,8 @@ export const bulkExportPayments = action({
 		const asaasClient = await getAsaasClientFromSettings(ctx);
 
 		// Import batch processor and workers dynamically
-		const { processBatch } = await import('./batch_processor');
-		const { exportPaymentWorker } = await import('./export_workers');
+		const { processBatch } = await import('./batchProcessor');
+		const { exportPaymentWorker } = await import('./exportWorkers');
 
 		// Create worker function
 		const worker = (payment: Doc<'asaasPayments'>) =>

@@ -13,7 +13,7 @@
 import { internal } from '../_generated/api';
 import type { Doc, Id } from '../_generated/dataModel';
 import type { ActionCtx } from '../_generated/server'; // Import ActionCtx
-import type { WorkerResult } from './batch_processor';
+import type { WorkerResult } from './batchProcessor';
 import type {
 	AsaasCustomerPayload,
 	AsaasCustomerResponse,
@@ -125,7 +125,7 @@ export async function exportStudentWorker(
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
 		// Update student with Asaas customer ID
-		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+		// @ts-expect-error: break deep type instantiation on internal api
 		await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 			studentId: student._id,
 			asaasCustomerId: asaasCustomer.id,
@@ -153,7 +153,7 @@ export async function exportStudentWorker(
 		) {
 			// Create conflict record for manual resolution
 			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-			await ctx.runMutation((internal as any).asaas.conflict_resolution.createConflict, {
+			await ctx.runMutation((internal as any).asaas.conflictResolution.createConflict, {
 				conflictType: 'duplicate_customer',
 				studentId: student._id,
 				localData: {
@@ -247,7 +247,6 @@ export async function exportPaymentWorker(
 		// Add installment info if available
 		if (payment.installmentNumber && payment.totalInstallments) {
 			paymentPayload.installmentCount = payment.totalInstallments;
-			// @ts-expect-error: Asaas API supports this but type definition might be outdated
 			paymentPayload.installmentNumber = payment.installmentNumber;
 		}
 

@@ -10,7 +10,7 @@ export * from './alerts';
 export * from './audit';
 // Type regeneration trigger
 export { logApiUsage } from './audit';
-export * from './conflict_resolution';
+export * from './conflictResolution';
 export * from './export';
 export * from './monitoring';
 export * from './mutations';

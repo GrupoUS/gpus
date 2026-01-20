@@ -93,9 +93,8 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
-			// @ts-expect-error: break deep type instantiation
-			const mutation = internal.asaas.mutations.updateStudentAsaasId;
-			await (ctx as any).runMutation(mutation, {
+			const updateAsaasIdMutation = internal.asaas.mutations.updateStudentAsaasId;
+			await ctx.runMutation(updateAsaasIdMutation, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
 			});
@@ -150,7 +149,7 @@ export const resolveConflictManually = mutation({
 	},
 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
 		// Call internal mutation
-		return await ctx.runMutation(internal.asaas.conflict_resolution.resolveCustomerConflict, {
+		return await ctx.runMutation(internal.asaas.conflictResolution.resolveCustomerConflict, {
 			conflictId: args.conflictId,
 			action: args.action,
 			primaryStudentId: args.primaryStudentId,

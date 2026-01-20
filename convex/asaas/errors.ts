@@ -1,22 +1,19 @@
 /**
- * Asaas Error Handling
+ * Asaas Integration Errors
  *
- * Custom error classes and error handling utilities for Asaas API integration.
+ * Standardized error classes and utilities for handling Asaas API errors,
+ * network issues, and validation failures.
  */
-
-// ═══════════════════════════════════════════════════════
-// ERROR CLASSES
-// ═══════════════════════════════════════════════════════
 
 /**
  * Base error class for all Asaas-related errors
  */
 export class AsaasError extends Error {
-	public readonly code: string;
-	public readonly isTransient: boolean;
-	public readonly isRetryable: boolean;
-	public readonly statusCode?: number;
-	public readonly originalError?: unknown;
+	readonly code: string;
+	readonly isTransient: boolean;
+	readonly isRetryable: boolean;
+	readonly statusCode?: number;
+	readonly originalError?: unknown;
 
 	constructor(
 		message: string,
@@ -33,227 +30,141 @@ export class AsaasError extends Error {
 		this.isRetryable = isRetryable;
 		this.statusCode = statusCode;
 		this.originalError = originalError;
-		Error.captureStackTrace(this, this.constructor);
-	}
 
-	toJSON() {
-		return {
-			name: this.name,
-			message: this.message,
-			code: this.code,
-			isTransient: this.isTransient,
-			isRetryable: this.isRetryable,
-			statusCode: this.statusCode,
-		};
+		// Ensure stack trace is captured correctly
+		if (Error.captureStackTrace) {
+			Error.captureStackTrace(this, AsaasError);
+		}
 	}
 }
 
 /**
- * Configuration error (missing API key, invalid config, etc.)
+ * Error thrown when Asaas API returns an error response
  */
-export class AsaasConfigurationError extends AsaasError {
+export class AsaasApiError extends AsaasError {
+	readonly errors: Array<{ code: string; description: string }>;
+
+	constructor(
+		message: string,
+		errors: Array<{ code: string; description: string }> = [],
+		statusCode?: number,
+		originalError?: unknown,
+	) {
+		// API errors are generally not transient but might be retryable depending on the code
+		const isRetryable = statusCode === 429 || statusCode === 500 || statusCode === 503;
+		super(message, 'API_ERROR', false, isRetryable, statusCode, originalError);
+		this.name = 'AsaasApiError';
+		this.errors = errors;
+	}
+}
+
+/**
+ * Error thrown when authentication with Asaas fails
+ */
+export class AsaasAuthError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
-		super(message, 'CONFIGURATION_ERROR', false, false, undefined, originalError);
-		this.name = 'AsaasConfigurationError';
+		super(message, 'AUTH_ERROR', false, false, 401, originalError);
+		this.name = 'AsaasAuthError';
 	}
 }
 
 /**
- * Validation error (invalid payload, malformed data, etc.)
- */
-export class AsaasValidationError extends AsaasError {
-	constructor(message: string, originalError?: unknown) {
-		super(message, 'VALIDATION_ERROR', false, false, 400, originalError);
-		this.name = 'AsaasValidationError';
-	}
-}
-
-/**
- * Authentication error (invalid API key, expired token, etc.)
- */
-export class AsaasAuthenticationError extends AsaasError {
-	constructor(message: string, originalError?: unknown) {
-		super(message, 'AUTHENTICATION_ERROR', false, false, 401, originalError);
-		this.name = 'AsaasAuthenticationError';
-	}
-}
-
-/**
- * Not found error (resource doesn't exist)
- */
-export class AsaasNotFoundError extends AsaasError {
-	constructor(message: string, originalError?: unknown) {
-		super(message, 'NOT_FOUND_ERROR', false, false, 404, originalError);
-		this.name = 'AsaasNotFoundError';
-	}
-}
-
-/**
- * Rate limit error (too many requests)
- */
-export class AsaasRateLimitError extends AsaasError {
-	constructor(message: string, retryAfter?: number, originalError?: unknown) {
-		super(message, 'RATE_LIMIT_ERROR', true, true, 429, originalError);
-		this.name = 'AsaasRateLimitError';
-		this.retryAfter = retryAfter;
-	}
-
-	public retryAfter?: number;
-}
-
-/**
- * Server error (5xx errors, service unavailable, etc.)
- */
-export class AsaasServerError extends AsaasError {
-	constructor(message: string, statusCode: number, originalError?: unknown) {
-		super(message, 'SERVER_ERROR', true, true, statusCode, originalError);
-		this.name = 'AsaasServerError';
-	}
-}
-
-/**
- * Network error (connection issues, timeouts, etc.)
+ * Error thrown when a network or timeout error occurs
  */
 export class AsaasNetworkError extends AsaasError {
 	constructor(message: string, originalError?: unknown) {
+		// Network errors are transient and retryable
 		super(message, 'NETWORK_ERROR', true, true, undefined, originalError);
 		this.name = 'AsaasNetworkError';
 	}
 }
 
 /**
- * Idempotency error (duplicate operation)
+ * Error thrown when validation fails before calling the API
  */
-export class AsaasIdempotencyError extends AsaasError {
-	constructor(message: string, originalError?: unknown) {
-		super(message, 'IDEMPOTENCY_ERROR', false, false, 409, originalError);
-		this.name = 'AsaasIdempotencyError';
+export class AsaasValidationError extends AsaasError {
+	constructor(message: string) {
+		super(message, 'VALIDATION_ERROR', false, false);
+		this.name = 'AsaasValidationError';
 	}
 }
 
-// ═══════════════════════════════════════════════════════
-// ERROR CLASSIFICATION
-// ═══════════════════════════════════════════════════════
+/**
+ * Error thrown when rate limit is exceeded
+ */
+export class AsaasRateLimitError extends AsaasError {
+	retryAfter?: number;
+
+	constructor(message: string, retryAfter?: number, originalError?: unknown) {
+		super(message, 'RATE_LIMIT_ERROR', true, true, 429, originalError);
+		this.name = 'AsaasRateLimitError';
+		this.retryAfter = retryAfter;
+	}
+}
 
 /**
- * Classify an error based on HTTP status code and error details
+ * Maps unknown errors to AsaasError instances
  */
-export function classifyError(error: unknown): AsaasError {
-	// Already classified error
+export function mapToAsaasError(error: unknown): AsaasError {
 	if (error instanceof AsaasError) {
 		return error;
 	}
 
-	// Network errors (no response)
-	if (error instanceof Error && !('response' in error)) {
-		return new AsaasNetworkError(`Erro de rede: ${error.message}`, error);
-	}
+	// Handle Axios-like errors
+	const apiError = error as {
+		response?: {
+			status?: number;
+			data?: {
+				errors?: Array<{ code: string; description: string }>;
+			};
+		};
+		request?: unknown;
+		message?: string;
+	};
 
-	// API errors with response
-	const apiError = error as any;
-	const statusCode = apiError.response?.status;
-	const responseData = apiError.response?.data;
+	if (apiError.response) {
+		const statusCode = apiError.response.status;
+		const responseData = apiError.response.data;
 
-	// Configuration errors (no API key)
-	if (apiError.message?.includes('ASAAS_API_KEY') || apiError.message?.includes('api_key')) {
-		return new AsaasConfigurationError(apiError.message, error);
-	}
+		if (statusCode === 401) {
+			return new AsaasAuthError('Falha na autenticação com Asaas', error);
+		}
 
-	// Authentication errors (401)
-	if (statusCode === 401) {
-		const message = responseData?.errors?.[0]?.description || 'Autenticação falhou';
-		return new AsaasAuthenticationError(message, error);
-	}
+		if (statusCode === 429) {
+			return new AsaasRateLimitError('Limite de requisições excedido', undefined, error);
+		}
 
-	// Not found errors (404)
-	if (statusCode === 404) {
-		const message = responseData?.errors?.[0]?.description || 'Recurso não encontrado';
-		return new AsaasNotFoundError(message, error);
-	}
-
-	// Rate limit errors (429)
-	if (statusCode === 429) {
-		const message = responseData?.errors?.[0]?.description || 'Limite de requisições excedido';
-		const retryAfter = apiError.response?.headers?.['retry-after'];
-		return new AsaasRateLimitError(
-			message,
-			retryAfter ? Number.parseInt(retryAfter, 10) : undefined,
-			error,
-		);
-	}
-
-	// Client errors (4xx, excluding 401, 404, 429)
-	if (statusCode >= 400 && statusCode < 500) {
+		const errors = responseData?.errors || [];
 		const message =
-			responseData?.errors?.[0]?.description || apiError.message || 'Erro na requisição';
-		return new AsaasValidationError(message, error);
+			errors.length > 0 ? errors[0].description : apiError.message || 'Erro na API do Asaas';
+
+		return new AsaasApiError(message, errors, statusCode, error);
 	}
 
-	// Server errors (5xx)
-	if (statusCode >= 500) {
-		const message = responseData?.errors?.[0]?.description || 'Erro no servidor Asaas';
-		return new AsaasServerError(message, statusCode, error);
+	if (apiError.request) {
+		return new AsaasNetworkError('Erro de rede ao conectar com Asaas', error);
 	}
 
-	// Unknown error
-	const message = apiError.message || 'Erro desconhecido';
-	return new AsaasError(message, 'UNKNOWN_ERROR', false, false, statusCode, error);
+	return new AsaasError(
+		apiError.message || 'Erro desconhecido na integração com Asaas',
+		'UNKNOWN_ERROR',
+		false,
+		false,
+		undefined,
+		error,
+	);
 }
 
-/**
- * Check if error is retryable
- */
-export function isRetryableError(error: unknown): boolean {
-	const classified = classifyError(error);
-	return classified.isRetryable;
-}
+// Regex for redaction
+const REDACTION_REGEX = /^[a-zA-Z0-9]+$/;
 
 /**
- * Check if error is transient (temporary)
+ * Sanitizes sensitive data for logging
  */
-export function isTransientError(error: unknown): boolean {
-	const classified = classifyError(error);
-	return classified.isTransient;
-}
-
-/**
- * Get user-friendly error message
- */
-export function getUserErrorMessage(error: unknown): string {
-	const classified = classifyError(error);
-
-	switch (classified.code) {
-		case 'CONFIGURATION_ERROR':
-			return 'Configuração da API Asaas está incompleta. Entre em contato com o suporte.';
-		case 'AUTHENTICATION_ERROR':
-			return 'Credenciais da API Asaas inválidas. Entre em contato com o suporte.';
-		case 'RATE_LIMIT_ERROR':
-			return 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
-		case 'SERVER_ERROR':
-			return 'Serviço Asaas temporariamente indisponível. Tente novamente em instantes.';
-		case 'NETWORK_ERROR':
-			return 'Erro de conexão com Asaas. Verifique sua internet e tente novamente.';
-		case 'VALIDATION_ERROR':
-			return `Dados inválidos: ${classified.message}`;
-		case 'NOT_FOUND_ERROR':
-			return 'Recurso não encontrado no Asaas.';
-		case 'IDEMPOTENCY_ERROR':
-			return 'Operação já realizada anteriormente.';
-		default:
-			return 'Erro ao processar requisição. Tente novamente ou entre em contato com o suporte.';
-	}
-}
-
-/**
- * Sanitize error for logging (remove sensitive data)
- */
-export function sanitizeErrorForLogging(error: unknown): string {
-	const classified = classifyError(error);
-	const json = classified.toJSON();
-
+export function sanitizeForLog(json: unknown): string {
 	// Remove any potential API keys or tokens
 	return JSON.stringify(json, (_key, value) => {
-		if (typeof value === 'string' && value.length > 32 && /^[a-zA-Z0-9]+$/.test(value)) {
+		if (typeof value === 'string' && value.length > 32 && REDACTION_REGEX.test(value)) {
 			return '[REDACTED]';
 		}
 		return value;

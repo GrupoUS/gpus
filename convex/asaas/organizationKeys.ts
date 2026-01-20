@@ -25,6 +25,7 @@ export const getOrganizationApiKey = query({
 	args: {},
 	returns: v.union(
 		v.object({
+			// biome-ignore lint/style/useNamingConvention: Convex system field
 			_id: v.id('organizationAsaasApiKeys'),
 			organizationId: v.string(),
 			apiKeyMasked: v.string(),
@@ -280,17 +281,26 @@ export const testOrganizationApiKey = action({
 					totalCustomers: response.totalCount ?? 0,
 				},
 			};
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const err = error as {
+				response?: {
+					status?: number;
+					data?: {
+						errors?: Array<{ description?: string }>;
+					};
+				};
+				message?: string;
+			};
 			const errorMessage =
-				error.response?.data?.errors?.[0]?.description ||
-				error.message ||
+				err.response?.data?.errors?.[0]?.description ||
+				err.message ||
 				'Erro desconhecido ao conectar com Asaas';
 
 			return {
 				success: false,
 				message: `Falha na conexão: ${errorMessage}`,
 				details: {
-					statusCode: error.response?.status,
+					statusCode: err.response?.status,
 					error: errorMessage,
 				},
 			};

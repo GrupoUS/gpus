@@ -6,7 +6,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { calculateETR, formatProgress, processBatch } from '../../../convex/asaas/batch_processor';
+import { calculateETR, formatProgress, processBatch } from '../../../convex/asaas/batchProcessor';
 
 describe('BatchProcessor', () => {
 	describe('Adaptive Batching', () => {
@@ -95,7 +95,7 @@ describe('BatchProcessor', () => {
 			expect(onProgress.mock.calls.length).toBeGreaterThanOrEqual(2);
 
 			// Verify last progress call (final update)
-			const lastCall = onProgress.mock.calls[onProgress.mock.calls.length - 1][0];
+			const lastCall = onProgress.mock.calls.at(-1)![0];
 			expect(lastCall.totalProcessed).toBe(100);
 		});
 
@@ -123,7 +123,7 @@ describe('BatchProcessor', () => {
 				onProgress,
 			);
 
-			const lastCall = onProgress.mock.calls[onProgress.mock.calls.length - 1][0];
+			const lastCall = onProgress.mock.calls.at(-1)![0];
 			expect(lastCall.created).toBe(5); // Half created
 			expect(lastCall.updated).toBe(5); // Half updated
 		});

@@ -69,6 +69,7 @@ export interface AsaasPaymentPayload {
 	externalReference?: string;
 	installmentCount?: number;
 	installmentValue?: number;
+	installmentNumber?: number;
 	totalValue?: number;
 	discount?: {
 		value: number;

@@ -14,7 +14,7 @@ export {
 	suppressAlertPublic as suppressAlert,
 } from './asaas/alerts';
 // Conflict resolution (public mutations)
-export { resolveConflictManually as resolveConflict } from './asaas/conflict_resolution';
+export { resolveConflictManually as resolveConflict } from './asaas/conflictResolution';
 // Export actions
 export * from './asaas/export';
 // Monitoring
