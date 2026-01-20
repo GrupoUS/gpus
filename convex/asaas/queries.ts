@@ -774,10 +774,7 @@ export const getAllPayments = query({
 			payments = await ctx.db
 				.query('asaasPayments')
 				.withIndex('by_organization_due_date', (q) =>
-					q
-						.eq('organizationId', orgId)
-						.gte('dueDate', startDate)
-						.lte('dueDate', endDate),
+					q.eq('organizationId', orgId).gte('dueDate', startDate).lte('dueDate', endDate),
 				)
 				.order('desc')
 				.collect();

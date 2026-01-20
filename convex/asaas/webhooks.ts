@@ -301,9 +301,7 @@ export const processWebhookEvent = internalAction({
 				? (payload as { event: string }).event
 				: webhook.event;
 
-		const handlePaymentEvent = async (
-			payment: AsaasPaymentResponse,
-		): Promise<WebhookResult> => {
+		const handlePaymentEvent = async (payment: AsaasPaymentResponse): Promise<WebhookResult> => {
 			const result = await processPaymentWorker(ctx, payment, undefined);
 			if (!result.success) {
 				const reason = result.error || result.reason || 'Payment processing failed';
@@ -375,9 +373,7 @@ export const processWebhookEvent = internalAction({
 			return markDone();
 		};
 
-		const handleCustomerEvent = async (
-			customer: AsaasCustomerResponse,
-		): Promise<WebhookResult> => {
+		const handleCustomerEvent = async (customer: AsaasCustomerResponse): Promise<WebhookResult> => {
 			const result = await processCustomerWorker(ctx, customer, undefined);
 			if (!result.success) {
 				const reason = result.error || result.reason || 'Customer processing failed';

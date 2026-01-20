@@ -20,7 +20,7 @@ vi.mock('./lib/encryption', () => ({
 	isEncrypted: vi.fn((val) => val.startsWith('encrypted_')),
 }));
 
-import * as auth from './lib/auth';
+import { getOrganizationId, hasPermission, requireAuth } from './lib/auth';
 import {
 	getCashbackSettings,
 	getOrganizationSettings,
@@ -46,23 +46,22 @@ describe('Organization Settings', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		(auth.getOrganizationId as any).mockResolvedValue('org_123');
-		(auth.requireAuth as any).mockResolvedValue(mockIdentity);
+		vi.mocked(getOrganizationId).mockResolvedValue('org_123');
+		vi.mocked(requireAuth).mockResolvedValue(mockIdentity);
 		// Default permission denied unless specified
-		(auth.hasPermission as any).mockResolvedValue(false);
+		vi.mocked(hasPermission).mockResolvedValue(false);
 	});
 
 	describe('getOrganizationSettings', () => {
 		it('should throw if not admin', async () => {
-			(auth.hasPermission as any).mockResolvedValue(false);
-			// @ts-expect-error
-			await expect(
-				getOrganizationSettings.handler(mockCtx, { organizationId: 'org_123' }),
-			).rejects.toThrow('Unauthorized');
+			vi.mocked(hasPermission).mockResolvedValue(false);
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getOrganizationSettings as any).handler;
+			await expect(handler(mockCtx, { organizationId: 'org_123' })).rejects.toThrow('Unauthorized');
 		});
 
 		it('should return settings for valid admin', async () => {
-			(auth.hasPermission as any).mockResolvedValue(true);
+			vi.mocked(hasPermission).mockResolvedValue(true);
 
 			const mockSettings = [
 				{ key: 'org_org_123_testKey', value: 'testValue' },
@@ -79,8 +78,9 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
-			const result = await getOrganizationSettings.handler(mockCtx, { organizationId: 'org_123' });
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getOrganizationSettings as any).handler;
+			const result = await handler(mockCtx, { organizationId: 'org_123' });
 
 			expect(result).toEqual({
 				testKey: 'testValue',
@@ -108,8 +108,9 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
-			const result = await getCashbackSettings.handler(mockCtx, { organizationId: 'org_123' });
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getCashbackSettings as any).handler;
+			const result = await handler(mockCtx, { organizationId: 'org_123' });
 			expect(result).toBeNull();
 		});
 
@@ -124,8 +125,9 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
-			const result = await getCashbackSettings.handler(mockCtx, { organizationId: 'org_123' });
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getCashbackSettings as any).handler;
+			const result = await handler(mockCtx, { organizationId: 'org_123' });
 			expect(result).toEqual({
 				cashbackAmount: 10,
 				cashbackType: 'percentage',
@@ -133,18 +135,17 @@ describe('Organization Settings', () => {
 		});
 
 		it('should throw if org mismatch and not admin', async () => {
-			(auth.getOrganizationId as any).mockResolvedValue('org_other');
-			(auth.hasPermission as any).mockResolvedValue(false);
+			vi.mocked(getOrganizationId).mockResolvedValue('org_other');
+			vi.mocked(hasPermission).mockResolvedValue(false);
 
-			// @ts-expect-error
-			await expect(
-				getCashbackSettings.handler(mockCtx, { organizationId: 'org_123' }),
-			).rejects.toThrow('Unauthorized');
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getCashbackSettings as any).handler;
+			await expect(handler(mockCtx, { organizationId: 'org_123' })).rejects.toThrow('Unauthorized');
 		});
 
 		it('should allow if org mismatch but IS admin', async () => {
-			(auth.getOrganizationId as any).mockResolvedValue('org_other');
-			(auth.hasPermission as any).mockResolvedValue(true);
+			vi.mocked(getOrganizationId).mockResolvedValue('org_other');
+			vi.mocked(hasPermission).mockResolvedValue(true);
 
 			const mockQueryBuilder = {
 				withIndex: vi.fn().mockReturnThis(),
@@ -152,28 +153,30 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
-			await getCashbackSettings.handler(mockCtx, { organizationId: 'org_123' });
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (getCashbackSettings as any).handler;
+			await handler(mockCtx, { organizationId: 'org_123' });
 			// Should not throw
 		});
 	});
 
 	describe('updateOrganizationSettings', () => {
 		it('should validate inputs', async () => {
-			(auth.hasPermission as any).mockResolvedValue(true);
+			vi.mocked(hasPermission).mockResolvedValue(true);
 			// Invalid cashback
 			const args = {
 				organizationId: 'org_123',
 				settings: { cashbackAmount: 150, cashbackType: 'percentage' },
 			};
-			// @ts-expect-error
-			await expect(updateOrganizationSettings.handler(mockCtx, args)).rejects.toThrow(
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (updateOrganizationSettings as any).handler;
+			await expect(handler(mockCtx, args)).rejects.toThrow(
 				'Porcentagem de cashback deve estar entre 0 e 100.',
 			);
 		});
 
 		it('should update settings and log activity', async () => {
-			(auth.hasPermission as any).mockResolvedValue(true);
+			vi.mocked(hasPermission).mockResolvedValue(true);
 			const args = {
 				organizationId: 'org_123',
 				settings: {
@@ -190,8 +193,9 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
-			await updateOrganizationSettings.handler(mockCtx, args);
+			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
+			const handler = (updateOrganizationSettings as any).handler;
+			await handler(mockCtx, args);
 
 			// Verify inserts
 			// API key should be encrypted

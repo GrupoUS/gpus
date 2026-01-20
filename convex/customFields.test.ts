@@ -1,5 +1,6 @@
-import type { Id } from './_generated/dataModel';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { Id } from './_generated/dataModel';
 
 // Mock _generated/server BEFORE importing customFields
 vi.mock('./_generated/server', () => ({

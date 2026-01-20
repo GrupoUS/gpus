@@ -31,12 +31,12 @@ export const testAsaasConnection = action({
 		baseUrl: v.string(),
 	},
 	returns: v.any(),
-		handler: async (_ctx, args) => {
-			try {
-				const client = createAsaasClient({
-					apiKey: args.apiKey,
-					baseUrl: args.baseUrl,
-				});
+	handler: async (_ctx, args) => {
+		try {
+			const client = createAsaasClient({
+				apiKey: args.apiKey,
+				baseUrl: args.baseUrl,
+			});
 
 			// testConnection makes a lightweight call (e.g. list customers limit=1)
 			await client.testConnection();
@@ -81,54 +81,52 @@ export const sendMessageToDify = action({
 		user: v.string(),
 	},
 	returns: v.any(),
-		handler: async (ctx, args) => {
-			const internalApi = getInternalApi();
-			const config = (await ctx.runQuery(internalApi.settings.internalGetIntegrationConfig, {
-				integrationName: 'dify',
-			})) as IntegrationConfig | null;
+	handler: async (ctx, args) => {
+		const internalApi = getInternalApi();
+		const config = (await ctx.runQuery(internalApi.settings.internalGetIntegrationConfig, {
+			integrationName: 'dify',
+		})) as IntegrationConfig | null;
 
-			const baseUrl = config?.base_url || config?.baseUrl;
-			const apiKey = config?.api_key || config?.apiKey;
+		const baseUrl = config?.base_url || config?.baseUrl;
+		const apiKey = config?.api_key || config?.apiKey;
 
 		if (!(baseUrl && apiKey)) {
 			throw new Error('Dify configuration missing in settings.');
 		}
 
-			const sanitizedBaseUrl = baseUrl.replace(TRAILING_SLASH_REGEX, '');
-			const url = `${sanitizedBaseUrl}/chat-messages`;
+		const sanitizedBaseUrl = baseUrl.replace(TRAILING_SLASH_REGEX, '');
+		const url = `${sanitizedBaseUrl}/chat-messages`;
 
-			try {
-				const response = await axios.post(
-					url,
-					{
-						query: args.query,
-						user: args.user,
-						inputs: {},
-						response_mode: 'blocking',
-						conversation_id: args.conversationId,
+		try {
+			const response = await axios.post(
+				url,
+				{
+					query: args.query,
+					user: args.user,
+					inputs: {},
+					response_mode: 'blocking',
+					conversation_id: args.conversationId,
+				},
+				{
+					headers: {
+						authorization: `Bearer ${apiKey}`,
+						'Content-Type': 'application/json',
 					},
-					{
-						headers: {
-							authorization: `Bearer ${apiKey}`,
-							'Content-Type': 'application/json',
-						},
-					},
-				);
+				},
+			);
 
-				return response.data;
-			} catch (error) {
-				if (axios.isAxiosError(error) && error.response) {
-					throw new Error(
-						`Dify API Error: ${error.response.status} - ${JSON.stringify(
-							error.response.data,
-						)}`,
-					);
-				}
+			return response.data;
+		} catch (error) {
+			if (axios.isAxiosError(error) && error.response) {
 				throw new Error(
-					`Dify Connection Error: ${error instanceof Error ? error.message : String(error)}`,
+					`Dify API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`,
 				);
 			}
-		},
+			throw new Error(
+				`Dify Connection Error: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+	},
 });
 
 export const testEvolutionConnection = action({

@@ -111,7 +111,7 @@ describe('Asaas Sync Integration', () => {
 			// Simular syncStudentAsCustomerInternal
 			const student = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'student123',
+				_id: 'student123',
 				name: 'Test',
 				email: 'test@example.com',
 				cpf: '52998224725',
@@ -218,7 +218,7 @@ describe('Integration - Complete Import Flow', () => {
 
 			const existingStudent = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'student_existing' as Id<'students'>,
+				_id: 'student_existing' as Id<'students'>,
 				name: 'João Silva',
 				email: 'joao@example.com',
 				asaasCustomerId: undefined,
@@ -267,7 +267,7 @@ describe('Integration - Complete Import Flow', () => {
 
 			const student = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'student_123' as Id<'students'>,
+				_id: 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 			};
 
@@ -317,7 +317,7 @@ describe('Integration - Conflict Resolution', () => {
 
 			const localStudent = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'student_123' as Id<'students'>,
+				_id: 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 				name: 'João Silva Atualizado',
 				email: 'joao.novo@example.com',
@@ -363,7 +363,7 @@ describe('Integration - Conflict Resolution', () => {
 
 			const localStudent = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'student_123' as Id<'students'>,
+				_id: 'student_123' as Id<'students'>,
 				asaasCustomerId: 'cus_asaas_123',
 				name: 'João Local',
 				updatedAt: oneHourAgo, // Older
@@ -471,7 +471,7 @@ describe('Integration - Webhook Processing', () => {
 
 			const paymentRecord = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'payment_123' as Id<'asaasPayments'>,
+				_id: 'payment_123' as Id<'asaasPayments'>,
 				studentId: 'student_123' as Id<'students'>,
 				status: 'PENDING',
 			};
@@ -542,7 +542,7 @@ describe('Integration - Webhook Processing', () => {
 			// Existing deduplication entry
 			const firstMock = vi.fn().mockResolvedValue({
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'dedup_123',
+				_id: 'dedup_123',
 				idempotencyKey,
 				processedAt: Date.now() - 1000,
 				expiresAt: Date.now() + 86_400_000,
@@ -626,7 +626,7 @@ describe('Integration - Error Recovery', () => {
 
 			const stuckSync = {
 				// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-				'_id': 'sync_123' as Id<'asaasSyncLogs'>,
+				_id: 'sync_123' as Id<'asaasSyncLogs'>,
 				status: 'running',
 				startedAt: Date.now() - 3_600_000, // Started 1 hour ago
 			};

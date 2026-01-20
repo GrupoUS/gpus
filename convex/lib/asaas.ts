@@ -455,11 +455,7 @@ const parseAsaasResponse = async <T>(response: Response): Promise<T> => {
 	throw new AsaasRequestError(`Asaas API Error: ${errorMessage}`, retriable);
 };
 
-const requestAsaas = async <T>(
-	url: string,
-	init: RequestInit,
-	timeoutMs: number,
-): Promise<T> => {
+const requestAsaas = async <T>(url: string, init: RequestInit, timeoutMs: number): Promise<T> => {
 	const response = await fetch(url, {
 		...init,
 		signal: AbortSignal.timeout(timeoutMs),
@@ -480,6 +476,36 @@ const shouldRetryRequest = (error: Error, attempt: number, retries: number): boo
 	return false;
 };
 
+const executeWithRetry = async <T>(
+	retries: number,
+	runAttempt: () => Promise<T>,
+	label: string,
+): Promise<T> => {
+	let lastError: Error | null = null;
+
+	for (let attempt = 0; attempt <= retries; attempt++) {
+		try {
+			return await runAttempt();
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
+
+			if (lastError instanceof AsaasRequestError || isNetworkFailure(lastError)) {
+				recordFailure();
+			}
+
+			if (shouldRetryRequest(lastError, attempt, retries)) {
+				const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
+				await sleep(delay);
+				continue;
+			}
+
+			throw lastError;
+		}
+	}
+
+	throw lastError || new Error(`Unknown error in ${label}`);
+};
+
 // ═══════════════════════════════════════════════════════
 // ASAAS API CLIENT
 // ═══════════════════════════════════════════════════════
@@ -489,7 +515,7 @@ const shouldRetryRequest = (error: Error, attempt: number, retries: number): boo
  * Handles authentication, retry logic, error handling, and response parsing
  * Includes logging for audit trail and monitoring.
  */
-async function asaasFetch<T>(
+function asaasFetch<T>(
 	endpoint: string,
 	options: {
 		method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -525,31 +551,15 @@ async function asaasFetch<T>(
 		body: options.body ? JSON.stringify(options.body) : undefined,
 	};
 
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt <= retries; attempt++) {
-		try {
+	return executeWithRetry(
+		retries,
+		async () => {
 			const result = await requestAsaas<T>(url, requestInit, 30_000);
 			recordSuccess();
 			return result;
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			if (lastError instanceof AsaasRequestError || isNetworkFailure(lastError)) {
-				recordFailure();
-			}
-
-			if (shouldRetryRequest(lastError, attempt, retries)) {
-				const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-				await sleep(delay);
-				continue;
-			}
-
-			throw lastError;
-		}
-	}
-
-	throw lastError || new Error('Unknown error in asaasFetch');
+		},
+		'asaasFetch',
+	);
 }
 
 /**
@@ -750,7 +760,7 @@ export class AsaasClient {
 		};
 	}
 
-	private async fetch<T>(
+	private fetch<T>(
 		endpoint: string,
 		options: {
 			method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -785,31 +795,15 @@ export class AsaasClient {
 			body: options.body ? JSON.stringify(options.body) : undefined,
 		};
 
-		let lastError: Error | null = null;
-
-		for (let attempt = 0; attempt <= retries; attempt++) {
-			try {
+		return executeWithRetry(
+			retries,
+			async () => {
 				const result = await requestAsaas<T>(url, requestInit, 30_000);
 				recordSuccess();
 				return result;
-			} catch (error) {
-				lastError = error instanceof Error ? error : new Error(String(error));
-
-				if (lastError instanceof AsaasRequestError || isNetworkFailure(lastError)) {
-					recordFailure();
-				}
-
-				if (shouldRetryRequest(lastError, attempt, retries)) {
-					const delay = addJitter(INITIAL_RETRY_DELAY * 2 ** attempt);
-					await sleep(delay);
-					continue;
-				}
-
-				throw lastError;
-			}
-		}
-
-		throw lastError || new Error('Unknown error in AsaasClient.fetch');
+			},
+			'AsaasClient.fetch',
+		);
 	}
 
 	async testConnection(): Promise<TestConnectionResult> {
@@ -819,7 +813,7 @@ export class AsaasClient {
 		return { status: 200, ...response };
 	}
 
-	async createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
+	createCustomer(payload: AsaasCustomerPayload): Promise<AsaasCustomerResponse> {
 		// Strict CPF normalization before sending to Asaas
 		if (payload.cpfCnpj) {
 			payload.cpfCnpj = payload.cpfCnpj.replace(/\D/g, '');
@@ -830,14 +824,14 @@ export class AsaasClient {
 		});
 	}
 
-	async createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
+	createPayment(payload: AsaasPaymentPayload): Promise<AsaasPaymentResponse> {
 		return this.fetch<AsaasPaymentResponse>('/payments', {
 			method: 'POST',
 			body: payload,
 		});
 	}
 
-	async getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
+	getPixQrCode(paymentId: string): Promise<{ encodedImage: string; payload: string }> {
 		return this.fetch<{ encodedImage: string; payload: string }>(
 			`/payments/${paymentId}/pixQrCode`,
 			{
@@ -846,9 +840,7 @@ export class AsaasClient {
 		);
 	}
 
-	async createSubscription(
-		payload: AsaasSubscriptionPayload,
-	): Promise<AsaasSubscriptionResponse> {
+	createSubscription(payload: AsaasSubscriptionPayload): Promise<AsaasSubscriptionResponse> {
 		return this.fetch<AsaasSubscriptionResponse>('/subscriptions', {
 			method: 'POST',
 			body: payload,
@@ -858,7 +850,7 @@ export class AsaasClient {
 	/**
 	 * List all customers with pagination
 	 */
-	async listAllCustomers(params?: {
+	listAllCustomers(params?: {
 		name?: string;
 		email?: string;
 		cpfCnpj?: string;
@@ -879,7 +871,7 @@ export class AsaasClient {
 	/**
 	 * List all payments with filters
 	 */
-	async listAllPayments(params?: {
+	listAllPayments(params?: {
 		customer?: string;
 		status?: string;
 		billingType?: string;
@@ -908,14 +900,14 @@ export class AsaasClient {
 	/**
 	 * Get a single payment by ID
 	 */
-	async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
+	getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
 		return this.fetch<AsaasPaymentResponse>(`/payments/${paymentId}`);
 	}
 
 	/**
 	 * List all subscriptions with filters
 	 */
-	async listAllSubscriptions(params?: {
+	listAllSubscriptions(params?: {
 		customer?: string;
 		status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
 		offset?: number;

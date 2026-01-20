@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 
-import { mutation, query, type MutationCtx, type QueryCtx } from './_generated/server';
+import { type MutationCtx, mutation, type QueryCtx, query } from './_generated/server';
 import { getIdentity, hasOrgRole, requireAuth } from './lib/auth';
 import { decrypt, encrypt, isEncrypted } from './lib/encryption';
 

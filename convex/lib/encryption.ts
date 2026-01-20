@@ -21,6 +21,11 @@ const ENCRYPTION_CONFIG = {
 	tagLength: 128, // bits
 } as const;
 
+// Top-level regex patterns for performance
+const HEX_PATTERN = /^[0-9a-fA-F]+$/;
+const DIGITS_ONLY_PATTERN = /[^\d]/g;
+const CPF_FORMAT_PATTERN = /(\d{3})(\d{3})(\d{3})(\d{2})/;
+
 /**
  * Converts ArrayBuffer to hex string
  */
@@ -86,7 +91,7 @@ export async function encrypt(data: string): Promise<string> {
 		const encrypted = await crypto.subtle.encrypt(
 			{
 				name: ENCRYPTION_CONFIG.algorithm,
-				iv: iv as Uint8Array<ArrayBuffer>,
+				iv,
 				tagLength: ENCRYPTION_CONFIG.tagLength,
 			},
 			key,
@@ -153,8 +158,7 @@ export function isEncrypted(data: string): boolean {
 	}
 
 	// Check if data is valid hex
-	const hexRegex = /^[0-9a-fA-F]+$/;
-	return hexRegex.test(data);
+	return HEX_PATTERN.test(data);
 }
 
 /**
@@ -174,22 +178,22 @@ export async function hashSensitiveData(data: string): Promise<string> {
 /**
  * Normalizes and hashes CPF for blind indexing
  */
-export async function hashCPF(cpf: string): Promise<string> {
-	if (!cpf) return '';
+export function hashCPF(cpf: string): Promise<string> {
+	if (!cpf) return Promise.resolve('');
 
 	// Strict normalization: only digits
-	const cleanCPF = cpf.replace(/[^\d]/g, '');
+	const cleanCPF = cpf.replace(DIGITS_ONLY_PATTERN, '');
 	return hashSensitiveData(cleanCPF);
 }
 
 /**
  * Encrypts CPF with specific formatting for Brazilian compliance
  */
-export async function encryptCPF(cpf: string): Promise<string> {
-	if (!cpf) return cpf;
+export function encryptCPF(cpf: string): Promise<string> {
+	if (!cpf) return Promise.resolve(cpf);
 
 	// Remove formatting before encryption
-	const cleanCPF = cpf.replace(/[^\d]/g, '');
+	const cleanCPF = cpf.replace(DIGITS_ONLY_PATTERN, '');
 	return encrypt(cleanCPF);
 }
 
@@ -203,7 +207,7 @@ export async function decryptCPF(encryptedCPF: string): Promise<string> {
 
 	// Format CPF: XXX.XXX.XXX-XX
 	if (decrypted.length === 11) {
-		return decrypted.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+		return decrypted.replace(CPF_FORMAT_PATTERN, '$1.$2.$3-$4');
 	}
 
 	return decrypted;

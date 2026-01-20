@@ -6,6 +6,7 @@ import {
 	classifyContext,
 	compressContext,
 	factCheckContext,
+	type ProcessedContext,
 	processAPI,
 	processDatabase,
 	processPDF,
@@ -111,9 +112,9 @@ export const gatherContext = inngest.createFunction(
 		const results = await Promise.all(contextPromises);
 
 		// Filter out null results and sort by relevance
-		const validResults = results
-			.filter((r): r is ContextSource => r !== null)
-			.sort((a, b) => b.relevance - a.relevance);
+		const validResults = (results.filter((r) => r !== null) as unknown as ContextSource[]).sort(
+			(a, b) => b.relevance - a.relevance,
+		);
 
 		// Trigger context augmentation
 		await step.sendEvent('trigger-augmentation', {
@@ -149,12 +150,20 @@ export const augmentContext = inngest.createFunction(
 
 		// 2. Fact check the compressed context
 		const factCheckedContext = await step.run('fact-check-context', async () => {
-			return await factCheckContext(compressedContext);
+			const ctx = compressedContext as unknown as ProcessedContext;
+			if (!ctx || typeof ctx.confidence !== 'number') {
+				return { ...ctx, confidence: 0 } as ProcessedContext;
+			}
+			return await factCheckContext(ctx);
 		});
 
 		// 3. Classify the context
 		const classifiedContext = await step.run('classify-context', async () => {
-			return await classifyContext(factCheckedContext);
+			const ctx = factCheckedContext as unknown as ProcessedContext;
+			if (!ctx || typeof ctx.confidence !== 'number') {
+				return await classifyContext({ ...ctx, confidence: 0 } as ProcessedContext);
+			}
+			return await classifyContext(ctx);
 		});
 
 		return {

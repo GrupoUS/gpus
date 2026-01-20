@@ -105,10 +105,11 @@ export const getDashboard = query({
 
 		const createQuery = () => {
 			if (effectiveUserId) {
+				const userId = effectiveUserId;
 				return ctx.db
 					.query('leads')
 					.withIndex('by_organization_assigned_to', (q) =>
-						q.eq('organizationId', organizationId).eq('assignedTo', effectiveUserId!),
+						q.eq('organizationId', organizationId).eq('assignedTo', userId),
 					);
 			}
 			return ctx.db
@@ -308,7 +309,7 @@ export const listVendors = query({
 	args: {},
 	returns: v.array(
 		v.object({
-			_id: v.id('users'),
+			id: v.id('users'),
 			name: v.string(),
 			email: v.string(),
 			role: v.string(),
@@ -344,7 +345,7 @@ export const listVendors = query({
 		return users
 			.filter((u) => u.isActive && ['member', 'sdr', 'manager', 'admin', 'owner'].includes(u.role))
 			.map((u) => ({
-				_id: u._id,
+				id: u._id,
 				name: u.name,
 				email: u.email,
 				role: u.role,
@@ -358,7 +359,7 @@ export const getTeamPerformance = query({
 	},
 	returns: v.array(
 		v.object({
-			_id: v.id('users'),
+			id: v.id('users'),
 			name: v.string(),
 			role: v.union(
 				v.literal('owner'),
@@ -410,7 +411,7 @@ export const getTeamPerformance = query({
 			.collect();
 
 		const result = users.map((u) => ({
-			_id: u._id,
+			id: u._id,
 			name: u.name,
 			role: u.role,
 			metric: performance.get(u._id) || 0,

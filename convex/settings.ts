@@ -21,15 +21,18 @@ export interface CashbackSettings {
 export interface OrganizationSettings {
 	cashbackAmount?: number;
 	cashbackType?: 'fixed' | 'percentage';
-	[key: string]: any;
+	[key: string]: unknown;
 }
+
+// Top-level regex for performance (avoids recreation in function calls)
+const ORG_PREFIX_REGEX = /^org_[^_]+_/;
+const VALID_ASAAS_KEY_PATTERN = /^[$a-zA-Z0-9_]+$/;
 
 function isSensitiveKey(key: string): boolean {
 	// Strip organization prefix if present (org_{orgId}_)
 	// We handle variable length orgIds, assuming they don't contain underscores usually,
 	// but strictly the pattern is 'org_' + part + '_' + rest
-	// A regex replacement is safer: org_[^_]+_(.*)
-	const cleanKey = key.startsWith('org_') ? key.replace(/^org_[^_]+_/, '') : key;
+	const cleanKey = key.startsWith('org_') ? key.replace(ORG_PREFIX_REGEX, '') : key;
 
 	return (
 		SENSITIVE_KEYS.includes(cleanKey) ||
@@ -37,10 +40,6 @@ function isSensitiveKey(key: string): boolean {
 		cleanKey.endsWith('_secret') ||
 		cleanKey.endsWith('_token')
 	);
-}
-
-function isOrganizationSettingKey(key: string): boolean {
-	return key.startsWith('org_');
 }
 
 function validateCashbackSettings(settings: {
@@ -117,8 +116,7 @@ function validateAsaasApiKey(key: string): {
 	}
 
 	// Check for invalid characters (should be alphanumeric, underscores, and dollar sign)
-	const validPattern = /^[$a-zA-Z0-9_]+$/;
-	if (!validPattern.test(cleanKey)) {
+	if (!VALID_ASAAS_KEY_PATTERN.test(cleanKey)) {
 		return {
 			valid: false,
 			error: 'API Key contém caracteres inválidos',
@@ -282,7 +280,7 @@ export const internalGetIntegrationConfig = internalQuery({
 		const prefix = `integration_${args.integrationName}_`;
 		const settings = await ctx.db.query('settings').collect();
 
-		const config: Record<string, any> = {};
+		const config: Record<string, unknown> = {};
 
 		for (const setting of settings) {
 			if (setting.key.startsWith(prefix)) {
