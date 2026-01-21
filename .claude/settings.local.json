@@ -59,12 +59,6 @@
 		]
 	},
 	"enableAllProjectMcpServers": true,
-	"enabledMcpjsonServers": [
-		"web-reader",
-		"zai-mcp-server",
-		"tavily",
-		"sequential-thinking"
-	],
 	"hooks": {
 		"SessionStart": [
 			{
