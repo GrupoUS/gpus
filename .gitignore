@@ -30,3 +30,8 @@ docs/Aura-Connect/
 
 .mcp/
 .mcp.json
+
+# Prevent other package manager lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

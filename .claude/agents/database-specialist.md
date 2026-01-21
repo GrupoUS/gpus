@@ -1,7 +1,8 @@
 ---
 name: database-specialist
 description: Convex database specialist with schema design, queries, mutations, and real-time expertise for Portal Grupo US
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 mode: subagent
 ---
 

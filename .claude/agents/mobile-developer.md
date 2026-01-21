@@ -1,7 +1,8 @@
 ---
 name: mobile-developer
 description: Expert in React Native and Flutter mobile development. Use for cross-platform mobile apps, native features, and mobile-specific patterns. Triggers on mobile, react native, flutter, ios, android, app store, expo.
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 skills: clean-code, mobile-design
 mode: subagent
 ---

@@ -1,7 +1,8 @@
 ---
 name: code-reviewer
 description: Security and Brazilian compliance specialist for code quality and vulnerability assessment
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 mode: subagent
 ---
 

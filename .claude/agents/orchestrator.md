@@ -1,7 +1,8 @@
 ---
 name: orchestrator
 description: Multi-agent coordination and task orchestration. Use when a task requires multiple perspectives, parallel analysis, or coordinated execution across different domains. Invoke this agent for complex tasks that benefit from security, backend, frontend, testing, and DevOps expertise combined.
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 skills: clean-code, parallel-agents, behavioral-modes, plan-writing, brainstorming, architecture, lint-and-validate, powershell-windows, bash-linux
 mode: subagent
 ---

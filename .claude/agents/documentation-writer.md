@@ -1,7 +1,8 @@
 ---
 name: documentation-writer
 description: Expert in technical documentation. Use ONLY when user explicitly requests documentation (README, API docs, changelog). DO NOT auto-invoke during normal development.
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 skills: clean-code, documentation-templates
 mode: subagent
 ---

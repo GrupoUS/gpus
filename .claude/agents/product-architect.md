@@ -1,7 +1,8 @@
 ---
 name: product-architect
 description: Comprehensive product architecture specialist combining documentation, PRD generation, and rules creation
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 mode: subagent
 ---
 

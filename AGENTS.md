@@ -12,7 +12,7 @@
 **⚠️ IMPORTANTE**: Este projeto **sempre usa `bun`** como package manager. Nunca use `npm`, `yarn` ou `pnpm`.
 
 - ✅ **Sempre use**: `bun install`, `bun run`, `bunx`
-- ❌ **Nunca use**: `npm install`, `npm run`, `npx`
+- ❌ **Nunca use**: `npm install`, `npm run`, `npx`, `yarn`, `pnpm`
 
 # SYSTEM ROLE & BEHAVIORAL PROTOCOLS
 

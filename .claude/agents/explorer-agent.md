@@ -1,7 +1,8 @@
 ---
 name: explorer-agent
 description: Advanced codebase discovery, deep architectural analysis, and proactive research agent. The eyes and ears of the framework. Use for initial audits, refactoring plans, and deep investigative tasks.
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 skills: clean-code, architecture, plan-writing, brainstorming, systematic-debugging
 mode: subagent
 ---

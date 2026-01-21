@@ -1,11 +1,62 @@
+import type { FunctionReference } from 'convex/server';
 import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
 import { query as convexQuery, internalMutation, mutation } from './_generated/server';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 import { rateLimiters, validateInput, validationSchemas } from './lib/validation';
+
+type MarketingLeadInterest =
+	| 'Harmonização Facial'
+	| 'Estética Corporal'
+	| 'Bioestimuladores'
+	| 'Outros';
+
+type MarketingLeadStatus = 'new' | 'contacted' | 'converted' | 'unsubscribed';
+
+interface InternalEmailMarketingApi {
+	syncMarketingLeadAsContactInternal: FunctionReference<'mutation', 'internal'>;
+}
+
+interface InternalApi {
+	emailMarketing: InternalEmailMarketingApi;
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('./_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
+
+const internalEmailMarketing = getInternalApi().emailMarketing;
+
+const MARKETING_INTERESTS = new Set<MarketingLeadInterest>([
+	'Harmonização Facial',
+	'Estética Corporal',
+	'Bioestimuladores',
+	'Outros',
+]);
+
+const MARKETING_STATUSES = new Set<MarketingLeadStatus>([
+	'new',
+	'contacted',
+	'converted',
+	'unsubscribed',
+]);
+
+const normalizeInterest = (value?: string | null): MarketingLeadInterest | null => {
+	if (!value) return null;
+	return MARKETING_INTERESTS.has(value as MarketingLeadInterest)
+		? (value as MarketingLeadInterest)
+		: null;
+};
+
+const normalizeStatus = (value?: string | null): MarketingLeadStatus | null => {
+	if (!value) return null;
+	return MARKETING_STATUSES.has(value as MarketingLeadStatus)
+		? (value as MarketingLeadStatus)
+		: null;
+};
 
 // ═══════════════════════════════════════════════════════
 // PUBLIC MUTATION: Create Marketing Lead
@@ -135,11 +186,9 @@ export const create = mutation({
 		});
 
 		// 8. Auto-sync to Brevo (async)
-		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-		const syncFn = (internal as any).emailMarketing?.syncMarketingLeadAsContactInternal;
+		const syncFn = internalEmailMarketing?.syncMarketingLeadAsContactInternal;
 		if (syncFn) {
-			// biome-ignore lint/suspicious/noExplicitAny: scheduler type not fully generated
-			await (ctx.scheduler as any).runAfter(0, syncFn, {
+			await ctx.scheduler.runAfter(0, syncFn, {
 				leadId,
 				organizationId: defaultOrgId,
 			});
@@ -181,13 +230,13 @@ export const createFromWebhook = internalMutation({
 			.first();
 
 		if (existing) {
+			const interest = normalizeInterest(args.interest) ?? existing.interest;
 			// Update only relevant fields if needed, or just return existing ID
 			// For now, we update UTMs and contact info if provided
 			await ctx.db.patch(existing._id, {
 				name: args.name ?? existing.name,
 				phone: args.phone ?? existing.phone,
-				// biome-ignore lint/suspicious/noExplicitAny: dynamic interest field casting
-				interest: (args.interest as any) ?? existing.interest,
+				interest,
 				utmSource: args.utmSource ?? existing.utmSource,
 				utmCampaign: args.utmCampaign ?? existing.utmCampaign,
 				utmMedium: args.utmMedium ?? existing.utmMedium,
@@ -197,16 +246,7 @@ export const createFromWebhook = internalMutation({
 		}
 
 		// 2. Map interest to valid enum if possible, else default
-		const validInterests = [
-			'Harmonização Facial',
-			'Estética Corporal',
-			'Bioestimuladores',
-			'Outros',
-		];
-		const interest = validInterests.includes(args.interest as string)
-			? // biome-ignore lint/suspicious/noExplicitAny: casting validated interest to schema type
-				(args.interest as any)
-			: 'Outros';
+		const interest = normalizeInterest(args.interest) ?? 'Outros';
 
 		// 3. Create new lead
 		const leadId = await ctx.db.insert('marketing_leads', {
@@ -268,62 +308,42 @@ export const list = convexQuery({
 		startDate: v.optional(v.number()),
 		endDate: v.optional(v.number()),
 	},
-	// biome-ignore lint/suspicious/noExplicitAny: Generic handler type
-	handler: async (ctx, args: any) => {
+	handler: async (ctx, args) => {
 		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
 		const organizationId = await getOrganizationId(ctx);
 
-		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
-		let leadQuery: any;
+		const status = normalizeStatus(args.status);
+		const interestFilter = normalizeInterest(args.interest);
 
-		if (args.status && args.status !== 'all') {
-			leadQuery = ctx.db.query('marketing_leads').withIndex('by_organization_status', (q) =>
-				q.eq('organizationId', organizationId).eq(
-					'status', // biome-ignore lint/suspicious/noExplicitAny: status type from args
-					args.status as any,
-				),
-			);
-		} else {
-			leadQuery = ctx.db
-				.query('marketing_leads')
-				.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
-		}
+		let leadQuery = status
+			? ctx.db
+					.query('marketing_leads')
+					.withIndex('by_organization_status', (q) =>
+						q.eq('organizationId', organizationId).eq('status', status),
+					)
+			: ctx.db
+					.query('marketing_leads')
+					.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
 
-		if (args.interest && args.interest !== 'all') {
-			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
-			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('interest'), args.interest));
+		if (interestFilter) {
+			leadQuery = leadQuery.filter((q) => q.eq(q.field('interest'), interestFilter));
 		}
 
 		if (args.source && args.source !== 'all') {
-			// Using the newly added source index if possible, or filter
-			// Since we started with by_organization*, we chain filter
-			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
-			leadQuery = leadQuery.filter((q: any) => q.eq(q.field('source'), args.source));
+			leadQuery = leadQuery.filter((q) => q.eq(q.field('source'), args.source));
 		}
 
 		if (args.landingPage && args.landingPage !== 'all') {
-			// Using the newly added index if possible (by_organization_landing_page)
-			if (leadQuery.toString().includes('by_organization_created')) {
-				// switch to by_organization_landing_page if possible, otherwise just filter
-				// Actually, we can't easily switch index mid-stream with this logic structure without refactoring
-				// So we append filter
-				// biome-ignore lint/suspicious/noExplicitAny: complex query filter
-				leadQuery = leadQuery.filter((q: any) => q.eq(q.field('landingPage'), args.landingPage));
-			} else {
-				// biome-ignore lint/suspicious/noExplicitAny: complex query filter
-				leadQuery = leadQuery.filter((q: any) => q.eq(q.field('landingPage'), args.landingPage));
-			}
+			leadQuery = leadQuery.filter((q) => q.eq(q.field('landingPage'), args.landingPage));
 		}
 
-		if (args.startDate || args.endDate) {
-			// biome-ignore lint/suspicious/noExplicitAny: complex query filter
-			leadQuery = leadQuery.filter((q: any) => {
-				// biome-ignore lint/suspicious/noExplicitAny: Complex condition array
-				const conditions: any[] = [];
-				if (args.startDate) conditions.push(q.gte(q.field('createdAt'), args.startDate));
-				if (args.endDate) conditions.push(q.lte(q.field('createdAt'), args.endDate));
-				return q.and(...conditions);
-			});
+		const startDate = args.startDate;
+		const endDate = args.endDate;
+		if (startDate !== undefined) {
+			leadQuery = leadQuery.filter((q) => q.gte(q.field('createdAt'), startDate));
+		}
+		if (endDate !== undefined) {
+			leadQuery = leadQuery.filter((q) => q.lte(q.field('createdAt'), endDate));
 		}
 
 		const results = await leadQuery.order('desc').paginate(args.paginationOpts);
@@ -331,11 +351,10 @@ export const list = convexQuery({
 		if (args.search) {
 			const searchLower = args.search.toLowerCase();
 			results.page = results.page.filter(
-				// biome-ignore lint/suspicious/noExplicitAny: generic result type
-				(l: any) =>
-					l.name.toLowerCase().includes(searchLower) ||
-					l.email.toLowerCase().includes(searchLower) ||
-					l.phone.includes(searchLower),
+				(lead) =>
+					lead.name.toLowerCase().includes(searchLower) ||
+					lead.email.toLowerCase().includes(searchLower) ||
+					lead.phone.includes(searchLower),
 			);
 		}
 
@@ -399,15 +418,13 @@ export const getStatsByLandingPage = convexQuery({
 			.query('marketing_leads')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 
-		if (args.startDate || args.endDate) {
-			// biome-ignore lint/suspicious/noExplicitAny: complex filter
-			leadQuery = leadQuery.filter((q: any) => {
-				const conditions: any[] = [];
-				if (args.startDate) conditions.push(q.gte(q.field('createdAt'), args.startDate));
-				if (args.endDate) conditions.push(q.lte(q.field('createdAt'), args.endDate));
-				// biome-ignore lint/suspicious/noExplicitAny: spread
-				return q.and(...(conditions as any));
-			});
+		const startDate = args.startDate;
+		const endDate = args.endDate;
+		if (startDate !== undefined) {
+			leadQuery = leadQuery.filter((q) => q.gte(q.field('createdAt'), startDate));
+		}
+		if (endDate !== undefined) {
+			leadQuery = leadQuery.filter((q) => q.lte(q.field('createdAt'), endDate));
 		}
 
 		// Optimization: If many leads, this aggregation might be slow.

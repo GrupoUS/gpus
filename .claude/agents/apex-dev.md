@@ -1,7 +1,8 @@
 ---
 name: apex-dev
 description: Advanced development specialist for complex implementations with TDD methodology
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 mode: subagent
 ---
 

@@ -1,7 +1,8 @@
 ---
 name: architect-reviewer
 description: Expert architecture reviewer specializing in system design validation, architectural patterns, and technical decision assessment. Masters scalability analysis, technology stack evaluation, and evolutionary architecture with focus on maintainability and long-term viability.
-model: inherit
+model: github-copilot/gpt-5.2-codex
+reasoningEffort: high
 mode: subagent
 ---
 

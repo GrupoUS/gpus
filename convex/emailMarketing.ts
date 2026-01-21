@@ -21,6 +21,7 @@ import {
 	mutation,
 	query,
 	type MutationCtx,
+	type QueryCtx,
 } from './_generated/server';
 import { createAuditLog } from './lib/auditLogging';
 import { getClerkId, getIdentity, getOrganizationId, requireAuth } from './lib/auth';
@@ -86,6 +87,20 @@ interface ListContactArgs {
 	filters?: ListContactFilters;
 }
 
+interface PreviewListArgs {
+	products: string[];
+	filters?: ListContactFilters;
+}
+
+interface SegmentContact {
+	email: string;
+	firstName?: string;
+	lastName?: string;
+	sourceId: string;
+	sourceType: 'lead' | 'student';
+	phone?: string;
+}
+
 const addContact = (
 	contactEmails: Set<string>,
 	contactData: ContactData[],
@@ -104,6 +119,14 @@ const addContact = (
 		sourceType,
 		sourceId,
 	});
+};
+
+const splitNameParts = (name?: string): { firstName?: string; lastName?: string } => {
+	const nameParts = (name || '').trim().split(' ');
+	return {
+		firstName: nameParts[0] || undefined,
+		lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
+	};
 };
 
 const collectStudentContacts = async (
@@ -156,6 +179,125 @@ const collectLeadContacts = async (
 		if (!lead.email) continue;
 		addContact(contactEmails, contactData, lead.email, lead.name, 'lead', lead._id);
 	}
+};
+
+const collectStudentPreviewEmails = async (
+	ctx: QueryCtx,
+	args: PreviewListArgs,
+	contactEmails: Set<string>,
+): Promise<void> => {
+	let students = await ctx.db.query('students').collect();
+
+	if (args.filters?.activeOnly) {
+		students = students.filter((student) => student.status === 'ativo');
+	}
+
+	if (args.products.length > 0) {
+		const enrollments = await ctx.db.query('enrollments').collect();
+		const studentIdsWithProducts = new Set(
+			enrollments.filter((entry) => args.products.includes(entry.product)).map((entry) => entry.studentId),
+		);
+		students = students.filter((student) => studentIdsWithProducts.has(student._id));
+	}
+
+	for (const student of students) {
+		if (student.email) {
+			contactEmails.add(student.email);
+		}
+	}
+};
+
+const collectLeadPreviewEmails = async (
+	ctx: QueryCtx,
+	organizationId: string,
+	args: PreviewListArgs,
+	contactEmails: Set<string>,
+): Promise<void> => {
+	let leads = await ctx.db
+		.query('leads')
+		.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+		.collect();
+
+	if (args.products.length > 0) {
+		leads = leads.filter(
+			(lead) => lead.interestedProduct && args.products.includes(lead.interestedProduct),
+		);
+	}
+
+	if (args.filters?.qualifiedOnly) {
+		leads = leads.filter((lead) => lead.stage === 'qualificado');
+	} else {
+		leads = leads.filter((lead) => lead.stage !== 'fechado_perdido');
+	}
+
+	for (const lead of leads) {
+		if (lead.email) {
+			contactEmails.add(lead.email);
+		}
+	}
+};
+
+const getProductFilterKey = (productFilter?: string): ProductKey | null => {
+	if (!productFilter || productFilter === 'all') return null;
+	return PRODUCT_KEYS.has(productFilter as ProductKey) ? (productFilter as ProductKey) : null;
+};
+
+const isLeadSegmentEligible = (lead: Doc<'leads'>, filters?: {
+	product?: string;
+	stage?: string;
+}): boolean => {
+	if (filters?.stage && filters.stage !== 'all' && lead.stage !== filters.stage) {
+		return false;
+	}
+	if (
+		filters?.product &&
+		filters.product !== 'all' &&
+		lead.interestedProduct !== filters.product
+	) {
+		return false;
+	}
+	return true;
+};
+
+const isStudentStatusEligible = (student: Doc<'students'>, status?: string): boolean => {
+	if (!status || status === 'all') return true;
+	return student.status === status;
+};
+
+const hasEnrollmentForProduct = async (
+	ctx: QueryCtx,
+	studentId: Id<'students'>,
+	productKey: ProductKey,
+): Promise<boolean> => {
+	const enrollments = await ctx.db
+		.query('enrollments')
+		.withIndex('by_student', (q) => q.eq('studentId', studentId))
+		.collect();
+	return enrollments.some((enrollment) => enrollment.product === productKey);
+};
+
+const mapLeadSegmentContact = (lead: Doc<'leads'>): SegmentContact => {
+	const { firstName, lastName } = splitNameParts(lead.name);
+	return {
+		email: lead.email ?? '',
+		firstName,
+		lastName,
+		sourceId: lead._id,
+		sourceType: 'lead',
+		phone: lead.phone,
+	};
+};
+
+const mapStudentSegmentContact = (student: Doc<'students'>): SegmentContact => {
+	const { firstName, lastName } = splitNameParts(student.name);
+	return {
+		email: student.email ?? '',
+		firstName,
+		lastName,
+		sourceId: student._id,
+		sourceType: 'student',
+		phone: student.phone,
+	};
 };
 
 const ensureBrevoListId = async (list: Doc<'emailLists'>): Promise<number> => {
@@ -1026,51 +1168,12 @@ export const previewListContacts = query({
 		// Count students
 		if (args.sourceType === 'students' || args.sourceType === 'both') {
 			// Note: students table doesn't have organizationId - rely on auth check
-			let students = await ctx.db.query('students').collect();
-
-			if (args.filters?.activeOnly) {
-				students = students.filter((s) => s.status === 'ativo');
-			}
-
-			if (args.products.length > 0) {
-				const enrollments = await ctx.db.query('enrollments').collect();
-				const studentIdsWithProducts = new Set(
-					enrollments.filter((e) => args.products.includes(e.product)).map((e) => e.studentId),
-				);
-				students = students.filter((s) => studentIdsWithProducts.has(s._id));
-			}
-
-			for (const student of students) {
-				if (student.email) {
-					contactEmails.add(student.email);
-				}
-			}
+			await collectStudentPreviewEmails(ctx, args, contactEmails);
 		}
 
 		// Count leads
 		if (args.sourceType === 'leads' || args.sourceType === 'both') {
-			let leads = await ctx.db
-				.query('leads')
-				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
-				.collect();
-
-			if (args.products.length > 0) {
-				leads = leads.filter(
-					(l) => l.interestedProduct && args.products.includes(l.interestedProduct),
-				);
-			}
-
-			if (args.filters?.qualifiedOnly) {
-				leads = leads.filter((l) => l.stage === 'qualificado');
-			} else {
-				leads = leads.filter((l) => l.stage !== 'fechado_perdido');
-			}
-
-			for (const lead of leads) {
-				if (lead.email && !contactEmails.has(lead.email)) {
-					contactEmails.add(lead.email);
-				}
-			}
+			await collectLeadPreviewEmails(ctx, organizationId, args, contactEmails);
 		}
 
 		return { count: contactEmails.size };
@@ -2108,14 +2211,7 @@ export const getSegmentDataInternal = internalQuery({
 		),
 	},
 	handler: async (ctx, args) => {
-		const results: Array<{
-			email: string;
-			firstName?: string;
-			lastName?: string;
-			sourceId: string;
-			sourceType: 'lead' | 'student';
-			phone?: string;
-		}> = [];
+		const results: SegmentContact[] = [];
 
 		if (args.sourceType === 'lead') {
 			const leadQuery = ctx.db.query('leads').order('desc');
@@ -2134,35 +2230,13 @@ export const getSegmentDataInternal = internalQuery({
 			const leads = await leadQuery.collect();
 			for (const lead of leads) {
 				if (!lead.email) continue;
-
-				// Stage filter
-				if (
-					args.filters?.stage &&
-					args.filters.stage !== 'all' &&
-					lead.stage !== args.filters.stage
-				)
-					continue;
-
-				if (
-					args.filters?.product &&
-					args.filters.product !== 'all' &&
-					lead.interestedProduct !== args.filters.product
-				)
-					continue;
-
-				const nameParts = (lead.name || '').split(' ');
-				results.push({
-					email: lead.email,
-					firstName: nameParts[0],
-					lastName: nameParts.slice(1).join(' '),
-					sourceId: lead._id,
-					sourceType: 'lead',
-					phone: lead.phone,
-				});
+				if (!isLeadSegmentEligible(lead, args.filters)) continue;
+				results.push(mapLeadSegmentContact(lead));
 			}
 		} else if (args.sourceType === 'student') {
 			const studentQuery = ctx.db.query('students').order('desc');
 			const students = await studentQuery.collect();
+			const productKey = getProductFilterKey(args.filters?.product);
 
 			for (const student of students) {
 				// Decrypt email if needed (handling LGPD)
@@ -2175,40 +2249,11 @@ export const getSegmentDataInternal = internalQuery({
 				// For now relying on plain email field.
 
 				if (!email) continue;
-
-				// Status filter
-				if (
-					args.filters?.status &&
-					args.filters.status !== 'all' &&
-					student.status !== args.filters.status
-				)
+				if (!isStudentStatusEligible(student, args.filters?.status)) continue;
+				if (productKey && !(await hasEnrollmentForProduct(ctx, student._id, productKey))) {
 					continue;
-
-				// Product filter via enrollments
-				const productFilter = args.filters?.product;
-				const productKey =
-					productFilter && PRODUCT_KEYS.has(productFilter as ProductKey)
-						? (productFilter as ProductKey)
-						: null;
-				if (productKey) {
-					const enrollments = await ctx.db
-						.query('enrollments')
-						.withIndex('by_student', (q) => q.eq('studentId', student._id))
-						.collect();
-
-					const products = new Set(enrollments.map((e) => e.product));
-					if (!products.has(productKey)) continue;
 				}
-
-				const nameParts = (student.name || '').split(' ');
-				results.push({
-					email,
-					firstName: nameParts[0],
-					lastName: nameParts.slice(1).join(' '),
-					sourceId: student._id,
-					sourceType: 'student',
-					phone: student.phone,
-				});
+				results.push(mapStudentSegmentContact(student));
 			}
 		}
 
