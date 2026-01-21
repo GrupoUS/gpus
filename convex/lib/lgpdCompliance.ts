@@ -45,6 +45,29 @@ export const LGPD_DATA_CATEGORIES = {
 	GEOLOCATION: 'geolocation',
 } as const;
 
+interface ConsentRecord {
+	consentType: string;
+	dataCategories?: string[];
+	granted: boolean;
+	grantedAt: string | number;
+	expiresAt?: string | number | null;
+	rightsWithdrawal?: boolean;
+}
+
+interface AuditLogRecord {
+	actionType: string;
+	createdAt: string | number;
+	actorId: string;
+	processingPurpose?: string;
+}
+
+interface StudentData {
+	name?: string;
+	email?: string;
+	phone?: string;
+	cpf?: string;
+}
+
 /**
  * Zod schema for LGPD consent records
  */
@@ -163,7 +186,11 @@ export function isMinor(birthDate: number | string): boolean {
 /**
  * Generates LGPD-compliant data export format
  */
-export function generateDataExport(studentData: any, consents: any[], auditLog: any[]): string {
+export function generateDataExport(
+	studentData: StudentData,
+	consents: ConsentRecord[],
+	auditLog: AuditLogRecord[],
+): string {
 	const exportData = {
 		metadata: {
 			exportDate: new Date().toISOString(),
@@ -214,7 +241,10 @@ export function generateDataExport(studentData: any, consents: any[], auditLog: 
 /**
  * Checks if student has given consent for specific data category
  */
-export function hasConsentForDataCategory(consents: any[], dataCategory: string): boolean {
+export function hasConsentForDataCategory(
+	consents: ConsentRecord[],
+	dataCategory: string,
+): boolean {
 	return consents.some(
 		(consent) =>
 			consent.granted &&

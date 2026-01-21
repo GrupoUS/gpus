@@ -1,5 +1,9 @@
 import type { AsaasCustomerPayload } from './asaas';
 
+const NON_DIGIT_REGEX = /\D/g;
+const REPEATED_DIGIT_REGEX = /^(\d)\1+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
  * Validates a CPF string.
  * Checks format, length, known invalid patterns, and check digits.
@@ -8,7 +12,7 @@ import type { AsaasCustomerPayload } from './asaas';
  */
 export function validateCPF(cpf: string): { valid: boolean; error?: string } {
 	// Remove non-numeric characters
-	const cleanCPF = cpf.replace(/\D/g, '');
+	const cleanCPF = cpf.replace(NON_DIGIT_REGEX, '');
 
 	// Check length
 	if (cleanCPF.length !== 11) {
@@ -16,13 +20,13 @@ export function validateCPF(cpf: string): { valid: boolean; error?: string } {
 	}
 
 	// Check for known invalid patterns (all same digits)
-	if (/^(\d)\1+$/.test(cleanCPF)) {
+	if (REPEATED_DIGIT_REGEX.test(cleanCPF)) {
 		return { valid: false, error: 'CPF inválido (dígitos repetidos)' };
 	}
 
 	// Validate check digits
 	let sum = 0;
-	let remainder;
+	let remainder = 0;
 
 	// First check digit
 	for (let i = 1; i <= 9; i++) {
@@ -80,11 +84,8 @@ export function validateAsaasCustomerPayload(payload: AsaasCustomerPayload): Val
 	}
 
 	// Email format (simplified RFC 5322)
-	if (payload.email) {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(payload.email)) {
-			errors.push('Email inválido');
-		}
+	if (payload.email && !EMAIL_REGEX.test(payload.email)) {
+		errors.push('Email inválido');
 	}
 
 	// Phone format (Brazilian: 10-11 digits)

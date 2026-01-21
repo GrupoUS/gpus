@@ -10,22 +10,198 @@
  * LGPD Compliance: All operations are audited and respect consent settings.
  */
 
-import { paginationOptsValidator } from 'convex/server';
+import { type FunctionReference, paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
-import { action, internalMutation, internalQuery, mutation, query } from './_generated/server';
-
-// Type assertion helper for internal functions during code generation bootstrap
-// Once Convex generates types for this file, these can be removed
-// biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const InternalAny: any = internal;
-// biome-ignore lint/suspicious/noExplicitAny: Required for Convex internal API bootstrap
-const internalEmailMarketing: Record<string, any> = InternalAny.emailMarketing;
-
+import type { Doc, Id } from './_generated/dataModel';
+import {
+	action,
+	internalMutation,
+	internalQuery,
+	mutation,
+	query,
+	type MutationCtx,
+} from './_generated/server';
 import { createAuditLog } from './lib/auditLogging';
 import { getClerkId, getIdentity, getOrganizationId, requireAuth } from './lib/auth';
 import { brevoCampaigns, brevoContacts, brevoLists, brevoTemplates } from './lib/brevo';
+
+interface InternalEmailMarketingApi {
+	getContactInternal: FunctionReference<'query', 'internal'>;
+	getListInternal: FunctionReference<'query', 'internal'>;
+	updateContactBrevoId: FunctionReference<'mutation', 'internal'>;
+	updateListSyncStatus: FunctionReference<'mutation', 'internal'>;
+	getListContactsInternal: FunctionReference<'query', 'internal'>;
+	getCampaignInternal: FunctionReference<'query', 'internal'>;
+	updateCampaignBrevoId: FunctionReference<'mutation', 'internal'>;
+	syncCampaignToBrevoInternal: FunctionReference<'action', 'internal'>;
+	updateCampaignStatus: FunctionReference<'mutation', 'internal'>;
+	updateCampaignStats: FunctionReference<'mutation', 'internal'>;
+	getTemplateInternal: FunctionReference<'query', 'internal'>;
+	updateTemplateBrevoId: FunctionReference<'mutation', 'internal'>;
+	getSegmentDataInternal: FunctionReference<'query', 'internal'>;
+	createList: FunctionReference<'mutation', 'internal'>;
+	updateListBrevoId: FunctionReference<'mutation', 'internal'>;
+	deleteList: FunctionReference<'mutation', 'internal'>;
+	bulkSyncContactsInternal: FunctionReference<'mutation', 'internal'>;
+}
+
+interface InternalApi {
+	emailMarketing: InternalEmailMarketingApi;
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('./_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
+
+const internalEmailMarketing = getInternalApi().emailMarketing;
+
+type ProductKey = 'trintae3' | 'otb' | 'black_neon' | 'comunidade' | 'auriculo' | 'na_mesa_certa';
+
+const PRODUCT_KEYS = new Set<ProductKey>([
+	'trintae3',
+	'otb',
+	'black_neon',
+	'comunidade',
+	'auriculo',
+	'na_mesa_certa',
+]);
+
+interface ContactData {
+	email: string;
+	firstName?: string;
+	lastName?: string;
+	sourceType: 'lead' | 'student';
+	sourceId: string;
+}
+
+interface ListContactFilters {
+	activeOnly: boolean;
+	qualifiedOnly: boolean;
+}
+
+interface ListContactArgs {
+	products: string[];
+	filters?: ListContactFilters;
+}
+
+const addContact = (
+	contactEmails: Set<string>,
+	contactData: ContactData[],
+	email: string,
+	name: string | undefined,
+	sourceType: 'lead' | 'student',
+	sourceId: string,
+) => {
+	if (contactEmails.has(email)) return;
+	contactEmails.add(email);
+	const nameParts = (name || '').trim().split(' ');
+	contactData.push({
+		email,
+		firstName: nameParts[0] || undefined,
+		lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
+		sourceType,
+		sourceId,
+	});
+};
+
+const collectStudentContacts = async (
+	ctx: MutationCtx,
+	args: ListContactArgs,
+	contactEmails: Set<string>,
+	contactData: ContactData[],
+) => {
+	let students = await ctx.db.query('students').collect();
+
+	if (args.filters?.activeOnly) {
+		students = students.filter((student) => student.status === 'ativo');
+	}
+
+	if (args.products.length > 0) {
+		const enrollments = await ctx.db.query('enrollments').collect();
+		const studentIdsWithProducts = new Set(
+			enrollments.filter((entry) => args.products.includes(entry.product)).map((entry) => entry.studentId),
+		);
+		students = students.filter((student) => studentIdsWithProducts.has(student._id));
+	}
+
+	for (const student of students) {
+		if (!student.email) continue;
+		addContact(contactEmails, contactData, student.email, student.name, 'student', student._id);
+	}
+};
+
+const collectLeadContacts = async (
+	ctx: MutationCtx,
+	args: ListContactArgs,
+	contactEmails: Set<string>,
+	contactData: ContactData[],
+) => {
+	let leads = await ctx.db.query('leads').collect();
+
+	if (args.products.length > 0) {
+		leads = leads.filter(
+			(lead) => lead.interestedProduct && args.products.includes(lead.interestedProduct),
+		);
+	}
+
+	if (args.filters?.qualifiedOnly) {
+		leads = leads.filter((lead) => lead.stage === 'qualificado');
+	} else {
+		leads = leads.filter((lead) => lead.stage !== 'fechado_perdido');
+	}
+
+	for (const lead of leads) {
+		if (!lead.email) continue;
+		addContact(contactEmails, contactData, lead.email, lead.name, 'lead', lead._id);
+	}
+};
+
+const ensureBrevoListId = async (list: Doc<'emailLists'>): Promise<number> => {
+	if (list.brevoListId) return list.brevoListId;
+	const result = await brevoLists.create({
+		name: list.name,
+		folderId: 1,
+	});
+	return result.id;
+};
+
+const upsertBrevoContacts = async (contacts: Doc<'emailContacts'>[]): Promise<string[]> => {
+	const contactEmails: string[] = [];
+	for (const contact of contacts) {
+		try {
+			await brevoContacts.upsert({
+				email: contact.email,
+				attributes: {
+					FIRSTNAME: contact.firstName || '',
+					LASTNAME: contact.lastName || '',
+				},
+				updateEnabled: true,
+			});
+			contactEmails.push(contact.email);
+		} catch (_error) {
+			// Ignore individual contact failures to continue batch sync.
+		}
+	}
+
+	return contactEmails;
+};
+
+const addContactsToBrevoList = async (
+	brevoListId: number,
+	contactEmails: string[],
+): Promise<void> => {
+	const batchSize = 150;
+	for (let i = 0; i < contactEmails.length; i += batchSize) {
+		const batch = contactEmails.slice(i, i + batchSize);
+		try {
+			await brevoContacts.addToList(brevoListId, batch);
+		} catch (_error) {
+			// Ignore batch errors to keep syncing remaining contacts.
+		}
+	}
+};
 
 // ═══════════════════════════════════════════════════════
 // SECTION 1: CONTACT MANAGEMENT
@@ -94,13 +270,13 @@ export const getContactsPaginated = query({
 	handler: async (ctx, args) => {
 		const organizationId = await getOrganizationId(ctx);
 
-		let query = ctx.db
+		let contactsQuery = ctx.db
 			.query('emailContacts')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 
 		// Apply filters via Convex filter expressions where possible
-		query = query.filter((q) => {
-			const filters = [];
+		contactsQuery = contactsQuery.filter((q) => {
+			const filters: ReturnType<typeof q.eq>[] = [];
 
 			if (args.subscriptionStatus) {
 				filters.push(q.eq(q.field('subscriptionStatus'), args.subscriptionStatus));
@@ -112,7 +288,7 @@ export const getContactsPaginated = query({
 			return filters.length > 0 ? q.and(...filters) : true;
 		});
 
-		const results = await query.order('desc').paginate(args.paginationOpts);
+		const results = await contactsQuery.order('desc').paginate(args.paginationOpts);
 
 		// Apply search filter in memory (Convex doesn't support substring matching)
 		if (args.search) {
@@ -752,82 +928,14 @@ export const createListWithContacts = mutation({
 
 		// Collect emails from students and/or leads based on sourceType and filters
 		const contactEmails: Set<string> = new Set();
-		const contactData: Array<{
-			email: string;
-			firstName?: string;
-			lastName?: string;
-			sourceType: 'lead' | 'student';
-			sourceId: string;
-		}> = [];
+		const contactData: ContactData[] = [];
 
-		// Query students if sourceType includes students
 		if (args.sourceType === 'students' || args.sourceType === 'both') {
-			let students = await ctx.db.query('students').collect();
-
-			// Filter by status if activeOnly
-			if (args.filters?.activeOnly) {
-				students = students.filter((s) => s.status === 'ativo');
-			}
-
-			// Filter by products if specified
-			if (args.products.length > 0) {
-				// Get enrollments for product filtering
-				const enrollments = await ctx.db.query('enrollments').collect();
-				const studentIdsWithProducts = new Set(
-					enrollments.filter((e) => args.products.includes(e.product)).map((e) => e.studentId),
-				);
-				students = students.filter((s) => studentIdsWithProducts.has(s._id));
-			}
-
-			// Add students with valid email
-			for (const student of students) {
-				if (student.email && !contactEmails.has(student.email)) {
-					contactEmails.add(student.email);
-					const nameParts = (student.name || '').trim().split(' ');
-					contactData.push({
-						email: student.email,
-						firstName: nameParts[0] || undefined,
-						lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
-						sourceType: 'student',
-						sourceId: student._id,
-					});
-				}
-			}
+			await collectStudentContacts(ctx, args, contactEmails, contactData);
 		}
 
-		// Query leads if sourceType includes leads
 		if (args.sourceType === 'leads' || args.sourceType === 'both') {
-			let leads = await ctx.db.query('leads').collect();
-
-			// Filter by product interest
-			if (args.products.length > 0) {
-				leads = leads.filter(
-					(l) => l.interestedProduct && args.products.includes(l.interestedProduct),
-				);
-			}
-
-			// Filter by stage if qualifiedOnly
-			if (args.filters?.qualifiedOnly) {
-				leads = leads.filter((l) => l.stage === 'qualificado');
-			} else {
-				// Exclude lost leads by default
-				leads = leads.filter((l) => l.stage !== 'fechado_perdido');
-			}
-
-			// Add leads with valid email (avoid duplicates)
-			for (const lead of leads) {
-				if (lead.email && !contactEmails.has(lead.email)) {
-					contactEmails.add(lead.email);
-					const nameParts = (lead.name || '').trim().split(' ');
-					contactData.push({
-						email: lead.email,
-						firstName: nameParts[0] || undefined,
-						lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
-						sourceType: 'lead',
-						sourceId: lead._id,
-					});
-				}
-			}
+			await collectLeadContacts(ctx, args, contactEmails, contactData);
 		}
 
 		// Create the list
@@ -1215,47 +1323,15 @@ export const syncListToBrevo = action({
 		});
 
 		try {
-			let brevoListId = list.brevoListId;
-
-			// Create list in Brevo if not exists
-			if (!brevoListId) {
-				const result = await brevoLists.create({
-					name: list.name,
-					folderId: 1,
-				});
-				brevoListId = result.id;
-			}
+			const brevoListId = await ensureBrevoListId(list);
 
 			// Get contacts in this list
 			const contacts = await ctx.runQuery(internalEmailMarketing.getListContactsInternal, {
 				listId: args.listId,
 			});
 
-			// Batch upsert contacts to Brevo (max 1000 per request)
-			const contactEmails: string[] = [];
-			for (const contact of contacts) {
-				// Upsert contact in Brevo
-				try {
-					await brevoContacts.upsert({
-						email: contact.email,
-						attributes: {
-							FIRSTNAME: contact.firstName || '',
-							LASTNAME: contact.lastName || '',
-						},
-						updateEnabled: true,
-					});
-					contactEmails.push(contact.email);
-				} catch (_error) {}
-			}
-
-			// Add contacts to list in batches of 150 (Brevo recommendation)
-			const BATCH_SIZE = 150;
-			for (let i = 0; i < contactEmails.length; i += BATCH_SIZE) {
-				const batch = contactEmails.slice(i, i + BATCH_SIZE);
-				try {
-					await brevoContacts.addToList(brevoListId, batch);
-				} catch (_error) {}
-			}
+			const contactEmails = await upsertBrevoContacts(contacts);
+			await addContactsToBrevoList(brevoListId, contactEmails);
 
 			// Update sync status to synced
 			await ctx.runMutation(internalEmailMarketing.updateListSyncStatus, {
@@ -2042,7 +2118,7 @@ export const getSegmentDataInternal = internalQuery({
 		}> = [];
 
 		if (args.sourceType === 'lead') {
-			const query = ctx.db.query('leads').order('desc');
+			const leadQuery = ctx.db.query('leads').order('desc');
 
 			// Apply organization filter if possible (but this is internal, assumes context is managed by action)
 			// Actually internal queries don't typically check org implicitly, but we should if multi-tenant.
@@ -2055,7 +2131,7 @@ export const getSegmentDataInternal = internalQuery({
 			// I'll grab all for now, assuming the codebase handles orgs via simple filters usually.
 			// Better: Add organizationId arg.
 
-			const leads = await query.collect();
+			const leads = await leadQuery.collect();
 			for (const lead of leads) {
 				if (!lead.email) continue;
 
@@ -2085,8 +2161,8 @@ export const getSegmentDataInternal = internalQuery({
 				});
 			}
 		} else if (args.sourceType === 'student') {
-			const query = ctx.db.query('students').order('desc');
-			const students = await query.collect();
+			const studentQuery = ctx.db.query('students').order('desc');
+			const students = await studentQuery.collect();
 
 			for (const student of students) {
 				// Decrypt email if needed (handling LGPD)
@@ -2109,14 +2185,19 @@ export const getSegmentDataInternal = internalQuery({
 					continue;
 
 				// Product filter via enrollments
-				if (args.filters?.product && args.filters.product !== 'all') {
+				const productFilter = args.filters?.product;
+				const productKey =
+					productFilter && PRODUCT_KEYS.has(productFilter as ProductKey)
+						? (productFilter as ProductKey)
+						: null;
+				if (productKey) {
 					const enrollments = await ctx.db
 						.query('enrollments')
 						.withIndex('by_student', (q) => q.eq('studentId', student._id))
 						.collect();
 
 					const products = new Set(enrollments.map((e) => e.product));
-					if (!products.has(args.filters.product as any)) continue;
+					if (!products.has(productKey)) continue;
 				}
 
 				const nameParts = (student.name || '').split(' ');
@@ -2174,15 +2255,21 @@ export const bulkSyncContactsInternal = internalMutation({
 				}
 			} else {
 				// Create
+				const leadId =
+					contactData.sourceType === 'lead' ? (contactData.sourceId as Id<'leads'>) : undefined;
+				const studentId =
+					contactData.sourceType === 'student'
+						? (contactData.sourceId as Id<'students'>)
+						: undefined;
+
 				await ctx.db.insert('emailContacts', {
 					email: contactData.email,
 					firstName: contactData.firstName,
 					lastName: contactData.lastName,
 					sourceType: contactData.sourceType,
 					sourceId: contactData.sourceId,
-					leadId: contactData.sourceType === 'lead' ? (contactData.sourceId as any) : undefined,
-					studentId:
-						contactData.sourceType === 'student' ? (contactData.sourceId as any) : undefined,
+					leadId,
+					studentId,
 					organizationId: args.organizationId,
 					subscriptionStatus: 'pending',
 					listIds: [args.listId],

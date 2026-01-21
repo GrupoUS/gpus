@@ -12,6 +12,7 @@
 
 import { z } from 'zod';
 
+import type { Doc, Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { createAuditLog } from './auditLogging';
 // getIdentity available for identity checks, getClerkId used
@@ -31,6 +32,10 @@ export const LGPD_RIGHTS_TYPES = {
 	OBJECTIVE: 'objective',
 	RESTRICTION: 'restriction',
 } as const;
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^\d{10,15}$/;
+const NON_DIGIT_REGEX = /\D/g;
 
 /**
  * Validation schemas for LGPD requests
@@ -94,21 +99,29 @@ const lgpdRequestSchemas = {
 	}),
 } as const;
 
+const normalizeStudentId = (ctx: MutationCtx | QueryCtx, studentId: string): Id<'students'> => {
+	const normalized = ctx.db.normalizeId('students', studentId);
+	if (!normalized) {
+		throw new Error('Invalid student id');
+	}
+	return normalized;
+};
+
 /**
  * Creates a new LGPD data subject request
  */
-export async function createLgpdRequest(ctx: MutationCtx, requestData: any) {
+export async function createLgpdRequest(ctx: MutationCtx, requestData: Record<string, unknown>) {
 	const clerkId = await getClerkId(ctx);
 
 	// Validate request based on type
-	const requestType = requestData.requestType;
+	const requestType = (requestData as { requestType?: string }).requestType;
 	const schema = lgpdRequestSchemas[requestType as keyof typeof lgpdRequestSchemas];
 
 	if (!schema) {
 		throw new Error(`Invalid LGPD request type: ${requestType}`);
 	}
 
-	const validation = validateInput(schema as any, requestData);
+	const validation = validateInput(schema as z.ZodTypeAny, requestData);
 	if (!validation.success) {
 		throw new Error(`Invalid LGPD request: ${validation.error}`);
 	}
@@ -130,7 +143,7 @@ export async function createLgpdRequest(ctx: MutationCtx, requestData: any) {
 
 	// Create LGPD request record
 	const requestId = await ctx.db.insert('lgpdRequests', {
-		studentId: ctx.db.normalizeId('students', data.studentId) as any,
+		studentId: normalizeStudentId(ctx, data.studentId),
 		requestType: data.requestType,
 		status: 'pending',
 		description: data.description,
@@ -176,7 +189,7 @@ export async function processAccessRequest(
 	studentId: string,
 	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
+	const student = await ctx.db.get(normalizeStudentId(ctx, studentId));
 	if (!student) {
 		throw new Error('Student not found');
 	}
@@ -184,17 +197,13 @@ export async function processAccessRequest(
 	// Get all consents
 	const consents = await ctx.db
 		.query('lgpdConsent')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.collect();
 
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.take(100); // Limit for access request
 
 	// Prepare access data - use type assertion since we know student is from students table
@@ -285,13 +294,18 @@ export async function processCorrectionRequest(
 	corrections: Array<{ fieldName: string; newValue: string }>,
 	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
+	const student = await ctx.db.get(normalizeStudentId(ctx, studentId));
 	if (!student) {
 		throw new Error('Student not found');
 	}
 
-	const updates: any = {};
-	const auditEntries: any[] = [];
+	const updates: Record<string, string> = {};
+	const auditEntries: Array<{
+		fieldName: string;
+		oldValue: unknown;
+		newValue: string;
+		timestamp: number;
+	}> = [];
 
 	// Process each correction
 	for (const correction of corrections) {
@@ -316,10 +330,10 @@ export async function processCorrectionRequest(
 	}
 
 	// Update student record
-	await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
+	await ctx.db.patch(normalizeStudentId(ctx, studentId), {
 		...updates,
 		updatedAt: Date.now(),
-	});
+	} as Partial<Doc<'students'>>);
 
 	// Log corrections
 	for (const entry of auditEntries) {
@@ -363,29 +377,34 @@ export async function processDeletionRequest(
 	},
 	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
+	const student = await ctx.db.get(normalizeStudentId(ctx, studentId));
 	if (!student) {
 		throw new Error('Student not found');
 	}
 
 	const now = Date.now();
-	const auditEntries: any[] = [];
+	const auditEntries: Array<{
+		category: string;
+		action: string;
+		timestamp: number;
+		count?: number;
+	}> = [];
 
 	// Phase 1: Anonymize PII data
 	if (deletionOptions.includePii !== false) {
-		const anonymizedData = {
+		const anonymizedData: Partial<Doc<'students'>> = {
 			name: `[DELETED-${Math.random().toString(36).substr(2, 9)}]`,
 			email: `[deleted-${now}@deleted.local]`,
 			phone: '[DELETED]',
-			cpf: null,
+			cpf: '[DELETED]',
 			encryptedCPF: '[DELETED]',
 			encryptedEmail: '[DELETED]',
 			encryptedPhone: '[DELETED]',
-			clinicName: null,
-			clinicCity: null,
+			clinicName: '[DELETED]',
+			clinicCity: '[DELETED]',
 		};
 
-		await ctx.db.patch(ctx.db.normalizeId('students', studentId) as any, {
+		await ctx.db.patch(normalizeStudentId(ctx, studentId), {
 			...anonymizedData,
 			updatedAt: now,
 		});
@@ -401,9 +420,7 @@ export async function processDeletionRequest(
 	if (deletionOptions.includeAcademic) {
 		const enrollments = await ctx.db
 			.query('enrollments')
-			.withIndex('by_student', (q) =>
-				q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-			)
+			.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 			.collect();
 
 		for (const enrollment of enrollments) {
@@ -424,9 +441,7 @@ export async function processDeletionRequest(
 	// Phase 3: Delete conversations and messages
 	const conversations = await ctx.db
 		.query('conversations')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.collect();
 
 	for (const conversation of conversations) {
@@ -490,7 +505,7 @@ export async function processPortabilityRequest(
 	exportFormat: 'json' | 'csv' | 'pdf',
 	requesterId: string,
 ) {
-	const student = await ctx.db.get(ctx.db.normalizeId('students', studentId) as any);
+	const student = await ctx.db.get(normalizeStudentId(ctx, studentId));
 	if (!student) {
 		throw new Error('Student not found');
 	}
@@ -498,21 +513,23 @@ export async function processPortabilityRequest(
 	// Get consents to verify what can be exported
 	const consents = await ctx.db
 		.query('lgpdConsent')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.collect();
 
 	// Get audit log
 	const auditLog = await ctx.db
 		.query('lgpdAudit')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.take(100);
 
 	// Generate export data
-	const exportData = generateDataExport(student, consents, auditLog);
+	const studentData = {
+		name: student.name,
+		email: student.email,
+		phone: student.phone,
+		cpf: student.cpf,
+	};
+	const exportData = generateDataExport(studentData, consents, auditLog);
 
 	// Create file (in production, this would be stored securely)
 	const fileName = `lgpd_export_${studentId}_${Date.now()}.${exportFormat}`;
@@ -556,9 +573,7 @@ export async function processPortabilityRequest(
 export async function getStudentLgpdRequests(ctx: QueryCtx, studentId: string) {
 	return await ctx.db
 		.query('lgpdRequests')
-		.withIndex('by_student', (q) =>
-			q.eq('studentId', ctx.db.normalizeId('students', studentId) as any),
-		)
+		.withIndex('by_student', (q) => q.eq('studentId', normalizeStudentId(ctx, studentId)))
 		.order('desc')
 		.collect();
 }
@@ -574,9 +589,9 @@ function isValidCorrection(fieldName: string, newValue: string, _student: unknow
 		case 'name':
 			return newValue.length >= 2 && newValue.length <= 100;
 		case 'email':
-			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newValue);
+			return EMAIL_REGEX.test(newValue);
 		case 'phone':
-			return /^\d{10,15}$/.test(newValue.replace(/\D/g, ''));
+			return PHONE_REGEX.test(newValue.replace(NON_DIGIT_REGEX, ''));
 		case 'profession':
 			return newValue.length >= 2 && newValue.length <= 50;
 		case 'clinicName':
@@ -680,9 +695,14 @@ export async function generateComplianceReport(ctx: QueryCtx, organizationId?: s
 	return report;
 }
 
-function calculateAverageProcessingTime(requests: any[]): number {
+function calculateAverageProcessingTime(
+	requests: Array<{ status?: string; completedAt?: number; createdAt?: number }>,
+): number {
 	const completedRequests = requests.filter(
-		(req) => req.status === 'completed' && req.completedAt && req.createdAt,
+		(req): req is { status: 'completed'; completedAt: number; createdAt: number } =>
+			req.status === 'completed' &&
+			typeof req.completedAt === 'number' &&
+			typeof req.createdAt === 'number',
 	);
 
 	if (completedRequests.length === 0) {

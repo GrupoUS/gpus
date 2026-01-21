@@ -17,7 +17,7 @@ export interface HealthCheckResult {
 	score: number; // 0-100
 	issues: HealthIssue[];
 	recommendations: string[];
-	metadata: any;
+	metadata: Record<string, unknown>;
 	timestamp: number;
 }
 

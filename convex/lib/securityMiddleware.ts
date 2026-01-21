@@ -7,6 +7,7 @@
 
 import type { MutationCtx, QueryCtx } from '../_generated/server';
 import { logSecurityEvent } from './auditLogging';
+import { hasAnyPermission } from './auth';
 // validateInput, rateLimiters, validateFileUpload used; validationSchemas available for schema definitions
 import { rateLimiters, validateFileUpload, validateInput } from './validation';
 
@@ -20,6 +21,118 @@ const SECURITY_CONFIG = {
 	allowedOrigins: ['http://localhost:5173', 'https://portalgrupo.us', 'https://*.railway.app'],
 	criticalEndpoints: ['createStudent', 'deleteStudent', 'updateStudent', 'exportStudentData'],
 } as const;
+
+interface SanitizedQueryParams {
+	limit?: number;
+	cursor?: string;
+	startDate?: number;
+	endDate?: number;
+}
+
+const CURSOR_SANITIZE_REGEX = /[^a-zA-Z0-9+/=]/g;
+const SQL_INJECTION_PATTERNS = [
+	/--/,
+	/\/\*/,
+	/\*\//,
+	/;/i,
+	/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
+	/(\b(OR|AND)\s+\d+\s*=\s*\d+)/i,
+	/(\b(OR|AND)\s+'\w+'\s*=\s*'\w+')/i,
+	/(1=1|1 = 1)/i,
+	/(true|TRUE)/i,
+];
+const XSS_PATTERNS = [
+	/<script/i,
+	/<iframe/i,
+	/<object/i,
+	/<embed/i,
+	/<form/i,
+	/on\w+\s*=/i,
+	/javascript:/i,
+	/vbscript:/i,
+	/data:/i,
+	/<\s*\/?\s*\w+\s+[^>]*on\w+\s*=/i,
+];
+const COMMAND_INJECTION_PATTERNS = [
+	/;\s*(rm|del|format|mkdir|rmdir)/i,
+	/\|\s*(cat|type|dir|ls)/i,
+	/&&\s*(rm|del|format)/i,
+	/\$\(/,
+	/`[^`]*`/,
+	/\${[^}]*}/,
+	/[;&|`$()]/,
+	/(wget|curl|nc|netcat)/i,
+];
+const STRING_THREAT_DETECTORS = [
+	{ label: 'SQL injection', detect: detectSQLInjection },
+	{ label: 'XSS', detect: detectXSS },
+	{ label: 'Command injection', detect: detectCommandInjection },
+];
+
+const parseDateValue = (value: unknown): number | null => {
+	if (typeof value === 'number' && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === 'string') {
+		const parsed = new Date(value);
+		const time = parsed.getTime();
+		return Number.isNaN(time) ? null : time;
+	}
+	return null;
+};
+
+const getLimitParam = (limit: unknown, errors: string[]): number | undefined => {
+	if (limit === undefined || limit === null) return undefined;
+	if (typeof limit !== 'number') {
+		errors.push('Limit must be a number');
+		return undefined;
+	}
+	if (limit > SECURITY_CONFIG.maxQueryResults || limit < 1) {
+		errors.push(`Limit must be between 1 and ${SECURITY_CONFIG.maxQueryResults}`);
+		return undefined;
+	}
+	return Math.min(limit, SECURITY_CONFIG.maxQueryResults);
+};
+
+const getCursorParam = (cursor: unknown, errors: string[]): string | undefined => {
+	if (cursor === undefined || cursor === null) return undefined;
+	if (typeof cursor !== 'string') {
+		errors.push('Cursor must be a string');
+		return undefined;
+	}
+	return cursor.replace(CURSOR_SANITIZE_REGEX, '');
+};
+
+const getDateRangeParams = (
+	startDate: unknown,
+	endDate: unknown,
+	errors: string[],
+): { startDate?: number; endDate?: number } => {
+	if (!(startDate && endDate)) return {};
+	const start = parseDateValue(startDate);
+	const end = parseDateValue(endDate);
+
+	if (start === null) {
+		errors.push('Invalid startDate format');
+	}
+	if (end === null) {
+		errors.push('Invalid endDate format');
+	}
+	if (start !== null && end !== null) {
+		if (start > end) {
+			errors.push('startDate must be before endDate');
+		}
+		const maxRange = 365 * 24 * 60 * 60 * 1000;
+		if (end - start > maxRange) {
+			errors.push('Date range cannot exceed 1 year');
+		}
+		if (start <= end) {
+			return { startDate: start, endDate: end };
+		}
+	}
+
+	return {};
+};
 
 /**
  * Request context interface
@@ -94,7 +207,7 @@ function validateOrigin(): boolean {
 /**
  * Checks if request size is within limits
  */
-function validateRequestSize(data: any): boolean {
+function validateRequestSize(data: unknown): boolean {
 	const size = JSON.stringify(data).length;
 	return size <= SECURITY_CONFIG.maxRequestSize;
 }
@@ -102,54 +215,28 @@ function validateRequestSize(data: any): boolean {
 /**
  * Validates and sanitizes query parameters
  */
-function validateQueryParams(params: any): { valid: boolean; sanitized: any; errors: string[] } {
+function validateQueryParams(
+	params: Record<string, unknown>,
+): { valid: boolean; sanitized: SanitizedQueryParams; errors: string[] } {
 	const errors: string[] = [];
-	const sanitized: any = {};
+	const sanitized: SanitizedQueryParams = {};
 
-	// Limit query result size
-	if (params.limit && (params.limit > SECURITY_CONFIG.maxQueryResults || params.limit < 1)) {
-		errors.push(`Limit must be between 1 and ${SECURITY_CONFIG.maxQueryResults}`);
-	} else if (params.limit) {
-		sanitized.limit = Math.min(params.limit, SECURITY_CONFIG.maxQueryResults);
+	const limitValue = getLimitParam(params.limit, errors);
+	if (limitValue !== undefined) {
+		sanitized.limit = limitValue;
 	}
 
-	// Validate cursor
-	if (params.cursor && typeof params.cursor !== 'string') {
-		errors.push('Cursor must be a string');
-	} else if (params.cursor) {
-		// Sanitize cursor (base64 or hex)
-		sanitized.cursor = params.cursor.replace(/[^a-zA-Z0-9+/=]/g, '');
+	const cursorValue = getCursorParam(params.cursor, errors);
+	if (cursorValue) {
+		sanitized.cursor = cursorValue;
 	}
 
-	// Validate date ranges
-	if (params.startDate && params.endDate) {
-		const start = new Date(params.startDate);
-		const end = new Date(params.endDate);
-
-		if (Number.isNaN(start.getTime())) {
-			errors.push('Invalid startDate format');
-		}
-
-		if (Number.isNaN(end.getTime())) {
-			errors.push('Invalid endDate format');
-		}
-
-		if (start > end) {
-			errors.push('startDate must be before endDate');
-		}
-
-		// Limit date range to 1 year
-		const maxRange = 365 * 24 * 60 * 60 * 1000;
-		if (end.getTime() - start.getTime() > maxRange) {
-			errors.push('Date range cannot exceed 1 year');
-		}
-
-		const isValidDateRange =
-			!(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) && start <= end;
-		if (isValidDateRange) {
-			sanitized.startDate = start.getTime();
-			sanitized.endDate = end.getTime();
-		}
+	const dateRange = getDateRangeParams(params.startDate, params.endDate, errors);
+	if (dateRange.startDate !== undefined) {
+		sanitized.startDate = dateRange.startDate;
+	}
+	if (dateRange.endDate !== undefined) {
+		sanitized.endDate = dateRange.endDate;
 	}
 
 	return {
@@ -162,11 +249,11 @@ function validateQueryParams(params: any): { valid: boolean; sanitized: any; err
 /**
  * Checks rate limits for different operation types
  */
-async function checkRateLimit(
+function checkRateLimit(
 	_ctx: MutationCtx, // Prefixed with _ to indicate intentionally unused
 	operationType: 'login' | 'contact' | 'dataExport' | 'passwordReset',
 	userId?: string,
-): Promise<{ allowed: boolean; remaining?: number; resetTime?: number }> {
+): { allowed: boolean; remaining?: number; resetTime?: number } {
 	const rateLimiter = rateLimiters[operationType];
 	const key = userId || getClientIP();
 
@@ -182,7 +269,7 @@ async function checkRateLimit(
 /**
  * Validates file uploads for security
  */
-function validateFileUploads(files: any[]): { valid: boolean; errors: string[] } {
+function validateFileUploads(files: unknown[]): { valid: boolean; errors: string[] } {
 	if (!(files && Array.isArray(files))) {
 		return { valid: true, errors: [] };
 	}
@@ -190,9 +277,14 @@ function validateFileUploads(files: any[]): { valid: boolean; errors: string[] }
 	const errors: string[] = [];
 
 	for (const file of files) {
-		const validation = validateFileUpload(file);
+		if (!file || typeof file !== 'object') {
+			errors.push('Invalid file');
+			continue;
+		}
+		const fileData = file as { name: string; size: number; type: string };
+		const validation = validateFileUpload(fileData);
 		if (!validation.valid) {
-			errors.push(`File ${file.name}: ${validation.error}`);
+			errors.push(`File ${fileData.name}: ${validation.error}`);
 		}
 	}
 
@@ -203,78 +295,44 @@ function validateFileUploads(files: any[]): { valid: boolean; errors: string[] }
  * Detects SQL injection patterns
  */
 function detectSQLInjection(input: string): boolean {
-	const patterns = [
-		/--/,
-		/\/\*/,
-		/\*\//,
-		/;/i,
-		/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
-		/(\b(OR|AND)\s+\d+\s*=\s*\d+)/i,
-		/(\b(OR|AND)\s+'\w+'\s*=\s*'\w+')/i,
-		/(1=1|1 = 1)/i,
-		/(true|TRUE)/i,
-	];
-
-	return patterns.some((pattern) => pattern.test(input));
+	return SQL_INJECTION_PATTERNS.some((pattern) => pattern.test(input));
 }
 
 /**
  * Detects XSS patterns
  */
 function detectXSS(input: string): boolean {
-	const patterns = [
-		/<script/i,
-		/<iframe/i,
-		/<object/i,
-		/<embed/i,
-		/<form/i,
-		/on\w+\s*=/i,
-		/javascript:/i,
-		/vbscript:/i,
-		/data:/i,
-		/<\s*\/?\s*\w+\s+[^>]*on\w+\s*=/i,
-	];
-
-	return patterns.some((pattern) => pattern.test(input));
+	return XSS_PATTERNS.some((pattern) => pattern.test(input));
 }
 
 /**
  * Detects command injection patterns
  */
 function detectCommandInjection(input: string): boolean {
-	const patterns = [
-		/;\s*(rm|del|format|mkdir|rmdir)/i,
-		/\|\s*(cat|type|dir|ls)/i,
-		/&&\s*(rm|del|format)/i,
-		/\$\(/,
-		/`[^`]*`/,
-		/\${[^}]*}/,
-		/[;&|`$()]/,
-		/(wget|curl|nc|netcat)/i,
-	];
+	return COMMAND_INJECTION_PATTERNS.some((pattern) => pattern.test(input));
+}
 
-	return patterns.some((pattern) => pattern.test(input));
+function addStringThreats(value: string, path: string, threats: string[]): void {
+	for (const detector of STRING_THREAT_DETECTORS) {
+		if (detector.detect(value)) {
+			threats.push(`${detector.label} detected in ${path}`);
+		}
+	}
 }
 
 /**
  * Comprehensive input security validation
  */
-function validateInputSecurity(input: any): { valid: boolean; threats: string[] } {
+function validateInputSecurity(input: unknown): { valid: boolean; threats: string[] } {
 	const threats: string[] = [];
 
-	const checkThreats = (value: any, path = '') => {
+	const checkThreats = (value: unknown, path = '') => {
 		if (typeof value === 'string') {
-			if (detectSQLInjection(value)) {
-				threats.push(`SQL injection detected in ${path}`);
-			}
-			if (detectXSS(value)) {
-				threats.push(`XSS detected in ${path}`);
-			}
-			if (detectCommandInjection(value)) {
-				threats.push(`Command injection detected in ${path}`);
-			}
-		} else if (typeof value === 'object' && value !== null) {
-			for (const [key, val] of Object.entries(value)) {
+			addStringThreats(value, path, threats);
+			return;
+		}
+		if (typeof value === 'object' && value !== null) {
+			for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
 				checkThreats(val, path ? `${path}.${key}` : key);
 			}
 		}
@@ -285,7 +343,221 @@ function validateInputSecurity(input: any): { valid: boolean; threats: string[] 
 	return { valid: threats.length === 0, threats };
 }
 
-import { hasAnyPermission } from './auth';
+async function enforceOrigin(ctx: MutationCtx, security: SecurityContext): Promise<void> {
+	if (validateOrigin()) return;
+	await logSecurityEvent(ctx, 'unauthorized_access', 'Invalid request origin', 'medium', [
+		security.actorId,
+	]);
+	throw new Error('CORS policy violation');
+}
+
+async function enforceAuthentication(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	requireAuth: boolean,
+): Promise<void> {
+	if (!requireAuth || security.isAuthenticated) return;
+	await logSecurityEvent(ctx, 'unauthorized_access', 'Authentication required', 'medium', [
+		security.actorId,
+	]);
+	throw new Error('Authentication required');
+}
+
+async function enforceRoles(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	allowedRoles?: string[],
+): Promise<void> {
+	if (!(allowedRoles && allowedRoles.length > 0)) return;
+	if (allowedRoles.includes(security.actorRole)) return;
+	await logSecurityEvent(
+		ctx,
+		'unauthorized_access',
+		`Role ${security.actorRole} not allowed`,
+		'medium',
+		[security.actorId],
+	);
+	throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
+}
+
+async function enforcePermissions(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	requiredPermissions?: string[],
+): Promise<void> {
+	if (!(requiredPermissions && requiredPermissions.length > 0)) return;
+	const hasPerm = await hasAnyPermission(ctx, requiredPermissions);
+	if (hasPerm) return;
+	await logSecurityEvent(
+		ctx,
+		'unauthorized_access',
+		`Missing required permissions: ${requiredPermissions.join(', ')}`,
+		'medium',
+		[security.actorId],
+	);
+	throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
+}
+
+async function enforceRateLimit(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	enableRateLimit: boolean,
+	operationType?: 'login' | 'contact' | 'dataExport' | 'passwordReset',
+): Promise<void> {
+	if (!(enableRateLimit && operationType)) return;
+	const rateLimitResult = await checkRateLimit(ctx, operationType, security.actorId);
+	if (rateLimitResult.allowed) return;
+	await logSecurityEvent(ctx, 'suspicious_activity', 'Rate limit exceeded', 'high', [
+		security.actorId,
+	]);
+	throw new Error(
+		`Rate limit exceeded. Try again in ${Math.ceil((rateLimitResult.resetTime || 0) / 1000)} seconds`,
+	);
+}
+
+async function enforceRequestSize(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	data: unknown,
+	maxRequestSize: number,
+): Promise<void> {
+	if (validateRequestSize(data)) return;
+	await logSecurityEvent(ctx, 'suspicious_activity', 'Request size exceeds limit', 'medium', [
+		security.actorId,
+	]);
+	throw new Error(`Request size exceeds maximum of ${maxRequestSize} bytes`);
+}
+
+async function enforceInputSecurity(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	data: unknown,
+): Promise<void> {
+	const securityCheck = validateInputSecurity(data);
+	if (securityCheck.valid) return;
+	await logSecurityEvent(
+		ctx,
+		'suspicious_activity',
+		`Security threats detected: ${securityCheck.threats.join(', ')}`,
+		'high',
+		[security.actorId],
+	);
+	throw new Error('Invalid input detected');
+}
+
+async function enforceSchemaValidation(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	data: unknown,
+	validationSchema?: Parameters<typeof validateInput>[0],
+): Promise<void> {
+	if (!validationSchema) return;
+	const validation = validateInput(validationSchema, data as Record<string, unknown>);
+	if (validation.success) return;
+	await logSecurityEvent(
+		ctx,
+		'suspicious_activity',
+		`Validation failed: ${validation.error}`,
+		'low',
+		[security.actorId],
+	);
+	throw new Error(`Validation failed: ${validation.error}`);
+}
+
+function getFilesFromData(data: unknown): unknown[] | null {
+	if (!data || typeof data !== 'object') return null;
+	const files = (data as { files?: unknown }).files;
+	return Array.isArray(files) ? files : null;
+}
+
+async function enforceFileUploads(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	data: unknown,
+): Promise<void> {
+	const files = getFilesFromData(data);
+	if (!files) return;
+	const fileValidation = validateFileUploads(files);
+	if (fileValidation.valid) return;
+	await logSecurityEvent(
+		ctx,
+		'suspicious_activity',
+		`File validation failed: ${fileValidation.errors.join(', ')}`,
+		'medium',
+		[security.actorId],
+	);
+	throw new Error(`File validation failed: ${fileValidation.errors.join(', ')}`);
+}
+
+async function logCriticalOperation(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	handlerName: string,
+): Promise<void> {
+	await logSecurityEvent(
+		ctx,
+		'suspicious_activity',
+		`Critical operation initiated: ${handlerName}`,
+		'low',
+		[security.actorId],
+	);
+}
+
+async function logHandlerError(
+	ctx: MutationCtx,
+	security: SecurityContext,
+	error: unknown,
+): Promise<void> {
+	const message = error instanceof Error ? error.message : 'Unknown';
+	await logSecurityEvent(
+		ctx,
+		'suspicious_activity',
+		`Handler error: ${message}`,
+		'medium',
+		[security.actorId],
+	);
+}
+
+function enforceQueryAuthentication(security: SecurityContext, requireAuth: boolean): void {
+	if (!requireAuth || security.isAuthenticated) return;
+	throw new Error('Authentication required');
+}
+
+function enforceQueryRoles(security: SecurityContext, allowedRoles?: string[]): void {
+	if (!(allowedRoles && allowedRoles.length > 0)) return;
+	if (allowedRoles.includes(security.actorRole)) return;
+	throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
+}
+
+async function enforceQueryPermissions(
+	ctx: QueryCtx,
+	requiredPermissions?: string[],
+): Promise<void> {
+	if (!(requiredPermissions && requiredPermissions.length > 0)) return;
+	const hasPerm = await hasAnyPermission(ctx, requiredPermissions);
+	if (hasPerm) return;
+	throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
+}
+
+function enforceQueryValidation(data: Record<string, unknown>): SanitizedQueryParams {
+	const queryValidation = validateQueryParams(data);
+	if (!queryValidation.valid) {
+		throw new Error(`Query validation failed: ${queryValidation.errors.join(', ')}`);
+	}
+	return queryValidation.sanitized;
+}
+
+function enforceQuerySchema(
+	validationSchema: Parameters<typeof validateInput>[0] | undefined,
+	data: Record<string, unknown>,
+	sanitized: SanitizedQueryParams,
+): void {
+	if (!validationSchema) return;
+	const validation = validateInput(validationSchema, { ...data, ...sanitized });
+	if (!validation.success) {
+		throw new Error(`Validation failed: ${validation.error}`);
+	}
+}
 
 /**
  * Security middleware wrapper for Convex functions
@@ -297,7 +569,7 @@ export function withSecurity<T, R>(
 		allowedRoles?: string[];
 		requiredPermissions?: string[];
 		operationType?: 'login' | 'contact' | 'dataExport' | 'passwordReset';
-		validationSchema?: any;
+		validationSchema?: Parameters<typeof validateInput>[0];
 		maxRequestSize?: number;
 		enableRateLimit?: boolean;
 		criticalOperation?: boolean;
@@ -318,144 +590,24 @@ export function withSecurity<T, R>(
 		// Get security context
 		const securityContext = await getSecurityContext(ctx);
 
-		// Origin validation
-		if (!validateOrigin()) {
-			await logSecurityEvent(ctx, 'unauthorized_access', 'Invalid request origin', 'medium', [
-				securityContext.actorId,
-			]);
-			throw new Error('CORS policy violation');
-		}
-
-		// Authentication check
-		if (requireAuth && !securityContext.isAuthenticated) {
-			await logSecurityEvent(ctx, 'unauthorized_access', 'Authentication required', 'medium', [
-				securityContext.actorId,
-			]);
-			throw new Error('Authentication required');
-		}
-
-		// Role validation
-		if (
-			allowedRoles &&
-			allowedRoles.length > 0 &&
-			!allowedRoles.includes(securityContext.actorRole)
-		) {
-			await logSecurityEvent(
-				ctx,
-				'unauthorized_access',
-				`Role ${securityContext.actorRole} not allowed`,
-				'medium',
-				[securityContext.actorId],
-			);
-			throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
-		}
-
-		// Permission validation
-		if (requiredPermissions && requiredPermissions.length > 0) {
-			const hasPerm = await hasAnyPermission(ctx, requiredPermissions);
-			if (!hasPerm) {
-				await logSecurityEvent(
-					ctx,
-					'unauthorized_access',
-					`Missing required permissions: ${requiredPermissions.join(', ')}`,
-					'medium',
-					[securityContext.actorId],
-				);
-				throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
-			}
-		}
-
-		// Rate limiting
-		if (enableRateLimit && operationType) {
-			const rateLimitResult = await checkRateLimit(ctx, operationType, securityContext.actorId);
-
-			if (!rateLimitResult.allowed) {
-				await logSecurityEvent(ctx, 'suspicious_activity', 'Rate limit exceeded', 'high', [
-					securityContext.actorId,
-				]);
-				throw new Error(
-					`Rate limit exceeded. Try again in ${Math.ceil((rateLimitResult.resetTime || 0) / 1000)} seconds`,
-				);
-			}
-		}
-
-		// Request size validation
-		if (!validateRequestSize(data)) {
-			await logSecurityEvent(ctx, 'suspicious_activity', 'Request size exceeds limit', 'medium', [
-				securityContext.actorId,
-			]);
-			throw new Error(`Request size exceeds maximum of ${maxRequestSize} bytes`);
-		}
-
-		// Input security validation
-		const securityCheck = validateInputSecurity(data);
-		if (!securityCheck.valid) {
-			await logSecurityEvent(
-				ctx,
-				'suspicious_activity',
-				`Security threats detected: ${securityCheck.threats.join(', ')}`,
-				'high',
-				[securityContext.actorId],
-			);
-			throw new Error('Invalid input detected');
-		}
-
-		// Schema validation
-		if (validationSchema) {
-			const validation = validateInput(validationSchema, data);
-			if (!validation.success) {
-				await logSecurityEvent(
-					ctx,
-					'suspicious_activity',
-					`Validation failed: ${validation.error}`,
-					'low',
-					[securityContext.actorId],
-				);
-				throw new Error(`Validation failed: ${validation.error}`);
-			}
-		}
-
-		// File upload validation
-		const dataWithFiles = data as { files?: unknown[] };
-		if (dataWithFiles.files && Array.isArray(dataWithFiles.files)) {
-			const fileValidation = validateFileUploads(
-				dataWithFiles.files as { name: string; size: number; type: string }[],
-			);
-			if (!fileValidation.valid) {
-				await logSecurityEvent(
-					ctx,
-					'suspicious_activity',
-					`File validation failed: ${fileValidation.errors.join(', ')}`,
-					'medium',
-					[securityContext.actorId],
-				);
-				throw new Error(`File validation failed: ${fileValidation.errors.join(', ')}`);
-			}
-		}
-
-		// Log critical operations
+		await enforceOrigin(ctx, securityContext);
+		await enforceAuthentication(ctx, securityContext, requireAuth);
+		await enforceRoles(ctx, securityContext, allowedRoles);
+		await enforcePermissions(ctx, securityContext, requiredPermissions);
+		await enforceRateLimit(ctx, securityContext, enableRateLimit, operationType);
+		await enforceRequestSize(ctx, securityContext, data, maxRequestSize);
+		await enforceInputSecurity(ctx, securityContext, data);
+		await enforceSchemaValidation(ctx, securityContext, data, validationSchema);
+		await enforceFileUploads(ctx, securityContext, data);
 		if (criticalOperation) {
-			await logSecurityEvent(
-				ctx,
-				'suspicious_activity',
-				`Critical operation initiated: ${handler.name}`,
-				'low',
-				[securityContext.actorId],
-			);
+			await logCriticalOperation(ctx, securityContext, handler.name);
 		}
 
 		// Execute the handler with security context
 		try {
 			return await handler(ctx, data, securityContext);
 		} catch (error) {
-			// Log errors for security monitoring
-			await logSecurityEvent(
-				ctx,
-				'suspicious_activity',
-				`Handler error: ${error instanceof Error ? error.message : 'Unknown'}`,
-				'medium',
-				[securityContext.actorId],
-			);
+			await logHandlerError(ctx, securityContext, error);
 			throw error;
 		}
 	};
@@ -470,7 +622,7 @@ export function withQuerySecurity<T, R>(
 		requireAuth?: boolean;
 		allowedRoles?: string[];
 		requiredPermissions?: string[];
-		validationSchema?: any;
+		validationSchema?: Parameters<typeof validateInput>[0];
 		maxResults?: number;
 	} = {},
 ) {
@@ -486,44 +638,14 @@ export function withQuerySecurity<T, R>(
 		// Get security context
 		const securityContext = await getSecurityContext(ctx);
 
-		// Authentication check
-		if (requireAuth && !securityContext.isAuthenticated) {
-			throw new Error('Authentication required');
-		}
-
-		// Role validation
-		if (
-			allowedRoles &&
-			allowedRoles.length > 0 &&
-			!allowedRoles.includes(securityContext.actorRole)
-		) {
-			throw new Error(`Access denied. Required roles: ${allowedRoles.join(', ')}`);
-		}
-
-		// Permission validation
-		if (requiredPermissions && requiredPermissions.length > 0) {
-			const hasPerm = await hasAnyPermission(ctx, requiredPermissions);
-			if (!hasPerm) {
-				throw new Error(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`);
-			}
-		}
-
-		// Query parameter validation
-		const queryValidation = validateQueryParams(data);
-		if (!queryValidation.valid) {
-			throw new Error(`Query validation failed: ${queryValidation.errors.join(', ')}`);
-		}
-
-		// Schema validation
-		if (validationSchema) {
-			const validation = validateInput(validationSchema, { ...data, ...queryValidation.sanitized });
-			if (!validation.success) {
-				throw new Error(`Validation failed: ${validation.error}`);
-			}
-		}
+		enforceQueryAuthentication(securityContext, requireAuth);
+		enforceQueryRoles(securityContext, allowedRoles);
+		await enforceQueryPermissions(ctx, requiredPermissions);
+		const sanitized = enforceQueryValidation(data as Record<string, unknown>);
+		enforceQuerySchema(validationSchema, data as Record<string, unknown>, sanitized);
 
 		// Execute with limited data
-		const result = await handler(ctx, { ...data, ...queryValidation.sanitized }, securityContext);
+		const result = await handler(ctx, { ...data, ...sanitized }, securityContext);
 
 		// Limit result size
 		if (Array.isArray(result) && result.length > maxResults) {
@@ -556,10 +678,10 @@ export function getSecurityHeaders(): Record<string, string> {
 export async function securityHealthCheck(ctx: QueryCtx): Promise<{
 	status: 'healthy' | 'warning' | 'critical';
 	issues: string[];
-	metadata: any;
+	metadata: Record<string, unknown>;
 }> {
 	const issues: string[] = [];
-	const metadata: any = {};
+	const metadata: Record<string, unknown> = {};
 
 	// Check encryption configuration
 	const { validateEncryptionConfig } = await import('./encryption');
@@ -599,12 +721,12 @@ export async function securityHealthCheck(ctx: QueryCtx): Promise<{
 	}
 
 	// Determine overall status
-	const status =
-		issues.length === 0
-			? 'healthy'
-			: issues.some((issue) => issue.includes('critical'))
-				? 'critical'
-				: 'warning';
+	let status: 'healthy' | 'warning' | 'critical' = 'warning';
+	if (issues.length === 0) {
+		status = 'healthy';
+	} else if (issues.some((issue) => issue.includes('critical'))) {
+		status = 'critical';
+	}
 
 	return {
 		status,

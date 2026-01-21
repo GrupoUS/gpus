@@ -1,18 +1,35 @@
 // import * as XLSX from 'xlsx';
 // import { z } from 'zod';
 
+type ContextSourceType = 'pdf' | 'spreadsheet' | 'api' | 'database';
+
+interface ContextData {
+	content?: string;
+	rows?: unknown[];
+	data?: unknown[];
+	records?: unknown[];
+	[key: string]: unknown;
+}
+
+interface RelevantDataItem {
+	type: ContextSourceType;
+	source: string;
+	content?: string;
+	sampleData?: unknown[];
+}
+
 // Define types for context processing
 export interface ContextSource {
-	type: 'pdf' | 'spreadsheet' | 'api' | 'database';
+	type: ContextSourceType;
 	source: string;
-	data: any;
+	data: ContextData;
 	relevance: number;
 }
 
 export interface ProcessedContext {
 	summary: string;
 	keyPoints: string[];
-	relevantData: any[];
+	relevantData: RelevantDataItem[];
 	confidence: number;
 	sources: string[];
 }
@@ -30,7 +47,7 @@ export interface ProcessingFilters {
  * Process PDF content
  * Extracts text and metadata from PDF files
  */
-export async function processPDF(path: string, _filters?: ProcessingFilters): Promise<any> {
+export function processPDF(path: string, _filters?: ProcessingFilters): ContextData {
 	// Placeholder implementation
 	// const pdfParse = await import('pdf-parse');
 	// const dataBuffer = fs.readFileSync(path);
@@ -51,7 +68,7 @@ export async function processPDF(path: string, _filters?: ProcessingFilters): Pr
  * Process spreadsheet content
  * Extracts data from Excel files and applies filters
  */
-export async function processSpreadsheet(path: string, filters?: ProcessingFilters): Promise<any> {
+export function processSpreadsheet(path: string, filters?: ProcessingFilters): ContextData {
 	// In a real implementation, you would read the actual file
 	// For now, we'll use a placeholder
 	// const workbook = XLSX.readFile(path);
@@ -60,7 +77,7 @@ export async function processSpreadsheet(path: string, filters?: ProcessingFilte
 	// const data = XLSX.utils.sheet_to_json(worksheet);
 
 	// Apply filters if provided
-	let filteredData: any[] = []; // Placeholder for actual data
+	let filteredData: unknown[] = []; // Placeholder for actual data
 
 	if (filters?.dateRange) {
 		// Filter by date range if applicable
@@ -93,17 +110,13 @@ export async function processSpreadsheet(path: string, filters?: ProcessingFilte
  * Process API response
  * Fetches data from external APIs and applies filters
  */
-export async function processAPI(
-	url: string,
-	query?: string,
-	filters?: ProcessingFilters,
-): Promise<any> {
+export function processAPI(url: string, query?: string, filters?: ProcessingFilters): ContextData {
 	// In a real implementation, you would make actual API calls
 	// const response = await fetch(url);
 	// const data = await response.json();
 
 	// Apply filters if provided
-	let filteredData: any[] = []; // Placeholder for actual data
+	let filteredData: unknown[] = []; // Placeholder for actual data
 
 	if (filters?.dateRange) {
 		// Filter by date range if applicable
@@ -136,12 +149,12 @@ export async function processAPI(
  * Process database query
  * Queries internal database and applies filters
  */
-export async function processDatabase(query?: string, filters?: ProcessingFilters): Promise<any> {
+export function processDatabase(query?: string, filters?: ProcessingFilters): ContextData {
 	// In a real implementation, you would query your actual database
 	// This would depend on your database system (Convex, PostgreSQL, etc.)
 
 	// Placeholder implementation
-	let records: any[] = []; // Placeholder for actual query results
+	let records: unknown[] = []; // Placeholder for actual query results
 
 	if (filters?.dateRange) {
 		// Filter by date range if applicable
@@ -172,7 +185,7 @@ export async function processDatabase(query?: string, filters?: ProcessingFilter
 /**
  * Calculate relevance score for a source based on filters
  */
-export function calculateRelevance(source: any, filters?: ProcessingFilters): number {
+export function calculateRelevance(source: ContextData, filters?: ProcessingFilters): number {
 	if (!filters) return 1.0;
 
 	let relevance = 1.0;
@@ -205,66 +218,81 @@ export function calculateRelevance(source: any, filters?: ProcessingFilters): nu
  * Compress and structure context for LLM input
  * Uses specialized models if needed (summarizers, fact-checkers, classifiers)
  */
-export async function compressContext(context: ContextSource[]): Promise<ProcessedContext> {
+const summarizeSource = (
+	source: ContextSource,
+): { keyPoints: string[]; relevantData: RelevantDataItem[] } => {
+	const keyPoints: string[] = [];
+	const relevantData: RelevantDataItem[] = [];
+
+	switch (source.type) {
+		case 'pdf': {
+			const content = typeof source.data.content === 'string' ? source.data.content : null;
+			if (content) {
+				keyPoints.push(`PDF: Key information from ${source.source}`);
+				relevantData.push({
+					type: 'pdf',
+					source: source.source,
+					content: content.substring(0, 1000),
+				});
+			}
+			break;
+		}
+		case 'spreadsheet': {
+			const rows = Array.isArray(source.data.rows) ? source.data.rows : [];
+			if (rows.length > 0) {
+				keyPoints.push(`Spreadsheet: ${rows.length} records from ${source.source}`);
+				relevantData.push({
+					type: 'spreadsheet',
+					source: source.source,
+					sampleData: rows.slice(0, 10),
+				});
+			}
+			break;
+		}
+		case 'api': {
+			const items = Array.isArray(source.data.data) ? source.data.data : [];
+			if (items.length > 0) {
+				keyPoints.push(`API: ${items.length} items from ${source.source}`);
+				relevantData.push({
+					type: 'api',
+					source: source.source,
+					sampleData: items.slice(0, 10),
+				});
+			}
+			break;
+		}
+		case 'database': {
+			const records = Array.isArray(source.data.records) ? source.data.records : [];
+			if (records.length > 0) {
+				keyPoints.push(`Database: ${records.length} records`);
+				relevantData.push({
+					type: 'database',
+					source: 'internal',
+					sampleData: records.slice(0, 10),
+				});
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	return { keyPoints, relevantData };
+};
+
+export function compressContext(context: ContextSource[]): ProcessedContext {
 	// Sort context by relevance
 	const sortedContext = context.sort((a, b) => b.relevance - a.relevance);
 
-	// Extract key information from each source
 	const keyPoints: string[] = [];
-	const relevantData: any[] = [];
+	const relevantData: RelevantDataItem[] = [];
 	const sources: string[] = [];
 
 	for (const source of sortedContext) {
 		sources.push(source.source);
-
-		// Extract key points based on source type
-		switch (source.type) {
-			case 'pdf':
-				if (source.data.content) {
-					// In a real implementation, you would use an AI model to extract key points
-					keyPoints.push(`PDF: Key information from ${source.source}`);
-					relevantData.push({
-						type: 'pdf',
-						source: source.source,
-						content: source.data.content.substring(0, 1000), // Truncate for context
-					});
-				}
-				break;
-
-			case 'spreadsheet':
-				if (source.data.rows && source.data.rows.length > 0) {
-					// Extract summary statistics or key rows
-					keyPoints.push(`Spreadsheet: ${source.data.rows.length} records from ${source.source}`);
-					relevantData.push({
-						type: 'spreadsheet',
-						source: source.source,
-						sampleData: source.data.rows.slice(0, 10), // Limit to 10 rows
-					});
-				}
-				break;
-
-			case 'api':
-				if (source.data.data && source.data.data.length > 0) {
-					keyPoints.push(`API: ${source.data.data.length} items from ${source.source}`);
-					relevantData.push({
-						type: 'api',
-						source: source.source,
-						sampleData: source.data.data.slice(0, 10), // Limit to 10 items
-					});
-				}
-				break;
-
-			case 'database':
-				if (source.data.records && source.data.records.length > 0) {
-					keyPoints.push(`Database: ${source.data.records.length} records`);
-					relevantData.push({
-						type: 'database',
-						source: 'internal',
-						sampleData: source.data.records.slice(0, 10), // Limit to 10 records
-					});
-				}
-				break;
-		}
+		const summary = summarizeSource(source);
+		keyPoints.push(...summary.keyPoints);
+		relevantData.push(...summary.relevantData);
 	}
 
 	// Generate a summary
@@ -289,7 +317,7 @@ export async function compressContext(context: ContextSource[]): Promise<Process
 /**
  * Fact-check and validate context data
  */
-export async function factCheckContext(context: ProcessedContext): Promise<ProcessedContext> {
+export function factCheckContext(context: ProcessedContext): ProcessedContext {
 	// In a real implementation, you would use a fact-checking model or service
 	// For now, we'll return the context as-is
 
@@ -305,9 +333,9 @@ export async function factCheckContext(context: ProcessedContext): Promise<Proce
 /**
  * Classify context data by category or topic
  */
-export async function classifyContext(
+export function classifyContext(
 	context: ProcessedContext,
-): Promise<ProcessedContext & { categories: string[] }> {
+): ProcessedContext & { categories: string[] } {
 	// In a real implementation, you would use a classification model
 	// For now, we'll return basic categories
 

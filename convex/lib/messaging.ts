@@ -29,7 +29,8 @@ export function validateMessagingWebhookSecret(secret: string | null): boolean {
 
 	let result = 0;
 	for (let i = 0; i < secret.length; i++) {
-		result |= secret.charCodeAt(i) ^ expectedSecret.charCodeAt(i);
+		const diff = secret.charCodeAt(i) - expectedSecret.charCodeAt(i);
+		result += Math.abs(diff);
 	}
 
 	return result === 0;

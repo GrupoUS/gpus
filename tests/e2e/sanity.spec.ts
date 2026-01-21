@@ -1,11 +1,19 @@
 import { expect, test } from '@playwright/test';
 
+const ANY_TITLE_REGEX = /./;
+const BRAND_LINK_REGEX = /Grupo US/i;
+const MENU_BUTTON_REGEX = /menu/i;
+const SIGN_IN_REGEX = /Entrar/i;
+const HERO_HEADING_REGEX = /Potencialize sua Gestão/i;
+const FEATURES_HEADING_REGEX = /Tudo que você precisa para crescer/i;
+const CONTACT_EMAIL_REGEX = /contato@grupous.com.br/i;
+
 test.describe('Landing Page', () => {
 	test('has title', async ({ page }) => {
 		await page.goto('/');
 
 		// Check that the page has a title
-		await expect(page).toHaveTitle(/./);
+		await expect(page).toHaveTitle(ANY_TITLE_REGEX);
 	});
 
 	test('page loads without errors', async ({ page }) => {
@@ -19,7 +27,9 @@ test.describe('Landing Page', () => {
 		await page.goto('/');
 
 		// Check for the Grupo US brand in navigation (scoped to nav to avoid footer match)
-		await expect(page.locator('nav').getByRole('link', { name: /Grupo US/i })).toBeVisible();
+		await expect(
+			page.locator('nav').getByRole('link', { name: BRAND_LINK_REGEX }),
+		).toBeVisible();
 	});
 
 	test('has sign-in link', async ({ page, isMobile }) => {
@@ -27,12 +37,12 @@ test.describe('Landing Page', () => {
 
 		// On mobile, the sign-in link is inside the hamburger menu
 		if (isMobile) {
-			const menuButton = page.getByRole('button', { name: /menu/i });
+			const menuButton = page.getByRole('button', { name: MENU_BUTTON_REGEX });
 			await menuButton.click();
 		}
 
 		// Check for the "Entrar" (sign-in) link
-		const signInLink = page.getByRole('link', { name: /Entrar/i });
+		const signInLink = page.getByRole('link', { name: SIGN_IN_REGEX });
 		await expect(signInLink).toBeVisible();
 		await expect(signInLink).toHaveAttribute('href', '/sign-in');
 	});
@@ -41,7 +51,7 @@ test.describe('Landing Page', () => {
 		await page.goto('/');
 
 		// Check for main heading
-		await expect(page.getByRole('heading', { name: /Potencialize sua Gestão/i })).toBeVisible();
+		await expect(page.getByRole('heading', { name: HERO_HEADING_REGEX })).toBeVisible();
 	});
 
 	test('displays features section', async ({ page }) => {
@@ -49,7 +59,7 @@ test.describe('Landing Page', () => {
 
 		// Check for features section heading
 		await expect(
-			page.getByRole('heading', { name: /Tudo que você precisa para crescer/i }),
+			page.getByRole('heading', { name: FEATURES_HEADING_REGEX }),
 		).toBeVisible();
 	});
 
@@ -57,6 +67,6 @@ test.describe('Landing Page', () => {
 		await page.goto('/');
 
 		// Check footer has email link
-		await expect(page.getByRole('link', { name: /contato@grupous.com.br/i })).toBeVisible();
+		await expect(page.getByRole('link', { name: CONTACT_EMAIL_REGEX })).toBeVisible();
 	});
 });
