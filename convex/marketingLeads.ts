@@ -17,6 +17,7 @@ type MarketingLeadStatus = 'new' | 'contacted' | 'converted' | 'unsubscribed';
 
 interface InternalEmailMarketingApi {
 	syncMarketingLeadAsContactInternal: FunctionReference<'mutation', 'internal'>;
+	updateContactSubscriptionInternal: FunctionReference<'mutation', 'internal'>;
 }
 
 interface InternalApi {
@@ -504,11 +505,9 @@ export const updateStatus = mutation({
 		});
 
 		if (args.newStatus === 'unsubscribed' && lead.brevoContactId) {
-			// biome-ignore lint/suspicious/noExplicitAny: Internal API may not be fully generated
-			const syncFn = (internal as any).emailMarketing?.updateContactSubscriptionInternal;
-			if (syncFn) {
-				// biome-ignore lint/suspicious/noExplicitAny: scheduler type not fully generated
-				await (ctx.scheduler as any).runAfter(0, syncFn, {
+			const updateSubscriptionFn = internalEmailMarketing?.updateContactSubscriptionInternal;
+			if (updateSubscriptionFn) {
+				await ctx.scheduler.runAfter(0, updateSubscriptionFn, {
 					email: lead.email,
 					subscriptionStatus: 'unsubscribed',
 				});
@@ -528,23 +527,22 @@ export const exportToCSV = convexQuery({
 		await requirePermission(ctx, PERMISSIONS.MARKETING_LEADS_READ);
 		const organizationId = await getOrganizationId(ctx);
 
-		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
-		let exportQuery: any;
+		const status = normalizeStatus(args.status);
+		const interestFilter = normalizeInterest(args.interest);
+		const startDate = args.startDate;
+		const endDate = args.endDate;
 
-		if (args.status && args.status !== 'all') {
-			exportQuery = ctx.db.query('marketing_leads').withIndex('by_organization_status', (q) =>
-				q.eq('organizationId', organizationId).eq(
-					'status', // biome-ignore lint/suspicious/noExplicitAny: status type from args
-					args.status as any,
-				),
-			);
-		} else {
-			exportQuery = ctx.db
-				.query('marketing_leads')
-				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
-		}
+		let exportQuery = status
+			? ctx.db
+					.query('marketing_leads')
+					.withIndex('by_organization_status', (q) =>
+						q.eq('organizationId', organizationId).eq('status', status),
+					)
+			: ctx.db
+					.query('marketing_leads')
+					.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 
-		if ((args.startDate || args.endDate) && (!args.status || args.status === 'all')) {
+		if ((startDate !== undefined || endDate !== undefined) && !status) {
 			exportQuery = ctx.db
 				.query('marketing_leads')
 				.withIndex('by_organization_created', (q) => q.eq('organizationId', organizationId));
@@ -552,37 +550,34 @@ export const exportToCSV = convexQuery({
 
 		let leads = await exportQuery.order('desc').collect();
 
-		if (args.interest && args.interest !== 'all') {
-			// biome-ignore lint/suspicious/noExplicitAny: complex filter type
-			leads = leads.filter((l: any) => l.interest === args.interest);
+		if (interestFilter) {
+			leads = leads.filter((lead) => lead.interest === interestFilter);
 		}
 
-		if (args.startDate || args.endDate) {
-			// biome-ignore lint/suspicious/noExplicitAny: complex filter type
-			leads = leads.filter((l: any) => {
-				if (args.startDate && l.createdAt < args.startDate) return false;
-				if (args.endDate && l.createdAt > args.endDate) return false;
+		if (startDate !== undefined || endDate !== undefined) {
+			leads = leads.filter((lead) => {
+				if (startDate !== undefined && lead.createdAt < startDate) return false;
+				if (endDate !== undefined && lead.createdAt > endDate) return false;
 				return true;
 			});
 		}
 
-		// biome-ignore lint/suspicious/noExplicitAny: complex map type
-		return leads.map((l: any) => ({
-			name: l.name,
-			email: l.email,
-			phone: l.phone,
-			interest: l.interest,
-			message: l.message || '',
-			lgpdConsent: l.lgpdConsent ? 'Sim' : 'Não',
-			whatsappConsent: l.whatsappConsent ? 'Sim' : 'Não',
-			status: l.status,
-			utmSource: l.utmSource || '',
-			utmCampaign: l.utmCampaign || '',
-			utmMedium: l.utmMedium || '',
+		return leads.map((lead) => ({
+			name: lead.name,
+			email: lead.email,
+			phone: lead.phone,
+			interest: lead.interest,
+			message: lead.message || '',
+			lgpdConsent: lead.lgpdConsent ? 'Sim' : 'Não',
+			whatsappConsent: lead.whatsappConsent ? 'Sim' : 'Não',
+			status: lead.status,
+			utmSource: lead.utmSource || '',
+			utmCampaign: lead.utmCampaign || '',
+			utmMedium: lead.utmMedium || '',
 			createdAt:
-				new Date(l.createdAt).toLocaleDateString('pt-BR') +
+				new Date(lead.createdAt).toLocaleDateString('pt-BR') +
 				' ' +
-				new Date(l.createdAt).toLocaleTimeString('pt-BR'),
+				new Date(lead.createdAt).toLocaleTimeString('pt-BR'),
 		}));
 	},
 });
@@ -613,8 +608,7 @@ export const syncToBrevoInternal = internalMutation({
 			return;
 		}
 
-		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-		const syncFn = (internal as any).emailMarketing?.syncMarketingLeadAsContactInternal;
+		const syncFn = internalEmailMarketing?.syncMarketingLeadAsContactInternal;
 		if (syncFn) {
 			await ctx.scheduler.runAfter(0, syncFn, {
 				leadId: args.leadId,

@@ -1,7 +1,121 @@
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
+import type { FunctionReference } from 'convex/server';
+
 import { action, internalMutation } from '../_generated/server';
+
+interface InternalMigrationsApi {
+	syncExistingClerkUsers: {
+		syncUserInternal: FunctionReference<'mutation', 'internal'>;
+	};
+}
+
+interface InternalApi {
+	migrations: InternalMigrationsApi;
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('../_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
+
+const internalMigrations = getInternalApi().migrations;
+
+type ClerkUser = {
+	id: string;
+	email_addresses?: Array<{ email_address?: string }>;
+	first_name?: string;
+	last_name?: string;
+	image_url?: string;
+};
+
+type ClerkUserPage = ClerkUser[] | { data?: ClerkUser[] };
+
+type SyncStats = {
+	total: number;
+	created: number;
+	alreadyExists: number;
+	errors: number;
+	skipped: number;
+};
+
+const buildClerkUsersUrl = (limit: number, offset: number): URL => {
+	const url = new URL('https://api.clerk.com/v1/users');
+	url.searchParams.append('limit', limit.toString());
+	url.searchParams.append('offset', offset.toString());
+	return url;
+};
+
+const getUsersArray = (payload: ClerkUserPage): ClerkUser[] =>
+	Array.isArray(payload) ? payload : payload.data || [];
+
+const normalizeClerkUser = (user: ClerkUser) => {
+	const email = user.email_addresses?.[0]?.email_address;
+	if (!email) return null;
+
+	const firstName = user.first_name || '';
+	const lastName = user.last_name || '';
+	const name = `${firstName} ${lastName}`.trim() || email || 'Usuário';
+
+	return {
+		clerkId: user.id,
+		email,
+		name,
+		pictureUrl: user.image_url,
+	};
+};
+
+const updateStatsFromResult = (stats: SyncStats, result: 'created' | 'exists') => {
+	if (result === 'created') {
+		stats.created++;
+	} else if (result === 'exists') {
+		stats.alreadyExists++;
+	}
+};
+
+const fetchClerkUsersPage = async (
+	limit: number,
+	offset: number,
+	clerkSecretKey: string,
+): Promise<ClerkUser[]> => {
+	const url = buildClerkUsersUrl(limit, offset);
+	const response = await fetch(url.toString(), {
+		headers: {
+			authorization: `Bearer ${clerkSecretKey}`,
+			'Content-Type': 'application/json',
+		},
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`Failed to fetch users from Clerk: ${response.status} ${errorText}`);
+	}
+
+	const payload = (await response.json()) as ClerkUserPage;
+	return getUsersArray(payload);
+};
+
+const syncClerkUser = async (
+	ctx: Parameters<typeof action>[0],
+	user: ClerkUser,
+	dryRun: boolean,
+	stats: SyncStats,
+): Promise<void> => {
+	const normalized = normalizeClerkUser(user);
+	if (!normalized) {
+		stats.skipped++;
+		return;
+	}
+
+	if (dryRun) return;
+
+	const result: 'created' | 'exists' = await ctx.runMutation(
+		internalMigrations.syncExistingClerkUsers.syncUserInternal,
+		normalized,
+	);
+
+	updateStatsFromResult(stats, result);
+};
 
 /**
  * Script de migração para sincronizar usuários existentes do Clerk para o Convex
@@ -28,7 +142,6 @@ export const sync = action({
 		const limit = 100;
 		let offset = 0;
 		let hasMore = true;
-		let _totalFetched = 0;
 
 		const stats = {
 			total: 0,
@@ -39,73 +152,22 @@ export const sync = action({
 		};
 
 		while (hasMore) {
-			const url = new URL('https://api.clerk.com/v1/users');
-			url.searchParams.append('limit', limit.toString());
-			url.searchParams.append('offset', offset.toString());
-			const response = await fetch(url.toString(), {
-				headers: {
-					Authorization: `Bearer ${clerkSecretKey}`,
-					'Content-Type': 'application/json',
-				},
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Failed to fetch users from Clerk: ${response.status} ${errorText}`);
-			}
-
-			const users = await response.json();
-			const usersArray = Array.isArray(users) ? users : users.data || [];
-
+			const usersArray = await fetchClerkUsersPage(limit, offset, clerkSecretKey);
 			if (usersArray.length === 0) {
 				hasMore = false;
 				break;
 			}
 
-			_totalFetched += usersArray.length;
 			stats.total += usersArray.length;
 
 			for (const user of usersArray) {
 				try {
-					const clerkId = user.id;
-					const email = user.email_addresses?.[0]?.email_address;
-					const firstName = user.first_name || '';
-					const lastName = user.last_name || '';
-					const name = `${firstName} ${lastName}`.trim() || email || 'Usuário';
-					const pictureUrl = user.image_url;
-
-					if (!email) {
-						stats.skipped++;
-						continue;
-					}
-
-					if (args.dryRun) {
-						continue;
-					}
-
-					// Use internal mutation to create user
-					// biome-ignore lint/suspicious/noExplicitAny: Type definitions for subdirectories may not be available
-					const result = await ctx.runMutation(
-						(internal as any).migrations.syncExistingClerkUsers.syncUserInternal,
-						{
-							clerkId,
-							email,
-							name,
-							pictureUrl,
-						},
-					);
-
-					if (result === 'created') {
-						stats.created++;
-					} else if (result === 'exists') {
-						stats.alreadyExists++;
-					}
+					await syncClerkUser(ctx, user, args.dryRun ?? false, stats);
 				} catch (_err) {
 					stats.errors++;
 				}
 			}
 
-			// Check if there are more users to fetch
 			hasMore = usersArray.length === limit;
 			offset += limit;
 		}
@@ -165,7 +227,9 @@ export const syncUserInternal = internalMutation({
 				performedBy: args.clerkId, // Use the user's own clerkId
 				createdAt: Date.now(),
 			});
-		} catch (_activityError) {}
+		} catch (_activityError) {
+			// Ignore activity logging failures for migration.
+		}
 
 		return 'created';
 	},

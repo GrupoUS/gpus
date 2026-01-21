@@ -1,7 +1,7 @@
 ---
 name: project-planner
 description: Smart project planning agent. Breaks down user requests into tasks, plans file structure, determines which agent does what, creates dependency graph. Use when starting new projects or planning major features.
-model: github-copilot/gpt-5.2-codex
+model: github-copilot/claude-opus-4.5
 reasoningEffort: high
 skills: clean-code, app-builder, plan-writing, brainstorming
 mode: subagent

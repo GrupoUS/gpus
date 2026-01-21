@@ -95,7 +95,6 @@ export const resolveCustomerConflict = internalMutation({
 			// Update student with Asaas customer ID
 			// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type chain
 			const internalAny: any = internal;
-			// @ts-expect-error TS2589 Type instantiation is excessively deep
 			const updateFn = internalAny.asaas.mutations.updateStudentAsaasId;
 			await ctx.runMutation(updateFn, {
 				studentId: conflict.studentId,
@@ -169,10 +168,8 @@ export const resolveConflictManually = mutation({
  * Create a new conflict record
  * Called by workers and actions when conflicts are detected
  */
-// @ts-expect-error TS2589 Type instantiation is excessively deep
 export const createConflict = internalMutation({
 	args: {
-		// @ts-expect-error TS2589
 		conflictType: v.union(
 			v.literal('duplicate_customer'),
 			v.literal('payment_mismatch'),

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import type { Doc, Id } from '../_generated/dataModel';
 import { internalMutation } from '../_generated/server';
 
 /**
@@ -21,7 +22,8 @@ export const run = internalMutation({
 	},
 	handler: async (ctx, args) => {
 		const users = await ctx.db.query('users').collect();
-		const updates = [];
+		type UserRole = Doc<'users'>['role'];
+		const updates: Array<{ id: Id<'users'>; old: UserRole; new: UserRole }> = [];
 
 		for (const user of users) {
 			let newRole = user.role;
@@ -33,9 +35,9 @@ export const run = internalMutation({
 				updates.push({ id: user._id, old: user.role, new: newRole });
 				if (!args.dryRun) {
 					// We can keep specific permissions if model allows, but here we just map role
-					await ctx.db.patch(user._id, { role: newRole as any });
-				}
+				await ctx.db.patch(user._id, { role: newRole });
 			}
+		}
 		}
 
 		return {

@@ -61,7 +61,9 @@ export const backfillCpfHash = internalMutation({
 					});
 					updatedCount++;
 				}
-			} catch (_error) {}
+			} catch (_error) {
+				// Ignore decryption errors for malformed CPF entries during backfill.
+			}
 		}
 
 		return {
