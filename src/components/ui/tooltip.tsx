@@ -1,22 +1,27 @@
 'use client';
 
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import * as React from 'react';
+import {
+	Content as TooltipContentPrimitive,
+	Portal as TooltipPortalPrimitive,
+	Provider as TooltipProviderPrimitive,
+	Root as TooltipRootPrimitive,
+	Trigger as TooltipTriggerPrimitive,
+} from '@radix-ui/react-tooltip';
+import type { ComponentPropsWithoutRef, ElementRef } from 'react';
+import { forwardRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const TooltipProvider = TooltipPrimitive.Provider;
+const TooltipProvider = TooltipProviderPrimitive;
+const Tooltip = TooltipRootPrimitive;
+const TooltipTrigger = TooltipTriggerPrimitive;
 
-const Tooltip = TooltipPrimitive.Root;
-
-const TooltipTrigger = TooltipPrimitive.Trigger;
-
-const TooltipContent = React.forwardRef<
-	React.ElementRef<typeof TooltipPrimitive.Content>,
-	React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+const TooltipContent = forwardRef<
+	ElementRef<typeof TooltipContentPrimitive>,
+	ComponentPropsWithoutRef<typeof TooltipContentPrimitive>
 >(({ className, sideOffset = 4, ...props }, ref) => (
-	<TooltipPrimitive.Portal>
-		<TooltipPrimitive.Content
+	<TooltipPortalPrimitive>
+		<TooltipContentPrimitive
 			className={cn(
 				'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-[--radix-tooltip-content-transform-origin] animate-in overflow-hidden rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs data-[state=closed]:animate-out',
 				className,
@@ -25,8 +30,8 @@ const TooltipContent = React.forwardRef<
 			sideOffset={sideOffset}
 			{...props}
 		/>
-	</TooltipPrimitive.Portal>
+	</TooltipPortalPrimitive>
 ));
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+TooltipContent.displayName = TooltipContentPrimitive.displayName;
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };

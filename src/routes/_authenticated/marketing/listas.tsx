@@ -92,7 +92,11 @@ function ListsPage() {
 	const [searchQuery, setSearchQuery] = useState('');
 
 	// Fetch all lists
-	const lists = useQuery(api.emailMarketing.getLists, { activeOnly: false });
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as { emailMarketing: { getLists: unknown } };
+	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: false }) as
+		| Doc<'emailLists'>[]
+		| undefined;
 
 	// Filter lists by search query
 	const filteredLists =
@@ -101,6 +105,23 @@ function ListsPage() {
 				list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				(list.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 		) ?? [];
+
+	const emptyState = searchQuery ? (
+		<Card>
+			<CardContent className="flex flex-col items-center justify-center py-12">
+				<Search className="mb-4 h-12 w-12 text-muted-foreground" />
+				<h2 className="font-semibold text-lg">Nenhum resultado</h2>
+				<p className="mt-2 text-center text-muted-foreground text-sm">
+					Não encontramos listas com "{searchQuery}". Tente outro termo.
+				</p>
+				<Button className="mt-4" onClick={() => setSearchQuery('')} variant="outline">
+					Limpar busca
+				</Button>
+			</CardContent>
+		</Card>
+	) : (
+		<EmptyState />
+	);
 
 	// Navigation handlers
 	const handleBack = () => {
@@ -154,22 +175,7 @@ function ListsPage() {
 
 			{/* Lists Grid */}
 			{filteredLists.length === 0 ? (
-				searchQuery ? (
-					<Card>
-						<CardContent className="flex flex-col items-center justify-center py-12">
-							<Search className="mb-4 h-12 w-12 text-muted-foreground" />
-							<h2 className="font-semibold text-lg">Nenhum resultado</h2>
-							<p className="mt-2 text-center text-muted-foreground text-sm">
-								Não encontramos listas com "{searchQuery}". Tente outro termo.
-							</p>
-							<Button className="mt-4" onClick={() => setSearchQuery('')} variant="outline">
-								Limpar busca
-							</Button>
-						</CardContent>
-					</Card>
-				) : (
-					<EmptyState />
-				)
+				emptyState
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{filteredLists.map((list: Doc<'emailLists'>) => (

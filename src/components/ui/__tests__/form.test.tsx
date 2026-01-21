@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Button } from '../button';
 import {

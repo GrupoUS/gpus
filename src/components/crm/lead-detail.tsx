@@ -3,10 +3,14 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone } from 'lucide-react';
+import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone, Send } from 'lucide-react';
+import { useState } from 'react';
 
 import { ObjectionsTab } from './objections-tab';
+import { ReferralSection } from './referral-section';
 import { TagSection } from './tag-section';
+import { TasksTab } from './tasks-tab';
+import { WhatsAppDialog } from './whatsapp-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,6 +33,12 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 	const lead = useQuery((api as any).leads.getLead, leadId ? { leadId } : 'skip');
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
 	const activities = useQuery((api as any).activities.listByLead, leadId ? { leadId } : 'skip');
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
+	const tasks = useQuery((api as any).tasks.listTasks, leadId ? { leadId } : 'skip');
+	// biome-ignore lint/suspicious/noExplicitAny: Dynamic task type
+	const pendingTasksCount = tasks?.filter((t: any) => !t.completed).length ?? 0;
+
+	const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
 	const isOpen = !!leadId;
 
@@ -88,6 +98,15 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 								</Button>
 								<Button
 									className="flex-1 gap-2"
+									onClick={() => setWhatsappDialogOpen(true)}
+									size="sm"
+									variant="outline"
+								>
+									<Send className="h-4 w-4" />
+									Msg
+								</Button>
+								<Button
+									className="flex-1 gap-2"
 									onClick={() => {
 										window.location.href = `tel:${lead.phone}`;
 									}}
@@ -132,6 +151,17 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 									</TabsTrigger>
 									<TabsTrigger
 										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+										value="tasks"
+									>
+										Tarefas
+										{pendingTasksCount > 0 && (
+											<Badge className="ml-2 h-5 min-w-5 px-1.5" variant="destructive">
+												{pendingTasksCount}
+											</Badge>
+										)}
+									</TabsTrigger>
+									<TabsTrigger
+										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
 										value="notes"
 									>
 										Notas
@@ -166,6 +196,10 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 									</div>
 								</TabsContent>
 
+								<TabsContent className="mt-0" value="tasks">
+									<TasksTab leadId={lead._id} />
+								</TabsContent>
+
 								<TabsContent className="mt-0" value="objections">
 									<ObjectionsTab leadId={lead._id} />
 								</TabsContent>
@@ -181,6 +215,16 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 					</div>
 				)}
 			</SheetContent>
+
+			{lead && (
+				<WhatsAppDialog
+					leadId={lead._id}
+					leadName={lead.name}
+					leadPhone={lead.phone}
+					onOpenChange={setWhatsappDialogOpen}
+					open={whatsappDialogOpen}
+				/>
+			)}
 		</Sheet>
 	);
 }
@@ -249,6 +293,7 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					)}
 				</div>
 			</section>
+			<ReferralSection leadId={lead._id} />
 			<TagSection leadId={lead._id} />
 		</>
 	);

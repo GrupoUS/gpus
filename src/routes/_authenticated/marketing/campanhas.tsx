@@ -1,6 +1,7 @@
 import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Mail, Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import { CampaignCard } from '@/components/marketing/campaign-card';
 import { CampaignFilters } from '@/components/marketing/campaign-filters';
@@ -41,6 +42,41 @@ function CampaignsPage() {
 		PAGE_SIZE,
 	} = useCampaignsViewModel(Route);
 
+	let campaignsContent: ReactNode;
+	if (!campaigns) {
+		campaignsContent = (
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{Array.from({ length: 6 }).map((_, i) => (
+					<div className="h-40 animate-pulse rounded-lg bg-muted" key={i} />
+				))}
+			</div>
+		);
+	} else if (campaigns.length === 0) {
+		campaignsContent = (
+			<div className="py-12 text-center text-muted-foreground">
+				<Mail className="mx-auto mb-4 h-16 w-16 opacity-30" />
+				<h2 className="font-medium text-lg">Nenhuma campanha encontrada</h2>
+				<p className="text-sm">Crie uma nova campanha para começar</p>
+			</div>
+		);
+	} else if (view === 'table') {
+		campaignsContent = (
+			<CampaignTable campaigns={paginatedCampaigns} onCampaignClick={navigateToCampaign} />
+		);
+	} else {
+		campaignsContent = (
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
+					<CampaignCard
+						campaign={campaign}
+						key={campaign._id}
+						onClick={() => navigateToCampaign(campaign._id)}
+					/>
+				))}
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-6 p-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -74,35 +110,7 @@ function CampaignsPage() {
 			/>
 
 			{/* Campaigns List */}
-			{campaigns ? (
-				campaigns.length === 0 ? (
-					<div className="py-12 text-center text-muted-foreground">
-						<Mail className="mx-auto mb-4 h-16 w-16 opacity-30" />
-						<h2 className="font-medium text-lg">Nenhuma campanha encontrada</h2>
-						<p className="text-sm">Crie uma nova campanha para começar</p>
-					</div>
-				) : view === 'table' ? (
-					/* Table View */
-					<CampaignTable campaigns={paginatedCampaigns} onCampaignClick={navigateToCampaign} />
-				) : (
-					/* Grid View */
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
-							<CampaignCard
-								campaign={campaign}
-								key={campaign._id}
-								onClick={() => navigateToCampaign(campaign._id)}
-							/>
-						))}
-					</div>
-				)
-			) : (
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{[1, 2, 3, 4, 5, 6].map((i) => (
-						<div className="h-40 animate-pulse rounded-lg bg-muted/20" key={i} />
-					))}
-				</div>
-			)}
+			{campaignsContent}
 
 			{/* Pagination */}
 			{campaigns && campaigns.length > PAGE_SIZE && (

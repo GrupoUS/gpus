@@ -65,12 +65,26 @@ export function AdminExportDialog() {
 	// const exportStudentsAction = useAction(api.asaas.export.bulkExportStudents);
 	// const exportPaymentsAction = useAction(api.asaas.export.bulkExportPayments);
 
-	const totalToExport =
-		exportType === 'students'
-			? studentsToExport?.length || 0
-			: exportType === 'payments'
-				? pendingPaymentsCount
-				: (studentsToExport?.length || 0) + pendingPaymentsCount;
+	const studentsCount = studentsToExport?.length || 0;
+	let totalToExport = 0;
+
+	if (exportType === 'students') {
+		totalToExport = studentsCount;
+	} else if (exportType === 'payments') {
+		totalToExport = pendingPaymentsCount;
+	} else {
+		totalToExport = studentsCount + pendingPaymentsCount;
+	}
+
+	const pluralSuffix = totalToExport === 1 ? 'registro' : 'registros';
+	let exportDescription = '';
+	if (exportType === 'students') {
+		exportDescription = `${studentsToExport?.length || 0} estudantes para exportar`;
+	} else if (exportType === 'payments') {
+		exportDescription = `${pendingPaymentsCount} pagamentos pendentes`;
+	} else {
+		exportDescription = `${(studentsToExport?.length || 0) + pendingPaymentsCount} registros totais`;
+	}
 
 	const handleExport = () => {
 		setIsExporting(true);
@@ -158,13 +172,7 @@ export function AdminExportDialog() {
 								<SelectItem value="all">Todos os Dados</SelectItem>
 							</SelectContent>
 						</Select>
-						<div className="text-muted-foreground text-sm">
-							{exportType === 'students' &&
-								`${studentsToExport?.length || 0} estudantes para exportar`}
-							{exportType === 'payments' && `${pendingPaymentsCount} pagamentos pendentes`}
-							{exportType === 'all' &&
-								`${(studentsToExport?.length || 0) + pendingPaymentsCount} registros totais`}
-						</div>
+						<div className="text-muted-foreground text-sm">{exportDescription}</div>
 					</div>
 
 					{/* Conflict Resolution Strategy */}
@@ -287,7 +295,7 @@ export function AdminExportDialog() {
 							) : (
 								<>
 									<Download className="mr-2 h-4 w-4" />
-									Exportar {totalToExport} {totalToExport === 1 ? 'registro' : 'registros'}
+									Exportar {totalToExport} {pluralSuffix}
 								</>
 							)}
 						</Button>

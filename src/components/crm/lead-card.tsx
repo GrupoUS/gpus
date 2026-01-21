@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,7 +21,7 @@ import { hotIconVariants, SPRING_SMOOTH } from '@/lib/motion-config';
 
 interface LeadCardProps {
 	lead: {
-		_id: string;
+		_id: Id<'leads'>;
 		name: string;
 		phone: string;
 		profession?: string;
@@ -146,8 +147,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="mt-3 flex flex-wrap gap-1">
-						{/* biome-ignore lint/suspicious/noExplicitAny: Temporary cast */}
-						<LeadTags leadId={lead._id as any} />
+						<LeadTags leadId={lead._id} />
 					</div>
 				</div>
 			</div>
@@ -155,20 +155,32 @@ export function LeadCard({ lead }: LeadCardProps) {
 	);
 }
 
-function LeadTags({ leadId }: { leadId: string }) {
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const getLeadTags = (api as any).tags.getLeadTags;
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const tags = useQuery(getLeadTags, { leadId: leadId as any });
+interface Tag {
+	_id: string;
+	name: string;
+	color?: string;
+}
+
+function LeadTags({ leadId }: { leadId: Id<'leads'> }) {
+	const apiAny: unknown = api;
+	const useQueryUnsafe = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => Tag[] | undefined;
+	const tags = useQueryUnsafe((apiAny as { tags: { getLeadTags: unknown } }).tags.getLeadTags, {
+		leadId,
+	});
 
 	if (!tags) return null;
 
-	const displayedTags = tags.slice(0, 3);
+	const displayedTags = tags
+		.slice(0, 3)
+		.filter((tag): tag is NonNullable<typeof tag> => tag !== null);
 	const remaining = tags.length - 3;
 
 	return (
 		<>
-			{displayedTags.map((tag: any) => (
+			{displayedTags.map((tag) => (
 				<Badge
 					className="h-5 px-1.5 text-[10px]"
 					key={tag._id}

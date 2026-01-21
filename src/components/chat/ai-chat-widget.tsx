@@ -60,6 +60,9 @@ export function AIChatWidget({
 			case 'template':
 				prompt = 'Sugira um template de mensagem adequado para esta situação';
 				break;
+			default:
+				prompt = '';
+				break;
 		}
 		setInputText(prompt);
 		// Focus logic would go here if we had a ref to input

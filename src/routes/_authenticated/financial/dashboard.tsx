@@ -17,19 +17,45 @@ export const Route = createFileRoute('/_authenticated/financial/dashboard')({
 	component: FinancialDashboardPage,
 });
 
+interface SyncEntry {
+	status?: 'completed' | 'failed' | 'pending';
+	completedAt?: number;
+}
+
+interface SyncStatus {
+	customers?: SyncEntry;
+	payments?: SyncEntry;
+}
+
+interface MonthlySummary {
+	paidCount: number;
+	pendingCount: number;
+	overdueCount: number;
+	paidThisMonth?: number;
+	pendingThisMonth?: number;
+	overdueTotal?: number;
+}
+
 function FinancialDashboardPage() {
 	const [isSyncing, setIsSyncing] = useState(false);
 	const convex = useConvex();
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as {
+		asaas: {
+			sync: { getLastSyncStatus: unknown };
+			queries: { getMonthlyFinancialSummary: unknown };
+		};
+	};
 
 	// Get sync status for display
-	const syncStatus = useQuery(api.asaas.sync.getLastSyncStatus);
+	const syncStatus = useQueryUnsafe(apiAny.asaas.sync.getLastSyncStatus) as SyncStatus | undefined;
 
 	// Get monthly summary for KPIs
 	const now = new Date();
-	const monthlySummary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, {
+	const monthlySummary = useQueryUnsafe(apiAny.asaas.queries.getMonthlyFinancialSummary, {
 		month: now.getMonth(),
 		year: now.getFullYear(),
-	});
+	}) as MonthlySummary | undefined;
 
 	const handleSync = async () => {
 		setIsSyncing(true);
@@ -68,19 +94,14 @@ function FinancialDashboardPage() {
 	};
 
 	// Calculate default rate
-	const defaultRate =
-		monthlySummary?.overdueCount &&
-		(monthlySummary
-			? monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount
-			: 0)
-			? (
-					(monthlySummary.overdueCount /
-						(monthlySummary.paidCount +
-							monthlySummary.pendingCount +
-							monthlySummary.overdueCount)) *
-					100
-				).toFixed(1)
-			: '0';
+	let defaultRate = '0';
+	if (monthlySummary) {
+		const totalCount =
+			monthlySummary.paidCount + monthlySummary.pendingCount + monthlySummary.overdueCount;
+		if (totalCount > 0) {
+			defaultRate = ((monthlySummary.overdueCount / totalCount) * 100).toFixed(1);
+		}
+	}
 
 	return (
 		<div className="space-y-6 p-6">
@@ -107,15 +128,15 @@ function FinancialDashboardPage() {
 								<span className="font-medium">Última Sincronização:</span>
 								{(['customers', 'payments'] as const).map((type) => {
 									const sync = syncStatus[type];
+									let statusIcon = <Clock className="h-4 w-4 text-muted-foreground" />;
+									if (sync?.status === 'completed') {
+										statusIcon = <CheckCircle className="h-4 w-4 text-green-500" />;
+									} else if (sync?.status === 'failed') {
+										statusIcon = <AlertTriangle className="h-4 w-4 text-red-500" />;
+									}
 									return (
 										<div className="flex items-center gap-2" key={type}>
-											{sync?.status === 'completed' ? (
-												<CheckCircle className="h-4 w-4 text-green-500" />
-											) : sync?.status === 'failed' ? (
-												<AlertTriangle className="h-4 w-4 text-red-500" />
-											) : (
-												<Clock className="h-4 w-4 text-muted-foreground" />
-											)}
+											{statusIcon}
 											<span className="capitalize">{type}:</span>
 											<Badge variant={sync?.status === 'completed' ? 'secondary' : 'outline'}>
 												{formatRelativeTime(sync?.completedAt)}

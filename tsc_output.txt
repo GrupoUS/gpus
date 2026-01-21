@@ -1,0 +1,7 @@
+convex/asaas/conflictResolution.ts(97,29): error TS2589: Type instantiation is excessively deep and possibly infinite.
+convex/templates.ts(44,55): error TS2345: Argument of type '"suporte" | "abertura" | "qualificacao" | "apresentacao" | "objecao_preco" | "objecao_tempo" | "objecao_outros_cursos" | "follow_up" | "fechamento" | "pos_venda" | undefined' is not assignable to parameter of type '"suporte" | "abertura" | "qualificacao" | "apresentacao" | "objecao_preco" | "objecao_tempo" | "objecao_outros_cursos" | "follow_up" | "fechamento" | "pos_venda"'.
+  Type 'undefined' is not assignable to type '"suporte" | "abertura" | "qualificacao" | "apresentacao" | "objecao_preco" | "objecao_tempo" | "objecao_outros_cursos" | "follow_up" | "fechamento" | "pos_venda"'.
+src/components/chat/chat-window.tsx(3,20): error TS6196: 'Id' is declared but never used.
+src/components/crm/lead-card.tsx(164,66): error TS2304: Cannot find name 'Id'.
+src/routes/_authenticated/chat/$department/$id.tsx(28,16): error TS2322: Type '{ conversationId: Id<"conversations">; onBack: () => void; }' is not assignable to type 'IntrinsicAttributes & ChatWindowProps'.
+  Property 'conversationId' does not exist on type 'IntrinsicAttributes & ChatWindowProps'. Did you mean 'conversation'?

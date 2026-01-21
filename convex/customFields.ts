@@ -444,7 +444,7 @@ export const setCustomFieldValue = mutation({
 			});
 		}
 
-		// 6. Log
+		// 6. Log (include entityType-specific ID for activity timeline indexing)
 		await ctx.db.insert('activities', {
 			type: 'nota_adicionada',
 			description: `Value updated for field '${field.name}'`,
@@ -454,6 +454,9 @@ export const setCustomFieldValue = mutation({
 				previousValue: existing?.value,
 				newValue: validatedValue,
 			},
+			// Link to entity for timeline queries (by_lead / by_student indexes)
+			...(args.entityType === 'lead' && { leadId: args.entityId as Id<'leads'> }),
+			...(args.entityType === 'student' && { studentId: args.entityId as Id<'students'> }),
 			organizationId,
 			performedBy: identity.subject,
 			createdAt: Date.now(),
@@ -487,13 +490,16 @@ function validateValueLogic(
 	options?: string[],
 	// biome-ignore lint/suspicious/noExplicitAny: Returns sanitized value of any type
 ): any {
-	// Required check
-	if (required && (value === null || value === undefined || value === '')) {
+	// Check for empty arrays (multiselect/select)
+	const isEmptyArray = Array.isArray(value) && value.length === 0;
+
+	// Required check - treat empty arrays as missing for multiselect/select
+	if (required && (value === null || value === undefined || value === '' || isEmptyArray)) {
 		throw new Error('Field is required');
 	}
 
 	// Allow clearing value if not required
-	if (value === null || value === undefined || value === '') {
+	if (value === null || value === undefined || value === '' || isEmptyArray) {
 		return null;
 	}
 

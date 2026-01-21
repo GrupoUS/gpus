@@ -39,7 +39,6 @@ interface Objection {
 	objectionText: string;
 	recordedBy: string;
 	recordedByDetails?: { name?: string };
-	createdAt: number;
 	recordedAt: number;
 	resolved?: boolean;
 	resolution?: string;
@@ -52,7 +51,10 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 		| undefined;
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
 	const deleteObjection = useMutation((api as any).objections.deleteObjection);
-	const user = useQuery(api.users.current);
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
+	const user = useQuery((api as any).users.current) as
+		| { clerkId: string; role: string }
+		| undefined;
 
 	const [editingId, setEditingId] = useState<Id<'objections'> | null>(null);
 	const [deletingId, setDeletingId] = useState<Id<'objections'> | null>(null);
@@ -71,8 +73,9 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 
 	const canEdit = (objection: Objection) => {
 		if (!user) return false;
-		// Allow if user is creator or admin
-		return user.clerkId === objection.recordedBy || user.organizationRole === 'admin';
+		// Allow if user is creator or admin/owner
+		const isAdmin = user.role === 'admin' || user.role === 'owner';
+		return user.clerkId === objection.recordedBy || isAdmin;
 	};
 
 	if (objections === undefined) {
@@ -127,7 +130,7 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 								</span>
 								<span>•</span>
 								<span>
-									{formatDistanceToNow(objection.createdAt, {
+									{formatDistanceToNow(objection.recordedAt, {
 										addSuffix: true,
 										locale: ptBR,
 									})}

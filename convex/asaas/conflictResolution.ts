@@ -93,10 +93,9 @@ export const resolveCustomerConflict = internalMutation({
 			}
 
 			// Update student with Asaas customer ID
+			// @ts-expect-error -- Convex deep type instantiation unavoidable here
 			// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type chain
-			const internalAny: any = internal;
-			const updateFn = internalAny.asaas.mutations.updateStudentAsaasId;
-			await ctx.runMutation(updateFn, {
+			await (ctx as any).runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
 				studentId: conflict.studentId,
 				asaasCustomerId: conflict.asaasCustomerId,
 			});

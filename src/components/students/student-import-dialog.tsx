@@ -14,9 +14,9 @@ import {
 	XCircle,
 } from 'lucide-react';
 import Papa from 'papaparse';
-import { useCallback, useId, useState } from 'react';
+import { type ChangeEvent, type DragEvent, useCallback, useId, useState } from 'react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import { read, utils, type WorkBook } from 'xlsx';
 
 import { api } from '../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
@@ -101,11 +101,11 @@ interface ImportResult {
 
 // Custom error class for XLSX parsing with specific error codes
 class XLSXParseError extends Error {
-	constructor(
-		message: string,
-		public readonly code: string,
-	) {
+	readonly code: string;
+
+	constructor(message: string, code: string) {
 		super(message);
+		this.code = code;
 		this.name = 'XLSXParseError';
 	}
 }
@@ -113,13 +113,13 @@ class XLSXParseError extends Error {
 // Helper function to get sheet names from XLSX file
 async function getXLSXSheetNames(file: File): Promise<string[]> {
 	const buffer = await file.arrayBuffer();
-	const workbook = XLSX.read(buffer, { type: 'array' });
+	const workbook = read(buffer, { type: 'array' });
 	return workbook.SheetNames;
 }
 
 // Helper function to parse workbook from buffer with password support
 // Extracted to reduce complexity of parseXLSXFile
-function parseWorkbookFromBuffer(buffer: ArrayBuffer, password?: string): XLSX.WorkBook {
+function parseWorkbookFromBuffer(buffer: ArrayBuffer, password?: string): WorkBook {
 	if (password) {
 		const result = parseXLSXWithPassword(buffer, password);
 		if (!result.success) {
@@ -134,7 +134,7 @@ function parseWorkbookFromBuffer(buffer: ArrayBuffer, password?: string): XLSX.W
 		return result.workbook;
 	}
 
-	return XLSX.read(buffer, {
+	return read(buffer, {
 		type: 'array',
 		cellDates: true,
 		cellNF: false,
@@ -174,7 +174,7 @@ async function parseXLSXFile(
 	}
 
 	// Step 2: Parse workbook (with password support)
-	let workbook: XLSX.WorkBook;
+	let workbook: WorkBook;
 	try {
 		workbook = parseWorkbookFromBuffer(buffer, password);
 	} catch (error) {
@@ -202,7 +202,7 @@ async function parseXLSXFile(
 	// Step 5: Convert to JSON (raw 2D array)
 	let jsonData: unknown[][];
 	try {
-		jsonData = XLSX.utils.sheet_to_json<unknown[]>(targetSheet, {
+		jsonData = utils.sheet_to_json<unknown[]>(targetSheet, {
 			header: 1,
 			raw: false,
 			defval: '',
@@ -322,8 +322,8 @@ interface StepContentProps {
 	setSelectedProduct?: (value: string) => void;
 	isProcessing?: boolean;
 	fileInputId?: string;
-	handleDrop?: (e: React.DragEvent<HTMLButtonElement>) => void;
-	handleFileSelect?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	handleDrop?: (e: DragEvent<HTMLButtonElement>) => void;
+	handleFileSelect?: (e: ChangeEvent<HTMLInputElement>) => void;
 	// Sheet select step
 	fileName?: string;
 	availableSheets?: string[];
@@ -362,6 +362,12 @@ function renderUploadStep(props: StepContentProps) {
 		handleDrop,
 		handleFileSelect,
 	} = props;
+	let uploadLabel = 'Selecione um produto primeiro';
+	if (isProcessing) {
+		uploadLabel = 'Processando arquivo...';
+	} else if (selectedProduct) {
+		uploadLabel = 'Arraste e solte um arquivo aqui';
+	}
 
 	return (
 		<div className="space-y-4">
@@ -407,13 +413,7 @@ function renderUploadStep(props: StepContentProps) {
 				) : (
 					<Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
 				)}
-				<p className="font-medium text-lg">
-					{isProcessing
-						? 'Processando arquivo...'
-						: selectedProduct
-							? 'Arraste e solte um arquivo aqui'
-							: 'Selecione um produto primeiro'}
-				</p>
+				<p className="font-medium text-lg">{uploadLabel}</p>
 				<p className="mt-2 text-muted-foreground text-sm">ou clique para selecionar (CSV, XLSX)</p>
 			</button>
 		</div>
@@ -1116,7 +1116,7 @@ export function StudentImportDialog() {
 	}, [pendingFile, pendingSheet, xlsxPassword]);
 
 	const handleDrop = useCallback(
-		(e: React.DragEvent<HTMLButtonElement>) => {
+		(e: DragEvent<HTMLButtonElement>) => {
 			e.preventDefault();
 			const droppedFile = e.dataTransfer.files[0];
 			if (droppedFile) {
@@ -1127,7 +1127,7 @@ export function StudentImportDialog() {
 	);
 
 	const handleFileSelect = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			const selectedFile = e.target.files?.[0];
 			if (selectedFile) {
 				void handleFileUpload(selectedFile);

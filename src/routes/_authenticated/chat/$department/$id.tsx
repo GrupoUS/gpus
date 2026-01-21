@@ -1,5 +1,7 @@
+import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
 
 import { ChatWindow } from '@/components/chat/chat-window';
 
@@ -13,19 +15,29 @@ function ConversationPage() {
 	const navigate = useNavigate();
 
 	// Cast id to Id<'conversations'> as it comes as string from URL
-	const conversationId = id as Id<'conversations'>;
+	const conversation = useQuery(api.conversations.getById, { id: id as Id<'conversations'> });
+	const messages = useQuery(api.messages.getByConversation, {
+		conversationId: id as Id<'conversations'>,
+	});
+	const sendMessage = useMutation(api.messages.send);
 
-	const handleBack = () => {
-		// Use router navigation instead of window.history.back for consistency
-		void navigate({
-			to: '/chat/$department',
-			params: { department },
-		});
+	const handleSendMessage = async (content: string) => {
+		await sendMessage({ conversationId: id as Id<'conversations'>, content, contentType: 'text' });
 	};
 
 	return (
 		<div className="h-full w-full">
-			<ChatWindow conversationId={conversationId} onBack={handleBack} />
+			<ChatWindow
+				conversation={conversation}
+				messages={messages}
+				onBack={() => {
+					void navigate({
+						to: '/chat/$department',
+						params: { department },
+					});
+				}}
+				onSendMessage={handleSendMessage}
+			/>
 		</div>
 	);
 }

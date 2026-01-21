@@ -6,7 +6,7 @@ import { Loader2, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -66,6 +66,10 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	const csUsers = useQuery(api.users.listCSUsers);
 
 	const isEditMode = !!studentId;
+	const dialogTitle = isEditMode ? 'Editar Aluno' : 'Novo Aluno';
+	const dialogDescription = isEditMode
+		? 'Atualize os dados cadastrais deste aluno.'
+		: 'Insira os dados para cadastrar um novo aluno no sistema.';
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -160,18 +164,14 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 				{trigger || (
 					<Button className="gap-2 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
 						<Plus className="h-4 w-4" />
-						{isEditMode ? 'Editar Aluno' : 'Novo Aluno'}
+						{dialogTitle}
 					</Button>
 				)}
 			</DialogTrigger>
 			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
 				<DialogHeader>
-					<DialogTitle>{isEditMode ? 'Editar Aluno' : 'Novo Aluno'}</DialogTitle>
-					<DialogDescription>
-						{isEditMode
-							? 'Atualize os dados cadastrais deste aluno.'
-							: 'Insira os dados para cadastrar um novo aluno no sistema.'}
-					</DialogDescription>
+					<DialogTitle>{dialogTitle}</DialogTitle>
+					<DialogDescription>{dialogDescription}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -376,16 +376,17 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 								disabled={form.formState.isSubmitting}
 								type="submit"
 							>
-								{form.formState.isSubmitting ? (
-									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										{isEditMode ? 'Atualizando...' : 'Criando...'}
-									</>
-								) : isEditMode ? (
-									'Atualizar Aluno'
-								) : (
-									'Criar Aluno'
-								)}
+								{(() => {
+									if (form.formState.isSubmitting) {
+										return (
+											<>
+												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+												{isEditMode ? 'Atualizando...' : 'Criando...'}
+											</>
+										);
+									}
+									return isEditMode ? 'Atualizar Aluno' : 'Criar Aluno';
+								})()}
 							</Button>
 						</div>
 					</form>

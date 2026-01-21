@@ -10,7 +10,7 @@
 
 import type { Doc } from '@convex/_generated/dataModel';
 import { ChevronLeft, ChevronRight, Eye, Filter } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -154,7 +154,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 										: null;
 									const isRunning = log.status === 'running';
 
-									let durationDisplay;
+									let durationDisplay: ReactNode = null;
 									if (isRunning) {
 										durationDisplay = <span className="text-blue-600">Em andamento...</span>;
 									} else if (duration) {

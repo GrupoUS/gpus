@@ -34,22 +34,26 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 		);
 	}
 
+	let bubbleColorClass = 'rounded-bl-md bg-muted';
+	if (isOwn) {
+		bubbleColorClass = 'rounded-br-md bg-linear-to-r from-purple-600 to-indigo-600 text-white';
+	} else if (isBot) {
+		bubbleColorClass = 'rounded-bl-md border border-amber-200 bg-amber-100 text-amber-900';
+	}
+
 	return (
 		<div className={cn('mb-3 flex', isOwn ? 'justify-end' : 'justify-start')}>
-			<div
-				className={cn(
-					'max-w-[75%] rounded-2xl px-4 py-2 shadow-sm',
-					isOwn
-						? 'rounded-br-md bg-linear-to-r from-purple-600 to-indigo-600 text-white'
-						: isBot
-							? 'rounded-bl-md border border-amber-200 bg-amber-100 text-amber-900'
-							: 'rounded-bl-md bg-muted',
-				)}
-			>
+			<div className={cn('max-w-[75%] rounded-2xl px-4 py-2 shadow-sm', bubbleColorClass)}>
 				{isBot && <span className="mb-1 block font-medium text-xs opacity-75">🤖 Bot</span>}
 
 				{message.contentType === 'image' && message.mediaUrl && (
-					<img alt="Imagem" className="mb-2 max-w-full rounded-lg" src={message.mediaUrl} />
+					<img
+						alt="Imagem"
+						className="mb-2 h-auto w-auto max-w-full rounded-lg"
+						height="300"
+						src={message.mediaUrl}
+						width="400"
+					/>
 				)}
 
 				{message.contentType === 'audio' && message.mediaUrl && (

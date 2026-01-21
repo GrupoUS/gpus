@@ -8,15 +8,8 @@
 				"serena",
 				"start-mcp-server",
 				"--context",
-				"ide-assistant"
-			]
-		},
-		"tavily": {
-			"command": "bunx",
-			"args": [
-				"-y",
-				"mcp-remote",
-				"https://mcp.tavily.com/mcp/?tavilyApiKey=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"
+				"ide-assistant",
+				"--project-from-cwd"
 			]
 		},
 		"sequentialthinking": {

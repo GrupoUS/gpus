@@ -4,9 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, ListChecks, Loader2, Mail, Save, Sparkles } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,8 +61,16 @@ function NewCampaignPage() {
 	const navigate = Route.useNavigate();
 
 	// Convex queries
-	const lists = useQuery(api.emailMarketing.getLists, { activeOnly: true });
-	const templates = useQuery(api.emailMarketing.getTemplates, { activeOnly: true });
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as {
+		emailMarketing: { getLists: unknown; getTemplates: unknown };
+	};
+	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: true }) as
+		| Doc<'emailLists'>[]
+		| undefined;
+	const templates = useQueryUnsafe(apiAny.emailMarketing.getTemplates, { activeOnly: true }) as
+		| Doc<'emailTemplates'>[]
+		| undefined;
 
 	// Convex mutation
 	const createCampaign = useMutation(api.emailMarketing.createCampaign);
@@ -81,6 +90,8 @@ function NewCampaignPage() {
 	const isSubmitting = form.formState.isSubmitting;
 	const selectedListIds = form.watch('listIds');
 	const selectedTemplateId = form.watch('templateId');
+	let templateOptions: ReactNode = null;
+	let listOptions: ReactNode = null;
 
 	// Calculate total contacts from selected lists
 	const totalContacts =
@@ -94,14 +105,81 @@ function NewCampaignPage() {
 
 		if (templateId && templateId !== 'none') {
 			const template = templates?.find((t: Doc<'emailTemplates'>) => t._id === templateId);
-			if (template) {
-				// Populate subject if template has one
-				if (template.subject && !form.getValues('subject')) {
-					form.setValue('subject', template.subject);
-				}
+			if (template?.subject && !form.getValues('subject')) {
+				form.setValue('subject', template.subject);
 			}
 		}
 	};
+
+	if (templates === undefined) {
+		templateOptions = (
+			<SelectItem disabled value="loading">
+				Carregando templates...
+			</SelectItem>
+		);
+	} else if (templates.length === 0) {
+		templateOptions = (
+			<SelectItem disabled value="empty">
+				Nenhum template disponível
+			</SelectItem>
+		);
+	} else {
+		templateOptions = templates.map((template: Doc<'emailTemplates'>) => (
+			<SelectItem key={template._id} value={template._id}>
+				{template.name}
+				{template.category && (
+					<span className="ml-2 text-muted-foreground">({template.category})</span>
+				)}
+			</SelectItem>
+		));
+	}
+
+	if (lists === undefined) {
+		listOptions = (
+			<div className="space-y-3">
+				{[1, 2, 3].map((i) => (
+					<Skeleton className="h-10 w-full" key={i} />
+				))}
+			</div>
+		);
+	} else if (lists.length === 0) {
+		listOptions = (
+			<div className="rounded-lg border border-dashed p-4 text-center text-muted-foreground">
+				<p className="text-sm">Nenhuma lista disponível</p>
+			</div>
+		);
+	} else {
+		listOptions = lists.map((list: Doc<'emailLists'>) => (
+			<FormField
+				control={form.control}
+				key={list._id}
+				name="listIds"
+				render={({ field }) => {
+					const isChecked = field.value?.includes(list._id);
+					return (
+						<FormItem className="flex items-center space-x-3 space-y-0">
+							<FormControl>
+								<Checkbox
+									checked={isChecked}
+									onCheckedChange={(checked) => {
+										const current = field.value || [];
+										const updatedListIds = checked
+											? [...current, list._id]
+											: current.filter((id) => id !== list._id);
+										field.onChange(updatedListIds);
+									}}
+								/>
+							</FormControl>
+							<div className="space-y-1 leading-none">
+								<FormLabel className="font-medium">{list.name}</FormLabel>
+								<p className="text-muted-foreground text-sm">{list.contactCount ?? 0} contatos</p>
+							</div>
+						</FormItem>
+					);
+				}}
+			/>
+		));
+	}
 
 	// Handle form submission
 	const onSubmit = async (data: CampaignFormValues) => {
@@ -228,26 +306,7 @@ function NewCampaignPage() {
 													</FormControl>
 													<SelectContent>
 														<SelectItem value="none">Sem template - criar do zero</SelectItem>
-														{templates === undefined ? (
-															<SelectItem disabled value="loading">
-																Carregando templates...
-															</SelectItem>
-														) : templates.length === 0 ? (
-															<SelectItem disabled value="empty">
-																Nenhum template disponível
-															</SelectItem>
-														) : (
-															templates.map((template: Doc<'emailTemplates'>) => (
-																<SelectItem key={template._id} value={template._id}>
-																	{template.name}
-																	{template.category && (
-																		<span className="ml-2 text-muted-foreground">
-																			({template.category})
-																		</span>
-																	)}
-																</SelectItem>
-															))
-														)}
+														{templateOptions}
 													</SelectContent>
 												</Select>
 												<FormDescription>
@@ -309,60 +368,7 @@ function NewCampaignPage() {
 										name="listIds"
 										render={() => (
 											<FormItem>
-												{lists === undefined ? (
-													<div className="space-y-3">
-														{[1, 2, 3].map((i) => (
-															<Skeleton className="h-10 w-full" key={i} />
-														))}
-													</div>
-												) : lists.length === 0 ? (
-													<div className="rounded-lg border border-dashed p-4 text-center text-muted-foreground">
-														<p className="text-sm">Nenhuma lista disponível</p>
-														<p className="text-xs">Crie listas de contatos primeiro</p>
-													</div>
-												) : (
-													<div className="space-y-3">
-														{lists.map((list: Doc<'emailLists'>) => (
-															<FormField
-																control={form.control}
-																key={list._id}
-																name="listIds"
-																render={({ field }) => {
-																	return (
-																		<FormItem
-																			className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 transition-colors hover:bg-muted/50"
-																			key={list._id}
-																		>
-																			<FormControl>
-																				<Checkbox
-																					checked={field.value?.includes(list._id)}
-																					onCheckedChange={(checked) => {
-																						return checked
-																							? field.onChange([...field.value, list._id])
-																							: field.onChange(
-																									field.value?.filter(
-																										(value) => value !== list._id,
-																									),
-																								);
-																					}}
-																				/>
-																			</FormControl>
-																			<div className="flex-1 space-y-1 leading-none">
-																				<FormLabel className="cursor-pointer font-medium">
-																					{list.name}
-																				</FormLabel>
-																				<p className="text-muted-foreground text-xs">
-																					{list.contactCount ?? 0} contatos
-																					{list.description && <span> • {list.description}</span>}
-																				</p>
-																			</div>
-																		</FormItem>
-																	);
-																}}
-															/>
-														))}
-													</div>
-												)}
+												{listOptions}
 												<FormMessage />
 											</FormItem>
 										)}

@@ -23,7 +23,7 @@ import {
 	Users,
 	XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -213,6 +213,50 @@ interface CampaignContentPreviewProps {
 }
 
 function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPreviewProps) {
+	let contentPreview: ReactNode;
+	if (templateId) {
+		contentPreview = (
+			<div className="rounded-lg border border-dashed p-6 text-center">
+				<Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+				<p className="font-medium">Template vinculado</p>
+				<p className="mt-1 text-muted-foreground text-sm">
+					Esta campanha usa um template. O conteúdo será carregado do template no momento do envio.
+				</p>
+			</div>
+		);
+	} else if (htmlContent) {
+		contentPreview = (
+			<div className="space-y-4">
+				<div className="rounded-lg border bg-muted/50 p-4">
+					<p className="mb-2 font-medium text-muted-foreground text-xs">PRÉVIA DO HTML:</p>
+					<div
+						className="prose prose-sm dark:prose-invert max-w-none"
+						// biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized with DOMPurify
+						dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
+					/>
+				</div>
+				<details className="group">
+					<summary className="cursor-pointer text-muted-foreground text-sm hover:text-foreground">
+						Ver código fonte
+					</summary>
+					<pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-4 text-xs">
+						<code>{htmlContent}</code>
+					</pre>
+				</details>
+			</div>
+		);
+	} else {
+		contentPreview = (
+			<div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+				<Mail className="mx-auto mb-2 h-8 w-8" />
+				<p>Nenhum conteúdo definido</p>
+				<p className="mt-1 text-sm">
+					Adicione conteúdo HTML ou selecione um template para esta campanha.
+				</p>
+			</div>
+		);
+	}
+
 	return (
 		<Card>
 			<CardHeader>
@@ -222,45 +266,7 @@ function CampaignContentPreview({ templateId, htmlContent }: CampaignContentPrev
 				</CardTitle>
 				<CardDescription>Prévia do conteúdo da campanha</CardDescription>
 			</CardHeader>
-			<CardContent>
-				{templateId ? (
-					<div className="rounded-lg border border-dashed p-6 text-center">
-						<Sparkles className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-						<p className="font-medium">Template vinculado</p>
-						<p className="mt-1 text-muted-foreground text-sm">
-							Esta campanha usa um template. O conteúdo será carregado do template no momento do
-							envio.
-						</p>
-					</div>
-				) : htmlContent ? (
-					<div className="space-y-4">
-						<div className="rounded-lg border bg-muted/50 p-4">
-							<p className="mb-2 font-medium text-muted-foreground text-xs">PRÉVIA DO HTML:</p>
-							<div
-								className="prose prose-sm dark:prose-invert max-w-none"
-								// biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized with DOMPurify
-								dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
-							/>
-						</div>
-						<details className="group">
-							<summary className="cursor-pointer text-muted-foreground text-sm hover:text-foreground">
-								Ver código fonte
-							</summary>
-							<pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-4 text-xs">
-								<code>{htmlContent}</code>
-							</pre>
-						</details>
-					</div>
-				) : (
-					<div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-						<Mail className="mx-auto mb-2 h-8 w-8" />
-						<p>Nenhum conteúdo definido</p>
-						<p className="mt-1 text-sm">
-							Adicione conteúdo HTML ou selecione um template para esta campanha.
-						</p>
-					</div>
-				)}{' '}
-			</CardContent>
+			<CardContent>{contentPreview}</CardContent>
 		</Card>
 	);
 }
@@ -342,6 +348,18 @@ function ActionsCard({
 		statusMessage = 'Esta campanha falhou no envio.';
 	}
 
+	const sendButtonContent = isSending ? (
+		<>
+			<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+			Enviando...
+		</>
+	) : (
+		<>
+			<Send className="mr-2 h-4 w-4" />
+			Enviar Agora
+		</>
+	);
+
 	return (
 		<Card>
 			<CardHeader>
@@ -355,17 +373,7 @@ function ActionsCard({
 							Editar Campanha
 						</Button>
 						<Button className="w-full" disabled={isSending} onClick={onSend}>
-							{isSending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Enviando...
-								</>
-							) : (
-								<>
-									<Send className="mr-2 h-4 w-4" />
-									Enviar Agora
-								</>
-							)}
+							{sendButtonContent}
 						</Button>
 						<Separator />
 						<AlertDialog>
@@ -427,8 +435,9 @@ interface EventLogsProps {
 
 function EventLogs({ campaignId }: EventLogsProps) {
 	// Type workaround for deep instantiation issue
-	const getCampaignEventsQuery = (api as any).emailMarketing.getCampaignEvents;
-	const events = useQuery(getCampaignEventsQuery, {
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as { emailMarketing: { getCampaignEvents: unknown } };
+	const events = useQueryUnsafe(apiAny.emailMarketing.getCampaignEvents, {
 		campaignId,
 		limit: 20,
 	}) as

@@ -52,10 +52,20 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	const [dueDate, setDueDate] = useState('');
 	const [description, setDescription] = useState('');
 	const [installmentCount, setInstallmentCount] = useState('1');
+	const useQueryUnsafe = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) =>
+		| {
+				asaasCustomerId?: string;
+				asaasCustomerSyncError?: string;
+				name?: string;
+				cpf?: string;
+		  }
+		| undefined;
 
 	// Get student data to check if synced with Asaas
-	// biome-ignore lint/suspicious/noExplicitAny: Deep type instantiation workaround for Convex
-	const student: any = useQuery(api.students.getById as any, { id: studentId });
+	const student = useQueryUnsafe(api.students.getById, { id: studentId });
 
 	// Create payment action
 	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
@@ -266,11 +276,12 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 					<div className="rounded-md border border-yellow-500/20 bg-yellow-500/10 p-4 text-sm text-yellow-600">
 						<p className="mb-1 font-medium">Aluno não pode receber cobranças</p>
 						<p className="text-xs">
-							{studentCpf
-								? syncError
-									? `Erro na sincronização: ${syncError}. Clique em "Sincronizar" para tentar novamente.`
-									: 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.'
-								: 'Cadastre o CPF do aluno primeiro.'}
+							{(() => {
+								if (!studentCpf) return 'Cadastre o CPF do aluno primeiro.';
+								if (syncError)
+									return `Erro na sincronização: ${syncError}. Clique em "Sincronizar" para tentar novamente.`;
+								return 'O aluno precisa ser sincronizado com o Asaas. Edite e salve o aluno para sincronizar.';
+							})()}
 						</p>
 						{syncError && (
 							<Button className="mt-2" onClick={handleManualSync} size="sm" variant="outline">

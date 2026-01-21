@@ -1,3 +1,4 @@
+import type { Id } from '@convex/_generated/dataModel';
 import { AnimatePresence, LayoutGroup, motion, Reorder } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -105,7 +106,7 @@ function DraggableLeadCard({
 			}}
 		>
 			<div className="relative w-full">
-				<LeadCard lead={lead} />
+				<LeadCard lead={{ ...lead, _id: lead._id as Id<'leads'> }} />
 				<button
 					aria-label="Abrir lead"
 					className="absolute inset-0 h-full w-full cursor-pointer rounded-lg border-none bg-transparent p-0 opacity-0 focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2"

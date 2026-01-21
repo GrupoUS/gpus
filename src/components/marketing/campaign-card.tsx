@@ -89,26 +89,36 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
 				{/* Footer */}
 				<div className="flex items-center justify-between border-t pt-2">
 					<div className="flex items-center gap-2 text-muted-foreground text-xs">
-						{campaign.status === 'sent' && campaign.sentAt ? (
-							<>
-								<Send className="h-3 w-3" />
-								<span>Enviada {formatDistanceToNow(campaign.sentAt, { locale: ptBR })} atrás</span>
-							</>
-						) : campaign.status === 'scheduled' && campaign.scheduledAt ? (
-							<>
-								<Calendar className="h-3 w-3" />
-								<span>
-									Agendada para {formatDistanceToNow(campaign.scheduledAt, { locale: ptBR })}
-								</span>
-							</>
-						) : (
-							<>
-								<Calendar className="h-3 w-3" />
-								<span>
-									Criada {formatDistanceToNow(campaign._creationTime, { locale: ptBR })} atrás
-								</span>
-							</>
-						)}
+						{(() => {
+							if (campaign.status === 'sent' && campaign.sentAt) {
+								return (
+									<>
+										<Send className="h-3 w-3" />
+										<span>
+											Enviada {formatDistanceToNow(campaign.sentAt, { locale: ptBR })} atrás
+										</span>
+									</>
+								);
+							}
+							if (campaign.status === 'scheduled' && campaign.scheduledAt) {
+								return (
+									<>
+										<Calendar className="h-3 w-3" />
+										<span>
+											Agendada para {formatDistanceToNow(campaign.scheduledAt, { locale: ptBR })}
+										</span>
+									</>
+								);
+							}
+							return (
+								<>
+									<Calendar className="h-3 w-3" />
+									<span>
+										Criada {formatDistanceToNow(campaign._creationTime, { locale: ptBR })} atrás
+									</span>
+								</>
+							);
+						})()}
 					</div>
 				</div>
 			</CardContent>

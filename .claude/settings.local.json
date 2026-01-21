@@ -1,12 +1,10 @@
 {
 	"permissions": {
 		"allow": [
-			"WebSearch",
 			"mcp__web-reader__webReader",
 			"Bash(dir:*)",
 			"Bash(findstr:*)",
 			"Bash(claude mcp list:*)",
-			"mcp__web-search-prime__webSearchPrime",
 			"Bash(cmd /c \"dir /b C:\\\\Users\\\\Mauri\\\\.claude* 2>nul\")",
 			"Bash(powershell:*)",
 			"mcp__plugin_serena_serena__find_file",

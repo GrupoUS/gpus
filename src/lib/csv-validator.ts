@@ -5,18 +5,31 @@
 
 import { getIntelligentMappings } from './import-intelligence';
 
+const NON_DIGIT_REGEX = /\D/g;
+const CPF_INVALID_PATTERN = /^(\d)\1{10}$/;
+const CPF_FORMAT_PATTERN = /(\d{3})(\d{3})(\d{3})(\d{2})/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_MOBILE_FORMAT = /(\d{2})(\d{5})(\d{4})/;
+const PHONE_LANDLINE_FORMAT = /(\d{2})(\d{4})(\d{4})/;
+const CEP_ZERO_PATTERN = /^0+$/;
+const CEP_FORMAT_PATTERN = /(\d{5})(\d{3})/;
+const BR_DATE_FORMAT = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+const CURRENCY_SYMBOLS_REGEX = /[R$\s]/g;
+const DOT_REGEX = /\./g;
+const COMMA_REGEX = /,/g;
+
 // CPF Validation - Brazilian Individual Taxpayer Registry
 export function validateCPF(cpf: string): boolean {
 	if (!cpf) return false;
 
 	// Remove formatting
-	const cleaned = cpf.replace(/\D/g, '');
+	const cleaned = cpf.replace(NON_DIGIT_REGEX, '');
 
 	// Must be 11 digits
 	if (cleaned.length !== 11) return false;
 
 	// Check for known invalid patterns (all same digits)
-	if (/^(\d)\1{10}$/.test(cleaned)) return false;
+	if (CPF_INVALID_PATTERN.test(cleaned)) return false;
 
 	// Validate first check digit
 	let sum = 0;
@@ -41,21 +54,20 @@ export function validateCPF(cpf: string): boolean {
 
 // Normalize CPF - remove formatting
 export function normalizeCPF(cpf: string): string {
-	return cpf.replace(/\D/g, '');
+	return cpf.replace(NON_DIGIT_REGEX, '');
 }
 
 // Format CPF with dots and dash
 export function formatCPF(cpf: string): string {
 	const cleaned = normalizeCPF(cpf);
-	return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+	return cleaned.replace(CPF_FORMAT_PATTERN, '$1.$2.$3-$4');
 }
 
 // Email Validation
 export function validateEmail(email: string): boolean {
 	if (!email) return false;
 
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	return emailRegex.test(email.trim().toLowerCase());
+	return EMAIL_REGEX.test(email.trim().toLowerCase());
 }
 
 // Normalize Email
@@ -67,7 +79,7 @@ export function normalizeEmail(email: string): string {
 export function validatePhone(phone: string): boolean {
 	if (!phone) return false;
 
-	const cleaned = phone.replace(/\D/g, '');
+	const cleaned = phone.replace(NON_DIGIT_REGEX, '');
 
 	// Brazilian phone: 10 digits (landline) or 11 digits (mobile)
 	return cleaned.length >= 10 && cleaned.length <= 11;
@@ -75,16 +87,16 @@ export function validatePhone(phone: string): boolean {
 
 // Normalize Phone - remove formatting
 export function normalizePhone(phone: string): string {
-	return phone.replace(/\D/g, '');
+	return phone.replace(NON_DIGIT_REGEX, '');
 }
 
 // Format Phone with Brazilian mask
 export function formatPhone(phone: string): string {
 	const cleaned = normalizePhone(phone);
 	if (cleaned.length === 11) {
-		return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+		return cleaned.replace(PHONE_MOBILE_FORMAT, '($1) $2-$3');
 	}
-	return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+	return cleaned.replace(PHONE_LANDLINE_FORMAT, '($1) $2-$3');
 }
 
 // ==========================================
@@ -97,11 +109,11 @@ export function formatPhone(phone: string): string {
  */
 export function validateCEP(cep: string): boolean {
 	if (!cep) return false;
-	const cleaned = cep.replace(/\D/g, '');
+	const cleaned = cep.replace(NON_DIGIT_REGEX, '');
 	// Must be exactly 8 digits
 	if (cleaned.length !== 8) return false;
 	// Cannot be all zeros
-	if (/^0+$/.test(cleaned)) return false;
+	if (CEP_ZERO_PATTERN.test(cleaned)) return false;
 	return true;
 }
 
@@ -109,7 +121,7 @@ export function validateCEP(cep: string): boolean {
  * Normalize CEP - remove formatting, keep only digits
  */
 export function normalizeCEP(cep: string): string {
-	return cep.replace(/\D/g, '');
+	return cep.replace(NON_DIGIT_REGEX, '');
 }
 
 /**
@@ -118,7 +130,7 @@ export function normalizeCEP(cep: string): string {
 export function formatCEP(cep: string): string {
 	const cleaned = normalizeCEP(cep);
 	if (cleaned.length !== 8) return cleaned;
-	return cleaned.replace(/(\d{5})(\d{3})/, '$1-$2');
+	return cleaned.replace(CEP_FORMAT_PATTERN, '$1-$2');
 }
 
 // ==========================================
@@ -281,8 +293,7 @@ export function parseDate(value: string | number | undefined): number | undefine
 	const str = String(value).trim();
 
 	// DD/MM/YYYY format
-	const brFormat = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-	const match = str.match(brFormat);
+	const match = str.match(BR_DATE_FORMAT);
 	if (match) {
 		const [, day, month, year] = match;
 		const date = new Date(
@@ -690,7 +701,7 @@ export function parseMonetary(value: string | number | undefined): number {
 	if (typeof value === 'number') return value;
 
 	// Remove R$ prefix and spaces
-	let cleaned = value.replace(/[R$\s]/g, '');
+	let cleaned = value.replace(CURRENCY_SYMBOLS_REGEX, '');
 
 	// Detect format: Brazilian uses comma as decimal separator
 	// Check if there's a comma after the last period (Brazilian format)
@@ -699,10 +710,10 @@ export function parseMonetary(value: string | number | undefined): number {
 
 	if (lastComma > lastPeriod) {
 		// Brazilian format: 1.234,56 → remove periods, replace comma with period
-		cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+		cleaned = cleaned.replace(DOT_REGEX, '').replace(',', '.');
 	} else if (lastPeriod > lastComma) {
 		// International format: 1,234.56 → just remove commas
-		cleaned = cleaned.replace(/,/g, '');
+		cleaned = cleaned.replace(COMMA_REGEX, '');
 	} else if (lastComma !== -1) {
 		// Only comma, likely Brazilian decimal: 1234,56
 		cleaned = cleaned.replace(',', '.');
@@ -718,6 +729,6 @@ export function parseMonetary(value: string | number | undefined): number {
 export function parseInteger(value: string | number | undefined): number {
 	if (!value) return 0;
 	if (typeof value === 'number') return Math.floor(value);
-	const parsed = Number.parseInt(String(value).replace(/\D/g, ''), 10);
+	const parsed = Number.parseInt(String(value).replace(NON_DIGIT_REGEX, ''), 10);
 	return Number.isNaN(parsed) ? 0 : parsed;
 }

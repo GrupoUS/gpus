@@ -88,17 +88,21 @@ export const getDashboard = query({
 		};
 		const { startDate, previousStartDate } = getPeriodRange();
 
-		// Role-based filtering logic
+		// Role-based filtering logic - SECURITY: User record must exist
 		const currentUser = await ctx.db
 			.query('users')
 			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
 			.unique();
 
+		// SECURITY: Treat missing user record as auth failure - never fall back to org-wide queries
+		if (!currentUser) {
+			return null;
+		}
+
 		const resolveEffectiveUserId = (
-			user: Doc<'users'> | null,
+			user: Doc<'users'>,
 			requestedUserId?: Id<'users'>,
 		): Id<'users'> | undefined => {
-			if (!user) return undefined;
 			const role = user.role;
 			if (role === 'member' || role === 'sdr') {
 				return user._id;
@@ -180,8 +184,28 @@ export const getDashboard = query({
 
 		const revenue = financialMetrics?.totalReceived || 0;
 
-		// Use currentEnrollments for trend calculation until financialMetrics supports history
-		const collectEnrollments = async () => ctx.db.query('enrollments').collect();
+		// Collect all leads once to get their IDs for enrollment scoping
+		const allCurrentLeads = await collectLeads();
+
+		// For revenue scoping: find students from scoped leads
+		let scopedStudentIds: Set<string> | null = null;
+		if (effectiveUserId) {
+			const scopedLeadIds = new Set(allCurrentLeads.map((l) => l._id));
+			const allStudents = await ctx.db.query('students').collect();
+			const matchingStudents = allStudents.filter((s) => s.leadId && scopedLeadIds.has(s.leadId));
+			scopedStudentIds = new Set(matchingStudents.map((s) => s._id));
+		}
+
+		// Use currentEnrollments for trend calculation, scoped to effectiveUserId leads via students
+		const collectEnrollments = async () => {
+			const enrollments = await ctx.db.query('enrollments').collect();
+			// If effectiveUserId is set, filter to enrollments linked to those students
+			const studentFilter = scopedStudentIds;
+			if (studentFilter) {
+				return enrollments.filter((e) => studentFilter.has(e.studentId));
+			}
+			return enrollments;
+		};
 		const currentEnrollments =
 			args.period === 'all'
 				? await collectEnrollments()
@@ -288,54 +312,6 @@ export const getDashboard = query({
 			dailyMetrics,
 			messagesCount: totalMessages,
 		};
-	},
-});
-
-export const listVendors = query({
-	args: {},
-	returns: v.array(
-		v.object({
-			id: v.id('users'),
-			name: v.string(),
-			email: v.string(),
-			role: v.string(),
-		}),
-	),
-	handler: async (ctx) => {
-		// Auth check
-		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) return [];
-
-		const organizationId = await getOrganizationId(ctx);
-		if (!organizationId) return [];
-
-		// Get current user to check role
-		const currentUser = await ctx.db
-			.query('users')
-			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-			.unique();
-
-		// Only managers/admins/owners can see vendor list to filter
-		if (!(currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role))) {
-			return [];
-		}
-
-		// Get all active users with vendor roles
-		const users = await ctx.db
-			.query('users')
-			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
-			.collect();
-
-		// Filter for vendor roles (member, sdr) and active status
-		// Also include other roles if needed, but usually we assign leads to sales/members
-		return users
-			.filter((u) => u.isActive && ['member', 'sdr', 'manager', 'admin', 'owner'].includes(u.role))
-			.map((u) => ({
-				id: u._id,
-				name: u.name,
-				email: u.email,
-				role: u.role,
-			}));
 	},
 });
 

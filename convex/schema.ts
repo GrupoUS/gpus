@@ -729,21 +729,6 @@ export default defineSchema({
 	}).index('by_date', ['date']),
 
 	// ═══════════════════════════════════════════════════════
-	// ORGANIZATION SETTINGS (Configurações por Organização)
-	// ═══════════════════════════════════════════════════════
-	organizationSettings: defineTable({
-		// Identificador único da organização
-		organizationId: v.string(),
-
-		// Configurações de Cashback
-		cashbackAmount: v.number(), // Valor do cashback (padrão: 500 para R$ 500)
-		cashbackType: v.union(v.literal('fixed'), v.literal('percentage')), // Tipo: fixo ou percentual
-
-		// Timestamp
-		updatedAt: v.number(),
-	}).index('by_organization', ['organizationId']),
-
-	// ═══════════════════════════════════════════════════════
 	// LGPD COMPLIANCE (Lei Geral de Proteção de Dados)
 	// ═══════════════════════════════════════════════════════
 	lgpdConsent: defineTable({

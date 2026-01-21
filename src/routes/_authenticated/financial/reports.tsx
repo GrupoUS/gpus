@@ -39,6 +39,11 @@ export const Route = createFileRoute('/_authenticated/financial/reports')({
 	component: FinancialReportsPage,
 });
 
+interface PaymentsResult {
+	payments: Doc<'asaasPayments'>[];
+	total: number;
+}
+
 function FinancialReportsPage() {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [startDate, setStartDate] = useState('');
@@ -46,20 +51,26 @@ function FinancialReportsPage() {
 
 	const startDateId = useId();
 	const endDateId = useId();
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as {
+		asaas: { queries: { getAllPayments: unknown }; sync: { getRecentSyncLogs: unknown } };
+	};
 
 	// Get payments for report
 	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
 	const endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
 
-	const paymentsResult = useQuery(api.asaas.queries.getAllPayments, {
+	const paymentsResult = useQueryUnsafe(apiAny.asaas.queries.getAllPayments, {
 		status: statusFilter === 'all' ? undefined : statusFilter,
 		startDate: startTimestamp,
 		endDate: endTimestamp,
 		limit: 100,
-	});
+	}) as PaymentsResult | undefined;
 
 	// Get sync logs for webhook history
-	const syncLogs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 20 });
+	const syncLogs = useQueryUnsafe(apiAny.asaas.sync.getRecentSyncLogs, { limit: 20 }) as
+		| Doc<'asaasSyncLogs'>[]
+		| undefined;
 
 	// Format helpers
 	const formatCurrency = (value: number) =>
@@ -328,35 +339,38 @@ function FinancialReportsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{syncLogs?.map((log: Doc<'asaasSyncLogs'>) => (
-										<TableRow key={log._id}>
-											<TableCell>{getSyncStatusIcon(log.status)}</TableCell>
-											<TableCell>
-												<Badge className="capitalize" variant="outline">
-													{log.syncType}
-												</Badge>
-											</TableCell>
-											<TableCell className="text-sm">{log.initiatedBy}</TableCell>
-											<TableCell className="text-sm">{formatDateTime(log.startedAt)}</TableCell>
-											<TableCell className="text-sm">{formatDateTime(log.completedAt)}</TableCell>
-											<TableCell>
-												{log.recordsProcessed !== undefined ? (
-													<Badge variant="secondary">
-														{log.recordsCreated || 0} / {log.recordsProcessed || 0}
+									{syncLogs?.map((log: Doc<'asaasSyncLogs'>) => {
+										let logMessage = '-';
+										if (log.errors && log.errors.length > 0) {
+											logMessage = log.errors[0];
+										} else if (log.status === 'completed') {
+											logMessage = 'Concluído com sucesso';
+										}
+
+										return (
+											<TableRow key={log._id}>
+												<TableCell>{getSyncStatusIcon(log.status)}</TableCell>
+												<TableCell>
+													<Badge className="capitalize" variant="outline">
+														{log.syncType}
 													</Badge>
-												) : (
-													'-'
-												)}
-											</TableCell>
-											<TableCell className="max-w-xs truncate text-sm">
-												{log.errors && log.errors.length > 0
-													? log.errors[0]
-													: log.status === 'completed'
-														? 'Concluído com sucesso'
-														: '-'}
-											</TableCell>
-										</TableRow>
-									))}
+												</TableCell>
+												<TableCell className="text-sm">{log.initiatedBy}</TableCell>
+												<TableCell className="text-sm">{formatDateTime(log.startedAt)}</TableCell>
+												<TableCell className="text-sm">{formatDateTime(log.completedAt)}</TableCell>
+												<TableCell>
+													{log.recordsProcessed !== undefined ? (
+														<Badge variant="secondary">
+															{log.recordsCreated || 0} / {log.recordsProcessed || 0}
+														</Badge>
+													) : (
+														'-'
+													)}
+												</TableCell>
+												<TableCell className="max-w-xs truncate text-sm">{logMessage}</TableCell>
+											</TableRow>
+										);
+									})}
 									{(!syncLogs || syncLogs.length === 0) && (
 										<TableRow>
 											<TableCell className="py-8 text-center text-muted-foreground" colSpan={7}>

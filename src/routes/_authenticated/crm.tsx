@@ -15,7 +15,17 @@ const PipelineKanban = lazy(() =>
 	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
 );
 
+import { z } from 'zod';
+
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// ... imports remain the same
+
 export const Route = createFileRoute('/_authenticated/crm')({
+	validateSearch: z.object({
+		product: z.string().optional().catch('all'),
+	}),
 	component: CRMPage,
 });
 
@@ -27,6 +37,10 @@ interface ListLeadsResult {
 }
 
 function CRMPage() {
+	const navigate = Route.useNavigate();
+	const { product } = Route.useSearch();
+	const [selectedProduct, setSelectedProduct] = useState<string>(product || 'all');
+
 	const [filters, setFilters] = useState({
 		search: '',
 		stages: [] as string[],
@@ -37,6 +51,18 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
+	const handleTabChange = (value: string) => {
+		setSelectedProduct(value);
+		navigate({ search: { product: value } });
+	};
+
+	let leadsProducts: string[] | undefined;
+	if (selectedProduct !== 'all') {
+		leadsProducts = [selectedProduct];
+	} else if (filters.products.length > 0) {
+		leadsProducts = filters.products;
+	}
+
 	// Break type inference chain to avoid "Type instantiation is excessively deep" error
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
 	const leads = useQuery((api as any).leads.listLeads, {
@@ -44,7 +70,8 @@ function CRMPage() {
 		search: filters.search || undefined,
 		stages: filters.stages.length > 0 ? filters.stages : undefined,
 		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		products: filters.products.length > 0 ? filters.products : undefined,
+		// If tab is 'all', use filter dropdown. If tab is specific, force that product.
+		products: leadsProducts,
 		source: filters.source.length > 0 ? filters.source : undefined,
 		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
 	}) as ListLeadsResult | undefined;
@@ -70,6 +97,15 @@ function CRMPage() {
 			temperature: l.temperature,
 		})) ?? [];
 
+	// Calculate counts from loaded page (Note: This is approximate if paginated,
+	// ideally should be a separate aggregation query)
+	const counts = {
+		all: formattedLeads.length,
+		otb: formattedLeads.filter((l) => l.interestedProduct === 'otb').length,
+		black_neon: formattedLeads.filter((l) => l.interestedProduct === 'black_neon').length,
+		trintae3: formattedLeads.filter((l) => l.interestedProduct === 'trintae3').length,
+	};
+
 	return (
 		<div className="flex h-[calc(100vh-4rem)] flex-col space-y-4">
 			<div className="flex animate-fade-in-up flex-col gap-4">
@@ -83,6 +119,35 @@ function CRMPage() {
 						</p>
 					</div>
 				</div>
+
+				<Tabs onValueChange={handleTabChange} value={selectedProduct}>
+					<TabsList>
+						<TabsTrigger value="all">
+							Todos{' '}
+							<Badge className="ml-2" variant="secondary">
+								{counts.all}
+							</Badge>
+						</TabsTrigger>
+						<TabsTrigger value="otb">
+							OTB 2025{' '}
+							<Badge className="ml-2" variant="secondary">
+								{counts.otb}
+							</Badge>
+						</TabsTrigger>
+						<TabsTrigger value="black_neon">
+							NEON{' '}
+							<Badge className="ml-2" variant="secondary">
+								{counts.black_neon}
+							</Badge>
+						</TabsTrigger>
+						<TabsTrigger value="trintae3">
+							TRINTAE3{' '}
+							<Badge className="ml-2" variant="secondary">
+								{counts.trintae3}
+							</Badge>
+						</TabsTrigger>
+					</TabsList>
+				</Tabs>
 
 				<Suspense fallback={<div>Carregando filtros...</div>}>
 					<LeadFilters

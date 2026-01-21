@@ -671,3 +671,53 @@ export const getUserByClerkIdInternal = internalQuery({
 			.unique();
 	},
 });
+
+export const listVendors = query({
+	args: {
+		organizationId: v.optional(v.string()),
+	},
+	returns: v.array(
+		v.object({
+			id: v.id('users'),
+			name: v.string(),
+			email: v.string(),
+			role: v.string(),
+		}),
+	),
+	handler: async (ctx, args) => {
+		// Auth check
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return [];
+
+		// Use provided organizationId or fall back to context
+		const orgId = args.organizationId ?? (await getOrganizationId(ctx));
+		if (!orgId) return [];
+
+		// Get current user to check role
+		const currentUser = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+			.unique();
+
+		// Only managers/admins/owners can see vendor list to filter
+		if (!(currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role))) {
+			return [];
+		}
+
+		// Get all active users scoped to the specified organization
+		const users = await ctx.db
+			.query('users')
+			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+			.collect();
+
+		// Filter for vendor roles only (member, sdr) - exclude management roles from dropdown
+		return users
+			.filter((u) => u.isActive && ['member', 'sdr'].includes(u.role))
+			.map((u) => ({
+				id: u._id,
+				name: u.name,
+				email: u.email,
+				role: u.role,
+			}));
+	},
+});

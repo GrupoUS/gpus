@@ -105,6 +105,9 @@ export function useIntegrationSettings(integration: IntegrationType) {
 						result = await testDify(args);
 						break;
 					}
+					default: {
+						throw new Error('Tipo de integração inválido');
+					}
 				}
 
 				if (result?.success) {

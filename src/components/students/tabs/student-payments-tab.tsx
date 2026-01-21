@@ -43,16 +43,15 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 	const [selectedPayment, setSelectedPayment] = useState<Doc<'asaasPayments'> | null>(null);
+	const useQueryUnsafe = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => { asaasCustomerId?: string; asaasCustomerSyncedAt?: number } | undefined;
 
 	// Fetch student to get Asaas ID
-	// biome-ignore lint/suspicious/noExplicitAny: Deep type instantiation workaround for Convex
-	const student = useQuery(api.students.getById as any, { id: studentId });
-	const asaasCustomerId =
-		typeof (student as { asaasCustomerId?: unknown } | null)?.asaasCustomerId === 'string'
-			? (student as { asaasCustomerId: string }).asaasCustomerId
-			: undefined;
-	const lastSyncedAt = (student as { asaasCustomerSyncedAt?: number } | null)
-		?.asaasCustomerSyncedAt;
+	const student = useQueryUnsafe(api.students.getById, { id: studentId });
+	const asaasCustomerId = student?.asaasCustomerId;
+	const lastSyncedAt = student?.asaasCustomerSyncedAt;
 
 	const payments = useQuery(api.asaas.queries.getPaymentsByStudent, {
 		studentId,
@@ -189,20 +188,28 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{payments === undefined ? (
-								<TableRow>
-									<TableCell className="py-8 text-center" colSpan={6}>
-										<Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-									</TableCell>
-								</TableRow>
-							) : payments.length === 0 ? (
-								<TableRow>
-									<TableCell className="py-8 text-center text-muted-foreground" colSpan={6}>
-										Nenhuma cobrança encontrada
-									</TableCell>
-								</TableRow>
-							) : (
-								payments.map((payment) => (
+							{(() => {
+								if (payments === undefined) {
+									return (
+										<TableRow>
+											<TableCell className="py-8 text-center" colSpan={6}>
+												<Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+											</TableCell>
+										</TableRow>
+									);
+								}
+
+								if (payments.length === 0) {
+									return (
+										<TableRow>
+											<TableCell className="py-8 text-center text-muted-foreground" colSpan={6}>
+												Nenhuma cobrança encontrada
+											</TableCell>
+										</TableRow>
+									);
+								}
+
+								return payments.map((payment) => (
 									<TableRow key={payment._id}>
 										<TableCell>
 											{payment.description || 'Cobrança'}
@@ -236,6 +243,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 													<Button
 														onClick={() => copyToClipboard(payment.pixQrCode ?? '', 'PIX')}
 														size="icon"
+														type="button"
 														variant="ghost"
 													>
 														<Copy className="h-4 w-4" />
@@ -244,8 +252,8 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 											</div>
 										</TableCell>
 									</TableRow>
-								))
-							)}
+								));
+							})()}
 						</TableBody>
 					</Table>
 				</CardContent>

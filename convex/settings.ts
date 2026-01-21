@@ -446,7 +446,11 @@ export const setUserSetting = mutation({
 export const updateOrganizationSettings = mutation({
 	args: {
 		organizationId: v.string(),
-		settings: v.any(),
+		settings: v.object({
+			cashbackAmount: v.optional(v.number()),
+			cashbackType: v.optional(v.union(v.literal('fixed'), v.literal('percentage'))),
+			extraSettings: v.optional(v.record(v.string(), v.any())),
+		}),
 	},
 	handler: async (ctx, args) => {
 		const identity = await requireAuth(ctx);
@@ -462,17 +466,42 @@ export const updateOrganizationSettings = mutation({
 			throw new Error('Unauthorized: Organization mismatch');
 		}
 
-		const settings = args.settings as OrganizationSettings;
+		const { cashbackAmount, cashbackType, extraSettings } = args.settings;
 
-		// Validate cashback settings
-		const validation = validateCashbackSettings(settings);
+		// Runtime guard: validate cashbackAmount is a finite number if provided
+		if (
+			cashbackAmount !== undefined &&
+			(typeof cashbackAmount !== 'number' || !Number.isFinite(cashbackAmount))
+		) {
+			throw new Error(
+				'cashbackAmount deve ser um número finito válido. Valores NaN ou Infinity não são permitidos.',
+			);
+		}
+
+		// Validate cashback settings consistency and range
+		const validation = validateCashbackSettings({ cashbackAmount, cashbackType });
 		if (!validation.valid) {
 			throw new Error(validation.error);
 		}
 
-		const keys = Object.keys(settings);
+		// Build the settings object to persist
+		const settingsToStore: OrganizationSettings = {};
+		if (cashbackAmount !== undefined) {
+			settingsToStore.cashbackAmount = cashbackAmount;
+		}
+		if (cashbackType !== undefined) {
+			settingsToStore.cashbackType = cashbackType;
+		}
+		// Merge extra settings if provided
+		if (extraSettings) {
+			for (const [key, value] of Object.entries(extraSettings)) {
+				settingsToStore[key] = value;
+			}
+		}
+
+		const keys = Object.keys(settingsToStore);
 		for (const key of keys) {
-			const value = settings[key];
+			const value = settingsToStore[key];
 			if (value === undefined) continue;
 
 			const prefixedKey = `org_${args.organizationId}_${key}`;

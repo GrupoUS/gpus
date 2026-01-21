@@ -3,7 +3,7 @@
  * Smart header detection and password handling for spreadsheet imports
  */
 
-import * as XLSX from 'xlsx';
+import { type ParsingOptions, read, utils, type WorkBook } from 'xlsx';
 
 import { calculateStringSimilarity, detectColumnType } from './import-intelligence';
 
@@ -88,6 +88,9 @@ export const HEADER_KEYWORDS = [
 	'clínica',
 ] as const;
 
+const HEADER_NUMBER_PATTERN = /^\d+([.,]\d+)?$/;
+const HEADER_DATE_PATTERN = /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/;
+
 /**
  * Result of header row detection
  */
@@ -110,7 +113,7 @@ export interface HeaderDetectionResult {
  * Result of XLSX parsing with password support
  */
 export type XLSXParseResult =
-	| { success: true; workbook: XLSX.WorkBook }
+	| { success: true; workbook: WorkBook }
 	| { success: false; needsPassword: true }
 	| { success: false; error: string };
 
@@ -128,10 +131,10 @@ function isLikelyHeaderValue(value: unknown): boolean {
 	if (str === '') return false;
 
 	// Pure numbers are unlikely to be headers
-	if (/^\d+([.,]\d+)?$/.test(str)) return false;
+	if (HEADER_NUMBER_PATTERN.test(str)) return false;
 
 	// Dates are unlikely to be headers
-	if (/^\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4}$/.test(str)) return false;
+	if (HEADER_DATE_PATTERN.test(str)) return false;
 
 	// Very long strings (>50 chars) are unlikely headers
 	if (str.length > 50) return false;
@@ -344,7 +347,7 @@ export function extractDataWithHeaders(
  */
 export function parseXLSXWithPassword(buffer: ArrayBuffer, password?: string): XLSXParseResult {
 	try {
-		const options: XLSX.ParsingOptions = {
+		const options: ParsingOptions = {
 			type: 'array',
 			cellDates: true,
 			cellNF: false,
@@ -355,7 +358,7 @@ export function parseXLSXWithPassword(buffer: ArrayBuffer, password?: string): X
 			options.password = password;
 		}
 
-		const workbook = XLSX.read(buffer, options);
+		const workbook = read(buffer, options);
 
 		return { success: true, workbook };
 	} catch (error) {
@@ -383,7 +386,7 @@ export function parseXLSXWithPassword(buffer: ArrayBuffer, password?: string): X
  * @param workbook - XLSX Workbook object
  * @returns Array of row arrays (for use with detectHeaderRow)
  */
-export function getRowsFromWorkbook(workbook: XLSX.WorkBook): unknown[][] {
+export function getRowsFromWorkbook(workbook: WorkBook): unknown[][] {
 	const sheetName = workbook.SheetNames[0];
 	if (!sheetName) {
 		throw new Error('Workbook has no sheets');
@@ -395,7 +398,7 @@ export function getRowsFromWorkbook(workbook: XLSX.WorkBook): unknown[][] {
 	}
 
 	// Get all rows as arrays (header: 1 means treat first row as data, not headers)
-	const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][];
+	const rows = utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][];
 
 	return rows;
 }

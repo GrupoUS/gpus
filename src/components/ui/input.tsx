@@ -1,37 +1,38 @@
-import * as React from 'react';
+import type { ChangeEvent, ComponentProps, FocusEvent } from 'react';
+import { forwardRef, useId, useImperativeHandle, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-interface InputProps extends React.ComponentProps<'input'> {
+interface InputProps extends ComponentProps<'input'> {
 	label?: string;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const Input = forwardRef<HTMLInputElement, InputProps>(
 	({ className, type, label, ...props }, ref) => {
-		const [isFocused, setIsFocused] = React.useState(false);
-		const [hasValue, setHasValue] = React.useState(false);
-		const inputRef = React.useRef<HTMLInputElement>(null);
-		const inputId = React.useId();
+		const [isFocused, setIsFocused] = useState(false);
+		const [hasValue, setHasValue] = useState(false);
+		const inputRef = useRef<HTMLInputElement>(null);
+		const inputId = useId();
 
-		React.useImperativeHandle(ref, () => {
+		useImperativeHandle(ref, () => {
 			if (!inputRef.current) {
 				throw new Error('Input ref is not available');
 			}
 			return inputRef.current;
 		});
 
-		const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+		const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
 			setIsFocused(true);
 			props.onFocus?.(e);
 		};
 
-		const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+		const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
 			setIsFocused(false);
 			setHasValue(e.target.value !== '');
 			props.onBlur?.(e);
 		};
 
-		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 			setHasValue(e.target.value !== '');
 			props.onChange?.(e);
 		};

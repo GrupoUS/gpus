@@ -31,9 +31,11 @@ export function useCampaignsViewModel(Route: any) {
 	}, [navigate]);
 
 	// Fetch campaigns with optional status filter
-	const campaigns = useQuery((api as any).emailMarketing.getCampaigns, {
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as { emailMarketing: { getCampaigns: unknown } };
+	const campaigns = useQueryUnsafe(apiAny.emailMarketing.getCampaigns, {
 		status: status === 'all' ? undefined : status,
-	});
+	}) as Doc<'emailCampaigns'>[] | undefined;
 
 	// Client-side search filtering
 	const filteredCampaigns = useMemo(() => {

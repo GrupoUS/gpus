@@ -5,7 +5,7 @@ import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { Copy, ExternalLink, FileText, Search } from 'lucide-react';
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,12 @@ const statusConfig: Record<
 	DELETED: { label: 'Excluído', variant: 'outline' },
 	CANCELLED: { label: 'Cancelado', variant: 'outline' },
 };
+
+interface PaymentsResult {
+	payments: Doc<'asaasPayments'>[];
+	total: number;
+	hasMore: boolean;
+}
 
 interface PaymentTableRowProps {
 	payment: Doc<'asaasPayments'>;
@@ -337,14 +343,16 @@ function PaymentsPage() {
 	const endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
 
 	// Use getAllPayments with filters
-	const paymentsResult = useQuery(api.asaas.queries.getAllPayments, {
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as { asaas: { queries: { getAllPayments: unknown } } };
+	const paymentsResult = useQueryUnsafe(apiAny.asaas.queries.getAllPayments, {
 		status: statusFilter === 'all' ? undefined : statusFilter,
 		billingType: billingTypeFilter === 'all' ? undefined : billingTypeFilter,
 		startDate: startTimestamp,
 		endDate: endTimestamp,
 		limit: 50,
 		offset,
-	});
+	}) as PaymentsResult | undefined;
 
 	const allPayments = paymentsResult?.payments || [];
 	const totalPayments = paymentsResult?.total || 0;
@@ -380,6 +388,49 @@ function PaymentsPage() {
 		setEndDate('');
 		setOffset(0);
 	};
+
+	let paymentsContent: ReactNode;
+	if (paymentsResult === undefined) {
+		paymentsContent = <Skeleton className="h-64" />;
+	} else if (filteredPayments.length === 0) {
+		paymentsContent = (
+			<p className="py-8 text-center text-muted-foreground">Nenhuma cobrança encontrada</p>
+		);
+	} else {
+		paymentsContent = (
+			<>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Descrição</TableHead>
+							<TableHead>Vencimento</TableHead>
+							<TableHead>Valor</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead>Tipo</TableHead>
+							<TableHead className="text-right">Ações</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{filteredPayments.map((payment: Doc<'asaasPayments'>) => (
+							<PaymentTableRow
+								key={payment._id}
+								onCopy={copyToClipboard}
+								onSelect={setSelectedPayment}
+								payment={payment}
+							/>
+						))}
+					</TableBody>
+				</Table>
+				{hasMore && (
+					<div className="mt-4 flex justify-center">
+						<Button onClick={handleLoadMore} variant="outline">
+							Carregar Mais
+						</Button>
+					</div>
+				)}
+			</>
+		);
+	}
 
 	return (
 		<div className="space-y-6 p-6">
@@ -426,45 +477,7 @@ function PaymentsPage() {
 						encontrada{totalPayments !== 1 ? 's' : ''}
 					</CardDescription>
 				</CardHeader>
-				<CardContent>
-					{paymentsResult === undefined ? (
-						<Skeleton className="h-64" />
-					) : filteredPayments.length === 0 ? (
-						<p className="py-8 text-center text-muted-foreground">Nenhuma cobrança encontrada</p>
-					) : (
-						<>
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead>Descrição</TableHead>
-										<TableHead>Vencimento</TableHead>
-										<TableHead>Valor</TableHead>
-										<TableHead>Status</TableHead>
-										<TableHead>Tipo</TableHead>
-										<TableHead className="text-right">Ações</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{filteredPayments.map((payment: Doc<'asaasPayments'>) => (
-										<PaymentTableRow
-											key={payment._id}
-											onCopy={copyToClipboard}
-											onSelect={setSelectedPayment}
-											payment={payment}
-										/>
-									))}
-								</TableBody>
-							</Table>
-							{hasMore && (
-								<div className="mt-4 flex justify-center">
-									<Button onClick={handleLoadMore} variant="outline">
-										Carregar Mais
-									</Button>
-								</div>
-							)}
-						</>
-					)}
-				</CardContent>
+				<CardContent>{paymentsContent}</CardContent>
 			</Card>
 
 			{/* Payment Detail Dialog */}

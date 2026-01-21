@@ -39,7 +39,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 // Schema definition matching Convex schema
-const formSchema = z
+const leadFormSchema = z
 	.object({
 		name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
 		phone: z.string().min(10, { message: 'Telefone inválido' }),
@@ -98,6 +98,8 @@ const formSchema = z
 			.enum(['tecnica', 'vendas', 'gestao', 'posicionamento', 'escala', 'certificacao', 'outro'])
 			.optional(),
 		mainDesire: z.string().max(500).optional(),
+		// Referrals
+		referredById: z.string().optional(),
 	})
 	.refine(
 		(data) => {
@@ -112,8 +114,8 @@ export function LeadForm() {
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
 	const createLead = useMutation((api as any).leads.createLead);
 
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
+	const form = useForm<z.infer<typeof leadFormSchema>>({
+		resolver: zodResolver(leadFormSchema),
 		defaultValues: {
 			name: '',
 			phone: '',
@@ -130,10 +132,11 @@ export function LeadForm() {
 			currentRevenue: undefined,
 			mainPain: undefined,
 			mainDesire: '',
+			referredById: '',
 		},
 	});
 
-	const onSubmit = async (values: z.infer<typeof formSchema>) => {
+	const onSubmit = async (values: z.infer<typeof leadFormSchema>) => {
 		try {
 			// Clean up optional empty strings to undefined for Convex compatibility
 			const payload = {

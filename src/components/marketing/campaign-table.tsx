@@ -157,6 +157,20 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 				<TableBody>
 					{sortedCampaigns.map((campaign) => {
 						const openRate = getOpenRate(campaign);
+						let openRateContent: React.ReactNode = (
+							<span className="text-muted-foreground text-sm">-</span>
+						);
+						if (campaign.status === 'sent') {
+							let openRateColor = 'text-red-600';
+							if (openRate >= 30) {
+								openRateColor = 'text-green-600';
+							} else if (openRate >= 15) {
+								openRateColor = 'text-yellow-600';
+							}
+							openRateContent = (
+								<span className={cn('font-medium', openRateColor)}>{openRate.toFixed(1)}%</span>
+							);
+						}
 						return (
 							<TableRow
 								aria-label={`Ver detalhes de ${campaign.name}`}
@@ -190,24 +204,7 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 										{statusLabels[campaign.status]}
 									</Badge>
 								</TableCell>
-								<TableCell>
-									{campaign.status === 'sent' ? (
-										<span
-											className={cn(
-												'font-medium',
-												openRate >= 30
-													? 'text-green-600'
-													: openRate >= 15
-														? 'text-yellow-600'
-														: 'text-red-600',
-											)}
-										>
-											{openRate.toFixed(1)}%
-										</span>
-									) : (
-										<span className="text-muted-foreground text-sm">-</span>
-									)}
-								</TableCell>
+								<TableCell>{openRateContent}</TableCell>
 								<TableCell className="text-muted-foreground text-sm">
 									{formatDistanceToNow(campaign._creationTime, { locale: ptBR, addSuffix: true })}
 								</TableCell>

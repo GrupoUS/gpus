@@ -7,6 +7,7 @@
 import { v } from 'convex/values';
 
 import type { Doc, Id } from './_generated/dataModel';
+import type { MutationCtx } from './_generated/server';
 import { mutation } from './_generated/server';
 import { logAudit } from './lgpd';
 import { getOrganizationId } from './lib/auth';
@@ -32,6 +33,63 @@ interface ImportCounters {
 	skippedCount: number;
 }
 
+interface ImportLookupMaps {
+	emailToStudent: Map<string, StudentDoc>;
+	cpfToStudent: Map<string, StudentDoc>;
+	phoneToStudent: Map<string, StudentDoc>;
+}
+
+interface ExistingStudentMatch {
+	existing?: StudentDoc;
+	existingByCP?: StudentDoc;
+	existingByPhone?: StudentDoc;
+}
+
+interface UpsertStudentResult {
+	studentId: Id<'students'>;
+	action: 'created' | 'updated';
+}
+
+interface StudentImportRow extends StudentImportContact {
+	name: string;
+	phone: string;
+	profession?: string;
+	hasClinic?: boolean;
+	status?: 'ativo' | 'inativo' | 'pausado' | 'formado';
+	cpf?: string;
+	clinicName?: string;
+	clinicCity?: string;
+	professionalId?: string;
+	birthDate?: number;
+	address?: string;
+	addressNumber?: string;
+	complement?: string;
+	neighborhood?: string;
+	city?: string;
+	state?: string;
+	zipCode?: string;
+	country?: string;
+	saleDate?: number;
+	salesperson?: string;
+	contractStatus?: string;
+	leadSource?: string;
+	cohort?: string;
+	totalValue?: number;
+	installments?: number;
+	installmentValue?: number;
+	paymentStatus?: string;
+	paidInstallments?: number;
+	startDate?: number;
+}
+
+interface StudentImportValidationRow extends StudentImportContact {
+	cpf?: string;
+}
+
+type StudentUpsertData = Omit<Doc<'students'>, '_id' | '_creationTime' | 'createdAt'> & {
+	createdAt?: number;
+};
+
 const normalizeEmailValue = (email?: string) => email?.trim().toLowerCase();
 const normalizePhoneValue = (phone: string) => phone.replace(NON_DIGIT_REGEX, '');
 const normalizePhoneValueOptional = (phone?: string) => {
@@ -41,6 +99,409 @@ const normalizePhoneValueOptional = (phone?: string) => {
 const normalizeCpfValue = (cpf?: string) => {
 	if (!cpf) return undefined;
 	return cpf.replace(NON_DIGIT_REGEX, '');
+};
+
+const buildLookupMaps = (students: StudentDoc[]): ImportLookupMaps => {
+	const emailToStudent = new Map<string, StudentDoc>();
+	const cpfToStudent = new Map<string, StudentDoc>();
+	const phoneToStudent = new Map<string, StudentDoc>();
+
+	for (const student of students) {
+		if (student.email) {
+			emailToStudent.set(student.email.toLowerCase(), student);
+		}
+		if (student.cpf) {
+			cpfToStudent.set(student.cpf.replace(NON_DIGIT_REGEX, ''), student);
+		}
+		phoneToStudent.set(normalizePhoneValue(student.phone), student);
+	}
+
+	return { emailToStudent, cpfToStudent, phoneToStudent };
+};
+
+const assertBulkImportRequiredFields = (student: StudentImportContact) => {
+	const rowErrors: string[] = [];
+	validateImportRequiredFields(student, rowErrors);
+	if (rowErrors.length > 0) {
+		throw new Error(rowErrors[0]);
+	}
+};
+
+const findExistingStudentMatch = (options: {
+	lookup: ImportLookupMaps;
+	normalizedCpf?: string;
+	normalizedPhone: string;
+	normalizedEmail?: string;
+}): ExistingStudentMatch => {
+	const { lookup, normalizedCpf, normalizedPhone, normalizedEmail } = options;
+	const existingByCP = normalizedCpf ? lookup.cpfToStudent.get(normalizedCpf) : undefined;
+	const existingByPhone = lookup.phoneToStudent.get(normalizedPhone);
+	const existingByEmail = normalizedEmail ? lookup.emailToStudent.get(normalizedEmail) : undefined;
+	const existing = existingByCP || existingByPhone || existingByEmail;
+
+	return {
+		existing,
+		existingByCP,
+		existingByPhone,
+	};
+};
+
+const normalizeBulkImportIdentifiers = (student: StudentImportRow) => ({
+	normalizedEmail: normalizeEmailValue(student.email),
+	normalizedPhone: normalizePhoneValue(student.phone),
+	normalizedCpf: normalizeCpfValue(student.cpf),
+});
+
+const shouldSkipDueToBatchDuplicates = (options: {
+	normalizedEmail?: string;
+	normalizedPhone: string;
+	normalizedCpf?: string;
+	processedEmails: Set<string>;
+	processedPhones: Set<string>;
+	processedCPFs: Set<string>;
+	results: ImportRowResult[];
+	rowNumber: number;
+	warnings: string[];
+	counters: ImportCounters;
+}) => {
+	const {
+		normalizedEmail,
+		normalizedPhone,
+		normalizedCpf,
+		processedEmails,
+		processedPhones,
+		processedCPFs,
+		results,
+		rowNumber,
+		warnings,
+		counters,
+	} = options;
+
+	if (
+		handleBatchEmailDuplicate(
+			normalizedEmail,
+			processedEmails,
+			results,
+			rowNumber,
+			warnings,
+			counters,
+		)
+	) {
+		return true;
+	}
+	if (
+		handleBatchPhoneDuplicate(
+			normalizedPhone,
+			processedPhones,
+			results,
+			rowNumber,
+			warnings,
+			counters,
+		)
+	) {
+		return true;
+	}
+	if (
+		handleBatchCpfDuplicate(normalizedCpf, processedCPFs, results, rowNumber, warnings, counters)
+	) {
+		return true;
+	}
+
+	return false;
+};
+
+const ensureSameOrganization = (options: {
+	existing?: StudentDoc;
+	organizationId: string;
+	results: ImportRowResult[];
+	rowNumber: number;
+	warnings: string[];
+	counters: ImportCounters;
+}) => {
+	const { existing, organizationId, results, rowNumber, warnings, counters } = options;
+	if (!existing) return true;
+	if (existing.organizationId === organizationId) return true;
+
+	pushFailureResult(
+		results,
+		rowNumber,
+		'Conflito de organização: aluno pertence a outra organização',
+		warnings,
+		counters,
+		'skipped',
+	);
+	return false;
+};
+
+const buildStudentData = async (options: {
+	organizationId: string;
+	student: StudentImportRow;
+	normalizedEmail?: string;
+	normalizedPhone: string;
+	normalizedCpf?: string;
+}): Promise<StudentUpsertData> => {
+	const { organizationId, student, normalizedEmail, normalizedPhone, normalizedCpf } = options;
+	let encryptedEmailValue: string | undefined;
+	if (normalizedEmail) {
+		encryptedEmailValue = await encrypt(normalizedEmail);
+	}
+	const encryptedPhoneValue = await encrypt(normalizedPhone);
+	let encryptedCPFValue: string | undefined;
+	if (student.cpf) {
+		encryptedCPFValue = await encryptCPF(student.cpf);
+	}
+
+	const studentData = {
+		organizationId,
+		name: student.name?.trim() ?? '',
+		email: normalizedEmail,
+		phone: normalizedPhone,
+		profession: student.profession ?? 'outro',
+		hasClinic: student.hasClinic ?? false,
+		status: student.status || ('ativo' as const),
+		churnRisk: 'baixo' as const,
+		encryptedEmail: encryptedEmailValue,
+		encryptedPhone: encryptedPhoneValue,
+		encryptedCPF: encryptedCPFValue,
+		cpf: normalizedCpf,
+		clinicName: student.clinicName,
+		clinicCity: student.clinicCity,
+		professionalId: student.professionalId,
+		birthDate: student.birthDate,
+		address: student.address,
+		addressNumber: student.addressNumber,
+		complement: student.complement,
+		neighborhood: student.neighborhood,
+		city: student.city,
+		state: student.state,
+		zipCode: student.zipCode,
+		country: student.country,
+		saleDate: student.saleDate,
+		salesperson: student.salesperson,
+		contractStatus: student.contractStatus,
+		leadSource: student.leadSource,
+		cohort: student.cohort,
+		updatedAt: Date.now(),
+	};
+
+	return studentData;
+};
+
+const updateExistingStudent = async (options: {
+	ctx: MutationCtx;
+	existing: StudentDoc;
+	studentData: StudentUpsertData;
+	fileName: string;
+	rowNumber: number;
+	identitySubject: string;
+	warnings: string[];
+}) => {
+	const { ctx, existing, studentData, fileName, rowNumber, identitySubject, warnings } = options;
+	await ctx.db.patch(existing._id, studentData);
+	await logAudit(ctx, {
+		studentId: existing._id,
+		actionType: 'data_modification',
+		dataCategory: 'personal_data',
+		description: `Student updated from CSV import: ${fileName}`,
+		legalBasis: 'contract_execution',
+		metadata: {
+			importSource: 'csv_upload',
+			fileName,
+			rowNumber,
+			importedBy: identitySubject,
+			action: 'update',
+		},
+	});
+	if (!warnings.includes('Aluno existente atualizado')) {
+		warnings.push('Aluno existente atualizado');
+	}
+};
+
+const insertNewStudent = async (options: {
+	ctx: MutationCtx;
+	studentData: StudentUpsertData;
+	fileName: string;
+	rowNumber: number;
+	identitySubject: string;
+	normalizedEmail?: string;
+	normalizedPhone: string;
+	lookup: ImportLookupMaps;
+}): Promise<Id<'students'>> => {
+	const {
+		ctx,
+		studentData,
+		fileName,
+		rowNumber,
+		identitySubject,
+		normalizedEmail,
+		normalizedPhone,
+		lookup,
+	} = options;
+	const newStudentData: Omit<Doc<'students'>, '_id' | '_creationTime'> = {
+		...studentData,
+		createdAt: Date.now(),
+	};
+	const newStudentId = await ctx.db.insert('students', newStudentData);
+
+	if (normalizedEmail) {
+		const newStudentRecord = {
+			...newStudentData,
+			// biome-ignore lint/style/useNamingConvention: Convex document field.
+			_id: newStudentId,
+			// biome-ignore lint/style/useNamingConvention: Convex document field.
+			_creationTime: Date.now(),
+		} as StudentDoc;
+		lookup.emailToStudent.set(normalizedEmail, newStudentRecord);
+	}
+	lookup.phoneToStudent.set(normalizedPhone, {
+		...newStudentData,
+		// biome-ignore lint/style/useNamingConvention: Convex document field.
+		_id: newStudentId,
+		// biome-ignore lint/style/useNamingConvention: Convex document field.
+		_creationTime: Date.now(),
+	} as StudentDoc);
+
+	await logAudit(ctx, {
+		studentId: newStudentId,
+		actionType: 'data_creation',
+		dataCategory: 'personal_data',
+		description: `Student imported from CSV: ${fileName}`,
+		legalBasis: 'contract_execution',
+		metadata: {
+			importSource: 'csv_upload',
+			fileName,
+			rowNumber,
+			importedBy: identitySubject,
+			action: 'create',
+		},
+	});
+
+	return newStudentId;
+};
+
+const upsertStudentRecord = async (options: {
+	ctx: MutationCtx;
+	match: ExistingStudentMatch;
+	upsertMode: boolean;
+	studentData: StudentUpsertData;
+	fileName: string;
+	rowNumber: number;
+	identitySubject: string;
+	normalizedEmail?: string;
+	normalizedPhone: string;
+	lookup: ImportLookupMaps;
+	results: ImportRowResult[];
+	warnings: string[];
+	counters: ImportCounters;
+}): Promise<UpsertStudentResult | null> => {
+	const {
+		ctx,
+		match,
+		upsertMode,
+		studentData,
+		fileName,
+		rowNumber,
+		identitySubject,
+		normalizedEmail,
+		normalizedPhone,
+		lookup,
+		results,
+		warnings,
+		counters,
+	} = options;
+	const { existing, existingByCP, existingByPhone } = match;
+
+	if (existing) {
+		if (!upsertMode) {
+			const identifier = getDuplicateIdentifier({
+				existingByCPF: existingByCP,
+				existingByPhone,
+			});
+			pushFailureResult(
+				results,
+				rowNumber,
+				`${identifier} já cadastrado (ignorado)`,
+				warnings,
+				counters,
+				'skipped',
+			);
+			return null;
+		}
+
+		await updateExistingStudent({
+			ctx,
+			existing,
+			studentData,
+			fileName,
+			rowNumber,
+			identitySubject,
+			warnings,
+		});
+		return { studentId: existing._id, action: 'updated' };
+	}
+
+	const studentId = await insertNewStudent({
+		ctx,
+		studentData,
+		fileName,
+		rowNumber,
+		identitySubject,
+		normalizedEmail,
+		normalizedPhone,
+		lookup,
+	});
+
+	return { studentId, action: 'created' };
+};
+
+const resolveInstallmentValue = (student: StudentImportRow) => {
+	if (student.installmentValue !== undefined) return student.installmentValue;
+	const totalValue = student.totalValue || 0;
+	const installments = student.installments || 1;
+	if (totalValue > 0) {
+		return totalValue / installments;
+	}
+	return 0;
+};
+
+const upsertEnrollment = async (options: {
+	ctx: MutationCtx;
+	studentId: Id<'students'>;
+	student: StudentImportRow;
+	product: Doc<'enrollments'>['product'];
+	warnings: string[];
+}) => {
+	const { ctx, studentId, student, product, warnings } = options;
+	const existingEnrollment = await ctx.db
+		.query('enrollments')
+		.withIndex('by_student', (q) => q.eq('studentId', studentId))
+		.filter((q) => q.eq(q.field('product'), product))
+		.first();
+
+	const enrollmentData = {
+		studentId,
+		product,
+		status: 'ativo' as const,
+		totalValue: student.totalValue || 0,
+		installments: student.installments || 1,
+		installmentValue: resolveInstallmentValue(student),
+		paymentStatus: normalizePaymentStatus(student.paymentStatus),
+		paidInstallments: student.paidInstallments || 0,
+		startDate: student.startDate,
+		cohort: student.cohort,
+		updatedAt: Date.now(),
+	};
+
+	if (existingEnrollment) {
+		await ctx.db.patch(existingEnrollment._id, enrollmentData);
+		warnings.push(`Matrícula existente para ${product} atualizada`);
+		return;
+	}
+
+	await ctx.db.insert('enrollments', {
+		...enrollmentData,
+		createdAt: Date.now(),
+	});
 };
 
 const buildWarningList = (warnings: string[]) => {
@@ -286,6 +747,80 @@ const validateImportCpfDuplicates = (options: {
 	seenCPFs.add(normalizedCpf);
 };
 
+const validateImportRow = (options: {
+	student: StudentImportValidationRow;
+	rowNumber: number;
+	upsertMode: boolean;
+	existingCPFs: Set<string>;
+	existingPhones: Set<string>;
+	existingEmails: Set<string>;
+	seenCPFs: Set<string>;
+	seenPhones: Set<string>;
+	seenEmails: Set<string>;
+	duplicateEmails: string[];
+	duplicateCPFs: string[];
+}) => {
+	const {
+		student,
+		upsertMode,
+		existingCPFs,
+		existingPhones,
+		existingEmails,
+		seenCPFs,
+		seenPhones,
+		seenEmails,
+		duplicateEmails,
+		duplicateCPFs,
+	} = options;
+	const rowErrors: string[] = [];
+	let willUpdateDelta = 0;
+	let willCreateDelta = 0;
+
+	validateImportRequiredFields(student, rowErrors);
+
+	const normalizedPhone = normalizePhoneValueOptional(student.phone);
+	const normalizedEmail = normalizeEmailValue(student.email);
+	const normalizedCpf = normalizeCpfValue(student.cpf);
+
+	validateImportPhoneDuplicates(normalizedPhone, seenPhones, rowErrors);
+	validateImportEmailDuplicates(normalizedEmail, seenEmails, duplicateEmails, rowErrors);
+
+	const studentExists = checkExistingStudentForImport({
+		normalizedCpf,
+		normalizedPhone,
+		normalizedEmail,
+		existingCPFs,
+		existingPhones,
+		existingEmails,
+	});
+
+	if (studentExists) {
+		if (upsertMode) {
+			willUpdateDelta = 1;
+		} else {
+			const identifier = getValidationIdentifier({
+				hasCPF: !!normalizedCpf && existingCPFs.has(normalizedCpf),
+				hasPhone: !!normalizedPhone && existingPhones.has(normalizedPhone),
+			});
+			rowErrors.push(`${identifier} já cadastrado`);
+		}
+	} else {
+		willCreateDelta = 1;
+	}
+
+	validateImportCpfDuplicates({
+		normalizedCpf,
+		cpfValue: student.cpf,
+		seenCPFs,
+		existingCPFs,
+		upsertMode,
+		duplicateCPFs,
+		rowErrors,
+	});
+
+	return { rowErrors, willUpdateDelta, willCreateDelta };
+};
+
 /**
  * Validate Brazilian CPF using the official algorithm
  * CPF must have 11 digits and pass the check digit verification
@@ -462,15 +997,7 @@ export const bulkImport = mutation({
 			.query('students')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
-		const emailToStudent = new Map(
-			existingStudents.filter((s) => s.email).map((s) => [s.email?.toLowerCase(), s]),
-		);
-		const cpfToStudent = new Map(
-			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(NON_DIGIT_REGEX, ''), s]),
-		);
-		const phoneToStudent = new Map(
-			existingStudents.map((s) => [s.phone.replace(NON_DIGIT_REGEX, ''), s]),
-		);
+		const lookup = buildLookupMaps(existingStudents);
 
 		// Track emails/CPFs/phones processed in this batch
 		const processedEmails = new Set<string>();
@@ -479,306 +1006,92 @@ export const bulkImport = mutation({
 
 		// Process each student
 		for (let i = 0; i < args.students.length; i++) {
-			const student = args.students[i];
+			const student: StudentImportRow = args.students[i];
 			const rowNumber = i + 2; // +2 because row 1 is header, and arrays are 0-indexed
 			const warnings: string[] = [];
 
 			try {
-				// Validate required fields
-				if (!student.name || student.name.trim().length < 2) {
-					throw new Error('Nome é obrigatório e deve ter pelo menos 2 caracteres');
-				}
-				// Email is now optional - validate format only if provided
-				if (student.email && !student.email.includes('@')) {
-					throw new Error('Email inválido (deve conter @)');
-				}
-				if (!student.phone || student.phone.replace(NON_DIGIT_REGEX, '').length < 10) {
-					throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-				}
-				// profession and hasClinic are optional - defaults applied below
+				assertBulkImportRequiredFields(student);
 
-				// Normalize email if provided
-				const normalizedEmail = normalizeEmailValue(student.email);
-				const normalizedPhone = normalizePhoneValue(student.phone);
-				let normalizedCPF: string | undefined;
-				if (student.cpf) {
-					normalizedCPF = student.cpf.replace(NON_DIGIT_REGEX, '');
-				}
+				const identifiers = normalizeBulkImportIdentifiers(student);
 
 				if (
-					handleBatchEmailDuplicate(
-						normalizedEmail,
+					shouldSkipDueToBatchDuplicates({
+						...identifiers,
 						processedEmails,
-						results,
-						rowNumber,
-						warnings,
-						counters,
-					)
-				) {
-					continue;
-				}
-				if (
-					handleBatchPhoneDuplicate(
-						normalizedPhone,
 						processedPhones,
-						results,
-						rowNumber,
-						warnings,
-						counters,
-					)
-				) {
-					continue;
-				}
-				if (
-					handleBatchCpfDuplicate(
-						normalizedCPF,
 						processedCPFs,
 						results,
 						rowNumber,
 						warnings,
 						counters,
-					)
+					})
 				) {
 					continue;
 				}
 
-				// Find existing student - priority: CPF > Phone > Email
-				let existingStudent: StudentDoc | undefined;
-				let existingByCP: StudentDoc | undefined;
-				let existingByPhone: StudentDoc | undefined;
+				const match = findExistingStudentMatch({
+					lookup,
+					normalizedCpf: identifiers.normalizedCpf,
+					normalizedPhone: identifiers.normalizedPhone,
+					normalizedEmail: identifiers.normalizedEmail,
+				});
 
-				// Check by CPF first (most reliable identifier)
-				if (student.cpf) {
-					const normalizedCPF = student.cpf.replace(NON_DIGIT_REGEX, '');
-					existingByCP = cpfToStudent.get(normalizedCPF);
-				}
-
-				// Check by phone (always available, required field)
-				existingByPhone = phoneToStudent.get(normalizedPhone);
-
-				// Check by email if provided
-				if (normalizedEmail) {
-					existingStudent = emailToStudent.get(normalizedEmail);
-				}
-
-				// Use the first found (priority: CPF > Phone > Email)
-				const existing = existingByCP || existingByPhone || existingStudent;
-
-				if (existing && existing.organizationId !== organizationId) {
-					// Ensure candidate belongs to current org
-					pushFailureResult(
+				if (
+					!ensureSameOrganization({
+						existing: match.existing,
+						organizationId,
 						results,
 						rowNumber,
-						'Conflito de organização: aluno pertence a outra organização',
 						warnings,
 						counters,
-						'skipped',
-					);
+					})
+				) {
 					continue;
 				}
 
-				// Prepare student data with awaited encrypted fields
-				let encryptedEmailValue: string | undefined;
-				if (normalizedEmail) {
-					encryptedEmailValue = await encrypt(normalizedEmail);
-				}
-				const encryptedPhoneValue = await encrypt(normalizedPhone);
-				let encryptedCPFValue: string | undefined;
-				if (student.cpf) {
-					encryptedCPFValue = await encryptCPF(student.cpf);
-				}
-
-				let normalizedCpfValue: string | undefined;
-				if (student.cpf) {
-					normalizedCpfValue = student.cpf.replace(NON_DIGIT_REGEX, '');
-				}
-
-				const studentData = {
+				const studentData = await buildStudentData({
 					organizationId,
-					name: student.name.trim(),
-					email: normalizedEmail,
-					phone: normalizedPhone,
-					profession: student.profession ?? 'outro',
-					hasClinic: student.hasClinic ?? false,
-					status: student.status || ('ativo' as const),
-					churnRisk: 'baixo' as const,
+					student,
+					normalizedEmail: identifiers.normalizedEmail,
+					normalizedPhone: identifiers.normalizedPhone,
+					normalizedCpf: identifiers.normalizedCpf,
+				});
 
-					// Encrypted fields (already resolved)
-					encryptedEmail: encryptedEmailValue,
-					encryptedPhone: encryptedPhoneValue,
-					encryptedCPF: encryptedCPFValue,
+				const upsertResult = await upsertStudentRecord({
+					ctx,
+					match,
+					upsertMode,
+					studentData,
+					fileName: args.fileName,
+					rowNumber,
+					identitySubject: identity.subject,
+					normalizedEmail: identifiers.normalizedEmail,
+					normalizedPhone: identifiers.normalizedPhone,
+					lookup,
+					results,
+					warnings,
+					counters,
+				});
 
-					// Optional fields
-					cpf: normalizedCpfValue,
-					clinicName: student.clinicName,
-					clinicCity: student.clinicCity,
-					professionalId: student.professionalId,
-
-					// Address fields
-					birthDate: student.birthDate,
-					address: student.address,
-					addressNumber: student.addressNumber,
-					complement: student.complement,
-					neighborhood: student.neighborhood,
-					city: student.city,
-					state: student.state,
-					zipCode: student.zipCode,
-					country: student.country,
-
-					// Sale/Origin fields
-					saleDate: student.saleDate,
-					salesperson: student.salesperson,
-					contractStatus: student.contractStatus,
-					leadSource: student.leadSource,
-					cohort: student.cohort,
-
-					updatedAt: Date.now(),
-				};
-
-				let studentId: Id<'students'>;
-				let action: 'created' | 'updated' | 'skipped';
-
-				if (existing) {
-					// Student exists
-
-					if (upsertMode) {
-						// UPDATE existing student
-						await ctx.db.patch(existing._id, studentData);
-						studentId = existing._id;
-						action = 'updated';
-						counters.updatedCount++;
-
-						// Log LGPD audit for modification
-						await logAudit(ctx, {
-							studentId: existing._id,
-							actionType: 'data_modification',
-							dataCategory: 'personal_data',
-							description: `Student updated from CSV import: ${args.fileName}`,
-							legalBasis: 'contract_execution',
-							metadata: {
-								importSource: 'csv_upload',
-								fileName: args.fileName,
-								rowNumber,
-								importedBy: identity.subject,
-								action: 'update',
-							},
-						});
-
-						warnings.push('Aluno existente atualizado');
-					} else {
-						// Skip duplicate
-						const identifier = getDuplicateIdentifier({
-							existingByCPF: existingByCP,
-							existingByPhone,
-						});
-						results.push({
-							rowNumber,
-							success: false,
-							action: 'skipped',
-							studentId: existing._id,
-							error: `${identifier} já cadastrado (ignorado)`,
-							warnings,
-						});
-						counters.failureCount++;
-						counters.skippedCount++;
-						continue;
-					}
-				} else {
-					// CREATE new student
-					const newStudentId = await ctx.db.insert('students', {
-						...studentData,
-						organizationId, // Include organizationId from authenticated user
-						createdAt: Date.now(),
-					});
-					studentId = newStudentId;
-					action = 'created';
-					counters.createdCount++;
-
-					// Update lookup maps for subsequent rows in same batch
-					if (normalizedEmail) {
-						const newStudentRecord = {
-							...studentData,
-							// biome-ignore lint/style/useNamingConvention: Convex document field.
-							_id: newStudentId,
-							// biome-ignore lint/style/useNamingConvention: Convex document field.
-							_creationTime: Date.now(),
-							createdAt: Date.now(),
-						} as StudentDoc;
-						emailToStudent.set(normalizedEmail, newStudentRecord);
-					}
-					phoneToStudent.set(normalizedPhone, {
-						...studentData,
-						// biome-ignore lint/style/useNamingConvention: Convex document field.
-						_id: newStudentId,
-						// biome-ignore lint/style/useNamingConvention: Convex document field.
-						_creationTime: Date.now(),
-						createdAt: Date.now(),
-					} as StudentDoc);
-
-					// Log LGPD audit for creation
-					await logAudit(ctx, {
-						studentId: newStudentId,
-						actionType: 'data_creation',
-						dataCategory: 'personal_data',
-						description: `Student imported from CSV: ${args.fileName}`,
-						legalBasis: 'contract_execution',
-						metadata: {
-							importSource: 'csv_upload',
-							fileName: args.fileName,
-							rowNumber,
-							importedBy: identity.subject,
-							action: 'create',
-						},
-					});
+				if (!upsertResult) {
+					continue;
 				}
+
+				const { studentId, action } = upsertResult;
 
 				// ==========================================
 				// Create or update enrollment for this student + product
 				// ==========================================
 
 				// Find existing enrollment for this student + product
-				const existingEnrollment = await ctx.db
-					.query('enrollments')
-					.withIndex('by_student', (q) => q.eq('studentId', studentId))
-					.filter((q) => q.eq(q.field('product'), args.product))
-					.first();
-
-				const normalizedPaymentStatus = normalizePaymentStatus(student.paymentStatus);
-				const totalValue = student.totalValue || 0;
-				const installments = student.installments || 1;
-				let installmentValue = student.installmentValue;
-				if (installmentValue === undefined) {
-					installmentValue = 0;
-					if (totalValue > 0) {
-						installmentValue = totalValue / installments;
-					}
-				}
-
-				const enrollmentData = {
+				await upsertEnrollment({
+					ctx,
 					studentId,
+					student,
 					product: args.product,
-					status: 'ativo' as const,
-					totalValue,
-					installments,
-					installmentValue,
-					paymentStatus: normalizedPaymentStatus,
-					paidInstallments: student.paidInstallments || 0,
-					startDate: student.startDate,
-					cohort: student.cohort,
-					updatedAt: Date.now(),
-				};
-
-				if (existingEnrollment) {
-					// Update existing enrollment
-					await ctx.db.patch(existingEnrollment._id, enrollmentData);
-					warnings.push(`Matrícula existente para ${args.product} atualizada`);
-				} else {
-					// Create new enrollment
-					await ctx.db.insert('enrollments', {
-						...enrollmentData,
-						createdAt: Date.now(),
-					});
-				}
+					warnings,
+				});
 
 				pushSuccessResult(results, rowNumber, studentId, action, warnings, counters);
 			} catch (error) {
@@ -843,9 +1156,7 @@ export const validateImport = mutation({
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
 		const existingEmails = new Set<string>(
-			existingStudents.flatMap((student) =>
-				student.email ? [student.email.toLowerCase()] : [],
-			),
+			existingStudents.flatMap((student) => (student.email ? [student.email.toLowerCase()] : [])),
 		);
 		const existingCPFs = new Set<string>(
 			existingStudents.flatMap((student) =>
@@ -870,51 +1181,22 @@ export const validateImport = mutation({
 		for (let i = 0; i < args.students.length; i++) {
 			const student = args.students[i];
 			const rowNumber = i + 2;
-			const rowErrors: string[] = [];
-
-			validateImportRequiredFields(student, rowErrors);
-
-			const normalizedPhone = normalizePhoneValueOptional(student.phone);
-			const normalizedEmail = normalizeEmailValue(student.email);
-			const normalizedCpf = normalizeCpfValue(student.cpf);
-
-			validateImportPhoneDuplicates(normalizedPhone, seenPhones, rowErrors);
-			validateImportEmailDuplicates(normalizedEmail, seenEmails, duplicateEmails, rowErrors);
-
-			const studentExists = checkExistingStudentForImport({
-				normalizedCpf,
-				normalizedPhone,
-				normalizedEmail,
+			const { rowErrors, willUpdateDelta, willCreateDelta } = validateImportRow({
+				student,
+				rowNumber,
+				upsertMode,
 				existingCPFs,
 				existingPhones,
 				existingEmails,
-			});
-
-			// Update counters
-			if (studentExists) {
-				if (upsertMode) {
-					willUpdate++;
-				} else {
-					const identifier = getValidationIdentifier({
-						hasCPF: !!normalizedCpf && existingCPFs.has(normalizedCpf),
-						hasPhone: !!normalizedPhone && existingPhones.has(normalizedPhone),
-					});
-					rowErrors.push(`${identifier} já cadastrado`);
-				}
-			} else {
-				willCreate++;
-			}
-			// profession and hasClinic are optional - defaults applied during import
-
-			validateImportCpfDuplicates({
-				normalizedCpf,
-				cpfValue: student.cpf,
 				seenCPFs,
-				existingCPFs,
-				upsertMode,
+				seenPhones,
+				seenEmails,
+				duplicateEmails,
 				duplicateCPFs,
-				rowErrors,
 			});
+
+			willUpdate += willUpdateDelta;
+			willCreate += willCreateDelta;
 
 			if (rowErrors.length > 0) {
 				errors.push({ rowNumber, errors: rowErrors });

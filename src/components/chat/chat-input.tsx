@@ -3,6 +3,7 @@
 import { api } from '@convex/_generated/api';
 import { useQuery } from 'convex/react';
 import { Loader2, Paperclip, Search, Send, Smile } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -46,10 +47,12 @@ export function ChatInput({
 		}
 	}, [pendingMessage, setPendingMessage]);
 
-	// Use the specific API endpoint as per plan.
-	// biome-ignore lint/suspicious/noTsIgnore: Convex API type instantiation depth issue
-	// @ts-ignore
-	const conversationTemplates = useQuery(api.messageTemplates.listTemplates, {});
+	const useQueryUnsafe = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => MessageTemplate[] | undefined;
+	const apiAny = api as unknown as { messageTemplates: { listTemplates: unknown } };
+	const conversationTemplates = useQueryUnsafe(apiAny.messageTemplates.listTemplates, {});
 
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();
@@ -84,6 +87,41 @@ export function ChatInput({
 			t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
 			t.content.toLowerCase().includes(templateSearch.toLowerCase()),
 	);
+
+	let templateListContent: ReactNode = null;
+	if (conversationTemplates === undefined) {
+		templateListContent = (
+			<div className="p-4 text-center text-muted-foreground text-xs">Carregando...</div>
+		);
+	} else if (filteredTemplates?.length === 0) {
+		templateListContent = (
+			<div className="p-4 text-center text-muted-foreground text-xs">Nenhum modelo encontrado</div>
+		);
+	} else {
+		templateListContent = (
+			<div className="p-1">
+				{filteredTemplates?.map((template: MessageTemplate) => (
+					<button
+						className="group w-full rounded-md p-2 text-left text-sm transition-colors hover:bg-muted"
+						key={template._id}
+						onClick={() => {
+							handleTemplateSelect(template.content);
+							setOpen(false);
+						}}
+						type="button"
+					>
+						<div className="mb-1 flex items-center justify-between">
+							<span className="font-medium text-xs">{template.name}</span>
+							<Badge className="px-1 py-0 text-[10px]" variant="outline">
+								{template.category}
+							</Badge>
+						</div>
+						<p className="line-clamp-2 text-muted-foreground text-xs">{template.content}</p>
+					</button>
+				))}
+			</div>
+		);
+	}
 
 	return (
 		<form
@@ -133,39 +171,7 @@ export function ChatInput({
 									/>
 								</div>
 							</div>
-							<ScrollArea className="h-64">
-								{conversationTemplates === undefined ? (
-									<div className="p-4 text-center text-muted-foreground text-xs">Carregando...</div>
-								) : filteredTemplates?.length === 0 ? (
-									<div className="p-4 text-center text-muted-foreground text-xs">
-										Nenhum modelo encontrado
-									</div>
-								) : (
-									<div className="p-1">
-										{filteredTemplates?.map((template: MessageTemplate) => (
-											<button
-												className="group w-full rounded-md p-2 text-left text-sm transition-colors hover:bg-muted"
-												key={template._id}
-												onClick={() => {
-													handleTemplateSelect(template.content);
-													setOpen(false);
-												}}
-												type="button"
-											>
-												<div className="mb-1 flex items-center justify-between">
-													<span className="font-medium text-xs">{template.name}</span>
-													<Badge className="px-1 py-0 text-[10px]" variant="outline">
-														{template.category}
-													</Badge>
-												</div>
-												<p className="line-clamp-2 text-muted-foreground text-xs">
-													{template.content}
-												</p>
-											</button>
-										))}
-									</div>
-								)}
-							</ScrollArea>
+							<ScrollArea className="h-64">{templateListContent}</ScrollArea>
 						</PopoverContent>
 					</Popover>
 				</div>

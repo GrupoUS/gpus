@@ -18,6 +18,15 @@ interface ConversationListProps {
 	search?: string;
 }
 
+type ConversationStatus =
+	| 'aguardando_atendente'
+	| 'em_atendimento'
+	| 'aguardando_cliente'
+	| 'resolvido'
+	| 'bot_ativo';
+
+type ConversationDepartment = 'vendas' | 'cs' | 'suporte';
+
 const statusColors: Record<string, string> = {
 	aguardando_atendente: 'bg-yellow-500',
 	em_atendimento: 'bg-green-500',
@@ -27,11 +36,16 @@ const statusColors: Record<string, string> = {
 };
 
 export function ConversationList({ department, statusFilter, search }: ConversationListProps) {
-	const conversations = useQuery(api.conversations.list, {
-		// biome-ignore lint/suspicious/noExplicitAny: Casting string to strict union
-		status: statusFilter as any,
-		// biome-ignore lint/suspicious/noExplicitAny: Casting string to strict union
-		department: (department === 'all' ? undefined : department) as any,
+	const useQueryUnsafe = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => Doc<'conversations'>[] | undefined;
+	const apiAny = api as unknown as { conversations: { list: unknown } };
+	const conversations = useQueryUnsafe(apiAny.conversations.list, {
+		status: statusFilter as ConversationStatus | undefined,
+		department: (department === 'all' ? undefined : department) as
+			| ConversationDepartment
+			| undefined,
 		search,
 	});
 
@@ -75,11 +89,11 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 					return (
 						<Link
 							activeProps={{ className: 'bg-muted' }}
-							// biome-ignore lint/suspicious/noExplicitAny: Route path dynamic
 							className="group block w-full rounded-lg p-3 text-left transition-colors hover:bg-muted/50"
 							key={item._id}
+							params={{ department: item.department, id: item._id }}
 							preload="intent"
-							to={`/chat/${item.department}/${item._id}` as any}
+							to="/chat/$department/$id"
 						>
 							<div className="flex items-start gap-3">
 								<div className="relative shrink-0">

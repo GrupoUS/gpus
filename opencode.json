@@ -8,9 +8,9 @@
 	},
 	"instructions": [
 		"AGENTS.md",
-		".cursor/rules/*.mdc",
-		".opencode/agent/*.md",
-		".opencode/command/*.md"
+		".claude/agents/*.md",
+		".claude/command/*.md",
+		".opencode/rules/*.md"
 	],
 	"mcp": {
 		"serena": {
@@ -22,7 +22,7 @@
 				"serena",
 				"start-mcp-server",
 				"--context",
-				"ide",
+				"ide-assistant",
 				"--project-from-cwd",
 				"--enable-web-dashboard",
 				"false"

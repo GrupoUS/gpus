@@ -2,27 +2,27 @@ import axios from 'axios';
 import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import type { ActionCtx } from './_generated/server';
 import { action, internalMutation, internalQuery } from './_generated/server';
 
 // Top-level regex for URL normalization (performance optimization)
 const TRAILING_SLASH_REGEX = /\/$/;
 
-type EvolutionConfig = {
+interface EvolutionConfig {
 	base_url: string;
 	api_key: string;
 	instance: string;
-};
+}
 
-type LeadInfo = {
+interface LeadInfo {
 	organizationId?: string;
 	phone?: string;
-};
+}
 
-type RateLimitStatus = {
+interface RateLimitStatus {
 	allowed: boolean;
-};
+}
 
 interface InternalSettingsApi {
 	internalGetIntegrationConfig: FunctionReference<'query', 'internal'>;
@@ -38,6 +38,7 @@ interface InternalWhatsappApi {
 	createMessageWithActivity: FunctionReference<'mutation', 'internal'>;
 	updateMessageStatus: FunctionReference<'mutation', 'internal'>;
 	updateQueueStatus: FunctionReference<'mutation', 'internal'>;
+	sendWhatsAppMessageFromQueue: FunctionReference<'action', 'internal'>;
 }
 
 interface InternalApi {
@@ -123,6 +124,72 @@ const buildEvolutionUrl = (config: EvolutionConfig) => {
 	return `${baseUrl}/message/sendText/${config.instance}`;
 };
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getAxiosErrorInfo = (error: unknown) => {
+	if (axios.isAxiosError(error)) {
+		return {
+			errorMessage: JSON.stringify(error.response?.data ?? error.message),
+			status: error.response?.status,
+		};
+	}
+	return { errorMessage: 'Unknown error', status: undefined };
+};
+
+const getErrorDetails = (status?: number) => {
+	if (status === 401) return 'Auth Error';
+	if (status === 429) return 'Rate Limited';
+	return 'Unknown Error';
+};
+
+const sendTextMessageOnce = async (
+	ctx: ActionCtx,
+	input: {
+		url: string;
+		apiKey: string;
+		phone: string;
+		message: string;
+		messageId: Id<'messages'>;
+	},
+): Promise<{ success: boolean; externalId?: string; error?: string; details?: string }> => {
+	try {
+		const response = await axios.post<{ key?: { id?: string }; id?: string }>(
+			input.url,
+			{ number: input.phone, text: input.message },
+			{
+				headers: {
+					apikey: input.apiKey,
+					'Content-Type': 'application/json',
+				},
+				timeout: 10_000,
+			},
+		);
+
+		const externalId = response.data?.key?.id || response.data?.id;
+		await updateMessageStatusInternal(ctx, {
+			messageId: input.messageId,
+			status: 'enviado',
+			externalId,
+		});
+
+		return { success: true, externalId };
+	} catch (error: unknown) {
+		const { errorMessage, status } = getAxiosErrorInfo(error);
+
+		await updateMessageStatusInternal(ctx, {
+			messageId: input.messageId,
+			status: 'falhou',
+			error: errorMessage,
+		});
+
+		return {
+			success: false,
+			error: errorMessage,
+			details: getErrorDetails(status),
+		};
+	}
+};
+
 const sendTextMessageWithRetry = async (
 	ctx: ActionCtx,
 	input: {
@@ -133,59 +200,16 @@ const sendTextMessageWithRetry = async (
 		messageId: Id<'messages'>;
 	},
 ): Promise<{ success: boolean; externalId?: string; error?: string; details?: string }> => {
-	let attempt = 0;
 	const maxAttempts = 3;
 	const baseDelay = 1000;
 
-	while (attempt < maxAttempts) {
-		try {
-			const response = await axios.post<{ key?: { id?: string }; id?: string }>(
-				input.url,
-				{ number: input.phone, text: input.message },
-				{
-					headers: {
-						apikey: input.apiKey,
-						'Content-Type': 'application/json',
-					},
-					timeout: 10_000,
-				},
-			);
-
-			await updateMessageStatusInternal(ctx, {
-				messageId: input.messageId,
-				status: 'enviado',
-				externalId: response.data?.key?.id || response.data?.id,
-			});
-
-			return { success: true, externalId: response.data?.key?.id || response.data?.id };
-		} catch (error: unknown) {
-			attempt++;
-
-			if (attempt >= maxAttempts) {
-				const errorMessage = axios.isAxiosError(error)
-					? JSON.stringify(error.response?.data ?? error.message)
-					: 'Unknown error';
-				const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-
-				await updateMessageStatusInternal(ctx, {
-					messageId: input.messageId,
-					status: 'falhou',
-					error: errorMessage,
-				});
-
-				let details = 'Unknown Error';
-				if (status === 401) {
-					details = 'Auth Error';
-				} else if (status === 429) {
-					details = 'Rate Limited';
-				}
-
-				return { success: false, error: errorMessage, details };
-			}
-
-			const delay = baseDelay * 2 ** (attempt - 1);
-			await new Promise((resolve) => setTimeout(resolve, delay));
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		const result = await sendTextMessageOnce(ctx, input);
+		if (result.success || attempt === maxAttempts - 1) {
+			return result;
 		}
+		const wait = baseDelay * 2 ** attempt;
+		await delay(wait);
 	}
 
 	return { success: false, error: 'Unknown error', details: 'Unknown Error' };
@@ -502,7 +526,7 @@ export const updateMessageStatus = internalMutation({
 		error: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		const updates: any = {
+		const updates: Partial<Doc<'messages'>> = {
 			status: args.status,
 		};
 		if (args.externalId) updates.externalId = args.externalId;
@@ -607,11 +631,14 @@ export const updateQueueStatus = internalMutation({
 		errorMessage: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
+		const queueItem = await ctx.db.get(args.queueId);
+		if (!queueItem) return;
+		const attempts = queueItem.attempts ?? 0;
 		await ctx.db.patch(args.queueId, {
 			status: args.status,
 			errorMessage: args.errorMessage,
 			lastAttemptAt: Date.now(),
-			attempts: (await ctx.db.get(args.queueId))!.attempts + 1,
+			attempts: attempts + 1,
 		});
 	},
 });
@@ -646,7 +673,7 @@ export const processQueuedMessages = internalMutation({
 
 			if (limitStatus.length < 100) {
 				// Schedule the send action
-				await ctx.scheduler.runAfter(0, (internal as any).whatsapp.sendWhatsAppMessageFromQueue, {
+				await ctx.scheduler.runAfter(0, internalApi.whatsapp.sendWhatsAppMessageFromQueue, {
 					queueId: msg._id,
 				});
 

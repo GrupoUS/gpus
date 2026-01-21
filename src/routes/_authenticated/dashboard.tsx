@@ -1,6 +1,7 @@
 'use client';
 
 import { api } from '@convex/_generated/api';
+import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { AlertTriangle, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Component, lazy, type ReactNode, Suspense, useState } from 'react';
 
 // Keep lightweight components as regular imports
 import { StatsCard } from '@/components/dashboard/stats-card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MotionWrapper } from '@/components/ui/motion-wrapper';
 import {
@@ -48,17 +50,164 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 	component: DashboardPage,
 });
 
+interface Vendor {
+	id: string;
+	name: string;
+}
+
+interface DailyMetric {
+	date: string;
+	newLeads: number;
+	conversions: number;
+	conversionValue: number;
+	messagesReceived: number;
+	messagesSent: number;
+}
+
+interface FunnelData {
+	novo: number;
+	primeiro_contato: number;
+	qualificado: number;
+	proposta: number;
+	negociacao: number;
+	fechado_ganho: number;
+}
+
+interface DashboardMetrics {
+	totalLeads: number;
+	leadsTrend?: number;
+	conversionRate: number;
+	conversionTrend?: number;
+	revenue: number;
+	revenueTrend?: number;
+	totalMessages?: number;
+	dailyMetrics?: DailyMetric[];
+	leadsByProduct?: Record<string, number>;
+	funnel?: FunnelData;
+	avgResponseTime?: number;
+	responseTimeTrend?: number;
+}
+
+interface TeamPerformanceItem {
+	id: string;
+	name: string;
+	role: string;
+	metric: number;
+	metricLabel: string;
+}
+
+interface TeamMember {
+	_id: string;
+	name: string;
+	role: string;
+	metric: number;
+	metricLabel: string;
+}
+
+interface ChurnAlert {
+	_id: Id<'students'>;
+	studentName: string;
+	reason: string;
+	risk: 'alto' | 'medio';
+}
+
+interface StatsCardsSectionProps {
+	metrics: DashboardMetrics | undefined;
+	formatCurrency: (value: number) => string;
+}
+
+function getDashboardTitle(isManager: boolean, selectedVendor?: Vendor) {
+	if (!isManager) return 'Meu Dashboard';
+	if (selectedVendor) return `Dashboard - ${selectedVendor.name.split(' ')[0]}`;
+	return 'Dashboard';
+}
+
+function StatsCardsSection({ metrics, formatCurrency }: StatsCardsSectionProps) {
+	if (!metrics) {
+		return (
+			<>
+				<Skeleton className="h-32 w-full" />
+				<Skeleton className="h-32 w-full" />
+				<Skeleton className="h-32 w-full" />
+				<Skeleton className="h-32 w-full" />
+			</>
+		);
+	}
+
+	return (
+		<>
+			<StatsCard
+				description="vs. período anterior"
+				icon={Users}
+				title="Leads este mês"
+				trend={{
+					value: metrics.leadsTrend || 0,
+					isPositive: (metrics.leadsTrend || 0) > 0,
+				}}
+				value={metrics.totalLeads || 0}
+			/>
+			<StatsCard
+				description="vs. período anterior"
+				icon={TrendingUp}
+				title="Taxa de Conversão"
+				trend={{
+					value: metrics.conversionTrend || 0,
+					isPositive: (metrics.conversionTrend || 0) > 0,
+				}}
+				value={`${metrics.conversionRate.toFixed(1)}%`}
+			/>
+			<StatsCard
+				description="vs. período anterior"
+				icon={DollarSign}
+				title="Faturamento"
+				trend={{
+					value: metrics.revenueTrend || 0,
+					isPositive: (metrics.revenueTrend || 0) > 0,
+				}}
+				value={formatCurrency(metrics.revenue)}
+			/>
+			<StatsCard
+				description="últimas 24h"
+				icon={MessageSquare}
+				title="Mensagens"
+				value={metrics.totalMessages?.toString() || '0'}
+			/>
+		</>
+	);
+}
+
 function DashboardPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
+	const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
-	const metrics = useQuery((api as any).metrics.getDashboard as any, { period });
-	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
-	const teamPerformance = useQuery((api as any).metrics.getTeamPerformance, { period });
-	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
-	const churnAlerts = useQuery((api as any).students.getChurnAlerts);
-	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
-	const recentLeads = useQuery((api as any).leads.recent, { limit: 5 });
+	const currentUser = useQuery(api.users.current);
+	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+	const apiAny = api as unknown as {
+		users: { listVendors: unknown };
+		metrics: { getDashboard: unknown; getTeamPerformance: unknown };
+		students: { getChurnAlerts: unknown };
+		leads: { recent: unknown };
+	};
+	const vendors = useQueryUnsafe(apiAny.users.listVendors) as Vendor[] | undefined;
+
+	const isManager = currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role);
+	const selectedVendor = vendors?.find((vendor) => vendor.id === selectedVendorId);
+
+	const metrics = useQueryUnsafe(apiAny.metrics.getDashboard, {
+		period,
+		userId: selectedVendorId || undefined,
+	}) as DashboardMetrics | undefined;
+	const teamPerformance = useQueryUnsafe(apiAny.metrics.getTeamPerformance, { period }) as
+		| TeamPerformanceItem[]
+		| undefined;
+	const churnAlerts = useQueryUnsafe(apiAny.students.getChurnAlerts) as ChurnAlert[] | undefined;
+	const recentLeads = useQueryUnsafe(apiAny.leads.recent, { limit: 5 }) as
+		| Doc<'leads'>[]
+		| undefined;
+	const teamPerformanceData: TeamMember[] | undefined = teamPerformance?.map((member) => ({
+		...member,
+		_id: member.id,
+	}));
 
 	// Format currency
 
@@ -70,82 +219,64 @@ function DashboardPage() {
 		}).format(value);
 	};
 
+	const dashboardTitle = getDashboardTitle(Boolean(isManager), selectedVendor);
+
 	return (
 		<DashboardErrorBoundary>
 			<div className="space-y-6">
 				<MotionWrapper>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<div>
-							<h1 className="font-bold font-display text-4xl tracking-tight md:text-5xl">
-								Dashboard
-							</h1>
+							<div className="flex items-center gap-2">
+								<h1 className="font-bold font-display text-4xl tracking-tight md:text-5xl">
+									{dashboardTitle}
+								</h1>
+								{selectedVendor && <Badge variant="secondary">{selectedVendor.name}</Badge>}
+								{!isManager && currentUser && (
+									<Badge variant="outline">Visualização Individual</Badge>
+								)}
+							</div>
 							<p className="font-sans text-base text-muted-foreground">
 								Visão geral do Grupo US em tempo real
 							</p>
 						</div>
-						<Select onValueChange={(value: typeof period) => setPeriod(value)} value={period}>
-							<SelectTrigger className="w-[180px]">
-								<SelectValue placeholder="Período" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="7d">Últimos 7 dias</SelectItem>
-								<SelectItem value="30d">Últimos 30 dias</SelectItem>
-								<SelectItem value="90d">Últimos 90 dias</SelectItem>
-								<SelectItem value="year">Este ano</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="flex gap-2">
+							{isManager && (
+								<Select
+									onValueChange={(value) => setSelectedVendorId(value === 'all' ? null : value)}
+									value={selectedVendorId || 'all'}
+								>
+									<SelectTrigger className="w-[200px]">
+										<SelectValue placeholder="Todos os Vendedores" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="all">Todos os Vendedores</SelectItem>
+										{vendors?.map((vendor) => (
+											<SelectItem key={vendor.id} value={vendor.id}>
+												{vendor.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							)}
+							<Select onValueChange={(value: typeof period) => setPeriod(value)} value={period}>
+								<SelectTrigger className="w-[180px]">
+									<SelectValue placeholder="Período" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="7d">Últimos 7 dias</SelectItem>
+									<SelectItem value="30d">Últimos 30 dias</SelectItem>
+									<SelectItem value="90d">Últimos 90 dias</SelectItem>
+									<SelectItem value="year">Este ano</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 					</div>
 				</MotionWrapper>
 
 				<MotionWrapper>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-						{metrics ? (
-							<>
-								<StatsCard
-									description="vs. período anterior"
-									icon={Users}
-									title="Leads este mês"
-									trend={{
-										value: metrics.leadsTrend || 0,
-										isPositive: (metrics.leadsTrend || 0) > 0,
-									}}
-									value={metrics.totalLeads || 0}
-								/>
-								<StatsCard
-									description="vs. período anterior"
-									icon={TrendingUp}
-									title="Taxa de Conversão"
-									trend={{
-										value: metrics.conversionTrend || 0,
-										isPositive: (metrics.conversionTrend || 0) > 0,
-									}}
-									value={metrics ? `${metrics.conversionRate}%` : '0%'}
-								/>
-								<StatsCard
-									description="vs. período anterior"
-									icon={DollarSign}
-									title="Faturamento"
-									trend={{
-										value: metrics.revenueTrend || 0,
-										isPositive: (metrics.revenueTrend || 0) > 0,
-									}}
-									value={metrics ? formatCurrency(metrics.revenue) : 'R$ 0'}
-								/>
-								<StatsCard
-									description="últimas 24h"
-									icon={MessageSquare}
-									title="Mensagens"
-									value={metrics?.totalMessages?.toString() || '0'}
-								/>
-							</>
-						) : (
-							<>
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-								<Skeleton className="h-32 w-full" />
-							</>
-						)}
+						<StatsCardsSection formatCurrency={formatCurrency} metrics={metrics} />
 					</div>
 				</MotionWrapper>
 
@@ -172,9 +303,7 @@ function DashboardPage() {
 
 				<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
 					<Suspense fallback={<Skeleton className="h-80 w-full rounded-lg" />}>
-						<TeamPerformance
-							data={teamPerformance?.map((m: any) => ({ ...m, _id: m.id as string }))}
-						/>
+						<TeamPerformance data={teamPerformanceData} />
 					</Suspense>
 					<Suspense fallback={<Skeleton className="h-80 w-full rounded-lg" />}>
 						<ChurnAlerts data={churnAlerts} />

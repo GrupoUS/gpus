@@ -1,13 +1,14 @@
 'use client';
 
 import { motion, useInView } from 'framer-motion';
-import * as React from 'react';
+import type { ReactNode } from 'react';
+import { Children, isValidElement, useRef } from 'react';
 
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 
 interface MotionWrapperProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 	stagger?: number;
 	delay?: number;
@@ -20,7 +21,7 @@ export function MotionWrapper({
 	delay = 0,
 	...props
 }: MotionWrapperProps) {
-	const ref = React.useRef<HTMLDivElement>(null);
+	const ref = useRef<HTMLDivElement>(null);
 	const isInView = useInView(ref, { once: true, margin: '-50px' });
 
 	return (
@@ -35,8 +36,8 @@ export function MotionWrapper({
 			variants={staggerContainer}
 			{...props}
 		>
-			{React.Children.map(children, (child, index) => {
-				if (React.isValidElement(child)) {
+			{Children.map(children, (child, index) => {
+				if (isValidElement(child)) {
 					return (
 						<motion.div
 							transition={{

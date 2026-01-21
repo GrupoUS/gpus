@@ -28,7 +28,22 @@ export const listObjections = query({
 			.withIndex('by_lead_recorded', (q) => q.eq('leadId', args.leadId))
 			.collect();
 
-		return objections;
+		// Join with users table to get recordedBy details
+		const objectionsWithDetails = await Promise.all(
+			objections.map(async (objection) => {
+				const user = await ctx.db
+					.query('users')
+					.withIndex('by_clerk_id', (q) => q.eq('clerkId', objection.recordedBy))
+					.first();
+
+				return {
+					...objection,
+					recordedByDetails: user ? { name: user.name } : undefined,
+				};
+			}),
+		);
+
+		return objectionsWithDetails;
 	},
 });
 

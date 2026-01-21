@@ -88,14 +88,14 @@ export const DesktopSidebar = ({
 	...props
 }: React.ComponentProps<typeof motion.div>) => {
 	const { open, setOpen, animate } = useSidebar();
+	let sidebarWidth = SIDEBAR_WIDTH_EXPANDED;
+	if (animate) {
+		sidebarWidth = open ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED;
+	}
 	return (
 		<motion.div
 			animate={{
-				width: animate
-					? open
-						? SIDEBAR_WIDTH_EXPANDED
-						: SIDEBAR_WIDTH_COLLAPSED
-					: SIDEBAR_WIDTH_EXPANDED,
+				width: sidebarWidth,
 			}}
 			className={cn(
 				'hidden h-full shrink-0 bg-sidebar-background px-4 py-4 md:flex md:flex-col',
@@ -174,6 +174,13 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 		damping: 12,
 	});
 
+	let labelDisplay: 'inline-block' | 'none' = 'inline-block';
+	let labelOpacity = 1;
+	if (animate) {
+		labelDisplay = open ? 'inline-block' : 'none';
+		labelOpacity = open ? 1 : 0;
+	}
+
 	return (
 		<Link
 			className={cn(
@@ -197,8 +204,8 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
 
 			<motion.span
 				animate={{
-					display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
-					opacity: animate ? (open ? 1 : 0) : 1,
+					display: labelDisplay,
+					opacity: labelOpacity,
 				}}
 				className="m-0! inline-block whitespace-pre p-0! text-sidebar-foreground text-sm transition duration-150 group-hover/sidebar:translate-x-1"
 			>

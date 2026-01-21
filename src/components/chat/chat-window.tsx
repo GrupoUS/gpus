@@ -1,9 +1,8 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useMutation, useQuery } from 'convex/react';
+import type { Doc } from '@convex/_generated/dataModel';
 import { ArrowLeft, MoreVertical, Phone, User, Video } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
 import { ChatInput } from './chat-input';
@@ -19,16 +18,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatWindowProps {
-	conversationId: Id<'conversations'>;
 	onBack?: () => void;
+	conversation: Doc<'conversations'> | null | undefined;
+	messages: Doc<'messages'>[] | undefined;
+	onSendMessage: (content: string) => Promise<void>;
 }
 
-export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
+export function ChatWindow({ conversation, messages, onBack, onSendMessage }: ChatWindowProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
-
-	const conversation = useQuery(api.conversations.getById, { id: conversationId });
-	const messages = useQuery(api.messages.getByConversation, { conversationId });
-	const sendMessage = useMutation(api.messages.send);
 
 	// Scroll to bottom on new messages
 	useEffect(() => {
@@ -47,15 +44,10 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	}, [messages]);
 
 	const handleSendMessage = async (content: string) => {
-		// Short-circuit if conversation is not loaded or doesn't exist
 		if (conversation === undefined || conversation === null) {
 			return;
 		}
-		await sendMessage({
-			conversationId,
-			content,
-			contentType: 'text',
-		});
+		await onSendMessage(content);
 	};
 
 	if (conversation === undefined) {
@@ -75,8 +67,36 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 	}
 
 	// Safety check for contactName if existing, else use channel
-	const contactName = conversation.contactName;
+	const contactName = (conversation as { contactName?: string }).contactName;
 	const displayName = contactName || conversation.channel;
+
+	let messagesContent: ReactNode = null;
+	if (messages === undefined) {
+		messagesContent = (
+			<div className="space-y-4">
+				{[1, 2, 3].map((i) => (
+					<div className="flex gap-3" key={i}>
+						<div className="h-12 w-48 animate-pulse rounded-lg bg-muted/20" />
+					</div>
+				))}
+			</div>
+		);
+	} else if (messages.length === 0) {
+		messagesContent = (
+			<div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+				<p>Nenhuma mensagem ainda</p>
+				<p className="text-sm">Envie uma mensagem para começar</p>
+			</div>
+		);
+	} else {
+		messagesContent = (
+			<div className="space-y-1 pb-4">
+				{messages.map((message: Doc<'messages'>) => (
+					<MessageBubble isOwn={message.sender === 'agent'} key={message._id} message={message} />
+				))}
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex h-full flex-col bg-background">
@@ -131,30 +151,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
 			{/* Messages */}
 			<ScrollArea className="flex-1 p-4" ref={scrollRef}>
-				{messages === undefined ? (
-					<div className="space-y-4">
-						{[1, 2, 3].map((i) => (
-							<div className="flex gap-3" key={i}>
-								<div className="h-12 w-48 animate-pulse rounded-lg bg-muted/20" />
-							</div>
-						))}
-					</div>
-				) : messages.length === 0 ? (
-					<div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-						<p>Nenhuma mensagem ainda</p>
-						<p className="text-sm">Envie uma mensagem para começar</p>
-					</div>
-				) : (
-					<div className="space-y-1 pb-4">
-						{messages.map((message: Doc<'messages'>) => (
-							<MessageBubble
-								isOwn={message.sender === 'agent'}
-								key={message._id}
-								message={message}
-							/>
-						))}
-					</div>
-				)}
+				{messagesContent}
 			</ScrollArea>
 
 			{/* Input */}
