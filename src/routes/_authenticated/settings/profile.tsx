@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { Loader2, User } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

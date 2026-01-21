@@ -8,7 +8,7 @@ if (!BREVO_API_KEY) {
 	process.exit(1);
 }
 
-console.log('🔑 API Key present (' + BREVO_API_KEY.slice(0, 10) + '...)');
+console.log(`🔑 API Key present (${BREVO_API_KEY.slice(0, 10)}...)`);
 
 async function validateBrevo() {
 	try {
@@ -61,4 +61,4 @@ async function validateBrevo() {
 	}
 }
 
-validateBrevo();
+void validateBrevo();

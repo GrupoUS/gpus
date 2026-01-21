@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import type { MutationCtx } from './_generated/server';
 import { mutation } from './_generated/server';
 import { getOrganizationId, requireOrgRole } from './lib/auth';
 
@@ -46,11 +47,11 @@ export const adoptOrphanedStudentsManual = mutation({
 /**
  * Internal helper function to do the actual adoption
  */
-async function adoptOrphansInternal(ctx: any, organizationId: string) {
+async function adoptOrphansInternal(ctx: MutationCtx, organizationId: string) {
 	// Find students with no organizationId
 	const orphans = await ctx.db
 		.query('students')
-		.filter((q: any) => q.eq(q.field('organizationId'), undefined))
+		.filter((q) => q.eq(q.field('organizationId'), undefined))
 		.take(1000);
 
 	let count = 0;
@@ -62,7 +63,7 @@ async function adoptOrphansInternal(ctx: any, organizationId: string) {
 	// Also adopt payments
 	const orphanedPayments = await ctx.db
 		.query('asaasPayments')
-		.filter((q: any) => q.eq(q.field('organizationId'), undefined))
+		.filter((q) => q.eq(q.field('organizationId'), undefined))
 		.take(1000);
 
 	let paymentsCount = 0;
@@ -74,7 +75,7 @@ async function adoptOrphansInternal(ctx: any, organizationId: string) {
 	// Also adopt subscriptions
 	const orphanedSubscriptions = await ctx.db
 		.query('asaasSubscriptions')
-		.filter((q: any) => q.eq(q.field('organizationId'), undefined))
+		.filter((q) => q.eq(q.field('organizationId'), undefined))
 		.take(1000);
 
 	let subscriptionsCount = 0;

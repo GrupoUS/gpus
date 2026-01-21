@@ -36,12 +36,29 @@ interface ErrorStats {
 	errorRate: number;
 }
 
+interface ApiUsageStats {
+	totalRequests: number;
+	errorRate: number;
+	avgResponseTime: number;
+	topEndpoints: EndpointStats[];
+	errorsByEndpoint: ErrorStats[];
+}
+
 export function AdminMetricsDashboard() {
+	const useQueryUnsafe = useQuery as unknown as <T>(query: unknown, args?: unknown) => T | null;
+	const apiAny = api as unknown as {
+		asaas: {
+			getApiUsageStats: unknown;
+			sync: { getRecentSyncLogs: unknown };
+		};
+	};
 	// Get API usage stats for last 24 hours
-	const apiStats = useQuery(api.asaas.getApiUsageStats, { hours: 24 });
+	const apiStats = useQueryUnsafe<ApiUsageStats>(apiAny.asaas.getApiUsageStats, { hours: 24 });
 
 	// Get sync statistics (would need to be implemented in queries)
-	const syncStats = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 100 });
+	const syncStats = useQueryUnsafe<SyncLog[]>(apiAny.asaas.sync.getRecentSyncLogs, {
+		limit: 100,
+	});
 
 	// Get active alerts (would need to be implemented in monitoring.ts)
 	// const activeAlerts = useQuery(api.asaas.monitoring.getActiveAlerts, {});
@@ -56,10 +73,31 @@ export function AdminMetricsDashboard() {
 	const successRate = syncStats.length > 0 ? (completedSyncs.length / syncStats.length) * 100 : 0;
 
 	// Status determination
-	const apiHealthStatus =
-		apiStats.errorRate < 5 ? 'healthy' : apiStats.errorRate < 20 ? 'degraded' : 'critical';
-	const syncHealthStatus =
-		successRate > 95 ? 'healthy' : successRate > 80 ? 'degraded' : 'critical';
+	const getHealthStatus = (value: number, thresholds: { healthy: number; degraded: number }) => {
+		if (value < thresholds.healthy) return 'healthy';
+		if (value < thresholds.degraded) return 'degraded';
+		return 'critical';
+	};
+
+	const apiHealthStatus = getHealthStatus(apiStats.errorRate, { healthy: 5, degraded: 20 });
+	const getSyncHealthStatus = (rate: number) => {
+		if (rate > 95) return 'healthy';
+		if (rate > 80) return 'degraded';
+		return 'critical';
+	};
+	const syncHealthStatus = getSyncHealthStatus(successRate);
+
+	const getResponseTimeStatus = (time: number) => {
+		if (time < 500) return 'healthy';
+		if (time < 1000) return 'degraded';
+		return 'critical';
+	};
+
+	const getErrorRateColor = (rate: number) => {
+		if (rate < 5) return 'text-green-600';
+		if (rate < 20) return 'text-yellow-600';
+		return 'text-red-600';
+	};
 
 	return (
 		<div className="space-y-6">
@@ -84,13 +122,7 @@ export function AdminMetricsDashboard() {
 				<StatusCard
 					metric={apiStats.topEndpoints?.[0]?.count || 0}
 					metricLabel="Top endpoint calls"
-					status={
-						apiStats.avgResponseTime < 500
-							? 'healthy'
-							: apiStats.avgResponseTime < 1000
-								? 'degraded'
-								: 'critical'
-					}
+					status={getResponseTimeStatus(apiStats.avgResponseTime)}
 					subtitle="Average API response"
 					title="Avg Response Time"
 					value={`${apiStats.avgResponseTime}ms`}
@@ -149,9 +181,7 @@ export function AdminMetricsDashboard() {
 								</div>
 								<div className="flex items-center gap-4">
 									<span className="text-muted-foreground">{endpoint.count} calls</span>
-									<span
-										className={`${endpoint.errorRate < 5 ? 'text-green-600' : endpoint.errorRate < 20 ? 'text-yellow-600' : 'text-red-600'}`}
-									>
+									<span className={getErrorRateColor(endpoint.errorRate)}>
 										{endpoint.errorRate}% errors
 									</span>
 								</div>

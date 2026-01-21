@@ -3,9 +3,10 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone, Tag } from 'lucide-react';
+import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone } from 'lucide-react';
 
-import { TagSelector } from './tag-selector';
+import { ObjectionsTab } from './objections-tab';
+import { TagSection } from './tag-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,8 +25,10 @@ interface LeadDetailProps {
 }
 
 export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
-	const lead = useQuery(api.leads.getLead, leadId ? { leadId } : 'skip');
-	const activities = useQuery(api.activities.listByLead, leadId ? { leadId } : 'skip');
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
+	const lead = useQuery((api as any).leads.getLead, leadId ? { leadId } : 'skip');
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
+	const activities = useQuery((api as any).activities.listByLead, leadId ? { leadId } : 'skip');
 
 	const isOpen = !!leadId;
 
@@ -133,6 +136,12 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 									>
 										Notas
 									</TabsTrigger>
+									<TabsTrigger
+										className="rounded-none px-0 pb-2 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+										value="objections"
+									>
+										Objeções
+									</TabsTrigger>
 								</TabsList>
 							</div>
 
@@ -155,6 +164,10 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 									<div className="flex h-40 items-center justify-center rounded-lg border-2 border-border/50 border-dashed bg-muted/10 text-muted-foreground">
 										Em breve: Notas e Comentários
 									</div>
+								</TabsContent>
+
+								<TabsContent className="mt-0" value="objections">
+									<ObjectionsTab leadId={lead._id} />
 								</TabsContent>
 							</ScrollArea>
 						</Tabs>
@@ -207,24 +220,6 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 
 			<section className="space-y-3">
 				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
-					<Tag className="h-4 w-4" /> Etiquetas
-				</h3>
-				<div className="rounded-lg border border-border/50 bg-card p-4">
-					<TagSelector leadId={lead._id} />
-				</div>
-			</section>
-
-			<section className="space-y-3">
-				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
-					<Tag className="h-4 w-4" /> Etiquetas
-				</h3>
-				<div className="rounded-lg border border-border/50 bg-card p-4">
-					<TagSelector leadId={lead._id} />
-				</div>
-			</section>
-
-			<section className="space-y-3">
-				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
 					<Activity className="h-4 w-4" /> Interesse
 				</h3>
 				<div className="space-y-3 rounded-lg border border-border/50 bg-card p-4">
@@ -236,34 +231,25 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					</div>
 					<div className="flex justify-between border-border/30 border-b pb-2">
 						<span className="text-muted-foreground">Temperatura</span>
-						<Badge
-							variant={
-								lead.temperature === 'quente'
-									? 'destructive'
-									: lead.temperature === 'morno'
-										? 'secondary'
-										: 'secondary'
-							}
-						>
-							{lead.temperature === 'quente'
-								? '🔥 Quente'
-								: lead.temperature === 'morno'
-									? '🌤️ Morno'
-									: '❄️ Frio'}
+						<Badge variant={lead.temperature === 'quente' ? 'destructive' : 'secondary'}>
+							{lead.temperature === 'quente' && '🔥 Quente'}
+							{lead.temperature === 'morno' && '🌤️ Morno'}
+							{lead.temperature !== 'quente' && lead.temperature !== 'morno' && '❄️ Frio'}
 						</Badge>
 					</div>
 					<div className="space-y-1">
 						<span className="text-muted-foreground text-xs">Dor Principal</span>
 						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
 					</div>
-					lead.mainDesire && (
-					<div className="space-y-1 border-border/30 border-t pt-2">
-						<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
-						<p className="text-sm">{lead.mainDesire}</p>
-					</div>
-					)
+					{lead.mainDesire && (
+						<div className="space-y-1 border-border/30 border-t pt-2">
+							<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
+							<p className="text-sm">{lead.mainDesire}</p>
+						</div>
+					)}
 				</div>
 			</section>
+			<TagSection leadId={lead._id} />
 		</>
 	);
 }

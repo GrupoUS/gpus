@@ -27,9 +27,7 @@ test.describe('Landing Page', () => {
 		await page.goto('/');
 
 		// Check for the Grupo US brand in navigation (scoped to nav to avoid footer match)
-		await expect(
-			page.locator('nav').getByRole('link', { name: BRAND_LINK_REGEX }),
-		).toBeVisible();
+		await expect(page.locator('nav').getByRole('link', { name: BRAND_LINK_REGEX })).toBeVisible();
 	});
 
 	test('has sign-in link', async ({ page, isMobile }) => {
@@ -58,9 +56,7 @@ test.describe('Landing Page', () => {
 		await page.goto('/');
 
 		// Check for features section heading
-		await expect(
-			page.getByRole('heading', { name: FEATURES_HEADING_REGEX }),
-		).toBeVisible();
+		await expect(page.getByRole('heading', { name: FEATURES_HEADING_REGEX })).toBeVisible();
 	});
 
 	test('displays footer with contact info', async ({ page }) => {

@@ -7,8 +7,19 @@ import { FileText, Loader2, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -191,24 +202,44 @@ function TemplatesSettingsPage() {
 												<TemplateForm initialData={template} templateId={template._id} />
 											</DialogContent>
 										</Dialog>
-										<DropdownMenuItem
-											className="text-destructive"
-											onClick={async () => {
-												if (confirm(`Excluir template "${template.name}"?`)) {
-													try {
-														await deleteTemplate({
-															templateId: template._id,
-														});
-														toast.success('Template excluído');
-													} catch {
-														toast.error('Erro ao excluir');
-													}
-												}
-											}}
-										>
-											<Trash2 className="mr-2 h-4 w-4" />
-											Excluir
-										</DropdownMenuItem>
+										<AlertDialog>
+											<AlertDialogTrigger asChild>
+												<DropdownMenuItem
+													className="text-destructive"
+													onSelect={(e) => e.preventDefault()}
+												>
+													<Trash2 className="mr-2 h-4 w-4" />
+													Excluir
+												</DropdownMenuItem>
+											</AlertDialogTrigger>
+											<AlertDialogContent>
+												<AlertDialogHeader>
+													<AlertDialogTitle>Excluir template?</AlertDialogTitle>
+													<AlertDialogDescription>
+														Tem certeza que deseja excluir o template "{template.name}"? Essa ação
+														não pode ser desfeita.
+													</AlertDialogDescription>
+												</AlertDialogHeader>
+												<AlertDialogFooter>
+													<AlertDialogCancel>Cancelar</AlertDialogCancel>
+													<AlertDialogAction
+														className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+														onClick={async () => {
+															try {
+																await deleteTemplate({
+																	templateId: template._id,
+																});
+																toast.success('Template excluído');
+															} catch {
+																toast.error('Erro ao excluir');
+															}
+														}}
+													>
+														Excluir
+													</AlertDialogAction>
+												</AlertDialogFooter>
+											</AlertDialogContent>
+										</AlertDialog>
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</TableCell>
@@ -256,6 +287,19 @@ function TemplateForm({
 		} catch (_error) {
 			toast.error('Erro ao salvar template');
 		}
+	};
+
+	const getSubmitContent = () => {
+		if (form.formState.isSubmitting) {
+			return (
+				<>
+					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					Salvando...
+				</>
+			);
+		}
+		if (templateId) return 'Atualizar';
+		return 'Criar Template';
 	};
 
 	return (
@@ -348,16 +392,7 @@ function TemplateForm({
 
 				<div className="flex justify-end pt-4">
 					<Button disabled={form.formState.isSubmitting} type="submit">
-						{form.formState.isSubmitting ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Salvando...
-							</>
-						) : templateId ? (
-							'Atualizar'
-						) : (
-							'Criar Template'
-						)}
+						{getSubmitContent()}
 					</Button>
 				</div>
 			</form>

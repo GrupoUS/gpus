@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as authLib from './lib/auth';
+import { getOrganizationId, requireOrgRole } from './lib/auth';
+
+const ORG_ID_NOT_FOUND_REGEX = /Organization ID not found/;
+type RequireOrgRoleReturn = Awaited<ReturnType<typeof requireOrgRole>>;
+type GetOrganizationIdReturn = Awaited<ReturnType<typeof getOrganizationId>>;
 
 // Define mocks
 vi.mock('./lib/auth', () => ({
@@ -34,7 +38,7 @@ describe('Admin Scripts Security', () => {
 			} as any;
 
 			// Mock requireOrgRole to throw
-			(authLib.requireOrgRole as any).mockRejectedValueOnce(new Error('Unauthorized'));
+			vi.mocked(requireOrgRole).mockRejectedValueOnce(new Error('Unauthorized'));
 
 			await expect(handler(mockCtx, {})).rejects.toThrow();
 		});
@@ -46,12 +50,14 @@ describe('Admin Scripts Security', () => {
 			} as any;
 
 			// Mock requireOrgRole success
-			(authLib.requireOrgRole as any).mockResolvedValueOnce(undefined);
+			const identity = { subject: 'user1' } as RequireOrgRoleReturn;
+			vi.mocked(requireOrgRole).mockResolvedValueOnce(identity);
 
 			// Mock getOrganizationId return undefined
-			(authLib.getOrganizationId as any).mockResolvedValueOnce(undefined);
+			const missingOrgId = '' as GetOrganizationIdReturn;
+			vi.mocked(getOrganizationId).mockResolvedValueOnce(missingOrgId);
 
-			await expect(handler(mockCtx, {})).rejects.toThrow(/Organization ID not found/);
+			await expect(handler(mockCtx, {})).rejects.toThrow(ORG_ID_NOT_FOUND_REGEX);
 		});
 	});
 
@@ -64,7 +70,8 @@ describe('Admin Scripts Security', () => {
 			} as any;
 
 			// Mock requireOrgRole success
-			(authLib.requireOrgRole as any).mockResolvedValueOnce(undefined);
+			const identity = { subject: 'user1' } as RequireOrgRoleReturn;
+			vi.mocked(requireOrgRole).mockResolvedValueOnce(identity);
 
 			const mockQuery = {
 				filter: vi.fn().mockReturnThis(),
@@ -74,13 +81,13 @@ describe('Admin Scripts Security', () => {
 
 			await handler(mockCtx, { organizationId: 'org_123' });
 
-			expect(authLib.requireOrgRole).toHaveBeenCalledWith(mockCtx, ['org:admin', 'admin']);
+			expect(requireOrgRole).toHaveBeenCalledWith(mockCtx, ['org:admin', 'admin']);
 		});
 
 		it('should throw if requireOrgRole throws', async () => {
 			const handler = (adoptOrphanedStudentsManual as any).handler;
 			const mockCtx = {} as any;
-			(authLib.requireOrgRole as any).mockRejectedValueOnce(new Error('Permissão negada'));
+			vi.mocked(requireOrgRole).mockRejectedValueOnce(new Error('Permissão negada'));
 
 			await expect(handler(mockCtx, { organizationId: 'org_123' })).rejects.toThrow(
 				'Permissão negada',

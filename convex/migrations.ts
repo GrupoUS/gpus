@@ -1,7 +1,163 @@
 import { v } from 'convex/values';
 
+import type { Doc } from './_generated/dataModel';
+import type { MutationCtx } from './_generated/server';
 import { internalMutation } from './_generated/server';
 import { decrypt, encrypt, encryptCPF, hashSensitiveData } from './lib/encryption';
+
+interface EncryptionFailure {
+	id: string;
+	name: string;
+	field: string;
+	error: string;
+}
+
+interface RemovalSkip {
+	id: string;
+	name: string;
+	reason: string;
+}
+
+const logReencryptFailure = (
+	failures: EncryptionFailure[],
+	student: Doc<'students'>,
+	field: string,
+	error: string,
+) => {
+	failures.push({
+		id: student._id,
+		name: student.name,
+		field,
+		error,
+	});
+};
+
+const processEncryptedField = async (options: {
+	student: Doc<'students'>;
+	field: string;
+	encryptedKey: 'encryptedCPF' | 'encryptedEmail' | 'encryptedPhone';
+	encryptedValue?: string;
+	plaintextValue?: string;
+	encryptFn: (value: string) => Promise<string>;
+	updates: Record<string, string>;
+	failures: EncryptionFailure[];
+}) => {
+	const {
+		student,
+		field,
+		encryptedKey,
+		encryptedValue,
+		plaintextValue,
+		encryptFn,
+		updates,
+		failures,
+	} = options;
+	if (!(encryptedValue || plaintextValue)) return;
+
+	try {
+		if (encryptedValue) {
+			await decrypt(encryptedValue);
+			return;
+		}
+		if (plaintextValue) {
+			updates[encryptedKey] = await encryptFn(plaintextValue);
+		}
+	} catch (_error) {
+		if (plaintextValue) {
+			updates[encryptedKey] = await encryptFn(plaintextValue);
+			return;
+		}
+		logReencryptFailure(
+			failures,
+			student,
+			field,
+			'Decryption failed and no plaintext fallback available',
+		);
+	}
+};
+
+const applyReencryptUpdates = async (
+	ctx: MutationCtx,
+	student: Doc<'students'>,
+	updates: Record<string, string>,
+	dryRun: boolean,
+) => {
+	if (Object.keys(updates).length === 0) return false;
+	if (dryRun) return true;
+
+	await ctx.db.patch(student._id, {
+		...updates,
+		updatedAt: Date.now(),
+	});
+
+	const { logAudit } = await import('./lgpd');
+	await logAudit(ctx, {
+		studentId: student._id,
+		actionType: 'data_modification',
+		dataCategory: 'encryption_rotation',
+		description: `Re-encrypted data with new key: ${Object.keys(updates).join(', ')}`,
+		legalBasis: 'seguranca_e_integridade',
+	});
+
+	return true;
+};
+
+const buildPlaintextRemovals = (student: Doc<'students'>) => {
+	const removals: Record<string, undefined> = {};
+	if (student.encryptedCPF && student.cpf) {
+		removals.cpf = undefined;
+	}
+	if (student.encryptedEmail && student.email) {
+		removals.email = undefined;
+	}
+	if (student.encryptedPhone && student.phone) {
+		removals.phone = undefined;
+	}
+	return removals;
+};
+
+const trackPlaintextWithoutEncrypted = (skipped: RemovalSkip[], student: Doc<'students'>) => {
+	const hasPlaintext = !!(student.cpf || student.email || student.phone);
+	const hasEncrypted = !!(student.encryptedCPF || student.encryptedEmail || student.encryptedPhone);
+
+	if (hasPlaintext && !hasEncrypted) {
+		skipped.push({
+			id: student._id,
+			name: student.name,
+			reason: 'Has plaintext but no encrypted version - data would be lost',
+		});
+	}
+};
+
+const applyPlaintextRemovals = async (
+	ctx: MutationCtx,
+	student: Doc<'students'>,
+	removals: Record<string, undefined>,
+	dryRun: boolean,
+) => {
+	if (Object.keys(removals).length === 0) return false;
+	if (dryRun) return true;
+
+	await ctx.db.patch(student._id, {
+		...removals,
+		updatedAt: Date.now(),
+	});
+
+	const { logAudit } = await import('./lgpd');
+	await logAudit(ctx, {
+		studentId: student._id,
+		actionType: 'data_modification',
+		dataCategory: 'pii_sanitization',
+		description: `Removed plaintext PII fields: ${Object.keys(removals).join(', ')}`,
+		legalBasis: 'seguranca_e_integridade',
+		metadata: {
+			fieldsRemoved: Object.keys(removals),
+			migration: 'removePlaintextPii',
+		},
+	});
+
+	return true;
+};
 
 /**
  * Migrate students to use the new organizationId field
@@ -197,12 +353,7 @@ export const reEncryptAllData = internalMutation({
 
 		let processed = 0;
 		let updated = 0;
-		const failures: Array<{
-			id: string;
-			name: string;
-			field: string;
-			error: string;
-		}> = [];
+		const failures: EncryptionFailure[] = [];
 
 		for (const student of students) {
 			if (processed >= limit) break;
@@ -210,100 +361,41 @@ export const reEncryptAllData = internalMutation({
 
 			const updates: Record<string, string> = {};
 
-			// Process CPF: try decrypt, if fails use plaintext and re-encrypt
-			if (student.encryptedCPF || student.cpf) {
-				try {
-					// Try decrypting existing encrypted field
-					if (student.encryptedCPF) {
-						await decrypt(student.encryptedCPF);
-						// Decryption successful - already encrypted with current key
-					} else if (student.cpf) {
-						// No encrypted field, use plaintext
-						updates.encryptedCPF = await encryptCPF(student.cpf);
-					}
-				} catch (_e) {
-					// Decryption failed - key was rotated, use plaintext as fallback
-					if (student.cpf) {
-						updates.encryptedCPF = await encryptCPF(student.cpf);
-					} else {
-						failures.push({
-							id: student._id,
-							name: student.name,
-							field: 'cpf',
-							error: 'Decryption failed and no plaintext fallback available',
-						});
-					}
-				}
-			}
+			await processEncryptedField({
+				student,
+				field: 'cpf',
+				encryptedKey: 'encryptedCPF',
+				encryptedValue: student.encryptedCPF,
+				plaintextValue: student.cpf,
+				encryptFn: encryptCPF,
+				updates,
+				failures,
+			});
 
-			// Process email: try decrypt, if fails use plaintext and re-encrypt
-			if (student.encryptedEmail || student.email) {
-				try {
-					if (student.encryptedEmail) {
-						await decrypt(student.encryptedEmail);
-						// Decryption successful
-					} else if (student.email) {
-						updates.encryptedEmail = await encrypt(student.email);
-					}
-				} catch (_e) {
-					// Decryption failed - key was rotated
-					if (student.email) {
-						updates.encryptedEmail = await encrypt(student.email);
-					} else {
-						failures.push({
-							id: student._id,
-							name: student.name,
-							field: 'email',
-							error: 'Decryption failed and no plaintext fallback available',
-						});
-					}
-				}
-			}
+			await processEncryptedField({
+				student,
+				field: 'email',
+				encryptedKey: 'encryptedEmail',
+				encryptedValue: student.encryptedEmail,
+				plaintextValue: student.email,
+				encryptFn: encrypt,
+				updates,
+				failures,
+			});
 
-			// Process phone: try decrypt, if fails use plaintext and re-encrypt
-			if (student.encryptedPhone || student.phone) {
-				try {
-					if (student.encryptedPhone) {
-						await decrypt(student.encryptedPhone);
-						// Decryption successful
-					} else if (student.phone) {
-						updates.encryptedPhone = await encrypt(student.phone);
-					}
-				} catch (_e) {
-					// Decryption failed - key was rotated
-					if (student.phone) {
-						updates.encryptedPhone = await encrypt(student.phone);
-					} else {
-						failures.push({
-							id: student._id,
-							name: student.name,
-							field: 'phone',
-							error: 'Decryption failed and no plaintext fallback available',
-						});
-					}
-				}
-			}
+			await processEncryptedField({
+				student,
+				field: 'phone',
+				encryptedKey: 'encryptedPhone',
+				encryptedValue: student.encryptedPhone,
+				plaintextValue: student.phone,
+				encryptFn: encrypt,
+				updates,
+				failures,
+			});
 
-			// Apply updates if not dry run
-			if (Object.keys(updates).length > 0) {
-				if (!dryRun) {
-					await ctx.db.patch(student._id, {
-						...updates,
-						updatedAt: Date.now(),
-					});
-
-					// Import logAudit dynamically to avoid circular dependency
-					const { logAudit } = await import('./lgpd');
-					await logAudit(ctx, {
-						studentId: student._id,
-						actionType: 'data_modification',
-						dataCategory: 'encryption_rotation',
-						description: `Re-encrypted data with new key: ${Object.keys(updates).join(', ')}`,
-						legalBasis: 'seguranca_e_integridade',
-					});
-				}
-				updated++;
-			}
+			const applied = await applyReencryptUpdates(ctx, student, updates, dryRun);
+			if (applied) updated++;
 		}
 
 		return {
@@ -352,68 +444,18 @@ export const removePlaintextPii = internalMutation({
 
 		let processed = 0;
 		let updated = 0;
-		const skipped: Array<{
-			id: string;
-			name: string;
-			reason: string;
-		}> = [];
+		const skipped: RemovalSkip[] = [];
 
 		for (const student of students) {
 			if (processed >= limit) break;
 			processed++;
 
-			const removals: Record<string, undefined> = {};
-
-			// Only remove plaintext if encrypted version exists
-			if (student.encryptedCPF && student.cpf) {
-				removals.cpf = undefined;
-			}
-			if (student.encryptedEmail && student.email) {
-				removals.email = undefined;
-			}
-			if (student.encryptedPhone && student.phone) {
-				removals.phone = undefined;
-			}
-
-			if (Object.keys(removals).length > 0) {
-				if (!dryRun) {
-					await ctx.db.patch(student._id, {
-						...removals,
-						updatedAt: Date.now(),
-					});
-
-					// Import logAudit dynamically to avoid circular dependency
-					const { logAudit } = await import('./lgpd');
-					await logAudit(ctx, {
-						studentId: student._id,
-						actionType: 'data_modification',
-						dataCategory: 'pii_sanitization',
-						description: `Removed plaintext PII fields: ${Object.keys(removals).join(', ')}`,
-						legalBasis: 'seguranca_e_integridade',
-						metadata: {
-							fieldsRemoved: Object.keys(removals),
-							migration: 'removePlaintextPii',
-						},
-					});
-				}
+			const removals = buildPlaintextRemovals(student);
+			const applied = await applyPlaintextRemovals(ctx, student, removals, dryRun);
+			if (applied) {
 				updated++;
 			} else {
-				// Track why we didn't update this student
-				const hasPlaintext = !!(student.cpf || student.email || student.phone);
-				const hasEncrypted = !!(
-					student.encryptedCPF ||
-					student.encryptedEmail ||
-					student.encryptedPhone
-				);
-
-				if (hasPlaintext && !hasEncrypted) {
-					skipped.push({
-						id: student._id,
-						name: student.name,
-						reason: 'Has plaintext but no encrypted version - data would be lost',
-					});
-				}
-				// If no plaintext exists, we don't need to skip (already clean)
+				trackPlaintextWithoutEncrypted(skipped, student);
 			}
 		}
 

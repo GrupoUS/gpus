@@ -1,7 +1,7 @@
+import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import type { FunctionReference } from 'convex/server';
-
+import type { ActionCtx } from '../_generated/server';
 import { action, internalMutation } from '../_generated/server';
 
 interface InternalMigrationsApi {
@@ -21,23 +21,25 @@ const getInternalApi = (): InternalApi => {
 
 const internalMigrations = getInternalApi().migrations;
 
-type ClerkUser = {
+interface ClerkUser {
 	id: string;
 	email_addresses?: Array<{ email_address?: string }>;
 	first_name?: string;
 	last_name?: string;
 	image_url?: string;
-};
+}
 
-type ClerkUserPage = ClerkUser[] | { data?: ClerkUser[] };
+interface ClerkUserPage {
+	data?: ClerkUser[];
+}
 
-type SyncStats = {
+interface SyncStats {
 	total: number;
 	created: number;
 	alreadyExists: number;
 	errors: number;
 	skipped: number;
-};
+}
 
 const buildClerkUsersUrl = (limit: number, offset: number): URL => {
 	const url = new URL('https://api.clerk.com/v1/users');
@@ -46,7 +48,7 @@ const buildClerkUsersUrl = (limit: number, offset: number): URL => {
 	return url;
 };
 
-const getUsersArray = (payload: ClerkUserPage): ClerkUser[] =>
+const getUsersArray = (payload: ClerkUser[] | ClerkUserPage): ClerkUser[] =>
 	Array.isArray(payload) ? payload : payload.data || [];
 
 const normalizeClerkUser = (user: ClerkUser) => {
@@ -96,7 +98,7 @@ const fetchClerkUsersPage = async (
 };
 
 const syncClerkUser = async (
-	ctx: Parameters<typeof action>[0],
+	ctx: ActionCtx,
 	user: ClerkUser,
 	dryRun: boolean,
 	stats: SyncStats,

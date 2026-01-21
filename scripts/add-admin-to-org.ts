@@ -97,4 +97,4 @@ async function main() {
 	console.log('   3. Verifique se o usuário tem acesso completo ao sistema\n');
 }
 
-main();
+void main();

@@ -33,6 +33,7 @@ function CRMPage() {
 		temperature: [] as string[],
 		products: [] as string[],
 		source: [] as string[],
+		tags: [] as string[],
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 
@@ -45,6 +46,7 @@ function CRMPage() {
 		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
 		products: filters.products.length > 0 ? filters.products : undefined,
 		source: filters.source.length > 0 ? filters.source : undefined,
+		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
 	}) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);

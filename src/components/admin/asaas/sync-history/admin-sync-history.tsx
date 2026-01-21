@@ -154,6 +154,15 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 										: null;
 									const isRunning = log.status === 'running';
 
+									let durationDisplay;
+									if (isRunning) {
+										durationDisplay = <span className="text-blue-600">Em andamento...</span>;
+									} else if (duration) {
+										durationDisplay = `${duration}s`;
+									} else {
+										durationDisplay = '-';
+									}
+
 									return (
 										<TableRow key={log._id}>
 											<TableCell className="capitalize">
@@ -166,15 +175,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 												</Badge>
 											</TableCell>
 											<TableCell>{new Date(log.startedAt).toLocaleString('pt-BR')}</TableCell>
-											<TableCell>
-												{isRunning ? (
-													<span className="text-blue-600">Em andamento...</span>
-												) : duration ? (
-													`${duration}s`
-												) : (
-													'-'
-												)}
-											</TableCell>
+											<TableCell>{durationDisplay}</TableCell>
 											<TableCell>{log.recordsProcessed}</TableCell>
 											<TableCell>
 												<span className="text-green-600">{log.recordsCreated}</span> /{' '}

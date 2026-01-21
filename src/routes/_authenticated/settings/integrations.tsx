@@ -1,7 +1,5 @@
-import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import {
 	AlertCircle,
 	Bot,
@@ -14,9 +12,10 @@ import {
 	Settings,
 } from 'lucide-react';
 import { useEffect } from 'react';
+import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import { z } from 'zod';
 
 import { AutoSyncSettings } from '@/components/asaas/auto-sync-settings';
 import { SyncControls } from '@/components/asaas/sync-controls';
@@ -75,19 +74,21 @@ type AsaasFormData = z.infer<typeof asaasSchema>;
 type IntegrationTestResult = { success: boolean; message: string; details?: unknown } | null;
 
 function IntegrationsSettingsPage() {
-	const currentUser = useQuery(api.users.current);
-	const isAdmin = currentUser?.role === 'admin';
+	const auth = (Route.useRouteContext() as { auth?: { orgRole?: string | null } }).auth;
+	const role = auth?.orgRole;
+	const isAdmin =
+		role === 'org:admin' || role === 'org:owner' || role === 'admin' || role === 'owner';
 
 	// Evolution API
 	const evolution = useIntegrationSettings('evolution');
-	const evolutionForm = useForm<EvolutionFormData>({
+	const evolutionForm = useForm({
 		resolver: zodResolver(evolutionSchema),
 		defaultValues: {
 			url: '',
 			apiKey: '',
 			instanceName: '',
 		},
-	});
+	}) as UseFormReturn<EvolutionFormData>;
 
 	useEffect(() => {
 		if (evolution.settings && !evolution.loading) {
@@ -101,14 +102,14 @@ function IntegrationsSettingsPage() {
 
 	// Dify AI
 	const dify = useIntegrationSettings('dify');
-	const difyForm = useForm<DifyFormData>({
+	const difyForm = useForm({
 		resolver: zodResolver(difySchema),
 		defaultValues: {
 			url: '',
 			apiKey: '',
 			appId: '',
 		},
-	});
+	}) as UseFormReturn<DifyFormData>;
 
 	useEffect(() => {
 		if (dify.settings && !dify.loading) {
@@ -122,7 +123,7 @@ function IntegrationsSettingsPage() {
 
 	// Asaas
 	const asaas = useIntegrationSettings('asaas');
-	const asaasForm = useForm<AsaasFormData>({
+	const asaasForm = useForm({
 		resolver: zodResolver(asaasSchema),
 		defaultValues: {
 			baseUrl: 'https://api.asaas.com/v3',
@@ -130,7 +131,7 @@ function IntegrationsSettingsPage() {
 			environment: 'production',
 			webhookSecret: '',
 		},
-	});
+	}) as UseFormReturn<AsaasFormData>;
 
 	useEffect(() => {
 		if (asaas.settings && !asaas.loading) {

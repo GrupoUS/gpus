@@ -18,6 +18,9 @@ const mockAnimateThemeChange = vi.fn(
 	},
 );
 
+const LIGHT_THEME_LABEL_REGEX = /alternar para tema claro/i;
+const DARK_THEME_LABEL_REGEX = /alternar para tema escuro/i;
+
 vi.mock('@/lib/theme-transitions', () => ({
 	useThemeTransition: () => ({
 		animateThemeChange: mockAnimateThemeChange,
@@ -46,14 +49,12 @@ describe('ThemeToggle', () => {
 
 		it('renders with accessible label in Portuguese when dark', () => {
 			renderThemeToggle('dark');
-			expect(screen.getByRole('button', { name: /alternar para tema claro/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: LIGHT_THEME_LABEL_REGEX })).toBeInTheDocument();
 		});
 
 		it('renders with accessible label in Portuguese when light', () => {
 			renderThemeToggle('light');
-			expect(
-				screen.getByRole('button', { name: /alternar para tema escuro/i }),
-			).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: DARK_THEME_LABEL_REGEX })).toBeInTheDocument();
 		});
 
 		it('renders sun and moon icons in the button', () => {

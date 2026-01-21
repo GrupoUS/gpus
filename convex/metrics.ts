@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import { internalMutation, query } from './_generated/server';
 import { getOrganizationId } from './lib/auth';
 
@@ -74,15 +74,19 @@ export const getDashboard = query({
 		if (!organizationId) return null;
 
 		const now = Date.now();
-		let startDate = 0;
-		let previousStartDate = 0;
-
-		if (args.period !== 'all') {
-			const periodDays = { '7d': 7, '30d': 30, '90d': 90, year: 365 };
+		const periodDays = { '7d': 7, '30d': 30, '90d': 90, year: 365 } as const;
+		const getPeriodRange = () => {
+			if (args.period === 'all') {
+				return { startDate: 0, previousStartDate: 0 };
+			}
 			const days = periodDays[args.period];
-			startDate = now - days * 24 * 60 * 60 * 1000;
-			previousStartDate = startDate - days * 24 * 60 * 60 * 1000;
-		}
+			const computedStartDate = now - days * 24 * 60 * 60 * 1000;
+			return {
+				startDate: computedStartDate,
+				previousStartDate: computedStartDate - days * 24 * 60 * 60 * 1000,
+			};
+		};
+		const { startDate, previousStartDate } = getPeriodRange();
 
 		// Role-based filtering logic
 		const currentUser = await ctx.db
@@ -90,20 +94,24 @@ export const getDashboard = query({
 			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
 			.unique();
 
-		let effectiveUserId: Id<'users'> | undefined;
-
-		if (currentUser) {
-			const role = currentUser.role;
+		const resolveEffectiveUserId = (
+			user: Doc<'users'> | null,
+			requestedUserId?: Id<'users'>,
+		): Id<'users'> | undefined => {
+			if (!user) return undefined;
+			const role = user.role;
 			if (role === 'member' || role === 'sdr') {
-				// Vendors can only see their own data
-				effectiveUserId = currentUser._id;
-			} else if (['manager', 'admin', 'owner'].includes(role)) {
-				// Managers/admins can see all or filter by specific user
-				effectiveUserId = args.userId;
+				return user._id;
 			}
-		}
+			if (['manager', 'admin', 'owner'].includes(role)) {
+				return requestedUserId;
+			}
+			return undefined;
+		};
 
-		const createQuery = () => {
+		const effectiveUserId = resolveEffectiveUserId(currentUser, args.userId);
+
+		const createLeadsQuery = () => {
 			if (effectiveUserId) {
 				const userId = effectiveUserId;
 				return ctx.db
@@ -117,40 +125,41 @@ export const getDashboard = query({
 				.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 		};
 
-		// 1. Leads Metrics (with Trends)
-		const currentLeads = await (async () => {
-			const q = createQuery();
-			if (args.period !== 'all') {
-				return (await q.collect()).filter((l) => l.createdAt >= startDate);
-			}
-			return await q.collect();
-		})();
-
-		const previousLeads = await (async () => {
-			if (args.period === 'all') return [];
-			const q = createQuery();
-			return (await q.collect()).filter(
-				(l) => l.createdAt >= previousStartDate && l.createdAt < startDate,
+		const filterByPeriod = <T extends { createdAt: number }>(
+			items: T[],
+			start: number,
+			end?: number,
+		): T[] =>
+			items.filter(
+				(item) => item.createdAt >= start && (end === undefined || item.createdAt < end),
 			);
-		})();
+
+		const collectLeads = async () => createLeadsQuery().collect();
+
+		const currentLeads =
+			args.period === 'all'
+				? await collectLeads()
+				: filterByPeriod(await collectLeads(), startDate);
+
+		const previousLeads =
+			args.period === 'all'
+				? []
+				: filterByPeriod(await collectLeads(), previousStartDate, startDate);
 
 		const totalLeads = currentLeads.length;
 		const previousTotalLeads = previousLeads.length;
 
 		// Explicitly 0 trend for 'all'
-		const leadsTrend =
-			args.period !== 'all' && previousTotalLeads > 0
-				? ((totalLeads - previousTotalLeads) / previousTotalLeads) * 100
-				: 0;
+		const calculateTrend = (current: number, previous: number) =>
+			args.period !== 'all' && previous > 0 ? ((current - previous) / previous) * 100 : 0;
+
+		const leadsTrend = calculateTrend(totalLeads, previousTotalLeads);
 
 		// leadsThisMonth (specific for reports)
 		const startOfMonth = new Date();
 		startOfMonth.setDate(1);
 		startOfMonth.setHours(0, 0, 0, 0);
-		const startOfMonthIds = await (async () => {
-			const q = createQuery();
-			return (await q.collect()).filter((l) => l.createdAt >= startOfMonth.getTime());
-		})();
+		const startOfMonthIds = filterByPeriod(await collectLeads(), startOfMonth.getTime());
 		const leadsThisMonth = startOfMonthIds.length;
 
 		// Conversion Rate (stage = 'fechado_ganho')
@@ -161,10 +170,7 @@ export const getDashboard = query({
 		const previousConversionRate =
 			previousTotalLeads > 0 ? (previousConversions / previousTotalLeads) * 100 : 0;
 
-		const conversionTrend =
-			args.period !== 'all' && previousConversionRate > 0
-				? ((conversionRate - previousConversionRate) / previousConversionRate) * 100
-				: 0;
+		const conversionTrend = calculateTrend(conversionRate, previousConversionRate);
 
 		// 2. Revenue & Financial Summary
 		const financialMetrics = await ctx.db
@@ -175,63 +181,46 @@ export const getDashboard = query({
 		const revenue = financialMetrics?.totalReceived || 0;
 
 		// Use currentEnrollments for trend calculation until financialMetrics supports history
-		const currentEnrollments = await (async () => {
-			if (args.period === 'all') {
-				return ctx.db.query('enrollments').collect();
-			}
-			return (await ctx.db.query('enrollments').collect()).filter((e) => e.createdAt >= startDate);
-		})();
-
-		const previousEnrollments = await (async () => {
-			if (args.period === 'all') return [];
-			return (await ctx.db.query('enrollments').collect()).filter(
-				(e) => e.createdAt >= previousStartDate && e.createdAt < startDate,
-			);
-		})();
+		const collectEnrollments = async () => ctx.db.query('enrollments').collect();
+		const currentEnrollments =
+			args.period === 'all'
+				? await collectEnrollments()
+				: filterByPeriod(await collectEnrollments(), startDate);
+		const previousEnrollments =
+			args.period === 'all'
+				? []
+				: filterByPeriod(await collectEnrollments(), previousStartDate, startDate);
 
 		const currentEnrollmentRevenue = currentEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
 		const previousRevenue = previousEnrollments.reduce((sum, e) => sum + e.totalValue, 0);
 
-		const revenueTrend =
-			args.period !== 'all' && previousRevenue > 0
-				? ((currentEnrollmentRevenue - previousRevenue) / previousRevenue) * 100
-				: 0;
+		const revenueTrend = calculateTrend(currentEnrollmentRevenue, previousRevenue);
 
 		// 3. Messages & Response Time
-		const currentMessages = await (async () => {
-			if (args.period === 'all') {
-				return ctx.db.query('messages').collect();
-			}
-			return (await ctx.db.query('messages').collect()).filter((m) => m.createdAt >= startDate);
-		})();
+		const collectMessages = async () => ctx.db.query('messages').collect();
+		const currentMessages =
+			args.period === 'all'
+				? await collectMessages()
+				: filterByPeriod(await collectMessages(), startDate);
 
 		const totalMessages = currentMessages.length;
 
 		// Avg Response Time (from Conversations)
-		const currentConversations = await (async () => {
-			if (args.period === 'all') {
-				return ctx.db
-					.query('conversations')
-					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-					.collect();
-			}
-			return (
-				await ctx.db
-					.query('conversations')
-					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-					.collect()
-			).filter((c) => c.createdAt >= startDate);
-		})();
+		const collectConversations = async () =>
+			ctx.db
+				.query('conversations')
+				.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
+				.collect();
 
-		const previousConversations = await (async () => {
-			if (args.period === 'all') return [];
-			return (
-				await ctx.db
-					.query('conversations')
-					.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
-					.collect()
-			).filter((c) => c.createdAt >= previousStartDate && c.createdAt < startDate);
-		})();
+		const currentConversations =
+			args.period === 'all'
+				? await collectConversations()
+				: filterByPeriod(await collectConversations(), startDate);
+
+		const previousConversations =
+			args.period === 'all'
+				? []
+				: filterByPeriod(await collectConversations(), previousStartDate, startDate);
 
 		const conversationsCount = currentConversations.length;
 
@@ -244,10 +233,7 @@ export const getDashboard = query({
 		const avgResponseTime = calculateAvgResponseTime(currentConversations);
 		const previousAvgResponseTime = calculateAvgResponseTime(previousConversations);
 
-		const responseTimeTrend =
-			args.period !== 'all' && previousAvgResponseTime > 0
-				? ((avgResponseTime - previousAvgResponseTime) / previousAvgResponseTime) * 100
-				: 0;
+		const responseTimeTrend = calculateTrend(avgResponseTime, previousAvgResponseTime);
 
 		// 4. Funnel
 		const funnel = {

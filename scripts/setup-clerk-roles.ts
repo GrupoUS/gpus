@@ -125,7 +125,7 @@ async function listExistingPermissions() {
 		const result = await clerkRequest('/organization_permissions');
 		console.log('📋 Permissões existentes:', result);
 		return result.data || [];
-	} catch (error) {
+	} catch (_error) {
 		console.log('⚠️ Nenhuma permissão existente ou erro ao listar');
 		return [];
 	}
@@ -136,7 +136,7 @@ async function listExistingRoles() {
 		const result = await clerkRequest('/organization_roles');
 		console.log('📋 Roles existentes:', result);
 		return result.data || [];
-	} catch (error) {
+	} catch (_error) {
 		console.log('⚠️ Nenhuma role existente ou erro ao listar');
 		return [];
 	}

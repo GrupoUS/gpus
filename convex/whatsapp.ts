@@ -1,12 +1,56 @@
 import axios from 'axios';
+import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
+import type { ActionCtx } from './_generated/server';
 import { action, internalMutation, internalQuery } from './_generated/server';
 
 // Top-level regex for URL normalization (performance optimization)
 const TRAILING_SLASH_REGEX = /\/$/;
+
+type EvolutionConfig = {
+	base_url: string;
+	api_key: string;
+	instance: string;
+};
+
+type LeadInfo = {
+	organizationId?: string;
+	phone?: string;
+};
+
+type RateLimitStatus = {
+	allowed: boolean;
+};
+
+interface InternalSettingsApi {
+	internalGetIntegrationConfig: FunctionReference<'query', 'internal'>;
+}
+
+interface InternalWhatsappApi {
+	getEvolutionConfig: FunctionReference<'query', 'internal'>;
+	getLeadOrganization: FunctionReference<'query', 'internal'>;
+	getRateLimitStatus: FunctionReference<'query', 'internal'>;
+	getQueueItem: FunctionReference<'query', 'internal'>;
+	queueWhatsAppMessage: FunctionReference<'mutation', 'internal'>;
+	rescheduleQueueItem: FunctionReference<'mutation', 'internal'>;
+	createMessageWithActivity: FunctionReference<'mutation', 'internal'>;
+	updateMessageStatus: FunctionReference<'mutation', 'internal'>;
+	updateQueueStatus: FunctionReference<'mutation', 'internal'>;
+}
+
+interface InternalApi {
+	settings: InternalSettingsApi;
+	whatsapp: InternalWhatsappApi;
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('./_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
+
+const internalApi = getInternalApi();
 
 // ============================================================================
 // INTERNAL HELPERS
@@ -15,10 +59,9 @@ const TRAILING_SLASH_REGEX = /\/$/;
 export const getEvolutionConfig = internalQuery({
 	args: {},
 	handler: async (ctx) => {
-		// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-		const config: any = await ctx.runQuery(internal.settings.internalGetIntegrationConfig, {
+		const config = (await ctx.runQuery(internalApi.settings.internalGetIntegrationConfig, {
 			integrationName: 'evolution',
-		});
+		})) as EvolutionConfig | null;
 
 		if (!(config?.base_url && config?.api_key && config?.instance)) {
 			return null;
@@ -26,6 +69,127 @@ export const getEvolutionConfig = internalQuery({
 		return config;
 	},
 });
+
+const fetchLeadInfo = async (
+	ctx: ActionCtx,
+	leadId: Id<'leads'>,
+): Promise<{ organizationId: string; phone?: string }> => {
+	const lead = (await ctx.runQuery(internalApi.whatsapp.getLeadOrganization, {
+		leadId,
+	})) as LeadInfo | null;
+
+	if (!lead?.organizationId) {
+		throw new Error('Lead not found or missing organizationId.');
+	}
+
+	return { organizationId: lead.organizationId, phone: lead.phone };
+};
+
+const fetchRateLimitStatus = async (ctx: ActionCtx, organizationId: string) =>
+	(await ctx.runQuery(internalApi.whatsapp.getRateLimitStatus, {
+		organizationId,
+	})) as RateLimitStatus;
+
+const enqueueWhatsAppMessage = async (
+	ctx: ActionCtx,
+	input: { organizationId: string; leadId: Id<'leads'>; message: string },
+) => ctx.runMutation(internalApi.whatsapp.queueWhatsAppMessage, input);
+
+const createMessageRecordInternal = async (
+	ctx: ActionCtx,
+	input: { leadId: Id<'leads'>; content: string; status: string; organizationId: string },
+) => ctx.runMutation(internalApi.whatsapp.createMessageWithActivity, input);
+
+const updateMessageStatusInternal = async (
+	ctx: ActionCtx,
+	input: { messageId: Id<'messages'>; status: string; externalId?: string; error?: string },
+) => ctx.runMutation(internalApi.whatsapp.updateMessageStatus, input);
+
+const fetchQueueItem = async (ctx: ActionCtx, queueId: Id<'evolutionApiQueue'>) =>
+	ctx.runQuery(internalApi.whatsapp.getQueueItem, { queueId });
+
+const rescheduleQueueItemInternal = async (
+	ctx: ActionCtx,
+	input: { queueId: Id<'evolutionApiQueue'>; baseDelayMinutes: number },
+) => ctx.runMutation(internalApi.whatsapp.rescheduleQueueItem, input);
+
+const updateQueueStatusInternal = async (
+	ctx: ActionCtx,
+	input: { queueId: Id<'evolutionApiQueue'>; status: string; errorMessage?: string },
+) => ctx.runMutation(internalApi.whatsapp.updateQueueStatus, input);
+
+const buildEvolutionUrl = (config: EvolutionConfig) => {
+	const baseUrl = config.base_url.replace(TRAILING_SLASH_REGEX, '');
+	return `${baseUrl}/message/sendText/${config.instance}`;
+};
+
+const sendTextMessageWithRetry = async (
+	ctx: ActionCtx,
+	input: {
+		url: string;
+		apiKey: string;
+		phone: string;
+		message: string;
+		messageId: Id<'messages'>;
+	},
+): Promise<{ success: boolean; externalId?: string; error?: string; details?: string }> => {
+	let attempt = 0;
+	const maxAttempts = 3;
+	const baseDelay = 1000;
+
+	while (attempt < maxAttempts) {
+		try {
+			const response = await axios.post<{ key?: { id?: string }; id?: string }>(
+				input.url,
+				{ number: input.phone, text: input.message },
+				{
+					headers: {
+						apikey: input.apiKey,
+						'Content-Type': 'application/json',
+					},
+					timeout: 10_000,
+				},
+			);
+
+			await updateMessageStatusInternal(ctx, {
+				messageId: input.messageId,
+				status: 'enviado',
+				externalId: response.data?.key?.id || response.data?.id,
+			});
+
+			return { success: true, externalId: response.data?.key?.id || response.data?.id };
+		} catch (error: unknown) {
+			attempt++;
+
+			if (attempt >= maxAttempts) {
+				const errorMessage = axios.isAxiosError(error)
+					? JSON.stringify(error.response?.data ?? error.message)
+					: 'Unknown error';
+				const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+				await updateMessageStatusInternal(ctx, {
+					messageId: input.messageId,
+					status: 'falhou',
+					error: errorMessage,
+				});
+
+				let details = 'Unknown Error';
+				if (status === 401) {
+					details = 'Auth Error';
+				} else if (status === 429) {
+					details = 'Rate Limited';
+				}
+
+				return { success: false, error: errorMessage, details };
+			}
+
+			const delay = baseDelay * 2 ** (attempt - 1);
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+	}
+
+	return { success: false, error: 'Unknown error', details: 'Unknown Error' };
+};
 
 // ============================================================================
 // PUBLIC ACTIONS
@@ -38,17 +202,13 @@ export const sendWhatsAppMessage = action({
 	},
 	handler: async (ctx, args) => {
 		// 1. Fetch Request Context & Configuration
-		// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-		const lead: any = await ctx.runQuery((internal as any).whatsapp.getLeadOrganization, {
-			leadId: args.leadId,
-		});
-		if (!lead?.organizationId) {
-			throw new Error('Lead not found or missing organizationId.');
-		}
-		const organizationId: string = lead.organizationId;
+		const lead = await fetchLeadInfo(ctx, args.leadId);
+		const organizationId = lead.organizationId;
 
-		// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-		const config: any = await ctx.runQuery(internal.whatsapp.getEvolutionConfig, {});
+		const config = (await ctx.runQuery(
+			internalApi.whatsapp.getEvolutionConfig,
+			{},
+		)) as EvolutionConfig | null;
 
 		if (!config) {
 			throw new Error('Evolution API not configured.');
@@ -57,13 +217,11 @@ export const sendWhatsAppMessage = action({
 		const { base_url, api_key, instance } = config;
 
 		// 2. Check Rate Limits
-		const rateLimitStatus = await ctx.runQuery((internal as any).whatsapp.getRateLimitStatus, {
-			organizationId,
-		});
+		const rateLimitStatus = await fetchRateLimitStatus(ctx, organizationId);
 
 		if (!rateLimitStatus.allowed) {
 			// Queue message if limit exceeded
-			const queueId: any = await ctx.runMutation((internal as any).whatsapp.queueWhatsAppMessage, {
+			const queueId = await enqueueWhatsAppMessage(ctx, {
 				organizationId,
 				leadId: args.leadId,
 				message: args.message,
@@ -88,77 +246,30 @@ export const sendWhatsAppMessage = action({
 
 		// 4. Create Message Record (Status: enviando)
 		// Persist message BEFORE API call to ensure visibility (Comment 1)
-		const messageId = await ctx.runMutation((internal as any).whatsapp.createMessageWithActivity, {
+		const messageId = (await createMessageRecordInternal(ctx, {
 			leadId: args.leadId,
 			content: args.message,
 			status: 'enviando',
 			organizationId,
+		})) as Id<'messages'>;
+
+		const sendResult = await sendTextMessageWithRetry(ctx, {
+			url,
+			apiKey: api_key,
+			phone,
+			message: args.message,
+			messageId,
 		});
 
-		// 5. Execute with Retry Logic
-		let attempt = 0;
-		const maxAttempts = 3;
-		const baseDelay = 1000; // 1 second
-
-		while (attempt < maxAttempts) {
-			try {
-				const response: any = await axios.post(
-					url,
-					{ number: phone, text: args.message },
-					{
-						headers: {
-							apikey: api_key,
-							'Content-Type': 'application/json',
-						},
-						timeout: 10_000,
-					},
-				);
-
-				// 6. Handle Success
-				// Update message status to 'enviado' (Comment 1)
-				await ctx.runMutation((internal as any).whatsapp.updateMessageStatus, {
-					messageId,
-					status: 'enviado',
-					externalId: response.data?.key?.id || response.data?.id,
-				});
-
-				return { success: true, externalId: response.data?.key?.id };
-			} catch (error: any) {
-				attempt++;
-
-				// Log failure on final attempt
-				if (attempt >= maxAttempts) {
-					const errorMessage = error.response?.data
-						? JSON.stringify(error.response.data)
-						: error.message;
-
-					// Update message status to 'falhou' (Comment 1)
-					await ctx.runMutation((internal as any).whatsapp.updateMessageStatus, {
-						messageId,
-						status: 'falhou',
-						error: errorMessage,
-					});
-
-					// Error details based on HTTP status
-					let details = 'Unknown Error';
-					if (error.response?.status === 401) {
-						details = 'Auth Error';
-					} else if (error.response?.status === 429) {
-						details = 'Rate Limited';
-					}
-
-					return {
-						success: false,
-						error: errorMessage,
-						details,
-					};
-				}
-
-				// Exponential backoff
-				const delay = baseDelay * 2 ** (attempt - 1);
-				await new Promise((resolve) => setTimeout(resolve, delay));
-			}
+		if (sendResult.success) {
+			return { success: true, externalId: sendResult.externalId };
 		}
+
+		return {
+			success: false,
+			error: sendResult.error,
+			details: sendResult.details,
+		};
 	},
 });
 
@@ -167,34 +278,27 @@ export const sendWhatsAppMessageFromQueue = action({
 		queueId: v.id('evolutionApiQueue'),
 	},
 	handler: async (ctx, args) => {
-		// 1. Fetch Request Context from Queue
-		const queueItem = await ctx.runQuery((internal as any).whatsapp.getQueueItem, {
-			queueId: args.queueId,
-		});
+		const queueItem = await fetchQueueItem(ctx, args.queueId);
 		if (!queueItem) return; // Already processed or deleted
 
 		const { leadId, message, organizationId } = queueItem;
 
-		// 2. Re-check Rate Limits (Comment 2)
-		// Essential to prevent over-sending if multiple workers run or limits updated independently
-		const rateLimitStatus = await ctx.runQuery((internal as any).whatsapp.getRateLimitStatus, {
-			organizationId,
-		});
-
+		const rateLimitStatus = await fetchRateLimitStatus(ctx, organizationId);
 		if (!rateLimitStatus.allowed) {
-			// Reschedule if limit exceeded
-			await ctx.runMutation((internal as any).whatsapp.rescheduleQueueItem, {
+			await rescheduleQueueItemInternal(ctx, {
 				queueId: args.queueId,
-				baseDelayMinutes: 60, // Try again in an hour
+				baseDelayMinutes: 60,
 			});
 			return;
 		}
 
-		// 3. Fetch Config
-		const config: any = await ctx.runQuery(internal.whatsapp.getEvolutionConfig, {});
+		const config = (await ctx.runQuery(
+			internalApi.whatsapp.getEvolutionConfig,
+			{},
+		)) as EvolutionConfig | null;
 
 		if (!config) {
-			await ctx.runMutation((internal as any).whatsapp.updateQueueStatus, {
+			await updateQueueStatusInternal(ctx, {
 				queueId: args.queueId,
 				status: 'failed',
 				errorMessage: 'Configuration missing',
@@ -202,9 +306,11 @@ export const sendWhatsAppMessageFromQueue = action({
 			return;
 		}
 
-		const lead = await ctx.runQuery((internal as any).whatsapp.getLeadOrganization, { leadId });
-		if (!lead) {
-			await ctx.runMutation((internal as any).whatsapp.updateQueueStatus, {
+		let leadInfo: { organizationId: string; phone?: string } | null = null;
+		try {
+			leadInfo = await fetchLeadInfo(ctx, leadId);
+		} catch (_error) {
+			await updateQueueStatusInternal(ctx, {
 				queueId: args.queueId,
 				status: 'failed',
 				errorMessage: 'Lead not found',
@@ -212,77 +318,45 @@ export const sendWhatsAppMessageFromQueue = action({
 			return;
 		}
 
-		const { base_url, api_key, instance } = config;
-		const baseUrl = base_url.replace(TRAILING_SLASH_REGEX, '');
-		const url = `${baseUrl}/message/sendText/${instance}`;
+		if (!leadInfo?.phone) {
+			await updateQueueStatusInternal(ctx, {
+				queueId: args.queueId,
+				status: 'failed',
+				errorMessage: 'Lead has no phone number',
+			});
+			return;
+		}
 
-		// 4. Create Message Record (Status: enviando) (Comment 1)
-		const messageId = await ctx.runMutation((internal as any).whatsapp.createMessageWithActivity, {
+		const url = buildEvolutionUrl(config);
+
+		const messageId = (await createMessageRecordInternal(ctx, {
 			leadId,
 			content: message,
 			status: 'enviando',
 			organizationId,
+		})) as Id<'messages'>;
+
+		const sendResult = await sendTextMessageWithRetry(ctx, {
+			url,
+			apiKey: config.api_key,
+			phone: leadInfo.phone,
+			message,
+			messageId,
 		});
 
-		// 5. Execute with Retry Logic (Comment 3)
-		let attempt = 0;
-		const maxAttempts = 3;
-		const baseDelay = 1000;
-
-		while (attempt < maxAttempts) {
-			try {
-				const response: any = await axios.post(
-					url,
-					{ number: lead.phone, text: message },
-					{ headers: { apikey: api_key, 'Content-Type': 'application/json' }, timeout: 10_000 },
-				);
-
-				// Success
-				await ctx.runMutation((internal as any).whatsapp.updateMessageStatus, {
-					messageId,
-					status: 'enviado',
-					externalId: response.data?.key?.id,
-				});
-
-				await ctx.runMutation((internal as any).whatsapp.updateQueueStatus, {
-					queueId: args.queueId,
-					status: 'sent',
-				});
-
-				return; // Exit on success
-			} catch (error: any) {
-				attempt++;
-
-				if (attempt >= maxAttempts) {
-					const errorMessage = error.response?.data
-						? JSON.stringify(error.response.data)
-						: error.message;
-
-					// Update message to failed
-					await ctx.runMutation((internal as any).whatsapp.updateMessageStatus, {
-						messageId,
-						status: 'falhou',
-						error: errorMessage,
-					});
-
-					// Update queue to failed (Comment 3: only fail after max attempts)
-					await ctx.runMutation((internal as any).whatsapp.updateQueueStatus, {
-						queueId: args.queueId,
-						status: 'failed',
-						errorMessage,
-					});
-				} else {
-					// Exponential Backoff
-					const delay = baseDelay * 2 ** (attempt - 1);
-					await new Promise((resolve) => setTimeout(resolve, delay));
-
-					// Update attempts on queue item to persist retry state if needed,
-					// although this loop runs in one execution context usually.
-					// If we wanted durable retries across executions, we'd reschedule.
-					// For now, in-memory retry loop as requested.
-				}
-			}
+		if (sendResult.success) {
+			await updateQueueStatusInternal(ctx, {
+				queueId: args.queueId,
+				status: 'sent',
+			});
+			return;
 		}
+
+		await updateQueueStatusInternal(ctx, {
+			queueId: args.queueId,
+			status: 'failed',
+			errorMessage: sendResult.error ?? 'Unknown error',
+		});
 	},
 });
 

@@ -55,7 +55,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 	} = usePaginatedQuery(
 		api.marketingLeads.list,
 		{
-			paginationOpts: { numItems: PAGE_SIZE, cursor: null },
+			// paginationOpts is handled by the hook
 			status: status === 'all' ? undefined : status,
 			interest: interest === 'all' ? undefined : interest,
 			source: source === 'all' ? undefined : source,

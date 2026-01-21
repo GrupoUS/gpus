@@ -133,4 +133,4 @@ async function main() {
 	console.log('      ```\n');
 }
 
-main();
+void main();

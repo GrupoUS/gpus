@@ -6,10 +6,285 @@
 
 import { v } from 'convex/values';
 
+import type { Doc, Id } from './_generated/dataModel';
 import { mutation } from './_generated/server';
 import { logAudit } from './lgpd';
 import { getOrganizationId } from './lib/auth';
 import { encrypt, encryptCPF } from './lib/encryption';
+
+const NON_DIGIT_REGEX = /\\D/g;
+const CPF_INVALID_PATTERN_REGEX = /^(\\d)\\1{10}$/;
+
+type StudentDoc = Doc<'students'>;
+
+type PaymentStatus = 'em_dia' | 'atrasado' | 'quitado' | 'cancelado';
+interface StudentImportContact {
+	name?: string;
+	email?: string;
+	phone?: string;
+}
+
+interface ImportCounters {
+	successCount: number;
+	failureCount: number;
+	createdCount: number;
+	updatedCount: number;
+	skippedCount: number;
+}
+
+const normalizeEmailValue = (email?: string) => email?.trim().toLowerCase();
+const normalizePhoneValue = (phone: string) => phone.replace(NON_DIGIT_REGEX, '');
+const normalizePhoneValueOptional = (phone?: string) => {
+	if (!phone) return '';
+	return normalizePhoneValue(phone);
+};
+const normalizeCpfValue = (cpf?: string) => {
+	if (!cpf) return undefined;
+	return cpf.replace(NON_DIGIT_REGEX, '');
+};
+
+const buildWarningList = (warnings: string[]) => {
+	if (warnings.length > 0) {
+		return warnings;
+	}
+	return undefined;
+};
+
+const pushFailureResult = (
+	results: ImportRowResult[],
+	rowNumber: number,
+	message: string,
+	warnings: string[],
+	counters: ImportCounters,
+	action?: ImportRowResult['action'],
+) => {
+	results.push({
+		rowNumber,
+		success: false,
+		action,
+		error: message,
+		warnings: buildWarningList(warnings),
+	});
+	if (action === 'skipped') {
+		counters.skippedCount++;
+	}
+	counters.failureCount++;
+};
+
+const pushSuccessResult = (
+	results: ImportRowResult[],
+	rowNumber: number,
+	studentId: Id<'students'>,
+	action: 'created' | 'updated',
+	warnings: string[],
+	counters: ImportCounters,
+) => {
+	results.push({
+		rowNumber,
+		success: true,
+		studentId,
+		action,
+		warnings: buildWarningList(warnings),
+	});
+	counters.successCount++;
+	if (action === 'created') {
+		counters.createdCount++;
+	} else {
+		counters.updatedCount++;
+	}
+};
+
+const handleBatchEmailDuplicate = (
+	normalizedEmail: string | undefined,
+	processedEmails: Set<string>,
+	results: ImportRowResult[],
+	rowNumber: number,
+	warnings: string[],
+	counters: ImportCounters,
+) => {
+	if (!normalizedEmail) return false;
+	if (processedEmails.has(normalizedEmail)) {
+		warnings.push('Email duplicado dentro do mesmo arquivo');
+		pushFailureResult(
+			results,
+			rowNumber,
+			'Email duplicado no arquivo (ignorado)',
+			warnings,
+			counters,
+			'skipped',
+		);
+		return true;
+	}
+	processedEmails.add(normalizedEmail);
+	return false;
+};
+
+const handleBatchPhoneDuplicate = (
+	normalizedPhone: string,
+	processedPhones: Set<string>,
+	results: ImportRowResult[],
+	rowNumber: number,
+	warnings: string[],
+	counters: ImportCounters,
+) => {
+	if (processedPhones.has(normalizedPhone)) {
+		warnings.push('Telefone duplicado dentro do mesmo arquivo');
+		pushFailureResult(
+			results,
+			rowNumber,
+			'Telefone duplicado no arquivo (ignorado)',
+			warnings,
+			counters,
+			'skipped',
+		);
+		return true;
+	}
+	processedPhones.add(normalizedPhone);
+	return false;
+};
+
+const handleBatchCpfDuplicate = (
+	normalizedCPF: string | undefined,
+	processedCPFs: Set<string>,
+	results: ImportRowResult[],
+	rowNumber: number,
+	warnings: string[],
+	counters: ImportCounters,
+) => {
+	if (!normalizedCPF) return false;
+	if (!validateCPF(normalizedCPF)) {
+		pushFailureResult(
+			results,
+			rowNumber,
+			`CPF inválido: ${normalizedCPF}. Verifique os dígitos verificadores.`,
+			warnings,
+			counters,
+		);
+		return true;
+	}
+	if (processedCPFs.has(normalizedCPF)) {
+		warnings.push('CPF duplicado dentro do mesmo arquivo');
+		pushFailureResult(
+			results,
+			rowNumber,
+			'CPF duplicado no arquivo (ignorado)',
+			warnings,
+			counters,
+			'skipped',
+		);
+		return true;
+	}
+	processedCPFs.add(normalizedCPF);
+	return false;
+};
+
+const getDuplicateIdentifier = (options: {
+	existingByCPF?: StudentDoc;
+	existingByPhone?: StudentDoc;
+}): 'CPF' | 'Telefone' | 'Email' => {
+	if (options.existingByCPF) return 'CPF';
+	if (options.existingByPhone) return 'Telefone';
+	return 'Email';
+};
+
+const getValidationIdentifier = (options: {
+	hasCPF: boolean;
+	hasPhone: boolean;
+}): 'CPF' | 'Telefone' | 'Email' => {
+	if (options.hasCPF) return 'CPF';
+	if (options.hasPhone) return 'Telefone';
+	return 'Email';
+};
+
+const validateImportRequiredFields = (student: StudentImportContact, rowErrors: string[]) => {
+	if (!student.name || student.name.trim().length < 2) {
+		rowErrors.push('Nome é obrigatório e deve ter pelo menos 2 caracteres');
+	}
+	if (student.email && !student.email.includes('@')) {
+		rowErrors.push('Email inválido (deve conter @)');
+	}
+	if (!student.phone || normalizePhoneValueOptional(student.phone).length < 10) {
+		rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
+	}
+};
+
+const validateImportPhoneDuplicates = (
+	normalizedPhone: string,
+	seenPhones: Set<string>,
+	rowErrors: string[],
+) => {
+	if (!normalizedPhone) return;
+	if (seenPhones.has(normalizedPhone)) {
+		rowErrors.push(`Telefone duplicado no arquivo: ${normalizedPhone}`);
+		return;
+	}
+	seenPhones.add(normalizedPhone);
+};
+
+const validateImportEmailDuplicates = (
+	normalizedEmail: string | undefined,
+	seenEmails: Set<string>,
+	duplicateEmails: string[],
+	rowErrors: string[],
+) => {
+	if (!normalizedEmail) return;
+	if (seenEmails.has(normalizedEmail)) {
+		rowErrors.push(`Email duplicado no arquivo: ${normalizedEmail}`);
+		if (!duplicateEmails.includes(normalizedEmail)) {
+			duplicateEmails.push(normalizedEmail);
+		}
+		return;
+	}
+	seenEmails.add(normalizedEmail);
+};
+
+const checkExistingStudentForImport = (options: {
+	normalizedCpf?: string;
+	normalizedPhone: string;
+	normalizedEmail?: string;
+	existingCPFs: Set<string>;
+	existingPhones: Set<string>;
+	existingEmails: Set<string>;
+}): boolean => {
+	if (options.normalizedCpf && options.existingCPFs.has(options.normalizedCpf)) {
+		return true;
+	}
+	if (options.normalizedPhone && options.existingPhones.has(options.normalizedPhone)) {
+		return true;
+	}
+	if (options.normalizedEmail && options.existingEmails.has(options.normalizedEmail)) {
+		return true;
+	}
+	return false;
+};
+
+const validateImportCpfDuplicates = (options: {
+	normalizedCpf?: string;
+	cpfValue?: string;
+	seenCPFs: Set<string>;
+	existingCPFs: Set<string>;
+	upsertMode: boolean;
+	duplicateCPFs: string[];
+	rowErrors: string[];
+}) => {
+	const { normalizedCpf, cpfValue, seenCPFs, existingCPFs, upsertMode, duplicateCPFs, rowErrors } =
+		options;
+	if (!(normalizedCpf && cpfValue)) return;
+
+	if (seenCPFs.has(normalizedCpf)) {
+		rowErrors.push(`CPF duplicado no arquivo: ${cpfValue}`);
+		if (!duplicateCPFs.includes(cpfValue)) {
+			duplicateCPFs.push(cpfValue);
+		}
+	} else if (existingCPFs.has(normalizedCpf) && !upsertMode) {
+		rowErrors.push(`CPF já cadastrado: ${cpfValue}`);
+		if (!duplicateCPFs.includes(cpfValue)) {
+			duplicateCPFs.push(cpfValue);
+		}
+	}
+
+	seenCPFs.add(normalizedCpf);
+};
 
 /**
  * Validate Brazilian CPF using the official algorithm
@@ -19,13 +294,13 @@ function validateCPF(cpf: string): boolean {
 	if (!cpf) return false;
 
 	// Remove formatting
-	const cleaned = cpf.replace(/\D/g, '');
+	const cleaned = cpf.replace(NON_DIGIT_REGEX, '');
 
 	// Must be 11 digits
 	if (cleaned.length !== 11) return false;
 
 	// Check for known invalid patterns (all same digits)
-	if (/^(\d)\1{10}$/.test(cleaned)) return false;
+	if (CPF_INVALID_PATTERN_REGEX.test(cleaned)) return false;
 
 	// Validate first check digit
 	let sum = 0;
@@ -121,22 +396,23 @@ function normalizePaymentStatus(
 	if (!status) return 'em_dia';
 
 	const normalized = status.trim().toLowerCase();
-	const statusMap: Record<string, 'em_dia' | 'atrasado' | 'quitado' | 'cancelado'> = {
-		em_dia: 'em_dia',
-		'em dia': 'em_dia',
-		adimplente: 'em_dia',
-		regular: 'em_dia',
-		atrasado: 'atrasado',
-		inadimplente: 'atrasado',
-		atraso: 'atrasado',
-		quitado: 'quitado',
-		pago: 'quitado',
-		finalizado: 'quitado',
-		cancelado: 'cancelado',
-		cancelamento: 'cancelado',
-	};
+	const statusEntries = [
+		['em_dia', 'em_dia'],
+		['em dia', 'em_dia'],
+		['adimplente', 'em_dia'],
+		['regular', 'em_dia'],
+		['atrasado', 'atrasado'],
+		['inadimplente', 'atrasado'],
+		['atraso', 'atrasado'],
+		['quitado', 'quitado'],
+		['pago', 'quitado'],
+		['finalizado', 'quitado'],
+		['cancelado', 'cancelado'],
+		['cancelamento', 'cancelado'],
+	] satisfies [string, PaymentStatus][];
+	const statusMap = new Map(statusEntries);
 
-	return statusMap[normalized] || 'em_dia';
+	return statusMap.get(normalized) ?? 'em_dia';
 }
 
 /**
@@ -173,11 +449,13 @@ export const bulkImport = mutation({
 		const upsertMode = args.upsertMode !== false; // Default to true
 
 		const results: ImportRowResult[] = [];
-		let successCount = 0;
-		let failureCount = 0;
-		let createdCount = 0;
-		let updatedCount = 0;
-		let skippedCount = 0;
+		const counters: ImportCounters = {
+			successCount: 0,
+			failureCount: 0,
+			createdCount: 0,
+			updatedCount: 0,
+			skippedCount: 0,
+		};
 
 		// Pre-fetch existing students for duplicate checking
 		const existingStudents = await ctx.db
@@ -188,9 +466,11 @@ export const bulkImport = mutation({
 			existingStudents.filter((s) => s.email).map((s) => [s.email?.toLowerCase(), s]),
 		);
 		const cpfToStudent = new Map(
-			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(/\D/g, ''), s]),
+			existingStudents.filter((s) => s.cpf).map((s) => [s.cpf?.replace(NON_DIGIT_REGEX, ''), s]),
 		);
-		const phoneToStudent = new Map(existingStudents.map((s) => [s.phone.replace(/\D/g, ''), s]));
+		const phoneToStudent = new Map(
+			existingStudents.map((s) => [s.phone.replace(NON_DIGIT_REGEX, ''), s]),
+		);
 
 		// Track emails/CPFs/phones processed in this batch
 		const processedEmails = new Set<string>();
@@ -212,89 +492,64 @@ export const bulkImport = mutation({
 				if (student.email && !student.email.includes('@')) {
 					throw new Error('Email inválido (deve conter @)');
 				}
-				if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
+				if (!student.phone || student.phone.replace(NON_DIGIT_REGEX, '').length < 10) {
 					throw new Error('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
 				}
 				// profession and hasClinic are optional - defaults applied below
 
 				// Normalize email if provided
-				const normalizedEmail = student.email?.trim().toLowerCase();
-				const normalizedPhone = student.phone.replace(/\D/g, '');
-
-				// Check for duplicate within same batch
-				if (normalizedEmail && processedEmails.has(normalizedEmail)) {
-					warnings.push('Email duplicado dentro do mesmo arquivo');
-					results.push({
-						rowNumber,
-						success: false,
-						action: 'skipped',
-						error: 'Email duplicado no arquivo (ignorado)',
-						warnings,
-					});
-					failureCount++;
-					skippedCount++;
-					continue;
-				}
-				if (normalizedEmail) {
-					processedEmails.add(normalizedEmail);
-				}
-
-				// Check for duplicate phone within same batch
-				if (processedPhones.has(normalizedPhone)) {
-					warnings.push('Telefone duplicado dentro do mesmo arquivo');
-					results.push({
-						rowNumber,
-						success: false,
-						action: 'skipped',
-						error: 'Telefone duplicado no arquivo (ignorado)',
-						warnings,
-					});
-					failureCount++;
-					skippedCount++;
-					continue;
-				}
-				processedPhones.add(normalizedPhone);
-
-				// Check for duplicate CPF within same batch
+				const normalizedEmail = normalizeEmailValue(student.email);
+				const normalizedPhone = normalizePhoneValue(student.phone);
+				let normalizedCPF: string | undefined;
 				if (student.cpf) {
-					const normalizedCPF = student.cpf.replace(/\D/g, '');
+					normalizedCPF = student.cpf.replace(NON_DIGIT_REGEX, '');
+				}
 
-					// Validate CPF format before proceeding
-					if (!validateCPF(normalizedCPF)) {
-						results.push({
-							rowNumber,
-							success: false,
-							error: `CPF inválido: ${student.cpf}. Verifique os dígitos verificadores.`,
-							warnings,
-						});
-						failureCount++;
-						continue;
-					}
-
-					if (processedCPFs.has(normalizedCPF)) {
-						warnings.push('CPF duplicado dentro do mesmo arquivo');
-						results.push({
-							rowNumber,
-							success: false,
-							action: 'skipped',
-							error: 'CPF duplicado no arquivo (ignorado)',
-							warnings,
-						});
-						failureCount++;
-						skippedCount++;
-						continue;
-					}
-					processedCPFs.add(normalizedCPF);
+				if (
+					handleBatchEmailDuplicate(
+						normalizedEmail,
+						processedEmails,
+						results,
+						rowNumber,
+						warnings,
+						counters,
+					)
+				) {
+					continue;
+				}
+				if (
+					handleBatchPhoneDuplicate(
+						normalizedPhone,
+						processedPhones,
+						results,
+						rowNumber,
+						warnings,
+						counters,
+					)
+				) {
+					continue;
+				}
+				if (
+					handleBatchCpfDuplicate(
+						normalizedCPF,
+						processedCPFs,
+						results,
+						rowNumber,
+						warnings,
+						counters,
+					)
+				) {
+					continue;
 				}
 
 				// Find existing student - priority: CPF > Phone > Email
-				let existingStudent;
-				let existingByCP;
-				let existingByPhone;
+				let existingStudent: StudentDoc | undefined;
+				let existingByCP: StudentDoc | undefined;
+				let existingByPhone: StudentDoc | undefined;
 
 				// Check by CPF first (most reliable identifier)
 				if (student.cpf) {
-					const normalizedCPF = student.cpf.replace(/\D/g, '');
+					const normalizedCPF = student.cpf.replace(NON_DIGIT_REGEX, '');
 					existingByCP = cpfToStudent.get(normalizedCPF);
 				}
 
@@ -311,22 +566,32 @@ export const bulkImport = mutation({
 
 				if (existing && existing.organizationId !== organizationId) {
 					// Ensure candidate belongs to current org
-					results.push({
+					pushFailureResult(
+						results,
 						rowNumber,
-						success: false,
-						action: 'skipped',
-						error: 'Conflito de organização: aluno pertence a outra organização',
+						'Conflito de organização: aluno pertence a outra organização',
 						warnings,
-					});
-					failureCount++;
-					skippedCount++;
+						counters,
+						'skipped',
+					);
 					continue;
 				}
 
 				// Prepare student data with awaited encrypted fields
-				const encryptedEmailValue = normalizedEmail ? await encrypt(normalizedEmail) : undefined;
+				let encryptedEmailValue: string | undefined;
+				if (normalizedEmail) {
+					encryptedEmailValue = await encrypt(normalizedEmail);
+				}
 				const encryptedPhoneValue = await encrypt(normalizedPhone);
-				const encryptedCPFValue = student.cpf ? await encryptCPF(student.cpf) : undefined;
+				let encryptedCPFValue: string | undefined;
+				if (student.cpf) {
+					encryptedCPFValue = await encryptCPF(student.cpf);
+				}
+
+				let normalizedCpfValue: string | undefined;
+				if (student.cpf) {
+					normalizedCpfValue = student.cpf.replace(NON_DIGIT_REGEX, '');
+				}
 
 				const studentData = {
 					organizationId,
@@ -344,7 +609,7 @@ export const bulkImport = mutation({
 					encryptedCPF: encryptedCPFValue,
 
 					// Optional fields
-					cpf: student.cpf ? student.cpf.replace(/\D/g, '') : undefined,
+					cpf: normalizedCpfValue,
 					clinicName: student.clinicName,
 					clinicCity: student.clinicCity,
 					professionalId: student.professionalId,
@@ -370,7 +635,7 @@ export const bulkImport = mutation({
 					updatedAt: Date.now(),
 				};
 
-				let studentId: string;
+				let studentId: Id<'students'>;
 				let action: 'created' | 'updated' | 'skipped';
 
 				if (existing) {
@@ -381,7 +646,7 @@ export const bulkImport = mutation({
 						await ctx.db.patch(existing._id, studentData);
 						studentId = existing._id;
 						action = 'updated';
-						updatedCount++;
+						counters.updatedCount++;
 
 						// Log LGPD audit for modification
 						await logAudit(ctx, {
@@ -402,7 +667,10 @@ export const bulkImport = mutation({
 						warnings.push('Aluno existente atualizado');
 					} else {
 						// Skip duplicate
-						const identifier = existingByCP ? 'CPF' : existingByPhone ? 'Telefone' : 'Email';
+						const identifier = getDuplicateIdentifier({
+							existingByCPF: existingByCP,
+							existingByPhone,
+						});
 						results.push({
 							rowNumber,
 							success: false,
@@ -411,8 +679,8 @@ export const bulkImport = mutation({
 							error: `${identifier} já cadastrado (ignorado)`,
 							warnings,
 						});
-						failureCount++;
-						skippedCount++;
+						counters.failureCount++;
+						counters.skippedCount++;
 						continue;
 					}
 				} else {
@@ -424,23 +692,28 @@ export const bulkImport = mutation({
 					});
 					studentId = newStudentId;
 					action = 'created';
-					createdCount++;
+					counters.createdCount++;
 
 					// Update lookup maps for subsequent rows in same batch
 					if (normalizedEmail) {
-						emailToStudent.set(normalizedEmail, {
+						const newStudentRecord = {
 							...studentData,
+							// biome-ignore lint/style/useNamingConvention: Convex document field.
 							_id: newStudentId,
+							// biome-ignore lint/style/useNamingConvention: Convex document field.
 							_creationTime: Date.now(),
 							createdAt: Date.now(),
-						} as (typeof existingStudents)[0]);
+						} as StudentDoc;
+						emailToStudent.set(normalizedEmail, newStudentRecord);
 					}
 					phoneToStudent.set(normalizedPhone, {
 						...studentData,
+						// biome-ignore lint/style/useNamingConvention: Convex document field.
 						_id: newStudentId,
+						// biome-ignore lint/style/useNamingConvention: Convex document field.
 						_creationTime: Date.now(),
 						createdAt: Date.now(),
-					} as (typeof existingStudents)[0]);
+					} as StudentDoc);
 
 					// Log LGPD audit for creation
 					await logAudit(ctx, {
@@ -466,18 +739,23 @@ export const bulkImport = mutation({
 				// Find existing enrollment for this student + product
 				const existingEnrollment = await ctx.db
 					.query('enrollments')
-					.withIndex('by_student', (q) => q.eq('studentId', studentId as any))
+					.withIndex('by_student', (q) => q.eq('studentId', studentId))
 					.filter((q) => q.eq(q.field('product'), args.product))
 					.first();
 
 				const normalizedPaymentStatus = normalizePaymentStatus(student.paymentStatus);
 				const totalValue = student.totalValue || 0;
 				const installments = student.installments || 1;
-				const installmentValue =
-					student.installmentValue || (totalValue > 0 ? totalValue / installments : 0);
+				let installmentValue = student.installmentValue;
+				if (installmentValue === undefined) {
+					installmentValue = 0;
+					if (totalValue > 0) {
+						installmentValue = totalValue / installments;
+					}
+				}
 
 				const enrollmentData = {
-					studentId: studentId as any,
+					studentId,
 					product: args.product,
 					status: 'ativo' as const,
 					totalValue,
@@ -502,33 +780,24 @@ export const bulkImport = mutation({
 					});
 				}
 
-				results.push({
-					rowNumber,
-					success: true,
-					studentId,
-					action,
-					warnings: warnings.length > 0 ? warnings : undefined,
-				});
-				successCount++;
+				pushSuccessResult(results, rowNumber, studentId, action, warnings, counters);
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-				results.push({
-					rowNumber,
-					success: false,
-					error: errorMessage,
-					warnings: warnings.length > 0 ? warnings : undefined,
-				});
-				failureCount++;
+				let errorMessage = 'Erro desconhecido';
+				if (error instanceof Error) {
+					errorMessage = error.message;
+				}
+
+				pushFailureResult(results, rowNumber, errorMessage, warnings, counters);
 			}
 		}
 
 		return {
 			totalRows: args.students.length,
-			successCount,
-			failureCount,
-			createdCount,
-			updatedCount,
-			skippedCount,
+			successCount: counters.successCount,
+			failureCount: counters.failureCount,
+			createdCount: counters.createdCount,
+			updatedCount: counters.updatedCount,
+			skippedCount: counters.skippedCount,
 			results,
 		};
 	},
@@ -573,13 +842,19 @@ export const validateImport = mutation({
 			.query('students')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
-		const existingEmails = new Set(
-			existingStudents.filter((s) => s.email).map((s) => s.email?.toLowerCase()),
+		const existingEmails = new Set<string>(
+			existingStudents.flatMap((student) =>
+				student.email ? [student.email.toLowerCase()] : [],
+			),
 		);
-		const existingCPFs = new Set(
-			existingStudents.filter((s) => s.cpf).map((s) => s.cpf?.replace(/\D/g, '')),
+		const existingCPFs = new Set<string>(
+			existingStudents.flatMap((student) =>
+				student.cpf ? [student.cpf.replace(NON_DIGIT_REGEX, '')] : [],
+			),
 		);
-		const existingPhones = new Set(existingStudents.map((s) => s.phone.replace(/\D/g, '')));
+		const existingPhones = new Set<string>(
+			existingStudents.map((student) => normalizePhoneValue(student.phone)),
+		);
 
 		const errors: Array<{ rowNumber: number; errors: string[] }> = [];
 		const duplicateEmails: string[] = [];
@@ -597,73 +872,33 @@ export const validateImport = mutation({
 			const rowNumber = i + 2;
 			const rowErrors: string[] = [];
 
-			// Validate required fields
-			if (!student.name || student.name.trim().length < 2) {
-				rowErrors.push('Nome é obrigatório e deve ter pelo menos 2 caracteres');
-			}
-			// Email is now optional - validate format only if provided
-			if (student.email && !student.email.includes('@')) {
-				rowErrors.push('Email inválido (deve conter @)');
-			}
+			validateImportRequiredFields(student, rowErrors);
 
-			if (!student.phone || student.phone.replace(/\D/g, '').length < 10) {
-				rowErrors.push('Telefone é obrigatório e deve ter pelo menos 10 dígitos');
-			}
+			const normalizedPhone = normalizePhoneValueOptional(student.phone);
+			const normalizedEmail = normalizeEmailValue(student.email);
+			const normalizedCpf = normalizeCpfValue(student.cpf);
 
-			const normalizedPhone = student.phone?.replace(/\D/g, '') || '';
+			validateImportPhoneDuplicates(normalizedPhone, seenPhones, rowErrors);
+			validateImportEmailDuplicates(normalizedEmail, seenEmails, duplicateEmails, rowErrors);
 
-			// Check for duplicate phone in same file
-			if (normalizedPhone && seenPhones.has(normalizedPhone)) {
-				rowErrors.push(`Telefone duplicado no arquivo: ${normalizedPhone}`);
-			} else if (normalizedPhone) {
-				seenPhones.add(normalizedPhone);
-			}
-
-			// Check email duplicates if email is provided
-			if (student.email) {
-				const normalizedEmail = student.email.trim().toLowerCase();
-
-				// Check for duplicate in same file
-				if (seenEmails.has(normalizedEmail)) {
-					rowErrors.push(`Email duplicado no arquivo: ${normalizedEmail}`);
-					if (!duplicateEmails.includes(normalizedEmail)) {
-						duplicateEmails.push(normalizedEmail);
-					}
-				} else {
-					seenEmails.add(normalizedEmail);
-				}
-			}
-
-			// Determine if student exists (priority: CPF > Phone > Email)
-			let studentExists = false;
-			if (student.cpf) {
-				const normalizedCPF = student.cpf.replace(/\D/g, '');
-				if (existingCPFs.has(normalizedCPF)) {
-					studentExists = true;
-				}
-			}
-			if (!studentExists && normalizedPhone && existingPhones.has(normalizedPhone)) {
-				studentExists = true;
-			}
-			if (!studentExists && student.email) {
-				const normalizedEmail = student.email.trim().toLowerCase();
-				if (existingEmails.has(normalizedEmail)) {
-					studentExists = true;
-				}
-			}
+			const studentExists = checkExistingStudentForImport({
+				normalizedCpf,
+				normalizedPhone,
+				normalizedEmail,
+				existingCPFs,
+				existingPhones,
+				existingEmails,
+			});
 
 			// Update counters
 			if (studentExists) {
 				if (upsertMode) {
 					willUpdate++;
 				} else {
-					// Only add error if not in upsert mode
-					const identifier =
-						student.cpf && existingCPFs.has(student.cpf.replace(/\D/g, ''))
-							? 'CPF'
-							: normalizedPhone && existingPhones.has(normalizedPhone)
-								? 'Telefone'
-								: 'Email';
+					const identifier = getValidationIdentifier({
+						hasCPF: !!normalizedCpf && existingCPFs.has(normalizedCpf),
+						hasPhone: !!normalizedPhone && existingPhones.has(normalizedPhone),
+					});
 					rowErrors.push(`${identifier} já cadastrado`);
 				}
 			} else {
@@ -671,22 +906,15 @@ export const validateImport = mutation({
 			}
 			// profession and hasClinic are optional - defaults applied during import
 
-			// Check CPF duplicates
-			if (student.cpf) {
-				const normalizedCPF = student.cpf.replace(/\D/g, '');
-				if (seenCPFs.has(normalizedCPF)) {
-					rowErrors.push(`CPF duplicado no arquivo: ${student.cpf}`);
-					if (!duplicateCPFs.includes(student.cpf)) {
-						duplicateCPFs.push(student.cpf);
-					}
-				} else if (existingCPFs.has(normalizedCPF) && !upsertMode) {
-					rowErrors.push(`CPF já cadastrado: ${student.cpf}`);
-					if (!duplicateCPFs.includes(student.cpf)) {
-						duplicateCPFs.push(student.cpf);
-					}
-				}
-				seenCPFs.add(normalizedCPF);
-			}
+			validateImportCpfDuplicates({
+				normalizedCpf,
+				cpfValue: student.cpf,
+				seenCPFs,
+				existingCPFs,
+				upsertMode,
+				duplicateCPFs,
+				rowErrors,
+			});
 
 			if (rowErrors.length > 0) {
 				errors.push({ rowNumber, errors: rowErrors });

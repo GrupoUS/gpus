@@ -1040,9 +1040,8 @@ interface AuthenticatedChatDepartmentRouteChildren {
 
 const AuthenticatedChatDepartmentRouteChildren: AuthenticatedChatDepartmentRouteChildren =
   {
-    AuthenticatedChatDepartmentIdRoute: AuthenticatedChatDepartmentIdRoute,
-    AuthenticatedChatDepartmentIndexRoute:
-      AuthenticatedChatDepartmentIndexRoute,
+    AuthenticatedChatDepartmentIdRoute,
+    AuthenticatedChatDepartmentIndexRoute,
   }
 
 const AuthenticatedChatDepartmentRouteWithChildren =
@@ -1058,7 +1057,7 @@ interface AuthenticatedChatRouteChildren {
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatDepartmentRoute:
     AuthenticatedChatDepartmentRouteWithChildren,
-  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+  AuthenticatedChatIndexRoute,
 }
 
 const AuthenticatedChatRouteWithChildren =
@@ -1072,9 +1071,9 @@ interface AuthenticatedFinancialRouteChildren {
 
 const AuthenticatedFinancialRouteChildren: AuthenticatedFinancialRouteChildren =
   {
-    AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
-    AuthenticatedFinancialPaymentsRoute: AuthenticatedFinancialPaymentsRoute,
-    AuthenticatedFinancialReportsRoute: AuthenticatedFinancialReportsRoute,
+    AuthenticatedFinancialDashboardRoute,
+    AuthenticatedFinancialPaymentsRoute,
+    AuthenticatedFinancialReportsRoute,
   }
 
 const AuthenticatedFinancialRouteWithChildren =
@@ -1088,8 +1087,7 @@ interface AuthenticatedMarketingCampaignIdRouteChildren {
 
 const AuthenticatedMarketingCampaignIdRouteChildren: AuthenticatedMarketingCampaignIdRouteChildren =
   {
-    AuthenticatedMarketingCampaignIdEditRoute:
-      AuthenticatedMarketingCampaignIdEditRoute,
+    AuthenticatedMarketingCampaignIdEditRoute,
   }
 
 const AuthenticatedMarketingCampaignIdRouteWithChildren =
@@ -1103,8 +1101,7 @@ interface AuthenticatedMarketingListasRouteChildren {
 
 const AuthenticatedMarketingListasRouteChildren: AuthenticatedMarketingListasRouteChildren =
   {
-    AuthenticatedMarketingListasListIdRoute:
-      AuthenticatedMarketingListasListIdRoute,
+    AuthenticatedMarketingListasListIdRoute,
   }
 
 const AuthenticatedMarketingListasRouteWithChildren =
@@ -1119,10 +1116,8 @@ interface AuthenticatedMarketingTemplatesRouteChildren {
 
 const AuthenticatedMarketingTemplatesRouteChildren: AuthenticatedMarketingTemplatesRouteChildren =
   {
-    AuthenticatedMarketingTemplatesTemplateIdRoute:
-      AuthenticatedMarketingTemplatesTemplateIdRoute,
-    AuthenticatedMarketingTemplatesNovoRoute:
-      AuthenticatedMarketingTemplatesNovoRoute,
+    AuthenticatedMarketingTemplatesTemplateIdRoute,
+    AuthenticatedMarketingTemplatesNovoRoute,
   }
 
 const AuthenticatedMarketingTemplatesRouteWithChildren =
@@ -1146,16 +1141,16 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
     AuthenticatedMarketingCampaignIdRoute:
       AuthenticatedMarketingCampaignIdRouteWithChildren,
-    AuthenticatedMarketingCampanhasRoute: AuthenticatedMarketingCampanhasRoute,
-    AuthenticatedMarketingContatosRoute: AuthenticatedMarketingContatosRoute,
-    AuthenticatedMarketingDashboardRoute: AuthenticatedMarketingDashboardRoute,
-    AuthenticatedMarketingLeadsRoute: AuthenticatedMarketingLeadsRoute,
+    AuthenticatedMarketingCampanhasRoute,
+    AuthenticatedMarketingContatosRoute,
+    AuthenticatedMarketingDashboardRoute,
+    AuthenticatedMarketingLeadsRoute,
     AuthenticatedMarketingListasRoute:
       AuthenticatedMarketingListasRouteWithChildren,
-    AuthenticatedMarketingNovaRoute: AuthenticatedMarketingNovaRoute,
+    AuthenticatedMarketingNovaRoute,
     AuthenticatedMarketingTemplatesRoute:
       AuthenticatedMarketingTemplatesRouteWithChildren,
-    AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
+    AuthenticatedMarketingIndexRoute,
   }
 
 const AuthenticatedMarketingRouteWithChildren =
@@ -1169,8 +1164,8 @@ interface AuthenticatedReportsRouteChildren {
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
-  AuthenticatedReportsSalesRoute: AuthenticatedReportsSalesRoute,
-  AuthenticatedReportsTeamRoute: AuthenticatedReportsTeamRoute,
+  AuthenticatedReportsSalesRoute,
+  AuthenticatedReportsTeamRoute,
 }
 
 const AuthenticatedReportsRouteWithChildren =
@@ -1190,18 +1185,16 @@ interface AuthenticatedSettingsRouteChildren {
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
-  AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
-  AuthenticatedSettingsIntegrationsRoute:
-    AuthenticatedSettingsIntegrationsRoute,
-  AuthenticatedSettingsNotificationsRoute:
-    AuthenticatedSettingsNotificationsRoute,
-  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
-  AuthenticatedSettingsRolesRoute: AuthenticatedSettingsRolesRoute,
-  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
-  AuthenticatedSettingsTagsRoute: AuthenticatedSettingsTagsRoute,
-  AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
-  AuthenticatedSettingsTemplatesRoute: AuthenticatedSettingsTemplatesRoute,
-  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+  AuthenticatedSettingsAppearanceRoute,
+  AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsRolesRoute,
+  AuthenticatedSettingsSecurityRoute,
+  AuthenticatedSettingsTagsRoute,
+  AuthenticatedSettingsTeamRoute,
+  AuthenticatedSettingsTemplatesRoute,
+  AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =
@@ -1214,7 +1207,7 @@ interface AuthenticatedStudentsRouteChildren {
 }
 
 const AuthenticatedStudentsRouteChildren: AuthenticatedStudentsRouteChildren = {
-  AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedStudentsStudentIdRoute,
 }
 
 const AuthenticatedStudentsRouteWithChildren =
@@ -1236,14 +1229,14 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
-  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedCrmRoute,
+  AuthenticatedDashboardRoute,
   AuthenticatedFinancialRoute: AuthenticatedFinancialRouteWithChildren,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
-  AuthenticatedAdminAsaasIndexRoute: AuthenticatedAdminAsaasIndexRoute,
+  AuthenticatedAdminAsaasIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -1251,15 +1244,15 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  SignInSplatRoute: SignInSplatRoute,
-  SignInSsoCallbackRoute: SignInSsoCallbackRoute,
-  SignUpSplatRoute: SignUpSplatRoute,
-  SignUpSsoCallbackRoute: SignUpSsoCallbackRoute,
-  CapturaIndexRoute: CapturaIndexRoute,
-  SignInIndexRoute: SignInIndexRoute,
-  SignUpIndexRoute: SignUpIndexRoute,
+  SignInSplatRoute,
+  SignInSsoCallbackRoute,
+  SignUpSplatRoute,
+  SignUpSsoCallbackRoute,
+  CapturaIndexRoute,
+  SignInIndexRoute,
+  SignUpIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

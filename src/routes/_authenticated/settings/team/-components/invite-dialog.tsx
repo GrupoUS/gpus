@@ -61,8 +61,8 @@ export function InviteDialog() {
 			toast.success(`Convite enviado para ${values.email}`);
 			setOpen(false);
 			form.reset();
-		} catch (error: any) {
-			toast.error(error.message || 'Erro ao enviar convite');
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Erro ao enviar convite');
 		}
 	};
 

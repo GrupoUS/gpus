@@ -62,6 +62,18 @@ export function AutoSyncSettings() {
 
 	const lastSync = lastSyncLogs?.[0];
 
+	const getStatusColor = (status: string) => {
+		if (status === 'completed') return 'text-green-500';
+		if (status === 'failed') return 'text-red-500';
+		return 'text-blue-500';
+	};
+
+	const getStatusLabel = (status: string) => {
+		if (status === 'completed') return 'Sucesso';
+		if (status === 'failed') return 'Falha';
+		return 'Em andamento';
+	};
+
 	if (config === undefined) {
 		return (
 			<div className="flex items-center justify-center p-8">
@@ -127,20 +139,8 @@ export function AutoSyncSettings() {
 						<p className="mb-1 font-medium">Última sincronização:</p>
 						<div className="flex items-center justify-between text-muted-foreground">
 							<span>{new Date(lastSync.completedAt || lastSync.startedAt).toLocaleString()}</span>
-							<span
-								className={
-									lastSync.status === 'completed'
-										? 'text-green-500'
-										: lastSync.status === 'failed'
-											? 'text-red-500'
-											: 'text-blue-500'
-								}
-							>
-								{lastSync.status === 'completed'
-									? 'Sucesso'
-									: lastSync.status === 'failed'
-										? 'Falha'
-										: 'Em andamento'}
+							<span className={getStatusColor(lastSync.status)}>
+								{getStatusLabel(lastSync.status)}
 							</span>
 						</div>
 						{lastSync.status === 'completed' && (

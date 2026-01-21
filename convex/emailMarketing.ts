@@ -18,10 +18,10 @@ import {
 	action,
 	internalMutation,
 	internalQuery,
-	mutation,
-	query,
 	type MutationCtx,
+	mutation,
 	type QueryCtx,
+	query,
 } from './_generated/server';
 import { createAuditLog } from './lib/auditLogging';
 import { getClerkId, getIdentity, getOrganizationId, requireAuth } from './lib/auth';
@@ -144,7 +144,9 @@ const collectStudentContacts = async (
 	if (args.products.length > 0) {
 		const enrollments = await ctx.db.query('enrollments').collect();
 		const studentIdsWithProducts = new Set(
-			enrollments.filter((entry) => args.products.includes(entry.product)).map((entry) => entry.studentId),
+			enrollments
+				.filter((entry) => args.products.includes(entry.product))
+				.map((entry) => entry.studentId),
 		);
 		students = students.filter((student) => studentIdsWithProducts.has(student._id));
 	}
@@ -195,7 +197,9 @@ const collectStudentPreviewEmails = async (
 	if (args.products.length > 0) {
 		const enrollments = await ctx.db.query('enrollments').collect();
 		const studentIdsWithProducts = new Set(
-			enrollments.filter((entry) => args.products.includes(entry.product)).map((entry) => entry.studentId),
+			enrollments
+				.filter((entry) => args.products.includes(entry.product))
+				.map((entry) => entry.studentId),
 		);
 		students = students.filter((student) => studentIdsWithProducts.has(student._id));
 	}
@@ -242,18 +246,17 @@ const getProductFilterKey = (productFilter?: string): ProductKey | null => {
 	return PRODUCT_KEYS.has(productFilter as ProductKey) ? (productFilter as ProductKey) : null;
 };
 
-const isLeadSegmentEligible = (lead: Doc<'leads'>, filters?: {
-	product?: string;
-	stage?: string;
-}): boolean => {
+const isLeadSegmentEligible = (
+	lead: Doc<'leads'>,
+	filters?: {
+		product?: string;
+		stage?: string;
+	},
+): boolean => {
 	if (filters?.stage && filters.stage !== 'all' && lead.stage !== filters.stage) {
 		return false;
 	}
-	if (
-		filters?.product &&
-		filters.product !== 'all' &&
-		lead.interestedProduct !== filters.product
-	) {
+	if (filters?.product && filters.product !== 'all' && lead.interestedProduct !== filters.product) {
 		return false;
 	}
 	return true;
@@ -298,6 +301,43 @@ const mapStudentSegmentContact = (student: Doc<'students'>): SegmentContact => {
 		sourceType: 'student',
 		phone: student.phone,
 	};
+};
+
+const collectLeadSegmentContacts = async (
+	ctx: QueryCtx,
+	filters?: {
+		product?: string;
+		stage?: string;
+	},
+): Promise<SegmentContact[]> => {
+	const leads = await ctx.db.query('leads').order('desc').collect();
+	return leads
+		.filter((lead) => lead.email && isLeadSegmentEligible(lead, filters))
+		.map((lead) => mapLeadSegmentContact(lead));
+};
+
+const collectStudentSegmentContacts = async (
+	ctx: QueryCtx,
+	filters?: {
+		product?: string;
+		status?: string;
+	},
+): Promise<SegmentContact[]> => {
+	const students = await ctx.db.query('students').order('desc').collect();
+	const productKey = getProductFilterKey(filters?.product);
+	const results: SegmentContact[] = [];
+
+	for (const student of students) {
+		const email = student.email;
+		if (!email) continue;
+		if (!isStudentStatusEligible(student, filters?.status)) continue;
+		if (productKey && !(await hasEnrollmentForProduct(ctx, student._id, productKey))) {
+			continue;
+		}
+		results.push(mapStudentSegmentContact(student));
+	}
+
+	return results;
 };
 
 const ensureBrevoListId = async (list: Doc<'emailLists'>): Promise<number> => {
@@ -2211,53 +2251,13 @@ export const getSegmentDataInternal = internalQuery({
 		),
 	},
 	handler: async (ctx, args) => {
-		const results: SegmentContact[] = [];
-
 		if (args.sourceType === 'lead') {
-			const leadQuery = ctx.db.query('leads').order('desc');
-
-			// Apply organization filter if possible (but this is internal, assumes context is managed by action)
-			// Actually internal queries don't typically check org implicitly, but we should if multi-tenant.
-			// Ideally we pass organizationId. But for now let's just query all and filter.
-			// Wait, actions have organization context? `createListFromSegment` will check auth.
-			// But internalQuery doesn't know org.
-			// We should probably pass organizationId to be safe.
-			// Let's assume the caller filters by org in the action/mutation logic,
-			// BUT this query runs on DB.
-			// I'll grab all for now, assuming the codebase handles orgs via simple filters usually.
-			// Better: Add organizationId arg.
-
-			const leads = await leadQuery.collect();
-			for (const lead of leads) {
-				if (!lead.email) continue;
-				if (!isLeadSegmentEligible(lead, args.filters)) continue;
-				results.push(mapLeadSegmentContact(lead));
-			}
-		} else if (args.sourceType === 'student') {
-			const studentQuery = ctx.db.query('students').order('desc');
-			const students = await studentQuery.collect();
-			const productKey = getProductFilterKey(args.filters?.product);
-
-			for (const student of students) {
-				// Decrypt email if needed (handling LGPD)
-				const email = student.email;
-				// If email is missing, check encrypted?
-				// The schema has optional email.
-				// If encryptedEmail exists, we might need to decrypt.
-				// But internalQuery can't easily decrypt without keys?
-				// `students.ts` handles decryption.
-				// For now relying on plain email field.
-
-				if (!email) continue;
-				if (!isStudentStatusEligible(student, args.filters?.status)) continue;
-				if (productKey && !(await hasEnrollmentForProduct(ctx, student._id, productKey))) {
-					continue;
-				}
-				results.push(mapStudentSegmentContact(student));
-			}
+			return await collectLeadSegmentContacts(ctx, args.filters);
 		}
-
-		return results;
+		if (args.sourceType === 'student') {
+			return await collectStudentSegmentContacts(ctx, args.filters);
+		}
+		return [];
 	},
 });
 

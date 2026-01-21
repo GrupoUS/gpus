@@ -88,6 +88,50 @@ function StudentsPage() {
 	// For table view, check the students list directly
 	const hasAnyStudents = view === 'grid' ? hasAnyStudentsInGroups : students && students.length > 0;
 
+	const renderContent = () => {
+		if (isLoading) {
+			return (
+				<div className="space-y-4">
+					{[1, 2].map((i) => (
+						<ProductSectionSkeleton key={i} />
+					))}
+				</div>
+			);
+		}
+
+		if (!hasAnyStudents && isFiltering) {
+			return <StudentListEmptyState isFiltering={true} search={search} />;
+		}
+
+		if (view === 'table') {
+			/* Table View */
+			return <StudentsTable onStudentClick={handleStudentClick} students={paginatedStudents} />;
+		}
+
+		/* Grid View (Product Sections) - ALL products rendered, including empty ones */
+		return (
+			<div className="space-y-2">
+				{productKeys.map((productId: string) => {
+					const groupStudents = groupedStudents[productId] ?? [];
+
+					// Always render product sections - empty sections show ProductEmptyState
+					return (
+						<ProductSection
+							count={groupStudents.length}
+							isExpanded={!!expandedSections[productId]}
+							key={productId}
+							onStudentClick={handleStudentClick}
+							onToggle={() => toggleSection(productId)}
+							productId={productId}
+							searchTerm={search}
+							students={groupStudents}
+						/>
+					);
+				})}
+			</div>
+		);
+	};
+
 	return (
 		<div className="space-y-6 p-6">
 			{/* Header */}
@@ -114,39 +158,7 @@ function StudentsPage() {
 			/>
 
 			{/* Students List */}
-			{isLoading ? (
-				<div className="space-y-4">
-					{[1, 2].map((i) => (
-						<ProductSectionSkeleton key={i} />
-					))}
-				</div>
-			) : !hasAnyStudents && isFiltering ? (
-				<StudentListEmptyState isFiltering={true} search={search} />
-			) : view === 'table' ? (
-				/* Table View */
-				<StudentsTable onStudentClick={handleStudentClick} students={paginatedStudents} />
-			) : (
-				/* Grid View (Product Sections) - ALL products rendered, including empty ones */
-				<div className="space-y-2">
-					{productKeys.map((productId: string) => {
-						const groupStudents = groupedStudents[productId] ?? [];
-
-						// Always render product sections - empty sections show ProductEmptyState
-						return (
-							<ProductSection
-								count={groupStudents.length}
-								isExpanded={!!expandedSections[productId]}
-								key={productId}
-								onStudentClick={handleStudentClick}
-								onToggle={() => toggleSection(productId)}
-								productId={productId}
-								searchTerm={search}
-								students={groupStudents}
-							/>
-						);
-					})}
-				</div>
-			)}
+			{renderContent()}
 
 			{/* Pagination - Only show in Table view */}
 			{view === 'table' && students && students.length > PAGE_SIZE && (

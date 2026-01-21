@@ -215,9 +215,11 @@ function validateRequestSize(data: unknown): boolean {
 /**
  * Validates and sanitizes query parameters
  */
-function validateQueryParams(
-	params: Record<string, unknown>,
-): { valid: boolean; sanitized: SanitizedQueryParams; errors: string[] } {
+function validateQueryParams(params: Record<string, unknown>): {
+	valid: boolean;
+	sanitized: SanitizedQueryParams;
+	errors: string[];
+} {
 	const errors: string[] = [];
 	const sanitized: SanitizedQueryParams = {};
 
@@ -509,13 +511,9 @@ async function logHandlerError(
 	error: unknown,
 ): Promise<void> {
 	const message = error instanceof Error ? error.message : 'Unknown';
-	await logSecurityEvent(
-		ctx,
-		'suspicious_activity',
-		`Handler error: ${message}`,
-		'medium',
-		[security.actorId],
-	);
+	await logSecurityEvent(ctx, 'suspicious_activity', `Handler error: ${message}`, 'medium', [
+		security.actorId,
+	]);
 }
 
 function enforceQueryAuthentication(security: SecurityContext, requireAuth: boolean): void {

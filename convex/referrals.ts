@@ -76,7 +76,7 @@ export const getMyReferrals = query({
 			.take(args.limit ?? 50);
 
 		return referrals.map((r) => ({
-			_id: r._id,
+			id: r._id,
 			name: r.name,
 			phone: r.phone,
 			stage: r.stage,
@@ -239,7 +239,6 @@ export const calculateCashback = internalMutation({
 						(e) =>
 							(e.status === 'ativo' || e.status === 'concluido') && e.paymentStatus !== 'cancelado',
 					)
-					// biome-ignore lint/suspicious/noExplicitAny: sort
 					.sort((a, b) => b.createdAt - a.createdAt);
 
 				if (validEnrollments.length > 0) {
@@ -295,8 +294,7 @@ export const calculateCashback = internalMutation({
 				metadata: { referrerId: referrer._id, cashbackAmount: cashback },
 				createdAt: Date.now(),
 			});
-		} catch (error) {
-			console.error('Error calculating cashback:', error);
+		} catch (_error) {
 			// Silent fail as per requirements
 		}
 	},

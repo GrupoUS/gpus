@@ -35,9 +35,9 @@ export const run = internalMutation({
 				updates.push({ id: user._id, old: user.role, new: newRole });
 				if (!args.dryRun) {
 					// We can keep specific permissions if model allows, but here we just map role
-				await ctx.db.patch(user._id, { role: newRole });
+					await ctx.db.patch(user._id, { role: newRole });
+				}
 			}
-		}
 		}
 
 		return {

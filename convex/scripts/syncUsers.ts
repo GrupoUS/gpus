@@ -1,7 +1,29 @@
+import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
 import { action, internalMutation } from '../_generated/server';
+
+type SyncRole = 'admin' | 'sdr' | 'cs' | 'support';
+
+interface InternalScriptsApi {
+	syncUsers: {
+		syncUserInternal: FunctionReference<'mutation', 'internal'>;
+	};
+}
+
+interface InternalApi {
+	scripts: InternalScriptsApi;
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('../_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
+
+const internalScripts = getInternalApi().scripts;
+
+const normalizeRole = (role?: string): SyncRole =>
+	role && ['admin', 'sdr', 'cs', 'support'].includes(role) ? (role as SyncRole) : 'sdr';
 
 export const sync = action({
 	args: {
@@ -22,7 +44,7 @@ export const sync = action({
 		}
 		const response = await fetch(url.toString(), {
 			headers: {
-				Authorization: `Bearer ${clerkSecretKey}`,
+				authorization: `Bearer ${clerkSecretKey}`,
 				'Content-Type': 'application/json',
 			},
 		});
@@ -48,7 +70,7 @@ export const sync = action({
 				const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
 				const pictureUrl = user.image_url;
 				const organizationId = user.public_metadata?.organization_id || 'default';
-				const role = user.public_metadata?.role || 'sdr';
+				const role = normalizeRole(user.public_metadata?.role);
 
 				if (!email) {
 					stats.skipped++;
@@ -60,13 +82,13 @@ export const sync = action({
 				}
 
 				// Updated reference to internal.scripts.syncUsers
-				const result = await ctx.runMutation((internal as any).scripts.syncUsers.syncUserInternal, {
+				const result = await ctx.runMutation(internalScripts.syncUsers.syncUserInternal, {
 					clerkId,
 					email,
 					name,
 					pictureUrl,
-					organizationId: organizationId as string,
-					role: role as any,
+					organizationId,
+					role,
 				});
 
 				if (result === 'created') stats.created++;
@@ -100,13 +122,15 @@ export const syncUserInternal = internalMutation({
 			return 'exists';
 		}
 
+		const role = normalizeRole(args.role);
+
 		await ctx.db.insert('users', {
 			clerkId: args.clerkId,
 			name: args.name || 'Usuário',
 			email: args.email,
 			avatar: args.pictureUrl,
 			organizationId: args.organizationId,
-			role: (['admin', 'sdr', 'cs', 'support'].includes(args.role) ? args.role : 'sdr') as any,
+			role,
 			isActive: true,
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
