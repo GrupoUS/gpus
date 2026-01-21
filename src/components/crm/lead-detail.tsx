@@ -3,7 +3,7 @@ import type { Doc, Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Activity, Briefcase, Clock, Mail, MessageSquare, Phone, Send } from 'lucide-react';
+import { Activity, Briefcase, Clock, Layers, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
 import { ObjectionsTab } from './objections-tab';
@@ -28,15 +28,39 @@ interface LeadDetailProps {
 	onClose: () => void;
 }
 
+type TasksResult = {
+	page?: Array<{ completed?: boolean }>;
+};
+
+const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
+
+const apiAny = api as unknown as Record<string, Record<string, unknown>>;
+
+function formatCustomFieldValue(value: unknown) {
+	if (Array.isArray(value)) {
+		return value.join(', ');
+	}
+
+	if (typeof value === 'boolean') {
+		return value ? 'Sim' : 'Não';
+	}
+
+	return String(value);
+}
+
 export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const lead = useQuery((api as any).leads.getLead, leadId ? { leadId } : 'skip');
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const activities = useQuery((api as any).activities.listByLead, leadId ? { leadId } : 'skip');
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const tasks = useQuery((api as any).tasks.listTasks, leadId ? { leadId } : 'skip');
-	// biome-ignore lint/suspicious/noExplicitAny: Dynamic task type
-	const pendingTasksCount = tasks?.filter((t: any) => !t.completed).length ?? 0;
+	const lead = useQueryUnsafe(apiAny.leads.getLead, leadId ? { leadId } : 'skip') as
+		| Doc<'leads'>
+		| null
+		| undefined;
+	const activities = useQueryUnsafe(apiAny.activities.listByLead, leadId ? { leadId } : 'skip') as
+		| Doc<'activities'>[]
+		| undefined;
+	const tasksResult = useQueryUnsafe(
+		apiAny.tasks.listTasks,
+		leadId ? { leadId, paginationOpts: { numItems: 50, cursor: null } } : 'skip',
+	) as TasksResult | undefined;
+	const pendingTasksCount = tasksResult?.page?.filter((task) => !task.completed).length ?? 0;
 
 	const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
@@ -230,6 +254,11 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 }
 
 function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
+	const customFieldValues = useQuery(api.customFields.getCustomFieldValues, {
+		entityId: lead._id,
+		entityType: 'lead',
+	});
+
 	return (
 		<>
 			<section className="space-y-3">
@@ -293,6 +322,25 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					)}
 				</div>
 			</section>
+
+			{customFieldValues && customFieldValues.length > 0 && (
+				<section className="space-y-3">
+					<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
+						<Layers className="h-4 w-4" /> Informações Adicionais
+					</h3>
+					<div className="grid grid-cols-2 gap-4 text-sm">
+						{customFieldValues.map((cf) => (
+							<div className="rounded-lg border border-border/50 bg-card p-3" key={cf._id}>
+								<span className="mb-1 block text-muted-foreground text-xs">
+									{cf.fieldDefinition?.name}
+								</span>
+								<span className="font-medium">{formatCustomFieldValue(cf.value)}</span>
+							</div>
+						))}
+					</div>
+				</section>
+			)}
+
 			<ReferralSection leadId={lead._id} />
 			<TagSection leadId={lead._id} />
 		</>

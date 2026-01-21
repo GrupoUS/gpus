@@ -38,6 +38,7 @@ import { Route as AuthenticatedSettingsRolesRouteImport } from './routes/_authen
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings/integrations'
+import { Route as AuthenticatedSettingsCustomFieldsRouteImport } from './routes/_authenticated/settings/custom-fields'
 import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedReportsTeamRouteImport } from './routes/_authenticated/reports/team'
 import { Route as AuthenticatedReportsSalesRouteImport } from './routes/_authenticated/reports/sales'
@@ -216,6 +217,12 @@ const AuthenticatedSettingsIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsCustomFieldsRoute =
+  AuthenticatedSettingsCustomFieldsRouteImport.update({
+    id: '/custom-fields',
+    path: '/custom-fields',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsAppearanceRoute =
   AuthenticatedSettingsAppearanceRouteImport.update({
     id: '/appearance',
@@ -381,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/reports/team': typeof AuthenticatedReportsTeamRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
@@ -483,6 +492,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/sales': typeof AuthenticatedReportsSalesRoute
   '/_authenticated/reports/team': typeof AuthenticatedReportsTeamRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
+  '/_authenticated/settings/custom-fields': typeof AuthenticatedSettingsCustomFieldsRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/reports/sales'
     | '/reports/team'
     | '/settings/appearance'
+    | '/settings/custom-fields'
     | '/settings/integrations'
     | '/settings/notifications'
     | '/settings/profile'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/reports/sales'
     | '/reports/team'
     | '/settings/appearance'
+    | '/settings/custom-fields'
     | '/settings/integrations'
     | '/settings/notifications'
     | '/settings/profile'
@@ -638,6 +650,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/sales'
     | '/_authenticated/reports/team'
     | '/_authenticated/settings/appearance'
+    | '/_authenticated/settings/custom-fields'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/settings/profile'
@@ -876,6 +889,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/custom-fields': {
+      id: '/_authenticated/settings/custom-fields'
+      path: '/custom-fields'
+      fullPath: '/settings/custom-fields'
+      preLoaderRoute: typeof AuthenticatedSettingsCustomFieldsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/appearance': {
       id: '/_authenticated/settings/appearance'
       path: '/appearance'
@@ -1040,8 +1060,9 @@ interface AuthenticatedChatDepartmentRouteChildren {
 
 const AuthenticatedChatDepartmentRouteChildren: AuthenticatedChatDepartmentRouteChildren =
   {
-    AuthenticatedChatDepartmentIdRoute,
-    AuthenticatedChatDepartmentIndexRoute,
+    AuthenticatedChatDepartmentIdRoute: AuthenticatedChatDepartmentIdRoute,
+    AuthenticatedChatDepartmentIndexRoute:
+      AuthenticatedChatDepartmentIndexRoute,
   }
 
 const AuthenticatedChatDepartmentRouteWithChildren =
@@ -1057,7 +1078,7 @@ interface AuthenticatedChatRouteChildren {
 const AuthenticatedChatRouteChildren: AuthenticatedChatRouteChildren = {
   AuthenticatedChatDepartmentRoute:
     AuthenticatedChatDepartmentRouteWithChildren,
-  AuthenticatedChatIndexRoute,
+  AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
 }
 
 const AuthenticatedChatRouteWithChildren =
@@ -1071,9 +1092,9 @@ interface AuthenticatedFinancialRouteChildren {
 
 const AuthenticatedFinancialRouteChildren: AuthenticatedFinancialRouteChildren =
   {
-    AuthenticatedFinancialDashboardRoute,
-    AuthenticatedFinancialPaymentsRoute,
-    AuthenticatedFinancialReportsRoute,
+    AuthenticatedFinancialDashboardRoute: AuthenticatedFinancialDashboardRoute,
+    AuthenticatedFinancialPaymentsRoute: AuthenticatedFinancialPaymentsRoute,
+    AuthenticatedFinancialReportsRoute: AuthenticatedFinancialReportsRoute,
   }
 
 const AuthenticatedFinancialRouteWithChildren =
@@ -1087,7 +1108,8 @@ interface AuthenticatedMarketingCampaignIdRouteChildren {
 
 const AuthenticatedMarketingCampaignIdRouteChildren: AuthenticatedMarketingCampaignIdRouteChildren =
   {
-    AuthenticatedMarketingCampaignIdEditRoute,
+    AuthenticatedMarketingCampaignIdEditRoute:
+      AuthenticatedMarketingCampaignIdEditRoute,
   }
 
 const AuthenticatedMarketingCampaignIdRouteWithChildren =
@@ -1101,7 +1123,8 @@ interface AuthenticatedMarketingListasRouteChildren {
 
 const AuthenticatedMarketingListasRouteChildren: AuthenticatedMarketingListasRouteChildren =
   {
-    AuthenticatedMarketingListasListIdRoute,
+    AuthenticatedMarketingListasListIdRoute:
+      AuthenticatedMarketingListasListIdRoute,
   }
 
 const AuthenticatedMarketingListasRouteWithChildren =
@@ -1116,8 +1139,10 @@ interface AuthenticatedMarketingTemplatesRouteChildren {
 
 const AuthenticatedMarketingTemplatesRouteChildren: AuthenticatedMarketingTemplatesRouteChildren =
   {
-    AuthenticatedMarketingTemplatesTemplateIdRoute,
-    AuthenticatedMarketingTemplatesNovoRoute,
+    AuthenticatedMarketingTemplatesTemplateIdRoute:
+      AuthenticatedMarketingTemplatesTemplateIdRoute,
+    AuthenticatedMarketingTemplatesNovoRoute:
+      AuthenticatedMarketingTemplatesNovoRoute,
   }
 
 const AuthenticatedMarketingTemplatesRouteWithChildren =
@@ -1141,16 +1166,16 @@ const AuthenticatedMarketingRouteChildren: AuthenticatedMarketingRouteChildren =
   {
     AuthenticatedMarketingCampaignIdRoute:
       AuthenticatedMarketingCampaignIdRouteWithChildren,
-    AuthenticatedMarketingCampanhasRoute,
-    AuthenticatedMarketingContatosRoute,
-    AuthenticatedMarketingDashboardRoute,
-    AuthenticatedMarketingLeadsRoute,
+    AuthenticatedMarketingCampanhasRoute: AuthenticatedMarketingCampanhasRoute,
+    AuthenticatedMarketingContatosRoute: AuthenticatedMarketingContatosRoute,
+    AuthenticatedMarketingDashboardRoute: AuthenticatedMarketingDashboardRoute,
+    AuthenticatedMarketingLeadsRoute: AuthenticatedMarketingLeadsRoute,
     AuthenticatedMarketingListasRoute:
       AuthenticatedMarketingListasRouteWithChildren,
-    AuthenticatedMarketingNovaRoute,
+    AuthenticatedMarketingNovaRoute: AuthenticatedMarketingNovaRoute,
     AuthenticatedMarketingTemplatesRoute:
       AuthenticatedMarketingTemplatesRouteWithChildren,
-    AuthenticatedMarketingIndexRoute,
+    AuthenticatedMarketingIndexRoute: AuthenticatedMarketingIndexRoute,
   }
 
 const AuthenticatedMarketingRouteWithChildren =
@@ -1164,8 +1189,8 @@ interface AuthenticatedReportsRouteChildren {
 }
 
 const AuthenticatedReportsRouteChildren: AuthenticatedReportsRouteChildren = {
-  AuthenticatedReportsSalesRoute,
-  AuthenticatedReportsTeamRoute,
+  AuthenticatedReportsSalesRoute: AuthenticatedReportsSalesRoute,
+  AuthenticatedReportsTeamRoute: AuthenticatedReportsTeamRoute,
 }
 
 const AuthenticatedReportsRouteWithChildren =
@@ -1173,6 +1198,7 @@ const AuthenticatedReportsRouteWithChildren =
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAppearanceRoute: typeof AuthenticatedSettingsAppearanceRoute
+  AuthenticatedSettingsCustomFieldsRoute: typeof AuthenticatedSettingsCustomFieldsRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
@@ -1185,16 +1211,20 @@ interface AuthenticatedSettingsRouteChildren {
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
-  AuthenticatedSettingsAppearanceRoute,
-  AuthenticatedSettingsIntegrationsRoute,
-  AuthenticatedSettingsNotificationsRoute,
-  AuthenticatedSettingsProfileRoute,
-  AuthenticatedSettingsRolesRoute,
-  AuthenticatedSettingsSecurityRoute,
-  AuthenticatedSettingsTagsRoute,
-  AuthenticatedSettingsTeamRoute,
-  AuthenticatedSettingsTemplatesRoute,
-  AuthenticatedSettingsIndexRoute,
+  AuthenticatedSettingsAppearanceRoute: AuthenticatedSettingsAppearanceRoute,
+  AuthenticatedSettingsCustomFieldsRoute:
+    AuthenticatedSettingsCustomFieldsRoute,
+  AuthenticatedSettingsIntegrationsRoute:
+    AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsRolesRoute: AuthenticatedSettingsRolesRoute,
+  AuthenticatedSettingsSecurityRoute: AuthenticatedSettingsSecurityRoute,
+  AuthenticatedSettingsTagsRoute: AuthenticatedSettingsTagsRoute,
+  AuthenticatedSettingsTeamRoute: AuthenticatedSettingsTeamRoute,
+  AuthenticatedSettingsTemplatesRoute: AuthenticatedSettingsTemplatesRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =
@@ -1207,7 +1237,7 @@ interface AuthenticatedStudentsRouteChildren {
 }
 
 const AuthenticatedStudentsRouteChildren: AuthenticatedStudentsRouteChildren = {
-  AuthenticatedStudentsStudentIdRoute,
+  AuthenticatedStudentsStudentIdRoute: AuthenticatedStudentsStudentIdRoute,
 }
 
 const AuthenticatedStudentsRouteWithChildren =
@@ -1229,14 +1259,14 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
-  AuthenticatedCrmRoute,
-  AuthenticatedDashboardRoute,
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancialRoute: AuthenticatedFinancialRouteWithChildren,
   AuthenticatedMarketingRoute: AuthenticatedMarketingRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRouteWithChildren,
-  AuthenticatedAdminAsaasIndexRoute,
+  AuthenticatedAdminAsaasIndexRoute: AuthenticatedAdminAsaasIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -1244,15 +1274,15 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute,
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  SignInSplatRoute,
-  SignInSsoCallbackRoute,
-  SignUpSplatRoute,
-  SignUpSsoCallbackRoute,
-  CapturaIndexRoute,
-  SignInIndexRoute,
-  SignUpIndexRoute,
+  SignInSplatRoute: SignInSplatRoute,
+  SignInSsoCallbackRoute: SignInSsoCallbackRoute,
+  SignUpSplatRoute: SignUpSplatRoute,
+  SignUpSsoCallbackRoute: SignUpSsoCallbackRoute,
+  CapturaIndexRoute: CapturaIndexRoute,
+  SignInIndexRoute: SignInIndexRoute,
+  SignUpIndexRoute: SignUpIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

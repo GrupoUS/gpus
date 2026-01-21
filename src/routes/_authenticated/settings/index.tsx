@@ -4,6 +4,7 @@ import {
 	ChevronRight,
 	FileText,
 	Key,
+	ListPlus,
 	type LucideProps,
 	Palette,
 	Plug,
@@ -256,6 +257,14 @@ function SettingsPage() {
 						Icon={Palette}
 						iconColorClass="text-green-500"
 						title="Aparência"
+					/>
+					<SettingItem
+						colorClass="from-green-500/20 to-green-600/20"
+						description="Configure campos customizados"
+						href="/settings/custom-fields"
+						Icon={ListPlus}
+						iconColorClass="text-green-500"
+						title="Campos Personalizados"
 					/>
 				</SettingSection>
 

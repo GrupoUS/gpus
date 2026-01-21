@@ -1,186 +1,211 @@
 import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
-import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
+import { format, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarDays, CheckSquare, MoreHorizontal, Square, Trash2, User } from 'lucide-react';
+import { Calendar, CheckCircle2, Trash2, User } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-interface Task {
-	_id: Id<'tasks'>;
-	description: string;
-	dueDate?: number;
-	completed: boolean;
-	assignedTo?: Id<'users'>;
-	mentionedUserIds?: Id<'users'>[];
-	// biome-ignore lint/suspicious/noExplicitAny: Inferred types from join
-	assignedToUser?: any;
-	// biome-ignore lint/suspicious/noExplicitAny: Inferred types from join
-	mentionedUsers?: any[];
-	createdAt: number;
-}
-
 interface TaskListProps {
-	tasks: Task[];
-	filter: 'all' | 'pending' | 'completed';
+	tasks: any[]; // Using any to avoid complex nested types, but effectively Doc<'tasks'> & relations
+	isLoading: boolean;
+	onEdit?: (task: any) => void;
 }
 
-export function TaskList({ tasks, filter }: TaskListProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const completeTask = useMutation((api as any).tasks.completeTask);
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const deleteTask = useMutation((api as any).tasks.deleteTask);
+export function TaskList({ tasks, isLoading, onEdit: _onEdit }: TaskListProps) {
+	const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
-	const filteredTasks = tasks.filter((task) => {
+	const filteredTasks = tasks?.filter((task) => {
 		if (filter === 'pending') return !task.completed;
 		if (filter === 'completed') return task.completed;
 		return true;
 	});
 
-	const getBadgeVariant = (completed: boolean, dueDate: number) => {
-		if (completed) return 'outline';
-		if (isPast(dueDate) && !isToday(dueDate)) return 'destructive';
-		return 'secondary';
-	};
+	if (isLoading) {
+		return (
+			<div className="space-y-2">
+				{[1, 2, 3].map((i) => (
+					<div className="h-20 animate-pulse rounded-lg bg-muted/20" key={i} />
+				))}
+			</div>
+		);
+	}
 
-	const handleComplete = async (taskId: Id<'tasks'>) => {
-		try {
-			await completeTask({ taskId });
-			toast.success('Tarefa concluída!');
-		} catch (_error) {
-			toast.error('Erro ao concluir tarefa.');
-		}
-	};
-
-	const handleDelete = async (taskId: Id<'tasks'>) => {
-		// TODO: Implement custom confirmation dialog
-		// Biome flags confirm() usage, skipping for MVP to ensure build passes
-		// if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return;
-		try {
-			await deleteTask({ taskId });
-			toast.success('Tarefa excluída!');
-		} catch (_error) {
-			toast.error('Erro ao excluir tarefa.');
-		}
-	};
-
-	const getPriorityClass = (dueDate?: number, completed?: boolean) => {
-		if (completed || !dueDate) return 'border-l-transparent bg-card';
-
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		const due = new Date(dueDate);
-		due.setHours(0, 0, 0, 0);
-
-		if (due < today) return 'border-l-destructive bg-destructive/5'; // Overdue
-		if (due.getTime() === today.getTime())
-			return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/10'; // Today
-		return 'border-l-green-500'; // Future
-	};
-
-	if (filteredTasks.length === 0) {
-		return <div className="py-8 text-center text-muted-foreground">Nenhuma tarefa encontrada.</div>;
+	if (!tasks || tasks.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+				<CheckCircle2 className="mb-2 h-10 w-10 opacity-20" />
+				<p>Nenhuma tarefa encontrada.</p>
+			</div>
+		);
 	}
 
 	return (
-		<div className="space-y-3">
-			{filteredTasks.map((task) => (
-				<div
-					className={cn(
-						'group relative flex items-start gap-3 rounded-lg border p-3 shadow-sm transition-all',
-						getPriorityClass(task.dueDate, task.completed),
-						task.completed && 'opacity-60 grayscale',
-						!task.completed && task.dueDate && 'border-l-4',
-					)}
-					key={task._id}
+		<div className="space-y-4">
+			<div className="flex items-center gap-2">
+				<Button
+					className="h-7 text-xs"
+					onClick={() => setFilter('all')}
+					size="sm"
+					variant={filter === 'all' ? 'secondary' : 'ghost'}
 				>
-					<Button
-						className="mt-0.5 h-5 w-5 shrink-0 p-0 text-muted-foreground hover:text-primary"
-						disabled={task.completed}
-						onClick={() => handleComplete(task._id)}
-						variant="ghost"
-					>
-						{task.completed ? (
-							<CheckSquare className="h-5 w-5 text-primary" />
-						) : (
-							<Square className="h-5 w-5" />
-						)}
-					</Button>
+					Todas ({tasks.length})
+				</Button>
+				<Button
+					className="h-7 text-xs"
+					onClick={() => setFilter('pending')}
+					size="sm"
+					variant={filter === 'pending' ? 'secondary' : 'ghost'}
+				>
+					Pendentes ({tasks.filter((t) => !t.completed).length})
+				</Button>
+				<Button
+					className="h-7 text-xs"
+					onClick={() => setFilter('completed')}
+					size="sm"
+					variant={filter === 'completed' ? 'secondary' : 'ghost'}
+				>
+					Concluídas ({tasks.filter((t) => t.completed).length})
+				</Button>
+			</div>
 
-					<div className="flex-1 space-y-1">
-						<p
+			<div className="space-y-2">
+				{filteredTasks?.length === 0 ? (
+					<div className="py-8 text-center text-muted-foreground text-sm">
+						Nenhuma tarefa nesta categoria.
+					</div>
+				) : (
+					filteredTasks?.map((task) => <TaskItem key={task._id} task={task} />)
+				)}
+			</div>
+		</div>
+	);
+}
+
+function TaskItem({ task }: { task: any }) {
+	const completeTask = useMutation(api.tasks.completeTask);
+	const deleteTask = useMutation(api.tasks.deleteTask);
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const isOverdue =
+		task.dueDate && isPast(task.dueDate) && !isToday(task.dueDate) && !task.completed;
+	const isDueToday = task.dueDate && isToday(task.dueDate) && !task.completed;
+
+	const handleToggle = async () => {
+		if (task.completed) return; // Uncomplete not implemented yet
+		try {
+			setIsProcessing(true);
+			await completeTask({ taskId: task._id });
+			toast.success('Tarefa concluída!');
+		} catch (_err) {
+			toast.error('Erro ao atualizar tarefa');
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	const handleDelete = async () => {
+		// biome-ignore lint: User confirmation for destructive action is acceptable
+		if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+		try {
+			setIsProcessing(true);
+			await deleteTask({ taskId: task._id });
+			toast.success('Tarefa excluída');
+		} catch (_err) {
+			toast.error('Erro ao excluir tarefa');
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	return (
+		<div
+			className={cn(
+				'group relative flex items-start gap-3 rounded-lg border bg-card p-3 transition-all hover:shadow-sm',
+				isOverdue && 'border-l-4 border-l-red-500 bg-red-50/50',
+				isDueToday && 'border-l-4 border-l-yellow-500 bg-yellow-50/50',
+				!(isOverdue || isDueToday || task.completed) && 'border-l-4 border-l-green-500',
+				task.completed && 'bg-muted/50 opacity-70',
+			)}
+		>
+			<button
+				className={cn(
+					'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+					task.completed
+						? 'border-primary bg-primary text-primary-foreground'
+						: 'border-muted-foreground hover:border-primary',
+				)}
+				disabled={isProcessing || task.completed}
+				onClick={handleToggle}
+				type="button"
+			>
+				{task.completed ? (
+					<CheckCircle2 className="h-3.5 w-3.5" />
+				) : (
+					<div className="h-3.5 w-3.5" />
+				)}
+			</button>
+
+			<div className="flex-1 space-y-1">
+				<p
+					className={cn(
+						'font-medium text-sm leading-none',
+						task.completed && 'text-muted-foreground line-through',
+					)}
+				>
+					{task.description}
+				</p>
+
+				<div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
+					{task.dueDate && (
+						<span
 							className={cn(
-								'text-sm leading-relaxed',
-								task.completed && 'text-muted-foreground line-through',
+								'flex items-center gap-1',
+								isOverdue && 'font-medium text-red-600',
+								isDueToday && 'font-medium text-yellow-600',
 							)}
 						>
-							{task.description}
-						</p>
+							<Calendar className="h-3 w-3" />
+							{format(task.dueDate, "d 'de' MMM", { locale: ptBR })}
+						</span>
+					)}
 
-						<div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
-							{task.dueDate && (
-								<Badge
-									className="gap-1 font-normal"
-									variant={getBadgeVariant(task.completed, task.dueDate)}
-								>
-									<CalendarDays className="h-3 w-3" />
-									{format(task.dueDate, "d 'de' MMM", { locale: ptBR })}
-									{!task.completed && isToday(task.dueDate) && ' (Hoje)'}
-								</Badge>
-							)}
+					{task.assignedToUser && (
+						<span
+							className="flex items-center gap-1"
+							title={`Atribuído a: ${task.assignedToUser.name}`}
+						>
+							<User className="h-3 w-3" />
+							{task.assignedToUser.name.split(' ')[0]}
+						</span>
+					)}
 
-							{task.assignedToUser && (
-								<span className="flex items-center gap-1">
-									<User className="h-3 w-3" />
-									{task.assignedToUser.name.split(' ')[0]}
+					{task.mentionedUsers && task.mentionedUsers.length > 0 && (
+						<div className="flex gap-1">
+							{task.mentionedUsers.map((u: any) => (
+								<span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]" key={u._id}>
+									@{u.name.split(' ')[0]}
 								</span>
-							)}
-
-							{task.mentionedUsers && task.mentionedUsers.length > 0 && (
-								<div className="flex gap-1">
-									{task.mentionedUsers.map((u) => (
-										<span className="text-primary/80" key={u._id}>
-											@{u.name.split(' ')[0]}
-										</span>
-									))}
-								</div>
-							)}
-
-							<span className="ml-auto text-[10px] opacity-70">
-								{formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ptBR })}
-							</span>
+							))}
 						</div>
-					</div>
-
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-								size="icon"
-								variant="ghost"
-							>
-								<MoreHorizontal className="h-4 w-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem className="text-destructive" onClick={() => handleDelete(task._id)}>
-								<Trash2 className="mr-2 h-4 w-4" />
-								Excluir
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+					)}
 				</div>
-			))}
+			</div>
+
+			<div className="opacity-0 transition-opacity group-hover:opacity-100">
+				<Button
+					className="h-6 w-6 text-muted-foreground hover:text-destructive"
+					disabled={isProcessing}
+					onClick={handleDelete}
+					size="icon"
+					variant="ghost"
+				>
+					<Trash2 className="h-3.5 w-3.5" />
+				</Button>
+			</div>
 		</div>
 	);
 }

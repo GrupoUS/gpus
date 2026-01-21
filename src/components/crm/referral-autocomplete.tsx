@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { useQuery } from 'convex/react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
@@ -18,62 +19,84 @@ import { cn } from '@/lib/utils';
 
 interface ReferralAutocompleteProps {
 	value?: string;
-	onChange: (value?: string) => void;
+	onChange: (value: string) => void;
+	disabled?: boolean;
 }
 
 interface LeadOption {
-	_id: string;
+	id: string;
 	name: string;
-	phone?: string;
+	phone: string;
+	email?: string;
 }
 
-export function ReferralAutocomplete({ value, onChange }: ReferralAutocompleteProps) {
+export function ReferralAutocomplete({ value, onChange, disabled }: ReferralAutocompleteProps) {
 	const [open, setOpen] = useState(false);
-	const [query, setQuery] = useState('');
-	const [debouncedQuery] = useDebounce(query, 500);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [debouncedQuery] = useDebounce(searchQuery, 300);
 
 	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { leads: { searchLeads: unknown; getLead: unknown } };
-	const results = useQueryUnsafe(apiAny.leads.searchLeads, {
+	const apiAny = api as unknown as { leads: { getLead: unknown; search: unknown } };
+
+	// Fetch selected lead explicitly to show name if value is set but not in search results
+	const selectedLead = useQueryUnsafe(
+		apiAny.leads.getLead,
+		value ? { leadId: value as Id<'leads'> } : 'skip',
+	) as LeadOption | null | undefined;
+
+	// Search leads
+	const searchResults = useQueryUnsafe(apiAny.leads.search, {
 		query: debouncedQuery,
+		limit: 10,
 	}) as LeadOption[] | undefined;
-	const selectedLead = useQueryUnsafe(apiAny.leads.getLead, value ? { leadId: value } : 'skip') as
-		| LeadOption
-		| undefined;
+
+	let displayValue = 'Selecione quem indicou (opcional)';
+	if (value && !selectedLead) {
+		displayValue = 'Carregando...';
+	} else if (selectedLead) {
+		displayValue = `${selectedLead.name} (${selectedLead.phone})`;
+	}
 
 	return (
 		<Popover onOpenChange={setOpen} open={open}>
 			<PopoverTrigger asChild>
 				<Button
 					aria-expanded={open}
-					className="w-full justify-between"
+					className="w-full justify-between font-normal"
+					disabled={disabled}
 					role="combobox"
 					variant="outline"
 				>
-					{selectedLead ? selectedLead.name : 'Selecione quem indicou...'}
+					<span className={cn('truncate', !value && 'text-muted-foreground')}>{displayValue}</span>
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[300px] p-0">
+			<PopoverContent align="start" className="w-[300px] p-0">
 				<Command shouldFilter={false}>
-					<CommandInput onValueChange={setQuery} placeholder="Buscar por nome..." value={query} />
+					<CommandInput
+						onValueChange={setSearchQuery}
+						placeholder="Buscar por nome ou telefone..."
+						value={searchQuery}
+					/>
 					<CommandList>
-						<CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+						<CommandEmpty>
+							{debouncedQuery.length < 2 ? 'Digite para buscar...' : 'Nenhum lead encontrado.'}
+						</CommandEmpty>
 						<CommandGroup>
-							{results?.map((lead) => (
+							{searchResults?.map((lead) => (
 								<CommandItem
-									key={lead._id}
-									onSelect={() => {
-										onChange(lead._id);
+									key={lead.id}
+									onSelect={(currentValue) => {
+										onChange(currentValue === value ? '' : currentValue);
 										setOpen(false);
 									}}
-									value={lead.name}
+									value={lead.id}
 								>
 									<Check
-										className={cn('mr-2 h-4 w-4', value === lead._id ? 'opacity-100' : 'opacity-0')}
+										className={cn('mr-2 h-4 w-4', value === lead.id ? 'opacity-100' : 'opacity-0')}
 									/>
 									<div className="flex flex-col">
-										<span>{lead.name}</span>
+										<span className="font-medium">{lead.name}</span>
 										<span className="text-muted-foreground text-xs">{lead.phone}</span>
 									</div>
 								</CommandItem>

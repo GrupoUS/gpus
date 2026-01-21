@@ -99,7 +99,30 @@ export const listTasks = query({
 			tasksQuery = tasksQuery.filter((q: any) => q.eq(q.field('completed'), args.completed));
 		}
 
-		return await tasksQuery.paginate(args.paginationOpts);
+		const result = await tasksQuery.paginate(args.paginationOpts);
+
+		// Hydrate assignedToUser and mentionedUsers for each task
+		const tasksWithUsers = await Promise.all(
+			// biome-ignore lint/suspicious/noExplicitAny: Paginated result type from Convex
+			result.page.map(async (task: any) => {
+				const assignedToUser = task.assignedTo ? await ctx.db.get(task.assignedTo) : null;
+				const mentionedUsers = task.mentionedUserIds
+					? await Promise.all(task.mentionedUserIds.map((id: Id<'users'>) => ctx.db.get(id)))
+					: [];
+
+				return {
+					...task,
+					assignedToUser,
+					mentionedUsers: mentionedUsers.filter((u) => u !== null),
+				};
+			}),
+		);
+
+		return {
+			page: tasksWithUsers,
+			isDone: result.isDone,
+			continueCursor: result.continueCursor,
+		};
 	},
 });
 

@@ -176,13 +176,14 @@ export const getDashboard = query({
 
 		const conversionTrend = calculateTrend(conversionRate, previousConversionRate);
 
-		// 2. Revenue & Financial Summary
+		// 2. Revenue & Financial Summary (scoped when vendor filtering is active)
 		const financialMetrics = await ctx.db
 			.query('financialMetrics')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.first();
 
-		const revenue = financialMetrics?.totalReceived || 0;
+		// For vendor views, revenue is computed from scoped enrollments below, not org-wide metrics
+		// This ensures headline revenue matches vendor-specific trend
 
 		// Collect all leads once to get their IDs for enrollment scoping
 		const allCurrentLeads = await collectLeads();
@@ -220,8 +221,22 @@ export const getDashboard = query({
 
 		const revenueTrend = calculateTrend(currentEnrollmentRevenue, previousRevenue);
 
-		// 3. Messages & Response Time
-		const collectMessages = async () => ctx.db.query('messages').collect();
+		// 3. Messages & Response Time (scoped by vendor if effectiveUserId is set)
+		// Get lead IDs for scoping messages/conversations
+		const scopedLeadIds = new Set(allCurrentLeads.map((l) => l._id));
+
+		const collectMessages = async () => {
+			const allMessages = await ctx.db.query('messages').collect();
+			// If effectiveUserId is set, filter to messages belonging to conversations linked to scoped leads
+			if (effectiveUserId) {
+				const allConversations = await ctx.db.query('conversations').collect();
+				const scopedConversationIds = new Set(
+					allConversations.filter((c) => c.leadId && scopedLeadIds.has(c.leadId)).map((c) => c._id),
+				);
+				return allMessages.filter((m) => scopedConversationIds.has(m.conversationId));
+			}
+			return allMessages;
+		};
 		const currentMessages =
 			args.period === 'all'
 				? await collectMessages()
@@ -229,12 +244,18 @@ export const getDashboard = query({
 
 		const totalMessages = currentMessages.length;
 
-		// Avg Response Time (from Conversations)
-		const collectConversations = async () =>
-			ctx.db
+		// Avg Response Time (from Conversations, scoped by vendor)
+		const collectConversations = async () => {
+			const allConversations = await ctx.db
 				.query('conversations')
 				.filter((c) => c.neq(c.field('firstResponseAt'), undefined))
 				.collect();
+			// If effectiveUserId is set, filter to conversations linked to scoped leads
+			if (effectiveUserId) {
+				return allConversations.filter((c) => c.leadId && scopedLeadIds.has(c.leadId));
+			}
+			return allConversations;
+		};
 
 		const currentConversations =
 			args.period === 'all'
@@ -276,14 +297,49 @@ export const getDashboard = query({
 			leadsByProduct[prod] = (leadsByProduct[prod] || 0) + 1;
 		});
 
-		// 6. Daily Metrics for Charts
+		// 6. Daily Metrics for Charts (scoped by vendor if effectiveUserId is set)
 		const dailyMetricsData = await ctx.db.query('dailyMetrics').collect();
-		const dailyMetrics = dailyMetricsData
+		// If effectiveUserId is set, filter daily metrics to those with matching userId (if field exists)
+		// Otherwise fall back to org-wide metrics. Note: dailyMetrics may not have userId field,
+		// in which case we return empty array for vendor views to maintain consistency.
+		let filteredDailyMetrics = dailyMetricsData;
+		if (effectiveUserId) {
+			// Check if dailyMetrics supports userId filtering
+			filteredDailyMetrics = dailyMetricsData.filter(
+				(m) => 'userId' in m && m.userId === effectiveUserId,
+			);
+		}
+		const dailyMetrics = filteredDailyMetrics
 			.filter((m) => (args.period === 'all' ? true : new Date(m.date).getTime() >= startDate))
 			.sort((a, b) => a.date.localeCompare(b.date));
 
 		// Round trend values to one decimal place for readability
 		const roundTrend = (value: number) => Math.round(value * 10) / 10;
+
+		// Compute scoped revenue: use enrollment revenue when vendor filtering is active
+		// Otherwise use org-wide financial metrics
+		const scopedRevenue = effectiveUserId
+			? currentEnrollmentRevenue
+			: financialMetrics?.totalReceived || 0;
+
+		// Financial summary: null for vendor views since it's org-wide data
+		let scopedFinancialSummary: {
+			totalReceived: number;
+			totalPending: number;
+			totalOverdue: number;
+			totalValue: number;
+			lastSync: number;
+		} | null = null;
+
+		if (!effectiveUserId && financialMetrics) {
+			scopedFinancialSummary = {
+				totalReceived: financialMetrics.totalReceived,
+				totalPending: financialMetrics.totalPending,
+				totalOverdue: financialMetrics.totalOverdue,
+				totalValue: financialMetrics.totalValue,
+				lastSync: financialMetrics.updatedAt,
+			};
+		}
 
 		return {
 			totalLeads,
@@ -291,17 +347,9 @@ export const getDashboard = query({
 			leadsThisMonth,
 			conversionRate,
 			conversionTrend: roundTrend(conversionTrend),
-			revenue,
+			revenue: scopedRevenue,
 			revenueTrend: roundTrend(revenueTrend),
-			financialSummary: financialMetrics
-				? {
-						totalReceived: financialMetrics.totalReceived,
-						totalPending: financialMetrics.totalPending,
-						totalOverdue: financialMetrics.totalOverdue,
-						totalValue: financialMetrics.totalValue,
-						lastSync: financialMetrics.updatedAt,
-					}
-				: null,
+			financialSummary: scopedFinancialSummary,
 			totalMessages,
 			conversationsCount,
 			avgResponseTime,

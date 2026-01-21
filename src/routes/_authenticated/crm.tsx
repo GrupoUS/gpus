@@ -63,7 +63,20 @@ function CRMPage() {
 		leadsProducts = filters.products;
 	}
 
-	// Break type inference chain to avoid "Type instantiation is excessively deep" error
+	// Query for tab badge counts: UNFILTERED by product to show accurate totals across all tabs
+	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
+	const allLeadsForCounts = useQuery((api as any).leads.listLeads, {
+		paginationOpts: { numItems: 1000, cursor: null },
+		search: filters.search || undefined,
+		stages: filters.stages.length > 0 ? filters.stages : undefined,
+		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
+		// No products filter here - this is used ONLY for badge counts
+		products: undefined,
+		source: filters.source.length > 0 ? filters.source : undefined,
+		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
+	}) as ListLeadsResult | undefined;
+
+	// Query for Kanban view: FILTERED by selected product tab
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
 	const leads = useQuery((api as any).leads.listLeads, {
 		paginationOpts: { numItems: 1000, cursor: null },
@@ -97,13 +110,13 @@ function CRMPage() {
 			temperature: l.temperature,
 		})) ?? [];
 
-	// Calculate counts from loaded page (Note: This is approximate if paginated,
-	// ideally should be a separate aggregation query)
+	// Calculate counts from UNFILTERED lead set for accurate badge totals
+	const allLeadsForCountsPage = allLeadsForCounts?.page ?? [];
 	const counts = {
-		all: formattedLeads.length,
-		otb: formattedLeads.filter((l) => l.interestedProduct === 'otb').length,
-		black_neon: formattedLeads.filter((l) => l.interestedProduct === 'black_neon').length,
-		trintae3: formattedLeads.filter((l) => l.interestedProduct === 'trintae3').length,
+		all: allLeadsForCountsPage.length,
+		otb: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'otb').length,
+		black_neon: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'black_neon').length,
+		trintae3: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'trintae3').length,
 	};
 
 	return (

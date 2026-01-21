@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
@@ -7,6 +8,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { CustomFieldsSection } from './custom-fields-section';
+import { ReferralAutocomplete } from './referral-autocomplete';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -100,6 +103,8 @@ const leadFormSchema = z
 		mainDesire: z.string().max(500).optional(),
 		// Referrals
 		referredById: z.string().optional(),
+		// Custom Fields
+		customFields: z.record(z.string(), z.any()).optional(),
 	})
 	.refine(
 		(data) => {
@@ -111,8 +116,11 @@ const leadFormSchema = z
 
 export function LeadForm() {
 	const [open, setOpen] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-	const createLead = useMutation((api as any).leads.createLead);
+	const useMutationUnsafe = useMutation as unknown as (
+		mutation: unknown,
+	) => (args: unknown) => Promise<unknown>;
+	const apiAny = api as unknown as Record<string, Record<string, unknown>>;
+	const createLead = useMutationUnsafe(apiAny.leads.createLead);
 
 	const form = useForm<z.infer<typeof leadFormSchema>>({
 		resolver: zodResolver(leadFormSchema),
@@ -136,6 +144,7 @@ export function LeadForm() {
 		},
 	});
 
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Form submission logic is naturally complex
 	const onSubmit = async (values: z.infer<typeof leadFormSchema>) => {
 		try {
 			// Clean up optional empty strings to undefined for Convex compatibility
@@ -159,6 +168,16 @@ export function LeadForm() {
 				...(values.currentRevenue && { currentRevenue: values.currentRevenue }),
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
+				...(values.referredById && { referredById: values.referredById }),
+
+				// Custom Fields Mapping
+				customFieldValues: values.customFields
+					? Object.entries(values.customFields).map(([key, value]) => ({
+							customFieldId: key as Id<'customFields'>,
+							value,
+						}))
+					: undefined,
+
 				lgpdConsent: true, // Manual entry implies consent or legitimate interest
 				whatsappConsent: true,
 			};
@@ -255,6 +274,21 @@ export function LeadForm() {
 										<FormLabel>Email (Opcional)</FormLabel>
 										<FormControl>
 											<Input placeholder="Ex: joao@email.com" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Indicação */}
+							<FormField
+								control={form.control}
+								name="referredById"
+								render={({ field }) => (
+									<FormItem className="flex flex-col">
+										<FormLabel>Indicado por (Opcional)</FormLabel>
+										<FormControl>
+											<ReferralAutocomplete onChange={field.onChange} value={field.value} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -527,6 +561,11 @@ export function LeadForm() {
 								</FormItem>
 							)}
 						/>
+
+						{/* Custom Fields Section */}
+						<div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+							<CustomFieldsSection control={form.control} entityType="lead" />
+						</div>
 
 						<div className="flex justify-end pt-4">
 							<Button

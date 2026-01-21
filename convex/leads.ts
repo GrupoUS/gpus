@@ -1,9 +1,14 @@
-import { type PaginationOptions, paginationOptsValidator } from 'convex/server';
+import {
+	type FunctionReference,
+	type PaginationOptions,
+	paginationOptsValidator,
+	type SchedulableFunctionReference,
+} from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
 import type { Doc, Id } from './_generated/dataModel';
 import { internalMutation, internalQuery, mutation, query } from './_generated/server';
+import { setCustomFieldValueInternal } from './customFields';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
@@ -17,6 +22,23 @@ interface ListLeadsArgs {
 	source?: string[];
 	tags?: Id<'tags'>[];
 }
+
+interface InternalApi {
+	emailMarketing: {
+		syncLeadAsContactInternal: SchedulableFunctionReference;
+	};
+	referrals: {
+		calculateCashback: SchedulableFunctionReference;
+	};
+	tasks: {
+		internalCreateTask: FunctionReference<'mutation', 'internal'>;
+	};
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('./_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
 
 // Common args for lead creation/update
 const leadArgs = {
@@ -40,6 +62,16 @@ const leadArgs = {
 	utmMedium: v.optional(v.string()),
 	utmContent: v.optional(v.string()),
 	utmTerm: v.optional(v.string()),
+
+	// Custom Fields
+	customFieldValues: v.optional(
+		v.array(
+			v.object({
+				customFieldId: v.id('customFields'),
+				value: v.any(),
+			}),
+		),
+	),
 
 	sourceDetail: v.optional(v.string()),
 
@@ -93,8 +125,7 @@ export const listLeads = query({
 			(args.stages?.length === 1 ? args.stages[0] : null) ??
 			(args.stage && args.stage !== 'all' ? args.stage : null);
 
-		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
-		let leadQuery: any = singleStage
+		let leadQuery = singleStage
 			? ctx.db
 					.query('leads')
 					.withIndex('by_organization_stage', (q) =>
@@ -117,15 +148,12 @@ export const listLeads = query({
 					.withIndex('by_organization', (q) => q.eq('organizationId', organizationId));
 
 		// Apply filters before pagination to preserve page size guarantees
-		// biome-ignore lint/suspicious/noExplicitAny: Complex query builder type
-		leadQuery = leadQuery.filter((q: any) => {
-			const filters: ReturnType<typeof q.eq | typeof q.or | typeof q.and>[] = [];
+		leadQuery = leadQuery.filter((q) => {
+			const filters: ReturnType<typeof q.eq>[] = [];
 
 			// Filter by multiple stages if applicable (when not already filtered by index)
 			if (!singleStage && args.stages && args.stages.length > 0) {
-				filters.push(
-					q.or(...(args.stages as string[]).map((s: string) => q.eq(q.field('stage'), s))),
-				);
+				filters.push(q.or(...args.stages.map((stage) => q.eq(q.field('stage'), stage))));
 			} else if (!singleStage && args.stage && args.stage !== 'all') {
 				filters.push(q.eq(q.field('stage'), args.stage));
 			}
@@ -133,9 +161,7 @@ export const listLeads = query({
 			// Filter by temperature
 			if (args.temperature && args.temperature.length > 0) {
 				filters.push(
-					q.or(
-						...(args.temperature as string[]).map((t: string) => q.eq(q.field('temperature'), t)),
-					),
+					q.or(...args.temperature.map((temperature) => q.eq(q.field('temperature'), temperature))),
 				);
 			}
 
@@ -144,20 +170,14 @@ export const listLeads = query({
 				filters.push(
 					q.and(
 						q.neq(q.field('interestedProduct'), undefined),
-						q.or(
-							...(args.products as string[]).map((p: string) =>
-								q.eq(q.field('interestedProduct'), p),
-							),
-						),
+						q.or(...args.products.map((product) => q.eq(q.field('interestedProduct'), product))),
 					),
 				);
 			}
 
 			// Filter by source
 			if (args.source && args.source.length > 0) {
-				filters.push(
-					q.or(...(args.source as string[]).map((s: string) => q.eq(q.field('source'), s))),
-				);
+				filters.push(q.or(...args.source.map((source) => q.eq(q.field('source'), source))));
 			}
 
 			return filters.length > 0 ? q.and(...filters) : true;
@@ -264,10 +284,13 @@ export const createLead = mutation({
 			}
 		}
 
+		// Destructure customFieldValues to avoid spreading into leads document
+		const { customFieldValues, ...leadData } = args;
+
 		const leadId = await ctx.db.insert('leads', {
 			stage: 'novo',
 			temperature: 'frio',
-			...args,
+			...leadData,
 			lgpdConsent: args.lgpdConsent ?? false,
 			whatsappConsent: args.whatsappConsent ?? false,
 			organizationId,
@@ -275,6 +298,22 @@ export const createLead = mutation({
 			updatedAt: Date.now(),
 			referredById: args.referredById,
 		});
+
+		// Save custom fields
+		if (args.customFieldValues) {
+			await Promise.all(
+				args.customFieldValues.map((cf) =>
+					setCustomFieldValueInternal(ctx, {
+						customFieldId: cf.customFieldId,
+						entityId: leadId,
+						entityType: 'lead',
+						value: cf.value,
+						userId: identity.subject,
+						organizationId,
+					}),
+				),
+			);
+		}
 
 		// Log activity
 		await ctx.db.insert('activities', {
@@ -288,10 +327,8 @@ export const createLead = mutation({
 
 		// Auto-sync to email marketing (if lead has email)
 		if (args.email) {
-			// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-			const syncFn = (internal as any).emailMarketing.syncLeadAsContactInternal;
-			// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-			await (ctx.scheduler as any).runAfter(0, syncFn as any, {
+			const syncLeadAsContact = getInternalApi().emailMarketing.syncLeadAsContactInternal;
+			await ctx.scheduler.runAfter(0, syncLeadAsContact, {
 				leadId,
 				organizationId,
 			});
@@ -330,7 +367,7 @@ export const createPublicLead = mutation({
 			});
 		}
 
-		const { userIp, ...leadData } = args;
+		const { userIp, customFieldValues, ...leadData } = args;
 
 		// Determine organization (fallback to null if not provided, or logic to find default)
 		// For now, we allow null organizationId as per schema
@@ -367,6 +404,22 @@ export const createPublicLead = mutation({
 			consentVersion: 'v1.0',
 		});
 
+		// Save custom fields
+		if (customFieldValues) {
+			await Promise.all(
+				customFieldValues.map((cf) =>
+					setCustomFieldValueInternal(ctx, {
+						customFieldId: cf.customFieldId,
+						entityId: leadId,
+						entityType: 'lead',
+						value: cf.value,
+						userId: 'system_landing_page',
+						organizationId: orgId ?? 'public',
+					}),
+				),
+			);
+		}
+
 		// Activity log (system)
 		await ctx.db.insert('activities', {
 			type: 'lead_criado',
@@ -379,10 +432,8 @@ export const createPublicLead = mutation({
 
 		// Trigger email sync
 		if (args.email) {
-			// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-			const syncFn = (internal as any).emailMarketing.syncLeadAsContactInternal;
-			// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-			await (ctx.scheduler as any).runAfter(0, syncFn as any, {
+			const syncLeadAsContact = getInternalApi().emailMarketing.syncLeadAsContactInternal;
+			await ctx.scheduler.runAfter(0, syncLeadAsContact, {
 				leadId,
 				organizationId: orgId ?? 'public',
 			});
@@ -433,8 +484,8 @@ export const updateLeadStage = mutation({
 
 		// Trigger Cashback Calculation if Won
 		if (args.newStage === 'fechado_ganho' && lead.referredById && !lead.cashbackPaidAt) {
-			// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-			await (ctx.scheduler as any).runAfter(0, (internal as any).referrals.calculateCashback, {
+			const calculateCashback = getInternalApi().referrals.calculateCashback;
+			await ctx.scheduler.runAfter(0, calculateCashback, {
 				referredLeadId: args.leadId,
 			});
 		}
@@ -485,23 +536,42 @@ export const updateLead = mutation({
 			utmContent: v.optional(v.string()),
 			utmTerm: v.optional(v.string()),
 		}),
+		customFieldValues: v.optional(
+			v.array(
+				v.object({
+					customFieldId: v.id('customFields'),
+					value: v.any(),
+				}),
+			),
+		),
 	},
-	// biome-ignore lint/suspicious/noExplicitAny: Schema uses v.any() for many fields
-	handler: async (ctx, args: any) => {
-		await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
+	handler: async (ctx, args) => {
+		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
 
-		// biome-ignore lint/suspicious/noExplicitAny: Required to break type instantiation recursion
-		const lead = (await ctx.db.get(args.leadId)) as any;
+		const lead = await ctx.db.get(args.leadId);
 		if (!lead || lead.organizationId !== organizationId) {
 			throw new Error('Lead not found or permission denied');
 		}
 
-		await ctx.db.patch(args.leadId, {
-			// biome-ignore lint/suspicious/noExplicitAny: Patching partial fields with possible type mismatch
-			...(args.patch as any),
-			updatedAt: Date.now(),
-		});
+		await ctx.db.patch(args.leadId, { ...args.patch, updatedAt: Date.now() });
+
+		// Save custom fields
+		if (args.customFieldValues) {
+			const userId = identity.subject;
+			await Promise.all(
+				args.customFieldValues.map((cf) =>
+					setCustomFieldValueInternal(ctx, {
+						customFieldId: cf.customFieldId,
+						entityId: args.leadId,
+						entityType: 'lead',
+						value: cf.value,
+						userId,
+						organizationId,
+					}),
+				),
+			);
+		}
 	},
 });
 
@@ -577,11 +647,11 @@ export const deduplicateLeads = mutation({
 		}
 
 		// Find duplicates (phone numbers with more than one lead)
-		const duplicateGroups: Array<{
+		const duplicateGroups: {
 			phone: string;
-			keepId: string;
-			deleteIds: string[];
-		}> = [];
+			keepId: Id<'leads'>;
+			deleteIds: Id<'leads'>[];
+		}[] = [];
 
 		for (const [phone, leads] of leadsByPhone) {
 			if (leads.length > 1) {
@@ -611,8 +681,7 @@ export const deduplicateLeads = mutation({
 		let deletedCount = 0;
 		for (const group of duplicateGroups) {
 			for (const deleteId of group.deleteIds) {
-				// biome-ignore lint/suspicious/noExplicitAny: ID comparison and delete
-				await ctx.db.delete(deleteId as any);
+				await ctx.db.delete(deleteId);
 				deletedCount++;
 			}
 		}
@@ -682,8 +751,8 @@ export const reactivateLead = internalMutation({
 		});
 
 		// Create follow-up task
-		// biome-ignore lint/suspicious/noExplicitAny: internal api typing
-		await ctx.runMutation((internal as any).tasks.internalCreateTask, {
+		const createTask = getInternalApi().tasks.internalCreateTask;
+		await ctx.runMutation(createTask, {
 			description: `Follow-up: Lead reativado automaticamente de ${lead.stage}`,
 			leadId: lead._id,
 			assignedTo: lead.assignedTo,
@@ -707,5 +776,44 @@ export const reactivateLead = internalMutation({
 				link: `/dashboard/leads/${lead._id}`,
 			});
 		}
+	},
+});
+
+export const search = query({
+	args: {
+		query: v.string(),
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		await requirePermission(ctx, PERMISSIONS.LEADS_READ);
+		const organizationId = await getOrganizationId(ctx);
+
+		if (!args.query) return [];
+
+		// Naive search implementation: fetch recent leads and filter in memory
+		// Ideally this should use Convex search index if configured
+		// For now, we reuse the existing pattern or simplified scan
+		const leads = await ctx.db
+			.query('leads')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.order('desc')
+			.take(200);
+
+		const lowerQuery = args.query.toLowerCase();
+
+		return leads
+			.filter(
+				(l) =>
+					l.name.toLowerCase().includes(lowerQuery) ||
+					l.phone.includes(lowerQuery) ||
+					l.email?.toLowerCase().includes(lowerQuery),
+			)
+			.slice(0, args.limit ?? 10)
+			.map((l) => ({
+				id: l._id,
+				name: l.name,
+				phone: l.phone,
+				email: l.email,
+			}));
 	},
 });

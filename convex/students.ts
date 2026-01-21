@@ -1,8 +1,9 @@
+import type { SchedulableFunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
+import { setCustomFieldValueInternal } from './customFields';
 import { logAudit } from './lgpd';
 import { getOrganizationId, requirePermission } from './lib/auth';
 import { decrypt, decryptCPF, encrypt, encryptCPF } from './lib/encryption';
@@ -10,6 +11,22 @@ import { PERMISSIONS } from './lib/permissions';
 
 // Top-level regex for name parsing (performance optimization)
 const NAME_SPLIT_REGEX = /\s+/;
+
+interface InternalApi {
+	asaas: {
+		mutations: {
+			syncStudentAsCustomerInternal: SchedulableFunctionReference;
+		};
+	};
+	emailMarketing: {
+		syncStudentAsContactInternal: SchedulableFunctionReference;
+	};
+}
+
+const getInternalApi = (): InternalApi => {
+	const apiModule = require('./_generated/api') as unknown;
+	return (apiModule as { internal: InternalApi }).internal;
+};
 
 // Queries
 export const list = query({
@@ -360,10 +377,19 @@ export const create = mutation({
 		assignedCS: v.optional(v.id('users')),
 		leadId: v.optional(v.id('leads')),
 		lgpdConsent: v.optional(v.boolean()),
+		customFieldValues: v.optional(
+			v.array(
+				v.object({
+					customFieldId: v.id('customFields'),
+					value: v.any(),
+				}),
+			),
+		),
 	},
 	handler: async (ctx, args) => {
-		await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE);
+		const identity = await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE);
 		const organizationId = await getOrganizationId(ctx);
+		const userId = identity.subject;
 
 		// Check for existing student with same phone (duplicate prevention)
 		const existingStudent = await ctx.db
@@ -379,7 +405,14 @@ export const create = mutation({
 		const encryptedEmail = await encrypt(args.email);
 		const encryptedPhone = await encrypt(args.phone);
 
-		const { email: _email, phone: _phone, cpf: _cpf, lgpdConsent, ...safeArgs } = args;
+		const {
+			email: _email,
+			phone: _phone,
+			cpf: _cpf,
+			lgpdConsent,
+			customFieldValues,
+			...safeArgs
+		} = args;
 
 		const studentId = await ctx.db.insert('students', {
 			...safeArgs,
@@ -410,14 +443,10 @@ export const create = mutation({
 
 		// Auto-sync with Asaas (async, don't wait)
 		try {
-			await ctx.scheduler.runAfter(
-				0,
-				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-				(internal as any).asaas.mutations.syncStudentAsCustomerInternal,
-				{
-					studentId,
-				},
-			);
+			const syncStudentAsCustomer = getInternalApi().asaas.mutations.syncStudentAsCustomerInternal;
+			await ctx.scheduler.runAfter(0, syncStudentAsCustomer, {
+				studentId,
+			});
 		} catch {
 			// Silently ignore - Asaas sync will be retried by background job
 		}
@@ -425,13 +454,30 @@ export const create = mutation({
 		// Auto-sync to email marketing (if student has email)
 		if (args.email) {
 			try {
-				await ctx.scheduler.runAfter(0, internal.emailMarketing.syncStudentAsContactInternal, {
+				const syncStudentAsContact = getInternalApi().emailMarketing.syncStudentAsContactInternal;
+				await ctx.scheduler.runAfter(0, syncStudentAsContact, {
 					studentId,
 					organizationId,
 				});
 			} catch {
 				// Silently ignore - email sync will be retried by background job
 			}
+		}
+
+		// Save custom fields
+		if (args.customFieldValues) {
+			await Promise.all(
+				args.customFieldValues.map((cf) =>
+					setCustomFieldValueInternal(ctx, {
+						customFieldId: cf.customFieldId,
+						entityId: studentId,
+						entityType: 'student',
+						value: cf.value,
+						userId,
+						organizationId,
+					}),
+				),
+			);
 		}
 
 		return studentId;
@@ -464,12 +510,21 @@ export const update = mutation({
 			lastEngagementAt: v.optional(v.number()),
 			leadId: v.optional(v.id('leads')),
 		}),
+		customFieldValues: v.optional(
+			v.array(
+				v.object({
+					customFieldId: v.id('customFields'),
+					value: v.any(),
+				}),
+			),
+		),
 	},
 	handler: async (ctx, args) => {
-		await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE);
+		const identity = await requirePermission(ctx, PERMISSIONS.STUDENTS_WRITE);
+		const organizationId = await getOrganizationId(ctx);
+		const userId = identity.subject;
 
-		// biome-ignore lint/suspicious/noExplicitAny: dynamic patch object
-		const updates: any = { ...args.patch };
+		const updates: Partial<Doc<'students'>> = { ...args.patch };
 
 		if (args.patch.cpf) updates.encryptedCPF = await encryptCPF(args.patch.cpf);
 		if (args.patch.email) updates.encryptedEmail = await encrypt(args.patch.email);
@@ -493,17 +548,30 @@ export const update = mutation({
 		const shouldSync = args.patch.cpf || args.patch.email || args.patch.phone;
 		if (shouldSync) {
 			try {
-				await ctx.scheduler.runAfter(
-					0,
-					// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-					(internal as any).asaas.mutations.syncStudentAsCustomerInternal,
-					{
-						studentId: args.studentId,
-					},
-				);
+				const syncStudentAsCustomer =
+					getInternalApi().asaas.mutations.syncStudentAsCustomerInternal;
+				await ctx.scheduler.runAfter(0, syncStudentAsCustomer, {
+					studentId: args.studentId,
+				});
 			} catch {
 				// Silently ignore - Asaas sync will be retried by background job
 			}
+		}
+
+		// Save custom fields
+		if (args.customFieldValues) {
+			await Promise.all(
+				args.customFieldValues.map((cf) =>
+					setCustomFieldValueInternal(ctx, {
+						customFieldId: cf.customFieldId,
+						entityId: args.studentId,
+						entityType: 'student',
+						value: cf.value,
+						userId,
+						organizationId,
+					}),
+				),
+			);
 		}
 	},
 });

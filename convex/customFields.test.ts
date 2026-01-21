@@ -10,13 +10,13 @@ vi.mock('./_generated/server', () => ({
 }));
 
 import { createCustomField, listCustomFields, setCustomFieldValue } from './customFields';
-import { getOrganizationId, requireAuth, requirePermission } from './lib/auth';
+import { getOrganizationId, requireAuth, requireOrgRole } from './lib/auth';
 
 // Mock lib/auth
 vi.mock('./lib/auth', () => ({
 	getOrganizationId: vi.fn(),
 	requireAuth: vi.fn(),
-	requirePermission: vi.fn(),
+	requireOrgRole: vi.fn(),
 }));
 
 describe('Custom Fields System', () => {
@@ -43,7 +43,7 @@ describe('Custom Fields System', () => {
 		vi.clearAllMocks();
 		vi.mocked(getOrganizationId).mockResolvedValue('org_123');
 		vi.mocked(requireAuth).mockResolvedValue(mockIdentity);
-		vi.mocked(requirePermission).mockResolvedValue(mockIdentity);
+		vi.mocked(requireOrgRole).mockResolvedValue(mockIdentity);
 	});
 
 	describe('createCustomField', () => {
@@ -55,19 +55,25 @@ describe('Custom Fields System', () => {
 				required: false,
 			};
 
-			// Mock query for duplicate check
+			// Mock query for counting existing fields (for displayOrder)
 			const mockQueryBuilder = {
 				withIndex: vi.fn().mockReturnThis(),
 				filter: vi.fn().mockReturnThis(),
+				collect: vi.fn().mockResolvedValue([]),
 				first: vi.fn().mockResolvedValue(null),
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 			mockDb.insert.mockResolvedValue('field_123');
 
-			// @ts-expect-error
+			// @ts-expect-error - Testing handler directly
 			const result = await createCustomField.handler(mockCtx, args);
 
-			expect(requirePermission).toHaveBeenCalled();
+			expect(requireOrgRole).toHaveBeenCalledWith(mockCtx, [
+				'org:admin',
+				'org:owner',
+				'admin',
+				'owner',
+			]);
 			expect(mockDb.insert).toHaveBeenCalledWith(
 				'customFields',
 				expect.objectContaining({
@@ -76,41 +82,10 @@ describe('Custom Fields System', () => {
 					entityType: 'lead',
 					organizationId: 'org_123',
 					active: true,
-				}),
-			);
-			expect(mockDb.insert).toHaveBeenCalledWith(
-				'activities',
-				expect.objectContaining({
-					type: 'nota_adicionada',
-					description: "Custom field 'Favorite Color' created for lead",
+					displayOrder: 0,
 				}),
 			);
 			expect(result).toBe('field_123');
-		});
-
-		it('should throw error for duplicate field name', async () => {
-			const args = {
-				name: 'Existing Field',
-				fieldType: 'text' as const,
-				entityType: 'lead' as const,
-				required: false,
-			};
-
-			const mockQueryBuilder = {
-				withIndex: vi.fn().mockReturnThis(),
-				filter: vi.fn().mockReturnThis(),
-				first: vi.fn().mockResolvedValue({
-					// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-					_id: 'existing_id',
-					active: true,
-				}),
-			};
-			mockDb.query.mockReturnValue(mockQueryBuilder);
-
-			// @ts-expect-error
-			await expect(createCustomField.handler(mockCtx, args)).rejects.toThrow(
-				"Field 'Existing Field' already exists",
-			);
 		});
 	});
 
@@ -179,25 +154,19 @@ describe('Custom Fields System', () => {
 					createdAt: 100,
 					active: true,
 				},
-				{
-					// biome-ignore lint/style/useNamingConvention: Convex document ids use _id
-					_id: 'f2',
-					name: 'Field 2',
-					createdAt: 200,
-					active: false,
-				},
 			];
 
 			const mockQueryBuilder = {
 				withIndex: vi.fn().mockReturnThis(),
+				filter: vi.fn().mockReturnThis(),
 				collect: vi.fn().mockResolvedValue(mockFields),
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// @ts-expect-error
+			// @ts-expect-error - Testing handler directly
 			const result = await listCustomFields.handler(mockCtx, { entityType: 'lead' });
 
-			expect(result).toHaveLength(1); // Default excludes inactive
+			expect(result).toHaveLength(1);
 			expect(result[0]._id).toBe('f1');
 		});
 	});

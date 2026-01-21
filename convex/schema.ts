@@ -634,7 +634,9 @@ export default defineSchema({
 		organizationId: v.string(),
 		createdBy: v.string(),
 		createdAt: v.number(),
+		updatedAt: v.number(),
 		active: v.boolean(),
+		displayOrder: v.optional(v.number()),
 	})
 		.index('by_organization_entity', ['organizationId', 'entityType'])
 		.index('by_organization', ['organizationId']),
@@ -1654,10 +1656,6 @@ export default defineSchema({
 		.index('by_scheduled', ['scheduledFor'])
 		.index('by_organization_status', ['organizationId', 'status'])
 		.index('by_lead', ['leadId']),
-
-	// ═══════════════════════════════════════════════════════
-	// TAGS (Sistema de etiquetas)
-	// ═══════════════════════════════════════════════════════
 
 	// ═══════════════════════════════════════════════════════
 	// TAGS SYSTEM (Lead Categorization)

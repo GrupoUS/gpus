@@ -673,9 +673,9 @@ export const getUserByClerkIdInternal = internalQuery({
 });
 
 export const listVendors = query({
-	args: {
-		organizationId: v.optional(v.string()),
-	},
+	// SECURITY: No organizationId argument - always scope to caller's organization
+	// to prevent cross-organization vendor enumeration
+	args: {},
 	returns: v.array(
 		v.object({
 			id: v.id('users'),
@@ -684,13 +684,13 @@ export const listVendors = query({
 			role: v.string(),
 		}),
 	),
-	handler: async (ctx, args) => {
+	handler: async (ctx) => {
 		// Auth check
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) return [];
 
-		// Use provided organizationId or fall back to context
-		const orgId = args.organizationId ?? (await getOrganizationId(ctx));
+		// SECURITY: Always use caller's organization from auth context
+		const orgId = await getOrganizationId(ctx);
 		if (!orgId) return [];
 
 		// Get current user to check role
@@ -704,7 +704,7 @@ export const listVendors = query({
 			return [];
 		}
 
-		// Get all active users scoped to the specified organization
+		// Get all active users scoped to the caller's organization
 		const users = await ctx.db
 			.query('users')
 			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))

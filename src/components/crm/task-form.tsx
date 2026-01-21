@@ -4,13 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -27,33 +26,24 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 const taskSchema = z.object({
-	description: z.string().min(1, 'Descrição é obrigatória'),
+	description: z.string().min(3, 'Descrição deve ter pelo menos 3 caracteres'),
 	dueDate: z.date().optional(),
 	mentionedUserIds: z.array(z.string()).optional(),
 });
 
-type TaskFormValues = z.infer<typeof taskSchema>;
-
-interface UserOption {
-	_id: Id<'users'>;
-	name?: string;
-	email?: string;
-}
-
 interface TaskFormProps {
 	leadId: Id<'leads'>;
 	onCancel: () => void;
-	onSuccess?: () => void;
+	onSuccess: () => void;
 }
 
 export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
-	const [openMentions, setOpenMentions] = useState(false);
 	const createTask = useMutation(api.tasks.createTask);
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { users: { list: unknown } };
-	const users = useQueryUnsafe(apiAny.users.list) as UserOption[] | undefined;
+	const users = useQuery(api.users.list) || [];
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [openUserSelect, setOpenUserSelect] = useState(false);
 
-	const form = useForm<TaskFormValues>({
+	const form = useForm<z.infer<typeof taskSchema>>({
 		resolver: zodResolver(taskSchema),
 		defaultValues: {
 			description: '',
@@ -61,24 +51,29 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 		},
 	});
 
-	const onSubmit = async (data: TaskFormValues) => {
+	const mentionedUserIds = form.watch('mentionedUserIds') || [];
+
+	const onSubmit = async (values: z.infer<typeof taskSchema>) => {
 		try {
+			setIsSubmitting(true);
 			await createTask({
 				leadId,
-				description: data.description,
-				dueDate: data.dueDate ? data.dueDate.getTime() : undefined,
-				mentionedUserIds: data.mentionedUserIds as Id<'users'>[],
+				description: values.description,
+				dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
+				mentionedUserIds: values.mentionedUserIds as Id<'users'>[],
 			});
 			toast.success('Tarefa criada com sucesso!');
 			form.reset();
-			onSuccess?.();
-			onSuccess?.();
-		} catch (_error) {
-			toast.error('Erro ao criar tarefa.');
+			onSuccess();
+		} catch (error) {
+			console.error('Erro ao criar tarefa:', error);
+			toast.error('Erro ao criar tarefa. Tente novamente.');
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
-	const toggleMention = (userId: string) => {
+	const toggleUser = (userId: string) => {
 		const current = form.getValues('mentionedUserIds') || [];
 		if (current.includes(userId)) {
 			form.setValue(
@@ -91,7 +86,7 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 	};
 
 	return (
-		<div className="rounded-lg border bg-muted/30 p-4">
+		<div className="slide-in-from-top-2 animate-in rounded-lg border bg-muted/30 p-4">
 			<Form {...form}>
 				<form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
@@ -100,7 +95,12 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input placeholder="Ex: Ligar para apresentar proposta" {...field} />
+									<Input
+										className="bg-background"
+										placeholder="O que precisa ser feito? (Ex: Ligar para apresentar proposta)"
+										{...field}
+										autoFocus
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -118,13 +118,14 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 											<FormControl>
 												<Button
 													className={cn(
-														'w-[240px] pl-3 text-left font-normal',
+														'h-9 w-[180px] bg-background pl-3 text-left font-normal',
 														!field.value && 'text-muted-foreground',
 													)}
-													variant={'outline'}
+													size="sm"
+													variant="outline"
 												>
 													{field.value ? (
-														format(field.value, 'PPP', { locale: ptBR })
+														format(field.value, "d 'de' MMMM", { locale: ptBR })
 													) : (
 														<span>Data de vencimento</span>
 													)}
@@ -147,56 +148,55 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 							)}
 						/>
 
-						<Popover onOpenChange={setOpenMentions} open={openMentions}>
+						<Popover onOpenChange={setOpenUserSelect} open={openUserSelect}>
 							<PopoverTrigger asChild>
-								<Button className="justify-between" role="combobox" variant="outline">
-									{form.watch('mentionedUserIds')?.length
-										? `${form.watch('mentionedUserIds')?.length} mencionado(s)`
-										: 'Mencionar equipe'}
+								<Button className="h-9 bg-background" size="sm" variant="outline">
+									@ Mencionar
+									{mentionedUserIds.length > 0 && (
+										<span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+											{mentionedUserIds.length}
+										</span>
+									)}
 								</Button>
 							</PopoverTrigger>
-							<PopoverContent className="w-[200px] p-0">
+							<PopoverContent align="start" className="p-0">
 								<Command>
 									<CommandInput placeholder="Buscar usuário..." />
 									<CommandList>
 										<CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
 										<CommandGroup>
-											{users?.map((user) => {
-												const userName = user.name || user.email || 'Usuário';
-												return (
-													<CommandItem
-														key={user._id}
-														onSelect={() => toggleMention(user._id)}
-														value={userName}
+											{users.map((user) => (
+												<CommandItem
+													key={user._id}
+													onSelect={() => toggleUser(user._id)}
+													value={user.name}
+												>
+													<div
+														className={cn(
+															'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+															mentionedUserIds.includes(user._id)
+																? 'bg-primary text-primary-foreground'
+																: 'opacity-50 [&_svg]:invisible',
+														)}
 													>
-														<div
-															className={cn(
-																'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-																form.watch('mentionedUserIds')?.includes(user._id)
-																	? 'bg-primary text-primary-foreground'
-																	: 'opacity-50 [&_svg]:invisible',
-															)}
+														<svg
+															aria-hidden="true"
+															className={cn('h-4 w-4')}
+															fill="none"
+															stroke="currentColor"
+															strokeWidth={2}
+															viewBox="0 0 24 24"
 														>
-															<svg
-																className={cn('h-4 w-4')}
-																fill="none"
-																height="24"
-																stroke="currentColor"
+															<path
+																d="M5 13l4 4L19 7"
 																strokeLinecap="round"
 																strokeLinejoin="round"
-																strokeWidth="2"
-																viewBox="0 0 24 24"
-																width="24"
-																xmlns="http://www.w3.org/2000/svg"
-															>
-																<title>Check</title>
-																<polyline points="20 6 9 17 4 12" />
-															</svg>
-														</div>
-														{userName}
-													</CommandItem>
-												);
-											})}
+															/>
+														</svg>
+													</div>
+													{user.name}
+												</CommandItem>
+											))}
 										</CommandGroup>
 									</CommandList>
 								</Command>
@@ -204,31 +204,47 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 						</Popover>
 					</div>
 
-					{/* Selected Mentions Badges */}
-					{form.watch('mentionedUserIds') &&
-						form.watch('mentionedUserIds')?.length !== undefined &&
-						(form.watch('mentionedUserIds')?.length ?? 0) > 0 && (
-							<div className="flex gap-2">
-								{form.watch('mentionedUserIds')?.map((userId) => {
-									const user = users?.find((u: { _id: string }) => u._id === userId);
-									return user ? (
-										<Badge key={userId} variant="secondary">
-											@{user.name}
-										</Badge>
-									) : null;
-								})}
-							</div>
-						)}
+					{mentionedUserIds.length > 0 && (
+						<div className="flex flex-wrap gap-2">
+							{mentionedUserIds.map((userId) => {
+								const user = users.find((u) => u._id === userId);
+								return user ? (
+									<div
+										className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-primary text-xs"
+										key={userId}
+									>
+										@{user.name}
+										<button
+											className="ml-1 rounded-full hover:bg-primary/20"
+											onClick={() => toggleUser(userId)}
+											type="button"
+										>
+											<X className="h-3 w-3" />
+										</button>
+									</div>
+								) : null;
+							})}
+						</div>
+					)}
 
-					<div className="flex justify-end gap-2">
-						<Button onClick={onCancel} size="sm" type="button" variant="ghost">
+					<div className="flex justify-end gap-2 pt-2">
+						<Button
+							disabled={isSubmitting}
+							onClick={onCancel}
+							size="sm"
+							type="button"
+							variant="ghost"
+						>
 							Cancelar
 						</Button>
-						<Button disabled={form.formState.isSubmitting} size="sm" type="submit">
-							{form.formState.isSubmitting ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-							) : null}
-							Criar Tarefa
+						<Button disabled={isSubmitting} size="sm" type="submit">
+							{isSubmitting ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+								</>
+							) : (
+								'Criar Tarefa'
+							)}
 						</Button>
 					</div>
 				</form>
