@@ -1,4 +1,5 @@
 import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
 import { format, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -6,16 +7,40 @@ import { Calendar, CheckCircle2, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface TaskListProps {
-	tasks: any[]; // Using any to avoid complex nested types, but effectively Doc<'tasks'> & relations
-	isLoading: boolean;
-	onEdit?: (task: any) => void;
+interface TaskUser {
+	_id: Id<'users'>;
+	name: string;
 }
 
-export function TaskList({ tasks, isLoading, onEdit: _onEdit }: TaskListProps) {
+interface TaskListItem {
+	_id: Id<'tasks'>;
+	completed?: boolean;
+	createdAt?: number;
+	assignedToUser?: TaskUser;
+	description: string;
+	dueDate?: Date | number;
+	mentionedUsers?: TaskUser[];
+}
+
+interface TaskListProps {
+	tasks?: TaskListItem[];
+	isLoading: boolean;
+}
+
+export function TaskList({ tasks, isLoading }: TaskListProps) {
 	const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
 	const filteredTasks = tasks?.filter((task) => {
@@ -85,14 +110,14 @@ export function TaskList({ tasks, isLoading, onEdit: _onEdit }: TaskListProps) {
 	);
 }
 
-function TaskItem({ task }: { task: any }) {
+function TaskItem({ task }: { task: TaskListItem }) {
 	const completeTask = useMutation(api.tasks.completeTask);
 	const deleteTask = useMutation(api.tasks.deleteTask);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const dueDate = task.dueDate ? new Date(task.dueDate) : undefined;
 
-	const isOverdue =
-		task.dueDate && isPast(task.dueDate) && !isToday(task.dueDate) && !task.completed;
-	const isDueToday = task.dueDate && isToday(task.dueDate) && !task.completed;
+	const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate) && !task.completed;
+	const isDueToday = dueDate && isToday(dueDate) && !task.completed;
 
 	const handleToggle = async () => {
 		if (task.completed) return; // Uncomplete not implemented yet
@@ -108,8 +133,6 @@ function TaskItem({ task }: { task: any }) {
 	};
 
 	const handleDelete = async () => {
-		// biome-ignore lint: User confirmation for destructive action is acceptable
-		if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return;
 		try {
 			setIsProcessing(true);
 			await deleteTask({ taskId: task._id });
@@ -160,7 +183,7 @@ function TaskItem({ task }: { task: any }) {
 				</p>
 
 				<div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
-					{task.dueDate && (
+					{dueDate && (
 						<span
 							className={cn(
 								'flex items-center gap-1',
@@ -169,7 +192,7 @@ function TaskItem({ task }: { task: any }) {
 							)}
 						>
 							<Calendar className="h-3 w-3" />
-							{format(task.dueDate, "d 'de' MMM", { locale: ptBR })}
+							{format(dueDate, "d 'de' MMM", { locale: ptBR })}
 						</span>
 					)}
 
@@ -185,7 +208,7 @@ function TaskItem({ task }: { task: any }) {
 
 					{task.mentionedUsers && task.mentionedUsers.length > 0 && (
 						<div className="flex gap-1">
-							{task.mentionedUsers.map((u: any) => (
+							{task.mentionedUsers.map((u) => (
 								<span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]" key={u._id}>
 									@{u.name.split(' ')[0]}
 								</span>
@@ -196,15 +219,29 @@ function TaskItem({ task }: { task: any }) {
 			</div>
 
 			<div className="opacity-0 transition-opacity group-hover:opacity-100">
-				<Button
-					className="h-6 w-6 text-muted-foreground hover:text-destructive"
-					disabled={isProcessing}
-					onClick={handleDelete}
-					size="icon"
-					variant="ghost"
-				>
-					<Trash2 className="h-3.5 w-3.5" />
-				</Button>
+				<AlertDialog>
+					<AlertDialogTrigger asChild>
+						<Button
+							className="h-6 w-6 text-muted-foreground hover:text-destructive"
+							disabled={isProcessing}
+							size="icon"
+							variant="ghost"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+						</Button>
+					</AlertDialogTrigger>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>Excluir tarefa?</AlertDialogTitle>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancelar</AlertDialogCancel>
+							<AlertDialogAction disabled={isProcessing} onClick={handleDelete}>
+								Excluir
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			</div>
 		</div>
 	);

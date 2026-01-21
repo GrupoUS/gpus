@@ -1,24 +1,19 @@
 import { cronJobs, type SchedulableFunctionReference } from 'convex/server';
 
-const apiModule = await import(`./_generated/${'api'}`);
-const internalApi = (
-	apiModule as unknown as {
-		internal: Record<string, Record<string, Record<string, unknown>>>;
-	}
-).internal;
+import { internal } from './_generated/api';
 
-const runAutoSyncCustomersAction = internalApi.asaas.sync
+const runAutoSyncCustomersAction = internal.asaas.sync
 	.runAutoSyncCustomersAction as SchedulableFunctionReference;
-const runAutoSyncPaymentsAction = internalApi.asaas.sync
+const runAutoSyncPaymentsAction = internal.asaas.sync
 	.runAutoSyncPaymentsAction as SchedulableFunctionReference;
-const checkAndCreateAlerts = internalApi.asaas.alerts
+const checkAndCreateAlerts = internal.asaas.alerts
 	.checkAndCreateAlerts as SchedulableFunctionReference;
-const retryFailedWebhooks = internalApi.asaas.webhooks
+const retryFailedWebhooks = internal.asaas.webhooks
 	.retryFailedWebhooks as SchedulableFunctionReference;
-const processQueuedMessages = internalApi.whatsapp
+const processQueuedMessages = internal.whatsapp
 	.processQueuedMessages as SchedulableFunctionReference;
-const sendTaskReminders = internalApi.tasks.crons.sendTaskReminders as SchedulableFunctionReference;
-const reactivateIdleLeads = internalApi.tasks.crons
+const sendTaskReminders = internal.tasks.crons.sendTaskReminders as SchedulableFunctionReference;
+const reactivateIdleLeads = internal.tasks.crons
 	.reactivateIdleLeads as SchedulableFunctionReference;
 
 const crons = cronJobs();

@@ -14,7 +14,10 @@
 			"src/**/*.jsx",
 			"convex/**/*.ts"
 		],
-		"experimentalScannerIgnores": ["src/routeTree.gen.ts"],
+		"experimentalScannerIgnores": [
+			"src/routeTree.gen.ts",
+			"convex/tsconfig.json"
+		],
 		"maxSize": 10485760
 	},
 	"formatter": {
@@ -751,6 +754,28 @@
 					},
 					"suspicious": {
 						"noExplicitAny": "warn"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/routeTree.gen.ts"],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
+				"enabled": false
+			},
+			"assist": {
+				"enabled": false
+			}
+		},
+		{
+			"includes": ["convex/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
 					}
 				}
 			}

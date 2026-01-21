@@ -10,12 +10,12 @@ interface ReferralSectionProps {
 	leadId: Id<'leads'>;
 }
 
-type ReferralStats = {
+interface ReferralStats {
 	convertedReferrals: number;
 	pendingReferrals: number;
 	totalCashback?: number;
 	totalReferrals: number;
-};
+}
 
 const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
 const apiAny = api as unknown as Record<string, Record<string, unknown>>;

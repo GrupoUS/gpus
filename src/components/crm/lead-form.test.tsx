@@ -88,6 +88,25 @@ class ResizeObserver {
 global.ResizeObserver = ResizeObserver;
 window.ResizeObserver = ResizeObserver;
 
+// Mock PointerEvent for Radix UI
+// @ts-expect-error
+window.PointerEvent = class PointerEvent extends Event {
+	button: number;
+	ctrlKey: boolean;
+	metaKey: boolean;
+	shiftKey: boolean;
+	constructor(type: string, props: PointerEventInit) {
+		super(type, props);
+		this.button = props.button || 0;
+		this.ctrlKey = props.ctrlKey;
+		this.metaKey = props.metaKey;
+		this.shiftKey = props.shiftKey;
+	}
+};
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+
 describe('LeadForm', () => {
 	const mockCreateLead = vi.fn();
 

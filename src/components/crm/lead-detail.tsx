@@ -28,9 +28,9 @@ interface LeadDetailProps {
 	onClose: () => void;
 }
 
-type TasksResult = {
+interface TasksResult {
 	page?: Array<{ completed?: boolean }>;
-};
+}
 
 const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
 

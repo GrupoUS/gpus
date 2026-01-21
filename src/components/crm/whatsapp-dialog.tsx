@@ -1,6 +1,6 @@
 import { useAction, useQuery } from 'convex/react';
 import { Loader2, MessageSquare, Send } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -33,6 +33,7 @@ export function WhatsAppDialog({
 }: WhatsAppDialogProps) {
 	const [message, setMessage] = useState('');
 	const [isSending, setIsSending] = useState(false);
+	const messageId = useId();
 
 	const templates = useQuery(api.messageTemplates.listTemplates, { isActive: true });
 	const sendWhatsApp = useAction(api.whatsapp.sendWhatsAppMessage);
@@ -57,8 +58,7 @@ export function WhatsAppDialog({
 			} else {
 				toast.error(result.message || 'Erro ao enviar mensagem.');
 			}
-		} catch (error) {
-			console.error('Erro ao enviar WhatsApp:', error);
+		} catch (_error) {
 			toast.error('Ocorreu um erro ao enviar a mensagem.');
 		} finally {
 			setIsSending(false);
@@ -70,6 +70,27 @@ export function WhatsAppDialog({
 		const personalizedMessage = content.replace('{{name}}', leadName.split(' ')[0]);
 		setMessage(personalizedMessage);
 	};
+
+	let templatesContent: ReactNode;
+	if (templates === undefined) {
+		templatesContent = <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+	} else if (templates.length === 0) {
+		templatesContent = (
+			<span className="text-muted-foreground text-xs">Nenhum modelo disponível</span>
+		);
+	} else {
+		templatesContent = templates.slice(0, 5).map((template) => (
+			<Button
+				className="h-7 text-xs"
+				key={template._id}
+				onClick={() => applyTemplate(template.content)}
+				size="sm"
+				variant="outline"
+			>
+				{template.name}
+			</Button>
+		));
+	}
 
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
@@ -86,35 +107,17 @@ export function WhatsAppDialog({
 
 				<div className="grid gap-4 py-4">
 					<div className="space-y-2">
-						<label className="font-medium text-muted-foreground text-sm">Modelos Rápidos</label>
-						<div className="flex flex-wrap gap-2">
-							{templates === undefined ? (
-								<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-							) : templates.length === 0 ? (
-								<span className="text-muted-foreground text-xs">Nenhum modelo disponível</span>
-							) : (
-								templates.slice(0, 5).map((template) => (
-									<Button
-										className="h-7 text-xs"
-										key={template._id}
-										onClick={() => applyTemplate(template.content)}
-										size="sm"
-										variant="outline"
-									>
-										{template.name}
-									</Button>
-								))
-							)}
-						</div>
+						<p className="font-medium text-muted-foreground text-sm">Modelos Rápidos</p>
+						<div className="flex flex-wrap gap-2">{templatesContent}</div>
 					</div>
 
 					<div className="space-y-2">
-						<label className="font-medium text-muted-foreground text-sm" htmlFor="whatsapp-message">
+						<label className="font-medium text-muted-foreground text-sm" htmlFor={messageId}>
 							Mensagem
 						</label>
 						<Textarea
 							className="min-h-[150px] resize-none"
-							id="whatsapp-message"
+							id={messageId}
 							onChange={(e) => setMessage(e.target.value)}
 							placeholder="Digite sua mensagem aqui..."
 							value={message}

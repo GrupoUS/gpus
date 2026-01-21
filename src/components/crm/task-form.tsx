@@ -65,8 +65,7 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 			toast.success('Tarefa criada com sucesso!');
 			form.reset();
 			onSuccess();
-		} catch (error) {
-			console.error('Erro ao criar tarefa:', error);
+		} catch (_error) {
 			toast.error('Erro ao criar tarefa. Tente novamente.');
 		} finally {
 			setIsSubmitting(false);
