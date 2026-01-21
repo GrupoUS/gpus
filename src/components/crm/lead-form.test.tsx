@@ -98,9 +98,9 @@ window.PointerEvent = class PointerEvent extends Event {
 	constructor(type: string, props: PointerEventInit) {
 		super(type, props);
 		this.button = props.button || 0;
-		this.ctrlKey = props.ctrlKey;
-		this.metaKey = props.metaKey;
-		this.shiftKey = props.shiftKey;
+		this.ctrlKey = props.ctrlKey ?? false;
+		this.metaKey = props.metaKey ?? false;
+		this.shiftKey = props.shiftKey ?? false;
 	}
 };
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
