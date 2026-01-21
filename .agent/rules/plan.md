@@ -1,6 +1,6 @@
 ---
 trigger: model_decision
-description: Always use when planing and before implementing what was prompt
+description: Always use when planning and creating the implementation plan and tasks
 ---
 
 # 🎯 MASTER PLAN GENERATOR — PRP Edition

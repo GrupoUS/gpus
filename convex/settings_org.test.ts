@@ -42,6 +42,8 @@ describe('Organization Settings', () => {
 	const mockIdentity = {
 		subject: 'user_123',
 		org_id: 'org_123',
+		tokenIdentifier: 'user_123',
+		issuer: 'clerk',
 	};
 
 	beforeEach(() => {
@@ -55,7 +57,6 @@ describe('Organization Settings', () => {
 	describe('getOrganizationSettings', () => {
 		it('should throw if not admin', async () => {
 			vi.mocked(hasPermission).mockResolvedValue(false);
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getOrganizationSettings as any).handler;
 			await expect(handler(mockCtx, { organizationId: 'org_123' })).rejects.toThrow('Unauthorized');
 		});
@@ -78,7 +79,6 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getOrganizationSettings as any).handler;
 			const result = await handler(mockCtx, { organizationId: 'org_123' });
 
@@ -108,7 +108,6 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getCashbackSettings as any).handler;
 			const result = await handler(mockCtx, { organizationId: 'org_123' });
 			expect(result).toBeNull();
@@ -125,7 +124,6 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getCashbackSettings as any).handler;
 			const result = await handler(mockCtx, { organizationId: 'org_123' });
 			expect(result).toEqual({
@@ -138,7 +136,6 @@ describe('Organization Settings', () => {
 			vi.mocked(getOrganizationId).mockResolvedValue('org_other');
 			vi.mocked(hasPermission).mockResolvedValue(false);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getCashbackSettings as any).handler;
 			await expect(handler(mockCtx, { organizationId: 'org_123' })).rejects.toThrow('Unauthorized');
 		});
@@ -153,7 +150,6 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (getCashbackSettings as any).handler;
 			await handler(mockCtx, { organizationId: 'org_123' });
 			// Should not throw
@@ -168,7 +164,6 @@ describe('Organization Settings', () => {
 				organizationId: 'org_123',
 				settings: { cashbackAmount: 150, cashbackType: 'percentage' },
 			};
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (updateOrganizationSettings as any).handler;
 			await expect(handler(mockCtx, args)).rejects.toThrow(
 				'Porcentagem de cashback deve estar entre 0 e 100.',
@@ -193,7 +188,6 @@ describe('Organization Settings', () => {
 			};
 			mockDb.query.mockReturnValue(mockQueryBuilder);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test mock access
 			const handler = (updateOrganizationSettings as any).handler;
 			await handler(mockCtx, args);
 

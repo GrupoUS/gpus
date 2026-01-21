@@ -51,10 +51,14 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 function DashboardPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 
-	const metrics = useQuery(api.metrics.getDashboard, { period });
-	const teamPerformance = useQuery(api.metrics.getTeamPerformance, { period });
-	const churnAlerts = useQuery(api.students.getChurnAlerts);
-	const recentLeads = useQuery(api.leads.recent, { limit: 5 });
+	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
+	const metrics = useQuery((api as any).metrics.getDashboard as any, { period });
+	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
+	const teamPerformance = useQuery((api as any).metrics.getTeamPerformance, { period });
+	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
+	const churnAlerts = useQuery((api as any).students.getChurnAlerts);
+	// biome-ignore lint/suspicious/noExplicitAny: Break type recursion in Convex api
+	const recentLeads = useQuery((api as any).leads.recent, { limit: 5 });
 
 	// Format currency
 
@@ -168,7 +172,9 @@ function DashboardPage() {
 
 				<MotionWrapper className="grid gap-4 md:grid-cols-2" stagger={100}>
 					<Suspense fallback={<Skeleton className="h-80 w-full rounded-lg" />}>
-						<TeamPerformance data={teamPerformance} />
+						<TeamPerformance
+							data={teamPerformance?.map((m: any) => ({ ...m, _id: m.id as string }))}
+						/>
 					</Suspense>
 					<Suspense fallback={<Skeleton className="h-80 w-full rounded-lg" />}>
 						<ChurnAlerts data={churnAlerts} />

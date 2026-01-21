@@ -210,7 +210,6 @@ export const updateObjection = mutation({
 		if (args.resolved !== undefined) updates.resolved = args.resolved;
 		if (args.resolution !== undefined) updates.resolution = args.resolution;
 
-		// biome-ignore lint/suspicious/noExplicitAny: Dynamic patch
 		await ctx.db.patch(args.objectionId, updates);
 
 		await ctx.db.insert('activities', {

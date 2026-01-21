@@ -91,11 +91,13 @@ export async function encrypt(data: string): Promise<string> {
 		const encrypted = await crypto.subtle.encrypt(
 			{
 				name: ENCRYPTION_CONFIG.algorithm,
-				iv,
+				// biome-ignore lint/suspicious/noExplicitAny: Fix lib.dom vs node Uint8Array buffer type mismatch
+				iv: iv as any,
 				tagLength: ENCRYPTION_CONFIG.tagLength,
 			},
 			key,
-			encodedData,
+			// biome-ignore lint/suspicious/noExplicitAny: Fix lib.dom vs node buffer definition mismatch
+			encodedData as any,
 		);
 
 		// Combine IV + encrypted data (which includes auth tag in Web Crypto)
@@ -103,7 +105,7 @@ export async function encrypt(data: string): Promise<string> {
 		combined.set(iv, 0);
 		combined.set(new Uint8Array(encrypted), iv.length);
 
-		return bufferToHex(combined.buffer as ArrayBuffer);
+		return bufferToHex(combined.buffer as unknown as ArrayBuffer);
 	} catch (error) {
 		if (error instanceof Error && error.message.includes('ENCRYPTION_KEY')) {
 			throw error;

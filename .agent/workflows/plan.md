@@ -26,6 +26,7 @@ CONTEXT:
 - User Request: $ARGUMENTS
 - Mode: PLANNING ONLY (no code)
 - Output: docs/PLAN-{task-slug}.md (dynamic naming)
+- Use the Rule `plan.md`
 
 NAMING RULES:
 1. Extract 2-3 key words from request
