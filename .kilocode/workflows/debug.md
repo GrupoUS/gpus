@@ -1,5 +1,5 @@
 ---
-description: Debugging command with integrated QA pipeline. Activates DEBUG mode using debugger agent and webapp-testing skill for systematic problem investigation, testing, and auto-fix.
+description: Unified debugging workflow with integrated QA pipeline. Activates DEBUG mode using debugger agent with skills debug and backend-design for systematic investigation, architecture validation, database analysis, API testing, and auto-fix.
 ---
 
 # /debug - Systematic Problem Investigation & QA Pipeline
@@ -8,17 +8,30 @@ $ARGUMENTS
 
 ---
 
-## 🔴 CRITICAL: Activate Resources
+## Core Philosophy
 
-**MANDATORY**: Before proceeding, read and follow:
-1. `.agent/agents/debugger.md` — Debugger agent with 4-phase methodology
-2. `.agent/skills/webapp-testing/SKILL.md` — E2E testing, Playwright, audit strategies
+> "Don't guess. Investigate systematically. Test thoroughly. Fix root causes."
+
+### Mindset
+
+- **Reproduce first**: Can't fix what you can't see
+- **Evidence-based**: Follow the data, not assumptions
+- **Root cause focus**: Symptoms hide the real problem
+- **One change at a time**: Multiple changes = confusion
+- **Regression prevention**: Every bug needs a test
+- **Security is non-negotiable**: Validate everything, trust nothing
+- **Type safety prevents bugs**: TypeScript strict mode everywhere
 
 ---
 
-## Purpose
+## Skills to Apply
 
-This command activates DEBUG mode for systematic investigation of issues, integrated with QA pipeline for auto-research and auto-fix capabilities.
+**MANDATORY**: Load and apply these skills:
+
+| Skill | Use For |
+|-------|---------|
+| `.agent/skills/debug/SKILL.md` | Testing, CLI tools, security checklist, E2E |
+| `.agent/skills/backend-design/SKILL.md` | API patterns, TypeScript, database, LEVER principles |
 
 ---
 
@@ -26,120 +39,199 @@ This command activates DEBUG mode for systematic investigation of issues, integr
 
 ```mermaid
 flowchart TD
-    A[/debug] --> B[Phase 1: Information Gathering]
-    B --> C[Phase 2: Hypothesis Formation]
-    C --> D[Phase 3: Investigation]
+    A[/debug] --> B[Phase 1: Reproduce & Gather]
+    B --> C[Phase 2: Isolate & Analyze]
+    C --> D[Phase 3: Root Cause]
     D --> E{Issue Found?}
-    
-    E -->|Yes| F[Phase 4: Fix & Validate]
+
+    E -->|Yes| F[Phase 4: Fix & Verify]
     F --> G[Phase 5: QA Pipeline]
-    
+
     E -->|No| H[Expand Search]
     H --> C
-    
+
     G --> I{All Tests Pass?}
     I -->|Yes| J[✅ DEBUG COMPLETE]
     I -->|No| K[Auto-Research & Fix]
     K --> G
-    
-    subgraph "Debugger Agent"
-    B
-    C
-    D
-    F
-    end
-    
-    subgraph "QA Pipeline"
-    G
-    K
-    end
 ```
 
 ---
 
-## Phase 1: Information Gathering
+## Phase 1: Reproduce & Gather Context
 
-```yaml
-gather:
-  - Error message and stack trace
-  - Reproduction steps
-  - Expected vs actual behavior
-  - Recent code changes
-  - Environment context (dev/prod)
-  - Browser/runtime logs
-
-tools:
-  - Sequential Thinking: Root cause analysis
-  - Grep/Search: Find related code
-  - Logs: Railway/Convex logs
+```
+┌─────────────────────────────────────────────────────────────┐
+│  • Get exact reproduction steps                              │
+│  • Determine reproduction rate (100%? intermittent?)         │
+│  • Document expected vs actual behavior                      │
+│  • Query context: architecture, patterns, constraints        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Commands to run:**
+### Investigation Start Questions
+
+1. **What is happening?** (exact error, symptoms)
+2. **What should happen?** (expected behavior)
+3. **When did it start?** (recent changes?)
+4. **Can you reproduce?** (steps, rate)
+5. **What have you tried?** (rule out)
+
+### Commands
+
 ```bash
-# Check logs
+# Check backend logs
 railway logs --latest -n 100
-bunx convex logs --prod --success --failure
+
+# Check database (Neon MCP)
+# mcp_mcp-server-neon_list_slow_queries
+# mcp_mcp-server-neon_run_sql
 ```
 
 ---
 
-## Phase 2: Hypothesis Formation
+## Phase 2: Isolate & Analyze
 
-```yaml
-process:
-  1: List possible causes
-  2: Order by likelihood
-  3: Consider AI-generated code anti-patterns
-  4: Map to specific files/functions
-
-anti_patterns_to_check:
-  - Direct database access from frontend
-  - API keys in browser code
-  - Client-side business logic
-  - Missing rate limiting
-  - Sensitive data in logs
+```
+┌─────────────────────────────────────────────────────────────┐
+│  • When did it start? What changed?                          │
+│  • Which component is responsible? (Frontend/Backend/DB)     │
+│  • Create minimal reproduction case                          │
+│  • Review code quality, security, performance                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
----
+### Investigation by Domain
 
-## Phase 3: Systematic Investigation
+#### Frontend Issues
 
-```yaml
-method: "Sequential hypothesis testing"
+| Symptom | Investigation |
+|---------|---------------|
+| **UI not updating** | Check state management, reactivity, hooks deps |
+| **Crashes on render** | Check null access, component lifecycle |
+| **Slow performance** | Profile with DevTools, check re-renders |
+| **Hydration mismatch** | SSR/CSR data consistency |
+| **Type errors** | TypeScript strict, Zod validation |
 
-for_each_hypothesis:
-  - Test with evidence
-  - Check logs, data flow
-  - Use elimination method
-  - Document findings
+#### Backend/API Issues
 
-tools:
-  - webapp-testing: Reproduce bugs with Playwright
-  - debugger-agent: 4-phase debugging methodology
-  - Sequential Thinking: Structure analysis
-```
+| Symptom | Investigation |
+|---------|---------------|
+| **500 errors** | Read stack trace, check middleware chain |
+| **Auth failures** | JWT validation, session state, CORS |
+| **Slow endpoints** | Profile queries, N+1, caching |
+| **Type mismatch** | tRPC inference, Zod schemas |
+| **Memory leaks** | Event listeners, closures, unclosed connections |
 
-**Webapp Testing Script:**
+#### Database Issues
+
+| Symptom | Investigation |
+|---------|---------------|
+| **Slow queries** | EXPLAIN ANALYZE, missing indexes |
+| **Wrong data** | Check constraints, trace mutations |
+| **Connection pool** | Pool size, leaks, timeouts |
+| **Migration fails** | Schema conflicts, data integrity |
+| **N+1 queries** | JOINs, eager loading, DataLoader |
+
+### Debugging Techniques
+
+#### Binary Search Debugging
+
+1. Find a point where it works
+2. Find a point where it fails
+3. Check the middle
+4. Repeat until exact location found
+
+#### Git Bisect for Regressions
+
 ```bash
-python .agent/skills/webapp-testing/scripts/playwright_runner.py <url> --screenshot --a11y
+git bisect start
+git bisect bad HEAD
+git bisect good <known-good-commit>
 ```
 
 ---
 
-## Phase 4: Fix & Prevention
+## Phase 3: Understand Root Cause
 
-```yaml
-fix_process:
-  1: Identify root cause
-  2: Apply minimal fix
-  3: Explain why it works
-  4: Add prevention measures
-  5: Update tests
+```
+┌─────────────────────────────────────────────────────────────┐
+│  • Apply "5 Whys" technique                                  │
+│  • Trace data flow from DB → API → Frontend                  │
+│  • Identify the actual bug, not the symptom                  │
+│  • Check for architecture/pattern violations                 │
+└─────────────────────────────────────────────────────────────┘
+```
 
-prevention:
-  - Add unit test for bug
-  - Add E2E test for flow
-  - Document the issue
+### The 5 Whys
+
+```
+WHY is the user seeing an error?
+→ Because the API returns 500.
+
+WHY does the API return 500?
+→ Because the database query fails.
+
+WHY does the query fail?
+→ Because the table doesn't exist.
+
+WHY doesn't the table exist?
+→ Because migration wasn't run.
+
+WHY wasn't migration run?
+→ Because deployment script skips it. ← ROOT CAUSE
+```
+
+### 5 Whys Template
+
+```markdown
+**Problem**: [Error description]
+
+1. Why? → [First cause]
+2. Why? → [Deeper cause]
+3. Why? → [Underlying issue]
+4. Why? → [Systemic reason]
+5. Why? → [Root cause]
+
+**Root Cause**: [Final determination]
+**Fix**: [Proposed solution]
+```
+
+---
+
+## Phase 4: Fix, Verify & Prevent
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  • Fix the root cause                                        │
+│  • Verify fix across all layers                              │
+│  • Add regression test                                       │
+│  • Check for similar issues elsewhere                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Quality Control Loop (MANDATORY)
+
+After every fix:
+
+```bash
+# 1. Type check
+bun run check
+
+# 2. Lint
+bun run format
+
+# 3. Test
+bun test
+
+# 4. Security check
+# - No hardcoded secrets
+# - Input validated
+# - Auth checks in place
+
+# 5. Database check (if applicable)
+# - Migration reversible
+# - Indexes cover queries
 ```
 
 ---
@@ -149,146 +241,260 @@ prevention:
 > **🔴 CRITICAL GATE**: Ensure fix doesn't break other things
 
 ### 5.1 Local Quality Checks
+
 ```bash
-# Code quality & linting
-bun run lint:check
-
-# Type safety & build verification  
-bun run build
-
-# Test coverage
-bun run test
+bun run check      # Type safety
+bun run format     # Lint & format
+bun test           # Unit tests
+bun test --coverage
 ```
 
 ### 5.2 Deployment Validation
+
 ```bash
-# Railway deployment status
 railway status
-
-# Convex backend deployment
-bunx convex deploy --prod
-
-# Verify logs for new errors
 railway logs --latest -n 50
-bunx convex logs --prod --failure
+# mcp_mcp-server-neon_run_sql "SELECT 1"
 ```
 
 ### 5.3 E2E Validation (if UI affected)
-```bash
-# Run E2E tests
-bun run test:e2e
 
-# Or use Playwright directly
-python .agent/skills/webapp-testing/scripts/playwright_runner.py <url> --screenshot
+```bash
+agent-browser open http://localhost:3000
+agent-browser snapshot
+agent-browser screenshot debug-result.png
+agent-browser close
 ```
 
 ---
 
 ## Auto-Research & Fix (If QA Fails)
 
-If errors are detected after fix:
+1. **Aggregate Errors**: Stack trace, lib versions, affected code, logs
+2. **Invoke Research**: `/research "Debug Fix: [resumo]. Context: [logs]."`
+3. **Generate Atomic Tasks**: Research → Apply fix → Verify
+4. **Re-run QA Pipeline**
 
-1. **Aggregate Errors**
-   - Stack trace completo
-   - Versões de bibliotecas
-   - Código fonte afetado
-   - Logs de erro
+---
 
-2. **Invoke Research**
-   > `/research "Debug Fix: [resumo]. Context: [logs]. GOAL: Research docs and plan atomic fixes."`
+## Code Review Checklist
 
-3. **Generate Atomic Tasks**
-   ```yaml
-   tasks:
-     - [ ] Research API/pattern (if unknown)
-     - [ ] Apply fix to [file]
-     - [ ] Verify fix (unit/build/lint)
-   ```
+### Security (CRITICAL - Check First)
 
-4. **Re-run QA Pipeline** after implementation
+- [ ] **Input Validation**: All inputs validated and sanitized
+- [ ] **Authentication**: Protected routes have auth middleware
+- [ ] **Authorization**: Role-based access control implemented
+- [ ] **SQL Injection**: Using parameterized queries/ORM
+- [ ] **XSS Prevention**: Output encoding, Content-Security-Policy
+- [ ] **Secrets**: Environment variables, not hardcoded
+- [ ] **Dependencies**: No known vulnerabilities
+
+### Code Quality
+
+- [ ] **Logic correctness**: Edge cases handled
+- [ ] **Error handling**: Centralized, consistent format
+- [ ] **Type safety**: No `any`, proper generics
+- [ ] **Naming**: Descriptive, consistent conventions
+- [ ] **Complexity**: Cyclomatic complexity < 10
+- [ ] **DRY**: No duplicated logic
+- [ ] **SOLID**: Single responsibility, dependency injection
+
+### Performance
+
+- [ ] **Database**: Indexes for query patterns, no SELECT *
+- [ ] **API**: Response size, caching strategy
+- [ ] **Frontend**: Bundle size, lazy loading, memoization
+- [ ] **Async**: Non-blocking I/O, proper await handling
+
+### Testing
+
+- [ ] **Coverage**: Critical paths tested > 80%
+- [ ] **Unit tests**: Business logic isolated
+- [ ] **Integration**: API endpoints verified
+- [ ] **E2E**: User journeys covered
+- [ ] **Regression**: Test for every bug fix
+
+---
+
+## Architecture Validation
+
+### Layered Architecture Check
+
+```
+Controller → Service → Repository → Database
+     │           │           │
+   Validate    Logic      Query
+   Route       Rules       Data
+```
+
+- ❌ Don't put business logic in controllers
+- ❌ Don't skip the service layer
+- ❌ Don't mix concerns across layers
+- ✅ Use dependency injection for testability
+
+### API Design Check
+
+- [ ] Consistent response format
+- [ ] Appropriate HTTP status codes
+- [ ] Rate limiting implemented
+- [ ] OpenAPI/tRPC documentation
+- [ ] Version strategy defined
+
+### Database Schema Check
+
+- [ ] Primary keys defined
+- [ ] Foreign keys constrained
+- [ ] Indexes match query patterns
+- [ ] Appropriate data types
+- [ ] Normalization level appropriate
+
+---
+
+## Common Anti-Patterns
+
+| ❌ Anti-Pattern | ✅ Correct Approach |
+|-----------------|---------------------|
+| Random changes hoping to fix | Systematic investigation |
+| Ignoring stack traces | Read every line carefully |
+| "Works on my machine" | Reproduce in same environment |
+| Fixing symptoms only | Find and fix root cause |
+| No regression test | Always add test for the bug |
+| Multiple changes at once | One change, then verify |
+| Guessing without data | Profile and measure first |
+| SELECT * everywhere | Select only needed columns |
+| N+1 queries | Use JOINs or eager loading |
+| Hardcoded secrets | Environment variables only |
+| Skipping auth checks | Verify every protected route |
+| Giant controllers | Split into services |
+
+---
+
+## Framework-Specific Debugging
+
+### tRPC + TanStack Query
+
+```typescript
+// Check: Query key conflicts
+// Check: Stale time configuration
+// Check: Error boundaries for mutations
+// Check: Optimistic update rollback
+
+const { data, error, isLoading, status } = trpc.feature.list.useQuery();
+console.log({ status, error });
+```
+
+### Drizzle ORM + Neon
+
+```typescript
+// Check: .returning() for PostgreSQL inserts
+// Check: Index usage with EXPLAIN
+// Check: Connection pooling (serverless)
+
+const result = await db.select().from(table);
+console.log(db.toSQL(query)); // See generated SQL
+```
+
+### React 19 + Hooks
+
+```typescript
+// Check: Hook dependency arrays
+// Check: ref-as-prop (no forwardRef needed)
+// Check: use() for promises
+// Check: Key prop for lists
+
+useEffect(() => {
+  console.log('Component rerendered with:', deps);
+}, [deps]);
+```
+
+---
+
+## Tool Selection by Problem
+
+### Browser/Frontend
+
+| Need | Tool |
+|------|------|
+| Network requests | Network tab |
+| DOM state | Elements tab |
+| Debug JS | Sources + breakpoints |
+| Performance | Performance tab |
+| Memory | Memory tab profiler |
+
+### Backend/API
+
+| Need | Tool |
+|------|------|
+| Request flow | Structured logging |
+| Step-by-step debug | --inspect flag |
+| Slow queries | Query logging, EXPLAIN |
+| Memory issues | Heap snapshots |
+| Regression | git bisect |
+
+### Database
+
+| Need | Approach |
+|------|----------|
+| Slow queries | EXPLAIN ANALYZE |
+| Wrong data | Check constraints, trace writes |
+| Connection issues | Check pool, connection logs |
+| Index efficiency | pg_stat_statements |
+
+---
+
+## Investigation Checklist
+
+### Before Starting
+
+- [ ] Can reproduce consistently
+- [ ] Have error message/stack trace
+- [ ] Know expected behavior
+- [ ] Checked recent changes (git diff)
+
+### During Investigation
+
+- [ ] Added strategic logging
+- [ ] Traced data flow (DB → API → UI)
+- [ ] Used debugger/breakpoints
+- [ ] Checked relevant logs
+- [ ] Reviewed code for anti-patterns
+
+### After Fix
+
+- [ ] Root cause documented
+- [ ] Fix verified in all affected areas
+- [ ] Regression test added
+- [ ] Similar code checked for same issue
+- [ ] Debug logging removed
+- [ ] Type check passes
+- [ ] Lint passes
 
 ---
 
 ## Output Format
 
 ```markdown
-## 🔍 Debug: [Issue]
+## 🔍 Debug Report: [Issue Title]
 
-### 1. Symptom
-[What's happening]
+**Issue:** [one-line description]
+**Root Cause:** [what was actually wrong]
 
-### 2. Information Gathered
-- **Error**: `[error message]`
-- **File**: `[filepath]`
-- **Line**: [line number]
-- **Logs**: [relevant log snippets]
+### Analysis
+- [key findings from investigation]
 
-### 3. Hypotheses
-1. ❓ [Most likely cause] — Testing: [method]
-2. ❓ [Second possibility] — Testing: [method]
-3. ❓ [Less likely cause] — Testing: [method]
+### Fix Applied
+- [files changed]
+- [what was changed and why]
 
-### 4. Investigation Results
+### Verification
+- [ ] Type check passes
+- [ ] Tests pass
+- [ ] Regression test added
+- [ ] Similar issues checked
 
-**Hypothesis 1:**
-[What I checked] → [Result] → ✅/❌
-
-**Hypothesis 2:**
-[What I checked] → [Result] → ✅/❌
-
-### 5. Root Cause
-🎯 **[Explanation of why this happened]**
-
-Evidence:
-- [Evidence 1]
-- [Evidence 2]
-
-### 6. Fix Applied
-```[language]
-// Before
-[broken code]
-
-// After  
-[fixed code]
+### Prevention
+- [how to prevent this in the future]
 ```
-
-### 7. QA Validation
-| Check | Status | Notes |
-|-------|--------|-------|
-| Lint | ✅/❌ | |
-| Build | ✅/❌ | |
-| Tests | ✅/❌ | |
-| E2E | ✅/❌ | (if applicable) |
-
-### 8. Prevention
-🛡️ [How to prevent this in the future]
-- [ ] Test added
-- [ ] Documentation updated
-- [ ] Validation improved
-```
-
----
-
-## Skill Integration
-
-### For UI/Frontend Bugs
-> **USE SKILL**: `webapp-testing`
-> - Create Playwright scripts for reproduction
-> - Capture screenshots of errors
-> - Run accessibility checks
-> - E2E test for the fixed flow
-
-### For Backend/Database Bugs
-> **USE SKILL**: `ai-data-analyst`
-> - Analyze data consistency
-> - Validate schema expectations
-> - Create verification scripts
-
-### For Security Issues
-> **USE AGENT**: `debugger.md` (Security section)
-> - Follow AI-generated code vulnerability checklist
-> - Check for client-side trust issues
-> - Verify authorization at each endpoint
 
 ---
 
@@ -296,38 +502,14 @@ Evidence:
 
 | Gate | Command | Expected |
 |------|---------|----------|
-| Lint | `bun run lint:check` | 0 errors |
+| Type Check | `bun run check` | 0 errors |
+| Lint | `bun run format --check` | 0 warnings |
+| Tests | `bun test` | All pass |
 | Build | `bun run build` | Clean build |
-| Tests | `bun run test` | All pass |
-| E2E | `bun run test:e2e` | All pass |
+| DB Schema | `bun run db:push --dry-run` | No drift |
+| Slow Queries | Neon MCP | < 100ms avg |
 | Deploy | `railway status` | Healthy |
-| Backend | `bunx convex deploy --prod` | Success |
-| Logs | `railway logs --latest -n 50` | No new errors |
-
----
-
-## Examples
-
-```
-/debug login not working
-/debug API returns 500
-/debug form doesn't submit
-/debug data not saving
-/debug payment failing in prod
-/debug component not rendering
-```
-
----
-
-## Key Principles
-
-- **Ask before assuming** — get full error context
-- **Test hypotheses** — don't guess randomly  
-- **Evidence-based** — document what you found
-- **Explain why** — not just what to fix
-- **Prevent recurrence** — add tests, validation
-- **QA validation** — ensure fix doesn't break other things
-- **Auto-research** — use Context7/Tavily for unknown issues
+| Logs | `railway logs` | No new errors |
 
 ---
 
@@ -336,11 +518,15 @@ Evidence:
 | Task | Command |
 |------|---------|
 | Debug issue | `/debug [description]` |
-| Run E2E | `python .agent/skills/webapp-testing/scripts/playwright_runner.py <url>` |
+| Check types | `bun run check` |
+| Run tests | `bun test` |
+| Slow queries | Neon MCP tools |
 | Check logs | `railway logs --latest -n 100` |
-| Convex logs | `bunx convex logs --prod --failure` |
 | Full QA | `/qa` |
+| Research fix | `/research "Debug: ..."` |
 
 ---
 
-**Pipeline completo: `/debug` → investigar → fix → QA validate → (se falhar) → auto-research → re-fix → QA validate**
+> **Remember:** Debugging is detective work. Follow the evidence, not your assumptions. Fix root causes, not symptoms.
+
+**Pipeline: `/debug` → reproduce → isolate → root cause → fix → QA validate → (se falhar) → auto-research → re-fix**
