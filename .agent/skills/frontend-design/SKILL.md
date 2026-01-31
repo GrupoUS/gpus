@@ -8,6 +8,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 > **Philosophy:** Every pixel has purpose. Restraint is luxury. User psychology drives decisions.
 > **Core Principle:** THINK, don't memorize. ASK, don't assume.
+> **Default Theme:** GPUS Navy/Gold palette from `gpus-theme` skill.
 
 ---
 
@@ -17,8 +18,9 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 | File | Status | When to Read |
 | ---- | ------ | ------------ |
+| [../gpus-theme/SKILL.md](../gpus-theme/SKILL.md) | 🔴 **REQUIRED** | Always! Default theme |
 | [ux-psychology.md](ux-psychology.md) | 🔴 **REQUIRED** | Always read first! |
-| [color-system.md](color-system.md) | ⚪ Optional | Color/palette decisions |
+| [color-system.md](color-system.md) | ⚪ Optional | Non-GPUS color decisions |
 | [typography-system.md](typography-system.md) | ⚪ Optional | Font selection/pairing |
 | [visual-effects.md](visual-effects.md) | ⚪ Optional | Glassmorphism, shadows, gradients |
 | [animation-guide.md](animation-guide.md) | ⚪ Optional | Animation needed |
@@ -88,11 +90,24 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ## 2. Design Execution
 
-### Color (60-30-10 Rule)
+### Color: GPUS Navy/Gold Palette (DEFAULT)
 
-- 60% → Primary/Background
-- 30% → Secondary
-- 10% → Accent (CTAs)
+**Use the GPUS theme by default:**
+
+| Mode | Background | Text | Primary/CTA |
+|------|------------|------|-------------|
+| Light | White `#fff` | Dark Blue | Gold `38 60% 45%` |
+| Dark | Navy `211 49% 10%` | Gold `39 44% 65%` | Gold |
+
+**60-30-10 Rule:**
+- 60% → Background (Navy/White)
+- 30% → Foreground (Gold/Dark Blue)
+- 10% → Accent/CTA (Gold)
+
+**Theme Assets:**
+- CSS: `.agent/skills/gpus-theme/assets/theme-tokens.css`
+- Tailwind: `.agent/skills/gpus-theme/assets/tailwind-theme.ts`
+- shadcn: `.agent/skills/gpus-theme/assets/components.json`
 
 ### Typography
 
@@ -156,18 +171,33 @@ Data in `assets/ui-ux-data/` (12 CSVs + 11 stack files).
 
 ## 5. CSS/Tailwind Patterns
 
-### Tailwind v4 Quick Reference
+### GPUS Theme Integration (DEFAULT)
+
+Always use the GPUS theme tokens from `gpus-theme` skill:
 
 ```css
-@theme {
-  --color-primary: oklch(0.7 0.15 250);
-  --spacing-md: 1rem;
+/* Import GPUS theme */
+@import "tailwindcss";
+
+/* Use semantic tokens */
+.card {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+/* Custom utilities available */
+.premium-card {
+  @apply glass-card bg-mesh;
 }
 ```
+
+### Tailwind v4 Quick Reference
 
 - Container queries: `@sm:`, `@md:`, `@lg:`
 - CSS variables: All tokens as `--*` vars
 - Read [tailwind-v4-patterns.md](tailwind-v4-patterns.md) for full guide
+- **Theme reference:** [../gpus-theme/references/css-variables.md](../gpus-theme/references/css-variables.md)
 
 ---
 
@@ -210,6 +240,8 @@ Data in `assets/ui-ux-data/` (12 CSVs + 11 stack files).
 
 | Folder | Contents |
 | ------ | -------- |
+| `../gpus-theme/assets/` | **GPUS theme tokens, CSS, shadcn config** |
+| `../gpus-theme/references/` | CSS variables, component inventory |
 | `assets/canvas-fonts/` | 81 fonts for canvas design |
 | `assets/p5-templates/` | p5.js viewer + generator |
 | `assets/ui-ux-data/` | 12 CSVs + 11 stack guides |
