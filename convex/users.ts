@@ -413,7 +413,8 @@ export const inviteTeamMember = action({
 			// But `requirePermission` returns identity which has `org_id`.
 			const organizationId = identity.org_id || identity.subject; // Fallback to personal org
 
-			await ctx.runMutation(internal.users.createPendingUser, {
+			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+			await ctx.runMutation((internal as any).users.createPendingUser, {
 				email: args.email,
 				role: args.role,
 				invitedAt: Date.now(),
@@ -776,5 +777,74 @@ export const fixSdrUsers = internalMutation({
 		}
 
 		return results;
+	},
+});
+
+/**
+ * Backfill Clerk Users Action
+ *
+ * Fetches all users from Clerk and upserts them to Convex.
+ * Run this once to populate the users table for lead owner dropdowns.
+ *
+ * SECURITY: Admin only (requires manual invocation via dashboard/CLI)
+ */
+export const backfillClerkUsers = action({
+	args: {
+		organizationId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const results: { clerkId: string; status: string; email?: string }[] = [];
+
+		try {
+			// Fetch all users from Clerk (paginated, up to 500)
+			const clerkResponse = await clerkClient.users.getUserList({
+				limit: 500,
+			});
+
+			for (const user of clerkResponse.data) {
+				// Get primary email
+				const primaryEmail =
+					user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ||
+					user.emailAddresses?.[0]?.emailAddress ||
+					'';
+
+				// Use passed organizationId (org memberships require separate API call)
+				const orgId = args.organizationId || 'default';
+
+				// Default role - can be overridden later by admin
+				const role: 'owner' | 'admin' | 'manager' | 'member' | 'sdr' | 'cs' | 'support' = 'member';
+
+				try {
+					// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+					await ctx.runMutation((internal as any).clerk.upsertFromWebhook, {
+						clerkId: user.id,
+						email: primaryEmail,
+						name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+						avatar: user.imageUrl || undefined,
+						organizationId: orgId,
+						role,
+					});
+
+					results.push({ clerkId: user.id, status: 'synced', email: primaryEmail });
+				} catch (_mutErr) {
+					results.push({
+						clerkId: user.id,
+						status: 'error',
+						email: primaryEmail,
+					});
+				}
+			}
+
+			return {
+				totalFetched: clerkResponse.data.length,
+				synced: results.filter((r) => r.status === 'synced').length,
+				errors: results.filter((r) => r.status === 'error').length,
+				results,
+			};
+		} catch (err) {
+			throw new Error(
+				`Failed to backfill Clerk users: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
 	},
 });

@@ -572,4 +572,91 @@ http.route({
 	}),
 });
 
+// ═══════════════════════════════════════════════════════
+// CLERK USER WEBHOOK
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Clerk Users Webhook Endpoint
+ *
+ * Receives user lifecycle events from Clerk (created, updated, deleted)
+ * and syncs them to the Convex users table.
+ *
+ * POST /clerk/users
+ *
+ * Headers:
+ * - svix-id: Webhook ID
+ * - svix-timestamp: Unix timestamp
+ * - svix-signature: HMAC signature
+ */
+http.route({
+	path: '/clerk/users',
+	method: 'POST',
+	handler: httpAction(async (ctx, request) => {
+		// Dynamic import to avoid circular dependencies
+		const { verifyClerkWebhook } = await import('./clerk');
+
+		const payload = await request.text();
+		const headers = {
+			'svix-id': request.headers.get('svix-id'),
+			'svix-timestamp': request.headers.get('svix-timestamp'),
+			'svix-signature': request.headers.get('svix-signature'),
+		};
+
+		const event = verifyClerkWebhook(payload, headers);
+		if (!event) {
+			return new Response('Unauthorized', { status: 401 });
+		}
+
+		try {
+			if (event.type === 'user.created' || event.type === 'user.updated') {
+				const user = event.data;
+				// Get primary email
+				const primaryEmail =
+					user.email_addresses?.find((e) => e.id === user.primary_email_address_id)
+						?.email_address ||
+					user.email_addresses?.[0]?.email_address ||
+					'';
+
+				// Get org membership role if available
+				const orgMembership = user.organization_memberships?.[0];
+				const orgId = orgMembership?.organization?.id;
+				const orgRole = orgMembership?.role; // 'admin' | 'member' | etc.
+
+				// Map Clerk org role to our system roles
+				let role: 'owner' | 'admin' | 'manager' | 'member' | 'sdr' | 'cs' | 'support' = 'member';
+				if (orgRole === 'org:admin') {
+					role = 'admin';
+				} else if (orgRole === 'org:member') {
+					role = 'member';
+				}
+
+				// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+				await ctx.runMutation((internal as any).clerk.upsertFromWebhook, {
+					clerkId: user.id,
+					email: primaryEmail,
+					name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || undefined,
+					avatar: user.image_url || undefined,
+					organizationId: orgId || undefined,
+					role,
+				});
+			} else if (event.type === 'user.deleted') {
+				const userId = event.data.id;
+				if (userId) {
+					// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+					await ctx.runMutation((internal as any).clerk.deleteFromWebhook, {
+						clerkId: userId,
+					});
+				}
+			}
+
+			return new Response('OK', { status: 200 });
+		} catch (err) {
+			// biome-ignore lint/suspicious/noConsole: Logging webhook processing error
+			console.error('Error processing Clerk webhook:', err);
+			return new Response('Internal Server Error', { status: 500 });
+		}
+	}),
+});
+
 export default http;

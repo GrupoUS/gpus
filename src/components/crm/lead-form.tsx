@@ -1,7 +1,7 @@
 import { api } from '@convex/_generated/api';
 import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -103,6 +103,8 @@ const leadFormSchema = z
 		mainDesire: z.string().max(500).optional(),
 		// Referrals
 		referredById: z.string().optional(),
+		// Assignment
+		assignedTo: z.string().optional(),
 		// Custom Fields
 		customFields: z.record(z.string(), z.any()).optional(),
 	})
@@ -121,6 +123,7 @@ export function LeadForm() {
 	) => (args: unknown) => Promise<unknown>;
 	const apiAny = api as unknown as Record<string, Record<string, unknown>>;
 	const createLead = useMutationUnsafe(apiAny.leads.createLead);
+	const vendors = useQuery(api.users.listVendors);
 
 	const form = useForm<z.infer<typeof leadFormSchema>>({
 		resolver: zodResolver(leadFormSchema),
@@ -169,6 +172,7 @@ export function LeadForm() {
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
 				...(values.referredById && { referredById: values.referredById }),
+				...(values.assignedTo && { assignedTo: values.assignedTo as Id<'users'> }),
 
 				// Custom Fields Mapping
 				customFieldValues: values.customFields
@@ -290,6 +294,32 @@ export function LeadForm() {
 										<FormControl>
 											<ReferralAutocomplete onChange={field.onChange} value={field.value} />
 										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{/* Responsável */}
+							<FormField
+								control={form.control}
+								name="assignedTo"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Responsável (Opcional)</FormLabel>
+										<Select onValueChange={field.onChange} value={field.value || ''}>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione o responsável" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{vendors?.map((vendor) => (
+													<SelectItem key={vendor.id} value={vendor.id}>
+														{vendor.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										<FormMessage />
 									</FormItem>
 								)}
