@@ -37,6 +37,7 @@ import type * as asaas_test_sync from "../asaas/test_sync.js";
 import type * as asaas_types from "../asaas/types.js";
 import type * as asaas_validation from "../asaas/validation.js";
 import type * as asaas_webhooks from "../asaas/webhooks.js";
+import type * as clerk from "../clerk.js";
 import type * as conversations from "../conversations.js";
 import type * as crons from "../crons.js";
 import type * as customFields from "../customFields.js";
@@ -133,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   "asaas/types": typeof asaas_types;
   "asaas/validation": typeof asaas_validation;
   "asaas/webhooks": typeof asaas_webhooks;
+  clerk: typeof clerk;
   conversations: typeof conversations;
   crons: typeof crons;
   customFields: typeof customFields;
