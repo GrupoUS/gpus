@@ -1,6 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
+import { Upload } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -14,10 +15,16 @@ const LeadDetail = lazy(() =>
 const PipelineKanban = lazy(() =>
 	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
 );
+const LeadImportDialog = lazy(() =>
+	import('@/components/crm/lead-import-dialog').then((module) => ({
+		default: module.LeadImportDialog,
+	})),
+);
 
 import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // ... imports remain the same
@@ -50,6 +57,7 @@ function CRMPage() {
 		tags: [] as string[],
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
+	const [importDialogOpen, setImportDialogOpen] = useState(false);
 
 	const handleTabChange = (value: string) => {
 		setSelectedProduct(value);
@@ -131,6 +139,10 @@ function CRMPage() {
 							Gerencie seus leads e oportunidades
 						</p>
 					</div>
+					<Button className="gap-2" onClick={() => setImportDialogOpen(true)} variant="outline">
+						<Upload className="h-4 w-4" />
+						Importar Leads
+					</Button>
 				</div>
 
 				<Tabs onValueChange={handleTabChange} value={selectedProduct}>
@@ -187,6 +199,10 @@ function CRMPage() {
 
 			<Suspense fallback={<div>Carregando detalhes...</div>}>
 				<LeadDetail leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+			</Suspense>
+
+			<Suspense fallback={null}>
+				<LeadImportDialog onOpenChange={setImportDialogOpen} open={importDialogOpen} />
 			</Suspense>
 		</div>
 	);

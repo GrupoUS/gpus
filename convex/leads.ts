@@ -817,3 +817,145 @@ export const search = query({
 			}));
 	},
 });
+
+// ═══════════════════════════════════════════════════════
+// BULK IMPORT: Import leads from spreadsheet
+// ═══════════════════════════════════════════════════════
+const importLeadArg = v.object({
+	name: v.string(),
+	phone: v.string(),
+	email: v.optional(v.string()),
+	source: v.optional(v.string()),
+	message: v.optional(v.string()),
+	profession: v.optional(v.string()),
+	interestedProduct: v.optional(v.string()),
+	clinicCity: v.optional(v.string()),
+	lastContactAt: v.optional(v.number()),
+});
+
+export const importLeads = mutation({
+	args: {
+		leads: v.array(importLeadArg),
+		defaultProduct: v.optional(v.string()),
+		defaultSource: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		// Auth/Permission check
+		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
+		const organizationId = await getOrganizationId(ctx);
+
+		if (!organizationId) {
+			throw new Error('Organization not found');
+		}
+
+		const results: { index: number; success: boolean; leadId?: string; error?: string }[] = [];
+
+		// Process each lead
+		for (let i = 0; i < args.leads.length; i++) {
+			const leadData = args.leads[i];
+
+			try {
+				// Validate required fields
+				if (!leadData.name || leadData.name.trim() === '') {
+					results.push({ index: i, success: false, error: 'Nome é obrigatório' });
+					continue;
+				}
+
+				if (!leadData.phone || leadData.phone.trim() === '') {
+					results.push({ index: i, success: false, error: 'Telefone é obrigatório' });
+					continue;
+				}
+
+				// Normalize phone: remove non-digits, ensure has country code
+				let phone = leadData.phone.replace(/\D/g, '');
+				if (phone.length === 10 || phone.length === 11) {
+					phone = `55${phone}`;
+				}
+
+				// Check for existing lead with same phone (duplicate prevention)
+				const existingLead = await ctx.db
+					.query('leads')
+					.withIndex('by_organization_phone', (q) =>
+						q.eq('organizationId', organizationId).eq('phone', phone),
+					)
+					.first();
+
+				if (existingLead) {
+					results.push({ index: i, success: false, error: 'Lead já existe com este telefone' });
+					continue;
+				}
+
+				// Map source string to valid source value
+				const sourceMap: Record<string, string> = {
+					instagram: 'instagram',
+					whatsapp: 'whatsapp',
+					trafego: 'trafego_pago',
+					landing: 'landing_page',
+					indicacao: 'indicacao',
+					organico: 'organico',
+				};
+				const rawSource = leadData.source?.toLowerCase() ?? args.defaultSource ?? 'landing_page';
+				const source = sourceMap[rawSource] ?? 'landing_page';
+
+				// Map product to valid product value
+				const productMap: Record<string, string> = {
+					otb: 'otb',
+					neon: 'black_neon',
+					black_neon: 'black_neon',
+					trintae3: 'trintae3',
+					comunidade: 'comunidade',
+				};
+				const rawProduct =
+					leadData.interestedProduct?.toLowerCase() ?? args.defaultProduct ?? 'otb';
+				const interestedProduct = productMap[rawProduct] ?? 'otb';
+
+				// Insert the lead
+				const leadId = await ctx.db.insert('leads', {
+					name: leadData.name.trim(),
+					phone,
+					email: leadData.email?.trim() || undefined,
+					source: source as Doc<'leads'>['source'],
+					message: leadData.message?.trim() || undefined,
+					profession: leadData.profession as Doc<'leads'>['profession'] | undefined,
+					interestedProduct: interestedProduct as Doc<'leads'>['interestedProduct'],
+					clinicCity: leadData.clinicCity?.trim() || undefined,
+					lastContactAt: leadData.lastContactAt,
+					stage: 'novo',
+					temperature: 'frio',
+					lgpdConsent: false,
+					whatsappConsent: false,
+					organizationId,
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+				});
+
+				results.push({ index: i, success: true, leadId: leadId as string });
+			} catch (error) {
+				results.push({
+					index: i,
+					success: false,
+					error: error instanceof Error ? error.message : 'Erro desconhecido',
+				});
+			}
+		}
+
+		// Log bulk import activity
+		const successCount = results.filter((r) => r.success).length;
+		const failCount = results.filter((r) => !r.success).length;
+
+		await ctx.db.insert('activities', {
+			type: 'lead_criado',
+			description: `Importação em massa: ${successCount} leads criados, ${failCount} ignorados`,
+			organizationId,
+			performedBy: identity.subject,
+			createdAt: Date.now(),
+		});
+
+		return {
+			total: args.leads.length,
+			success: successCount,
+			failed: failCount,
+			results,
+		};
+	},
+});

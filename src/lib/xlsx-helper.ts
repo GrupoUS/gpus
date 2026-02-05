@@ -402,3 +402,57 @@ export function getRowsFromWorkbook(workbook: WorkBook): unknown[][] {
 
 	return rows;
 }
+
+/**
+ * Result of parsing an XLSX/CSV file
+ */
+export interface ParsedFileResult {
+	data: {
+		headers: string[];
+		rows: Record<string, unknown>[];
+	};
+	headerDetection: HeaderDetectionResult;
+}
+
+/**
+ * Parse XLSX/CSV file with automatic header detection
+ *
+ * @param file - File to parse (XLSX, XLS, or CSV)
+ * @param password - Optional password for protected files
+ * @returns Parsed data with headers and rows
+ *
+ * @example
+ * ```typescript
+ * const result = await parseXLSXFile(file);
+ * console.log(result.data.headers); // ['Nome', 'Email', 'Telefone']
+ * console.log(result.data.rows); // [{ Nome: 'João', Email: '...', ... }]
+ * ```
+ */
+export async function parseXLSXFile(file: File, password?: string): Promise<ParsedFileResult> {
+	const buffer = await file.arrayBuffer();
+	const parseResult = parseXLSXWithPassword(buffer, password);
+
+	if (!parseResult.success) {
+		if ('needsPassword' in parseResult && parseResult.needsPassword) {
+			throw new Error('NEEDS_PASSWORD');
+		}
+		throw new Error(parseResult.error ?? 'Erro ao processar arquivo');
+	}
+
+	const rows = getRowsFromWorkbook(parseResult.workbook);
+
+	if (rows.length === 0) {
+		throw new Error('Arquivo vazio');
+	}
+
+	const headerDetection = detectHeaderRow(rows);
+	const extracted = extractDataWithHeaders(rows, headerDetection.headerRowIndex);
+
+	return {
+		data: {
+			headers: extracted.headers,
+			rows: extracted.dataRows,
+		},
+		headerDetection,
+	};
+}
