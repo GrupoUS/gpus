@@ -436,7 +436,8 @@ export async function parseXLSXFile(file: File, password?: string): Promise<Pars
 		if ('needsPassword' in parseResult && parseResult.needsPassword) {
 			throw new Error('NEEDS_PASSWORD');
 		}
-		throw new Error(parseResult.error ?? 'Erro ao processar arquivo');
+		const errorResult = parseResult as { success: false; error: string };
+		throw new Error(errorResult.error ?? 'Erro ao processar arquivo');
 	}
 
 	const rows = getRowsFromWorkbook(parseResult.workbook);

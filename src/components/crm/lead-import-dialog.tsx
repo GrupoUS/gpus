@@ -196,7 +196,6 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 		}
 	}, [rows, mapping, defaultProduct, importLeads]);
 
-	const requiredFieldsMapped = mapping.name !== null && mapping.phone !== null;
 	const hasNameMapping = Object.values(mapping).includes('name');
 	const hasPhoneMapping = Object.values(mapping).includes('phone');
 
