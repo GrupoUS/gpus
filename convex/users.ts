@@ -8,10 +8,23 @@ import { createAuditLog } from './lib/auditLogging';
 import { getOrganizationId, requireAuth, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
-const clerkClient = createClerkClient({
-	secretKey: process.env.CLERK_SECRET_KEY,
-	publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-});
+// Lazy-loaded Clerk client to ensure env vars are available at runtime
+let ClerkClient: ReturnType<typeof createClerkClient> | null = null;
+function getClerkClient() {
+	if (!ClerkClient) {
+		const secretKey = process.env.CLERK_SECRET_KEY;
+		if (!secretKey) {
+			throw new Error(
+				'Missing Clerk Secret Key. Go to https://dashboard.clerk.com and get your key for your instance.',
+			);
+		}
+		ClerkClient = createClerkClient({
+			secretKey,
+			publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+		});
+	}
+	return ClerkClient;
+}
 
 /**
  * Get current user from Clerk auth
@@ -402,7 +415,7 @@ export const inviteTeamMember = action({
 		// Basic requirement is TEAM_MANAGE.
 
 		try {
-			const invitation = await clerkClient.invitations.createInvitation({
+			const invitation = await getClerkClient().invitations.createInvitation({
 				emailAddress: args.email,
 				redirectUrl: args.redirectUrl,
 				publicMetadata: { role: args.role },
@@ -412,14 +425,16 @@ export const inviteTeamMember = action({
 			// We need organizationId. Actions don't have direct access to `getOrganizationId` helper easily without `ctx.runQuery`.
 			// But `requirePermission` returns identity which has `org_id`.
 			const organizationId = identity.org_id || identity.subject; // Fallback to personal org
-
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-			await ctx.runMutation((internal as any).users.createPendingUser, {
-				email: args.email,
-				role: args.role,
-				invitedAt: Date.now(),
-				organizationId,
-			});
+			// Type cast to break deep type instantiation chain in Convex internal API
+			await (ctx.runMutation as (fn: unknown, argObj: unknown) => Promise<void>)(
+				internal.users.createPendingUser,
+				{
+					email: args.email,
+					role: args.role,
+					invitedAt: Date.now(),
+					organizationId,
+				},
+			);
 
 			await ctx.runMutation(internal.users.internalLogAudit, {
 				actionType: 'data_creation',
@@ -513,7 +528,7 @@ export const updateTeamMemberRole = action({
 		}
 
 		try {
-			await clerkClient.users.updateUserMetadata(args.userId, {
+			await getClerkClient().users.updateUserMetadata(args.userId, {
 				publicMetadata: { role: args.newRole },
 			});
 
@@ -567,7 +582,7 @@ export const removeTeamMember = action({
 		}
 
 		try {
-			await clerkClient.users.updateUserMetadata(args.userId, {
+			await getClerkClient().users.updateUserMetadata(args.userId, {
 				publicMetadata: { isActive: false },
 			});
 
@@ -781,6 +796,40 @@ export const fixSdrUsers = internalMutation({
 });
 
 /**
+ * TEMPORARY: Set owner role for main admin user
+ * Run via: bunx convex run --prod users:fixOwner
+ * DELETE after fixing
+ */
+export const fixOwner = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const ownerClerkId = 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6'; // msm.jur@gmail.com
+
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', ownerClerkId))
+			.unique();
+
+		if (!user) {
+			return { status: 'NOT_FOUND', clerkId: ownerClerkId };
+		}
+
+		await ctx.db.patch(user._id, {
+			role: 'owner',
+			isActive: true,
+			updatedAt: Date.now(),
+		});
+
+		return {
+			status: 'FIXED',
+			name: user.name,
+			previousRole: user.role,
+			newRole: 'owner',
+		};
+	},
+});
+
+/**
  * Backfill Clerk Users Action
  *
  * Fetches all users from Clerk and upserts them to Convex.
@@ -797,7 +846,7 @@ export const backfillClerkUsers = action({
 
 		try {
 			// Fetch all users from Clerk (paginated, up to 500)
-			const clerkResponse = await clerkClient.users.getUserList({
+			const clerkResponse = await getClerkClient().users.getUserList({
 				limit: 500,
 			});
 

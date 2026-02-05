@@ -58,6 +58,7 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
+	const { isAuthenticated } = useConvexAuth();
 
 	const handleTabChange = (value: string) => {
 		setSelectedProduct(value);
@@ -71,31 +72,37 @@ function CRMPage() {
 		leadsProducts = filters.products;
 	}
 
-	// Query for tab badge counts: UNFILTERED by product to show accurate totals across all tabs
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
-	const allLeadsForCounts = useQuery((api as any).leads.listLeads, {
-		paginationOpts: { numItems: 1000, cursor: null },
-		search: filters.search || undefined,
-		stages: filters.stages.length > 0 ? filters.stages : undefined,
-		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		// No products filter here - this is used ONLY for badge counts
-		products: undefined,
-		source: filters.source.length > 0 ? filters.source : undefined,
-		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-	}) as ListLeadsResult | undefined;
+	const allLeadsForCounts = useQuery(
+		(api as any).leads.listLeads,
+		isAuthenticated
+			? {
+					paginationOpts: { numItems: 1000, cursor: null },
+					search: filters.search || undefined,
+					stages: filters.stages.length > 0 ? filters.stages : undefined,
+					temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
+					// No products filter here - this is used ONLY for badge counts
+					products: undefined,
+					source: filters.source.length > 0 ? filters.source : undefined,
+					tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
+				}
+			: 'skip',
+	) as ListLeadsResult | undefined;
 
-	// Query for Kanban view: FILTERED by selected product tab
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
-	const leads = useQuery((api as any).leads.listLeads, {
-		paginationOpts: { numItems: 1000, cursor: null },
-		search: filters.search || undefined,
-		stages: filters.stages.length > 0 ? filters.stages : undefined,
-		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		// If tab is 'all', use filter dropdown. If tab is specific, force that product.
-		products: leadsProducts,
-		source: filters.source.length > 0 ? filters.source : undefined,
-		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-	}) as ListLeadsResult | undefined;
+	const leads = useQuery(
+		(api as any).leads.listLeads,
+		isAuthenticated
+			? {
+					paginationOpts: { numItems: 1000, cursor: null },
+					search: filters.search || undefined,
+					stages: filters.stages.length > 0 ? filters.stages : undefined,
+					temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
+					// If tab is 'all', use filter dropdown. If tab is specific, force that product.
+					products: leadsProducts,
+					source: filters.source.length > 0 ? filters.source : undefined,
+					tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
+				}
+			: 'skip',
+	) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 

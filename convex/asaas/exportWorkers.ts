@@ -124,13 +124,14 @@ export async function exportStudentWorker(
 		// Create customer in Asaas
 		const asaasCustomer: AsaasCustomerResponse = await asaasClient.createCustomer(customerPayload);
 
-		// Update student with Asaas customer ID
-		// @ts-expect-error - Convex internal API causes deep type instantiation
-		// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-		await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
-			studentId: student._id,
-			asaasCustomerId: asaasCustomer.id,
-		});
+		// Update student with Asaas customer ID - cast to break deep type chain
+		await (ctx.runMutation as (fn: unknown, argObj: unknown) => Promise<void>)(
+			internal.asaas.mutations.updateStudentAsaasId,
+			{
+				studentId: student._id,
+				asaasCustomerId: asaasCustomer.id,
+			},
+		);
 
 		return {
 			success: true,
