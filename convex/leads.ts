@@ -535,6 +535,9 @@ export const updateLead = mutation({
 			utmMedium: v.optional(v.string()),
 			utmContent: v.optional(v.string()),
 			utmTerm: v.optional(v.string()),
+
+			// Assignment
+			assignedTo: v.optional(v.id('users')),
 		}),
 		customFieldValues: v.optional(
 			v.array(
@@ -571,6 +574,22 @@ export const updateLead = mutation({
 					}),
 				),
 			);
+		}
+
+		// Log assignment change
+		if (args.patch.assignedTo !== undefined && args.patch.assignedTo !== lead.assignedTo) {
+			const newOwner = args.patch.assignedTo ? await ctx.db.get(args.patch.assignedTo) : null;
+			await ctx.db.insert('activities', {
+				type: 'atribuicao_alterada',
+				description: newOwner
+					? `Lead atribuído para ${newOwner.name}`
+					: 'Responsável removido do lead',
+				leadId: args.leadId,
+				organizationId,
+				performedBy: identity.subject,
+				createdAt: Date.now(),
+				metadata: { previousAssignee: lead.assignedTo, newAssignee: args.patch.assignedTo },
+			});
 		}
 	},
 });
@@ -821,6 +840,43 @@ export const search = query({
 // ═══════════════════════════════════════════════════════
 // BULK IMPORT: Import leads from spreadsheet
 // ═══════════════════════════════════════════════════════
+
+// Extracted helper functions to reduce handler complexity
+const SOURCE_MAP: Record<string, string> = {
+	instagram: 'instagram',
+	whatsapp: 'whatsapp',
+	trafego: 'trafego_pago',
+	landing: 'landing_page',
+	indicacao: 'indicacao',
+	organico: 'organico',
+};
+
+const PRODUCT_MAP: Record<string, string> = {
+	otb: 'otb',
+	neon: 'black_neon',
+	black_neon: 'black_neon',
+	trintae3: 'trintae3',
+	comunidade: 'comunidade',
+};
+
+function normalizePhone(phone: string): string {
+	const digits = phone.replace(/\D/g, '');
+	if (digits.length === 10 || digits.length === 11) {
+		return `55${digits}`;
+	}
+	return digits;
+}
+
+function mapSource(rawSource: string | undefined, defaultSource: string | undefined): string {
+	const source = rawSource?.toLowerCase() ?? defaultSource ?? 'landing_page';
+	return SOURCE_MAP[source] ?? 'landing_page';
+}
+
+function mapProduct(rawProduct: string | undefined, defaultProduct: string | undefined): string {
+	const product = rawProduct?.toLowerCase() ?? defaultProduct ?? 'otb';
+	return PRODUCT_MAP[product] ?? 'otb';
+}
+
 const importLeadArg = v.object({
 	name: v.string(),
 	phone: v.string(),
@@ -866,11 +922,8 @@ export const importLeads = mutation({
 					continue;
 				}
 
-				// Normalize phone: remove non-digits, ensure has country code
-				let phone = leadData.phone.replace(/\D/g, '');
-				if (phone.length === 10 || phone.length === 11) {
-					phone = `55${phone}`;
-				}
+				// Normalize phone and map values using extracted helpers
+				const phone = normalizePhone(leadData.phone);
 
 				// Check for existing lead with same phone (duplicate prevention)
 				const existingLead = await ctx.db
@@ -885,29 +938,8 @@ export const importLeads = mutation({
 					continue;
 				}
 
-				// Map source string to valid source value
-				const sourceMap: Record<string, string> = {
-					instagram: 'instagram',
-					whatsapp: 'whatsapp',
-					trafego: 'trafego_pago',
-					landing: 'landing_page',
-					indicacao: 'indicacao',
-					organico: 'organico',
-				};
-				const rawSource = leadData.source?.toLowerCase() ?? args.defaultSource ?? 'landing_page';
-				const source = sourceMap[rawSource] ?? 'landing_page';
-
-				// Map product to valid product value
-				const productMap: Record<string, string> = {
-					otb: 'otb',
-					neon: 'black_neon',
-					black_neon: 'black_neon',
-					trintae3: 'trintae3',
-					comunidade: 'comunidade',
-				};
-				const rawProduct =
-					leadData.interestedProduct?.toLowerCase() ?? args.defaultProduct ?? 'otb';
-				const interestedProduct = productMap[rawProduct] ?? 'otb';
+				const source = mapSource(leadData.source, args.defaultSource);
+				const interestedProduct = mapProduct(leadData.interestedProduct, args.defaultProduct);
 
 				// Insert the lead
 				const leadId = await ctx.db.insert('leads', {

@@ -7,7 +7,6 @@
 
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
 import type { Doc } from '../_generated/dataModel';
 import { internalMutation, internalQuery, mutation, query } from '../_generated/server';
 
@@ -92,11 +91,12 @@ export const resolveCustomerConflict = internalMutation({
 				throw new Error('Cannot link conflict: no studentId');
 			}
 
-			// Update student with Asaas customer ID
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-			await ctx.runMutation((internal as any).asaas.mutations.updateStudentAsaasId, {
-				studentId: conflict.studentId,
+			// Update student with Asaas customer ID (inline to avoid deep type instantiation)
+			await ctx.db.patch(conflict.studentId, {
 				asaasCustomerId: conflict.asaasCustomerId,
+				asaasCustomerSyncedAt: now,
+				asaasCustomerSyncError: undefined,
+				asaasCustomerSyncAttempts: 0,
 			});
 
 			// Mark conflict as resolved
@@ -139,6 +139,7 @@ export const resolveCustomerConflict = internalMutation({
 /**
  * Manually resolve a conflict (public API)
  * Allows admins to resolve conflicts from the UI
+ * Logic inlined to avoid deep type instantiation with ctx.runMutation
  */
 export const resolveConflictManually = mutation({
 	args: {
@@ -148,17 +149,61 @@ export const resolveConflictManually = mutation({
 		resolutionNote: v.optional(v.string()),
 	},
 	handler: async (ctx, args): Promise<{ success: boolean; action: string }> => {
-		// Call internal mutation
-		return await ctx.runMutation(
-			// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
-			(internal as any).asaas.conflictResolution.resolveCustomerConflict,
-			{
-				conflictId: args.conflictId,
-				action: args.action,
-				primaryStudentId: args.primaryStudentId,
+		const conflict = await ctx.db.get(args.conflictId);
+		if (!conflict) {
+			throw new Error(`Conflict ${args.conflictId} not found`);
+		}
+
+		const now = Date.now();
+
+		if (args.action === 'ignore') {
+			await ctx.db.patch(args.conflictId, {
+				status: 'ignored',
+				resolvedAt: now,
 				resolutionNote: args.resolutionNote,
-			},
-		);
+				updatedAt: now,
+			});
+			return { success: true, action: 'ignored' };
+		}
+
+		if (args.action === 'link' && conflict.asaasCustomerId) {
+			if (!conflict.studentId) {
+				throw new Error('Cannot link conflict: no studentId');
+			}
+
+			await ctx.db.patch(conflict.studentId, {
+				asaasCustomerId: conflict.asaasCustomerId,
+				asaasCustomerSyncedAt: now,
+				asaasCustomerSyncError: undefined,
+				asaasCustomerSyncAttempts: 0,
+			});
+
+			await ctx.db.patch(args.conflictId, {
+				status: 'resolved',
+				resolvedAt: now,
+				resolutionNote: args.resolutionNote || 'Linked student to Asaas customer',
+				updatedAt: now,
+			});
+
+			return { success: true, action: 'linked' };
+		}
+
+		if (args.action === 'merge') {
+			if (!args.primaryStudentId) {
+				throw new Error('Primary student ID required for merge');
+			}
+
+			await ctx.db.patch(args.conflictId, {
+				status: 'resolved',
+				resolvedAt: now,
+				resolutionNote: args.resolutionNote || 'Merged student records',
+				updatedAt: now,
+			});
+
+			return { success: true, action: 'merged' };
+		}
+
+		throw new Error(`Invalid action: ${args.action}`);
 	},
 });
 

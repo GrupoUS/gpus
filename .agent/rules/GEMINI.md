@@ -20,13 +20,13 @@ Before ANY implementation:
 
 | Skill             | Purpose                                    | When to Use         |
 | ----------------- | ------------------------------------------ | ------------------- |
-| `backend-design`  | API, TypeScript, data, DB, code principles | Backend work        |
+| `backend-design`  | Convex, TypeScript, data, code principles  | Backend work        |
 | `debug`           | Testing, debugging, fixing                 | Bugs, errors        |
 | `frontend-design` | UI/UX, Tailwind, components                | Frontend work       |
-| `notion`          | Notion CMS integration                     | Content from Notion |
+| `notion-cms`      | Notion CMS integration                     | Content from Notion |
 | `planning`        | Project planning, PRPs                     | Complex tasks       |
 | `skill-creator`   | Creating new skills                        | Meta work           |
-| `theme-factory`   | Visual themes                              | Styling artifacts   |
+| `gpus-theme`      | Navy/Gold design system                    | Styling artifacts   |
 
 ### Workflows (4 total)
 
@@ -94,22 +94,22 @@ Before coding:
 
 ## 🏗️ Architecture Principles
 
-### Database
+### Database (Convex)
 
 **Goal**: 0 new tables. Extend existing.
 
 ```typescript
-// ❌ DON'T
-campaignTracking: pgTable("campaign_tracking", { ... })
+// ❌ DON'T: Create redundant tables
+defineTable("campaign_tracking", { ... })
 
-// ✅ DO
-users: pgTable("users", {
-  ...existing,
-  campaignSource: varchar("campaign_source"),
-});
+// ✅ DO: Extend existing tables
+defineTable("users", {
+  ...existingFields,
+  campaignSource: v.optional(v.string()),
+})
 ```
 
-### Queries
+### Queries (Convex)
 
 **Goal**: No duplicate logic.
 
@@ -118,10 +118,10 @@ users: pgTable("users", {
 
 // ✅ DO: Extend with computed props
 export const getUserStatus = query({
-  handler: async ctx => ({
-    ...(await getUser(ctx)),
-    isTrial: Boolean(user?.campaign),
-  }),
+  handler: async (ctx) => {
+    const user = await getUser(ctx);
+    return { ...user, isTrial: Boolean(user?.campaign) };
+  },
 });
 ```
 
@@ -129,7 +129,7 @@ export const getUserStatus = query({
 
 - Use `useQuery` (reactive) over `useState/useEffect`
 - Use `Promise.all` for batch writes
-- Reuse indexes with `.filter()`
+- Convex indexes for filtered queries
 - Single aggregated query > 3 separate requests
 
 ---
@@ -148,8 +148,7 @@ export const getUserStatus = query({
 ```typescript
 // ✅ Use
 const foo = bar?.baz ?? "default"; // Optional chaining + nullish
-for (const item of items) {
-} // for...of
+for (const item of items) { } // for...of
 const { id, name } = user; // Destructuring
 const msg = `Hello ${name}`; // Template literals
 ```
@@ -157,7 +156,7 @@ const msg = `Hello ${name}`; // Template literals
 ### "Type instantiation is excessively deep"
 
 ```typescript
-// ✅ Early cast
+// ✅ Early cast for Convex API
 const mutate = useMutation((api as any).leads.updateStatus);
 ```
 
@@ -203,9 +202,9 @@ const mutate = useMutation((api as any).leads.updateStatus);
 
 ### Stack
 
-- [ ] `bun run check` passes?
-- [ ] `bun run lint:check` passes? (Biome)
-- [ ] `bun run test` passes? (Vitest)
+- [ ] `bun run build` passes (tsc)?
+- [ ] `bun run lint:check` passes (Biome)?
+- [ ] `bun run test` passes (Vitest)?
 - [ ] No console errors in browser?
 
 ---
@@ -213,16 +212,16 @@ const mutate = useMutation((api as any).leads.updateStatus);
 ## 📁 Project Structure
 
 ```
-neondash/
-├── client/src/           # React frontend
-│   ├── components/       # UI components
-│   ├── pages/            # Route pages
-│   └── lib/trpc.ts       # tRPC client
-├── server/               # Express + tRPC backend
-│   ├── _core/            # Server core (index, context)
-│   └── *.ts              # Feature routers
-├── drizzle/              # Database schema
-│   └── schema.ts         # Neon PostgreSQL tables
+gpus/
+├── src/                  # React 19 frontend
+│   ├── components/       # shadcn/ui + custom components
+│   ├── routes/           # TanStack Router file-based routes
+│   ├── hooks/            # Custom React hooks
+│   └── lib/              # Utilities (cn, convex client)
+├── convex/               # Convex backend
+│   ├── schema.ts         # Database schema
+│   ├── _generated/       # Auto-generated types
+│   └── *.ts              # Query/mutation/action handlers
 └── .agent/               # AI configuration
     ├── skills/           # 7 skills
     ├── workflows/        # 4 workflows
@@ -239,38 +238,37 @@ neondash/
 | "Just one more table" | Join complexity           |
 | Parallel APIs         | Duplication               |
 | Manual state sync     | Race conditions           |
-| `SELECT *`            | Performance               |
-| No indexes on FKs     | Slow queries              |
+| No Convex indexes     | Slow queries              |
+| Unused convex imports | Bundle bloat              |
 
 ---
 
 ## 📦 Stack Quick Reference
 
-| Layer    | Technology                    |
-| -------- | ----------------------------- |
-| Runtime  | Bun                           |
-| Frontend | React 19 + Vite               |
-| Styling  | Tailwind CSS 4 + shadcn/ui    |
-| Routing  | wouter                        |
-| State    | TanStack Query + tRPC         |
-| Backend  | Express + tRPC 11             |
-| Database | Neon PostgreSQL + Drizzle ORM |
-| Auth     | Clerk                         |
-| Linter   | Biome                         |
-| Tests    | Vitest                        |
+| Layer     | Technology                      |
+| --------- | ------------------------------- |
+| Runtime   | Bun                             |
+| Frontend  | React 19 + Vite 7               |
+| Styling   | Tailwind CSS 4 + shadcn/ui      |
+| Routing   | TanStack Router (file-based)    |
+| State     | TanStack Query + Convex useQuery|
+| Backend   | Convex (query/mutation/action)  |
+| Database  | Convex (integrated)             |
+| Auth      | Clerk                           |
+| Linter    | Biome                           |
+| Tests     | Vitest + Playwright             |
 
 ---
 
 ## 🚀 Commands
 
 ```bash
-bun dev             # Dev server
-bun run check       # TypeScript type check
+bun dev             # Dev server (Vite + Convex)
+bun run build       # Build + TypeScript check
 bun run lint        # Biome lint + format (auto-fix)
 bun run lint:check  # Biome lint + format (check only)
-bun run format      # Biome format only
 bun run test        # Vitest run
 bun run test:watch  # Vitest watch mode
-bun run db:push     # Drizzle migrations
+bunx convex deploy  # Deploy Convex functions
+bunx convex dev     # Convex dev mode
 ```
-

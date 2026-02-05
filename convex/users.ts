@@ -710,9 +710,17 @@ export const listVendors = query({
 			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 			.collect();
 
-		// Filter for vendor roles only (member, sdr) - exclude management roles from dropdown
+		// Specific admin users who are also sellers (e.g., Lucas as head of sales)
+		// Add clerkIds here to include admins in the vendor list
+		const SELLER_CLERK_IDS = ['user_38J04ndpzs8cDCEx0prhmXgfKdG'];
+
+		// Filter for vendor roles (member, sdr) OR specific seller clerkIds
 		return users
-			.filter((u) => u.isActive && ['member', 'sdr'].includes(u.role))
+			.filter(
+				(u) =>
+					u.isActive &&
+					(['member', 'sdr'].includes(u.role) || SELLER_CLERK_IDS.includes(u.clerkId)),
+			)
 			.map((u) => ({
 				id: u._id,
 				name: u.name,
