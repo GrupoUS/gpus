@@ -24,8 +24,10 @@ export function LeadCaptureForm({
 	defaultSource = 'landing_page',
 }: LeadCaptureFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
-	const createMarketingLead = useMutation((api as any).marketingLeads.create);
+	const createMarketingLead: ReturnType<typeof useMutation> = useMutation(
+		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+		(api as any).marketingLeads.create,
+	);
 	const utmParams = useUTMParams();
 
 	const form = useForm<LeadCaptureFormData>({

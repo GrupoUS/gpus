@@ -721,3 +721,52 @@ export const listVendors = query({
 			}));
 	},
 });
+
+/**
+ * TEMPORARY: Fix specific SDR users who can't access CRM
+ * Run via: bunx convex run users:fixSdrUsers
+ * DELETE after fixing users
+ */
+export const fixSdrUsers = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const clerkIds = [
+			'user_38J04ndpzs8cDCEx0prhmXgfKdG', // Lucas
+			'user_39FYiwwX6W5JUWWQSb0CLXAxscX', // Erica
+		];
+
+		const results: { clerkId: string; status: string; details?: unknown }[] = [];
+
+		for (const clerkId of clerkIds) {
+			const user = await ctx.db
+				.query('users')
+				.withIndex('by_clerk_id', (q) => q.eq('clerkId', clerkId))
+				.unique();
+
+			if (!user) {
+				results.push({ clerkId, status: 'NOT_FOUND' });
+				continue;
+			}
+
+			// Fix: ensure role is 'sdr' and user is active
+			await ctx.db.patch(user._id, {
+				role: 'sdr',
+				isActive: true,
+				updatedAt: Date.now(),
+			});
+
+			results.push({
+				clerkId,
+				status: 'FIXED',
+				details: {
+					name: user.name,
+					previousRole: user.role,
+					previousIsActive: user.isActive,
+					organizationId: user.organizationId,
+				},
+			});
+		}
+
+		return results;
+	},
+});
