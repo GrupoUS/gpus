@@ -40,7 +40,7 @@ input_contract:
     title: "[ACTION] [TARGET]"
     phase: 1-5
     dependencies: ["AT-XXX"]
-    parallel_safe: true  # ⚡ marker
+    parallel_safe: true # ⚡ marker
     validation: "[COMMAND]"
     rollback: "[UNDO STEPS]"
 
@@ -138,13 +138,13 @@ for_each_atomic_task:
 
 ### Phase-Based Execution
 
-| Phase | Focus                    | Checkpoint Command         |
-| ----- | ------------------------ | -------------------------- |
-| 1     | Setup & Scaffolding      | `bun install`              |
-| 2     | Core Logic & Backend     | `bun run check`            |
-| 3     | Frontend Components      | `bun run build`            |
-| 4     | Integration & Routes     | `bun run check`            |
-| 5     | Verification & Polish    | `bun test`                 |
+| Phase | Focus                 | Checkpoint Command |
+| ----- | --------------------- | ------------------ |
+| 1     | Setup & Scaffolding   | `bun install`      |
+| 2     | Core Logic & Backend  | `bun run check`    |
+| 3     | Frontend Components   | `bun run build`    |
+| 4     | Integration & Routes  | `bun run check`    |
+| 5     | Verification & Polish | `bun test`         |
 
 ---
 

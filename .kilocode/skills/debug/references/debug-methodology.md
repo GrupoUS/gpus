@@ -13,9 +13,11 @@
 
 ```markdown
 ## Reproduction Notes
+
 **Expected**: [What should happen]
 **Actual**: [What actually happens]
 **Steps**:
+
 1. [Step 1]
 2. [Step 2]
 3. [Error occurs]
@@ -26,6 +28,7 @@
 **Goal**: Narrow down the problem location.
 
 **Binary Search**:
+
 ```
 Error appears → Check midpoint
 ├── Error before midpoint → Check first half
@@ -34,6 +37,7 @@ Error appears → Check midpoint
 ```
 
 **Git Bisect**:
+
 ```bash
 git bisect start
 git bisect bad           # Current commit is broken
@@ -43,10 +47,11 @@ git bisect reset         # When done
 ```
 
 **Strategic Logging**:
+
 ```typescript
-console.log('>> Function called:', { input, state });
+console.log(">> Function called:", { input, state });
 // ... code
-console.log('>> Before return:', { result });
+console.log(">> Before return:", { result });
 ```
 
 ## Phase 3: UNDERSTAND (Root Cause)
@@ -80,13 +85,13 @@ User Input → Component State → API Call → Database → Response → UI Upd
 
 **Goal**: Implement fix and prove it works.
 
-| Step | Command | Check |
-|------|---------|-------|
-| 1. Fix code | Edit files | Logical |
-| 2. Type check | `bun run check` | No errors |
-| 3. Test | `bun test` | All pass |
-| 4. Visual | `agent-browser` | UI works |
-| 5. Commit | `git commit` | Documented |
+| Step          | Command         | Check      |
+| ------------- | --------------- | ---------- |
+| 1. Fix code   | Edit files      | Logical    |
+| 2. Type check | `bun run check` | No errors  |
+| 3. Test       | `bun test`      | All pass   |
+| 4. Visual     | `agent-browser` | UI works   |
+| 5. Commit     | `git commit`    | Documented |
 
 ### Commit Message Template
 

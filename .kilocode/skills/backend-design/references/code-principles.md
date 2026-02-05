@@ -17,23 +17,23 @@ Before coding:
 
 ## Scoring: Extend vs Create
 
-| Factor | Points |
-|--------|--------|
-| Reuse data structure | +3 |
-| Reuse indexes/queries | +3 |
-| Reuse >70% code | +5 |
-| Circular dependencies | -5 |
-| Distinct domain | -3 |
+| Factor                | Points |
+| --------------------- | ------ |
+| Reuse data structure  | +3     |
+| Reuse indexes/queries | +3     |
+| Reuse >70% code       | +5     |
+| Circular dependencies | -5     |
+| Distinct domain       | -3     |
 
 **Score > 5**: Extend existing code.
 
 ## Three-Pass Process
 
-| Pass | Focus | Code |
-|------|-------|------|
-| 1. Discovery | Find related code, document patterns | None |
-| 2. Design | Write interfaces, plan data flow | Minimal |
-| 3. Implementation | Execute with max reuse | Essential only |
+| Pass              | Focus                                | Code           |
+| ----------------- | ------------------------------------ | -------------- |
+| 1. Discovery      | Find related code, document patterns | None           |
+| 2. Design         | Write interfaces, plan data flow     | Minimal        |
+| 3. Implementation | Execute with max reuse               | Essential only |
 
 ## Database Rules
 
@@ -60,7 +60,7 @@ users: defineTable({
 // ✅ DO: Extend with computed props
 export const getUserStatus = query({
   handler: async ctx => ({
-    ...await getUser(ctx),
+    ...(await getUser(ctx)),
     isTrial: Boolean(user?.campaign),
   }),
 });
@@ -75,13 +75,13 @@ export const getUserStatus = query({
 
 ## Anti-Patterns
 
-| Pattern | Problem |
-|---------|---------|
-| UI-Driven DB | Schema matches components |
-| "Just one more table" | Join complexity |
-| Parallel APIs | Duplication |
-| Manual state sync | Race conditions |
-| Sequential DB writes | Performance |
+| Pattern               | Problem                   |
+| --------------------- | ------------------------- |
+| UI-Driven DB          | Schema matches components |
+| "Just one more table" | Join complexity           |
+| Parallel APIs         | Duplication               |
+| Manual state sync     | Race conditions           |
+| Sequential DB writes  | Performance               |
 
 ## Metrics
 

@@ -1,220 +1,183 @@
 ---
 name: frontend-design
-description: "Unified frontend design skill covering UI/UX design, Tailwind CSS v4, generative art (p5.js), canvas art (PDF/PNG), image generation (Nano Banana/Gemini), and design system intelligence. Use when designing components, layouts, color schemes, typography, creating visual assets, fixing frontend errors, or building aesthetic interfaces."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash
+description: Unified frontend design skill covering React 19 patterns, Tailwind CSS v4, Web Design Guidelines (A11y, Animation, Forms), and AI prototyping tools (Stitch, Nano Banana Pro). Use when designing components, layouts, or building aesthetic interfaces.
 ---
 
-# Frontend Design System
+# Frontend Design Skill
 
-> **Philosophy:** Every pixel has purpose. Restraint is luxury. User psychology drives decisions.
-> **Core Principle:** THINK, don't memorize. ASK, don't assume.
-
----
-
-## 🎯 Selective Reading Rule (MANDATORY)
-
-**Read REQUIRED files always, OPTIONAL only when needed:**
-
-| File | Status | When to Read |
-| ---- | ------ | ------------ |
-| [ux-psychology.md](ux-psychology.md) | 🔴 **REQUIRED** | Always read first! |
-| [color-system.md](color-system.md) | ⚪ Optional | Color/palette decisions |
-| [typography-system.md](typography-system.md) | ⚪ Optional | Font selection/pairing |
-| [visual-effects.md](visual-effects.md) | ⚪ Optional | Glassmorphism, shadows, gradients |
-| [animation-guide.md](animation-guide.md) | ⚪ Optional | Animation needed |
-| [motion-graphics.md](motion-graphics.md) | ⚪ Optional | Lottie, GSAP, 3D |
-| [decision-trees.md](decision-trees.md) | ⚪ Optional | Context templates |
-| [tailwind-v4-patterns.md](tailwind-v4-patterns.md) | ⚪ Optional | Tailwind CSS v4, container queries |
-| [algorithmic-art-guide.md](algorithmic-art-guide.md) | ⚪ Optional | p5.js, generative art |
-| [canvas-design-guide.md](canvas-design-guide.md) | ⚪ Optional | PDF/PNG visual art |
-| [design-system-search.md](design-system-search.md) | ⚪ Optional | Search 50+ styles, palettes |
-| [nanobananaskill.md](nanobananaskill.md) | ⚪ Optional | AI image generation |
+> **Philosophy:** Intentional Minimalism. Every element must earn its place.
 
 ---
 
-## 🔧 Runtime Scripts
+## Tech Stack
 
-| Script | Purpose | Usage |
-| ------ | ------- | ----- |
-| `scripts/ux_audit.py` | UX & Accessibility Audit | `python scripts/ux_audit.py <project_path>` |
-| `scripts/accessibility_checker.py` | WCAG Compliance Check | `python scripts/accessibility_checker.py <file>` |
-| `scripts/generate_images.py` | Nano Banana Image Gen | `python scripts/generate_images.py "prompt" "filename"` |
-| `scripts/search.py` | Design System Search | `python scripts/search.py "query" --design-system` |
-
----
-
-## ⚠️ ASK BEFORE ASSUMING (MANDATORY)
-
-**Color not specified?** Ask: "What color palette do you prefer?"
-**Style not specified?** Ask: "What style are you going for?"
-**Layout not specified?** Ask: "Do you have a layout preference?"
-
-### Anti-Patterns to Avoid
-
-| AI Default Tendency | Think Instead |
-| ------------------- | ------------- |
-| Bento Grids | Why does this content NEED a grid? |
-| Hero Split (Left/Right) | Massive Typography or Vertical Narrative? |
-| Mesh/Aurora Gradients | What's a radical color pairing? |
-| Glassmorphism | Solid, high-contrast flat? |
-| Deep Cyan / Fintech Blue | Red, Black, or Neon Green? |
-| Dark + neon glow | What does the BRAND need? |
-| Purple/violet everything | **PURPLE BAN ✅** |
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| Framework | React 19 + Vite | Function components, `ref` as prop |
+| Styling | Tailwind CSS v4 | `@tailwindcss/vite` plugin |
+| Components | shadcn/ui + Radix | Never reinvent primitives |
+| Animation | Framer Motion 12 | Micro-interactions |
+| Charts | Recharts 2 | Performance visualizations |
 
 ---
 
-## 1. Core UX Principles
+## React Performance Patterns (Vercel)
 
-### Constraint Analysis (ALWAYS FIRST)
+### Priority 1: Eliminating Waterfalls (CRITICAL)
 
-| Constraint | Question | Why It Matters |
-| ---------- | -------- | -------------- |
-| **Timeline** | How much time? | Determines complexity |
-| **Content** | Ready or placeholder? | Affects layout flexibility |
-| **Brand** | Existing guidelines? | May dictate colors/fonts |
-| **Tech** | What stack? | Affects capabilities |
-| **Audience** | Who exactly? | Drives all visual decisions |
+| Rule | Pattern |
+|------|---------|
+| `async-defer-await` | Move `await` into branches where actually used |
+| `async-parallel` | Use `Promise.all()` for independent operations |
+| `async-suspense` | Use `<Suspense>` to stream content progressively |
 
-### Core Laws
+```tsx
+// ❌ Sequential waterfalls
+const user = await getUser();
+const posts = await getPosts();
 
-| Law | Principle | Application |
-| --- | --------- | ----------- |
-| **Hick's** | More choices = slower decisions | Limit options |
-| **Fitts'** | Bigger + closer = easier to click | Size CTAs appropriately |
-| **Miller's** | ~7 items in working memory | Chunk content |
-| **Von Restorff** | Different = memorable | Make CTAs visually distinct |
-
----
-
-## 2. Design Execution
-
-### Color (60-30-10 Rule)
-
-- 60% → Primary/Background
-- 30% → Secondary
-- 10% → Accent (CTAs)
-
-### Typography
-
-- Line length: 45-75 characters
-- Line height: 1.4-1.6 for body
-- Size: 16px+ for body on web
-
-### Layout (8-Point Grid)
-
-- Tight: 4px → Small: 8px → Medium: 16px → Large: 24-32px → XL: 48-80px
-
----
-
-## 3. Visual Asset Generation
-
-### Image Generation (Nano Banana)
-
-```bash
-python .agent/skills/frontend-design/scripts/generate_images.py "Your prompt" "output_filename"
+// ✅ Parallel fetching
+const [user, posts] = await Promise.all([getUser(), getPosts()]);
 ```
 
-Models:
-- **gemini-2.5-flash-image**: Speed/bulk placeholders
-- **gemini-3-pro-image-preview**: Hero/marketing assets
+### Priority 2: Bundle Optimization (CRITICAL)
 
-### Generative Art (p5.js)
+| Rule | Pattern |
+|------|---------|
+| `bundle-barrel-imports` | Avoid barrel files (`index.ts` re-exports) |
+| `bundle-namespace-imports` | Use specific imports, not `import * as` |
+| `bundle-dynamic-imports` | Use `next/dynamic` or `React.lazy` for heavy components |
 
-Use templates in `assets/p5-templates/`:
-- `viewer.html` - Interactive artifact template
-- `generator_template.js` - Code patterns
+```tsx
+// ❌ Barrel import
+import { Button, Card, Modal } from "@/components";
 
-Read [algorithmic-art-guide.md](algorithmic-art-guide.md) for philosophy creation process.
-
-### Canvas Art (PDF/PNG)
-
-Use fonts in `assets/canvas-fonts/` (81 fonts).
-
-Read [canvas-design-guide.md](canvas-design-guide.md) for visual philosophy process.
-
----
-
-## 4. Design System Intelligence
-
-### Search for Recommendations
-
-```bash
-# Full design system
-python .agent/skills/frontend-design/scripts/search.py "saas dashboard" --design-system
-
-# Domain-specific
-python .agent/skills/frontend-design/scripts/search.py "minimalism" --domain style
-python .agent/skills/frontend-design/scripts/search.py "elegant" --domain typography
-python .agent/skills/frontend-design/scripts/search.py "animation" --domain ux
+// ✅ Direct imports
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 ```
 
-Domains: `style`, `color`, `typography`, `product`, `landing`, `chart`, `ux`, `react`, `web`
+### Priority 3: Component Boundaries (HIGH)
 
-Data in `assets/ui-ux-data/` (12 CSVs + 11 stack files).
+| Rule | Pattern |
+|------|---------|
+| `client-boundary` | Keep `"use client"` at leaf components |
+| `server-default` | Default to Server Components, client only for interactivity |
+| `rerender-children` | Pass children as props to avoid re-renders |
 
----
+```tsx
+// ❌ Client boundary too high
+"use client"
+export function Page() { ... } // Entire page is client
 
-## 5. CSS/Tailwind Patterns
-
-### Tailwind v4 Quick Reference
-
-```css
-@theme {
-  --color-primary: oklch(0.7 0.15 250);
-  --spacing-md: 1rem;
+// ✅ Client boundary at leaf
+export function Page() {
+  return <Layout><InteractiveButton /></Layout> // Only button is client
 }
 ```
 
-- Container queries: `@sm:`, `@md:`, `@lg:`
-- CSS variables: All tokens as `--*` vars
-- Read [tailwind-v4-patterns.md](tailwind-v4-patterns.md) for full guide
+---
+
+## Web Design Standards (Vercel)
+
+### Accessibility
+
+| Rule | Standard |
+|------|----------|
+| Contrast | 4.5:1 minimum for text |
+| Focus | Visible `focus-visible:ring-*`, never `outline-none` alone |
+| Semantics | Use `<button>`, `<a>`, `<nav>` before ARIA |
+| Headings | Hierarchical `<h1>`→`<h6>`, include skip links |
+
+### Animation
+
+| Rule | Standard |
+|------|----------|
+| Performance | Only `transform`/`opacity` (compositor-friendly) |
+| Preference | Honor `prefers-reduced-motion` |
+| Specificity | Never `transition: all`, list properties explicitly |
+| Interruptible | Animations respond to user input mid-animation |
+
+### Forms
+
+| Rule | Standard |
+|------|----------|
+| Autocomplete | Always set `autocomplete` and meaningful `name` |
+| Input Types | Use correct `type` (`email`, `tel`, `url`) and `inputmode` |
+| Labels | Clickable via `htmlFor` or wrapping |
+| Errors | Inline next to fields, focus first error on submit |
+| Paste | Never block paste (`onPaste + preventDefault`) |
+
+### Typography
+
+| Rule | Standard |
+|------|----------|
+| Ellipsis | Use `…` not `...` |
+| Quotes | Curly quotes `"` `"` not straight `"` |
+| Numbers | `font-variant-numeric: tabular-nums` for columns |
+| Loading | States end with `…`: "Loading…", "Saving…" |
 
 ---
 
-## 6. Animation Principles
+## AI Prototyping Tools
 
-| Action | Easing | Duration |
-| ------ | ------ | -------- |
-| Entering | Ease-out | 150-300ms |
-| Leaving | Ease-in | 150-300ms |
-| Emphasis | Ease-in-out | 200-400ms |
+### Stitch (Google Gemini)
 
-- Animate only `transform` and `opacity`
-- Respect `prefers-reduced-motion`
+Generate UI prototypes from text prompts via MCP.
 
----
+```yaml
+workflow:
+  1. Create project: mcp_stitch_create_project
+  2. Generate screen: mcp_stitch_generate_screen_from_text
+     - Use GEMINI_3_PRO for high fidelity
+     - Include design system colors in prompt
+  3. Handle output_components (suggestions or code)
+  4. Adapt to Tailwind v4 + shadcn/ui
 
-## 7. "Wow Factor" Checklist
-
-- [ ] Generous whitespace
-- [ ] Subtle depth and dimension
-- [ ] Smooth, purposeful animations
-- [ ] Cohesive visual rhythm
-- [ ] Custom elements (not all defaults)
-
----
-
-## 8. Decision Process
-
+prompt_template: |
+  Create a [component type] for [purpose].
+  Style: {from ui-ux-pro-max palette}
+  Layout: [specific grid/flex requirements]
+  Features: [interactive elements needed]
 ```
-1. CONSTRAINTS → What's the timeline, brand, tech, audience?
-2. CONTENT → What exists? What's the hierarchy?
-3. STYLE DIRECTION → If unclear → ASK (don't default!)
-4. EXECUTION → Apply principles, check anti-patterns
-5. REVIEW → "Does this serve the user?" "Is this different from my defaults?"
+
+### Nano Banana Pro (Image Generation)
+
+Generate assets using Gemini 3.0 Pro via `generate_image` tool.
+
+```yaml
+usage:
+  - High-fidelity placeholders and mockups
+  - UI illustrations and icons
+  - Background patterns and gradients
+
+best_practices:
+  - Be specific about style, colors, dimensions
+  - Reference design system palette
+  - Request "clean, minimal, professional" for UI assets
 ```
 
 ---
 
-## Assets
+## Quick Reference
 
-| Folder | Contents |
-| ------ | -------- |
-| `assets/canvas-fonts/` | 81 fonts for canvas design |
-| `assets/p5-templates/` | p5.js viewer + generator |
-| `assets/ui-ux-data/` | 12 CSVs + 11 stack guides |
-| `scripts/` | 4 Python automation scripts |
+### Component Checklist
 
----
+- [ ] Uses shadcn/ui primitives (not custom buttons/modals)
+- [ ] Client boundary at lowest possible level
+- [ ] Parallel data fetching where applicable
+- [ ] Visible focus states
+- [ ] Respects `prefers-reduced-motion`
+- [ ] Form inputs have `autocomplete` and `name`
 
-> **Remember:** Design is THINKING, not copying. Every project deserves fresh consideration. **Avoid the Modern SaaS Safe Harbor!**
+### Import Pattern
+
+```tsx
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Hooks
+import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
+```

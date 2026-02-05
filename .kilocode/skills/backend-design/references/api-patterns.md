@@ -40,13 +40,13 @@ export const userRouter = router({
 
 ## REST Conventions
 
-| Method | Action | Status Codes |
-|--------|--------|--------------|
-| GET | Read | 200, 404 |
-| POST | Create | 201, 400 |
-| PUT | Replace | 200, 404 |
-| PATCH | Update | 200, 404 |
-| DELETE | Remove | 204, 404 |
+| Method | Action  | Status Codes |
+| ------ | ------- | ------------ |
+| GET    | Read    | 200, 404     |
+| POST   | Create  | 201, 400     |
+| PUT    | Replace | 200, 404     |
+| PATCH  | Update  | 200, 404     |
+| DELETE | Remove  | 204, 404     |
 
 ## Response Format
 
@@ -69,12 +69,12 @@ export const userRouter = router({
 
 ## Auth Patterns
 
-| Pattern | Use Case |
-|---------|----------|
-| JWT | Stateless APIs, mobile apps |
-| Session cookies | Web apps, SSR |
-| API Keys | Server-to-server |
-| OAuth | Third-party auth |
+| Pattern         | Use Case                    |
+| --------------- | --------------------------- |
+| JWT             | Stateless APIs, mobile apps |
+| Session cookies | Web apps, SSR               |
+| API Keys        | Server-to-server            |
+| OAuth           | Third-party auth            |
 
 ## Anti-Patterns
 

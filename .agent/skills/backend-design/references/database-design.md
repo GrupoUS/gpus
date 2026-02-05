@@ -4,19 +4,19 @@
 
 ## Database Selection (This Project)
 
-| Database | Use Case |
-|----------|----------|
+| Database            | Use Case                              |
+| ------------------- | ------------------------------------- |
 | **Neon PostgreSQL** | Production (serverless, branching) ✅ |
-| SQLite | Local dev, embedded apps |
-| Turso | Edge-first, multi-region |
+| SQLite              | Local dev, embedded apps              |
+| Turso               | Edge-first, multi-region              |
 
 ## ORM Selection (This Project)
 
-| ORM | Use Case |
-|-----|----------|
+| ORM             | Use Case                      |
+| --------------- | ----------------------------- |
 | **Drizzle ORM** | Type-safe, SQL-like syntax ✅ |
-| Prisma | Schema-first, migrations |
-| Kysely | Query builder only |
+| Prisma          | Schema-first, migrations      |
+| Kysely          | Query builder only            |
 
 ---
 
@@ -40,11 +40,11 @@ Denormalize (embed/duplicate):
 
 ### Primary Key Selection
 
-| Type | Use When |
-|------|----------|
+| Type             | Use When                        |
+| ---------------- | ------------------------------- |
 | Serial/BigSerial | Simple apps, single database ✅ |
-| UUID | Distributed systems, security |
-| ULID | UUID + sortable by time |
+| UUID             | Distributed systems, security   |
+| ULID             | UUID + sortable by time         |
 
 ### Timestamps (Always Include)
 
@@ -56,11 +56,11 @@ updatedAt: timestamp("updated_at").defaultNow().notNull(),
 
 ### Relationship Types
 
-| Type | Implementation |
-|------|----------------|
-| One-to-One | FK on child with unique constraint |
-| One-to-Many | FK on child table |
-| Many-to-Many | Junction table |
+| Type         | Implementation                     |
+| ------------ | ---------------------------------- |
+| One-to-One   | FK on child with unique constraint |
+| One-to-Many  | FK on child table                  |
+| Many-to-Many | Junction table                     |
 
 ---
 
@@ -84,12 +84,12 @@ updatedAt: timestamp("updated_at").defaultNow().notNull(),
 
 ### Index Types
 
-| Type | Use For |
-|------|---------|
-| B-tree | General purpose (default) |
-| Hash | Equality only |
-| GIN | JSONB, arrays, full-text |
-| pgvector | Vector similarity |
+| Type     | Use For                   |
+| -------- | ------------------------- |
+| B-tree   | General purpose (default) |
+| Hash     | Equality only             |
+| GIN      | JSONB, arrays, full-text  |
+| pgvector | Vector similarity         |
 
 ### Composite Index Order
 

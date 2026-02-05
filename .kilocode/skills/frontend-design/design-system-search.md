@@ -7,6 +7,7 @@
 ## Overview
 
 This system provides BM25-powered search across comprehensive design databases including:
+
 - 50+ UI styles
 - 97 color palettes
 - 57 font pairings
@@ -27,6 +28,7 @@ python .agent/skills/frontend-design/scripts/search.py "<query>" --design-system
 ```
 
 Example:
+
 ```bash
 python .agent/skills/frontend-design/scripts/search.py "beauty spa wellness service" --design-system -p "Serenity Spa"
 ```
@@ -43,18 +45,18 @@ python .agent/skills/frontend-design/scripts/search.py "<keyword>" --domain <dom
 
 ## Available Domains
 
-| Domain       | Use For                              | Example Keywords                          |
-| ------------ | ------------------------------------ | ----------------------------------------- |
-| `product`    | Product type recommendations         | SaaS, e-commerce, fintech, healthcare     |
-| `style`      | UI styles, colors, effects           | glassmorphism, minimalism, brutalism      |
-| `typography` | Font pairings, Google Fonts          | elegant, playful, professional            |
-| `color`      | Color palettes by product type       | saas, ecommerce, beauty, fintech          |
-| `landing`    | Page structure, CTA strategies       | hero, testimonial, pricing, social-proof  |
-| `chart`      | Chart types, library recommendations | trend, comparison, timeline, funnel       |
-| `ux`         | Best practices, anti-patterns        | animation, accessibility, z-index         |
-| `react`      | React/Next.js performance            | waterfall, bundle, suspense, memo         |
-| `web`        | Web interface guidelines             | aria, focus, keyboard, semantic           |
-| `prompt`     | AI prompts, CSS keywords             | (style name)                              |
+| Domain       | Use For                              | Example Keywords                         |
+| ------------ | ------------------------------------ | ---------------------------------------- |
+| `product`    | Product type recommendations         | SaaS, e-commerce, fintech, healthcare    |
+| `style`      | UI styles, colors, effects           | glassmorphism, minimalism, brutalism     |
+| `typography` | Font pairings, Google Fonts          | elegant, playful, professional           |
+| `color`      | Color palettes by product type       | saas, ecommerce, beauty, fintech         |
+| `landing`    | Page structure, CTA strategies       | hero, testimonial, pricing, social-proof |
+| `chart`      | Chart types, library recommendations | trend, comparison, timeline, funnel      |
+| `ux`         | Best practices, anti-patterns        | animation, accessibility, z-index        |
+| `react`      | React/Next.js performance            | waterfall, bundle, suspense, memo        |
+| `web`        | Web interface guidelines             | aria, focus, keyboard, semantic          |
+| `prompt`     | AI prompts, CSS keywords             | (style name)                             |
 
 ---
 
@@ -64,17 +66,17 @@ python .agent/skills/frontend-design/scripts/search.py "<keyword>" --domain <dom
 python .agent/skills/frontend-design/scripts/search.py "<keyword>" --stack <stack>
 ```
 
-| Stack           | Focus                            |
-| --------------- | -------------------------------- |
-| `html-tailwind` | Tailwind utilities (DEFAULT)     |
-| `react`         | State, hooks, performance        |
-| `nextjs`        | SSR, routing, images             |
-| `vue`           | Composition API, Pinia           |
-| `svelte`        | Runes, stores, SvelteKit         |
-| `swiftui`       | Views, State, Navigation         |
-| `react-native`  | Components, Navigation           |
-| `flutter`       | Widgets, State, Layout           |
-| `shadcn`        | shadcn/ui components, theming    |
+| Stack           | Focus                         |
+| --------------- | ----------------------------- |
+| `html-tailwind` | Tailwind utilities (DEFAULT)  |
+| `react`         | State, hooks, performance     |
+| `nextjs`        | SSR, routing, images          |
+| `vue`           | Composition API, Pinia        |
+| `svelte`        | Runes, stores, SvelteKit      |
+| `swiftui`       | Views, State, Navigation      |
+| `react-native`  | Components, Navigation        |
+| `flutter`       | Widgets, State, Layout        |
+| `shadcn`        | shadcn/ui components, theming |
 
 ---
 
@@ -82,21 +84,21 @@ python .agent/skills/frontend-design/scripts/search.py "<keyword>" --stack <stac
 
 Located in `assets/ui-ux-data/`:
 
-| File                   | Contents                        |
-| ---------------------- | ------------------------------- |
-| `styles.csv`           | 50+ UI style definitions        |
-| `colors.csv`           | 97 color palettes               |
-| `typography.csv`       | 57 font pairings                |
-| `products.csv`         | Product type recommendations    |
-| `landing.csv`          | Landing page patterns           |
-| `charts.csv`           | Chart type guidance             |
-| `ux-guidelines.csv`    | UX best practices               |
-| `prompts.csv`          | AI prompt templates             |
-| `icons.csv`            | Icon recommendations            |
-| `react-performance.csv`| React optimization tips         |
-| `web-interface.csv`    | Web accessibility guidelines    |
-| `ui-reasoning.csv`     | Design reasoning rules          |
-| `stacks/`              | Stack-specific guidelines       |
+| File                    | Contents                     |
+| ----------------------- | ---------------------------- |
+| `styles.csv`            | 50+ UI style definitions     |
+| `colors.csv`            | 97 color palettes            |
+| `typography.csv`        | 57 font pairings             |
+| `products.csv`          | Product type recommendations |
+| `landing.csv`           | Landing page patterns        |
+| `charts.csv`            | Chart type guidance          |
+| `ux-guidelines.csv`     | UX best practices            |
+| `prompts.csv`           | AI prompt templates          |
+| `icons.csv`             | Icon recommendations         |
+| `react-performance.csv` | React optimization tips      |
+| `web-interface.csv`     | Web accessibility guidelines |
+| `ui-reasoning.csv`      | Design reasoning rules       |
+| `stacks/`               | Stack-specific guidelines    |
 
 ---
 

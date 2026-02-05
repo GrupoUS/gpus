@@ -67,10 +67,10 @@ bun run check
 
 ## Best Practices
 
-| Do | Don't |
-|----|-------|
-| Use `unknown` | Use `any` |
-| Explicit exports | Implicit inference |
-| `const` assertions | Mutable literals |
-| `satisfies` | Type assertions |
-| Branded types | Primitive obsession |
+| Do                 | Don't               |
+| ------------------ | ------------------- |
+| Use `unknown`      | Use `any`           |
+| Explicit exports   | Implicit inference  |
+| `const` assertions | Mutable literals    |
+| `satisfies`        | Type assertions     |
+| Branded types      | Primitive obsession |

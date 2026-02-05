@@ -7,6 +7,7 @@
 ## When to Use
 
 Use this guide when creating:
+
 - Posters and print-ready designs
 - Static visual compositions
 - PDF/PNG art pieces
@@ -20,11 +21,13 @@ Use this guide when creating:
 ### Step 1: Design Philosophy Creation
 
 Create a VISUAL PHILOSOPHY (not layouts or templates) that will be interpreted through:
+
 - Form, space, color, composition
 - Images, graphics, shapes, patterns
 - Minimal text as visual accent
 
 **Philosophy Structure:**
+
 1. **Name the movement** (1-2 words): "Brutalist Joy" / "Chromatic Silence"
 2. **Articulate the philosophy** (4-6 paragraphs) emphasizing:
    - Space and form
@@ -104,6 +107,7 @@ Single downloadable .pdf or .png file, alongside the design philosophy as .md fi
 ## Multi-Page Option
 
 When requested:
+
 - Create additional pages along the same design philosophy
 - Each page distinctly different but cohesive
 - Bundle in same PDF or multiple PNGs

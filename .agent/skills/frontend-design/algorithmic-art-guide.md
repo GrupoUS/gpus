@@ -7,6 +7,7 @@
 ## When to Use
 
 Use this guide when creating:
+
 - Generative art and algorithmic compositions
 - Flow fields and particle systems
 - Interactive p5.js visualizations
@@ -20,12 +21,14 @@ Use this guide when creating:
 ### Step 1: Algorithmic Philosophy Creation
 
 Create an ALGORITHMIC PHILOSOPHY (not static images) that will be interpreted through:
+
 - Computational processes, emergent behavior, mathematical beauty
 - Seeded randomness, noise fields, organic systems
 - Particles, flows, fields, forces
 - Parametric variation and controlled chaos
 
 **Philosophy Structure:**
+
 1. **Name the movement** (1-2 words): "Organic Turbulence" / "Quantum Harmonics"
 2. **Articulate the philosophy** (4-6 paragraphs) emphasizing:
    - Computational processes and mathematical relationships
@@ -91,11 +94,13 @@ function draw() {
 Use `assets/p5-templates/viewer.html` as the starting point for interactive artifacts.
 
 **Fixed elements (keep unchanged):**
+
 - Layout structure (header, sidebar, main canvas)
 - Seed section (display, prev/next/random buttons, jump input)
 - Actions section (regenerate, reset, download)
 
 **Variable elements (customize):**
+
 - The p5.js algorithm
 - The parameters object
 - Parameter controls in sidebar
@@ -103,6 +108,7 @@ Use `assets/p5-templates/viewer.html` as the starting point for interactive arti
 ### Generator Template
 
 Reference `assets/p5-templates/generator_template.js` for:
+
 - Parameter organization
 - Seeded randomness patterns
 - Class structure best practices

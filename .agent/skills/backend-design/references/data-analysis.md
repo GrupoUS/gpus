@@ -33,22 +33,22 @@ plt.savefig("output.png", dpi=300, bbox_inches="tight")
 
 ## Statistical Tests
 
-| Question | Test | Python |
-|----------|------|--------|
-| Compare 2 groups | t-test | `scipy.stats.ttest_ind()` |
-| Compare 3+ groups | ANOVA | `scipy.stats.f_oneway()` |
-| Correlation | Pearson | `df.corr()` |
+| Question             | Test       | Python                           |
+| -------------------- | ---------- | -------------------------------- |
+| Compare 2 groups     | t-test     | `scipy.stats.ttest_ind()`        |
+| Compare 3+ groups    | ANOVA      | `scipy.stats.f_oneway()`         |
+| Correlation          | Pearson    | `df.corr()`                      |
 | Categorical relation | Chi-square | `scipy.stats.chi2_contingency()` |
 
 ## Visualization Selection
 
-| Data Type | Chart |
-|-----------|-------|
-| Trend over time | Line chart |
-| Compare categories | Bar chart |
-| Distribution | Histogram, box plot |
-| Relationship | Scatter plot |
-| Composition | Pie chart, stacked bar |
+| Data Type          | Chart                  |
+| ------------------ | ---------------------- |
+| Trend over time    | Line chart             |
+| Compare categories | Bar chart              |
+| Distribution       | Histogram, box plot    |
+| Relationship       | Scatter plot           |
+| Composition        | Pie chart, stacked bar |
 
 ## Best Practices
 

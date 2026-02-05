@@ -28,9 +28,9 @@ $ARGUMENTS
 
 **MANDATORY**: Load and apply these skills:
 
-| Skill | Use For |
-|-------|---------|
-| `.agent/skills/debug/SKILL.md` | Testing, CLI tools, security checklist, E2E |
+| Skill                                   | Use For                                              |
+| --------------------------------------- | ---------------------------------------------------- |
+| `.agent/skills/debug/SKILL.md`          | Testing, CLI tools, security checklist, E2E          |
 | `.agent/skills/backend-design/SKILL.md` | API patterns, TypeScript, database, LEVER principles |
 
 ---
@@ -105,33 +105,33 @@ railway logs --latest -n 100
 
 #### Frontend Issues
 
-| Symptom | Investigation |
-|---------|---------------|
-| **UI not updating** | Check state management, reactivity, hooks deps |
-| **Crashes on render** | Check null access, component lifecycle |
-| **Slow performance** | Profile with DevTools, check re-renders |
-| **Hydration mismatch** | SSR/CSR data consistency |
-| **Type errors** | TypeScript strict, Zod validation |
+| Symptom                | Investigation                                  |
+| ---------------------- | ---------------------------------------------- |
+| **UI not updating**    | Check state management, reactivity, hooks deps |
+| **Crashes on render**  | Check null access, component lifecycle         |
+| **Slow performance**   | Profile with DevTools, check re-renders        |
+| **Hydration mismatch** | SSR/CSR data consistency                       |
+| **Type errors**        | TypeScript strict, Zod validation              |
 
 #### Backend/API Issues
 
-| Symptom | Investigation |
-|---------|---------------|
-| **500 errors** | Read stack trace, check middleware chain |
-| **Auth failures** | JWT validation, session state, CORS |
-| **Slow endpoints** | Profile queries, N+1, caching |
-| **Type mismatch** | tRPC inference, Zod schemas |
-| **Memory leaks** | Event listeners, closures, unclosed connections |
+| Symptom            | Investigation                                   |
+| ------------------ | ----------------------------------------------- |
+| **500 errors**     | Read stack trace, check middleware chain        |
+| **Auth failures**  | JWT validation, session state, CORS             |
+| **Slow endpoints** | Profile queries, N+1, caching                   |
+| **Type mismatch**  | tRPC inference, Zod schemas                     |
+| **Memory leaks**   | Event listeners, closures, unclosed connections |
 
 #### Database Issues
 
-| Symptom | Investigation |
-|---------|---------------|
-| **Slow queries** | EXPLAIN ANALYZE, missing indexes |
-| **Wrong data** | Check constraints, trace mutations |
-| **Connection pool** | Pool size, leaks, timeouts |
-| **Migration fails** | Schema conflicts, data integrity |
-| **N+1 queries** | JOINs, eager loading, DataLoader |
+| Symptom             | Investigation                      |
+| ------------------- | ---------------------------------- |
+| **Slow queries**    | EXPLAIN ANALYZE, missing indexes   |
+| **Wrong data**      | Check constraints, trace mutations |
+| **Connection pool** | Pool size, leaks, timeouts         |
+| **Migration fails** | Schema conflicts, data integrity   |
+| **N+1 queries**     | JOINs, eager loading, DataLoader   |
 
 ### Debugging Techniques
 
@@ -218,11 +218,11 @@ After every fix:
 # 1. Type check
 bun run check
 
-# 2. Lint
-bun run format
+# 2. Lint (Biome)
+bun run lint:check
 
-# 3. Test
-bun test
+# 3. Test (Vitest)
+bun run test
 
 # 4. Security check
 # - No hardcoded secrets
@@ -244,9 +244,9 @@ bun test
 
 ```bash
 bun run check      # Type safety
-bun run format     # Lint & format
-bun test           # Unit tests
-bun test --coverage
+bun run lint:check # Biome lint
+bun run test       # Vitest unit tests
+bun run test:coverage
 ```
 
 ### 5.2 Deployment Validation
@@ -259,12 +259,28 @@ railway logs --latest -n 50
 
 ### 5.3 E2E Validation (if UI affected)
 
+> [!IMPORTANT]
+> **SEMPRE prefira `agent-browser` CLI** ao invés do `browser_subagent` padrão.
+> O `agent-browser` oferece controle programático preciso, snapshots reproduzíveis, e refs consistentes para debugging.
+
 ```bash
-agent-browser open http://localhost:3000
-agent-browser snapshot
-agent-browser screenshot debug-result.png
-agent-browser close
+# Workflow preferido para validação frontend
+agent-browser open http://localhost:3000   # Abre página
+agent-browser snapshot                     # Lista elementos interativos (@refs)
+agent-browser screenshot debug-result.png  # Captura estado visual
+agent-browser get text @e1                 # Verifica conteúdo de elemento
+agent-browser close                        # Cleanup obrigatório
 ```
+
+**Quando usar cada ferramenta:**
+
+| Cenário                        | Ferramenta          | Motivo                                |
+| ------------------------------ | ------------------- | ------------------------------------- |
+| Validar UI visualmente         | `agent-browser`     | Snapshots reproduzíveis, refs estáveis |
+| Testar fluxos de usuário       | `agent-browser`     | Comandos encadeados, sem overhead     |
+| Capturar screenshots           | `agent-browser`     | Direto, salva como PNG                |
+| Gravar vídeo de reprodução     | `browser_subagent`  | Único caso para usar (grava WebP)     |
+| Debugging interativo complexo  | `agent-browser`     | Controle step-by-step                 |
 
 ---
 
@@ -301,7 +317,7 @@ agent-browser close
 
 ### Performance
 
-- [ ] **Database**: Indexes for query patterns, no SELECT *
+- [ ] **Database**: Indexes for query patterns, no SELECT \*
 - [ ] **API**: Response size, caching strategy
 - [ ] **Frontend**: Bundle size, lazy loading, memoization
 - [ ] **Async**: Non-blocking I/O, proper await handling
@@ -352,20 +368,20 @@ Controller → Service → Repository → Database
 
 ## Common Anti-Patterns
 
-| ❌ Anti-Pattern | ✅ Correct Approach |
-|-----------------|---------------------|
-| Random changes hoping to fix | Systematic investigation |
-| Ignoring stack traces | Read every line carefully |
-| "Works on my machine" | Reproduce in same environment |
-| Fixing symptoms only | Find and fix root cause |
-| No regression test | Always add test for the bug |
-| Multiple changes at once | One change, then verify |
-| Guessing without data | Profile and measure first |
-| SELECT * everywhere | Select only needed columns |
-| N+1 queries | Use JOINs or eager loading |
-| Hardcoded secrets | Environment variables only |
-| Skipping auth checks | Verify every protected route |
-| Giant controllers | Split into services |
+| ❌ Anti-Pattern              | ✅ Correct Approach           |
+| ---------------------------- | ----------------------------- |
+| Random changes hoping to fix | Systematic investigation      |
+| Ignoring stack traces        | Read every line carefully     |
+| "Works on my machine"        | Reproduce in same environment |
+| Fixing symptoms only         | Find and fix root cause       |
+| No regression test           | Always add test for the bug   |
+| Multiple changes at once     | One change, then verify       |
+| Guessing without data        | Profile and measure first     |
+| SELECT \* everywhere         | Select only needed columns    |
+| N+1 queries                  | Use JOINs or eager loading    |
+| Hardcoded secrets            | Environment variables only    |
+| Skipping auth checks         | Verify every protected route  |
+| Giant controllers            | Split into services           |
 
 ---
 
@@ -403,7 +419,7 @@ console.log(db.toSQL(query)); // See generated SQL
 // Check: Key prop for lists
 
 useEffect(() => {
-  console.log('Component rerendered with:', deps);
+  console.log("Component rerendered with:", deps);
 }, [deps]);
 ```
 
@@ -413,32 +429,32 @@ useEffect(() => {
 
 ### Browser/Frontend
 
-| Need | Tool |
-|------|------|
-| Network requests | Network tab |
-| DOM state | Elements tab |
-| Debug JS | Sources + breakpoints |
-| Performance | Performance tab |
-| Memory | Memory tab profiler |
+| Need             | Tool                  |
+| ---------------- | --------------------- |
+| Network requests | Network tab           |
+| DOM state        | Elements tab          |
+| Debug JS         | Sources + breakpoints |
+| Performance      | Performance tab       |
+| Memory           | Memory tab profiler   |
 
 ### Backend/API
 
-| Need | Tool |
-|------|------|
-| Request flow | Structured logging |
-| Step-by-step debug | --inspect flag |
-| Slow queries | Query logging, EXPLAIN |
-| Memory issues | Heap snapshots |
-| Regression | git bisect |
+| Need               | Tool                   |
+| ------------------ | ---------------------- |
+| Request flow       | Structured logging     |
+| Step-by-step debug | --inspect flag         |
+| Slow queries       | Query logging, EXPLAIN |
+| Memory issues      | Heap snapshots         |
+| Regression         | git bisect             |
 
 ### Database
 
-| Need | Approach |
-|------|----------|
-| Slow queries | EXPLAIN ANALYZE |
-| Wrong data | Check constraints, trace writes |
-| Connection issues | Check pool, connection logs |
-| Index efficiency | pg_stat_statements |
+| Need              | Approach                        |
+| ----------------- | ------------------------------- |
+| Slow queries      | EXPLAIN ANALYZE                 |
+| Wrong data        | Check constraints, trace writes |
+| Connection issues | Check pool, connection logs     |
+| Index efficiency  | pg_stat_statements              |
 
 ---
 
@@ -480,19 +496,23 @@ useEffect(() => {
 **Root Cause:** [what was actually wrong]
 
 ### Analysis
+
 - [key findings from investigation]
 
 ### Fix Applied
+
 - [files changed]
 - [what was changed and why]
 
 ### Verification
+
 - [ ] Type check passes
 - [ ] Tests pass
 - [ ] Regression test added
 - [ ] Similar issues checked
 
 ### Prevention
+
 - [how to prevent this in the future]
 ```
 
@@ -500,30 +520,33 @@ useEffect(() => {
 
 ## Success Metrics
 
-| Gate | Command | Expected |
-|------|---------|----------|
-| Type Check | `bun run check` | 0 errors |
-| Lint | `bun run format --check` | 0 warnings |
-| Tests | `bun test` | All pass |
-| Build | `bun run build` | Clean build |
-| DB Schema | `bun run db:push --dry-run` | No drift |
-| Slow Queries | Neon MCP | < 100ms avg |
-| Deploy | `railway status` | Healthy |
-| Logs | `railway logs` | No new errors |
+| Gate         | Command                     | Expected      |
+| ------------ | --------------------------- | ------------- |
+| Type Check   | `bun run check`             | 0 errors      |
+| Lint         | `bun run lint:check`        | 0 warnings    |
+| Tests        | `bun run test`              | All pass      |
+| Build        | `bun run build`             | Clean build   |
+| DB Schema    | `bun run db:push --dry-run` | No drift      |
+| Slow Queries | Neon MCP                    | < 100ms avg   |
+| Deploy       | `railway status`            | Healthy       |
+| Logs         | `railway logs`              | No new errors |
 
 ---
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Debug issue | `/debug [description]` |
-| Check types | `bun run check` |
-| Run tests | `bun test` |
-| Slow queries | Neon MCP tools |
-| Check logs | `railway logs --latest -n 100` |
-| Full QA | `/qa` |
-| Research fix | `/research "Debug: ..."` |
+| Task         | Command                        |
+| ------------ | ------------------------------ |
+| Debug issue  | `/debug [description]`         |
+| Check types  | `bun run check`                |
+| Lint & fix   | `bun run lint`                 |
+| Lint check   | `bun run lint:check`           |
+| Run tests    | `bun run test`                 |
+| Watch tests  | `bun run test:watch`           |
+| Slow queries | Neon MCP tools                 |
+| Check logs   | `railway logs --latest -n 100` |
+| Full QA      | `/qa`                          |
+| Research fix | `/research "Debug: ..."`       |
 
 ---
 

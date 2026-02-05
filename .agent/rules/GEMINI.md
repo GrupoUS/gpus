@@ -18,24 +18,24 @@ Before ANY implementation:
 
 ### Skills (7 total)
 
-| Skill | Purpose | When to Use |
-|-------|---------|-------------|
-| `backend-design` | API, TypeScript, data, DB, code principles | Backend work |
-| `debug` | Testing, debugging, fixing | Bugs, errors |
-| `frontend-design` | UI/UX, Tailwind, components | Frontend work |
-| `notion` | Notion CMS integration | Content from Notion |
-| `planning` | Project planning, PRPs | Complex tasks |
-| `skill-creator` | Creating new skills | Meta work |
-| `theme-factory` | Visual themes | Styling artifacts |
+| Skill             | Purpose                                    | When to Use         |
+| ----------------- | ------------------------------------------ | ------------------- |
+| `backend-design`  | API, TypeScript, data, DB, code principles | Backend work        |
+| `debug`           | Testing, debugging, fixing                 | Bugs, errors        |
+| `frontend-design` | UI/UX, Tailwind, components                | Frontend work       |
+| `notion`          | Notion CMS integration                     | Content from Notion |
+| `planning`        | Project planning, PRPs                     | Complex tasks       |
+| `skill-creator`   | Creating new skills                        | Meta work           |
+| `theme-factory`   | Visual themes                              | Styling artifacts   |
 
 ### Workflows (4 total)
 
-| Command | Description |
-|---------|-------------|
-| `/debug` | Systematic problem investigation & QA pipeline |
-| `/design` | Frontend design orchestration |
-| `/implement` | Execute approved implementation plan |
-| `/plan` | Create project plan with research |
+| Command      | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `/debug`     | Systematic problem investigation & QA pipeline |
+| `/design`    | Frontend design orchestration                  |
+| `/implement` | Execute approved implementation plan           |
+| `/plan`      | Create project plan with research              |
 
 **Priority:** GEMINI.md > Skill
 
@@ -58,13 +58,13 @@ Before coding:
 
 ### Scoring: Extend vs Create
 
-| Factor | Points |
-|--------|--------|
-| Reuse data structure | +3 |
-| Reuse indexes/queries | +3 |
-| Reuse >70% code | +5 |
-| Circular dependencies | -5 |
-| Distinct domain | -3 |
+| Factor                | Points |
+| --------------------- | ------ |
+| Reuse data structure  | +3     |
+| Reuse indexes/queries | +3     |
+| Reuse >70% code       | +5     |
+| Circular dependencies | -5     |
+| Distinct domain       | -3     |
 
 **Score > 5**: Extend existing code.
 
@@ -72,23 +72,23 @@ Before coding:
 
 ## 🛠️ Three-Pass Implementation
 
-| Pass | Focus | Code |
-|------|-------|------|
-| 1. Discovery | Find related code, document patterns | None |
-| 2. Design | Write interfaces, plan data flow | Minimal |
-| 3. Implementation | Execute with max reuse | Essential only |
+| Pass              | Focus                                | Code           |
+| ----------------- | ------------------------------------ | -------------- |
+| 1. Discovery      | Find related code, document patterns | None           |
+| 2. Design         | Write interfaces, plan data flow     | Minimal        |
+| 3. Implementation | Execute with max reuse               | Essential only |
 
 ---
 
 ## 📋 Request Classification
 
-| Type | Keywords | Action |
-|------|----------|--------|
-| Question | "what is", "explain" | Answer directly |
-| Simple edit | "fix", "add" (1 file) | Edit directly |
-| Complex build | "create", "implement" | `/plan` first |
-| Debug | "bug", "error", "broken" | `/debug` workflow |
-| Design | "UI", "page", "dashboard" | `/design` workflow |
+| Type          | Keywords                  | Action             |
+| ------------- | ------------------------- | ------------------ |
+| Question      | "what is", "explain"      | Answer directly    |
+| Simple edit   | "fix", "add" (1 file)     | Edit directly      |
+| Complex build | "create", "implement"     | `/plan` first      |
+| Debug         | "bug", "error", "broken"  | `/debug` workflow  |
+| Design        | "UI", "page", "dashboard" | `/design` workflow |
 
 ---
 
@@ -118,8 +118,8 @@ users: pgTable("users", {
 
 // ✅ DO: Extend with computed props
 export const getUserStatus = query({
-  handler: async (ctx) => ({
-    ...await getUser(ctx),
+  handler: async ctx => ({
+    ...(await getUser(ctx)),
     isTrial: Boolean(user?.campaign),
   }),
 });
@@ -147,10 +147,11 @@ export const getUserStatus = query({
 
 ```typescript
 // ✅ Use
-const foo = bar?.baz ?? 'default';   // Optional chaining + nullish
-for (const item of items) { }         // for...of
-const { id, name } = user;            // Destructuring
-const msg = `Hello ${name}`;          // Template literals
+const foo = bar?.baz ?? "default"; // Optional chaining + nullish
+for (const item of items) {
+} // for...of
+const { id, name } = user; // Destructuring
+const msg = `Hello ${name}`; // Template literals
 ```
 
 ### "Type instantiation is excessively deep"
@@ -194,14 +195,17 @@ const mutate = useMutation((api as any).leads.updateStatus);
 ## ✅ Review Checklist
 
 ### Code Quality
+
 - [ ] Extended existing tables/queries?
 - [ ] Followed Three-Pass approach?
 - [ ] No manual state sync?
 - [ ] New code < 50% of fresh implementation?
 
 ### Stack
+
 - [ ] `bun run check` passes?
-- [ ] `bun test` passes?
+- [ ] `bun run lint:check` passes? (Biome)
+- [ ] `bun run test` passes? (Vitest)
 - [ ] No console errors in browser?
 
 ---
@@ -229,38 +233,44 @@ neondash/
 
 ## 🛑 Anti-Patterns
 
-| Pattern | Problem |
-|---------|---------|
-| UI-Driven DB | Schema matches components |
-| "Just one more table" | Join complexity |
-| Parallel APIs | Duplication |
-| Manual state sync | Race conditions |
-| `SELECT *` | Performance |
-| No indexes on FKs | Slow queries |
+| Pattern               | Problem                   |
+| --------------------- | ------------------------- |
+| UI-Driven DB          | Schema matches components |
+| "Just one more table" | Join complexity           |
+| Parallel APIs         | Duplication               |
+| Manual state sync     | Race conditions           |
+| `SELECT *`            | Performance               |
+| No indexes on FKs     | Slow queries              |
 
 ---
 
 ## 📦 Stack Quick Reference
 
-| Layer | Technology |
-|-------|------------|
-| Runtime | Bun |
-| Frontend | React 19 + Vite |
-| Styling | Tailwind CSS 4 + shadcn/ui |
-| Routing | wouter |
-| State | TanStack Query + tRPC |
-| Backend | Express + tRPC 11 |
+| Layer    | Technology                    |
+| -------- | ----------------------------- |
+| Runtime  | Bun                           |
+| Frontend | React 19 + Vite               |
+| Styling  | Tailwind CSS 4 + shadcn/ui    |
+| Routing  | wouter                        |
+| State    | TanStack Query + tRPC         |
+| Backend  | Express + tRPC 11             |
 | Database | Neon PostgreSQL + Drizzle ORM |
-| Auth | Clerk |
+| Auth     | Clerk                         |
+| Linter   | Biome                         |
+| Tests    | Vitest                        |
 
 ---
 
 ## 🚀 Commands
 
 ```bash
-bun dev           # Dev server
-bun run check     # Lint + type check
-bun run format    # Prettier
-bun test          # Vitest
-bun run db:push   # Drizzle migrations
+bun dev             # Dev server
+bun run check       # TypeScript type check
+bun run lint        # Biome lint + format (auto-fix)
+bun run lint:check  # Biome lint + format (check only)
+bun run format      # Biome format only
+bun run test        # Vitest run
+bun run test:watch  # Vitest watch mode
+bun run db:push     # Drizzle migrations
 ```
+

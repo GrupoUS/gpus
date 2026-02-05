@@ -15,23 +15,23 @@ allowed-tools:
 
 ## When to Use
 
-| Trigger | Action |
-|---------|--------|
+| Trigger                  | Action                  |
+| ------------------------ | ----------------------- |
 | Bug report, error, crash | Start 4-phase debugging |
-| Need tests | Run biome + vitest |
-| Frontend broken | Use agent-browser CLI |
-| Slow queries | Use Neon MCP tools |
-| Deployment failed | Check Railway logs |
+| Need tests               | Run biome + vitest      |
+| Frontend broken          | Use agent-browser CLI   |
+| Slow queries             | Use Neon MCP tools      |
+| Deployment failed        | Check Railway logs      |
 
 ---
 
 ## Content Map
 
-| Reference | Purpose |
-|-----------|---------|
-| [Testing Pyramid](references/testing-pyramid.md) | Unit/Integration/E2E selection |
-| [Debug Methodology](references/debug-methodology.md) | 4-phase process, 5 Whys |
-| [Security Checklist](references/security-checklist.md) | OWASP Top 10 2025 |
+| Reference                                              | Purpose                        |
+| ------------------------------------------------------ | ------------------------------ |
+| [Testing Pyramid](references/testing-pyramid.md)       | Unit/Integration/E2E selection |
+| [Debug Methodology](references/debug-methodology.md)   | 4-phase process, 5 Whys        |
+| [Security Checklist](references/security-checklist.md) | OWASP Top 10 2025              |
 
 ---
 
@@ -121,21 +121,25 @@ railway ssh --service <service-id>
 ## 4-Phase Debugging Process
 
 ### Phase 1: REPRODUCE
+
 - [ ] Confirm minimum reproducible steps
 - [ ] Document expected vs actual behavior
 - [ ] Identify affected scope (file, component, route)
 
 ### Phase 2: ISOLATE
+
 - [ ] Binary search to narrow location
 - [ ] Add strategic logging
 - [ ] Check recent changes (`git diff HEAD~5`)
 
 ### Phase 3: UNDERSTAND (Root Cause)
+
 - [ ] Apply 5 Whys technique
 - [ ] Trace data flow
 - [ ] Check state at each step
 
 ### Phase 4: FIX & VERIFY
+
 - [ ] Implement fix
 - [ ] Run `bun run check` (no type errors)
 - [ ] Run `bun test` (tests pass)
@@ -173,32 +177,32 @@ railway ssh --service <service-id>
   /--------------\
 ```
 
-| Layer | Tool | When |
-|-------|------|------|
-| Unit | Vitest | Business logic, utils |
+| Layer       | Tool          | When                   |
+| ----------- | ------------- | ---------------------- |
+| Unit        | Vitest        | Business logic, utils  |
 | Integration | Vitest + tRPC | API routes, DB queries |
-| E2E | agent-browser | User flows, UI |
+| E2E         | agent-browser | User flows, UI         |
 
 ---
 
 ## Security Quick Check (OWASP 2025)
 
-| # | Vulnerability | Check |
-|---|---------------|-------|
-| 1 | Broken Access Control | Verify auth on all routes |
-| 2 | Cryptographic Failures | Check secrets not exposed |
-| 3 | Injection | Parameterized queries only |
-| 4 | Insecure Design | Review auth flow |
-| 5 | Security Misconfig | Check CORS, headers |
+| #   | Vulnerability          | Check                      |
+| --- | ---------------------- | -------------------------- |
+| 1   | Broken Access Control  | Verify auth on all routes  |
+| 2   | Cryptographic Failures | Check secrets not exposed  |
+| 3   | Injection              | Parameterized queries only |
+| 4   | Insecure Design        | Review auth flow           |
+| 5   | Security Misconfig     | Check CORS, headers        |
 
 ---
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| [`run_tests.sh`](scripts/run_tests.sh) | Run biome + vitest |
-| [`fetch_logs.sh`](scripts/fetch_logs.sh) | Aggregate error logs |
+| Script                                         | Purpose               |
+| ---------------------------------------------- | --------------------- |
+| [`run_tests.sh`](scripts/run_tests.sh)         | Run biome + vitest    |
+| [`fetch_logs.sh`](scripts/fetch_logs.sh)       | Aggregate error logs  |
 | [`frontend_test.sh`](scripts/frontend_test.sh) | agent-browser testing |
 
 ---
@@ -224,8 +228,9 @@ When debugging is complete, document:
 **Root Cause**: [5 Whys result]
 **Fix**: [What was changed]
 **Verification**:
+
 - [ ] `bun run check` ✅
 - [ ] `bun test` ✅
 - [ ] Browser verified ✅
-**Files Changed**: [list]
+      **Files Changed**: [list]
 ```

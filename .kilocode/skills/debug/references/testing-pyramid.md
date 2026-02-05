@@ -14,18 +14,18 @@
 
 ## Layer Selection
 
-| Layer | Tool | When to Use | Count |
-|-------|------|-------------|-------|
-| **Unit** | Vitest | Pure functions, utils, business logic | 70% |
-| **Integration** | Vitest + tRPC | API routes, DB queries, auth flows | 20% |
-| **E2E** | agent-browser | Critical user journeys, UI flows | 10% |
+| Layer           | Tool          | When to Use                           | Count |
+| --------------- | ------------- | ------------------------------------- | ----- |
+| **Unit**        | Vitest        | Pure functions, utils, business logic | 70%   |
+| **Integration** | Vitest + tRPC | API routes, DB queries, auth flows    | 20%   |
+| **E2E**         | agent-browser | Critical user journeys, UI flows      | 10%   |
 
 ## Unit Tests
 
 ```typescript
 // Pattern: AAA (Arrange, Act, Assert)
-describe('calculateTotal', () => {
-  it('sums items correctly', () => {
+describe("calculateTotal", () => {
+  it("sums items correctly", () => {
     // Arrange
     const items = [{ price: 10 }, { price: 20 }];
 
@@ -42,11 +42,11 @@ describe('calculateTotal', () => {
 
 ```typescript
 // Test API + DB together
-describe('mentorados.create', () => {
-  it('creates mentorado in database', async () => {
+describe("mentorados.create", () => {
+  it("creates mentorado in database", async () => {
     const result = await caller.mentorados.create({
-      nome_completo: 'Test User',
-      turma: 'neon_estrutura'
+      nome_completo: "Test User",
+      turma: "neon_estrutura",
     });
 
     expect(result.id).toBeDefined();
@@ -74,6 +74,7 @@ describe('[Component/Function]')
 ```
 
 Examples:
+
 - `it('calculates tax correctly for positive amounts')`
 - `it('throws error when input is negative')`
 - `it('returns empty array when no items found')`
