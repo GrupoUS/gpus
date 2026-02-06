@@ -1,6 +1,6 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { Upload } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';

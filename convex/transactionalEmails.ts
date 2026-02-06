@@ -15,7 +15,9 @@
 
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('./_generated/api').internal;
+
 import { action, internalMutation, internalQuery } from './_generated/server';
 import { brevoSmtp } from './lib/brevo';
 

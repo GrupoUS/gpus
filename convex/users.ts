@@ -2,7 +2,9 @@ import { createClerkClient } from '@clerk/backend';
 import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('./_generated/api').internal;
+
 import { action, internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { createAuditLog } from './lib/auditLogging';
 import { getOrganizationId, requireAuth, requirePermission } from './lib/auth';
@@ -436,12 +438,15 @@ export const inviteTeamMember = action({
 				},
 			);
 
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_creation',
-				description: `Invited user ${args.email} as ${args.role}`,
-				dataCategory: 'identificacao',
-				metadata: { email: args.email, role: args.role, invitedBy: identity.subject },
-			});
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_creation',
+					description: `Invited user ${args.email} as ${args.role}`,
+					dataCategory: 'identificacao',
+					metadata: { email: args.email, role: args.role, invitedBy: identity.subject },
+				},
+			);
 
 			return invitation;
 		} catch (error) {
@@ -532,23 +537,26 @@ export const updateTeamMemberRole = action({
 				publicMetadata: { role: args.newRole },
 			});
 
-			await ctx.runMutation(internal.users.syncUserRole, {
-				clerkId: args.userId,
-				role: args.newRole,
-			});
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.syncUserRole,
+				{ clerkId: args.userId, role: args.newRole },
+			);
 
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_modification',
-				description: `Updated role for ${args.userId} to ${args.newRole}`,
-				dataCategory: 'identificacao',
-				metadata: {
-					userId: args.userId,
-					previous_value: targetUser?.role || 'unknown',
-					new_value: args.newRole,
-					reason: args.reason,
-					ip_address: 'client_action', // Placeholder as we don't have IP here easily
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_modification',
+					description: `Updated role for ${args.userId} to ${args.newRole}`,
+					dataCategory: 'identificacao',
+					metadata: {
+						userId: args.userId,
+						previous_value: targetUser?.role || 'unknown',
+						new_value: args.newRole,
+						reason: args.reason,
+						ip_address: 'client_action',
+					},
 				},
-			});
+			);
 
 			return { success: true };
 		} catch (error) {
@@ -586,20 +594,26 @@ export const removeTeamMember = action({
 				publicMetadata: { isActive: false },
 			});
 
-			await ctx.runMutation(internal.users.softDeleteUserByClerkId, { clerkId: args.userId });
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.softDeleteUserByClerkId,
+				{ clerkId: args.userId },
+			);
 
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_deletion',
-				description: `Removed user ${args.userId}`,
-				dataCategory: 'identificacao',
-				metadata: {
-					userId: args.userId,
-					reason: args.reason,
-					previous_value: 'active',
-					new_value: 'inactive',
-					ip_address: 'client_action',
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_deletion',
+					description: `Removed user ${args.userId}`,
+					dataCategory: 'identificacao',
+					metadata: {
+						userId: args.userId,
+						reason: args.reason,
+						previous_value: 'active',
+						new_value: 'inactive',
+						ip_address: 'client_action',
+					},
 				},
-			});
+			);
 
 			return { success: true };
 		} catch (error) {

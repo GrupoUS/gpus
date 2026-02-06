@@ -1,6 +1,7 @@
 import { cronJobs, type SchedulableFunctionReference } from 'convex/server';
 
-import { internal } from './_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('./_generated/api').internal;
 
 const runAutoSyncCustomersAction = internal.asaas.sync
 	.runAutoSyncCustomersAction as SchedulableFunctionReference;

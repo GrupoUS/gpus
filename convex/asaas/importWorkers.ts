@@ -9,7 +9,9 @@
  * execution with error isolation.
  */
 
-import { internal } from '../_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('../_generated/api').internal;
+
 import type { Id } from '../_generated/dataModel';
 import type { ActionCtx } from '../_generated/server';
 import { maskCPF } from '../lib/masking';
