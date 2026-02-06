@@ -48,23 +48,9 @@ interface ListLeadsResult {
 	continueCursor: string;
 }
 
-// Use require to completely bypass TypeScript deep type instantiation
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const leadsApi = require('@convex/_generated/api').api.leads;
-
-interface LeadsQueryArgs {
-	paginationOpts: { numItems: number; cursor: null };
-	search?: string;
-	stages?: string[];
-	temperature?: string[];
-	products?: string[];
-	source?: string[];
-	tags?: Id<'tags'>[];
-}
-
-function useLeadsQuery(args: LeadsQueryArgs | 'skip') {
-	return useQuery(leadsApi.listLeads, args) as ListLeadsResult | undefined;
-}
+// Early cast to avoid deep type instantiation - applied at module level
+// biome-ignore lint/suspicious/noExplicitAny: Required for Convex deep type workaround
+const leadsApi = api.leads as any;
 
 function CRMPage() {
 	const navigate = Route.useNavigate();
@@ -106,12 +92,16 @@ function CRMPage() {
 		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
 	};
 
-	// Use extracted hook to reduce complexity
-	const allLeadsForCounts = useLeadsQuery(
+	// Use leadsApi (early cast) to avoid deep type instantiation
+	const allLeadsForCounts = useQuery(
+		leadsApi.listLeads,
 		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
-	);
+	) as ListLeadsResult | undefined;
 
-	const leads = useLeadsQuery(isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip');
+	const leads = useQuery(
+		leadsApi.listLeads,
+		isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip',
+	) as ListLeadsResult | undefined;
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
