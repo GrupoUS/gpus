@@ -48,10 +48,6 @@ interface ListLeadsResult {
 	continueCursor: string;
 }
 
-// Early cast to avoid deep type instantiation - applied at module level
-// biome-ignore lint/suspicious/noExplicitAny: Required for Convex deep type workaround
-const leadsApi = api.leads as any;
-
 function CRMPage() {
 	const navigate = Route.useNavigate();
 	const { product } = Route.useSearch();
@@ -92,16 +88,21 @@ function CRMPage() {
 		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
 	};
 
-	// Use leadsApi (early cast) to avoid deep type instantiation
-	const allLeadsForCounts = useQuery(
-		leadsApi.listLeads,
-		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
-	) as ListLeadsResult | undefined;
+	// Early cast at hook call site to avoid Convex deep type instantiation
+	const useLeadsQuery = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => ListLeadsResult | undefined;
 
-	const leads = useQuery(
-		leadsApi.listLeads,
+	const allLeadsForCounts = useLeadsQuery(
+		api.leads.listLeads,
+		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
+	);
+
+	const leads = useLeadsQuery(
+		api.leads.listLeads,
 		isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip',
-	) as ListLeadsResult | undefined;
+	);
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -118,7 +119,7 @@ function CRMPage() {
 	};
 
 	const formattedLeads =
-		leads?.page?.map((l) => ({
+		leads?.page?.map((l: LeadItem) => ({
 			...l,
 			stage: l.stage,
 			temperature: l.temperature,
@@ -128,9 +129,11 @@ function CRMPage() {
 	const allLeadsForCountsPage = allLeadsForCounts?.page ?? [];
 	const counts = {
 		all: allLeadsForCountsPage.length,
-		otb: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'otb').length,
-		black_neon: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'black_neon').length,
-		trintae3: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'trintae3').length,
+		otb: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'otb').length,
+		black_neon: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'black_neon')
+			.length,
+		trintae3: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'trintae3')
+			.length,
 	};
 
 	return (
