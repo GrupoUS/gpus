@@ -20,6 +20,11 @@ const LeadImportDialog = lazy(() =>
 		default: module.LeadImportDialog,
 	})),
 );
+const AdminUserSelector = lazy(() =>
+	import('@/components/crm/admin-user-selector').then((module) => ({
+		default: module.AdminUserSelector,
+	})),
+);
 
 import { z } from 'zod';
 
@@ -43,6 +48,24 @@ interface ListLeadsResult {
 	continueCursor: string;
 }
 
+// Use require to completely bypass TypeScript deep type instantiation
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const leadsApi = require('@convex/_generated/api').api.leads;
+
+interface LeadsQueryArgs {
+	paginationOpts: { numItems: number; cursor: null };
+	search?: string;
+	stages?: string[];
+	temperature?: string[];
+	products?: string[];
+	source?: string[];
+	tags?: Id<'tags'>[];
+}
+
+function useLeadsQuery(args: LeadsQueryArgs | 'skip') {
+	return useQuery(leadsApi.listLeads, args) as ListLeadsResult | undefined;
+}
+
 function CRMPage() {
 	const navigate = Route.useNavigate();
 	const { product } = Route.useSearch();
@@ -58,6 +81,7 @@ function CRMPage() {
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
+	const [adminSelectedUserId, setAdminSelectedUserId] = useState<string | null>(null);
 	const { isAuthenticated } = useConvexAuth();
 
 	const handleTabChange = (value: string) => {
@@ -72,37 +96,22 @@ function CRMPage() {
 		leadsProducts = filters.products;
 	}
 
-	const allLeadsForCounts = useQuery(
-		(api as any).leads.listLeads,
-		isAuthenticated
-			? {
-					paginationOpts: { numItems: 1000, cursor: null },
-					search: filters.search || undefined,
-					stages: filters.stages.length > 0 ? filters.stages : undefined,
-					temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-					// No products filter here - this is used ONLY for badge counts
-					products: undefined,
-					source: filters.source.length > 0 ? filters.source : undefined,
-					tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-				}
-			: 'skip',
-	) as ListLeadsResult | undefined;
+	// Build query args
+	const baseArgs = {
+		paginationOpts: { numItems: 1000, cursor: null as null },
+		search: filters.search || undefined,
+		stages: filters.stages.length > 0 ? filters.stages : undefined,
+		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
+		source: filters.source.length > 0 ? filters.source : undefined,
+		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
+	};
 
-	const leads = useQuery(
-		(api as any).leads.listLeads,
-		isAuthenticated
-			? {
-					paginationOpts: { numItems: 1000, cursor: null },
-					search: filters.search || undefined,
-					stages: filters.stages.length > 0 ? filters.stages : undefined,
-					temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-					// If tab is 'all', use filter dropdown. If tab is specific, force that product.
-					products: leadsProducts,
-					source: filters.source.length > 0 ? filters.source : undefined,
-					tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-				}
-			: 'skip',
-	) as ListLeadsResult | undefined;
+	// Use extracted hook to reduce complexity
+	const allLeadsForCounts = useLeadsQuery(
+		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
+	);
+
+	const leads = useLeadsQuery(isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip');
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -146,10 +155,18 @@ function CRMPage() {
 							Gerencie seus leads e oportunidades
 						</p>
 					</div>
-					<Button className="gap-2" onClick={() => setImportDialogOpen(true)} variant="outline">
-						<Upload className="h-4 w-4" />
-						Importar Leads
-					</Button>
+					<div className="flex items-center gap-4">
+						<Suspense fallback={null}>
+							<AdminUserSelector
+								onUserSelect={setAdminSelectedUserId}
+								selectedUserId={adminSelectedUserId}
+							/>
+						</Suspense>
+						<Button className="gap-2" onClick={() => setImportDialogOpen(true)} variant="outline">
+							<Upload className="h-4 w-4" />
+							Importar Leads
+						</Button>
+					</div>
 				</div>
 
 				<Tabs onValueChange={handleTabChange} value={selectedProduct}>

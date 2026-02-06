@@ -65,6 +65,51 @@ export const list = query({
 });
 
 /**
+ * AT-004: List system users for admin CRM view selector
+ * SECURITY: Requires admin role to access
+ * Returns minimal data for dropdown: _id, name, email
+ */
+export const listSystemUsers = query({
+	args: {},
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return [];
+
+		const organizationId = await getOrganizationId(ctx);
+		if (!organizationId) return [];
+
+		// Get current user to check admin role
+		const currentUser = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+			.unique();
+
+		// Only admins can list all users for the selector
+		if (!currentUser || currentUser.role !== 'admin') {
+			return [];
+		}
+
+		// Get all active users in organization
+		const users = await ctx.db
+			.query('users')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
+
+		// Return minimal data for LGPD compliance
+		return users
+			.filter((u) => u.isActive)
+			.map((user) => ({
+				// biome-ignore lint/style/useNamingConvention: Convex convention uses _id
+				_id: user._id,
+				clerkId: user.clerkId,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+			}));
+	},
+});
+
+/**
  * List CS (Customer Success) users for dropdowns
  * SECURITY: Requires authentication but NOT admin role
  * Returns minimal data (LGPD compliance): only _id, name, email

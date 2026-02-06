@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { Activity, Briefcase, Clock, Layers, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { LeadActions } from './lead-actions';
 import { LeadOwnerSelect } from './lead-owner-select';
 import { ObjectionsTab } from './objections-tab';
 import { ReferralSection } from './referral-section';
@@ -108,6 +109,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 										</span>
 									</div>
 								</div>
+								<LeadActions lead={lead} onClose={onClose} />
 							</div>
 
 							<div className="flex gap-2">

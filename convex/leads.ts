@@ -21,6 +21,8 @@ interface ListLeadsArgs {
 	products?: string[];
 	source?: string[];
 	tags?: Id<'tags'>[];
+	// AT-003: Admin filter to view other users' leads
+	forUserId?: string;
 }
 
 interface InternalApi {
@@ -111,6 +113,8 @@ export const listLeads = query({
 		products: v.optional(v.array(v.string())),
 		source: v.optional(v.array(v.string())),
 		tags: v.optional(v.array(v.id('tags'))),
+		// AT-003: Admin filter to view other users' leads
+		forUserId: v.optional(v.string()),
 	},
 	handler: async (ctx, args: ListLeadsArgs) => {
 		// 1. Verify Auth & Permissions
@@ -989,5 +993,60 @@ export const importLeads = mutation({
 			failed: failCount,
 			results,
 		};
+	},
+});
+
+// ============================================================================
+// AT-001: Delete Lead Mutation (with cascade delete)
+// ============================================================================
+export const deleteLead = mutation({
+	args: {
+		leadId: v.id('leads'),
+	},
+	handler: async (ctx, args) => {
+		// 1. Require leads:write permission
+		const identity = await requirePermission(ctx, PERMISSIONS.LEADS_WRITE);
+		const organizationId = await getOrganizationId(ctx);
+
+		// 2. Verify lead exists and belongs to organization
+		const lead = await ctx.db.get(args.leadId);
+		if (!lead || lead.organizationId !== organizationId) {
+			throw new Error('Lead not found or permission denied');
+		}
+
+		// 3. Cascade delete: activities linked to this lead
+		const activities = await ctx.db
+			.query('activities')
+			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+			.collect();
+		await Promise.all(activities.map((a) => ctx.db.delete(a._id)));
+
+		// 4. Cascade delete: tasks linked to this lead
+		const tasks = await ctx.db
+			.query('tasks')
+			.withIndex('by_lead', (q) => q.eq('leadId', args.leadId))
+			.collect();
+		await Promise.all(tasks.map((t) => ctx.db.delete(t._id)));
+
+		// 5. Cascade delete: custom field values linked to this lead
+		const cfValues = await ctx.db
+			.query('customFieldValues')
+			.withIndex('by_entity', (q) => q.eq('entityId', args.leadId).eq('entityType', 'lead'))
+			.collect();
+		await Promise.all(cfValues.map((cf) => ctx.db.delete(cf._id)));
+
+		// 6. Delete the lead
+		await ctx.db.delete(args.leadId);
+
+		// 7. Log deletion activity (to org level, not lead level since lead is deleted)
+		await ctx.db.insert('activities', {
+			type: 'lead_excluido',
+			description: `Lead "${lead.name}" excluído permanentemente`,
+			organizationId,
+			performedBy: identity.subject,
+			createdAt: Date.now(),
+		});
+
+		return { success: true };
 	},
 });

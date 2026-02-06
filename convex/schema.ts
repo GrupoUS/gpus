@@ -555,6 +555,8 @@ export default defineSchema({
 			v.literal('lead_reactivated'),
 			v.literal('system_task_reminder'),
 			v.literal('system_lead_reactivation'),
+			// Lead deletion
+			v.literal('lead_excluido'),
 		),
 
 		// Detalhes
