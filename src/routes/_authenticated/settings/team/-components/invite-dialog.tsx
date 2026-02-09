@@ -41,7 +41,12 @@ type InviteFormData = z.infer<typeof inviteSchema>;
 
 export function InviteDialog() {
 	const [open, setOpen] = useState(false);
-	const inviteUser = useAction(api.users.inviteTeamMember);
+	// Cast to break deep type instantiation chain in Convex API types
+	const inviteUser = (
+		useAction as (
+			fn: unknown,
+		) => (args: { email: string; role: string; redirectUrl: string }) => Promise<unknown>
+	)(api.users.inviteTeamMember);
 
 	const form = useForm<InviteFormData>({
 		resolver: zodResolver(inviteSchema),

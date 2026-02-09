@@ -88,19 +88,20 @@ function CRMPage() {
 		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
 	};
 
-	// Early cast at hook call site to avoid Convex deep type instantiation
+	// Cast to break deep type instantiation chain in Convex API types
+	const listLeadsRef = api.leads.listLeads as unknown;
 	const useLeadsQuery = useQuery as unknown as (
 		query: unknown,
 		args?: unknown,
 	) => ListLeadsResult | undefined;
 
 	const allLeadsForCounts = useLeadsQuery(
-		api.leads.listLeads,
+		listLeadsRef,
 		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
 	);
 
 	const leads = useLeadsQuery(
-		api.leads.listLeads,
+		listLeadsRef,
 		isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip',
 	);
 
