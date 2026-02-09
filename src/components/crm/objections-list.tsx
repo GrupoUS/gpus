@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useMutation, useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreVertical, Pencil, ShieldAlert, Trash2 } from 'lucide-react';
@@ -28,14 +25,14 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ObjectionsListProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 }
 
 interface Objection {
-	_id: Id<'objections'>;
+	id: number;
 	_creationTime: number;
 	organizationId: string;
-	leadId: Id<'leads'>;
+	leadId: number;
 	objectionText: string;
 	recordedBy: string;
 	recordedByDetails?: { name?: string };
@@ -56,8 +53,8 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 		| { clerkId: string; role: string }
 		| undefined;
 
-	const [editingId, setEditingId] = useState<Id<'objections'> | null>(null);
-	const [deletingId, setDeletingId] = useState<Id<'objections'> | null>(null);
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [deletingId, setDeletingId] = useState<number | null>(null);
 
 	const handleDelete = async () => {
 		if (!deletingId) return;
@@ -106,10 +103,10 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 	return (
 		<div className="space-y-4">
 			{objections.map((objection) => {
-				if (editingId === objection._id) {
+				if (editingId === objection.id) {
 					return (
 						<ObjectionForm
-							key={objection._id}
+							key={objection.id}
 							leadId={leadId}
 							objection={objection}
 							onCancel={() => setEditingId(null)}
@@ -121,7 +118,7 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 				return (
 					<div
 						className="group relative rounded-lg border border-border/50 bg-card p-4 transition-colors hover:bg-muted/5"
-						key={objection._id}
+						key={objection.id}
 					>
 						<div className="mb-2 flex items-start justify-between">
 							<div className="flex items-center gap-2 text-muted-foreground text-xs">
@@ -150,13 +147,13 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end">
-										<DropdownMenuItem onClick={() => setEditingId(objection._id)}>
+										<DropdownMenuItem onClick={() => setEditingId(objection.id)}>
 											<Pencil className="mr-2 h-4 w-4" />
 											Editar
 										</DropdownMenuItem>
 										<DropdownMenuItem
 											className="text-destructive focus:text-destructive"
-											onClick={() => setDeletingId(objection._id)}
+											onClick={() => setDeletingId(objection.id)}
 										>
 											<Trash2 className="mr-2 h-4 w-4" />
 											Excluir

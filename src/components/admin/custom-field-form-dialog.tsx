@@ -1,12 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from 'convex/react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { api } from '../../../convex/_generated/api';
-import type { Doc } from '../../../convex/_generated/dataModel';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import {
@@ -29,6 +26,7 @@ import {
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
+import type { CustomField } from '@/types/api';
 
 const formSchema = z.object({
 	name: z.string().min(2, { message: 'Nome deve ter pelo menos 2 caracteres' }),
@@ -43,7 +41,7 @@ type CustomFieldFormValues = z.infer<typeof formSchema>;
 interface CustomFieldFormDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	initialData?: Doc<'customFields'> | null;
+	initialData?: CustomField | null;
 }
 
 export function CustomFieldFormDialog({
@@ -104,7 +102,7 @@ export function CustomFieldFormDialog({
 
 			if (isEditing && initialData) {
 				await updateField({
-					id: initialData._id,
+					id: initialData.id,
 					name: values.name,
 					required: values.required,
 					options: optionsArray,

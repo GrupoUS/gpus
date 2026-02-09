@@ -1,15 +1,13 @@
-import { useMutation, useQuery } from 'convex/react';
 import { UserCircle } from 'lucide-react';
 import { useId } from 'react';
 
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
+import { trpc } from '../../lib/trpc';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface LeadOwnerSelectProps {
-	leadId: Id<'leads'>;
-	currentOwnerId?: Id<'users'> | null;
+	leadId: number;
+	currentOwnerId?: number | null;
 }
 
 function getRoleBadge(role: string): string {
@@ -20,15 +18,13 @@ function getRoleBadge(role: string): string {
 
 export function LeadOwnerSelect({ leadId, currentOwnerId }: LeadOwnerSelectProps) {
 	const selectId = useId();
-	const vendors = useQuery(api.users.listVendors);
-	// biome-ignore lint/suspicious/noExplicitAny: Convex API type workaround
-	const updateLead = useMutation((api as any).leads.updateLead);
+	const { data: vendors } = trpc.users.listSystemUsers.useQuery();
+	const updateLead = trpc.leads.update.useMutation();
 
 	const handleChange = async (value: string) => {
-		const assignedTo = value === 'none' ? undefined : (value as Id<'users'>);
-		await updateLead({
+		await updateLead.mutateAsync({
 			leadId,
-			patch: { assignedTo },
+			patch: { assignedTo: value === 'none' ? undefined : Number(value) },
 		});
 	};
 

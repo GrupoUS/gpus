@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertTriangle, Building2, GraduationCap, Mail, Phone, User } from 'lucide-react';
@@ -8,9 +7,10 @@ import { AlertTriangle, Building2, GraduationCap, Mail, Phone, User } from 'luci
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import type { StudentListItem } from '@/types/api';
 
 interface StudentCardProps {
-	student: Doc<'students'>;
+	student: StudentListItem;
 	onClick?: () => void;
 	searchTerm?: string;
 }

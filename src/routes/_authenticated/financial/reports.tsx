@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import {
 	AlertTriangle,
 	Calendar,
@@ -34,13 +31,37 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// import { trpc } from '../../../lib/trpc'; // TODO: re-enable when financial router is ready
 
 export const Route = createFileRoute('/_authenticated/financial/reports')({
 	component: FinancialReportsPage,
 });
 
+interface Payment {
+	id: number | string;
+	description?: string;
+	status: string;
+	value: number;
+	netValue?: number;
+	dueDate: number;
+	confirmedDate?: number;
+	billingType: string;
+}
+
+interface SyncLog {
+	id: number | string;
+	status: string;
+	syncType: string;
+	initiatedBy: string;
+	startedAt?: number;
+	completedAt?: number;
+	recordsProcessed?: number;
+	recordsCreated?: number;
+	errors?: string[];
+}
+
 interface PaymentsResult {
-	payments: Doc<'asaasPayments'>[];
+	payments: Payment[];
 	total: number;
 }
 
@@ -51,26 +72,15 @@ function FinancialReportsPage() {
 
 	const startDateId = useId();
 	const endDateId = useId();
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as {
-		asaas: { queries: { getAllPayments: unknown }; sync: { getRecentSyncLogs: unknown } };
-	};
-
 	// Get payments for report
-	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
-	const endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
+	const _startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
+	const _endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
 
-	const paymentsResult = useQueryUnsafe(apiAny.asaas.queries.getAllPayments, {
-		status: statusFilter === 'all' ? undefined : statusFilter,
-		startDate: startTimestamp,
-		endDate: endTimestamp,
-		limit: 100,
-	}) as PaymentsResult | undefined;
+	// TODO: Implement financial reports tRPC router
+	const paymentsResult: PaymentsResult | undefined = undefined;
 
-	// Get sync logs for webhook history
-	const syncLogs = useQueryUnsafe(apiAny.asaas.sync.getRecentSyncLogs, { limit: 20 }) as
-		| Doc<'asaasSyncLogs'>[]
-		| undefined;
+	// TODO: Implement sync logs tRPC router
+	const syncLogs: SyncLog[] | undefined = undefined;
 
 	// Format helpers
 	const formatCurrency = (value: number) =>
@@ -121,16 +131,11 @@ function FinancialReportsPage() {
 
 	// Calculate summary metrics
 	const payments = paymentsResult?.payments || [];
-	const totalValue = payments.reduce((sum: number, p: Doc<'asaasPayments'>) => sum + p.value, 0);
-	const paidPayments = payments.filter(
-		(p: Doc<'asaasPayments'>) => p.status === 'RECEIVED' || p.status === 'CONFIRMED',
-	);
-	const paidValue = paidPayments.reduce((sum: number, p: Doc<'asaasPayments'>) => sum + p.value, 0);
-	const overduePayments = payments.filter((p: Doc<'asaasPayments'>) => p.status === 'OVERDUE');
-	const overdueValue = overduePayments.reduce(
-		(sum: number, p: Doc<'asaasPayments'>) => sum + p.value,
-		0,
-	);
+	const totalValue = payments.reduce((sum, p) => sum + p.value, 0);
+	const paidPayments = payments.filter((p) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+	const paidValue = paidPayments.reduce((sum, p) => sum + p.value, 0);
+	const overduePayments = payments.filter((p) => p.status === 'OVERDUE');
+	const overdueValue = overduePayments.reduce((sum, p) => sum + p.value, 0);
 
 	return (
 		<div className="space-y-6 p-6">
@@ -289,8 +294,8 @@ function FinancialReportsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{payments.map((payment: Doc<'asaasPayments'>) => (
-										<TableRow key={payment._id}>
+									{payments.map((payment) => (
+										<TableRow key={String(payment.id)}>
 											<TableCell className="font-medium">
 												{payment.description || 'Sem descrição'}
 											</TableCell>
@@ -339,16 +344,16 @@ function FinancialReportsPage() {
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{syncLogs?.map((log: Doc<'asaasSyncLogs'>) => {
+									{syncLogs?.map((log) => {
 										let logMessage = '-';
 										if (log.errors && log.errors.length > 0) {
-											logMessage = log.errors[0];
+											logMessage = log.errors[0] ?? '-';
 										} else if (log.status === 'completed') {
 											logMessage = 'Concluído com sucesso';
 										}
 
 										return (
-											<TableRow key={log._id}>
+											<TableRow key={String(log.id)}>
 												<TableCell>{getSyncStatusIcon(log.status)}</TableCell>
 												<TableCell>
 													<Badge className="capitalize" variant="outline">

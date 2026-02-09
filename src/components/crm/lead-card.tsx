@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -21,7 +18,7 @@ import { hotIconVariants, SPRING_SMOOTH } from '@/lib/motion-config';
 
 interface LeadCardProps {
 	lead: {
-		_id: Id<'leads'>;
+		id: number;
 		name: string;
 		phone: string;
 		profession?: string;
@@ -147,7 +144,7 @@ export function LeadCard({ lead }: LeadCardProps) {
 						)}
 					</div>
 					<div className="mt-3 flex flex-wrap gap-1">
-						<LeadTags leadId={lead._id} />
+						<LeadTags leadId={lead.id} />
 					</div>
 				</div>
 			</div>
@@ -155,21 +152,8 @@ export function LeadCard({ lead }: LeadCardProps) {
 	);
 }
 
-interface Tag {
-	_id: string;
-	name: string;
-	color?: string;
-}
-
-function LeadTags({ leadId }: { leadId: Id<'leads'> }) {
-	const apiAny: unknown = api;
-	const useQueryUnsafe = useQuery as unknown as (
-		query: unknown,
-		args?: unknown,
-	) => Tag[] | undefined;
-	const tags = useQueryUnsafe((apiAny as { tags: { getLeadTags: unknown } }).tags.getLeadTags, {
-		leadId,
-	});
+function LeadTags({ leadId }: { leadId: number }) {
+	const { data: tags } = trpc.tags.getLeadTags.useQuery({ leadId });
 
 	if (!tags) return null;
 
@@ -183,7 +167,7 @@ function LeadTags({ leadId }: { leadId: Id<'leads'> }) {
 			{displayedTags.map((tag) => (
 				<Badge
 					className="h-5 px-1.5 text-[10px]"
-					key={tag._id}
+					key={tag.id}
 					style={{
 						backgroundColor: tag.color ? `${tag.color}15` : undefined,
 						color: tag.color,

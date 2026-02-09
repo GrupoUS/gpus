@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
 import DOMPurify from 'dompurify';
 import {
 	ArrowLeft,
@@ -26,6 +23,7 @@ import {
 import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -430,7 +428,7 @@ function ActionsCard({
 // --- Event Logs Component ---
 
 interface EventLogsProps {
-	campaignId: Id<'emailCampaigns'>;
+	campaignId: number;
 }
 
 function EventLogs({ campaignId }: EventLogsProps) {
@@ -442,7 +440,7 @@ function EventLogs({ campaignId }: EventLogsProps) {
 		limit: 20,
 	}) as
 		| Array<{
-				_id: string;
+				id: string;
 				eventType: string;
 				email: string;
 				timestamp: number;
@@ -469,7 +467,7 @@ function EventLogs({ campaignId }: EventLogsProps) {
 						{events.map((event) => (
 							<div
 								className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-								key={event._id}
+								key={event.id}
 							>
 								<div className="flex items-center gap-3">
 									<Badge
@@ -525,22 +523,20 @@ function CampaignDetailPage() {
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Convex queries
-	const campaign = useQuery(api.emailMarketing.getCampaign, {
-		campaignId: campaignId as Id<'emailCampaigns'>,
+	const { data: campaign } = trpc.emailMarketing.campaigns.get.useQuery({
+		campaignId: campaignId as number,
 	});
-	const lists = useQuery(api.emailMarketing.getLists, { activeOnly: false });
+	const { data: lists } = trpc.emailMarketing.lists.list.useQuery({ activeOnly: false });
 
 	// Convex mutations/actions
-	const deleteCampaign = useMutation(api.emailMarketing.deleteCampaign);
-	const sendCampaign = useAction(api.emailMarketing.sendCampaign);
+	const deleteCampaign = trpc.emailMarketing.campaigns.list.useMutation();
+	const sendCampaign = trpc.emailMarketing.campaigns.create.useMutation();
 
 	// Get list names for display
 	const getListNames = (): string[] => {
 		if (!(campaign?.listIds && lists)) return [];
 		return campaign.listIds
-			.map(
-				(listId: Id<'emailLists'>) => lists.find((l: Doc<'emailLists'>) => l._id === listId)?.name,
-			)
+			.map((listId: number) => lists.find((l: Record<string, unknown>) => l.id === listId)?.name)
 			.filter((name: string | undefined): name is string => !!name);
 	};
 
@@ -566,7 +562,7 @@ function CampaignDetailPage() {
 
 		setIsSending(true);
 		try {
-			await sendCampaign({ campaignId: campaign._id });
+			await sendCampaign({ campaignId: campaign.id });
 			toast.success('Campanha enviada!', {
 				description: 'Sua campanha foi enviada com sucesso.',
 			});
@@ -586,7 +582,7 @@ function CampaignDetailPage() {
 
 		setIsDeleting(true);
 		try {
-			await deleteCampaign({ campaignId: campaign._id });
+			await deleteCampaign({ campaignId: campaign.id });
 			toast.success('Campanha excluída', {
 				description: 'A campanha foi excluída com sucesso.',
 			});
@@ -766,7 +762,7 @@ function CampaignDetailPage() {
 					/>
 
 					{/* Event Logs */}
-					{isSent && <EventLogs campaignId={campaign._id} />}
+					{isSent && <EventLogs campaignId={campaign.id} />}
 				</div>
 
 				{/* Sidebar */}

@@ -8,18 +8,19 @@
  * - History (detailed sync logs with pagination)
  */
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { Activity, Database, Download, FileText, RefreshCw } from 'lucide-react';
 import React from 'react';
 
+import { trpc } from '../../../lib/trpc';
 import { AdminMetricsDashboard } from './monitoring/admin-metrics-dashboard';
 import { AdminExportDialog } from './sync-controls/admin-export-dialog';
 import { AdminSyncControls } from './sync-controls/admin-sync-controls';
 import { AdminSyncHistory } from './sync-history/admin-sync-history';
+import type { AsaasConflict } from '@/types/api';
 
 interface AsaasAdminPageProps {
-	syncStatus: Record<string, Doc<'asaasSyncLogs'> | null> | null | undefined;
-	recentLogs: Doc<'asaasSyncLogs'>[] | null | undefined;
+	syncStatus: Record<string, AsaasConflict | null> | null | undefined;
+	recentLogs: AsaasConflict[] | null | undefined;
 }
 
 type TabValue = 'dashboard' | 'sync' | 'export' | 'history';
@@ -99,12 +100,10 @@ function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 }
 
 // Wrapper component that fetches data internally
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 
 export function AsaasAdminPageWrapper() {
-	const syncStatusResult = useQuery(api.asaas.sync.getLastSyncStatus, {});
-	const recentLogsResult = useQuery(api.asaas.sync.getRecentSyncLogs, {
+	const { data: syncStatusResult } = trpc.settings.list.useQuery({});
+	const { data: recentLogsResult } = trpc.settings.list.useQuery({
 		limit: 10,
 	});
 

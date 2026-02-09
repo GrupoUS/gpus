@@ -1,8 +1,7 @@
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { Lock, Shield } from 'lucide-react';
 
+import { trpc } from '../../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -64,7 +63,7 @@ const ROLES_DEFINITIONS = [
 ];
 
 function RolesSettingsPage() {
-	const userData = useQuery(api.users.current);
+	const { data: userData } = trpc.users.me.useQuery();
 	const isAdmin = userData?.role === 'admin';
 
 	return (

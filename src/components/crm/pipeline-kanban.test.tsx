@@ -4,10 +4,33 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PipelineKanban } from './pipeline-kanban';
 
-// Mock Framer Motion to avoid animation issues in tests
-type UnknownProps = Record<string, unknown>;
+// Mock tRPC - LeadForm inside PipelineKanban uses trpc
+vi.mock('@/lib/trpc', () => ({
+	trpc: {
+		leads: {
+			create: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+			updateStage: { useMutation: () => ({ mutateAsync: vi.fn() }) },
+		},
+		users: {
+			listSystemUsers: { useQuery: () => ({ data: [] }) },
+		},
+	},
+}));
 
-function stripMotionProps<T extends UnknownProps>(props: T): UnknownProps {
+// Mock Clerk auth
+vi.mock('@clerk/clerk-react', () => ({
+	useAuth: () => ({ isSignedIn: true, userId: 'test-user' }),
+	useUser: () => ({ user: { id: 'test-user' } }),
+}));
+
+// Mock sonner
+vi.mock('sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+// Mock Framer Motion to avoid animation issues in tests
+// biome-ignore lint/suspicious/noExplicitAny: test mock
+function stripMotionProps(props: any): Record<string, unknown> {
 	const {
 		animate,
 		initial,
@@ -42,28 +65,31 @@ function stripMotionProps<T extends UnknownProps>(props: T): UnknownProps {
 
 vi.mock('framer-motion', () => ({
 	motion: {
-		div: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		div: ({ children, ...props }: any) => (
 			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
 		),
-		button: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		button: ({ children, ...props }: any) => (
 			<button {...(stripMotionProps(props) as React.ComponentProps<'button'>)}>{children}</button>
 		),
-		span: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		span: ({ children, ...props }: any) => (
 			<span {...(stripMotionProps(props) as React.ComponentProps<'span'>)}>{children}</span>
 		),
 		create:
-			(Component: React.ElementType) =>
-			(props: React.ComponentProps<typeof Component> & UnknownProps) => (
-				<Component
-					{...(stripMotionProps(props as UnknownProps) as React.ComponentProps<typeof Component>)}
-				/>
+			// biome-ignore lint/suspicious/noExplicitAny: test mock
+			(Component: React.ElementType) => (props: any) => (
+				<Component {...(stripMotionProps(props) as React.ComponentProps<typeof Component>)} />
 			),
 	},
 	Reorder: {
-		Group: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		Group: ({ children, ...props }: any) => (
 			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
 		),
-		Item: ({ children, ...props }: { children?: React.ReactNode } & UnknownProps) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		Item: ({ children, ...props }: any) => (
 			<div {...(stripMotionProps(props) as React.ComponentProps<'div'>)}>{children}</div>
 		),
 	},
@@ -71,9 +97,44 @@ vi.mock('framer-motion', () => ({
 	LayoutGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('convex/react', () => ({
-	useMutation: () => vi.fn(),
-	useQuery: () => null,
+// Mock FlipButton components
+vi.mock('@/components/ui/flip-button', async () => {
+	const React = await import('react');
+	return {
+		FlipButton: React.forwardRef(
+			(
+				// biome-ignore lint/suspicious/noExplicitAny: test mock
+				{ children, className, initial: _initial, ...props }: any,
+				ref: React.Ref<HTMLButtonElement>,
+			) => (
+				<button className={className} ref={ref} {...props} type="button">
+					{children}
+				</button>
+			),
+		),
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		FlipButtonFront: ({ children, className }: any) => (
+			<div className={className} data-testid="flip-front">
+				{children}
+			</div>
+		),
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		FlipButtonBack: ({ children, className }: any) => (
+			<div className={className} data-testid="flip-back">
+				{children}
+			</div>
+		),
+	};
+});
+
+// Mock HoverBorderGradient
+vi.mock('@/components/ui/hover-border-gradient', () => ({
+	// biome-ignore lint/suspicious/noExplicitAny: test mock
+	HoverBorderGradient: ({ children, className, ...props }: any) => (
+		<div className={className} {...props}>
+			{children}
+		</div>
+	),
 }));
 
 // Mock ResizeObserver
@@ -86,21 +147,21 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 describe('PipelineKanban', () => {
 	const mockLeads: React.ComponentProps<typeof PipelineKanban>['leads'] = [
 		{
-			_id: '1',
+			id: 1,
 			name: 'Lead 1',
 			phone: '123456789',
 			stage: 'novo',
 			temperature: 'quente',
 		},
 		{
-			_id: '2',
+			id: 2,
 			name: 'Lead 2',
 			phone: '987654321',
 			stage: 'novo',
 			temperature: 'frio',
 		},
 		{
-			_id: '3',
+			id: 3,
 			name: 'Lead 3',
 			phone: '555555555',
 			stage: 'qualificado',
@@ -132,11 +193,10 @@ describe('PipelineKanban', () => {
 			<PipelineKanban leads={mockLeads} onDragEnd={mockOnDragEnd} onLeadClick={mockOnLeadClick} />,
 		);
 
-		// Click the overlay button for the first lead (updated for a11y fix)
 		const openButtons = screen.getAllByLabelText('Abrir lead');
 		fireEvent.click(openButtons[0]);
 
-		expect(mockOnLeadClick).toHaveBeenCalledWith('1');
+		expect(mockOnLeadClick).toHaveBeenCalledWith(1);
 	});
 
 	it('shows empty placeholders for columns without leads', () => {
@@ -161,8 +221,4 @@ describe('PipelineKanban', () => {
 
 		openSpy.mockRestore();
 	});
-
-	// Note: Testing actual drag and drop with Framer Motion in JSDOM is difficult
-	// without extensive mocking of pointer events and layout system.
-	// We verify the component structure and interactions instead.
 });

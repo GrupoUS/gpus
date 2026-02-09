@@ -1,15 +1,14 @@
-import { useAction } from 'convex/react';
 import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function AsaasImportButton() {
 	const [isLoading, setIsLoading] = useState(false);
-	const importAll = useAction(api.asaas.actions.importAllFromAsaas);
+	const importAll = trpc.settings.set.useMutation();
 
 	const handleImport = async () => {
 		setIsLoading(true);

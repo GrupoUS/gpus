@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { ArrowLeft, Cloud, CloudOff, List, Loader2, Search, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -95,13 +92,13 @@ function ListsPage() {
 	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
 	const apiAny = api as unknown as { emailMarketing: { getLists: unknown } };
 	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: false }) as
-		| Doc<'emailLists'>[]
+		| Record<string, unknown>[]
 		| undefined;
 
 	// Filter lists by search query
 	const filteredLists =
 		lists?.filter(
-			(list: Doc<'emailLists'>) =>
+			(list: Record<string, unknown>) =>
 				list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				(list.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 		) ?? [];
@@ -178,11 +175,11 @@ function ListsPage() {
 				emptyState
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{filteredLists.map((list: Doc<'emailLists'>) => (
+					{filteredLists.map((list: Record<string, unknown>) => (
 						<Card
 							className="cursor-pointer transition-colors hover:bg-muted/50"
-							key={list._id}
-							onClick={() => handleListClick(list._id)}
+							key={list.id}
+							onClick={() => handleListClick(list.id)}
 						>
 							<CardHeader className="pb-3">
 								<div className="flex items-start justify-between">
@@ -223,7 +220,10 @@ function ListsPage() {
 					</span>
 					<span>
 						Total:{' '}
-						{lists.reduce((sum: number, l: Doc<'emailLists'>) => sum + (l.contactCount ?? 0), 0)}{' '}
+						{lists.reduce(
+							(sum: number, l: Record<string, unknown>) => sum + (l.contactCount ?? 0),
+							0,
+						)}{' '}
 						contatos
 					</span>
 				</div>

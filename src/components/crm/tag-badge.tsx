@@ -1,28 +1,27 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
 import { Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { Tag } from '@/types/api';
 
 interface TagBadgeProps {
-	tag: Doc<'tags'>;
-	leadId: Id<'leads'>;
+	tag: Tag;
+	leadId: number;
 	onRemove?: () => void;
 }
 
 export function TagBadge({ tag, leadId, onRemove }: TagBadgeProps) {
-	const removeTag = useMutation(api.tags.removeTagFromLead);
+	const removeTag = trpc.tags.removeTagFromLead.useMutation();
 	const [isRemoving, setIsRemoving] = useState(false);
 
 	const handleRemove = async () => {
 		setIsRemoving(true);
 		try {
-			await removeTag({ leadId, tagId: tag._id });
+			await removeTag({ leadId, tagId: tag.id });
 			toast.success('Tag removida');
 			onRemove?.();
 		} catch (_error) {

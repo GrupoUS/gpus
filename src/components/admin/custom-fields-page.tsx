@@ -1,10 +1,8 @@
-import { useMutation, useQuery } from 'convex/react';
 import { List, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
-import type { Doc } from '../../../convex/_generated/dataModel';
+import { trpc } from '../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -23,16 +21,17 @@ import { Skeleton } from '../ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { CustomFieldFormDialog } from './custom-field-form-dialog';
+import type { CustomField } from '@/types/api';
 
 export function CustomFieldsPage() {
 	const [activeTab, setActiveTab] = useState<'lead' | 'student'>('lead');
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const [editingField, setEditingField] = useState<Doc<'customFields'> | null>(null);
+	const [editingField, setEditingField] = useState<CustomField | null>(null);
 
-	const fields = useQuery(api.customFields.listCustomFields, { entityType: activeTab });
-	const deleteField = useMutation(api.customFields.deleteCustomField);
+	const { data: fields } = trpc.customFields.list.useQuery({ entityType: activeTab });
+	const deleteField = trpc.customFields.list.useMutation();
 
-	const handleEdit = (field: Doc<'customFields'>) => {
+	const handleEdit = (field: CustomField) => {
 		setEditingField(field);
 		setDialogOpen(true);
 	};
@@ -42,7 +41,7 @@ export function CustomFieldsPage() {
 		setDialogOpen(true);
 	};
 
-	const handleDelete = async (id: Doc<'customFields'>['_id']) => {
+	const handleDelete = async (id: CustomField['_id']) => {
 		try {
 			await deleteField({ id });
 			toast.success('Campo excluído com sucesso');
@@ -126,7 +125,7 @@ export function CustomFieldsPage() {
 								</TableHeader>
 								<TableBody>
 									{fields.map((field) => (
-										<TableRow key={field._id}>
+										<TableRow key={field.id}>
 											<TableCell className="font-medium">{field.name}</TableCell>
 											<TableCell>
 												<Badge variant="outline">{getTypeName(field.fieldType)}</Badge>
@@ -169,7 +168,7 @@ export function CustomFieldsPage() {
 														</AlertDialogHeader>
 														<AlertDialogFooter>
 															<AlertDialogCancel>Cancelar</AlertDialogCancel>
-															<AlertDialogAction onClick={() => handleDelete(field._id)}>
+															<AlertDialogAction onClick={() => handleDelete(field.id)}>
 																Excluir
 															</AlertDialogAction>
 														</AlertDialogFooter>

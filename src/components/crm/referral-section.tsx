@@ -1,13 +1,11 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Coins, HandCoins, Users } from 'lucide-react';
 
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface ReferralSectionProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 }
 
 interface ReferralStats {
@@ -17,18 +15,15 @@ interface ReferralStats {
 	totalReferrals: number;
 }
 
-const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-const apiAny = api as unknown as Record<string, Record<string, unknown>>;
-
 export function ReferralSection({ leadId }: ReferralSectionProps) {
-	const lead = useQueryUnsafe(apiAny.leads.getLead, { leadId }) as Doc<'leads'> | null | undefined;
-	const referrer = useQueryUnsafe(
-		apiAny.leads.getLead,
-		lead?.referredById ? { leadId: lead.referredById } : 'skip',
-	) as Doc<'leads'> | null | undefined;
-	const stats = useQueryUnsafe(apiAny.referrals.getReferralStats, { leadId }) as
-		| ReferralStats
-		| undefined;
+	const { data: lead } = trpc.leads.get.useQuery({ id: leadId });
+	// TODO: referrals router not yet implemented - stub referrer and stats
+	const { data: referrer } = trpc.leads.get.useQuery(
+		{ id: lead?.referredById ?? 0 },
+		{ enabled: !!lead?.referredById },
+	);
+	// TODO: Implement referrals.getReferralStats in tRPC router
+	const stats: ReferralStats | undefined = undefined;
 
 	if (!lead || (!lead.referredById && stats?.totalReferrals === 0)) {
 		return null;

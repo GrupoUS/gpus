@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useMutation, useQuery } from 'convex/react';
 import { Check, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,39 +14,39 @@ import {
 	CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { trpc } from '@/lib/trpc';
 
 interface TagSelectorProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 	readOnly?: boolean;
 }
 
 export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 	// Queries
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const getLeadTags = (api as any).tags.getLeadTags;
-	const leadTags = useQuery(getLeadTags, { leadId });
+	const { data: leadTags } = trpc.tags.getLeadTags.useQuery({ leadId });
 
 	// Mutations
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const addTagMutation = (api as any).tags.addTagToLead;
-	const addTag = useMutation(addTagMutation);
-
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const removeTagMutation = (api as any).tags.removeTagFromLead;
-	const removeTag = useMutation(removeTagMutation);
+	const utils = trpc.useUtils();
+	const addTag = trpc.tags.addTagToLead.useMutation({
+		onSuccess: () => utils.tags.getLeadTags.invalidate({ leadId }),
+	});
+	const removeTag = trpc.tags.removeTagFromLead.useMutation({
+		onSuccess: () => utils.tags.getLeadTags.invalidate({ leadId }),
+	});
 
 	// Search State
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState('');
 	const [debouncedQuery] = useDebounce(query, 300);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const searchTagsQuery = (api as any).tags.searchTags;
-	const searchResults = useQuery(searchTagsQuery, { query: debouncedQuery });
+	const { data: searchResults } = trpc.tags.searchTags.useQuery(
+		{ query: debouncedQuery },
+		{ enabled: open },
+	);
 
-	const handleAddTag = async (tagId: Id<'tags'>) => {
+	const handleAddTag = async (tagId: number) => {
 		try {
-			await addTag({ leadId, tagId });
+			await addTag.mutateAsync({ leadId, tagId });
 			toast.success('Tag adicionada');
 			setOpen(false);
 			setQuery('');
@@ -60,9 +57,9 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 		}
 	};
 
-	const handleRemoveTag = async (tagId: Id<'tags'>) => {
+	const handleRemoveTag = async (tagId: number) => {
 		try {
-			await removeTag({ leadId, tagId });
+			await removeTag.mutateAsync({ leadId, tagId });
 			toast.success('Tag removida');
 		} catch (error) {
 			toast.error('Erro ao remover tag');
@@ -75,11 +72,14 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 		if (!leadTags || leadTags.length === 0) return null;
 		return (
 			<div className="flex flex-wrap gap-2">
-				{leadTags.map((tag: Doc<'tags'>) => (
+				{leadTags.map((tag) => (
 					<Badge
 						className="border-transparent"
-						key={tag._id}
-						style={{ backgroundColor: tag.color ? `${tag.color}20` : undefined, color: tag.color }}
+						key={tag.id}
+						style={{
+							backgroundColor: tag.color ? `${tag.color}20` : undefined,
+							color: tag.color ?? undefined,
+						}}
 						variant="secondary"
 					>
 						{tag.displayName || tag.name}
@@ -92,17 +92,20 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			{/* Existing Tags */}
-			{leadTags?.map((tag: Doc<'tags'>) => (
+			{leadTags?.map((tag) => (
 				<Badge
 					className="flex items-center gap-1 border-transparent pr-1 pl-2 transition-colors hover:bg-secondary/80"
-					key={tag._id}
-					style={{ backgroundColor: tag.color ? `${tag.color}20` : undefined, color: tag.color }}
+					key={tag.id}
+					style={{
+						backgroundColor: tag.color ? `${tag.color}20` : undefined,
+						color: tag.color ?? undefined,
+					}}
 					variant="secondary"
 				>
 					{tag.displayName || tag.name}
 					<button
 						className="ml-1 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
-						onClick={() => handleRemoveTag(tag._id)}
+						onClick={() => handleRemoveTag(tag.id)}
 						type="button"
 					>
 						<X className="h-3 w-3" />
@@ -130,14 +133,14 @@ export function TagSelector({ leadId, readOnly = false }: TagSelectorProps) {
 						<CommandList>
 							<CommandEmpty>Nenhuma tag encontrada.</CommandEmpty>
 							<CommandGroup>
-								{searchResults?.map((tag: Doc<'tags'>) => {
-									const isSelected = leadTags?.some((t: Doc<'tags'>) => t._id === tag._id);
+								{searchResults?.map((tag) => {
+									const isSelected = leadTags?.some((t) => t.id === tag.id);
 									return (
 										<CommandItem
 											className="flex items-center gap-2"
 											disabled={isSelected}
-											key={tag._id}
-											onSelect={() => !isSelected && handleAddTag(tag._id)}
+											key={tag.id}
+											onSelect={() => !isSelected && handleAddTag(tag.id)}
 											value={tag.name}
 										>
 											<div

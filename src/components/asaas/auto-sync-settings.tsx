@@ -1,9 +1,8 @@
-import { useMutation, useQuery } from 'convex/react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import {
 	Card,
@@ -18,9 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 export function AutoSyncSettings() {
-	const config = useQuery(api.asaas.sync.getAutoSyncConfig);
-	const saveConfig = useMutation(api.asaas.sync.saveAutoSyncConfig);
-	const lastSyncLogs = useQuery(api.asaas.sync.getSyncLogs, {
+	const { data: config } = trpc.asaas.sync.getAutoSyncConfig.useQuery();
+	const saveConfig = trpc.asaas.sync.saveAutoSyncConfig.useMutation();
+	const { data: lastSyncLogs } = trpc.asaas.sync.getSyncLogs.useQuery({
 		syncType: 'customers',
 		limit: 1,
 	});

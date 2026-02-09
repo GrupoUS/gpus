@@ -1,24 +1,23 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageSquare } from 'lucide-react';
 
+import { trpc } from '../../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { conversationStatusLabels } from '@/lib/constants';
+import type { Student } from '@/types/api';
 
 interface StudentConversationsTabProps {
-	studentId: Id<'students'>;
+	studentId: number;
 }
 
 export function StudentConversationsTab({ studentId }: StudentConversationsTabProps) {
-	const conversations = useQuery(api.conversations.getByStudent, { studentId });
+	const { data: conversations } = trpc.conversations.list.useQuery({ studentId });
 
 	if (!conversations) {
 		return (
@@ -54,8 +53,8 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 
 	return (
 		<div className="space-y-3">
-			{conversations.map((conv: Doc<'conversations'>) => (
-				<Link className="block" key={conv._id} search={{ conversationId: conv._id }} to="/chat">
+			{conversations.map((conv: Student) => (
+				<Link className="block" key={conv.id} search={{ conversationId: conv.id }} to="/chat">
 					<Card className="cursor-pointer transition-colors hover:bg-muted/50">
 						<CardContent className="p-4">
 							<div className="flex items-start justify-between">

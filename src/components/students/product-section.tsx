@@ -1,12 +1,11 @@
 'use client';
 
-import type { Doc, Id } from '@convex/_generated/dataModel';
-
 import { ProductEmptyState } from '@/components/students/product-empty-state';
 import { ProductHeader } from '@/components/students/product-header';
 import { StudentCard } from '@/components/students/student-card';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import type { StudentListItem } from '@/types/api';
 
 interface ProductSectionProps {
 	productId: string;
@@ -14,8 +13,8 @@ interface ProductSectionProps {
 	totalCount?: number;
 	isExpanded: boolean;
 	onToggle: () => void;
-	students: Doc<'students'>[];
-	onStudentClick: (id: Id<'students'>) => void;
+	students: StudentListItem[];
+	onStudentClick: (id: number) => void;
 	searchTerm?: string;
 	className?: string;
 }
@@ -57,8 +56,8 @@ export function ProductSection({
 						<div className="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-3">
 							{students.map((student) => (
 								<StudentCard
-									key={student._id}
-									onClick={() => onStudentClick(student._id)}
+									key={student.id}
+									onClick={() => onStudentClick(student.id)}
 									searchTerm={searchTerm}
 									student={student}
 								/>

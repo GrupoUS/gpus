@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle, Edit, FileCode, RefreshCw, Trash2, XCircle } from 'lucide-react';
@@ -16,7 +15,7 @@ import {
 
 interface TemplateCardProps {
 	template: {
-		_id: Id<'emailTemplates'>;
+		id: number;
 		name: string;
 		subject: string;
 		category?: string;
@@ -24,9 +23,9 @@ interface TemplateCardProps {
 		brevoTemplateId?: string | number;
 		updatedAt: number;
 	};
-	onEdit: (id: Id<'emailTemplates'>) => void;
-	onDelete: (id: Id<'emailTemplates'>) => void;
-	onSync: (id: Id<'emailTemplates'>) => void;
+	onEdit: (id: number) => void;
+	onDelete: (id: number) => void;
+	onSync: (id: number) => void;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -75,18 +74,18 @@ export function TemplateCard({ template, onEdit, onDelete, onSync }: TemplateCar
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem onClick={() => onEdit(template._id)}>
+							<DropdownMenuItem onClick={() => onEdit(template.id)}>
 								<Edit className="mr-2 h-4 w-4" />
 								Editar
 							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => onSync(template._id)}>
+							<DropdownMenuItem onClick={() => onSync(template.id)}>
 								<RefreshCw className="mr-2 h-4 w-4" />
 								Sincronizar com Brevo
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								className="text-destructive focus:text-destructive"
-								onClick={() => onDelete(template._id)}
+								onClick={() => onDelete(template.id)}
 							>
 								<Trash2 className="mr-2 h-4 w-4" />
 								Excluir

@@ -3,7 +3,6 @@
  * Upload CSV/XLSX files to bulk import students
  */
 
-import { useMutation } from 'convex/react';
 import {
 	AlertCircle,
 	CheckCircle,
@@ -18,7 +17,7 @@ import { type ChangeEvent, type DragEvent, useCallback, useId, useState } from '
 import { toast } from 'sonner';
 import { read, utils, type WorkBook } from 'xlsx';
 
-import { api } from '../../../convex/_generated/api';
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,6 +68,7 @@ import {
 	type HeaderDetectionResult,
 	parseXLSXWithPassword,
 } from '@/lib/xlsx-helper';
+import type { Student } from '@/types/api';
 
 type ImportStep =
 	| 'upload'
@@ -81,7 +81,7 @@ type ImportStep =
 
 interface ParsedData {
 	headers: string[];
-	rows: Record<string, unknown>[];
+	rows: Student[];
 }
 
 interface XLSXParseResult {
@@ -239,7 +239,7 @@ async function parseXLSXFile(
 // Helper function to parse CSV files
 async function parseCSVFile(file: File): Promise<ParsedData> {
 	const text = await file.text();
-	const result = Papa.parse<Record<string, unknown>>(text, {
+	const result = Papa.parse<Student>(text, {
 		header: true,
 		skipEmptyLines: true,
 		transformHeader: (h: string) => h.trim(),
@@ -340,7 +340,7 @@ interface StepContentProps {
 	setUpsertMode?: (value: boolean) => void;
 	// Preview step
 	previewValidation?: { valid: number; invalid: number; errors: string[] };
-	transformRowData?: (row: Record<string, unknown>) => Record<string, unknown>;
+	transformRowData?: (row: Student) => Student;
 	// Importing step
 	importProgress?: number;
 	// Results step
@@ -916,7 +916,7 @@ export function StudentImportDialog() {
 	const [pendingFile, setPendingFile] = useState<File | null>(null);
 	const [pendingSheet, setPendingSheet] = useState<string | undefined>(undefined);
 
-	const bulkImport = useMutation(api.studentsImport.bulkImport);
+	const bulkImport = trpc.students.create.useMutation();
 	const fileInputId = useId();
 	const passwordInputId = useId();
 
@@ -1144,8 +1144,8 @@ export function StudentImportDialog() {
 	}, []);
 
 	const transformRowData = useCallback(
-		(row: Record<string, unknown>): Record<string, unknown> => {
-			const transformed: Record<string, unknown> = {};
+		(row: Student): Student => {
+			const transformed: Student = {};
 
 			for (const [csvHeader, schemaField] of Object.entries(columnMapping)) {
 				if (schemaField === '_skip' || !schemaField) continue;

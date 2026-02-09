@@ -1,12 +1,10 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { AlertTriangle, DollarSign, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { Component, lazy, type ReactNode, Suspense, useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 // Keep lightweight components as regular imports
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Badge } from '@/components/ui/badge';
@@ -96,16 +94,8 @@ interface TeamPerformanceItem {
 	metricLabel: string;
 }
 
-interface TeamMember {
-	_id: string;
-	name: string;
-	role: string;
-	metric: number;
-	metricLabel: string;
-}
-
 interface ChurnAlert {
-	_id: Id<'students'>;
+	_id: number;
 	studentName: string;
 	reason: string;
 	risk: 'alto' | 'medio';
@@ -180,34 +170,17 @@ function DashboardPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 	const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
-	const currentUser = useQuery(api.users.current);
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as {
-		users: { listVendors: unknown };
-		metrics: { getDashboard: unknown; getTeamPerformance: unknown };
-		students: { getChurnAlerts: unknown };
-		leads: { recent: unknown };
-	};
-	const vendors = useQueryUnsafe(apiAny.users.listVendors) as Vendor[] | undefined;
-
+	const { data: currentUser } = trpc.users.me.useQuery();
+	// TODO: Implement metrics, team performance, and churn alerts in tRPC routers
+	const vendors: Vendor[] | undefined = undefined; // TODO: trpc.users.listVendors
 	const isManager = currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role);
 	const selectedVendor = vendors?.find((vendor) => vendor.id === selectedVendorId);
 
-	const metrics = useQueryUnsafe(apiAny.metrics.getDashboard, {
-		period,
-		userId: selectedVendorId || undefined,
-	}) as DashboardMetrics | undefined;
-	const teamPerformance = useQueryUnsafe(apiAny.metrics.getTeamPerformance, { period }) as
-		| TeamPerformanceItem[]
-		| undefined;
-	const churnAlerts = useQueryUnsafe(apiAny.students.getChurnAlerts) as ChurnAlert[] | undefined;
-	const recentLeads = useQueryUnsafe(apiAny.leads.recent, { limit: 5 }) as
-		| Doc<'leads'>[]
-		| undefined;
-	const teamPerformanceData: TeamMember[] | undefined = teamPerformance?.map((member) => ({
-		...member,
-		_id: member.id,
-	}));
+	const metrics: DashboardMetrics | undefined = undefined; // TODO: trpc.metrics.getDashboard
+	const teamPerformance: TeamPerformanceItem[] | undefined = undefined; // TODO: trpc.metrics.getTeamPerformance
+	const churnAlerts: ChurnAlert[] | undefined = undefined; // TODO: trpc.students.getChurnAlerts
+	const recentLeads: Record<string, unknown>[] | undefined = undefined; // TODO: trpc.leads.recent
+	const teamPerformanceData = teamPerformance;
 
 	// Format currency
 

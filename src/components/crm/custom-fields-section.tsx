@@ -1,7 +1,6 @@
-import { useQuery } from 'convex/react';
 import type { Control, FieldValues, Path } from 'react-hook-form';
 
-import { api } from '../../../convex/_generated/api';
+import { trpc } from '../../lib/trpc';
 import { Skeleton } from '../ui/skeleton';
 import { CustomFieldRenderer } from './custom-field-renderer';
 
@@ -22,7 +21,7 @@ export function CustomFieldsSection<T extends FieldValues>({
 	entityType,
 	control,
 }: CustomFieldsSectionProps<T>) {
-	const fields = useQuery(api.customFields.listCustomFields, { entityType });
+	const { data: fields } = trpc.customFields.list.useQuery({ entityType });
 
 	if (fields === undefined) {
 		return (
@@ -48,11 +47,11 @@ export function CustomFieldsSection<T extends FieldValues>({
 					<CustomFieldRenderer
 						control={control}
 						field={field}
-						key={field._id}
+						key={field.id}
 						// Map the field ID to a path in the form data.
-						// We'll use `customFields.${field._id}` as the key in the form object.
+						// We'll use `customFields.${field.id}` as the key in the form object.
 						// Cast to Path<T> is required but safe if we ensure T has `customFields` index signature or we ignore type strictness here for dynamic fields
-						name={`customFields.${field._id}` as Path<T>}
+						name={`customFields.${field.id}` as Path<T>}
 					/>
 				))}
 			</div>

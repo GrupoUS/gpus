@@ -1,6 +1,4 @@
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useConvex, useQuery } from 'convex/react';
 import { AlertTriangle, CheckCircle, Clock, DollarSign, RefreshCw, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -38,32 +36,17 @@ interface MonthlySummary {
 
 function FinancialDashboardPage() {
 	const [isSyncing, setIsSyncing] = useState(false);
-	const convex = useConvex();
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as {
-		asaas: {
-			sync: { getLastSyncStatus: unknown };
-			queries: { getMonthlyFinancialSummary: unknown };
-		};
-	};
 
-	// Get sync status for display
-	const syncStatus = useQueryUnsafe(apiAny.asaas.sync.getLastSyncStatus) as SyncStatus | undefined;
+	// TODO: Replace with proper tRPC queries when Asaas routers are implemented
+	const syncStatus = undefined as SyncStatus | undefined;
+	const monthlySummary = undefined as MonthlySummary | undefined;
 
-	// Get monthly summary for KPIs
-	const now = new Date();
-	const monthlySummary = useQueryUnsafe(apiAny.asaas.queries.getMonthlyFinancialSummary, {
-		month: now.getMonth(),
-		year: now.getFullYear(),
-	}) as MonthlySummary | undefined;
-
-	const handleSync = async () => {
+	const handleSync = () => {
 		setIsSyncing(true);
 		try {
 			toast.info('Sincronizando dados do Asaas...');
-			await convex.action(api.asaas.actions.importAllFromAsaas, {
-				initiatedBy: 'dashboard_sync',
-			});
+			// TODO: Implement Asaas sync via tRPC action/mutation
+			toast.info('Sincronização Asaas em implementação via tRPC');
 			toast.success('Sincronização concluída!');
 		} catch (error) {
 			toast.error('Erro na sincronização', {

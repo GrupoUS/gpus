@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { AlertTriangle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ChurnAlert {
-	_id: Id<'students'>;
+	id: number;
 	studentName: string;
 	reason: string;
 	risk: 'alto' | 'medio';
@@ -30,7 +29,7 @@ export function ChurnAlerts({ data }: ChurnAlertsProps) {
 		content = data.map((alert) => (
 			<div
 				className="flex items-center justify-between rounded-lg bg-amber-500/10 p-2"
-				key={alert._id}
+				key={alert.id}
 			>
 				<div>
 					<p className="font-medium text-sm">{alert.studentName}</p>

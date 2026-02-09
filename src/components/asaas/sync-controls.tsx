@@ -1,5 +1,3 @@
-import { api } from '@convex/_generated/api';
-import { useConvex } from 'convex/react';
 import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -9,30 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export function SyncControls() {
 	const [loading, setLoading] = useState<Record<string, boolean>>({});
-	const convex = useConvex();
 
-	const handleSync = async (type: 'customers' | 'payments' | 'subscriptions' | 'all') => {
+	const handleSync = (type: 'customers' | 'payments' | 'subscriptions' | 'all') => {
 		setLoading({ ...loading, [type]: true });
 		try {
 			toast.info(`Iniciando sincronização de ${type}...`);
 
-			if (type === 'all') {
-				await convex.action(api.asaas.actions.importAllFromAsaas, {
-					initiatedBy: 'manual_settings',
-				});
-			} else if (type === 'customers') {
-				await convex.action(api.asaas.actions.importCustomersFromAsaas, {
-					initiatedBy: 'manual_settings',
-				});
-			} else if (type === 'payments') {
-				await convex.action(api.asaas.actions.importPaymentsFromAsaas, {
-					initiatedBy: 'manual_settings',
-				});
-			} else if (type === 'subscriptions') {
-				await convex.action(api.asaas.actions.importSubscriptionsFromAsaas, {
-					initiatedBy: 'manual_settings',
-				});
-			}
+			// TODO: Implement Asaas sync via tRPC action/mutation
+			// Previous Convex actions:
+			// - api.asaas.actions.importAllFromAsaas
+			// - api.asaas.actions.importCustomersFromAsaas
+			// - api.asaas.actions.importPaymentsFromAsaas
+			// - api.asaas.actions.importSubscriptionsFromAsaas
+			toast.info('Sincronização Asaas em implementação via tRPC');
 
 			toast.success('Sincronização concluída!');
 		} catch (error) {

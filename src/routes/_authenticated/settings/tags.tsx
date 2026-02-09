@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { Plus, Tag, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -25,29 +22,39 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import { trpc } from '@/lib/trpc';
+
+interface TagItem {
+	id: number;
+	name: string;
+	color: string | null;
+}
 
 export const Route = createFileRoute('/_authenticated/settings/tags')({
 	component: TagsSettingsPage,
 });
 
 function TagsSettingsPage() {
-	// Queries & Mutations
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast for deeply nested API types
-	const listTagsQuery = (api as any).tags.listTags;
-	const tags = useQuery(listTagsQuery);
+	// tRPC Queries & Mutations
+	const { data: tags } = trpc.tags.list.useQuery();
+	const utils = trpc.useUtils();
 
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const createTagMutation = (api as any).tags.createTag;
-	const createTag = useMutation(createTagMutation);
+	const createTagMutation = trpc.tags.create.useMutation({
+		onSuccess: () => {
+			utils.tags.list.invalidate();
+		},
+	});
 
-	// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-	const deleteTagMutation = (api as any).tags.deleteTag;
-	const deleteTag = useMutation(deleteTagMutation);
+	const deleteTagMutation = trpc.tags.delete.useMutation({
+		onSuccess: () => {
+			utils.tags.list.invalidate();
+		},
+	});
 
 	// Local State
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-	const [selectedTag, setSelectedTag] = useState<Doc<'tags'> | null>(null);
+	const [selectedTag, setSelectedTag] = useState<TagItem | null>(null);
 	const [newTagName, setNewTagName] = useState('');
 	const [newTagColor, setNewTagColor] = useState('#6366f1'); // Default Indigo
 	const nameInputId = useId();
@@ -61,7 +68,7 @@ function TagsSettingsPage() {
 		}
 
 		try {
-			await createTag({
+			await createTagMutation.mutateAsync({
 				name: newTagName,
 				color: newTagColor,
 			});
@@ -80,8 +87,7 @@ function TagsSettingsPage() {
 		if (!selectedTag) return;
 
 		try {
-			// biome-ignore lint/suspicious/noExplicitAny: Temporary cast
-			await deleteTag({ tagId: selectedTag._id as any });
+			await deleteTagMutation.mutateAsync({ tagId: selectedTag.id });
 			toast.success('Tag removida com sucesso');
 			setIsDeleteOpen(false);
 			setSelectedTag(null);
@@ -92,7 +98,7 @@ function TagsSettingsPage() {
 		}
 	};
 
-	const openDeleteDialog = (tag: Doc<'tags'>) => {
+	const openDeleteDialog = (tag: TagItem) => {
 		setSelectedTag(tag);
 		setIsDeleteOpen(true);
 	};
@@ -126,8 +132,8 @@ function TagsSettingsPage() {
 					</TableHeader>
 					<TableBody>
 						{tags && tags.length > 0 ? (
-							tags.map((tag: Doc<'tags'>) => (
-								<TableRow key={tag._id}>
+							tags.map((tag) => (
+								<TableRow key={tag.id}>
 									<TableCell>
 										<div
 											className="h-6 w-6 rounded-full border"

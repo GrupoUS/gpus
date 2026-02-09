@@ -8,7 +8,6 @@
  * - Filtering by status and type
  */
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { ChevronLeft, ChevronRight, Eye, Filter } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
@@ -37,6 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { AsaasConflict } from '@/types/api';
 
 const STATUS_BADGE = {
 	completed: { label: 'Concluído', variant: 'default' as const },
@@ -53,14 +53,14 @@ const SYNC_TYPE_LABELS = {
 };
 
 interface AdminSyncHistoryProps {
-	logs: Doc<'asaasSyncLogs'>[] | null | undefined;
+	logs: AsaasConflict[] | null | undefined;
 }
 
 export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 	const [page, setPage] = useState(0);
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [typeFilter, setTypeFilter] = useState<string>('all');
-	const [selectedLog, setSelectedLog] = useState<Doc<'asaasSyncLogs'> | null>(null);
+	const [selectedLog, setSelectedLog] = useState<AsaasConflict | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
 	const pageSize = 10;
@@ -86,7 +86,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 	const totalPages = Math.ceil(filteredLogs.length / pageSize);
 	const paginatedLogs = filteredLogs.slice(page * pageSize, (page + 1) * pageSize);
 
-	const handleViewDetails = (log: Doc<'asaasSyncLogs'>) => {
+	const handleViewDetails = (log: AsaasConflict) => {
 		setSelectedLog(log);
 		setDetailOpen(true);
 	};
@@ -164,7 +164,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 									}
 
 									return (
-										<TableRow key={log._id}>
+										<TableRow key={log.id}>
 											<TableCell className="capitalize">
 												{SYNC_TYPE_LABELS[log.syncType as keyof typeof SYNC_TYPE_LABELS] ||
 													log.syncType}

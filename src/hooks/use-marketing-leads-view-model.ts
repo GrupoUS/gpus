@@ -1,21 +1,14 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
-import { useConvex, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
-import { endOfDay, startOfDay } from 'date-fns';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
-const PAGE_SIZE = 20;
+import { trpc } from '../lib/trpc';
 
 // biome-ignore lint/suspicious/noExplicitAny: generic route typing
 export function useMarketingLeadsViewModel(Route: any) {
 	const navigate = useNavigate();
 	const searchParams = Route.useSearch();
-	// Initialize state from URL params if available, else default
-	// Note: In a real app we might want to sync state <-> URL bi-directionally stricter
-	// For now we initialize from URL and update URL on change, which triggers re-render
 
 	const [search, setSearch] = useState(searchParams.search || '');
 	const [status, setStatus] = useState(searchParams.status || 'all');
@@ -32,51 +25,23 @@ export function useMarketingLeadsViewModel(Route: any) {
 		return undefined;
 	});
 
-	// Mutations & Queries
-	// Early cast pattern to break TS deep recursion on Convex api type
-	const updateStatusMutation = (api as { marketingLeads: { updateStatus: unknown } }).marketingLeads
-		.updateStatus;
-	const updateStatus = useMutation(updateStatusMutation as typeof api.marketingLeads.updateStatus);
-
-	// Fetch Options
-	const sourceOptions = useQuery(api.marketingLeads.getSources) || [];
-	const landingPageOptions = useQuery(api.marketingLeads.getDistinctLandingPages) || [];
-	const landingPageStats = useQuery(api.marketingLeads.getStatsByLandingPage, {
-		startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
-		endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
+	// TODO: marketing_leads is not yet in the tRPC router
+	// For now, using leads router as a fallback
+	const { data: leadsResult, isLoading } = trpc.leads.list.useQuery({
+		search: search || undefined,
+		limit: 100,
 	});
 
-	// Use paginated query for server-side pagination
-	const {
-		results: leads,
-		status: queryStatus,
-		loadMore,
-		isLoading: _isLoadingMore,
-	} = usePaginatedQuery(
-		api.marketingLeads.list,
-		{
-			// paginationOpts is handled by the hook
-			status: status === 'all' ? undefined : status,
-			interest: interest === 'all' ? undefined : interest,
-			source: source === 'all' ? undefined : source,
-			landingPage: landingPage === 'all' ? undefined : landingPage,
-			search: search || undefined,
-			startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
-			endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
-		},
-		{ initialNumItems: PAGE_SIZE },
-	);
+	const leads = leadsResult?.data ?? [];
 
 	// Stats - computed from loaded leads
 	const stats = (() => {
 		if (!leads || leads.length === 0) return null;
 		const total = leads.length;
-		const newLeads = leads.filter((l) => l.status === 'new').length;
-		const contacted = leads.filter((l) => l.status === 'contacted').length;
-		const converted = leads.filter((l) => l.status === 'converted').length;
-		const unsubscribed = leads.filter((l) => l.status === 'unsubscribed').length;
+		const newLeads = leads.filter((l: { stage?: string }) => l.stage === 'novo').length;
+		const contacted = leads.filter((l: { stage?: string }) => l.stage === 'contato_feito').length;
+		const converted = leads.filter((l: { stage?: string }) => l.stage === 'cliente').length;
 
-		// Calculate conversion rate (converted / total * 100)
 		const conversionRate = total > 0 ? (converted / total) * 100 : 0;
 
 		return {
@@ -84,25 +49,15 @@ export function useMarketingLeadsViewModel(Route: any) {
 			new: newLeads,
 			contacted,
 			converted,
-			unsubscribed,
+			unsubscribed: 0,
 			conversionRate: conversionRate.toFixed(1),
 		};
 	})();
 
 	// Handlers
-	const handleStatusUpdate = async (
-		leadId: Id<'marketing_leads'>,
-		newStatus: 'new' | 'contacted' | 'converted' | 'unsubscribed',
-	) => {
-		try {
-			await updateStatus({
-				leadId,
-				newStatus,
-			});
-			toast.success('Status atualizado com sucesso');
-		} catch (_error) {
-			toast.error('Erro ao atualizar status');
-		}
+	const handleStatusUpdate = (_leadId: number, _newStatus: string) => {
+		// TODO: Add updateStatus mutation for marketing leads
+		toast.info('Atualização de status em breve');
 	};
 
 	// biome-ignore lint/suspicious/noExplicitAny: dynamic URL search params
@@ -151,9 +106,7 @@ export function useMarketingLeadsViewModel(Route: any) {
 	};
 
 	const handleLoadMore = () => {
-		if (queryStatus === 'CanLoadMore') {
-			loadMore(PAGE_SIZE);
-		}
+		// No pagination yet
 	};
 
 	const handleClearFilters = () => {
@@ -180,83 +133,18 @@ export function useMarketingLeadsViewModel(Route: any) {
 		});
 	};
 
-	const convex = useConvex();
-
-	const handleExportCSV = async () => {
-		try {
-			// biome-ignore lint/suspicious/noExplicitAny: prevent TS error on query
-			const data = await convex.query((api as any).marketingLeads.exportToCSV, {
-				status: status === 'all' ? undefined : status,
-				interest: interest === 'all' ? undefined : interest,
-				source: source === 'all' ? undefined : source,
-				landingPage: landingPage === 'all' ? undefined : landingPage,
-				startDate: date?.from ? startOfDay(date.from).getTime() : undefined,
-				endDate: date?.to ? endOfDay(date.to).getTime() : undefined,
-			});
-
-			if (!data || data.length === 0) {
-				toast.error('Nenhum dado para exportar');
-				return;
-			}
-
-			// Convert to CSV
-			const headers = [
-				'Nome',
-				'Email',
-				'Telefone',
-				'Interesse',
-				'Mensagem',
-				'Consentimento LGPD',
-				'Consentimento WhatsApp',
-				'Status',
-				'Origem',
-				'Campanha',
-				'Mídia',
-				'Data',
-			];
-			const csvContent = [
-				headers.join(','),
-				// biome-ignore lint/suspicious/noExplicitAny: dynamic CSV row type
-				...data.map((row: any) =>
-					[
-						`"${row.name || ''}"`,
-						`"${row.email || ''}"`,
-						`"${row.phone || ''}"`,
-						`"${row.interest || ''}"`,
-						`"${(row.message || '').replace(/"/g, '""')}"`,
-						row.lgpdConsent ? 'Sim' : 'Não',
-						row.whatsappConsent ? 'Sim' : 'Não',
-						row.status,
-						row.source || '',
-						row.utmCampaign || '',
-						row.utmMedium || '',
-						new Date(row.createdAt).toLocaleString('pt-BR'),
-					].join(','),
-				),
-			].join('\n');
-
-			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `leads-captura-${new Date().toISOString().split('T')[0]}.csv`;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-
-			toast.success('Exportação concluída com sucesso');
-		} catch (_error) {
-			toast.error('Erro ao exportar CSV');
-		}
+	const handleExportCSV = () => {
+		// TODO: Add CSV export as a tRPC query
+		toast.info('Exportação CSV em breve');
 	};
 
 	return {
-		leads: leads ?? [],
+		leads,
 		stats,
-		landingPageStats: landingPageStats || [],
-		isLoading: queryStatus === 'LoadingFirstPage',
-		canLoadMore: queryStatus === 'CanLoadMore',
-		paginationStatus: queryStatus,
+		landingPageStats: [],
+		isLoading,
+		canLoadMore: false,
+		paginationStatus: 'Exhausted' as const,
 		filters: {
 			search,
 			status,
@@ -266,8 +154,8 @@ export function useMarketingLeadsViewModel(Route: any) {
 			date,
 		},
 		options: {
-			sources: sourceOptions,
-			landingPages: landingPageOptions,
+			sources: [] as string[],
+			landingPages: [] as string[],
 		},
 		handlers: {
 			onStatusUpdate: handleStatusUpdate,

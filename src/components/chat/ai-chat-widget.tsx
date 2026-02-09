@@ -10,7 +10,6 @@ import {
 import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
 
-import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { useChatContext } from '@/routes/_authenticated/chat';
 
 interface AIChatWidgetProps {
-	conversationId?: Id<'conversations'> | null; // Allow null to handle "no conversation selected"
+	conversationId?: number | null; // Allow null to handle "no conversation selected"
 	onInsertResponse?: (text: string) => void;
 }
 

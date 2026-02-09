@@ -1,14 +1,12 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { FileText, Loader2, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -102,8 +100,8 @@ const categoryLabels: Record<string, string> = {
 };
 
 function TemplatesSettingsPage() {
-	const templates = useQuery(api.templates.list, {});
-	const deleteTemplate = useMutation(api.templates.deleteTemplate);
+	const { data: templates } = trpc.templates.list.useQuery({});
+	const deleteTemplate = trpc.templates.list.useMutation();
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
@@ -166,8 +164,8 @@ function TemplatesSettingsPage() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{filteredTemplates?.map((template: Doc<'messageTemplates'>) => (
-						<TableRow key={template._id}>
+					{filteredTemplates?.map((template: Record<string, unknown>) => (
+						<TableRow key={template.id}>
 							<TableCell className="font-medium">{template.name}</TableCell>
 							<TableCell>
 								<Badge variant="outline">{categoryLabels[template.category]}</Badge>
@@ -199,7 +197,7 @@ function TemplatesSettingsPage() {
 												<DialogHeader>
 													<DialogTitle>Editar Template</DialogTitle>
 												</DialogHeader>
-												<TemplateForm initialData={template} templateId={template._id} />
+												<TemplateForm initialData={template} templateId={template.id} />
 											</DialogContent>
 										</Dialog>
 										<AlertDialog>
@@ -227,7 +225,7 @@ function TemplatesSettingsPage() {
 														onClick={async () => {
 															try {
 																await deleteTemplate({
-																	templateId: template._id,
+																	templateId: template.id,
 																});
 																toast.success('Template excluído');
 															} catch {
@@ -256,12 +254,12 @@ function TemplateForm({
 	initialData,
 	onSuccess,
 }: {
-	templateId?: Id<'messageTemplates'>;
+	templateId?: number;
 	initialData?: TemplateFormData;
 	onSuccess?: () => void;
 }) {
-	const createTemplate = useMutation(api.templates.create);
-	const updateTemplate = useMutation(api.templates.update);
+	const createTemplate = trpc.templates.create.useMutation();
+	const updateTemplate = trpc.templates.create.useMutation();
 
 	const form = useForm<TemplateFormData>({
 		resolver: zodResolver(templateSchema),

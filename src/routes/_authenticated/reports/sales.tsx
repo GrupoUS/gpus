@@ -1,6 +1,4 @@
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { DollarSign, Package, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -15,6 +13,7 @@ import {
 	YAxis,
 } from 'recharts';
 
+import { trpc } from '../../../lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	Select,
@@ -39,7 +38,7 @@ export const Route = createFileRoute('/_authenticated/reports/sales')({
 
 function SalesReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
-	const metrics = useQuery(api.metrics.getDashboard, { period });
+	const { data: metrics } = trpc.metrics.daily.useQuery({ period });
 
 	return (
 		<div className="space-y-6 p-6">

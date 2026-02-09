@@ -1,10 +1,8 @@
-import { useAction, useQuery } from 'convex/react';
 import { Loader2, MessageSquare, Send } from 'lucide-react';
 import { type ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -17,7 +15,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 interface WhatsAppDialogProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 	leadName: string;
 	leadPhone: string;
 	open: boolean;
@@ -35,8 +33,8 @@ export function WhatsAppDialog({
 	const [isSending, setIsSending] = useState(false);
 	const messageId = useId();
 
-	const templates = useQuery(api.messageTemplates.listTemplates, { isActive: true });
-	const sendWhatsApp = useAction(api.whatsapp.sendWhatsAppMessage);
+	const { data: templates } = trpc.messageTemplates.listTemplates.useQuery({ isActive: true });
+	const sendWhatsApp = trpc.whatsapp.sendWhatsAppMessage.useMutation();
 
 	const handleSend = async () => {
 		if (!message.trim()) {
@@ -82,7 +80,7 @@ export function WhatsAppDialog({
 		templatesContent = templates.slice(0, 5).map((template) => (
 			<Button
 				className="h-7 text-xs"
-				key={template._id}
+				key={template.id}
 				onClick={() => applyTemplate(template.content)}
 				size="sm"
 				variant="outline"

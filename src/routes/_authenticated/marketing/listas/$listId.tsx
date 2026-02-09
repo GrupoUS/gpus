@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
 import {
 	ArrowLeft,
 	Cloud,
@@ -22,6 +19,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -135,19 +133,19 @@ function ListNotFound({ onBack }: ListNotFoundProps) {
 }
 
 interface Contact {
-	_id: Id<'emailContacts'>;
+	id: number;
 	email: string;
 	firstName?: string;
 	lastName?: string;
 	subscriptionStatus: SubscriptionStatus;
-	listIds?: Id<'emailLists'>[];
+	listIds?: number[];
 }
 
 interface AddContactDialogProps {
 	availableContacts: Contact[];
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
-	onAdd: (contactId: Id<'emailContacts'>) => Promise<void>;
+	onAdd: (contactId: number) => Promise<void>;
 	isAdding: boolean;
 }
 
@@ -162,7 +160,7 @@ function AddContactDialog({
 
 	const handleAdd = async () => {
 		if (!selectedContactId) return;
-		await onAdd(selectedContactId as Id<'emailContacts'>);
+		await onAdd(selectedContactId as number);
 		setSelectedContactId('');
 	};
 
@@ -195,7 +193,7 @@ function AddContactDialog({
 							</SelectTrigger>
 							<SelectContent>
 								{availableContacts.map((contact) => (
-									<SelectItem key={contact._id} value={contact._id}>
+									<SelectItem key={contact.id} value={contact.id}>
 										<div className="flex items-center gap-2">
 											<span>
 												{contact.firstName || contact.lastName
@@ -236,8 +234,8 @@ function AddContactDialog({
 
 interface ContactsTableProps {
 	contacts: Contact[];
-	onRemove: (contactId: Id<'emailContacts'>) => Promise<void>;
-	isRemoving: Id<'emailContacts'> | null;
+	onRemove: (contactId: number) => Promise<void>;
+	isRemoving: number | null;
 }
 
 function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
@@ -273,7 +271,7 @@ function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
 								: '-';
 
 						return (
-							<TableRow key={contact._id}>
+							<TableRow key={contact.id}>
 								<TableCell className="font-medium">{displayName}</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-2">
@@ -289,11 +287,11 @@ function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
 										<AlertDialogTrigger asChild>
 											<Button
 												className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-												disabled={isRemoving === contact._id}
+												disabled={isRemoving === contact.id}
 												size="icon"
 												variant="ghost"
 											>
-												{isRemoving === contact._id ? (
+												{isRemoving === contact.id ? (
 													<Loader2 className="h-4 w-4 animate-spin" />
 												) : (
 													<UserMinus className="h-4 w-4" />
@@ -312,7 +310,7 @@ function ContactsTable({ contacts, onRemove, isRemoving }: ContactsTableProps) {
 												<AlertDialogCancel>Cancelar</AlertDialogCancel>
 												<AlertDialogAction
 													className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-													onClick={() => onRemove(contact._id)}
+													onClick={() => onRemove(contact.id)}
 												>
 													Remover
 												</AlertDialogAction>
@@ -340,24 +338,24 @@ function ListDetailsPage() {
 	// Local state
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [isAdding, setIsAdding] = useState(false);
-	const [isRemoving, setIsRemoving] = useState<Id<'emailContacts'> | null>(null);
+	const [isRemoving, setIsRemoving] = useState<number | null>(null);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Convex queries
-	const listData = useQuery(api.emailMarketing.getList, {
-		listId: listId as Id<'emailLists'>,
+	const { data: listData } = trpc.emailMarketing.getList.useQuery({
+		listId: listId as number,
 	});
-	const list = listData as Doc<'emailLists'> | undefined | null;
-	const allContacts = useQuery(api.emailMarketing.getContacts, {});
+	const list = listData as Record<string, unknown> | undefined | null;
+	const { data: allContacts } = trpc.emailMarketing.contacts.list.useQuery({});
 
 	// Convex mutations/actions
-	const updateList = useMutation(api.emailMarketing.updateList);
-	const deleteList = useMutation(api.emailMarketing.deleteList);
-	const addContactToList = useMutation(api.emailMarketing.addContactToList);
-	const removeContactFromList = useMutation(api.emailMarketing.removeContactFromList);
-	const syncListToBrevo = useAction(api.emailMarketing.syncListToBrevo);
+	const updateList = trpc.emailMarketing.updateList.useMutation();
+	const deleteList = trpc.emailMarketing.deleteList.useMutation();
+	const addContactToList = trpc.emailMarketing.addContactToList.useMutation();
+	const removeContactFromList = trpc.emailMarketing.removeContactFromList.useMutation();
+	const syncListToBrevo = trpc.emailMarketing.syncListToBrevo.useMutation();
 
 	// Filter contacts: those in this list vs those not in this list
 	const { contactsInList, contactsNotInList } = useMemo(() => {
@@ -369,7 +367,7 @@ function ListDetailsPage() {
 		const notInList: Contact[] = [];
 
 		for (const contact of allContacts) {
-			const isInList = contact.listIds?.includes(listId as Id<'emailLists'>);
+			const isInList = contact.listIds?.includes(listId as number);
 			if (isInList) {
 				inList.push(contact as Contact);
 			} else {
@@ -395,7 +393,7 @@ function ListDetailsPage() {
 		setIsUpdating(true);
 		try {
 			await updateList({
-				listId: list._id,
+				listId: list.id,
 				isActive: !list.isActive,
 			});
 			toast.success(list.isActive ? 'Lista desativada' : 'Lista ativada', {
@@ -419,7 +417,7 @@ function ListDetailsPage() {
 
 		setIsSyncing(true);
 		try {
-			await syncListToBrevo({ listId: list._id });
+			await syncListToBrevo({ listId: list.id });
 			toast.success('Sincronização concluída', {
 				description: 'A lista foi sincronizada com o Brevo.',
 			});
@@ -439,7 +437,7 @@ function ListDetailsPage() {
 
 		setIsDeleting(true);
 		try {
-			await deleteList({ listId: list._id });
+			await deleteList({ listId: list.id });
 			toast.success('Lista excluída', {
 				description: 'A lista foi excluída com sucesso.',
 			});
@@ -455,12 +453,12 @@ function ListDetailsPage() {
 	};
 
 	// Add contact to list
-	const handleAddContact = async (contactId: Id<'emailContacts'>) => {
+	const handleAddContact = async (contactId: number) => {
 		if (!list) return;
 
 		setIsAdding(true);
 		try {
-			await addContactToList({ contactId, listId: list._id });
+			await addContactToList({ contactId, listId: list.id });
 			toast.success('Contato adicionado', {
 				description: 'O contato foi adicionado à lista com sucesso.',
 			});
@@ -476,12 +474,12 @@ function ListDetailsPage() {
 	};
 
 	// Remove contact from list
-	const handleRemoveContact = async (contactId: Id<'emailContacts'>) => {
+	const handleRemoveContact = async (contactId: number) => {
 		if (!list) return;
 
 		setIsRemoving(contactId);
 		try {
-			await removeContactFromList({ contactId, listId: list._id });
+			await removeContactFromList({ contactId, listId: list.id });
 			toast.success('Contato removido', {
 				description: 'O contato foi removido da lista.',
 			});

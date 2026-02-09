@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Eye, Mail, MousePointerClick, Send, Users } from 'lucide-react';
@@ -8,9 +7,10 @@ import { Calendar, Eye, Mail, MousePointerClick, Send, Users } from 'lucide-reac
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import type { EmailCampaign } from '@/types/api';
 
 interface CampaignCardProps {
-	campaign: Doc<'emailCampaigns'>;
+	campaign: EmailCampaign;
 	onClick?: () => void;
 }
 

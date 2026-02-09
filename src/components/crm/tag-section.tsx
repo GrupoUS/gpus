@@ -1,19 +1,16 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Tag } from 'lucide-react';
 
 import { TagAutocomplete } from './tag-autocomplete';
 import { TagBadge } from './tag-badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { trpc } from '@/lib/trpc';
 
 interface TagSectionProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 }
 
 export function TagSection({ leadId }: TagSectionProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation
-	const tags = useQuery((api as any).tags.getLeadTags, { leadId });
+	const { data: tags, isLoading } = trpc.tags.getLeadTags.useQuery({ leadId });
 
 	return (
 		<section className="space-y-3">
@@ -24,7 +21,7 @@ export function TagSection({ leadId }: TagSectionProps) {
 			</div>
 
 			<div className="rounded-lg border border-border/50 bg-card p-4">
-				{tags === undefined ? (
+				{isLoading ? (
 					<div className="flex flex-wrap gap-2">
 						<Skeleton className="h-6 w-20 rounded-md" />
 						<Skeleton className="h-6 w-24 rounded-md" />
@@ -32,10 +29,10 @@ export function TagSection({ leadId }: TagSectionProps) {
 					</div>
 				) : (
 					<div className="space-y-3">
-						{tags.length > 0 ? (
+						{tags && tags.length > 0 ? (
 							<div className="flex flex-wrap gap-2">
-								{tags.map((tag: Doc<'tags'>) => (
-									<TagBadge key={tag._id} leadId={leadId} tag={tag} />
+								{tags.map((tag) => (
+									<TagBadge key={tag.id} leadId={leadId} tag={tag} />
 								))}
 							</div>
 						) : (

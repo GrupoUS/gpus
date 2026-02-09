@@ -1,12 +1,10 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
 import { format, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, CheckCircle2, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -21,12 +19,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface TaskUser {
-	_id: Id<'users'>;
+	id: number;
 	name: string;
 }
 
 interface TaskListItem {
-	_id: Id<'tasks'>;
+	id: number;
 	completed?: boolean;
 	createdAt?: number;
 	assignedToUser?: TaskUser;
@@ -103,7 +101,7 @@ export function TaskList({ tasks, isLoading }: TaskListProps) {
 						Nenhuma tarefa nesta categoria.
 					</div>
 				) : (
-					filteredTasks?.map((task) => <TaskItem key={task._id} task={task} />)
+					filteredTasks?.map((task) => <TaskItem key={task.id} task={task} />)
 				)}
 			</div>
 		</div>
@@ -111,8 +109,8 @@ export function TaskList({ tasks, isLoading }: TaskListProps) {
 }
 
 function TaskItem({ task }: { task: TaskListItem }) {
-	const completeTask = useMutation(api.tasks.completeTask);
-	const deleteTask = useMutation(api.tasks.deleteTask);
+	const completeTask = trpc.tasks.update.useMutation();
+	const deleteTask = trpc.tasks.delete.useMutation();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const dueDate = task.dueDate ? new Date(task.dueDate) : undefined;
 
@@ -123,7 +121,7 @@ function TaskItem({ task }: { task: TaskListItem }) {
 		if (task.completed) return; // Uncomplete not implemented yet
 		try {
 			setIsProcessing(true);
-			await completeTask({ taskId: task._id });
+			await completeTask({ taskId: task.id });
 			toast.success('Tarefa concluída!');
 		} catch (_err) {
 			toast.error('Erro ao atualizar tarefa');
@@ -135,7 +133,7 @@ function TaskItem({ task }: { task: TaskListItem }) {
 	const handleDelete = async () => {
 		try {
 			setIsProcessing(true);
-			await deleteTask({ taskId: task._id });
+			await deleteTask({ taskId: task.id });
 			toast.success('Tarefa excluída');
 		} catch (_err) {
 			toast.error('Erro ao excluir tarefa');
@@ -209,7 +207,7 @@ function TaskItem({ task }: { task: TaskListItem }) {
 					{task.mentionedUsers && task.mentionedUsers.length > 0 && (
 						<div className="flex gap-1">
 							{task.mentionedUsers.map((u) => (
-								<span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]" key={u._id}>
+								<span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]" key={u.id}>
 									@{u.name.split(' ')[0]}
 								</span>
 							))}

@@ -1,13 +1,11 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { CustomFieldsSection } from './custom-fields-section';
 import { ReferralAutocomplete } from './referral-autocomplete';
 import { Button } from '@/components/ui/button';
@@ -118,12 +116,9 @@ const leadFormSchema = z
 
 export function LeadForm() {
 	const [open, setOpen] = useState(false);
-	const useMutationUnsafe = useMutation as unknown as (
-		mutation: unknown,
-	) => (args: unknown) => Promise<unknown>;
-	const apiAny = api as unknown as Record<string, Record<string, unknown>>;
-	const createLead = useMutationUnsafe(apiAny.leads.createLead);
-	const vendors = useQuery(api.users.listVendors);
+	const createLeadMutation = trpc.leads.create.useMutation();
+	const createLead = createLeadMutation.mutateAsync;
+	const { data: vendors } = trpc.users.listSystemUsers.useQuery();
 
 	const form = useForm<z.infer<typeof leadFormSchema>>({
 		resolver: zodResolver(leadFormSchema),
@@ -172,12 +167,12 @@ export function LeadForm() {
 				...(values.mainPain && { mainPain: values.mainPain }),
 				...(values.mainDesire && { mainDesire: values.mainDesire }),
 				...(values.referredById && { referredById: values.referredById }),
-				...(values.assignedTo && { assignedTo: values.assignedTo as Id<'users'> }),
+				...(values.assignedTo && { assignedTo: values.assignedTo }),
 
 				// Custom Fields Mapping
 				customFieldValues: values.customFields
 					? Object.entries(values.customFields).map(([key, value]) => ({
-							customFieldId: key as Id<'customFields'>,
+							customFieldId: key as number,
 							value,
 						}))
 					: undefined,

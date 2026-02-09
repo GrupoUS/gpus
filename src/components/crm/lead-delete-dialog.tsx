@@ -1,10 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../lib/trpc';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -15,9 +13,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { Lead } from '@/types/api';
 
 interface LeadDeleteDialogProps {
-	lead: Doc<'leads'>;
+	lead: Lead;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onClose?: () => void;
@@ -25,12 +24,12 @@ interface LeadDeleteDialogProps {
 
 export function LeadDeleteDialog({ lead, open, onOpenChange, onClose }: LeadDeleteDialogProps) {
 	const [isDeleting, setIsDeleting] = useState(false);
-	const deleteLead = useMutation(api.leads.deleteLead);
+	const deleteLead = trpc.leads.delete.useMutation();
 
 	const handleDelete = async () => {
 		try {
 			setIsDeleting(true);
-			await deleteLead({ leadId: lead._id });
+			await deleteLead({ leadId: lead.id });
 			toast.success(`Lead "${lead.name}" excluído com sucesso`);
 			onOpenChange(false);
 			onClose?.();

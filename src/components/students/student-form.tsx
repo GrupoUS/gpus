@@ -1,13 +1,11 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -53,17 +51,20 @@ const formSchema = z.object({
 });
 
 interface StudentFormProps {
-	studentId?: Id<'students'>;
+	studentId?: number;
 	trigger?: React.ReactNode;
 	onSuccess?: () => void;
 }
 
 export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps) {
 	const [open, setOpen] = useState(false);
-	const createStudent = useMutation(api.students.create);
-	const updateStudent = useMutation(api.students.update);
-	const existingStudent = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const csUsers = useQuery(api.users.listCSUsers);
+	const createStudent = trpc.students.create.useMutation();
+	const updateStudent = trpc.students.update.useMutation();
+	const { data: existingStudent } = trpc.students.get.useQuery(
+		{ id: studentId },
+		{ enabled: !!studentId },
+	);
+	const { data: csUsers } = trpc.users.listSystemUsers.useQuery();
 
 	const isEditMode = !!studentId;
 	const dialogTitle = isEditMode ? 'Editar Aluno' : 'Novo Aluno';
@@ -118,13 +119,13 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 			clinicName: values.clinicName || undefined,
 			clinicCity: values.clinicCity || undefined,
 			status: 'ativo',
-			assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+			assignedCS: values.assignedCS ? (values.assignedCS as number) : undefined,
 			lgpdConsent: values.lgpdConsent,
 		});
 		toast.success('Aluno criado com sucesso!');
 	};
 
-	const handleUpdate = async (values: z.infer<typeof formSchema>, id: Id<'students'>) => {
+	const handleUpdate = async (values: z.infer<typeof formSchema>, id: number) => {
 		await updateStudent({
 			studentId: id,
 			patch: {
@@ -137,7 +138,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 				clinicName: values.clinicName || undefined,
 				clinicCity: values.clinicCity || undefined,
 				cpf: values.cpf || undefined,
-				assignedCS: values.assignedCS ? (values.assignedCS as Id<'users'>) : undefined,
+				assignedCS: values.assignedCS ? (values.assignedCS as number) : undefined,
 			},
 		});
 		toast.success('Aluno atualizado com sucesso!');
@@ -285,8 +286,8 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 											</FormControl>
 											<SelectContent>
 												<SelectItem value="none">Nenhum</SelectItem>
-												{csUsers?.map((user: { _id: string; name: string }) => (
-													<SelectItem key={user._id} value={user._id}>
+												{csUsers?.map((user: { id: string; name: string }) => (
+													<SelectItem key={user.id} value={user.id}>
 														{user.name}
 													</SelectItem>
 												))}

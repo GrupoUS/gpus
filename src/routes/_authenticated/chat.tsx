@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router';
 import { MessageSquare, Search, Settings } from 'lucide-react';
 import { createContext, useContext, useId, useState } from 'react';
@@ -149,7 +148,7 @@ function ChatPage() {
 				{/* AI Assistant Widget - only shown when a conversation is selected */}
 				{selectedConversationId && (
 					<AIChatWidget
-						conversationId={selectedConversationId as Id<'conversations'>}
+						conversationId={selectedConversationId as number}
 						onInsertResponse={(text) => {
 							setPendingMessage(text);
 						}}

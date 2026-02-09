@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useMutation, useQuery } from 'convex/react';
 import { Check, ChevronsUpDown, Loader2, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,16 +13,11 @@ import {
 } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { trpc } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 
-interface Tag {
-	_id: Id<'tags'>;
-	name: string;
-	color: string;
-}
-
 interface TagAutocompleteProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 	onTagAdded?: () => void;
 }
 
@@ -44,14 +36,22 @@ export function TagAutocomplete({ leadId, onTagAdded }: TagAutocompleteProps) {
 		return () => clearTimeout(timer);
 	}, [search]);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const tags = useQuery((api as any).tags.searchTags, { query: debouncedSearch }) as
-		| Tag[]
-		| undefined;
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const createTag = useMutation((api as any).tags.createTag);
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const addTagToLead = useMutation((api as any).tags.addTagToLead);
+	// tRPC queries and mutations
+	const { data: tags } = trpc.tags.searchTags.useQuery(
+		{ query: debouncedSearch },
+		{ enabled: open },
+	);
+
+	const utils = trpc.useUtils();
+
+	const createTag = trpc.tags.create.useMutation({
+		onSuccess: () => utils.tags.searchTags.invalidate(),
+	});
+
+	const addTagToLead = trpc.tags.addTagToLead.useMutation({
+		onSuccess: () => utils.tags.getLeadTags.invalidate({ leadId }),
+	});
+
 	const [isCreating, setIsCreating] = useState(false);
 
 	const handleCreateTag = async () => {
@@ -59,8 +59,8 @@ export function TagAutocomplete({ leadId, onTagAdded }: TagAutocompleteProps) {
 
 		setIsCreating(true);
 		try {
-			const tagId = await createTag({ name: search, color: newTagColor });
-			await addTagToLead({ leadId, tagId });
+			const created = await createTag.mutateAsync({ name: search, color: newTagColor });
+			await addTagToLead.mutateAsync({ leadId, tagId: created.id });
 			toast.success('Tag criada e adicionada com sucesso');
 			setOpen(false);
 			setSearch('');
@@ -72,9 +72,9 @@ export function TagAutocomplete({ leadId, onTagAdded }: TagAutocompleteProps) {
 		}
 	};
 
-	const handleSelectTag = async (tagId: Id<'tags'>) => {
+	const handleSelectTag = async (tagId: number) => {
 		try {
-			await addTagToLead({ leadId, tagId });
+			await addTagToLead.mutateAsync({ leadId, tagId });
 			toast.success('Tag adicionada com sucesso');
 			setOpen(false);
 			onTagAdded?.();
@@ -133,14 +133,10 @@ export function TagAutocomplete({ leadId, onTagAdded }: TagAutocompleteProps) {
 						</CommandEmpty>
 						<CommandGroup>
 							{tags?.map((tag) => (
-								<CommandItem
-									key={tag._id}
-									onSelect={() => handleSelectTag(tag._id)}
-									value={tag.name}
-								>
+								<CommandItem key={tag.id} onSelect={() => handleSelectTag(tag.id)} value={tag.name}>
 									<div
 										className="mr-2 h-2 w-2 rounded-full"
-										style={{ backgroundColor: tag.color }}
+										style={{ backgroundColor: tag.color || '#ccc' }}
 									/>
 									{tag.name}
 									<Check

@@ -8,8 +8,6 @@
  * - Recent performance metrics
  */
 
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import { Activity, AlertTriangle, CheckCircle2, Clock, Database, XCircle } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +59,7 @@ export function AdminMetricsDashboard() {
 	});
 
 	// Get active alerts (would need to be implemented in monitoring.ts)
-	// const activeAlerts = useQuery(api.asaas.monitoring.getActiveAlerts, {});
+	// const { data: activeAlerts } = trpc.settings.list.useQuery({});
 
 	if (!(apiStats && syncStats)) {
 		return <MetricsDashboardSkeleton />;

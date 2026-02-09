@@ -1,18 +1,17 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { BookOpen } from 'lucide-react';
 
+import { trpc } from '../../../lib/trpc';
 import { EnrollmentCard } from '../enrollment-card';
+import type { Enrollment } from '@/types/api';
 
 interface StudentEnrollmentsTabProps {
-	studentId: Id<'students'>;
+	studentId: number;
 }
 
 export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps) {
-	const enrollments = useQuery(api.enrollments.getByStudent, { studentId });
+	const { data: enrollments } = trpc.enrollments.listByStudent.useQuery({ studentId });
 
 	if (!enrollments) {
 		return (
@@ -35,8 +34,8 @@ export function StudentEnrollmentsTab({ studentId }: StudentEnrollmentsTabProps)
 
 	return (
 		<div className="grid gap-4 md:grid-cols-2">
-			{enrollments.map((enrollment: Doc<'enrollments'>) => (
-				<EnrollmentCard enrollment={enrollment} key={enrollment._id} />
+			{enrollments.map((enrollment: Enrollment) => (
+				<EnrollmentCard enrollment={enrollment} key={enrollment.id} />
 			))}
 		</div>
 	);

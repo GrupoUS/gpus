@@ -1,9 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+
+import { trpc } from '../lib/trpc';
 
 // biome-ignore lint/suspicious/noExplicitAny: generic route typing
 export function useTemplatesViewModel(Route?: any) {
@@ -14,14 +13,10 @@ export function useTemplatesViewModel(Route?: any) {
 	const search = routeSearch?.search ?? '';
 	const category = routeSearch?.category ?? 'all';
 
-	const getTemplates = useQuery(api.emailMarketing.getTemplates, {
-		category: category === 'all' ? undefined : category,
-	});
+	const { data: getTemplates } = trpc.emailMarketing.templates.list.useQuery();
 
-	const createTemplate = useMutation(api.emailMarketing.createTemplate);
-	const updateTemplate = useMutation(api.emailMarketing.updateTemplate);
-	const deleteTemplate = useMutation(api.emailMarketing.deleteTemplate);
-	const syncTemplate = useAction(api.emailMarketing.syncTemplateToBrevo);
+	const createTemplateMutation = trpc.emailMarketing.templates.create.useMutation();
+	// TODO: Add update/delete to email templates tRPC router
 
 	const templates = useMemo(() => {
 		if (!getTemplates) return undefined;
@@ -31,14 +26,18 @@ export function useTemplatesViewModel(Route?: any) {
 		if (search) {
 			const searchLower = search.toLowerCase();
 			filtered = filtered.filter(
-				(t) =>
+				(t: { name: string; subject: string }) =>
 					t.name.toLowerCase().includes(searchLower) ||
 					t.subject.toLowerCase().includes(searchLower),
 			);
 		}
 
+		if (category && category !== 'all') {
+			filtered = filtered.filter((t: { category?: string }) => t.category === category);
+		}
+
 		return filtered;
-	}, [getTemplates, search]);
+	}, [getTemplates, search, category]);
 
 	const handleCreateTemplate = async (data: {
 		name: string;
@@ -47,19 +46,19 @@ export function useTemplatesViewModel(Route?: any) {
 		category?: string;
 	}) => {
 		try {
-			const templateId = await createTemplate(data);
+			const result = await createTemplateMutation.mutateAsync(data);
 			toast.success('Template criado com sucesso');
 			void navigate({ to: '/marketing/templates', search: { search: '', category: 'all' } });
-			return templateId;
+			return result;
 		} catch (_err) {
 			toast.error('Falha ao criar template');
 			throw _err;
 		}
 	};
 
-	const handleUpdateTemplate = async (
-		templateId: Id<'emailTemplates'>,
-		data: {
+	const handleUpdateTemplate = (
+		_templateId: number,
+		_data: {
 			name?: string;
 			subject?: string;
 			htmlContent?: string;
@@ -67,33 +66,18 @@ export function useTemplatesViewModel(Route?: any) {
 			isActive?: boolean;
 		},
 	) => {
-		try {
-			await updateTemplate({ templateId, ...data });
-			toast.success('Template atualizado');
-		} catch (_err) {
-			toast.error('Falha ao atualizar template');
-			throw _err;
-		}
+		// TODO: Add update to email templates tRPC router
+		toast.info('Atualização de template em breve');
 	};
 
-	const handleDeleteTemplate = async (templateId: Id<'emailTemplates'>) => {
-		try {
-			await deleteTemplate({ templateId });
-			toast.success('Template excluído');
-		} catch (_err) {
-			toast.error('Falha ao excluir template');
-		}
+	const handleDeleteTemplate = (_templateId: number) => {
+		// TODO: Add delete to email templates tRPC router
+		toast.info('Exclusão de template em breve');
 	};
 
-	const handleSyncTemplate = async (templateId: Id<'emailTemplates'>) => {
-		try {
-			const result = await syncTemplate({ templateId });
-			if (result.success) {
-				toast.success('Template sincronizado com Brevo');
-			}
-		} catch (_err) {
-			toast.error('Falha ao sincronizar template');
-		}
+	const handleSyncTemplate = (_templateId: number) => {
+		// TODO: Add syncTemplateToBrevo as a tRPC action/mutation
+		toast.info('Sincronização com Brevo em breve');
 	};
 
 	const handleFilterChange = (key: string, value: string) => {

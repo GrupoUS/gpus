@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { ArrowLeft, MoreVertical, Phone, User, Video } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
@@ -16,11 +15,12 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { Conversation } from '@/types/api';
 
 interface ChatWindowProps {
 	onBack?: () => void;
-	conversation: Doc<'conversations'> | null | undefined;
-	messages: Doc<'messages'>[] | undefined;
+	conversation: Conversation | null | undefined;
+	messages: Conversation[] | undefined;
 	onSendMessage: (content: string) => Promise<void>;
 }
 
@@ -91,8 +91,8 @@ export function ChatWindow({ conversation, messages, onBack, onSendMessage }: Ch
 	} else {
 		messagesContent = (
 			<div className="space-y-1 pb-4">
-				{messages.map((message: Doc<'messages'>) => (
-					<MessageBubble isOwn={message.sender === 'agent'} key={message._id} message={message} />
+				{messages.map((message: Conversation) => (
+					<MessageBubble isOwn={message.sender === 'agent'} key={message.id} message={message} />
 				))}
 			</div>
 		);

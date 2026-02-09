@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { AnimatePresence, LayoutGroup, motion, Reorder } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,7 +19,7 @@ const stages = [
 ];
 
 interface Lead {
-	_id: string;
+	id: string;
 	name: string;
 	phone: string;
 	profession?: string;
@@ -72,13 +71,13 @@ function DraggableLeadCard({
 					info.point.y <= rect.bottom
 				) {
 					if (stageId !== lead.stage) {
-						onDragToColumn(lead._id, stageId);
+						onDragToColumn(lead.id, stageId);
 					}
 					break;
 				}
 			}
 		},
-		[columnRefs, lead._id, lead.stage, onDragToColumn],
+		[columnRefs, lead.id, lead.stage, onDragToColumn],
 	);
 
 	return (
@@ -89,10 +88,10 @@ function DraggableLeadCard({
 			dragElastic={0.1}
 			dragTransition={dragTransition}
 			exit="exit"
-			id={lead._id}
+			id={lead.id}
 			initial="initial"
 			layout="position"
-			layoutId={lead._id}
+			layoutId={lead.id}
 			onDragEnd={handleDragEnd}
 			onDragStart={() => setIsDragging(true)}
 			transition={layoutTransition}
@@ -106,13 +105,13 @@ function DraggableLeadCard({
 			}}
 		>
 			<div className="relative w-full">
-				<LeadCard lead={{ ...lead, _id: lead._id as Id<'leads'> }} />
+				<LeadCard lead={{ ...lead, id: lead.id as number }} />
 				<button
 					aria-label="Abrir lead"
 					className="absolute inset-0 h-full w-full cursor-pointer rounded-lg border-none bg-transparent p-0 opacity-0 focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2"
 					onClick={() => {
 						if (!isDragging) {
-							onLeadClick?.(lead._id);
+							onLeadClick?.(lead.id);
 						}
 					}}
 					type="button"
@@ -209,7 +208,7 @@ function KanbanColumn({
 								{leads.map((lead) => (
 									<DraggableLeadCard
 										columnRefs={columnRefs}
-										key={lead._id}
+										key={lead.id}
 										lead={lead}
 										onDragToColumn={onDragToColumn}
 										onLeadClick={onLeadClick}

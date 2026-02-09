@@ -1,11 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { api } from '../../../convex/_generated/api';
 import { LeadCaptureFormFields } from './lead-capture-form-fields';
 import { LeadCaptureSuccess } from './lead-capture-success';
 import { Button } from '@/components/ui/button';

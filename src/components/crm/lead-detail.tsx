@@ -1,11 +1,9 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Activity, Briefcase, Clock, Layers, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 import { LeadActions } from './lead-actions';
 import { LeadOwnerSelect } from './lead-owner-select';
 import { ObjectionsTab } from './objections-tab';
@@ -24,19 +22,12 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Activity as ActivityItem, Lead } from '@/types/api';
 
 interface LeadDetailProps {
-	leadId: Id<'leads'> | null;
+	leadId: number | null;
 	onClose: () => void;
 }
-
-interface TasksResult {
-	page?: Array<{ completed?: boolean }>;
-}
-
-const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-
-const apiAny = api as unknown as Record<string, Record<string, unknown>>;
 
 function formatCustomFieldValue(value: unknown) {
 	if (Array.isArray(value)) {
@@ -51,18 +42,16 @@ function formatCustomFieldValue(value: unknown) {
 }
 
 export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
-	const lead = useQueryUnsafe(apiAny.leads.getLead, leadId ? { leadId } : 'skip') as
-		| Doc<'leads'>
-		| null
-		| undefined;
-	const activities = useQueryUnsafe(apiAny.activities.listByLead, leadId ? { leadId } : 'skip') as
-		| Doc<'activities'>[]
-		| undefined;
-	const tasksResult = useQueryUnsafe(
-		apiAny.tasks.listTasks,
-		leadId ? { leadId, paginationOpts: { numItems: 50, cursor: null } } : 'skip',
-	) as TasksResult | undefined;
-	const pendingTasksCount = tasksResult?.page?.filter((task) => !task.completed).length ?? 0;
+	const { data: lead } = trpc.leads.get.useQuery({ id: leadId! }, { enabled: !!leadId });
+	const { data: activities } = trpc.activities.list.useQuery(
+		{ leadId: leadId! },
+		{ enabled: !!leadId },
+	);
+	const { data: tasksResult } = trpc.tasks.list.useQuery(
+		{ leadId: leadId!, limit: 50, offset: 0 },
+		{ enabled: !!leadId },
+	);
+	const pendingTasksCount = tasksResult?.data?.filter((task) => !task.completed).length ?? 0;
 
 	const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
 
@@ -90,33 +79,33 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 							<div className="mb-4 flex items-start justify-between">
 								<div>
 									<h2 className="font-bold font-display text-2xl text-foreground tracking-tight">
-										{lead.name}
+										{lead.name ?? ''}
 									</h2>
 									<div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
 										<Badge
 											className="border-primary/50 bg-primary/10 text-primary"
 											variant="outline"
 										>
-											{lead.stage.replace('_', ' ').toUpperCase()}
+											{(lead.stage ?? '').replace('_', ' ').toUpperCase()}
 										</Badge>
 										<span className="flex items-center gap-1">
 											<Clock className="h-3 w-3" />
 											Atualizado{' '}
-											{formatDistanceToNow(lead.updatedAt, {
+											{formatDistanceToNow(new Date(lead.updatedAt ?? lead.createdAt), {
 												addSuffix: true,
 												locale: ptBR,
 											})}
 										</span>
 									</div>
 								</div>
-								<LeadActions lead={lead} onClose={onClose} />
+								<LeadActions lead={lead as Lead} onClose={onClose} />
 							</div>
 
 							<div className="flex gap-2">
 								<Button
 									className="flex-1 gap-2 border-0 bg-[#25D366] text-white hover:bg-[#128C7E]"
 									onClick={() =>
-										window.open(`https://wa.me/${lead.phone.replace(/\D/g, '')}`, '_blank')
+										window.open(`https://wa.me/${(lead.phone ?? '').replace(/\D/g, '')}`, '_blank')
 									}
 									size="sm"
 								>
@@ -135,7 +124,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 								<Button
 									className="flex-1 gap-2"
 									onClick={() => {
-										window.location.href = `tel:${lead.phone}`;
+										window.location.href = `tel:${lead.phone ?? ''}`;
 									}}
 									size="sm"
 									variant="outline"
@@ -224,11 +213,11 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 								</TabsContent>
 
 								<TabsContent className="mt-0" value="tasks">
-									<TasksTab leadId={lead._id} />
+									<TasksTab leadId={lead.id} />
 								</TabsContent>
 
 								<TabsContent className="mt-0" value="objections">
-									<ObjectionsTab leadId={lead._id} />
+									<ObjectionsTab leadId={lead.id} />
 								</TabsContent>
 							</ScrollArea>
 						</Tabs>
@@ -245,9 +234,9 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 
 			{lead && (
 				<WhatsAppDialog
-					leadId={lead._id}
-					leadName={lead.name}
-					leadPhone={lead.phone}
+					leadId={lead.id}
+					leadName={lead.name ?? ''}
+					leadPhone={lead.phone ?? ''}
 					onOpenChange={setWhatsappDialogOpen}
 					open={whatsappDialogOpen}
 				/>
@@ -256,17 +245,14 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 	);
 }
 
-function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
-	const customFieldValues = useQuery(api.customFields.getCustomFieldValues, {
-		entityId: lead._id,
-		entityType: 'lead',
-	});
+function LeadOverview({ lead }: { lead: Lead }) {
+	const { data: customFieldValues } = trpc.customFields.getValues.useQuery({ entityId: lead.id });
 
 	return (
 		<>
 			{/* Responsável Comercial */}
 			<section className="mb-4">
-				<LeadOwnerSelect currentOwnerId={lead.assignedTo} leadId={lead._id} />
+				<LeadOwnerSelect currentOwnerId={lead.assignedTo} leadId={lead.id} />
 			</section>
 
 			<section className="space-y-3">
@@ -276,25 +262,27 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 				<div className="grid grid-cols-2 gap-4 text-sm">
 					<div className="rounded-lg border border-border/50 bg-card p-3">
 						<span className="mb-1 block text-muted-foreground text-xs">Profissão</span>
-						<span className="font-medium">{lead.profession || 'Não informado'}</span>
+						<span className="font-medium">{lead.profession ?? 'Não informado'}</span>
 					</div>
 					<div className="rounded-lg border border-border/50 bg-card p-3">
 						<span className="mb-1 block text-muted-foreground text-xs">Clínica</span>
-						<span className="font-medium">{lead.hasClinic ? lead.clinicName || 'Sim' : 'Não'}</span>
-						{lead.clinicCity && (
+						<span className="font-medium">
+							{lead.hasClinic ? (lead.clinicName ?? 'Sim') : 'Não'}
+						</span>
+						{lead.clinicCity ? (
 							<span className="block text-muted-foreground text-xs">{lead.clinicCity}</span>
-						)}
+						) : null}
 					</div>
 					<div className="rounded-lg border border-border/50 bg-card p-3">
 						<span className="mb-1 block text-muted-foreground text-xs">Experiência</span>
 						<span className="font-medium">
-							{lead.yearsInAesthetics ? `${lead.yearsInAesthetics} anos` : 'N/A'}
+							{lead.yearsInAesthetics != null ? `${lead.yearsInAesthetics} anos` : 'N/A'}
 						</span>
 					</div>
 
 					<div className="rounded-lg border border-border/50 bg-card p-3">
 						<span className="mb-1 block text-muted-foreground text-xs">Faturamento</span>
-						<span className="font-medium">{lead.currentRevenue || 'N/A'}</span>
+						<span className="font-medium">{lead.currentRevenue ?? 'N/A'}</span>
 					</div>
 				</div>
 			</section>
@@ -307,7 +295,7 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					<div className="flex justify-between border-border/30 border-b pb-2">
 						<span className="text-muted-foreground">Produto</span>
 						<span className="font-medium text-primary">
-							{lead.interestedProduct || 'Indefinido'}
+							{lead.interestedProduct ?? 'Indefinido'}
 						</span>
 					</div>
 					<div className="flex justify-between border-border/30 border-b pb-2">
@@ -320,14 +308,14 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 					</div>
 					<div className="space-y-1">
 						<span className="text-muted-foreground text-xs">Dor Principal</span>
-						<p className="text-sm">{lead.mainPain || 'Não identificada'}</p>
+						<p className="text-sm">{lead.mainPain ?? 'Não identificada'}</p>
 					</div>
-					{lead.mainDesire && (
+					{lead.mainDesire ? (
 						<div className="space-y-1 border-border/30 border-t pt-2">
 							<span className="text-muted-foreground text-xs">Desejo / Objetivo</span>
 							<p className="text-sm">{lead.mainDesire}</p>
 						</div>
-					)}
+					) : null}
 				</div>
 			</section>
 
@@ -337,25 +325,27 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 						<Layers className="h-4 w-4" /> Informações Adicionais
 					</h3>
 					<div className="grid grid-cols-2 gap-4 text-sm">
-						{customFieldValues.map((cf) => (
-							<div className="rounded-lg border border-border/50 bg-card p-3" key={cf._id}>
-								<span className="mb-1 block text-muted-foreground text-xs">
-									{cf.fieldDefinition?.name}
-								</span>
-								<span className="font-medium">{formatCustomFieldValue(cf.value)}</span>
-							</div>
-						))}
+						{customFieldValues.map(
+							(cf: { id: number; fieldDefinition?: { name: string } | null; value: unknown }) => (
+								<div className="rounded-lg border border-border/50 bg-card p-3" key={cf.id}>
+									<span className="mb-1 block text-muted-foreground text-xs">
+										{cf.fieldDefinition?.name}
+									</span>
+									<span className="font-medium">{formatCustomFieldValue(cf.value)}</span>
+								</div>
+							),
+						)}
 					</div>
 				</section>
 			)}
 
-			<ReferralSection leadId={lead._id} />
-			<TagSection leadId={lead._id} />
+			<ReferralSection leadId={lead.id} />
+			<TagSection leadId={lead.id} />
 		</>
 	);
 }
 
-function LeadTimeline({ activities }: { activities?: Doc<'activities'>[] }) {
+function LeadTimeline({ activities }: { activities?: ActivityItem[] }) {
 	if (!activities) {
 		return (
 			<div className="space-y-4">
@@ -375,18 +365,18 @@ function LeadTimeline({ activities }: { activities?: Doc<'activities'>[] }) {
 	return (
 		<div className="relative ml-3 space-y-6 border-border/50 border-l">
 			{activities.map((activity) => (
-				<div className="relative pl-6" key={activity._id}>
+				<div className="relative pl-6" key={activity.id}>
 					<div className="absolute top-1 -left-[5px] h-2.5 w-2.5 rounded-full border-2 border-background bg-primary ring-2 ring-primary/20" />
 					<div className="flex flex-col gap-1">
 						<span className="text-muted-foreground text-xs">
-							{formatDistanceToNow(activity.createdAt, {
+							{formatDistanceToNow(new Date(activity.createdAt), {
 								addSuffix: true,
 								locale: ptBR,
 							})}
 						</span>
 						<p className="font-medium text-sm">{activity.description}</p>
 						<span className="w-fit rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs capitalize">
-							{activity.type.replace('_', ' ')}
+							{(activity.type ?? '').replace('_', ' ')}
 						</span>
 					</div>
 				</div>

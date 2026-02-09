@@ -50,6 +50,11 @@ const FIELD_KEYWORDS: Record<LeadFieldKey, string[]> = {
 	lastContactAt: ['data', 'date', 'contato', 'abordagem', 'registro'],
 };
 
+// Top-level regex patterns (required by Biome useTopLevelRegex)
+const PHONE_PATTERN = /^[\d\s\-()+]{10,}$/;
+const EMAIL_PATTERN = /@.*\./;
+const BR_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+
 export interface MappingSuggestion {
 	field: LeadFieldKey | null;
 	confidence: number;
@@ -121,8 +126,7 @@ export function mapLeadHeaders(
 				.filter((v) => v != null && v !== '');
 
 			// Phone pattern
-			const phonePattern = /^[\d\s\-()+]{10,}$/;
-			const phoneMatches = sampleValues.filter((v) => phonePattern.test(String(v))).length;
+			const phoneMatches = sampleValues.filter((v) => PHONE_PATTERN.test(String(v))).length;
 			if (phoneMatches >= sampleValues.length * 0.7) {
 				bestMatch = {
 					field: 'phone',
@@ -132,8 +136,7 @@ export function mapLeadHeaders(
 			}
 
 			// Email pattern
-			const emailPattern = /@.*\./;
-			const emailMatches = sampleValues.filter((v) => emailPattern.test(String(v))).length;
+			const emailMatches = sampleValues.filter((v) => EMAIL_PATTERN.test(String(v))).length;
 			if (emailMatches >= sampleValues.length * 0.7) {
 				bestMatch = {
 					field: 'email',
@@ -229,7 +232,7 @@ function parseDate(value: unknown): number | undefined {
 		}
 
 		// Try DD/MM/YYYY format (common in Brazil)
-		const brMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+		const brMatch = value.match(BR_DATE_PATTERN);
 		if (brMatch) {
 			const [, day, month, year] = brMatch;
 			return new Date(Number(year), Number(month) - 1, Number(day)).getTime();

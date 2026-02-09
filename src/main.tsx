@@ -1,21 +1,24 @@
 import { ClerkProvider, useAuth } from '@clerk/clerk-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { trpc } from './lib/trpc';
+import { createTRPCClient } from './lib/trpc-client';
 import { routeTree } from './routeTree.gen';
 import './index.css';
 
-// Convex client
+// Convex client (kept for backward compatibility during migration)
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 // Router
 const router = createRouter({
 	routeTree,
 	context: {
-		auth: undefined as ReturnType<typeof useAuth> | undefined, // We'll inject this in the provider
+		auth: undefined as ReturnType<typeof useAuth> | undefined,
 	},
 	defaultPreload: 'intent',
 });
@@ -36,7 +39,29 @@ if (!clerkPubKey) {
 
 function InnerApp() {
 	const auth = useAuth();
-	return <RouterProvider context={{ auth }} router={router} />;
+	const { getToken } = auth;
+
+	const [queryClient] = useState(
+		() =>
+			new QueryClient({
+				defaultOptions: {
+					queries: {
+						staleTime: 1000 * 30, // 30 seconds
+						refetchOnWindowFocus: false,
+					},
+				},
+			}),
+	);
+
+	const [trpcClient] = useState(() => createTRPCClient(getToken));
+
+	return (
+		<trpc.Provider client={trpcClient} queryClient={queryClient}>
+			<QueryClientProvider client={queryClient}>
+				<RouterProvider context={{ auth }} router={router} />
+			</QueryClientProvider>
+		</trpc.Provider>
+	);
 }
 
 export function App() {

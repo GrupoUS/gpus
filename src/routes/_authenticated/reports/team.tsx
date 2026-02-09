@@ -1,10 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { Award, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 
+import { trpc } from '../../../lib/trpc';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,13 +34,13 @@ const roleLabels: Record<string, string> = {
 };
 
 interface User {
-	_id: Id<'users'>;
+	id: number;
 	name: string;
 	role: string;
 }
 
 interface TeamPerformanceMember {
-	_id: Id<'users'>;
+	id: number;
 	name: string;
 	role: string;
 	metric: number;
@@ -53,9 +51,9 @@ interface TeamPerformanceMember {
 function TeamReportPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
 
-	const teamPerformanceData = useQuery(api.metrics.getTeamPerformance, { period } as const);
+	const { data: teamPerformanceData } = trpc.metrics.daily.useQuery({ period } as const);
 	const teamPerformance = teamPerformanceData as TeamPerformanceMember[] | undefined;
-	const allUsersData = useQuery(api.users.list);
+	const { data: allUsersData } = trpc.users.list.useQuery();
 	const allUsers = allUsersData as User[] | undefined;
 
 	return (
@@ -85,7 +83,7 @@ function TeamReportPage() {
 			{/* Top Performers */}
 			<div className="grid gap-4 md:grid-cols-3">
 				{teamPerformance?.slice(0, 3).map((member: TeamPerformanceMember, index: number) => (
-					<Card className={index === 0 ? 'border-yellow-500/50' : ''} key={member._id}>
+					<Card className={index === 0 ? 'border-yellow-500/50' : ''} key={member.id}>
 						<CardHeader className="pb-3">
 							<div className="flex items-center justify-between">
 								<Badge variant={index === 0 ? 'default' : 'secondary'}>
@@ -139,7 +137,7 @@ function TeamReportPage() {
 						</TableHeader>
 						<TableBody>
 							{teamPerformance?.map((member: TeamPerformanceMember, index: number) => (
-								<TableRow key={member._id}>
+								<TableRow key={member.id}>
 									<TableCell className="font-medium">{index + 1}</TableCell>
 									<TableCell>
 										<div className="flex items-center gap-3">

@@ -1,4 +1,3 @@
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Mail, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -66,11 +65,11 @@ function CampaignsPage() {
 	} else {
 		campaignsContent = (
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{paginatedCampaigns.map((campaign: Doc<'emailCampaigns'>) => (
+				{paginatedCampaigns.map((campaign: Record<string, unknown>) => (
 					<CampaignCard
 						campaign={campaign}
-						key={campaign._id}
-						onClick={() => navigateToCampaign(campaign._id)}
+						key={campaign.id}
+						onClick={() => navigateToCampaign(campaign.id)}
 					/>
 				))}
 			</div>

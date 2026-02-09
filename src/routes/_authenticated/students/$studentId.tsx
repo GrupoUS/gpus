@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { StudentDetail } from '@/components/students/student-detail';
@@ -12,7 +11,7 @@ export const Route = createFileRoute('/_authenticated/students/$studentId')({
 			product: (search.product as string) || 'all',
 			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
 			page: Math.max(1, Number(search.page) || 1),
-			studentId: (search.studentId as Id<'students'>) || undefined,
+			studentId: (search.studentId as number) || undefined,
 		};
 	},
 	component: StudentDetailPage,
@@ -26,5 +25,5 @@ function StudentDetailPage() {
 		navigate({ to: '/students', search: (prev) => prev });
 	};
 
-	return <StudentDetail onClose={handleClose} studentId={studentId as Id<'students'>} />;
+	return <StudentDetail onClose={handleClose} studentId={studentId as number} />;
 }

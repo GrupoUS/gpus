@@ -1,4 +1,3 @@
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Loader2, Plus, Search } from 'lucide-react';
 import { z } from 'zod';
@@ -82,9 +81,9 @@ function TemplatesListPage() {
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-					{templates?.map((template: Doc<'emailTemplates'>) => (
+					{templates?.map((template: Record<string, unknown>) => (
 						<TemplateCard
-							key={template._id}
+							key={template.id}
 							onDelete={handleDeleteTemplate}
 							onEdit={(id) => {
 								void navigate({

@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Filter, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { trpc } from '@/lib/trpc';
 
 interface FilterState {
 	search: string;
@@ -26,9 +24,7 @@ interface LeadFiltersProps {
 }
 
 export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on api
-	const listTags = (api as any).tags.listTags;
-	const tags = useQuery(listTags);
+	const { data: tags } = trpc.tags.list.useQuery();
 
 	const [filters, setFilters] = useState<FilterState>({
 		search: '',
@@ -232,16 +228,16 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 						<div className="space-y-2">
 							<h5 className="font-medium text-muted-foreground text-sm">Etiquetas</h5>
 							<div className="grid grid-cols-2 gap-2">
-								{tags?.map((tag: Doc<'tags'>) => (
-									<div className="flex items-center space-x-2" key={tag._id}>
+								{tags?.map((tag) => (
+									<div className="flex items-center space-x-2" key={tag.id}>
 										<Checkbox
-											checked={filters.tags?.includes(tag._id)}
-											id={`tag-${tag._id}`}
-											onCheckedChange={() => toggleFilter('tags', tag._id)}
+											checked={filters.tags?.includes(tag.id)}
+											id={`tag-${tag.id}`}
+											onCheckedChange={() => toggleFilter('tags', tag.id)}
 										/>
 										<Label
 											className="flex items-center gap-2 font-normal text-sm"
-											htmlFor={`tag-${tag._id}`}
+											htmlFor={`tag-${tag.id}`}
 										>
 											<div
 												className="h-2 w-2 rounded-full"

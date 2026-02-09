@@ -1,10 +1,9 @@
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { Bell, Mail, MessageSquare } from 'lucide-react';
 import { useId } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../lib/trpc';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -15,8 +14,8 @@ export const Route = createFileRoute('/_authenticated/settings/notifications')({
 });
 
 function NotificationsSettingsPage() {
-	const userData = useQuery(api.users.current);
-	const updateProfile = useMutation(api.users.updateProfile);
+	const { data: userData } = trpc.users.me.useQuery();
+	const updateProfile = trpc.users.updateProfile.useMutation();
 
 	const emailLeadsId = useId();
 	const emailConversionsId = useId();

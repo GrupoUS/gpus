@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { ProductSection } from '@/components/students/product-section';
@@ -21,7 +20,7 @@ export const Route = createFileRoute('/_authenticated/students')({
 			product: (search.product as string) || 'all',
 			view: ((search.view as string) || 'grid') === 'table' ? 'table' : 'grid',
 			page: Math.max(1, Number(search.page) || 1),
-			studentId: (search.studentId as Id<'students'>) || undefined,
+			studentId: (search.studentId as number) || undefined,
 		};
 	},
 	component: StudentsPage,
@@ -65,7 +64,7 @@ function StudentsPage() {
 		});
 	};
 
-	const handleStudentClick = (studentId: Id<'students'>) => {
+	const handleStudentClick = (studentId: number) => {
 		void navigate({
 			to: '/students',
 			search: { ...params, studentId },

@@ -1,7 +1,5 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import { Loader2, Paperclip, Search, Send, Smile } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -16,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useChatContext } from '@/routes/_authenticated/chat';
 
 interface MessageTemplate {
-	_id: string;
+	id: string;
 	name: string;
 	content: string;
 	category: string;
@@ -103,7 +101,7 @@ export function ChatInput({
 				{filteredTemplates?.map((template: MessageTemplate) => (
 					<button
 						className="group w-full rounded-md p-2 text-left text-sm transition-colors hover:bg-muted"
-						key={template._id}
+						key={template.id}
 						onClick={() => {
 							handleTemplateSelect(template.content);
 							setOpen(false);

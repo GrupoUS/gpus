@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Mail, Phone } from 'lucide-react';
@@ -22,7 +21,7 @@ import {
 import { leadStatusLabels, leadStatusVariants } from '@/lib/constants';
 
 interface MarketingLead {
-	_id: Id<'marketing_leads'>;
+	id: number;
 	name: string;
 	email: string;
 	phone: string;
@@ -39,7 +38,7 @@ interface MarketingLead {
 interface LeadCaptureTableProps {
 	leads: MarketingLead[];
 	onStatusUpdate: (
-		leadId: Id<'marketing_leads'>,
+		leadId: number,
 		newStatus: 'new' | 'contacted' | 'converted' | 'unsubscribed',
 	) => void;
 }
@@ -66,7 +65,7 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 				</TableHeader>
 				<TableBody>
 					{leads.map((lead) => (
-						<TableRow key={lead._id}>
+						<TableRow key={lead.id}>
 							<TableCell>
 								<div className="flex flex-col">
 									<span className="font-medium">{lead.name}</span>
@@ -111,7 +110,7 @@ export function LeadCaptureTable({ leads, onStatusUpdate }: LeadCaptureTableProp
 							<TableCell className="text-right">
 								<Select
 									onValueChange={(value: 'new' | 'contacted' | 'converted' | 'unsubscribed') =>
-										onStatusUpdate(lead._id, value)
+										onStatusUpdate(lead.id, value)
 									}
 									value={lead.status}
 								>

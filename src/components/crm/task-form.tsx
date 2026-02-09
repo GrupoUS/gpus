@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, Loader2, X } from 'lucide-react';
@@ -10,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -32,14 +30,14 @@ const taskSchema = z.object({
 });
 
 interface TaskFormProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 	onCancel: () => void;
 	onSuccess: () => void;
 }
 
 export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
-	const createTask = useMutation(api.tasks.createTask);
-	const users = useQuery(api.users.list) || [];
+	const createTask = trpc.tasks.create.useMutation();
+	const { data: users } = trpc.users.list.useQuery() || [];
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [openUserSelect, setOpenUserSelect] = useState(false);
 
@@ -60,7 +58,7 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 				leadId,
 				description: values.description,
 				dueDate: values.dueDate ? values.dueDate.getTime() : undefined,
-				mentionedUserIds: values.mentionedUserIds as Id<'users'>[],
+				mentionedUserIds: values.mentionedUserIds as number[],
 			});
 			toast.success('Tarefa criada com sucesso!');
 			form.reset();
@@ -166,14 +164,14 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 										<CommandGroup>
 											{users.map((user) => (
 												<CommandItem
-													key={user._id}
-													onSelect={() => toggleUser(user._id)}
+													key={user.id}
+													onSelect={() => toggleUser(user.id)}
 													value={user.name}
 												>
 													<div
 														className={cn(
 															'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-															mentionedUserIds.includes(user._id)
+															mentionedUserIds.includes(user.id)
 																? 'bg-primary text-primary-foreground'
 																: 'opacity-50 [&_svg]:invisible',
 														)}
@@ -206,7 +204,7 @@ export function TaskForm({ leadId, onCancel, onSuccess }: TaskFormProps) {
 					{mentionedUserIds.length > 0 && (
 						<div className="flex flex-wrap gap-2">
 							{mentionedUserIds.map((userId) => {
-								const user = users.find((u) => u._id === userId);
+								const user = users.find((u) => u.id === userId);
 								return user ? (
 									<div
 										className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-primary text-xs"

@@ -1,10 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useAction, useQuery } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -27,7 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 interface CreatePaymentDialogProps {
-	studentId: Id<'students'>;
+	studentId: number;
 	trigger?: React.ReactNode;
 	onSuccess?: () => void;
 }
@@ -52,7 +50,7 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 	const [dueDate, setDueDate] = useState('');
 	const [description, setDescription] = useState('');
 	const [installmentCount, setInstallmentCount] = useState('1');
-	const useQueryUnsafe = useQuery as unknown as (
+	const _useQueryUnsafe = useQuery as unknown as (
 		query: unknown,
 		args?: unknown,
 	) =>
@@ -65,11 +63,11 @@ export function CreatePaymentDialog({ studentId, trigger, onSuccess }: CreatePay
 		| undefined;
 
 	// Get student data to check if synced with Asaas
-	const student = useQueryUnsafe(api.students.getById, { id: studentId });
+	const { data: student } = trpc.students.get.useQuery({ id: studentId });
 
 	// Create payment action
-	const createPayment = useAction(api.asaas.actions.createAsaasPayment);
-	const syncStudent = useAction(api.asaas.mutations.syncStudentAsCustomer);
+	const createPayment = trpc.settings.set.useMutation();
+	const syncStudent = trpc.settings.set.useMutation();
 
 	const asaasCustomerId = student?.asaasCustomerId;
 	const syncError = student?.asaasCustomerSyncError;

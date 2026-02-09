@@ -1,5 +1,3 @@
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import {
 	CartesianGrid,
 	Line,
@@ -10,6 +8,7 @@ import {
 	YAxis,
 } from 'recharts';
 
+import { trpc } from '../../lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formatCurrency = (value: number) =>
@@ -17,7 +16,7 @@ const formatCurrency = (value: number) =>
 
 export function RevenueChart() {
 	const now = new Date();
-	const summary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, {
+	const { data: summary } = trpc.financial.metrics.useQuery({
 		month: now.getMonth(),
 		year: now.getFullYear(),
 	});

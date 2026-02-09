@@ -1,12 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAction } from 'convex/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { api } from '../../../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -41,12 +39,11 @@ type InviteFormData = z.infer<typeof inviteSchema>;
 
 export function InviteDialog() {
 	const [open, setOpen] = useState(false);
-	// Cast to break deep type instantiation chain in Convex API types
-	const inviteUser = (
-		useAction as (
-			fn: unknown,
-		) => (args: { email: string; role: string; redirectUrl: string }) => Promise<unknown>
-	)(api.users.inviteTeamMember);
+	// TODO: Implement invite via tRPC mutation (e.g., trpc.users.invite.useMutation())
+	const inviteUser = (_args: { email: string; role: string; redirectUrl: string }) => {
+		// Stub: was api.users.inviteTeamMember
+		throw new Error('Convite de membros via tRPC ainda não implementado');
+	};
 
 	const form = useForm<InviteFormData>({
 		resolver: zodResolver(inviteSchema),

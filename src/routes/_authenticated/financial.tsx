@@ -1,12 +1,11 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useAction } from 'convex/react';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../lib/trpc';
 import { InvoiceList } from '@/components/financial/invoice-list';
 import { MonthlyOverviewCard } from '@/components/financial/monthly-overview-card';
 import { PaymentCalendar } from '@/components/financial/payment-calendar';
@@ -28,7 +27,7 @@ interface ImportResult {
 
 function FinancialDashboard() {
 	const [isSyncing, setIsSyncing] = useState(false);
-	const syncPayments = useAction(api.asaas.actions.importPaymentsFromAsaas);
+	const syncPayments = trpc.settings.set.useMutation();
 
 	const handleSync = async () => {
 		setIsSyncing(true);

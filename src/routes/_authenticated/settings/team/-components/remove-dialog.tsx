@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAction } from 'convex/react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { api } from '../../../../../../convex/_generated/api';
+import { trpc } from '../../../../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -46,7 +45,7 @@ interface RemoveDialogProps {
 }
 
 export function RemoveDialog({ open, onOpenChange, user }: RemoveDialogProps) {
-	const removeUser = useAction(api.users.removeTeamMember);
+	const removeUser = trpc.users.delete.useMutation();
 
 	const form = useForm<RemoveUserFormData>({
 		resolver: zodResolver(removeUserSchema),

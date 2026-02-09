@@ -1,8 +1,7 @@
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import { AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	Select,
@@ -24,7 +23,7 @@ export function MonthlyOverviewCard() {
 	const [month, setMonth] = useState(now.getMonth());
 	const [year, setYear] = useState(now.getFullYear());
 
-	const summary = useQuery(api.asaas.queries.getMonthlyFinancialSummary, { month, year });
+	const { data: summary } = trpc.financial.metrics.useQuery({ month, year });
 
 	if (summary === undefined) {
 		return (

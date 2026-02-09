@@ -1,21 +1,15 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { format, startOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
 
+import { trpc } from '../lib/trpc';
+
 export function useEmailDashboardViewModel() {
 	// Fetch sent campaigns for metrics
-	const campaigns = useQuery(api.emailMarketing.getCampaigns, {
-		status: 'sent',
-		limit: 100, // Fetch last 100 sent campaigns for stats
-	});
+	const { data: campaigns } = trpc.emailMarketing.campaigns.list.useQuery();
 
-	// Fetch all contacts to calculate growth (approximate)
-	const contacts = useQuery(api.emailMarketing.getContacts, {
-		limit: 1000,
-	});
+	// Fetch all contacts to calculate growth
+	const { data: contacts } = trpc.emailMarketing.contacts.list.useQuery();
 
 	const metrics = useMemo(() => {
 		if (!(campaigns && contacts)) {
@@ -29,14 +23,16 @@ export function useEmailDashboardViewModel() {
 			};
 		}
 
-		// Aggregate campaign stats
+		// Only count sent campaigns
+		const sentCampaigns = campaigns.filter((c) => c.status === 'sent');
+
 		let totalSent = 0;
 		let totalDelivered = 0;
 		let totalOpened = 0;
 		let totalClicked = 0;
 		let totalBounced = 0;
 
-		for (const campaign of campaigns) {
+		for (const campaign of sentCampaigns) {
 			if (campaign.stats) {
 				totalSent += campaign.stats.sent;
 				totalDelivered += campaign.stats.delivered;
@@ -48,19 +44,21 @@ export function useEmailDashboardViewModel() {
 
 		const avgOpenRate = totalDelivered > 0 ? (totalOpened / totalDelivered) * 100 : 0;
 		const avgClickRate = totalOpened > 0 ? (totalClicked / totalOpened) * 100 : 0;
-		const bounceRate = totalSent > 0 ? (totalBounced / totalSent) * 100 : 0;
+		const bounceRateVal = totalSent > 0 ? (totalBounced / totalSent) * 100 : 0;
 
 		// Contact growth (last 30 days)
 		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-		const newContacts = contacts.filter(
-			(c: Doc<'emailContacts'>) => c.createdAt && c.createdAt > thirtyDaysAgo,
-		).length;
+		const newContacts = contacts.filter((c) => {
+			if (!c.createdAt) return false;
+			const ts = new Date(c.createdAt).getTime();
+			return ts > thirtyDaysAgo;
+		}).length;
 
 		return {
 			totalSent,
 			avgOpenRate: avgOpenRate.toFixed(1),
 			avgClickRate: avgClickRate.toFixed(1),
-			bounceRate: bounceRate.toFixed(1),
+			bounceRate: bounceRateVal.toFixed(1),
 			totalContacts: contacts.length,
 			contactGrowth: newContacts,
 		};
@@ -68,6 +66,8 @@ export function useEmailDashboardViewModel() {
 
 	const chartData = useMemo(() => {
 		if (!campaigns) return [];
+
+		const sentCampaigns = campaigns.filter((c) => c.status === 'sent');
 
 		// Group by month (last 6 months)
 		const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -81,13 +81,13 @@ export function useEmailDashboardViewModel() {
 			};
 		}).reverse();
 
-		for (const campaign of campaigns) {
+		for (const campaign of sentCampaigns) {
 			if (!(campaign.sentAt && campaign.stats)) continue;
 
 			const campaignDate = new Date(campaign.sentAt);
-			const MonthStart = startOfMonth(campaignDate).getTime();
+			const monthStart = startOfMonth(campaignDate).getTime();
 
-			const monthData = last6Months.find((m) => m.date === MonthStart);
+			const monthData = last6Months.find((m) => m.date === monthStart);
 			if (monthData) {
 				monthData.enviados += campaign.stats.sent;
 				monthData.abertos += campaign.stats.opened;
@@ -101,8 +101,8 @@ export function useEmailDashboardViewModel() {
 	const topCampaigns = useMemo(() => {
 		if (!campaigns) return [];
 
-		// Sort by open rate
 		return [...campaigns]
+			.filter((c) => c.status === 'sent')
 			.sort((a, b) => {
 				const rateA = a.stats && a.stats.delivered > 0 ? a.stats.opened / a.stats.delivered : 0;
 				const rateB = b.stats && b.stats.delivered > 0 ? b.stats.opened / b.stats.delivered : 0;

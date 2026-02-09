@@ -1,14 +1,12 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, ListChecks, Loader2, Mail, Save, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,14 +64,14 @@ function NewCampaignPage() {
 		emailMarketing: { getLists: unknown; getTemplates: unknown };
 	};
 	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: true }) as
-		| Doc<'emailLists'>[]
+		| Record<string, unknown>[]
 		| undefined;
 	const templates = useQueryUnsafe(apiAny.emailMarketing.getTemplates, { activeOnly: true }) as
-		| Doc<'emailTemplates'>[]
+		| Record<string, unknown>[]
 		| undefined;
 
 	// Convex mutation
-	const createCampaign = useMutation(api.emailMarketing.createCampaign);
+	const createCampaign = trpc.emailMarketing.campaigns.create.useMutation();
 
 	// Form setup
 	const form = useForm<CampaignFormValues>({
@@ -96,15 +94,16 @@ function NewCampaignPage() {
 	// Calculate total contacts from selected lists
 	const totalContacts =
 		lists
-			?.filter((list: Doc<'emailLists'>) => selectedListIds.includes(list._id))
-			.reduce((sum: number, list: Doc<'emailLists'>) => sum + (list.contactCount ?? 0), 0) ?? 0;
+			?.filter((list: Record<string, unknown>) => selectedListIds.includes(list.id))
+			.reduce((sum: number, list: Record<string, unknown>) => sum + (list.contactCount ?? 0), 0) ??
+		0;
 
 	// Handle template selection - populate subject from template
 	const handleTemplateChange = (templateId: string) => {
 		form.setValue('templateId', templateId === 'none' ? undefined : templateId);
 
 		if (templateId && templateId !== 'none') {
-			const template = templates?.find((t: Doc<'emailTemplates'>) => t._id === templateId);
+			const template = templates?.find((t: Record<string, unknown>) => t.id === templateId);
 			if (template?.subject && !form.getValues('subject')) {
 				form.setValue('subject', template.subject);
 			}
@@ -124,8 +123,8 @@ function NewCampaignPage() {
 			</SelectItem>
 		);
 	} else {
-		templateOptions = templates.map((template: Doc<'emailTemplates'>) => (
-			<SelectItem key={template._id} value={template._id}>
+		templateOptions = templates.map((template: Record<string, unknown>) => (
+			<SelectItem key={template.id} value={template.id}>
 				{template.name}
 				{template.category && (
 					<span className="ml-2 text-muted-foreground">({template.category})</span>
@@ -149,13 +148,13 @@ function NewCampaignPage() {
 			</div>
 		);
 	} else {
-		listOptions = lists.map((list: Doc<'emailLists'>) => (
+		listOptions = lists.map((list: Record<string, unknown>) => (
 			<FormField
 				control={form.control}
-				key={list._id}
+				key={list.id}
 				name="listIds"
 				render={({ field }) => {
-					const isChecked = field.value?.includes(list._id);
+					const isChecked = field.value?.includes(list.id);
 					return (
 						<FormItem className="flex items-center space-x-3 space-y-0">
 							<FormControl>
@@ -164,8 +163,8 @@ function NewCampaignPage() {
 									onCheckedChange={(checked) => {
 										const current = field.value || [];
 										const updatedListIds = checked
-											? [...current, list._id]
-											: current.filter((id) => id !== list._id);
+											? [...current, list.id]
+											: current.filter((id) => id !== list.id);
 										field.onChange(updatedListIds);
 									}}
 								/>
@@ -188,8 +187,8 @@ function NewCampaignPage() {
 				name: data.name,
 				subject: data.subject,
 				htmlContent: data.htmlContent || undefined,
-				templateId: data.templateId ? (data.templateId as Id<'emailTemplates'>) : undefined,
-				listIds: data.listIds as Id<'emailLists'>[],
+				templateId: data.templateId ? (data.templateId as number) : undefined,
+				listIds: data.listIds as number[],
 			});
 
 			toast.success('Campanha criada com sucesso!', {

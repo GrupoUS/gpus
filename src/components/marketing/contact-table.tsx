@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Mail, RefreshCw, User } from 'lucide-react';
@@ -15,7 +14,7 @@ import {
 } from '@/components/ui/table';
 
 interface Contact {
-	_id: Id<'emailContacts'>;
+	id: number;
 	email: string;
 	firstName?: string;
 	lastName?: string;
@@ -27,7 +26,7 @@ interface Contact {
 
 interface ContactTableProps {
 	contacts: Contact[];
-	onSync: (contactId: Id<'emailContacts'>) => void;
+	onSync: (contactId: number) => void;
 }
 
 function getStatusBadge(status: string) {
@@ -69,7 +68,7 @@ export function ContactTable({ contacts, onSync }: ContactTableProps) {
 				</TableHeader>
 				<TableBody>
 					{contacts.map((contact) => (
-						<TableRow key={contact._id}>
+						<TableRow key={contact.id}>
 							<TableCell>
 								<div className="flex flex-col">
 									<div className="flex items-center gap-2 font-medium">
@@ -103,7 +102,7 @@ export function ContactTable({ contacts, onSync }: ContactTableProps) {
 							</TableCell>
 							<TableCell className="text-right">
 								<Button
-									onClick={() => onSync(contact._id)}
+									onClick={() => onSync(contact.id)}
 									size="sm"
 									title="Sincronizar com Brevo"
 									variant="ghost"

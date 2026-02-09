@@ -1,9 +1,6 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageSquare } from 'lucide-react';
@@ -11,6 +8,7 @@ import { MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import type { ConversationListItem } from '@/types/api';
 
 interface ConversationListProps {
 	department?: string;
@@ -39,7 +37,7 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 	const useQueryUnsafe = useQuery as unknown as (
 		query: unknown,
 		args?: unknown,
-	) => Doc<'conversations'>[] | undefined;
+	) => ConversationListItem[] | undefined;
 	const apiAny = api as unknown as { conversations: { list: unknown } };
 	const conversations = useQueryUnsafe(apiAny.conversations.list, {
 		status: statusFilter as ConversationStatus | undefined,
@@ -74,10 +72,10 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 	return (
 		<ScrollArea className="h-full">
 			<div className="space-y-1 p-2">
-				{conversations.map((conversation: Doc<'conversations'>) => {
+				{conversations.map((conversation: ConversationListItem) => {
 					// Type assertion for enriched data that comes from the backend but isn't in the generated Doc type yet
 					// Note: lastMessage is returned as a string from the backend, not an object
-					const item = conversation as Doc<'conversations'> & {
+					const item = conversation as ConversationListItem & {
 						contactName?: string;
 						lastMessage?: string;
 						unreadCount?: number;
@@ -90,8 +88,8 @@ export function ConversationList({ department, statusFilter, search }: Conversat
 						<Link
 							activeProps={{ className: 'bg-muted' }}
 							className="group block w-full rounded-lg p-3 text-left transition-colors hover:bg-muted/50"
-							key={item._id}
-							params={{ department: item.department, id: item._id }}
+							key={item.id}
+							params={{ department: item.department, id: item.id }}
 							preload="intent"
 							to="/chat/$department/$id"
 						>

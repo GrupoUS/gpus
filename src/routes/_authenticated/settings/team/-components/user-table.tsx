@@ -1,6 +1,5 @@
 import { Eye, MoreVertical, Trash2, UserCog } from 'lucide-react';
 
-import type { Doc } from '../../../../../../convex/_generated/dataModel';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,11 +19,11 @@ import {
 } from '@/components/ui/table';
 
 interface UserTableProps {
-	users: Doc<'users'>[];
+	users: Record<string, unknown>[];
 	isLoading: boolean;
-	onEdit: (user: Doc<'users'>) => void;
-	onRemove: (user: Doc<'users'>) => void;
-	onView: (user: Doc<'users'>) => void;
+	onEdit: (user: Record<string, unknown>) => void;
+	onRemove: (user: Record<string, unknown>) => void;
+	onView: (user: Record<string, unknown>) => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -77,7 +76,7 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 				{users.map((user) => (
 					<TableRow
 						className="cursor-pointer hover:bg-muted/50"
-						key={user._id}
+						key={user.id}
 						onClick={() => onView(user)}
 					>
 						<TableCell>

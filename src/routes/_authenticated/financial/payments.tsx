@@ -1,9 +1,6 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { Copy, ExternalLink, FileText, Search } from 'lucide-react';
 import { type ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -36,6 +33,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+// import { trpc } from '../../../lib/trpc'; // TODO: re-enable when financial router is ready
 
 export const Route = createFileRoute('/_authenticated/financial/payments')({
 	component: PaymentsPage,
@@ -54,15 +52,31 @@ const statusConfig: Record<
 	CANCELLED: { label: 'Cancelado', variant: 'outline' },
 };
 
+interface Payment {
+	id: number | string;
+	description?: string;
+	status: string;
+	value: number;
+	netValue?: number;
+	dueDate: number;
+	confirmedDate?: number;
+	billingType: string;
+	installmentNumber?: number;
+	totalInstallments?: number;
+	boletoUrl?: string;
+	pixQrCode?: string;
+	asaasPaymentId?: string;
+}
+
 interface PaymentsResult {
-	payments: Doc<'asaasPayments'>[];
+	payments: Payment[];
 	total: number;
 	hasMore: boolean;
 }
 
 interface PaymentTableRowProps {
-	payment: Doc<'asaasPayments'>;
-	onSelect: (payment: Doc<'asaasPayments'>) => void;
+	payment: Payment;
+	onSelect: (payment: Payment) => void;
 	onCopy: (text: string) => void;
 }
 
@@ -88,7 +102,7 @@ function PaymentTableRow({ payment, onSelect, onCopy }: PaymentTableRowProps) {
 	};
 
 	return (
-		<TableRow key={payment._id}>
+		<TableRow key={payment.id}>
 			<TableCell>
 				{payment.description || 'Cobrança'}
 				{payment.installmentNumber && payment.totalInstallments && (
@@ -238,7 +252,7 @@ function PaymentFilters({
 }
 
 interface PaymentDetailContentProps {
-	payment: Doc<'asaasPayments'>;
+	payment: Payment;
 	onCopy: (text: string) => void;
 }
 
@@ -333,26 +347,17 @@ function PaymentsPage() {
 	const [startDate, setStartDate] = useState('');
 	const [endDate, setEndDate] = useState('');
 	const [offset, setOffset] = useState(0);
-	const [selectedPayment, setSelectedPayment] = useState<Doc<'asaasPayments'> | null>(null);
+	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
 	const startDateId = useId();
 	const endDateId = useId();
 
 	// Convert dates to timestamps for query
-	const startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
-	const endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
+	const _startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
+	const _endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
 
-	// Use getAllPayments with filters
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { asaas: { queries: { getAllPayments: unknown } } };
-	const paymentsResult = useQueryUnsafe(apiAny.asaas.queries.getAllPayments, {
-		status: statusFilter === 'all' ? undefined : statusFilter,
-		billingType: billingTypeFilter === 'all' ? undefined : billingTypeFilter,
-		startDate: startTimestamp,
-		endDate: endTimestamp,
-		limit: 50,
-		offset,
-	}) as PaymentsResult | undefined;
+	// TODO: Implement financial payments tRPC router
+	const paymentsResult: PaymentsResult | undefined = undefined;
 
 	const allPayments = paymentsResult?.payments || [];
 	const totalPayments = paymentsResult?.total || 0;
@@ -360,7 +365,7 @@ function PaymentsPage() {
 
 	// Apply local search filter (for description)
 	const filteredPayments = search
-		? allPayments.filter((payment: Doc<'asaasPayments'>) =>
+		? allPayments.filter((payment) =>
 				payment.description?.toLowerCase().includes(search.toLowerCase()),
 			)
 		: allPayments;
@@ -411,9 +416,9 @@ function PaymentsPage() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{filteredPayments.map((payment: Doc<'asaasPayments'>) => (
+						{filteredPayments.map((payment) => (
 							<PaymentTableRow
-								key={payment._id}
+								key={String(payment.id)}
 								onCopy={copyToClipboard}
 								onSelect={setSelectedPayment}
 								payment={payment}
@@ -485,7 +490,7 @@ function PaymentsPage() {
 				<DialogContent className="max-w-md">
 					<DialogHeader>
 						<DialogTitle>Detalhes da Cobrança</DialogTitle>
-						<DialogDescription>{selectedPayment?.asaasPaymentId}</DialogDescription>
+						<DialogDescription>{selectedPayment?.asaasPaymentId ?? ''}</DialogDescription>
 					</DialogHeader>
 					{selectedPayment && (
 						<PaymentDetailContent onCopy={copyToClipboard} payment={selectedPayment} />

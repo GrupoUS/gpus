@@ -1,4 +1,3 @@
-import type { Doc } from '@convex/_generated/dataModel';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -12,9 +11,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { Lead } from '@/types/api';
 
 interface LeadActionsProps {
-	lead: Doc<'leads'>;
+	lead: Lead;
 	onClose?: () => void;
 }
 

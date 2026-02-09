@@ -1,14 +1,14 @@
 'use client';
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Check, CheckCheck, Clock, XCircle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import type { Message } from '@/types/api';
 
 interface MessageBubbleProps {
-	message: Doc<'messages'>;
+	message: Message;
 	isOwn: boolean;
 }
 

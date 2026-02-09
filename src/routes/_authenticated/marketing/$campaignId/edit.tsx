@@ -1,11 +1,9 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +15,7 @@ type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
 interface CampaignFormData {
 	name: string;
 	subject: string;
-	listIds: Id<'emailLists'>[];
+	listIds: number[];
 	status: CampaignStatus;
 	scheduledAt?: number;
 }
@@ -33,15 +31,15 @@ function EditCampaignPage() {
 	const { campaignId } = Route.useParams();
 
 	// Fetch existing campaign data
-	const queryArgs = { campaignId: campaignId as Id<'emailCampaigns'> };
-	const campaign = useQuery(api.emailMarketing.getCampaign, queryArgs);
+	const queryArgs = { campaignId: campaignId as number };
+	const { data: campaign } = trpc.emailMarketing.campaigns.get.useQuery(queryArgs);
 	const isLoading = campaign === undefined;
 
 	// Fetch available email lists
-	const lists = useQuery(api.emailMarketing.getLists, {});
+	const { data: lists } = trpc.emailMarketing.lists.list.useQuery({});
 
 	// Update campaign mutation
-	const updateCampaign = useMutation(api.emailMarketing.updateCampaign);
+	const updateCampaign = trpc.emailMarketing.campaigns.create.useMutation();
 
 	// Form state
 	const [formData, setFormData] = useState<CampaignFormData>({
@@ -73,7 +71,7 @@ function EditCampaignPage() {
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { status: _status, ...updateData } = formData;
 			await updateCampaign({
-				campaignId: campaign._id,
+				campaignId: campaign.id,
 				...updateData,
 			});
 			toast.success('Campanha atualizada com sucesso!', {
@@ -93,7 +91,7 @@ function EditCampaignPage() {
 		}
 	};
 
-	const handleListToggle = (listId: Id<'emailLists'>) => {
+	const handleListToggle = (listId: number) => {
 		setFormData((prev) => {
 			const isSelected = prev.listIds.includes(listId);
 			const newList = isSelected
@@ -201,16 +199,16 @@ function EditCampaignPage() {
 								</div>
 							) : (
 								<div className="space-y-2">
-									{lists?.map((list: Doc<'emailLists'>) => (
-										<div className="flex items-center gap-3 rounded-lg border p-3" key={list._id}>
+									{lists?.map((list: Record<string, unknown>) => (
+										<div className="flex items-center gap-3 rounded-lg border p-3" key={list.id}>
 											<input
-												checked={formData.listIds.includes(list._id)}
+												checked={formData.listIds.includes(list.id)}
 												className="h-5 w-5"
-												id={`list-${list._id}`}
-												onChange={() => handleListToggle(list._id)}
+												id={`list-${list.id}`}
+												onChange={() => handleListToggle(list.id)}
 												type="checkbox"
 											/>
-											<Label className="flex-1 cursor-pointer" htmlFor={`list-${list._id}`}>
+											<Label className="flex-1 cursor-pointer" htmlFor={`list-${list.id}`}>
 												{list.name}
 											</Label>
 										</div>

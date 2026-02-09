@@ -8,8 +8,6 @@
  * - Progress bar for running syncs
  */
 
-import { api } from '@convex/_generated/api';
-import { useAction, useQuery } from 'convex/react';
 import {
 	AlertCircle,
 	CheckCircle2,
@@ -23,6 +21,7 @@ import {
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,17 +45,17 @@ export function AdminSyncControls() {
 	});
 
 	// Get current sync status - use most recent sync log
-	const recentSyncs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 1 });
+	const { data: recentSyncs } = trpc.settings.list.useQuery({ limit: 1 });
 	const syncStatus = recentSyncs?.[0];
 
 	// Get auto-sync settings (would need to be implemented)
-	// const settings = useQuery(api.asaas.settings.getAutoSyncSettings, {});
+	// const { data: settings } = trpc.settings.list.useQuery({});
 
 	// Actions for starting syncs
-	const startCustomersSync = useAction(api.asaas.actions.importCustomersFromAsaas);
-	const startPaymentsSync = useAction(api.asaas.actions.importPaymentsFromAsaas);
-	const startSubscriptionsSync = useAction(api.asaas.actions.importSubscriptionsFromAsaas);
-	const startAllSync = useAction(api.asaas.actions.importAllFromAsaas);
+	const startCustomersSync = trpc.settings.set.useMutation();
+	const startPaymentsSync = trpc.settings.set.useMutation();
+	const startSubscriptionsSync = trpc.settings.set.useMutation();
+	const startAllSync = trpc.settings.set.useMutation();
 
 	const handleSync = async (type: 'customers' | 'payments' | 'subscriptions' | 'all') => {
 		setLoading({ ...loading, [type]: true });

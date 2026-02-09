@@ -1,9 +1,7 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -24,6 +22,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { FinancialMetrics } from '@/types/api';
 
 const formatCurrency = (value: number) =>
 	new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -40,7 +39,7 @@ const STATUS_CONFIG = {
 
 interface PaymentDateGroup {
 	date: string;
-	payments: Doc<'asaasPayments'>[];
+	payments: FinancialMetrics[];
 	totals: { pending: number; paid: number; overdue: number };
 }
 
@@ -51,7 +50,7 @@ export function PaymentCalendar() {
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-	const dueDates = useQuery(api.asaas.queries.getPaymentsDueDates, {
+	const { data: dueDates } = trpc.financial.metrics.useQuery({
 		month,
 		year,
 	});
@@ -274,7 +273,7 @@ export function PaymentCalendar() {
 								</TableHeader>
 								<TableBody>
 									{selectedPayments.payments.map((payment) => (
-										<TableRow key={payment._id}>
+										<TableRow key={payment.id}>
 											<TableCell className="max-w-37.5 truncate">
 												{payment.description || 'Cobrança'}
 											</TableCell>

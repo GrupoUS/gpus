@@ -1,16 +1,14 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useMutation } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import type { Objection } from '@/types/api';
 
 interface ObjectionFormProps {
-	leadId: Id<'leads'>;
-	objection?: Doc<'objections'>;
+	leadId: number;
+	objection?: Objection;
 	onSuccess?: () => void;
 	onCancel?: () => void;
 }
@@ -31,7 +29,7 @@ export function ObjectionForm({ leadId, objection, onSuccess, onCancel }: Object
 		try {
 			if (objection) {
 				await updateObjection({
-					objectionId: objection._id,
+					objectionId: objection.id,
 					objectionText: text,
 				});
 				toast.success('Objeção atualizada');

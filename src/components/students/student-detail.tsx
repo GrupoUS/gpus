@@ -1,8 +1,5 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -19,6 +16,7 @@ import {
 } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 import { StudentForm } from './student-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +33,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
+import type { Student } from '@/types/api';
 
 // Helper to handle chunk load errors (e.g., after a new deployment)
 const handleChunkError = (error: Error): Promise<never> => {
@@ -82,8 +81,8 @@ function SafeTab({
 	studentId,
 	Component,
 }: {
-	studentId: Id<'students'> | null;
-	Component: React.ComponentType<{ studentId: Id<'students'> }>;
+	studentId: number | null;
+	Component: React.ComponentType<{ studentId: number }>;
 }) {
 	if (!studentId) return null;
 	return <Component studentId={studentId} />;
@@ -93,16 +92,17 @@ export function StudentDetail({
 	studentId,
 	onClose,
 }: {
-	studentId: Id<'students'> | null;
+	studentId: number | null;
 	onClose: () => void;
 }) {
 	const [activeTab, _setActiveTab] = useState('enrollments');
-	const student = useQuery(api.students.getById, studentId ? { id: studentId } : 'skip');
-	const enrollments = useQuery(api.enrollments.getByStudent, studentId ? { studentId } : 'skip');
-	const activities = useQuery(
-		api.activities.listByStudent,
-		activeTab === 'timeline' && studentId ? { studentId } : 'skip',
+	const { data: student } = trpc.students.get.useQuery({ id: studentId }, { enabled: !!studentId });
+	const { data: enrollments } = trpc.enrollments.listByStudent.useQuery(
+		{ studentId },
+		{ enabled: !!studentId },
 	);
+	// TODO: Implement activities query via tRPC (was api.activities.listByStudent)
+	const activities = [] as Student[];
 
 	const isOpen = !!studentId;
 
@@ -214,8 +214,7 @@ export function StudentDetail({
 								</CardHeader>
 								<CardContent>
 									<div className="font-bold text-2xl text-green-600">
-										{enrollments?.filter((e: Doc<'enrollments'>) => e.status === 'ativo').length ??
-											0}
+										{enrollments?.filter((e: Student) => e.status === 'ativo').length ?? 0}
 									</div>
 								</CardContent>
 							</Card>
@@ -227,10 +226,7 @@ export function StudentDetail({
 								<CardContent>
 									<div className="font-bold text-2xl text-primary">
 										{formatCurrency(
-											enrollments?.reduce(
-												(sum: number, e: Doc<'enrollments'>) => sum + e.totalValue,
-												0,
-											) ?? 0,
+											enrollments?.reduce((sum: number, e: Student) => sum + e.totalValue, 0) ?? 0,
 										)}
 									</div>
 								</CardContent>
@@ -292,8 +288,8 @@ export function StudentDetail({
 											</div>
 										) : (
 											<div className="relative ml-3 space-y-6 border-border/50 border-l">
-												{activities.map((activity: Doc<'activities'>) => (
-													<div className="relative pl-6" key={activity._id}>
+												{activities.map((activity: Student) => (
+													<div className="relative pl-6" key={activity.id}>
 														<div className="absolute top-1 -left-[5px] h-2.5 w-2.5 rounded-full border-2 border-background bg-primary ring-2 ring-primary/20" />
 														<div className="flex flex-col gap-1">
 															<span className="text-muted-foreground text-xs">

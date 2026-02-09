@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc } from '@convex/_generated/dataModel';
 import { Eye, MousePointerClick, Send } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +12,10 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { EmailCampaign } from '@/types/api';
 
 interface TopCampaignsTableProps {
-	campaigns: Doc<'emailCampaigns'>[];
+	campaigns: EmailCampaign[];
 }
 
 export function TopCampaignsTable({ campaigns }: TopCampaignsTableProps) {
@@ -44,7 +44,7 @@ export function TopCampaignsTable({ campaigns }: TopCampaignsTableProps) {
 							const clickRate = opened > 0 ? (clicked / opened) * 100 : 0;
 
 							return (
-								<TableRow key={campaign._id}>
+								<TableRow key={campaign.id}>
 									<TableCell className="font-medium">
 										<div className="flex flex-col">
 											<span className="max-w-[200px] truncate" title={campaign.name}>

@@ -1,13 +1,12 @@
 import { useUser } from '@clerk/clerk-react';
-import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
 import { Loader2, User } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../../lib/trpc';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,8 +34,8 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 function ProfileSettingsPage() {
 	const { user: clerkUser } = useUser();
-	const userData = useQuery(api.users.current);
-	const updateProfile = useMutation(api.users.updateProfile);
+	const { data: userData } = trpc.users.me.useQuery();
+	const updateProfile = trpc.users.updateProfile.useMutation();
 
 	const form = useForm<ProfileFormData>({
 		resolver: zodResolver(profileSchema),

@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp, User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,13 +19,14 @@ import {
 	studentStatusVariants,
 } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import type { StudentListItem } from '@/types/api';
 
 // Enriched student type including mainProduct from students.list query
-type EnrichedStudent = Doc<'students'> & { mainProduct?: string };
+type EnrichedStudent = StudentListItem & { mainProduct?: string };
 
 interface StudentsTableProps {
 	students: EnrichedStudent[];
-	onStudentClick: (studentId: Id<'students'>) => void;
+	onStudentClick: (studentId: number) => void;
 }
 
 type SortField = 'name' | 'status' | 'churnRisk' | 'createdAt';
@@ -138,12 +138,12 @@ export function StudentsTable({ students, onStudentClick }: StudentsTableProps) 
 							<TableRow
 								aria-label={`Ver detalhes de ${student.name}`}
 								className="cursor-pointer transition-colors hover:bg-muted/50"
-								key={student._id}
-								onClick={() => onStudentClick(student._id)}
+								key={student.id}
+								onClick={() => onStudentClick(student.id)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
-										onStudentClick(student._id);
+										onStudentClick(student.id);
 									}
 								}}
 								role="button"

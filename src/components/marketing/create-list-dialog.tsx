@@ -1,14 +1,13 @@
 'use client';
 
-import { api } from '@convex/_generated/api';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from 'convex/react';
 import { Loader2, Plus, Users } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -62,7 +61,7 @@ interface CreateListDialogProps {
 
 export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 	const [open, setOpen] = useState(false);
-	const createList = useMutation(api.emailMarketing.createListWithContacts);
+	const createList = trpc.emailMarketing.lists.create.useMutation();
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
@@ -81,21 +80,12 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 
 	const sourceType = form.watch('sourceType');
 	const products = form.watch('products');
-	const activeOnly = form.watch('activeOnly');
-	const qualifiedOnly = form.watch('qualifiedOnly');
+	const _activeOnly = form.watch('activeOnly');
+	const _qualifiedOnly = form.watch('qualifiedOnly');
 	const isSubmitting = form.formState.isSubmitting;
 
-	// Preview count query
-	const previewData = useQuery(
-		api.emailMarketing.previewListContacts,
-		open
-			? {
-					sourceType,
-					products,
-					filters: { activeOnly, qualifiedOnly },
-				}
-			: 'skip',
-	);
+	// TODO: Implement preview query via tRPC (was api.emailMarketing.previewListContacts)
+	const previewData = open ? { count: 0 } : undefined;
 
 	const toggleProduct = (product: string) => {
 		const currentProducts = form.getValues('products');

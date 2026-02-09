@@ -1,10 +1,7 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { useNavigate } from '@tanstack/react-router';
-import { useAction, useMutation, usePaginatedQuery } from 'convex/react';
 import { toast } from 'sonner';
 
-const PAGE_SIZE = 20;
+import { trpc } from '../lib/trpc';
 
 // biome-ignore lint/suspicious/noExplicitAny: generic route typing
 export function useContactsViewModel(Route: any) {
@@ -12,26 +9,8 @@ export function useContactsViewModel(Route: any) {
 	const searchParams = Route.useSearch();
 	const { search, status, sourceType } = searchParams;
 
-	// Mutations & Actions
-	const syncContact = useAction(api.emailMarketing.syncContactToBrevo);
-	const updateSubscription = useMutation(api.emailMarketing.updateContactSubscription);
-
-	// Use paginated query for server-side pagination
-	const {
-		results: contacts,
-		status: paginationStatus,
-		loadMore,
-		isLoading,
-	} = usePaginatedQuery(
-		api.emailMarketing.getContactsPaginated,
-		{
-			subscriptionStatus:
-				status === 'all' ? undefined : (status as 'subscribed' | 'unsubscribed' | 'pending'),
-			sourceType: sourceType === 'all' ? undefined : (sourceType as 'lead' | 'student'),
-			search: search || undefined,
-		},
-		{ initialNumItems: PAGE_SIZE },
-	);
+	// Fetch contacts
+	const { data: contacts, isLoading } = trpc.emailMarketing.contacts.list.useQuery();
 
 	// Stats - computed from all loaded contacts
 	const stats = (() => {
@@ -41,7 +20,6 @@ export function useContactsViewModel(Route: any) {
 		const pending = contacts.filter((c) => c.subscriptionStatus === 'pending').length;
 		const unsubscribed = contacts.filter((c) => c.subscriptionStatus === 'unsubscribed').length;
 
-		// Calculate unsubscribe rate (unsubscribed / total * 100)
 		const unsubscribeRate = total > 0 ? (unsubscribed / total) * 100 : 0;
 
 		return {
@@ -53,31 +31,36 @@ export function useContactsViewModel(Route: any) {
 		};
 	})();
 
-	// Handlers
-	const handleSyncContact = async (contactId: Id<'emailContacts'>) => {
-		try {
-			const result = await syncContact({ contactId });
-			if (result.success) {
-				toast.success('Contato sincronizado com Brevo com sucesso');
-			}
-		} catch (_error) {
-			toast.error('Falha ao sincronizar contato');
+	// Filter client-side
+	const filteredContacts = (() => {
+		if (!contacts) return [];
+		let result = [...contacts];
+
+		if (status && status !== 'all') {
+			result = result.filter((c) => c.subscriptionStatus === status);
 		}
+		if (search) {
+			const searchLower = search.toLowerCase();
+			result = result.filter(
+				(c) =>
+					c.email?.toLowerCase().includes(searchLower) ||
+					c.firstName?.toLowerCase().includes(searchLower) ||
+					c.lastName?.toLowerCase().includes(searchLower),
+			);
+		}
+		return result;
+	})();
+
+	// Handlers (stubs — Brevo sync actions not yet in tRPC)
+	const handleSyncContact = (_contactId: number) => {
+		toast.info('Sincronização com Brevo em breve');
 	};
 
-	const handleUpdateSubscription = async (
-		contactId: Id<'emailContacts'>,
-		newStatus: 'subscribed' | 'unsubscribed',
+	const handleUpdateSubscription = (
+		_contactId: number,
+		_newStatus: 'subscribed' | 'unsubscribed',
 	) => {
-		try {
-			await updateSubscription({
-				contactId,
-				subscriptionStatus: newStatus,
-			});
-			toast.success('Status de inscrição atualizado');
-		} catch (_error) {
-			toast.error('Falha ao atualizar status de inscrição');
-		}
+		toast.info('Atualização de inscrição em breve');
 	};
 
 	const handleFilterChange = (key: string, value: string | number) => {
@@ -88,9 +71,7 @@ export function useContactsViewModel(Route: any) {
 	};
 
 	const handleLoadMore = () => {
-		if (paginationStatus === 'CanLoadMore') {
-			loadMore(PAGE_SIZE);
-		}
+		// No pagination yet — all contacts loaded at once
 	};
 
 	const clearFilters = () => {
@@ -106,12 +87,12 @@ export function useContactsViewModel(Route: any) {
 	};
 
 	return {
-		contacts: contacts ?? [],
+		contacts: filteredContacts,
 		stats,
 		isLoading,
-		canLoadMore: paginationStatus === 'CanLoadMore',
-		paginationStatus,
-		totalContacts: contacts?.length ?? 0,
+		canLoadMore: false,
+		paginationStatus: 'Exhausted' as const,
+		totalContacts: filteredContacts.length,
 		filters: {
 			search,
 			status,

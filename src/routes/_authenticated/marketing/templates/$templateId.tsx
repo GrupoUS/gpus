@@ -1,10 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
+import { trpc } from '../../../../lib/trpc';
 import { TemplateForm } from '@/components/marketing/template-form';
 import { useTemplatesViewModel } from '@/hooks/use-templates-view-model';
 
@@ -24,8 +22,8 @@ function EditTemplatePage() {
 	const { handleUpdateTemplate } = useTemplatesViewModel();
 
 	// Fetch template data
-	const template = useQuery(api.emailMarketing.getTemplate, {
-		templateId: templateId as Id<'emailTemplates'>,
+	const { data: template } = trpc.emailMarketing.templates.list.useQuery({
+		templateId: templateId as number,
 	});
 
 	// Loading state
@@ -69,7 +67,7 @@ function EditTemplatePage() {
 					isActive: template.isActive,
 				}}
 				onSubmit={async (data) => {
-					await handleUpdateTemplate(template._id, data);
+					await handleUpdateTemplate(template.id, data);
 					void navigate({ to: '/marketing/templates', search: { search: '', category: 'all' } });
 				}}
 			/>

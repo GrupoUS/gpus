@@ -1,4 +1,3 @@
-import type { Doc } from '@convex/_generated/dataModel';
 import { Link } from '@tanstack/react-router';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import type { Lead } from '@/types/api';
 
 const tempConfig = {
 	quente: { icon: Flame, color: 'text-red-500', bg: 'bg-red-500/10' },
@@ -28,7 +28,7 @@ const productLabels: Record<string, string> = {
 };
 
 interface RecentLeadsProps {
-	data?: Doc<'leads'>[];
+	data?: Lead[];
 }
 
 export function RecentLeads({ data }: RecentLeadsProps) {
@@ -54,7 +54,7 @@ export function RecentLeads({ data }: RecentLeadsProps) {
 			return (
 				<div
 					className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
-					key={lead._id}
+					key={lead.id}
 				>
 					<Avatar className="h-9 w-9">
 						<AvatarFallback className="bg-primary/10 text-primary text-xs">

@@ -1,12 +1,10 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -26,6 +24,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import type { Lead } from '@/types/api';
 
 const editLeadSchema = z.object({
 	name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -46,13 +45,13 @@ const editLeadSchema = z.object({
 type EditLeadFormData = z.infer<typeof editLeadSchema>;
 
 interface LeadEditDialogProps {
-	lead: Doc<'leads'>;
+	lead: Lead;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }
 
 export function LeadEditDialog({ lead, open, onOpenChange }: LeadEditDialogProps) {
-	const updateLead = useMutation(api.leads.updateLead);
+	const updateLead = trpc.leads.updateLead.useMutation();
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required for react-hook-form zod resolver deep type fix
 	const form = useForm({
@@ -77,7 +76,7 @@ export function LeadEditDialog({ lead, open, onOpenChange }: LeadEditDialogProps
 	const onSubmit = async (data: EditLeadFormData) => {
 		try {
 			await updateLead({
-				leadId: lead._id,
+				leadId: lead.id,
 				patch: {
 					name: data.name,
 					phone: data.phone,

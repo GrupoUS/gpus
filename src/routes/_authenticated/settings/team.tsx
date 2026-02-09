@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { usePaginatedQuery } from 'convex/react';
 import { Search, UserCog } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -13,8 +10,8 @@ import { InviteDialog } from './team/-components/invite-dialog';
 import { RemoveDialog } from './team/-components/remove-dialog';
 import { UserDetailsDrawer } from './team/-components/user-details';
 import { UserTable } from './team/-components/user-table';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { trpc } from '@/lib/trpc';
 
 export const Route = createFileRoute('/_authenticated/settings/team')({
 	beforeLoad: ({ context }) => {
@@ -39,38 +36,35 @@ function TeamSettingsPage() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [debouncedQuery] = useDebounce(searchQuery, 300);
 
-	// Use paginated query
-	// biome-ignore lint/suspicious/noExplicitAny: Fix deep type instantiation
-	const searchTeamMembers = (api as any).users.searchTeamMembers;
-	// biome-ignore lint/suspicious/noExplicitAny: Fix deep type instantiation
-	const paginatedQuery = usePaginatedQuery as any;
-	const { results, status, loadMore } = paginatedQuery(
-		searchTeamMembers,
-		{ query: debouncedQuery },
-		{ initialNumItems: 10 },
-	);
+	// Use tRPC query instead of Convex paginated query
+	const { data: allUsers, isLoading } = trpc.users.list.useQuery();
+
+	// Client-side filter by search query
+	const results = (allUsers ?? []).filter((user) => {
+		if (!debouncedQuery) return true;
+		const q = debouncedQuery.toLowerCase();
+		return user.name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q);
+	});
 
 	// State for Dialogs
-	const [selectedUser, setSelectedUser] = useState<Doc<'users'> | null>(null);
+	const [selectedUser, setSelectedUser] = useState<Record<string, unknown> | null>(null);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
 	// Handlers
-	const handleEditRole = (user: Doc<'users'>) => {
+	const handleEditRole = (user: Record<string, unknown>) => {
 		setSelectedUser(user);
 		setIsEditOpen(true);
 	};
 
-	const handleRemove = (user: Doc<'users'>) => {
+	const handleRemove = (user: Record<string, unknown>) => {
 		setSelectedUser(user);
 		setIsRemoveOpen(true);
 	};
 
-	const handleView = (user: Doc<'users'>) => {
+	const handleView = (user: Record<string, unknown>) => {
 		setSelectedUser(user);
 	};
-
-	const isLoading = status === 'LoadingFirstPage';
 
 	return (
 		<div className="space-y-6 p-6">
@@ -107,15 +101,6 @@ function TeamSettingsPage() {
 				onView={handleView}
 				users={results || []}
 			/>
-
-			{/* Pagination / Load More */}
-			<div className="flex justify-center py-4">
-				{status === 'CanLoadMore' && (
-					<Button onClick={() => loadMore(10)} variant="outline">
-						Carregar mais
-					</Button>
-				)}
-			</div>
 
 			{/* Dialogs */}
 			{selectedUser && (

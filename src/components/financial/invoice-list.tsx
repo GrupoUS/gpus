@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +17,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { FinancialMetrics } from '@/types/api';
 
 const STATUS_CONFIG = {
 	PENDING: { label: 'Pendente', variant: 'secondary' as const },
@@ -65,7 +63,7 @@ export function InvoiceList() {
 		status: statusFilter === 'all' ? undefined : statusFilter,
 		limit: pageSize,
 		offset: page * pageSize,
-	}) as { payments: Doc<'asaasPayments'>[]; total: number; hasMore: boolean } | undefined;
+	}) as { payments: FinancialMetrics[]; total: number; hasMore: boolean } | undefined;
 
 	if (!result) {
 		return <div>Carregando...</div>;
@@ -99,8 +97,8 @@ export function InvoiceList() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{result.payments.map((payment: Doc<'asaasPayments'>) => (
-						<TableRow key={payment._id}>
+					{result.payments.map((payment: FinancialMetrics) => (
+						<TableRow key={payment.id}>
 							<TableCell>{payment.description || 'Cobrança'}</TableCell>
 							<TableCell>{formatCurrency(payment.value)}</TableCell>
 							<TableCell>{formatDate(payment.dueDate)}</TableCell>

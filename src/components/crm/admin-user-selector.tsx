@@ -1,8 +1,7 @@
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import { Check, ChevronsUpDown, User } from 'lucide-react';
 import { useState } from 'react';
 
+import { trpc } from '../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import {
 	Command,
@@ -22,7 +21,7 @@ interface AdminUserSelectorProps {
 
 export function AdminUserSelector({ selectedUserId, onUserSelect }: AdminUserSelectorProps) {
 	const [open, setOpen] = useState(false);
-	const users = useQuery(api.users.listSystemUsers);
+	const { data: users } = trpc.users.listSystemUsers.useQuery();
 
 	// If no users returned (not admin or no data), don't render
 	if (!users || users.length === 0) {
@@ -65,7 +64,7 @@ export function AdminUserSelector({ selectedUserId, onUserSelect }: AdminUserSel
 							</CommandItem>
 							{users.map((user) => (
 								<CommandItem
-									key={user._id}
+									key={user.id}
 									onSelect={() => {
 										onUserSelect(user.clerkId);
 										setOpen(false);

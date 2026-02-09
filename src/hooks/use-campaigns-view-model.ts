@@ -1,9 +1,7 @@
-import { api } from '@convex/_generated/api';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { useEffect, useMemo } from 'react';
 
-import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { trpc } from '../lib/trpc';
 
 const PAGE_SIZE = 12;
 
@@ -30,24 +28,32 @@ export function useCampaignsViewModel(Route: any) {
 		}
 	}, [navigate]);
 
-	// Fetch campaigns with optional status filter
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { emailMarketing: { getCampaigns: unknown } };
-	const campaigns = useQueryUnsafe(apiAny.emailMarketing.getCampaigns, {
-		status: status === 'all' ? undefined : status,
-	}) as Doc<'emailCampaigns'>[] | undefined;
+	// Fetch all campaigns (filtering done client-side)
+	const { data: allCampaigns } = trpc.emailMarketing.campaigns.list.useQuery();
 
-	// Client-side search filtering
+	// Client-side filtering (status + search)
 	const filteredCampaigns = useMemo(() => {
-		if (!campaigns) return undefined;
-		if (!search) return campaigns;
+		if (!allCampaigns) return undefined;
 
-		const searchLower = search.toLowerCase();
-		return campaigns.filter(
-			(c: Doc<'emailCampaigns'>) =>
-				c.name.toLowerCase().includes(searchLower) || c.subject.toLowerCase().includes(searchLower),
-		);
-	}, [campaigns, search]);
+		let result = [...allCampaigns];
+
+		// Status filter
+		if (status && status !== 'all') {
+			result = result.filter((c) => c.status === status);
+		}
+
+		// Search filter
+		if (search) {
+			const searchLower = search.toLowerCase();
+			result = result.filter(
+				(c) =>
+					c.name.toLowerCase().includes(searchLower) ||
+					c.subject.toLowerCase().includes(searchLower),
+			);
+		}
+
+		return result;
+	}, [allCampaigns, status, search]);
 
 	const clearFilters = () => {
 		void navigate({
@@ -63,21 +69,18 @@ export function useCampaignsViewModel(Route: any) {
 
 	// Stats
 	const totalCampaigns = filteredCampaigns?.length ?? 0;
-	const draftCount =
-		filteredCampaigns?.filter((c: Doc<'emailCampaigns'>) => c.status === 'draft').length ?? 0;
-	const sentCount =
-		filteredCampaigns?.filter((c: Doc<'emailCampaigns'>) => c.status === 'sent').length ?? 0;
+	const draftCount = filteredCampaigns?.filter((c) => c.status === 'draft').length ?? 0;
+	const sentCount = filteredCampaigns?.filter((c) => c.status === 'sent').length ?? 0;
 
 	// Calculate average open rate from sent campaigns
 	const avgOpenRate = useMemo(() => {
 		if (!filteredCampaigns) return 0;
 		const sentCampaigns = filteredCampaigns.filter(
-			(c: { status: string; stats?: { delivered: number } }) =>
-				c.status === 'sent' && c.stats && c.stats.delivered > 0,
+			(c) => c.status === 'sent' && c.stats && c.stats.delivered > 0,
 		);
 		if (sentCampaigns.length === 0) return 0;
 
-		const totalRate = sentCampaigns.reduce((acc: number, c: Doc<'emailCampaigns'>) => {
+		const totalRate = sentCampaigns.reduce((acc, c) => {
 			const rate = c.stats ? (c.stats.opened / c.stats.delivered) * 100 : 0;
 			return acc + rate;
 		}, 0);
@@ -99,10 +102,10 @@ export function useCampaignsViewModel(Route: any) {
 		});
 	};
 
-	const navigateToCampaign = (campaignId: Id<'emailCampaigns'>) => {
+	const navigateToCampaign = (campaignId: number | string) => {
 		void navigate({
 			to: '/marketing/$campaignId',
-			params: { campaignId },
+			params: { campaignId: String(campaignId) },
 			search: {
 				page,
 				search,

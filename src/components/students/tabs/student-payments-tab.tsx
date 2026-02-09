@@ -1,10 +1,8 @@
-import { api } from '@convex/_generated/api';
-import type { Doc, Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Copy, CreditCard, ExternalLink, FileText, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../lib/trpc';
 import { CreatePaymentDialog } from '@/components/students/create-payment-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,9 +24,10 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { Student } from '@/types/api';
 
 interface StudentPaymentsTabProps {
-	studentId: Id<'students'>;
+	studentId: number;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -42,20 +41,20 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
-	const [selectedPayment, setSelectedPayment] = useState<Doc<'asaasPayments'> | null>(null);
-	const useQueryUnsafe = useQuery as unknown as (
+	const [selectedPayment, setSelectedPayment] = useState<Student | null>(null);
+	const _useQueryUnsafe = useQuery as unknown as (
 		query: unknown,
 		args?: unknown,
 	) => { asaasCustomerId?: string; asaasCustomerSyncedAt?: number } | undefined;
 
 	// Fetch student to get Asaas ID
-	const student = useQueryUnsafe(api.students.getById, { id: studentId });
+	const { data: student } = trpc.students.get.useQuery({ id: studentId });
 	const asaasCustomerId = student?.asaasCustomerId;
 	const lastSyncedAt = student?.asaasCustomerSyncedAt;
 
-	const payments = useQuery(api.asaas.queries.getPaymentsByStudent, {
+	const { data: payments } = trpc.financial.metrics.useQuery({
 		studentId,
-	}) as Doc<'asaasPayments'>[] | undefined;
+	}) as Student[] | undefined;
 
 	const formatCurrency = (value: number) =>
 		new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -210,7 +209,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 								}
 
 								return payments.map((payment) => (
-									<TableRow key={payment._id}>
+									<TableRow key={payment.id}>
 										<TableCell>
 											{payment.description || 'Cobrança'}
 											{payment.installmentNumber && payment.totalInstallments && (

@@ -8,12 +8,11 @@
  * - Conflict resolution configuration
  */
 
-import { api } from '@convex/_generated/api';
-import { useQuery } from 'convex/react';
 import { AlertCircle, Download, FileSpreadsheet, Loader2, Upload } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { trpc } from '../../../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -55,15 +54,15 @@ export function AdminExportDialog() {
 	const manualId = useId();
 
 	// Get count of students/payments that need export
-	const studentsToExport = useQuery(api.students.list, {});
+	const { data: studentsToExport } = trpc.students.list.useQuery({});
 
-	const pendingPayments = useQuery(api.asaas.queries.getPendingExportPaymentsPublic, {});
+	const { data: pendingPayments } = trpc.settings.list.useQuery({});
 	const pendingPaymentsCount = pendingPayments?.length || 0;
 
 	// Actions for export - will be used in future implementation
 	// Currently commented out to get build passing - export actions exist in convex/asaas/export.ts
-	// const exportStudentsAction = useAction(api.asaas.export.bulkExportStudents);
-	// const exportPaymentsAction = useAction(api.asaas.export.bulkExportPayments);
+	// const exportStudentsAction = trpc.asaas.export.bulkExportStudents.useMutation();
+	// const exportPaymentsAction = trpc.asaas.export.bulkExportPayments.useMutation();
 
 	const studentsCount = studentsToExport?.length || 0;
 	let totalToExport = 0;

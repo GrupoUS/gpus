@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -15,6 +12,7 @@ import {
 	CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { trpc } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 
 interface ReferralAutocompleteProps {
@@ -23,32 +21,21 @@ interface ReferralAutocompleteProps {
 	disabled?: boolean;
 }
 
-interface LeadOption {
-	id: string;
-	name: string;
-	phone: string;
-	email?: string;
-}
-
 export function ReferralAutocomplete({ value, onChange, disabled }: ReferralAutocompleteProps) {
 	const [open, setOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [debouncedQuery] = useDebounce(searchQuery, 300);
 
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { leads: { getLead: unknown; search: unknown } };
+	// Fetch selected lead by ID
+	const { data: selectedLead } = trpc.leads.get.useQuery(
+		{ leadId: Number(value) },
+		{ enabled: !!value },
+	);
 
-	// Fetch selected lead explicitly to show name if value is set but not in search results
-	const selectedLead = useQueryUnsafe(
-		apiAny.leads.getLead,
-		value ? { leadId: value as Id<'leads'> } : 'skip',
-	) as LeadOption | null | undefined;
-
-	// Search leads
-	const searchResults = useQueryUnsafe(apiAny.leads.search, {
-		query: debouncedQuery,
-		limit: 10,
-	}) as LeadOption[] | undefined;
+	// Search leads — TODO: Add a dedicated leads.search procedure for better performance
+	const { data: searchResults } = trpc.leads.list.useQuery(undefined, {
+		enabled: open && debouncedQuery.length >= 2,
+	});
 
 	let displayValue = 'Selecione quem indicou (opcional)';
 	if (value && !selectedLead) {

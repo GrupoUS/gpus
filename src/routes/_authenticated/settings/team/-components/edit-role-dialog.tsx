@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAction } from 'convex/react';
 import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { api } from '../../../../../../convex/_generated/api';
+import { trpc } from '../../../../../lib/trpc';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -50,7 +49,7 @@ interface EditRoleDialogProps {
 }
 
 export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps) {
-	const updateRole = useAction(api.users.updateTeamMemberRole);
+	const updateRole = trpc.users.update.useMutation();
 
 	const form = useForm<EditRoleFormData>({
 		resolver: zodResolver(editRoleSchema),

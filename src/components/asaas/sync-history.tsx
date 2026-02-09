@@ -1,7 +1,4 @@
-import { api } from '@convex/_generated/api';
-import type { Doc } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
-
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,6 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { AsaasConflict } from '@/types/api';
 
 const STATUS_BADGE = {
 	completed: { label: 'Concluído', variant: 'default' as const },
@@ -21,7 +19,7 @@ const STATUS_BADGE = {
 };
 
 export function SyncHistory() {
-	const logs = useQuery(api.asaas.sync.getRecentSyncLogs, { limit: 10 });
+	const { data: logs } = trpc.settings.list.useQuery({ limit: 10 });
 
 	if (!logs) {
 		return <div>Carregando histórico...</div>;
@@ -45,13 +43,13 @@ export function SyncHistory() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{logs.map((log: Doc<'asaasSyncLogs'>) => {
+						{logs.map((log: AsaasConflict) => {
 							const duration = log.completedAt
 								? Math.round((log.completedAt - log.startedAt) / 1000)
 								: null;
 
 							return (
-								<TableRow key={log._id}>
+								<TableRow key={log.id}>
 									<TableCell className="capitalize">{log.syncType}</TableCell>
 									<TableCell>
 										<Badge variant={STATUS_BADGE[log.status].variant}>

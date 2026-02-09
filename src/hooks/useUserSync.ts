@@ -1,52 +1,52 @@
-// @ts-nocheck
-import { useAuth } from '@clerk/clerk-react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 
-import { api } from '../../convex/_generated/api';
+import { trpc } from '../lib/trpc';
 
 type SyncStatus = 'loading' | 'synced' | 'error';
 
 export function useUserSync() {
 	const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
+	const { user: clerkUser } = useUser();
 	const [status, setStatus] = useState<SyncStatus>('loading');
 	const [error, setError] = useState<Error | null>(null);
 
-	// Skip query if not signed in to avoid unnecessary calls
-	// We use "skip" logic: if not signed in, we don't query
 	const shouldQuery = isAuthLoaded && isSignedIn;
 
-	// biome-ignore lint/suspicious/noExplicitAny: break deep type
-	const currentUser = useQuery((api as any).users.current, shouldQuery ? {} : 'skip');
-	const ensureUser = useMutation(api.users.ensureUser);
+	const { data: currentUser } = trpc.users.me.useQuery(undefined, {
+		enabled: shouldQuery,
+	});
+
+	const ensureUserMutation = trpc.users.ensureUser.useMutation();
 
 	useEffect(() => {
-		// If auth is loading, wait
 		if (!isAuthLoaded) return;
 
-		// If not signed in, we are "synced" in the sense that we don't need a user record
-		// But typically this hook is used in authenticated routes.
 		if (!isSignedIn) {
 			setStatus('synced');
 			return;
 		}
 
-		// If we have a user from existing query, we are synced
 		if (currentUser) {
 			setStatus('synced');
 			return;
 		}
 
-		// If query is loading (undefined), wait
+		// If query is still loading, wait
 		if (currentUser === undefined) {
-			// It's still loading the query
 			return;
 		}
 
-		// If currentUser is null, it means we need to create it
+		// currentUser is null — create it
 		const sync = async () => {
+			if (!clerkUser) return;
 			try {
-				await ensureUser();
+				await ensureUserMutation.mutateAsync({
+					clerkId: clerkUser.id,
+					email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+					name: clerkUser.fullName ?? clerkUser.firstName ?? 'User',
+					avatarUrl: clerkUser.imageUrl,
+				});
 				setStatus('synced');
 			} catch (err) {
 				// biome-ignore lint/suspicious/noConsole: Log error for debugging
@@ -57,7 +57,7 @@ export function useUserSync() {
 		};
 
 		void sync();
-	}, [isAuthLoaded, isSignedIn, currentUser, ensureUser]);
+	}, [isAuthLoaded, isSignedIn, currentUser, clerkUser, ensureUserMutation]);
 
 	return {
 		status,

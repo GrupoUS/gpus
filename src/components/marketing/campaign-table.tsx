@@ -1,6 +1,5 @@
 'use client';
 
-import type { Doc, Id } from '@convex/_generated/dataModel';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronDown, ChevronRight, ChevronUp, Mail } from 'lucide-react';
@@ -16,10 +15,11 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import type { EmailCampaign } from '@/types/api';
 
 interface CampaignTableProps {
-	campaigns: Doc<'emailCampaigns'>[];
-	onCampaignClick: (campaignId: Id<'emailCampaigns'>) => void;
+	campaigns: EmailCampaign[];
+	onCampaignClick: (campaignId: number) => void;
 }
 
 type SortField = 'name' | 'status' | 'openRate' | 'createdAt';
@@ -46,7 +46,7 @@ const statusVariants: Record<string, 'default' | 'secondary' | 'destructive' | '
 	failed: 'destructive',
 };
 
-function getOpenRate(campaign: Doc<'emailCampaigns'>): number {
+function getOpenRate(campaign: EmailCampaign): number {
 	if (!campaign.stats || campaign.stats.delivered === 0) return 0;
 	return (campaign.stats.opened / campaign.stats.delivered) * 100;
 }
@@ -175,12 +175,12 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 							<TableRow
 								aria-label={`Ver detalhes de ${campaign.name}`}
 								className="cursor-pointer transition-colors hover:bg-muted/50"
-								key={campaign._id}
-								onClick={() => onCampaignClick(campaign._id)}
+								key={campaign.id}
+								onClick={() => onCampaignClick(campaign.id)}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter' || e.key === ' ') {
 										e.preventDefault();
-										onCampaignClick(campaign._id);
+										onCampaignClick(campaign.id);
 									}
 								}}
 								role="button"

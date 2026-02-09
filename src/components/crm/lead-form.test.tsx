@@ -5,9 +5,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LeadForm } from './lead-form';
 
-// Mock dependencies
-vi.mock('convex/react', () => ({
-	useMutation: vi.fn(),
+const mockMutateAsync = vi.fn();
+
+// Mock tRPC
+vi.mock('@/lib/trpc', () => ({
+	trpc: {
+		leads: {
+			create: {
+				useMutation: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
+			},
+		},
+		users: {
+			listSystemUsers: { useQuery: () => ({ data: [] }) },
+		},
+	},
+}));
+
+// Mock Clerk
+vi.mock('@clerk/clerk-react', () => ({
+	useAuth: () => ({ isSignedIn: true, userId: 'test-user' }),
+	useUser: () => ({ user: { id: 'test-user' } }),
 }));
 
 vi.mock('sonner', () => ({
@@ -23,12 +40,8 @@ vi.mock('@/components/ui/flip-button', async () => {
 	return {
 		FlipButton: React.forwardRef(
 			(
-				{
-					children,
-					className,
-					initial,
-					...props
-				}: React.ComponentProps<'button'> & { initial?: unknown },
+				// biome-ignore lint/suspicious/noExplicitAny: test mock
+				{ children, className, initial: _initial, ...props }: any,
 				ref: React.Ref<HTMLButtonElement>,
 			) => (
 				<button className={className} ref={ref} {...props} type="button">
@@ -36,12 +49,14 @@ vi.mock('@/components/ui/flip-button', async () => {
 				</button>
 			),
 		),
-		FlipButtonFront: ({ children, className }: React.ComponentProps<'div'>) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		FlipButtonFront: ({ children, className }: any) => (
 			<div className={className} data-testid="flip-front">
 				{children}
 			</div>
 		),
-		FlipButtonBack: ({ children, className }: React.ComponentProps<'div'>) => (
+		// biome-ignore lint/suspicious/noExplicitAny: test mock
+		FlipButtonBack: ({ children, className }: any) => (
 			<div className={className} data-testid="flip-back">
 				{children}
 			</div>
@@ -51,45 +66,25 @@ vi.mock('@/components/ui/flip-button', async () => {
 
 // Mock HoverBorderGradient
 vi.mock('@/components/ui/hover-border-gradient', () => ({
-	HoverBorderGradient: ({
-		children,
-		className,
-		containerClassName,
-		clockwise,
-		...props
-	}: React.ComponentProps<'div'> & { containerClassName?: string; clockwise?: boolean }) => (
+	// biome-ignore lint/suspicious/noExplicitAny: test mock
+	HoverBorderGradient: ({ children, className, ...props }: any) => (
 		<div className={className} {...props}>
 			{children}
 		</div>
 	),
 }));
 
-// Mock matchMedia for Radix UI (Dialog often uses it)
-Object.defineProperty(window, 'matchMedia', {
-	writable: true,
-	value: vi.fn().mockImplementation((query) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(), // deprecated
-		removeListener: vi.fn(), // deprecated
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
-});
-
 // Mock ResizeObserver
-class ResizeObserver {
+class ResizeObserverMock {
 	observe = vi.fn();
 	unobserve = vi.fn();
 	disconnect = vi.fn();
 }
-global.ResizeObserver = ResizeObserver;
-window.ResizeObserver = ResizeObserver;
+global.ResizeObserver = ResizeObserverMock;
+window.ResizeObserver = ResizeObserverMock;
 
 // Mock PointerEvent for Radix UI
-// @ts-expect-error
+// @ts-expect-error - minimal PointerEvent mock for tests
 window.PointerEvent = class PointerEvent extends Event {
 	button: number;
 	ctrlKey: boolean;
@@ -108,12 +103,8 @@ window.HTMLElement.prototype.releasePointerCapture = vi.fn();
 window.HTMLElement.prototype.hasPointerCapture = vi.fn();
 
 describe('LeadForm', () => {
-	const mockCreateLead = vi.fn();
-
-	beforeEach(async () => {
+	beforeEach(() => {
 		vi.clearAllMocks();
-		const { useMutation } = await import('convex/react');
-		(useMutation as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockCreateLead);
 	});
 
 	it('renders the trigger button correctly', () => {
@@ -126,9 +117,8 @@ describe('LeadForm', () => {
 		const user = userEvent.setup();
 		render(<LeadForm />);
 
-		// Use the role button from our mock
 		const triggers = screen.getAllByRole('button');
-		const trigger = triggers[0]; // The first one is the flip button container
+		const trigger = triggers[0];
 		await user.click(trigger);
 
 		await waitFor(() => {
@@ -158,7 +148,7 @@ describe('LeadForm', () => {
 
 	it('submits valid form data', async () => {
 		const user = userEvent.setup();
-		mockCreateLead.mockResolvedValue({ _id: '123' });
+		mockMutateAsync.mockResolvedValue({ id: 123 });
 
 		render(<LeadForm />);
 
@@ -178,7 +168,7 @@ describe('LeadForm', () => {
 		await user.click(submitBtn);
 
 		await waitFor(() => {
-			expect(mockCreateLead).toHaveBeenCalledWith(
+			expect(mockMutateAsync).toHaveBeenCalledWith(
 				expect.objectContaining({
 					name: 'Test User',
 					phone: '11999999999',
@@ -190,15 +180,10 @@ describe('LeadForm', () => {
 		});
 	});
 
-	// See: https://github.com/testing-library/user-event/issues/1115
-	// NOTE: Test removed due to flaky behavior (form interaction issues).
-	// To re-enable, investigate: https://github.com/testing-library/user-event/issues/1115
-	// This test validated optional clinic fields functionality before refactoring
-
 	it('handles submission error', async () => {
 		const user = userEvent.setup();
 		const { toast } = await import('sonner');
-		mockCreateLead.mockRejectedValue(new Error('API Error'));
+		mockMutateAsync.mockRejectedValue(new Error('API Error'));
 
 		render(<LeadForm />);
 

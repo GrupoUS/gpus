@@ -3,8 +3,6 @@
  * Multi-step wizard for importing leads from XLSX/CSV spreadsheets
  */
 
-import { api } from '@convex/_generated/api';
-import { useMutation } from 'convex/react';
 import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -44,6 +42,7 @@ import {
 	validateLeadRow,
 } from '@/lib/lead-csv-validator';
 import { parseXLSXFile } from '@/lib/xlsx-helper';
+import type { Lead } from '@/types/api';
 
 interface LeadImportDialogProps {
 	open: boolean;
@@ -63,7 +62,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 	const [step, setStep] = useState<ImportStep>('upload');
 	const [file, setFile] = useState<File | null>(null);
 	const [headers, setHeaders] = useState<string[]>([]);
-	const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+	const [rows, setRows] = useState<Lead[]>([]);
 	const [mapping, setMapping] = useState<Record<string, LeadFieldKey | null>>({});
 	const [defaultProduct, setDefaultProduct] = useState<string>('otb');
 	const [importResult, setImportResult] = useState<ImportResult | null>(null);

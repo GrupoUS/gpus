@@ -1,4 +1,3 @@
-import type { Id } from '@convex/_generated/dataModel';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -7,7 +6,7 @@ import { ObjectionsList } from './objections-list';
 import { Button } from '@/components/ui/button';
 
 interface ObjectionsTabProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 }
 
 export function ObjectionsTab({ leadId }: ObjectionsTabProps) {

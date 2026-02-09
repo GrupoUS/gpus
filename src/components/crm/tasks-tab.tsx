@@ -1,6 +1,3 @@
-import { api } from '@convex/_generated/api';
-import type { Id } from '@convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,7 +6,7 @@ import { TaskList } from './task-list';
 import { Button } from '@/components/ui/button';
 
 interface TasksTabProps {
-	leadId: Id<'leads'>;
+	leadId: number;
 }
 
 export function TasksTab({ leadId }: TasksTabProps) {

@@ -1,11 +1,8 @@
-import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { Upload } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { LeadFilters } from '@/components/crm/lead-filters';
 
 // Lazy load heavy CRM components
@@ -28,6 +25,7 @@ const AdminUserSelector = lazy(() =>
 
 import { z } from 'zod';
 
+import { trpc } from '../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,12 +39,7 @@ export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
 
-type LeadItem = Doc<'leads'>;
-interface ListLeadsResult {
-	page: LeadItem[];
-	isDone: boolean;
-	continueCursor: string;
-}
+type LeadItem = Record<string, unknown>;
 
 function CRMPage() {
 	const navigate = Route.useNavigate();
@@ -61,10 +54,9 @@ function CRMPage() {
 		source: [] as string[],
 		tags: [] as string[],
 	});
-	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
+	const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
 	const [importDialogOpen, setImportDialogOpen] = useState(false);
 	const [adminSelectedUserId, setAdminSelectedUserId] = useState<string | null>(null);
-	const { isAuthenticated } = useConvexAuth();
 
 	const handleTabChange = (value: string) => {
 		setSelectedProduct(value);
@@ -78,40 +70,23 @@ function CRMPage() {
 		leadsProducts = filters.products;
 	}
 
-	// Build query args
-	const baseArgs = {
-		paginationOpts: { numItems: 1000, cursor: null as null },
-		search: filters.search || undefined,
-		stages: filters.stages.length > 0 ? filters.stages : undefined,
-		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		source: filters.source.length > 0 ? filters.source : undefined,
-		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-	};
+	const { data: allLeadsResult } = trpc.leads.list.useQuery({});
+	const allLeadsData = allLeadsResult?.data ?? [];
 
-	// Cast to break deep type instantiation chain in Convex API types
-	const listLeadsRef = api.leads.listLeads as unknown;
-	const useLeadsQuery = useQuery as unknown as (
-		query: unknown,
-		args?: unknown,
-	) => ListLeadsResult | undefined;
+	// Filter leads based on product selection
+	const allLeadsForCounts = allLeadsData;
+	const leads = leadsProducts
+		? allLeadsData.filter((l) => leadsProducts.includes(l.interestedProduct as string))
+		: allLeadsData;
 
-	const allLeadsForCounts = useLeadsQuery(
-		listLeadsRef,
-		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
-	);
-
-	const leads = useLeadsQuery(
-		listLeadsRef,
-		isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip',
-	);
-
-	const updateStage = useMutation(api.leads.updateLeadStage);
+	const updateStage = trpc.leads.updateStage.useMutation();
 
 	const handleDragEnd = async (leadId: string, newStage: string) => {
 		try {
-			await updateStage({
-				leadId: leadId as Id<'leads'>,
-				newStage: newStage as Doc<'leads'>['stage'],
+			await updateStage.mutateAsync({
+				leadId: Number(leadId),
+				// biome-ignore lint/suspicious/noExplicitAny: stage enum type
+				newStage: newStage as any,
 			});
 			toast.success('Lead atualizado');
 		} catch {
@@ -119,22 +94,18 @@ function CRMPage() {
 		}
 	};
 
-	const formattedLeads =
-		leads?.page?.map((l: LeadItem) => ({
-			...l,
-			stage: l.stage,
-			temperature: l.temperature,
-		})) ?? [];
+	const formattedLeads = leads.map((l) => ({
+		...l,
+		stage: l.stage,
+		temperature: l.temperature,
+	}));
 
 	// Calculate counts from UNFILTERED lead set for accurate badge totals
-	const allLeadsForCountsPage = allLeadsForCounts?.page ?? [];
 	const counts = {
-		all: allLeadsForCountsPage.length,
-		otb: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'otb').length,
-		black_neon: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'black_neon')
-			.length,
-		trintae3: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'trintae3')
-			.length,
+		all: allLeadsForCounts.length,
+		otb: allLeadsForCounts.filter((l) => l.interestedProduct === 'otb').length,
+		black_neon: allLeadsForCounts.filter((l) => l.interestedProduct === 'black_neon').length,
+		trintae3: allLeadsForCounts.filter((l) => l.interestedProduct === 'trintae3').length,
 	};
 
 	return (
@@ -200,7 +171,7 @@ function CRMPage() {
 			</div>
 
 			<div className="flex-1 overflow-hidden">
-				{leads === undefined ? (
+				{allLeadsResult === undefined ? (
 					<div className="flex h-full items-center justify-center text-muted-foreground">
 						Carregando pipeline...
 					</div>
@@ -209,7 +180,7 @@ function CRMPage() {
 						<PipelineKanban
 							leads={formattedLeads}
 							onDragEnd={handleDragEnd}
-							onLeadClick={(id: string) => setSelectedLeadId(id as Id<'leads'>)}
+							onLeadClick={(id: string) => setSelectedLeadId(id as number)}
 						/>
 					</Suspense>
 				)}

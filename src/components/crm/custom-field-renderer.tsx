@@ -3,7 +3,6 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import type { Control, FieldValues, Path } from 'react-hook-form';
 
-import type { Doc } from '../../../convex/_generated/dataModel';
 import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
 import { Checkbox } from '../ui/checkbox';
@@ -12,9 +11,10 @@ import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { cn } from '@/lib/utils';
+import type { CustomFieldValue } from '@/types/api';
 
 interface CustomFieldRendererProps<T extends FieldValues> {
-	field: Doc<'customFields'>;
+	field: CustomFieldValue;
 	control: Control<T>;
 	name: Path<T>;
 	disabled?: boolean;

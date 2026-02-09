@@ -1,6 +1,5 @@
 import { Clock, Shield, Trash2, UserCog } from 'lucide-react';
 
-import type { Doc } from '../../../../../../convex/_generated/dataModel';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,10 +7,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface UserDetailsProps {
-	user: Doc<'users'> | null;
+	user: Record<string, unknown> | null;
 	onClose: () => void;
-	onEditRole: (user: Doc<'users'>) => void;
-	onRemove: (user: Doc<'users'>) => void;
+	onEditRole: (user: Record<string, unknown>) => void;
+	onRemove: (user: Record<string, unknown>) => void;
 }
 
 export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserDetailsProps) {
@@ -64,8 +63,8 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 									<Shield className="h-3 w-3" />
 									ID do Sistema
 								</span>
-								<p className="truncate font-mono text-xs" title={user._id}>
-									{user._id}
+								<p className="truncate font-mono text-xs" title={user.id}>
+									{user.id}
 								</p>
 							</div>
 						</div>
