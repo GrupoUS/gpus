@@ -1,6 +1,6 @@
-# Plan File Template (PRP Format)
+# Plan File Template
 
-> Reference documentation for creating implementation-ready plan files.
+> Reference for creating implementation-ready plan files.
 
 ## File Location & Naming
 
@@ -9,189 +9,199 @@
 | `/plan e-commerce site with cart` | `docs/PLAN-ecommerce-cart.md` |
 | `/plan mobile app for fitness`    | `docs/PLAN-fitness-app.md`    |
 | `/plan add dark mode feature`     | `docs/PLAN-dark-mode.md`      |
-| `/plan SaaS dashboard`            | `docs/PLAN-saas-dashboard.md` |
 
 **Rules:**
 
 1. Extract 2-3 key words from request
-2. Lowercase, hyphen-separated
-3. Max 30 characters
-4. Location: `docs/PLAN-{slug}.md`
+2. Lowercase, hyphen-separated, max 30 characters
+3. Location: `docs/PLAN-{slug}.md`
 
 ---
 
-## Complete Template
+## Document Header
 
-```yaml
-# File: docs/PLAN-{task-slug}.md
+Every plan MUST start with:
 
-# [Task Title]
+```markdown
+# [Feature Name] Implementation Plan
 
-## Metadata
-complexity: "L[1-10] — [JUSTIFICATION]"
-estimated_time: "[DURATION]"
-parallel_safe: [true/false]
+**Goal:** [One sentence describing what this builds]
 
-## Objective
-task: "[ACTION VERB] + [TARGET] + [OUTCOME]"
-context: "[PROJECT], [STACK], [CONSTRAINTS]"
-why_this_matters: "[MOTIVATION]"
+**Architecture:** [2-3 sentences about approach]
 
-## Environment
-runtime: "Bun 1.x"
-framework: "React 19"
-database: "Neon PostgreSQL"
-orm: "Drizzle"
-auth: "Clerk"
-ui: "shadcn/ui"
-testing: "Bun test"
+**Tech Stack:** [Key technologies/libraries involved]
 
+**Complexity:** L[1-10] — [Justification]
+
+---
+```
+
+---
+
+## Research Section
+
+```markdown
 ## Research Summary
+
 ### Findings Table
-| # | Finding | Confidence | Source | Impact |
+
+| # | Finding | Confidence (1-5) | Source | Impact |
+|---|---------|-------------------|--------|--------|
+| 1 | ... | 4 | codebase | high |
 
 ### Knowledge Gaps
-- [gaps]
+- [What remains unknown]
 
 ### Assumptions to Validate
-- [assumptions]
+- [Explicit assumptions needing confirmation]
 
+### Edge Cases
+- [At least 5 for L4+ complexity]
+```
+
+---
+
+## Task Structure (Bite-Sized)
+
+Each task is a small, focused unit. Each **step** within a task is **one action** (2-5 minutes).
+
+```markdown
+### Task 1: [Component Name]
+
+**Files:**
+- Create: `exact/path/to/file.ts`
+- Modify: `exact/path/to/existing.ts:123-145`
+- Test: `exact/path/to/test.ts`
+
+**Step 1: Write the failing test**
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { createUser } from "../server/users";
+
+describe("createUser", () => {
+  it("creates a user with valid input", async () => {
+    const result = await createUser({ name: "Test", email: "test@example.com" });
+    expect(result.id).toBeDefined();
+  });
+});
+```
+
+**Step 2: Run test to verify it fails**
+
+Run: `bun test src/tests/users.test.ts`
+Expected: FAIL — "createUser is not defined"
+
+**Step 3: Write minimal implementation**
+
+```typescript
+// server/users.ts
+export async function createUser(input: { name: string; email: string }) {
+  return await db.insert(users).values(input).returning();
+}
+```
+
+**Step 4: Run test to verify it passes**
+
+Run: `bun test src/tests/users.test.ts`
+Expected: PASS
+
+**Step 5: Quality gates**
+
+Run: `bun run check && bun run lint:check`
+Expected: No errors
+
+**Step 6: Commit**
+
+```bash
+git add src/tests/users.test.ts server/users.ts
+git commit -m "feat: add createUser function with test"
+```
+```
+
+---
+
+## Relevant Files Section
+
+```markdown
 ## Relevant Files
-### Must Read
-- path: "[PATH]"
-  relevance: "[WHY]"
 
-### May Reference
-- path: "[PATH]"
-  relevance: "[WHY]"
+### Must Read (before implementation)
+- `path/to/file.ts` — [why this file matters]
 
+### May Reference (during implementation)
+- `path/to/file.ts` — [when you'd need this]
+```
+
+---
+
+## Existing Patterns Section
+
+```markdown
 ## Existing Patterns
-naming: "[DESCRIBE]"
-file_structure: "[DESCRIBE]"
-error_handling: "[DESCRIBE]"
-state_management: "[DESCRIBE]"
 
+| Pattern | Convention | Example |
+|---------|-----------|---------|
+| Naming | camelCase for functions, PascalCase for components | `createUser`, `UserCard` |
+| File structure | Feature-based colocation | `server/users.ts`, `client/src/pages/UsersPage.tsx` |
+| Error handling | tRPC TRPCError with code | `throw new TRPCError({ code: "NOT_FOUND" })` |
+| State | tRPC + TanStack Query | `trpc.users.list.useQuery()` |
+```
+
+---
+
+## Constraints Section
+
+```markdown
 ## Constraints
-non_negotiable: ["[CONSTRAINT_1]", "[CONSTRAINT_2]"]
-preferences: ["[PREFERENCE_1]"]
 
-## Chain of Thought
-### Research
-- Codebase patterns: _____
-- Docs consulted: _____
-- Security: _____
-- Edge cases: _____
+**Non-negotiable:**
+- [Hard requirements that cannot be changed]
 
-### Analyze
-- Core requirement: _____
-- Technical constraints: _____
-- Integration points: _____
-
-### Think
-step_by_step: ["First: _____", "Then: _____", "Finally: _____"]
-tree_of_thoughts:
-  approach_a: {description, pros, cons, score}
-  approach_b: {description, pros, cons, score}
-  selected: "[CHOSEN]"
-  rationale: "[WHY]"
-
-## Atomic Tasks
-- id: "AT-001"
-  title: "[ACTION] [TARGET]"
-  phase: 1
-  priority: "critical"
-  dependencies: []
-  parallel_safe: true
-  files_to_create: ["[PATH]"]
-  files_to_modify: ["[PATH]"]
-  validation: "[COMMAND]"
-  rollback: "[UNDO]"
-  acceptance_criteria: ["[CRITERION]"]
-
-## Validation Gates
-automated:
-  - {id: "VT-001", command: "bun run build", expected: "Exit 0"}
-  - {id: "VT-002", command: "bun run check", expected: "No errors"}
-  - {id: "VT-003", command: "bun test", expected: "All pass"}
-manual_review:
-  - {reviewer: "@code-reviewer", focus: "[ASPECT]", required_if: "[CONDITION]"}
-
-## Output
-format: "[DELIVERABLE]"
-files_created: [{path, purpose}]
-files_modified: [{path, changes}]
-success_definition: "[CRITERIA]"
-failure_handling: "If [CONDITION], then [ACTION]. Rollback: [STEPS]"
+**Preferences:**
+- [Soft preferences, can be adjusted if needed]
 ```
 
 ---
 
-## Atomic Task Schema
+## Execution Handoff
 
-Each atomic task should follow this structure:
+Every plan MUST end with:
 
-```yaml
-task_template:
-  id: "AT-XXX"
-  title: "Action verb + specific target"
-  phase: "1-5 (foundation → core → integration → polish → validation)"
-  priority: "critical | high | medium | low"
-  dependencies: "[AT-XXX]"
-  parallel_safe: "true/false (mark ⚡ PARALLEL-SAFE when true)"
-  files_to_create: "[paths]"
-  files_to_modify: "[paths]"
-  validation: "Specific command/check"
-  rollback: "Exact undo steps"
-  acceptance_criteria: "[measurable bullets]"
-```
-
-**Parallel-safe conditions:**
-
-- No shared file modifications
-- No dependency chain
-- Independent validation
-
+```markdown
 ---
 
-## Research Outputs Schema
+## Next Steps
 
-```yaml
-outputs:
-  - "Findings Table: | # | Finding | Confidence (1-5) | Source | Impact |"
-  - "Knowledge Gaps: what you still don't know"
-  - "Assumptions to Validate: explicit assumptions requiring confirmation"
-  - "Edge Cases / Failure Modes: at least 5 when complexity ≥ L4"
+Plan saved to `docs/PLAN-{slug}.md`.
+
+**Execution options:**
+1. **Implement now** — Start executing tasks sequentially with validation gates
+2. **Review first** — Review and adjust before implementation
+3. **Modify plan** — Change scope, ordering, or approach
 ```
 
 ---
 
 ## Pre-Submission Checklist
 
-```yaml
-research:
-  - [ ] Codebase searched?
-  - [ ] Docs consulted (Context7)?
-  - [ ] Web research done (Tavily)?
-  - [ ] Security/compliance identified?
-  - [ ] Edge cases considered (min 5 for L4+)?
+Before delivering a plan, verify:
 
-context:
-  - [ ] Findings Table included?
-  - [ ] Knowledge Gaps listed?
-  - [ ] Assumptions to Validate listed?
-  - [ ] Relevant files specified?
-  - [ ] WHY included for instructions?
+**Research:**
+- [ ] Codebase searched for existing patterns?
+- [ ] Docs consulted (Context7)?
+- [ ] Web research done (Tavily) if needed?
+- [ ] Edge cases considered (min 5 for L4+)?
 
-tasks:
-  - [ ] Truly atomic?
-  - [ ] Validation command each?
-  - [ ] Dependencies mapped?
-  - [ ] Rollback defined?
-  - [ ] Parallel-safe marked?
+**Tasks:**
+- [ ] Each step is one atomic action (2-5 min)?
+- [ ] Exact file paths with line ranges?
+- [ ] Complete code provided (not vague instructions)?
+- [ ] Validation command for each task?
+- [ ] Dependencies mapped, parallel-safe marked?
+- [ ] Rollback defined?
 
-behavior:
-  - [ ] Mode specified (CONSERVATIVE/PROACTIVE)?
-  - [ ] Output format explicit?
-  - [ ] Success criteria measurable?
-  - [ ] Failure handling defined?
-```
+**Format:**
+- [ ] Header with goal, architecture, tech stack?
+- [ ] Research summary included?
+- [ ] Execution handoff at end?

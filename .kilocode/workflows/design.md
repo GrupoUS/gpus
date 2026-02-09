@@ -1,264 +1,129 @@
 ---
-description: Unified frontend design workflow using planning, ui-ux-pro-max, and frontend-design skills. Triggers on /design command.
+description: Canonical design workflow. Orchestration-only; style/pattern policy stays in design skills.
 ---
 
-# Command: /design
-
-Comprehensive design workflow combining **research/planning** → **design system** → **implementation** → **validation**.
-
-## Trigger
-- `/design` or `/design "description"`
-- Design-related requests: create UI, build component, design page, improve UX
-
----
-
-## Skill Architecture
-
-| Priority | Skill | Role | Phase |
-|----------|-------|------|-------|
-| P0 | `planning` | Research & Plan | Pre-Phase (L4+) |
-| P1 | `ui-ux-pro-max` | Design Intelligence | Phase 1 |
-| P2 | `frontend-design` | Assets + Validation | Phase 2-4 |
-
----
-
-## 🔴 Pre-Phase: Research (L4+ Tasks Only)
-
-> [!CAUTION]
-> For L4+ complexity (new page/feature/redesign), execute `/plan` workflow first.
-
-| Complexity | Action |
-|------------|--------|
-| L1-L3 | Skip to Phase 0 |
-| L4+ | **Execute APEX Research → Create `docs/PLAN-design-{slug}.md`** |
-
-### APEX Research (if L4+)
-1. **LOCAL**: `grep_search` existing components, colors, similar pages
-2. **CONTEXT7**: shadcn/ui, Tailwind v4, React 19 docs
-3. **TAVILY**: Industry UX patterns (if needed)
-4. **SYNTHESIS**: Sequential thinking → define approach
-
-### Design Plan Output (`docs/PLAN-design-{slug}.md`)
-```markdown
-# PLAN-design-{slug}: {Title}
-> **Goal:** {One-line objective}
-
-## Research Findings
-| # | Finding | Confidence | Source |
-|---|---------|------------|--------|
-
-## Design Specs
-- **Hierarchy:** Primary/Secondary/Tertiary elements
-- **Colors (60-30-10):** Background/Foreground/Accent
-- **Typography:** Heading/Body/Caption
-
-## Atomic Tasks
-### AT-001: {Task}
-- [ ] ST-001.1: {Subtask} → File: `path` → Validation: {check}
-```
-
----
-
-## Phase 0: Requirement Analysis (MANDATORY)
-
-**⛔ Complete before designing!**
-
-### Constraints
-| Constraint | Question |
-|------------|----------|
-| Timeline | How much time? |
-| Content | Ready or placeholder? |
-| Brand | Existing guidelines? |
-| Audience | Who exactly? |
-
-### Extract
-- **Product type**: SaaS, dashboard, landing, etc.
-- **Style**: minimal, professional, dark mode, etc.
-- **Stack**: Default `shadcn`
-
-### Socratic Gate
-If unclear, ASK: "What color palette?", "What style?", "Layout preference?"
-
----
-
-## Phase 1: Design System (ui-ux-pro-max)
-
-### Generate Design System (REQUIRED)
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<product> <industry> <keywords>" --design-system -p "Project"
-```
-
-### Persist (Multi-page)
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system --persist -p "Project" --page "dashboard"
-```
-
-### Supplementary Searches
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "query" --domain ux|style|typography|color
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "query" --stack shadcn|react|nextjs
-```
-
-**Domains:** `product`, `style`, `typography`, `color`, `landing`, `chart`, `ux`, `react`, `web`
-**Stacks:** `html-tailwind`, `react`, `nextjs`, `vue`, `svelte`, `swiftui`, `shadcn`
-
----
-
-## Phase 1.5: AI Prototyping (Stitch)
-
-> **Goal:** Generate high-fidelity UI prototypes and code using Gemini 3.0.
-
-### 1. Create Design File
-Create `docs/DESIGN-{slug}.md` to store all outputs.
-
-### 2. Generate Prototype (Stitch)
-```bash
-# 1. Create Project
-stitch_create_project(title="{slug}")
-
-# 2. Generate Screen (Iterate until satisfied)
-stitch_generate_screen_from_text(
-  project_id="...", 
-  prompt="High-fidelity dashboard for [User], [Style] aesthetics (Navy/Gold), using Tailwind v4 and shadcn/ui. [Specific Features]. Use gemini-3-pro."
-)
-
-# 3. Capture Code
-# Copy full `output_components` from the tool response into docs/DESIGN-{slug}.md
-```
-
-### 3. Generate Assets (Nano Banana Pro)
-For hero images or specific visuals needed in the design:
-```bash
-# REQUIRED: Use --model gemini-3-pro for high fidelity
-python3 .agent/skills/frontend-design/scripts/generate_images.py "Prompt" "filename" --model gemini-3-pro
-```
-
----
-
-## Phase 2: Asset Generation (Optional)
-
-### Image Generation
-```bash
-python3 .agent/skills/frontend-design/scripts/generate_images.py "prompt" "filename"
-```
-
-### Generative Art (p5.js)
-Templates: `.agent/skills/frontend-design/assets/p5-templates/`
-Guide: `algorithmic-art-guide.md`
-
-### Canvas Art (PDF/PNG)
-Fonts: `.agent/skills/frontend-design/assets/canvas-fonts/`
-Guide: `canvas-design-guide.md`
-
----
-
-## Phase 3: Implementation
-
-### Theme (GPUS)
-```
-60% → Background (Navy/White)
-30% → Foreground (Gold/Dark Blue)
-10% → Accent/CTA (Gold)
-```
-
-Assets: `.agent/skills/gpus-theme/assets/`
-
-### Component Usage (shadcn/ui)
-```tsx
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export function FeatureCard({ ...props }) {
-  return (
-    <Card className="border-primary/20 hover:shadow-lg transition-shadow">
-      <CardHeader><CardTitle>Title</CardTitle></CardHeader>
-      <CardContent>{/* content */}</CardContent>
-    </Card>
-  );
-}
-```
-
-### Build Order
-1. HTML structure (semantic, accessible)
-2. CSS/Tailwind (8-point grid, tokens)
-3. Interactivity (states, transitions)
-
-### Requirements
-- React 19 + Tailwind v4 + shadcn/ui
-- Mobile-first, 44px+ touch targets
-- WCAG 2.1 AA (contrast 4.5:1, keyboard nav)
-- `prefers-reduced-motion` respected
-
----
-
-## Phase 4: Validation (MANDATORY)
-
-```bash
-python3 .agent/skills/frontend-design/scripts/ux_audit.py <path>
-python3 .agent/skills/frontend-design/scripts/accessibility_checker.py <file>
-bun run check && bun run lint && bun test
-```
-
----
-
-## Anti-Patterns (FORBIDDEN)
-
-| ❌ Forbidden | ✅ Alternative |
-|-------------|----------------|
-| Left/Right Split Hero | Massive Typography, Vertical Narrative |
-| Bento Grids | Asymmetric layouts |
-| Mesh/Aurora Gradients | Solid colors, Grain textures |
-| Glassmorphism everywhere | High-contrast flat |
-| Purple/Violet | **PURPLE BAN ✅** |
-| Emoji as icons | SVG (Heroicons/Lucide) |
-
----
-
-## Pre-Delivery Checklist
-
-### Research (L4+)
-- [ ] Plan file: `docs/PLAN-design-{slug}.md`
-
-### Visual
-- [ ] No emojis as icons
-- [ ] `cursor-pointer` on clickables
-- [ ] Hover transitions 150-300ms
-- [ ] Theme colors (`bg-primary` not `var()`)
-
-### Accessibility
-- [ ] Contrast 4.5:1
-- [ ] Focus states visible
-- [ ] Touch targets 44px+
-
-### Responsive
-- [ ] Tested: 375px, 768px, 1024px, 1440px
-- [ ] No horizontal scroll mobile
-
-### Code
-- [ ] `bun run check` ✓
-- [ ] `bun run lint` ✓
-- [ ] UX audit script ✓
-
----
-
-## Skill References
-
-| Skill | Key Files |
-|-------|-----------|
-| planning | `SKILL.md` (APEX methodology) |
-| ui-ux-pro-max | `SKILL.md`, `data/*.csv` (styles, colors, typography) |
-| frontend-design | `SKILL.md`, `ux-psychology.md`, `tailwind-v4-patterns.md` |
-| gpus-theme | `assets/theme-tokens.css`, `assets/tailwind-theme.ts` |
-
----
-
-## Usage
-```bash
-/design "Dashboard brutalista para métricas"
-/design "Landing minimalista para clínica"
-/design  # interactive mode
-```
-
----
-
-> 🔴 **MAESTRO RULE:** "If I can find this layout in a Tailwind UI template, I have FAILED."
+# /design - Design Orchestration
+
+$ARGUMENTS
+
+## Mandatory Skill Loading
+
+Before any design work, load the primary skill and route to the appropriate reference:
+
+1. **Always load:** `.agent/skills/frontend-design/SKILL.md`
+2. **Route by task type:**
+
+| Task Type | Load Reference |
+|-----------|---------------|
+| New Stitch screen / prototype | `references/stitch-prompt-templates.md` → pick template, enhance, generate |
+| Multi-page Stitch generation | `references/stitch-workflows.md` → DESIGN.md + Build Loop |
+| Stitch → React conversion | `references/stitch-workflows.md` → Section 4 conversion rules |
+| shadcn/ui component work | `references/shadcn-patterns.md` → discovery, CVA, blocks |
+| Color/palette decisions | `color-system.md` + `gpus-theme` skill |
+| Typography decisions | `typography-system.md` |
+| Animation/motion | `animation-guide.md` |
+| Component selection | `decision-trees.md` |
+| UX trade-offs | `ux-psychology.md` + `sequentialthinking` MCP |
+| Tailwind v4 patterns | `tailwind-v4-patterns.md` |
+
+3. **For broad redesigns/features:** Run `/plan` first
+
+## Execution Sequence
+
+### Phase 1: Intent & Context
+
+1. Clarify intent and UX target
+2. Audit existing components/patterns (search codebase first)
+3. Load appropriate reference(s) from the table above
+
+### Phase 2: Stitch Prototyping (if generating new UI)
+
+1. **Enhance the prompt** — Apply the enhancement pipeline from `SKILL.md`:
+   - Assess missing elements (platform, page type, structure, colors, components)
+   - Inject GPUS theme colors (Navy/Gold) from `references/stitch-prompt-templates.md`
+   - Add UI-specific keywords and vibe amplification
+   - Structure with numbered sections
+
+2. **Check for DESIGN.md** — If multi-screen project:
+   - If exists: include DESIGN SYSTEM block in prompt
+   - If not: generate one first using workflow from `references/stitch-workflows.md` Section 1
+
+3. **Generate with Stitch MCP:**
+   ```
+   mcp_stitch_create_project (if needed)
+   → mcp_stitch_generate_screen_from_text (GEMINI_3_PRO, DESKTOP)
+   → mcp_stitch_get_screen (retrieve HTML + screenshot)
+   ```
+
+4. **Handle output_components** — If Stitch returns suggestions, present to user
+
+### Phase 3: Implementation
+
+1. **Convert Stitch → React** (if from Stitch):
+   - Follow conversion rules from `references/stitch-workflows.md` Section 4
+   - Replace raw HTML with shadcn/ui primitives (`references/shadcn-patterns.md`)
+   - Map colors to GPUS CSS variables (not arbitrary hex)
+   - Extract static content to tRPC queries
+   - Move logic to custom hooks
+
+2. **Component work** (if not from Stitch):
+   - Use shadcn/ui primitives — check `references/shadcn-patterns.md` for patterns
+   - Follow CVA for variants, extension pattern for custom components
+   - Use `bunx shadcn@latest add [component]` for new primitives
+
+3. **Styling:**
+   - Tailwind v4 classes with GPUS theme tokens
+   - Framer Motion for micro-interactions (honor `prefers-reduced-motion`)
+   - Only `transform`/`opacity` animations (compositor-friendly)
+
+### Phase 4: Validation
+
+1. **Accessibility:** Contrast 4.5:1, visible focus states, semantic HTML, keyboard nav
+2. **Responsive:** Test mobile/tablet/desktop breakpoints
+3. **Dark/Light mode:** Both tested and correct
+4. **Component checklist** from `SKILL.md`:
+   ```
+   [ ] Uses shadcn/ui primitives
+   [ ] Client boundary at lowest level
+   [ ] Parallel data fetching
+   [ ] Visible focus states
+   [ ] Respects prefers-reduced-motion
+   [ ] Form inputs have autocomplete + name
+   ```
+
+5. **Quality gates:**
+   ```bash
+   bun run check
+   bun run lint:check
+   bun run test
+   ```
+
+## MCP Routing
+
+| MCP | When |
+|-----|------|
+| `stitch` | UI prototype generation, screen retrieval |
+| `context7` | React/Tailwind/shadcn/Radix docs |
+| `tavily` | Only when official docs are insufficient |
+| `sequentialthinking` | Complex UX trade-offs, layout decisions |
+
+## Anti-Patterns
+
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| Vague Stitch prompts | Enhanced prompts with DESIGN SYSTEM block |
+| Arbitrary hex colors | GPUS theme CSS variables |
+| Custom buttons/modals | shadcn/ui primitives |
+| Monolithic components | Modular components with custom hooks |
+| Skip accessibility | A11y validation before completion |
+| `npm` / `npx` | `bun` / `bunx` |
+
+## References
+
+- `.agent/skills/frontend-design/SKILL.md` — Primary skill (pipeline, patterns, checklists)
+- `.agent/skills/frontend-design/references/stitch-workflows.md` — DESIGN.md, Build Loop, conversion
+- `.agent/skills/frontend-design/references/stitch-prompt-templates.md` — GPUS prompt templates
+- `.agent/skills/frontend-design/references/shadcn-patterns.md` — Component patterns, CVA, blocks
+- `.agent/skills/gpus-theme/SKILL.md` — GPUS Navy/Gold design system
+- `.agent/skills/ui-ux-pro-max/SKILL.md` — Styles, palettes, font pairings
+- `.agent/workflows/plan.md` — Use for broad redesigns

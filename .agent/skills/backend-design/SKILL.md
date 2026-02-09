@@ -1,6 +1,6 @@
 ---
 name: backend-design
-description: Unified backend development skill covering API design (REST/GraphQL/tRPC), TypeScript expertise, data analysis, and code optimization principles. Use for backend architecture, API patterns, type issues, data processing, and code quality.
+description: Operational backend architecture skill for Bun + Express/Hono + tRPC + Drizzle + Neon + Clerk. Supports gradual migration from Express to Hono for new features. Use to design, implement, debug, and harden backend systems with lifecycle maps, runbooks, guardrails, and production-readiness validation.
 allowed-tools:
   - run_command
   - mcp_mcp-server-neon_run_sql
@@ -10,264 +10,127 @@ allowed-tools:
 
 # Backend Design Skill
 
-> Unified backend development: API design, TypeScript expertise, data analysis, and code principles.
+Provide a single source of truth for backend architecture, operations, and incident response in this stack.
+
+## Purpose
+
+Standardize backend decisions across API design, authentication flow, context composition, database access, external integrations, observability, and rollback safety.
+
+Keep `SKILL.md` procedural. Store deep reference material under [`references/`](references/).
 
 ## When to Use
 
-| Trigger              | Action                                  |
-| -------------------- | --------------------------------------- |
-| API design decision  | Check decision tree (REST/GraphQL/tRPC) |
-| TypeScript error     | Apply type patterns                     |
-| Data analysis needed | Use Python workflow                     |
-| Code optimization    | Follow LEVER principles                 |
-| Backend architecture | Apply Three-Pass process                |
+| Trigger | Action |
+|---|---|
+| New backend feature | Apply canonical architecture and lifecycle maps |
+| Auth, context, or role issues | Follow auth/context drift runbook |
+| Cache inconsistency or stale sessions | Follow cache consistency runbook |
+| Webhook reliability concerns | Follow webhook loss/retry runbook |
+| Database latency or migration regressions | Follow DB runbooks and validation checklist |
+| External API instability or rate limits | Apply external integration resilience patterns |
 
 ---
 
 ## Content Map
 
-| Reference                                                | Purpose                                   |
-| -------------------------------------------------------- | ----------------------------------------- |
-| [API Patterns](references/api-patterns.md)               | REST vs GraphQL vs tRPC, auth, versioning |
-| [TypeScript Patterns](references/typescript-patterns.md) | Type gymnastics, build optimization       |
-| [Data Analysis](references/data-analysis.md)             | Python scripts, statistical methods       |
-| [Code Principles](references/code-principles.md)         | LEVER, Three-Pass, anti-patterns          |
-| [Database Design](references/database-design.md)         | Schema, indexing, query optimization      |
+| Reference | Purpose |
+|---|---|
+| [API Patterns](references/api-patterns.md) | Procedure hierarchy, boundary contracts, API standards |
+| [Request Lifecycle Maps](references/request-lifecycle.md) | API to auth to context to DB/services to response flow maps |
+| [Database Design](references/database-design.md) | Schema strategy, Drizzle patterns, Neon operational behavior |
+| [Infrastructure](references/infrastructure.md) | Session cache, queueing, scheduler constraints, observability |
+| [Operational Guardrails](references/operational-guardrails.md) | Resilience, security, rollback, SLO-minded controls |
+| [Runbooks](references/runbooks.md) | Incident playbooks for critical backend failures |
+| [Debugging Strategy Matrix](references/debugging-matrix.md) | Symptom to cause to diagnostics to fix to prevention |
+| [Code Principles](references/code-principles.md) | LEVER, Three-Pass, Do/Don’t, anti-pattern catalog |
+| [TypeScript Patterns](references/typescript-patterns.md) | Type-depth fixes and maintainability patterns |
+| [Hono Migration Guide](references/hono-migration.md) | Hono patterns, Express-to-Hono equivalents, migration strategy |
 
 ---
 
-## Core Philosophy: LEVER
+## Canonical Architecture Patterns
 
-> **L**everage patterns | **E**xtend first | **V**erify reactivity | **E**liminate duplication | **R**educe complexity
+Apply this sequence for every backend change:
 
-**"The best code is no code. The second best structure is the one that already exists."**
+1. Choose procedure boundary by trust level: `public` → `protected` → `mentorado` → `admin`.
+2. Enforce input contract with Zod before business logic.
+3. Build context once per request with deterministic auth resolution and request-scoped logger.
+4. Route orchestration to service layer for non-trivial logic.
+5. Use Drizzle as only SQL access path for application code.
+6. Isolate external APIs behind adapters with retries, backoff, and circuit behavior.
+7. Emit structured logs and metrics at every trust boundary and failure domain.
+8. Validate rollback path before merge for schema and integration changes.
 
-### Decision Tree
+Use detailed maps in [`references/request-lifecycle.md`](references/request-lifecycle.md).
 
-```
-Before coding, ask:
-├── Can existing code handle it? → Yes: Extend
-├── Can we modify existing patterns? → Yes: Adapt
-└── Is new code reusable? → Yes: Abstract → No: Reconsider
-```
+## Framework Selection Strategy
 
-### Scoring: Extend vs Create
+| Scenario | Framework | Rationale |
+|---|---|---|
+| New API endpoints | Hono | Lightweight, Web Standards, better performance |
+| New webhooks | Hono | Native Web Request/Response, simpler middleware |
+| Existing Express routes | Express | Maintain until migration window |
+| tRPC integration | Both | Works with both via adapters |
+| Complex middleware chains | Express | Mature ecosystem (short-term) |
 
-| Factor                | Points |
-| --------------------- | ------ |
-| Reuse data structure  | +3     |
-| Reuse indexes/queries | +3     |
-| Reuse >70% code       | +5     |
-| Circular dependencies | -5     |
-| Distinct domain       | -3     |
+For new features, prefer Hono unless Express-specific middleware is required.
 
-**Score > 5**: Extend existing code.
+## Workflow Alignment
 
----
+Align architecture work with planning workflow in [`/.agent/workflows/plan.md`](../../workflows/plan.md):
 
-## Three-Pass Implementation
+- Run research cascade before major design choices: local codebase → docs → synthesis.
+- Keep tasks atomic with explicit validation and rollback criteria.
+- Gate high-risk changes with incident readiness runbook updates.
 
-| Pass              | Activity                             | Code           |
-| ----------------- | ------------------------------------ | -------------- |
-| 1. Discovery      | Find related code, document patterns | None           |
-| 2. Design         | Write interfaces, plan data flow     | Minimal        |
-| 3. Implementation | Execute with max reuse               | Essential only |
+## Required Operational Standards
 
----
+Always include these concerns in backend design and review:
 
-## API Design Decision Tree
+- Session cache dual-write correctness and invalidation reliability.
+- In-memory webhook queue failure mode containment.
+- Scheduler limits, idempotency, and catch-up semantics.
+- Tight Clerk auth and context coupling safeguards.
+- Schema sprawl control under LEVER extension-first policy.
+- External API rate limiting, timeout budgets, and degraded-mode behavior.
 
-```
-Who consumes the API?
-├── TypeScript monorepo → tRPC (type-safe E2E)
-├── Multiple clients/languages → REST (universal)
-├── Complex nested data → GraphQL (flexible queries)
-└── Not sure → Ask user first!
-```
+Use runbooks in [`references/runbooks.md`](references/runbooks.md) and matrix in [`references/debugging-matrix.md`](references/debugging-matrix.md).
 
-### tRPC Pattern (This Project)
+## Backend Do/Don’t Baseline
 
-```typescript
-// server/featureRouter.ts
-export const featureRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.select().from(table);
-  }),
+Do:
 
-  create: protectedProcedure
-    .input(z.object({ name: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const [result] = await ctx.db
-        .insert(table)
-        .values(input)
-        .returning({ id: table.id });
-      return result;
-    }),
-});
-```
+- Prefer extension-first schema evolution and explicit indexing.
+- Prefer idempotent writes for webhook and scheduler paths.
+- Prefer structured logs with request and actor correlation.
+- Prefer bounded retries with jitter and failure classification.
 
-### API Checklist
+Don’t:
 
-- [ ] Chosen API style for THIS context?
-- [ ] Defined consistent response format?
-- [ ] Planned versioning strategy?
-- [ ] Considered authentication needs?
-- [ ] Planned rate limiting?
+- Don’t add new tables for 1:1 extensions without hard justification.
+- Don’t couple router handlers to raw external clients.
+- Don’t rely on in-memory-only queues for critical delivery guarantees.
+- Don’t merge without failure diagnostics and rollback instructions.
 
----
+Use full catalog in [`references/code-principles.md`](references/code-principles.md).
 
-## TypeScript Patterns
+## PR Readiness and Hardening
 
-### "Type instantiation is excessively deep"
+Before approving backend changes, validate:
 
-```typescript
-// ❌ Anti-Pattern
-const mutate = useMutation(api.leads.updateStatus);
+1. Architecture fit and lifecycle integrity.
+2. Failure-mode handling for cache, webhook, DB, and external APIs.
+3. Observability coverage: logs, metrics, and actionable alerts.
+4. Security controls: auth, authorization, input boundaries, secrets handling.
+5. Rollback and data safety for migrations and incident response.
 
-// ✅ Pattern: Early cast
-const mutate = useMutation((api as any).leads.updateStatus);
-```
+Use full checklist in [`references/operational-guardrails.md`](references/operational-guardrails.md).
 
-### Branded Types
-
-```typescript
-type Brand<K, T> = K & { __brand: T };
-type UserId = Brand<string, "UserId">;
-type OrderId = Brand<string, "OrderId">;
-
-// Prevents accidental mixing
-function processOrder(orderId: OrderId, userId: UserId) {}
-```
-
-### Build Performance
+## Execution Commands
 
 ```bash
-# Diagnose slow type checking
-npx tsc --extendedDiagnostics --incremental false
-
-# Quick validation
 bun run check
-```
-
----
-
-## Data Analysis Workflow
-
-### Python Script Pattern
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# 1. Load data
-df = pd.read_csv("data.csv")
-
-# 2. Explore
-print(df.describe())
-
-# 3. Analyze
-summary = df.groupby("category").agg({"value": ["mean", "sum"]})
-
-# 4. Visualize
-plt.figure(figsize=(10, 6))
-summary.plot(kind="bar")
-plt.savefig("analysis.png", dpi=300)
-```
-
-### Statistical Tests
-
-| Question                  | Test                    |
-| ------------------------- | ----------------------- |
-| Difference between groups | t-test, ANOVA           |
-| Relationship between vars | Correlation, regression |
-| Distribution comparison   | Chi-square, KS-test     |
-
----
-
-## Database & Schema Principles
-
-**Goal**: 0 new tables. Extend existing.
-
-```typescript
-// ❌ DON'T: Create separate table
-// campaignTracking: defineTable({ ... })
-
-// ✅ DO: Add optional field
-users: defineTable({
-  // ...existing
-  campaignSource: v.optional(v.string()),
-});
-```
-
-### Query Patterns
-
-```typescript
-// ❌ DON'T: Parallel queries
-// getTrialUsers vs getUsers
-
-// ✅ DO: Extend with computed props
-export const getUserStatus = query({
-  handler: async ctx => {
-    const user = await getUser(ctx);
-    return {
-      ...user,
-      isTrial: Boolean(user?.campaign),
-      daysRemaining: calculateDays(user),
-    };
-  },
-});
-```
-
----
-
-## Anti-Patterns
-
-| Pattern               | Why Bad                   | Fix               |
-| --------------------- | ------------------------- | ----------------- |
-| UI-Driven DB          | Schema matches components | Store logically   |
-| "Just one more table" | Join complexity           | Extend existing   |
-| Parallel APIs         | Duplication               | Add flags to main |
-| Manual state sync     | Race conditions           | Use useQuery      |
-| Sequential DB writes  | Slow                      | Use Promise.all   |
-
----
-
-## Review Checklist
-
-### Architecture
-
-- [ ] Extended existing tables/queries?
-- [ ] Followed Three-Pass approach?
-- [ ] No manual state sync (useEffect)?
-- [ ] Added fields are optional?
-- [ ] New code < 50% of fresh implementation?
-
-### API
-
-- [ ] Consistent response format?
-- [ ] Proper status codes?
-- [ ] Rate limiting considered?
-
-### TypeScript
-
-- [ ] No `any` (use `unknown`)?
-- [ ] Explicit return types on exports?
-- [ ] Const assertions where applicable?
-
----
-
-## Commands
-
-```bash
-# Type check
-bun run check
-
-# Format
-bun run format
-
-# Test
-bun test
-
-# Diagnose TS performance
-npx tsc --extendedDiagnostics
+bun run lint:check
+bun run test
+bun run db:push
 ```
