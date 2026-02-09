@@ -35,7 +35,6 @@ export function WhatsAppDialog({
 
 	// TODO: Replace with trpc.messageTemplates.listTemplates.useQuery once router exists
 	const templates = undefined as { id: string; name: string; content: string }[] | undefined;
-	// @ts-expect-error - Migration: error TS2339
 	const sendWhatsAppMutation = trpc.whatsapp.sendMessage.useMutation();
 
 	const handleSend = async () => {
@@ -47,6 +46,7 @@ export function WhatsAppDialog({
 		try {
 			setIsSending(true);
 			const result = await sendWhatsAppMutation.mutateAsync({
+				phone: leadPhone,
 				leadId,
 				message,
 			});
@@ -56,7 +56,7 @@ export function WhatsAppDialog({
 				setMessage('');
 				onOpenChange(false);
 			} else {
-				toast.error(result.message || 'Erro ao enviar mensagem.');
+				toast.error('Erro ao enviar mensagem.');
 			}
 		} catch (_error) {
 			toast.error('Ocorreu um erro ao enviar a mensagem.');

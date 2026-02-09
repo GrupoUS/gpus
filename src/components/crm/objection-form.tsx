@@ -13,7 +13,12 @@ interface ObjectionFormProps {
 	onCancel?: () => void;
 }
 
-export function ObjectionForm({ leadId: _leadId, objection, onSuccess, onCancel }: ObjectionFormProps) {
+export function ObjectionForm({
+	leadId: _leadId,
+	objection,
+	onSuccess,
+	onCancel,
+}: ObjectionFormProps) {
 	const [text, setText] = useState(objection?.objectionText || '');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 

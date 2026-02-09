@@ -14,6 +14,9 @@ vi.mock('@/lib/trpc', () => ({
 		users: {
 			listSystemUsers: { useQuery: () => ({ data: [] }) },
 		},
+		tags: {
+			getLeadTags: { useQuery: () => ({ data: [] }) },
+		},
 	},
 }));
 
@@ -196,7 +199,7 @@ describe('PipelineKanban', () => {
 		const openButtons = screen.getAllByLabelText('Abrir lead');
 		fireEvent.click(openButtons[0]);
 
-		expect(mockOnLeadClick).toHaveBeenCalledWith(1);
+		expect(mockOnLeadClick).toHaveBeenCalledWith('1');
 	});
 
 	it('shows empty placeholders for columns without leads', () => {

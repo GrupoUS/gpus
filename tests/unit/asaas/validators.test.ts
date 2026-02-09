@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { validateAsaasCustomerPayload, validateCPF } from '../../../convex/lib/validators';
+import { validateAsaasCustomerPayload, validateCPF } from '../../../server/lib/validators';
 
 describe('CPF Validation', () => {
 	describe('validateCPF', () => {

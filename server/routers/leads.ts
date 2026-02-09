@@ -341,6 +341,60 @@ export const leadsRouter = router({
 			return updated;
 		}),
 
+	/** Bulk import leads from spreadsheet */
+	importLeads: protectedProcedure
+		.input(
+			z.object({
+				leads: z.array(
+					z.object({
+						name: z.string().min(1),
+						phone: z.string().min(1),
+						email: z.string().optional(),
+						source: z.string().optional(),
+					}),
+				),
+				defaultProduct: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'BAD_REQUEST', message: 'Organization required' });
+			}
+
+			const results: { index: number; success: boolean; error?: string }[] = [];
+			let success = 0;
+			let failed = 0;
+
+			for (let i = 0; i < input.leads.length; i++) {
+				try {
+					await ctx.db
+						.insert(leads)
+						.values({
+							name: input.leads[i].name,
+							phone: input.leads[i].phone,
+							email: input.leads[i].email || undefined,
+							source: 'outro',
+							organizationId: orgId,
+							stage: 'novo',
+							temperature: 'frio',
+						})
+						.returning();
+					results.push({ index: i, success: true });
+					success++;
+				} catch (err) {
+					results.push({
+						index: i,
+						success: false,
+						error: err instanceof Error ? err.message : 'Erro desconhecido',
+					});
+					failed++;
+				}
+			}
+
+			return { total: input.leads.length, success, failed, results };
+		}),
+
 	/** Delete lead */
 	delete: protectedProcedure
 		.input(z.object({ leadId: z.number() }))

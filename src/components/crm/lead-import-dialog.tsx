@@ -41,6 +41,7 @@ import {
 	transformLeadRow,
 	validateLeadRow,
 } from '@/lib/lead-csv-validator';
+import { trpc } from '@/lib/trpc';
 import { parseXLSXFile } from '@/lib/xlsx-helper';
 import type { Lead } from '@/types/api';
 
@@ -58,6 +59,12 @@ interface ImportResult {
 	results: { index: number; success: boolean; error?: string }[];
 }
 
+function getMappingWarning(hasName: boolean, hasPhone: boolean): string {
+	if (hasName) return 'Mapeie a coluna de Telefone (obrigatório)';
+	if (hasPhone) return 'Mapeie a coluna de Nome (obrigatório)';
+	return 'Mapeie as colunas de Nome e Telefone (obrigatórios)';
+}
+
 export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) {
 	const [step, setStep] = useState<ImportStep>('upload');
 	const [file, setFile] = useState<File | null>(null);
@@ -69,9 +76,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Required for Convex API
-	// @ts-expect-error - Migration: error TS2304
-	const importLeads = useMutation((api as any).leads.importLeads);
+	const importLeadsMutation = trpc.leads.importLeads.useMutation();
 
 	const resetState = useCallback(() => {
 		setStep('upload');
@@ -178,7 +183,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 				.map((row) => transformLeadRow(row, mapping))
 				.filter((lead): lead is NonNullable<typeof lead> => lead !== null);
 
-			const result = await importLeads({
+			const result = await importLeadsMutation.mutateAsync({
 				leads: leadsToImport,
 				defaultProduct,
 			});
@@ -195,7 +200,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 		} finally {
 			setIsProcessing(false);
 		}
-	}, [rows, mapping, defaultProduct, importLeads]);
+	}, [rows, mapping, defaultProduct, importLeadsMutation]);
 
 	const hasNameMapping = Object.values(mapping).includes('name');
 	const hasPhoneMapping = Object.values(mapping).includes('phone');
@@ -243,10 +248,11 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 				<ScrollArea className="flex-1 pr-4">
 					{/* Step 1: Upload */}
 					{step === 'upload' && (
-						<div
-							className="cursor-pointer rounded-lg border-2 border-muted border-dashed p-12 text-center transition-colors hover:border-primary/50"
+						<button
+							className="w-full cursor-pointer rounded-lg border-2 border-muted border-dashed bg-transparent p-12 text-center transition-colors hover:border-primary/50"
 							onDragOver={(e) => e.preventDefault()}
 							onDrop={handleDrop}
+							type="button"
 						>
 							{isProcessing ? (
 								<div className="flex flex-col items-center gap-4">
@@ -274,7 +280,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 									</p>
 								</>
 							)}
-						</div>
+						</button>
 					)}
 
 					{/* Step 2: Mapping */}
@@ -300,11 +306,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 								<Alert>
 									<AlertCircle className="h-4 w-4" />
 									<AlertDescription>
-										{hasNameMapping || hasPhoneMapping
-											? hasNameMapping
-												? 'Mapeie a coluna de Telefone (obrigatório)'
-												: 'Mapeie a coluna de Nome (obrigatório)'
-											: 'Mapeie as colunas de Nome e Telefone (obrigatórios)'}
+										{getMappingWarning(hasNameMapping, hasPhoneMapping)}
 									</AlertDescription>
 								</Alert>
 							)}

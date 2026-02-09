@@ -4,30 +4,31 @@ import { useState } from 'react';
 import { TaskForm } from './task-form';
 import { TaskList } from './task-list';
 import { Button } from '@/components/ui/button';
+import { trpc } from '@/lib/trpc';
 
 interface TasksTabProps {
 	leadId: number;
 }
 
 export function TasksTab({ leadId }: TasksTabProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	// @ts-expect-error - Migration: error TS2304
-	const tasksResult = useQuery((api as any).tasks.listTasks, {
+	const { data: tasksResult } = trpc.tasks.list.useQuery({
 		leadId,
-		paginationOpts: { numItems: 50, cursor: null },
+		limit: 50,
 	});
 	const [showForm, setShowForm] = useState(false);
 
 	// Extract tasks from paginated result
-	const tasks = tasksResult?.page;
+	const tasks = tasksResult?.data;
 
 	// Sort tasks client-side for immediate feedback: Overdue -> Today -> Future -> Completed
 	const sortedTasks = tasks
 		? [...tasks].sort((a, b) => {
-				if (a.completed !== b.completed) return a.completed ? 1 : -1;
+				const aCompleted = !!a.completedAt;
+				const bCompleted = !!b.completedAt;
+				if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
 				if (!a.dueDate) return 1;
 				if (!b.dueDate) return -1;
-				return a.dueDate - b.dueDate;
+				return a.dueDate.getTime() - b.dueDate.getTime();
 			})
 		: [];
 

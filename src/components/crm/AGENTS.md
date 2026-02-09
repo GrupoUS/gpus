@@ -37,11 +37,11 @@ We provide a system to track and resolve sales objections.
 
 ## Dependencies
 
-- **Convex**: All data fetching and mutations via `convex/react`.
+- **tRPC**: All data fetching and mutations via `trpc` hooks from `~/lib/trpc`.
 - **Shadcn UI**: Uses `Command`, `Popover`, `Badge`, `Sheet`, `Tabs`, `Button`, `Textarea`.
 - **Lucide React**: Icons (`Tag`, `Check`, `Plus`, `X`, etc.).
 
 ## Notes
 
-- Tags supports optimistic updates via Convex.
+- Tags support optimistic updates via tRPC mutation callbacks.
 - Objections are secured: only creators and admins can edit/delete.

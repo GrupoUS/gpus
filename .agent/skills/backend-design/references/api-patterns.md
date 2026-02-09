@@ -1,4 +1,4 @@
-# API Patterns — Bun + Express + tRPC + Clerk
+# API Patterns — Bun + Hono + tRPC + Clerk
 
 Define strict API boundaries and keep failure behavior deterministic.
 

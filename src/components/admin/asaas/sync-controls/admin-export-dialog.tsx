@@ -61,7 +61,7 @@ export function AdminExportDialog() {
 	const pendingPaymentsCount = pendingPayments?.length || 0;
 
 	// Actions for export - will be used in future implementation
-	// Currently commented out to get build passing - export actions exist in convex/asaas/export.ts
+	// Currently commented out to get build passing - export actions exist in server/routers/financial.ts
 	// const exportStudentsAction = trpc.financial.export.bulkExportStudents.useMutation();
 	// const exportPaymentsAction = trpc.financial.export.bulkExportPayments.useMutation();
 

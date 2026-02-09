@@ -9,6 +9,7 @@ import { LeadCaptureSuccess } from './lead-capture-success';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { trpc } from '@/lib/trpc';
 import { useUTMParams } from '@/lib/utils/utm-capture';
 import { type LeadCaptureFormData, leadCaptureSchema } from '@/lib/validations/lead-capture-schema';
 
@@ -22,12 +23,7 @@ export function LeadCaptureForm({
 	defaultSource = 'landing_page',
 }: LeadCaptureFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
-	// @ts-expect-error - Migration: error TS2304
-	const createMarketingLead: ReturnType<typeof useMutation> = useMutation(
-		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
-		// @ts-expect-error - Migration: error TS2304
-		(api as any).marketingLeads.create,
-	);
+	const createMarketingLead = trpc.leads.create.useMutation();
 	const utmParams = useUTMParams();
 
 	const form = useForm<LeadCaptureFormData>({
@@ -59,20 +55,11 @@ export function LeadCaptureForm({
 				return;
 			}
 
-			await createMarketingLead({
+			await createMarketingLead.mutateAsync({
 				name: data.name,
-				email: data.email,
+				email: data.email || undefined,
 				phone: data.phone,
-				// biome-ignore lint/suspicious/noExplicitAny: mismatch between Zod enum and Convex union types
-				interest: data.interest as any,
-				message: data.message,
-				lgpdConsent: data.lgpdConsent,
-				whatsappConsent: data.whatsappConsent,
-				utmSource: data.utmSource,
-				utmCampaign: data.utmCampaign,
-				utmMedium: data.utmMedium,
-				utmContent: data.utmContent,
-				utmTerm: data.utmTerm,
+				source: 'landing_page',
 			});
 
 			setIsSuccess(true);

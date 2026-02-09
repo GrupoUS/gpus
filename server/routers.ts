@@ -15,6 +15,7 @@ import {
 } from './routers/misc';
 import { studentsRouter } from './routers/students';
 import { usersRouter } from './routers/users';
+import { whatsappRouter } from './routers/whatsapp';
 
 export const appRouter = router({
 	users: usersRouter,
@@ -34,6 +35,7 @@ export const appRouter = router({
 	templates: templatesRouter,
 	emailMarketing: emailMarketingRouter,
 	lgpd: lgpdRouter,
+	whatsapp: whatsappRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -40,7 +40,7 @@ Do:
 
 Don’t:
 
-- Don’t place domain orchestration in Express route glue.
+- Don't place domain orchestration in Hono route handlers.
 - Don’t bypass context-level authorization assumptions.
 - Don’t mix transport, domain, and persistence concerns in one function.
 

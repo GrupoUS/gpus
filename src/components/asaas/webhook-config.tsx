@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 
 export function WebhookConfig() {
-	// Webhook URL must match the route defined in convex/http.ts
+	// Webhook URL must match the route defined in server/_core/index.ts
 	const webhookUrl = `${window.location.origin}/asaas/webhook`;
 
 	const handleCopy = () => {

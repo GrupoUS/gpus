@@ -110,8 +110,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	}, [isEditMode, existingStudent, form]);
 
 	const handleCreate = async (values: z.infer<typeof formSchema>) => {
-		await createStudent.mutateAsync(
-				{
+		await createStudent.mutateAsync({
 			name: values.name,
 			email: values.email,
 			phone: values.phone,
@@ -131,8 +130,7 @@ export function StudentForm({ studentId, trigger, onSuccess }: StudentFormProps)
 	};
 
 	const handleUpdate = async (values: z.infer<typeof formSchema>, id: number) => {
-		await updateStudent.mutateAsync(
-				{
+		await updateStudent.mutateAsync({
 			studentId: id,
 			patch: {
 				name: values.name,

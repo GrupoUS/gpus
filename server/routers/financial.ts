@@ -237,4 +237,44 @@ export const financialRouter = router({
 					.limit(input?.limit ?? 20);
 			}),
 	}),
+
+	/** ASAAS Auto-Sync Configuration sub-router */
+	sync: router({
+		getAutoSyncConfig: protectedProcedure.query(() => {
+			// Stub: no sync_config table yet — return defaults
+			return {
+				enabled: false,
+				intervalHours: 1,
+				updateExisting: true,
+			};
+		}),
+
+		saveAutoSyncConfig: protectedProcedure
+			.input(
+				z.object({
+					enabled: z.boolean(),
+					intervalHours: z.number().min(1).max(24),
+					updateExisting: z.boolean(),
+				}),
+			)
+			.mutation(({ input }) => {
+				// Stub: persist in future sync_config table
+				return input;
+			}),
+
+		getSyncLogs: protectedProcedure
+			.input(
+				z.object({
+					syncType: z.string().optional(),
+					limit: z.number().min(1).max(50).default(10),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				return await ctx.db
+					.select()
+					.from(asaasSyncLogs)
+					.orderBy(desc(asaasSyncLogs.createdAt))
+					.limit(input.limit);
+			}),
+	}),
 });

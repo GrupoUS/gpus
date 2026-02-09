@@ -26,11 +26,13 @@ interface TaskUser {
 interface TaskListItem {
 	id: number;
 	completed?: boolean;
-	createdAt?: number;
+	completedAt?: Date | null;
+	createdAt?: Date | number;
 	assignedToUser?: TaskUser;
 	description: string;
-	dueDate?: Date | number;
+	dueDate?: Date | number | null;
 	mentionedUsers?: TaskUser[];
+	[key: string]: unknown;
 }
 
 interface TaskListProps {

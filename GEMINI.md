@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Type** | Single-project React application |
-| **Stack** | React 19 + Vite 7 + TanStack Router + shadcn/ui + Convex + Clerk |
+| **Stack** | React 19 + Vite 7 + TanStack Router + shadcn/ui + tRPC + Drizzle + Neon + Clerk |
 | **Purpose** | CRM and student management portal for health aesthetics education |
 | **Package Manager** | **bun** (ALWAYS - never npm/yarn/pnpm) |
 
@@ -21,9 +21,9 @@
 | Frontend  | React 19 + Vite 7               |
 | Styling   | Tailwind CSS 4 + shadcn/ui      |
 | Routing   | TanStack Router (file-based)    |
-| State     | TanStack Query + Convex useQuery|
-| Backend   | Convex (query/mutation/action)  |
-| Database  | Convex (integrated)             |
+| State     | TanStack Query + tRPC useQuery   |
+| Backend   | Hono + tRPC (query/mutation)     |
+| Database  | Neon (PostgreSQL) + Drizzle ORM  |
 | Auth      | Clerk                           |
 | Linter    | Biome                           |
 | Tests     | Vitest + Playwright             |
@@ -33,13 +33,14 @@
 ## 🚀 Commands
 
 ```bash
-bun dev             # Dev server (Vite + Convex concurrent)
+bun dev             # Dev server (Vite + Hono concurrent)
 bun run build       # Build + TypeScript check
 bun run lint        # Biome lint + format (auto-fix)
 bun run lint:check  # Biome check only
 bun run test        # Vitest run
-bunx convex deploy  # Deploy Convex functions
-bunx convex dev     # Convex dev mode
+bun run db:push     # Push Drizzle schema to Neon
+bun run db:generate # Generate Drizzle migrations
+bun run db:studio   # Open Drizzle Studio
 bunx shadcn@latest add [component]  # Add shadcn component
 ```
 
@@ -78,7 +79,7 @@ bunx shadcn@latest add [component]  # Add shadcn component
 | `src/routes/` | TanStack Router pages | [src/routes/AGENTS.md](src/routes/AGENTS.md) |
 | `src/hooks/` | Custom hooks | [src/hooks/AGENTS.md](src/hooks/AGENTS.md) |
 | `src/lib/` | Utilities | [src/lib/AGENTS.md](src/lib/AGENTS.md) |
-| `convex/` | Backend (Convex) | [convex/AGENTS.md](convex/AGENTS.md) |
+| `server/` | Backend (Hono + tRPC) | [server/AGENTS.md](server/AGENTS.md) |
 | `tests/` | Test suites | [tests/AGENTS.md](tests/AGENTS.md) |
 | `docs/` | Documentation | PRD, tech stack, setup guides |
 
@@ -104,8 +105,8 @@ bunx shadcn@latest add [component]  # Add shadcn component
 
 - **Never commit:** API keys, tokens, credentials
 - **Environment:** `.env.local` (gitignored)
-- **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`
-- **Auth:** Clerk for frontend, `ctx.auth.getUserIdentity()` for Convex
+- **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `DATABASE_URL`
+- **Auth:** Clerk for frontend, `ctx.auth.getUserIdentity()` for tRPC context
 
 ---
 
@@ -128,14 +129,14 @@ Before PR:
 | `tavily` | Web search, URL extraction |
 | `sequential-thinking` | Step-by-step reasoning for complex tasks |
 | `linear-mcp-server` | Linear issue management |
-| `convex` | Convex operations |
+| `convex` | Convex MCP (legacy, not used) |
 | `clerk` | Clerk SDK snippets |
 
 ### MCP Activation Rules
 
 | Trigger | Action |
 |---------|--------|
-| Convex code (queries, mutations) | `context7` → Convex docs |
+| tRPC/Drizzle code             | `context7` → Drizzle/tRPC docs |
 | Clerk auth code | `context7` → Clerk docs |
 | TanStack Router routes | `context7` → TanStack Router docs |
 | shadcn/ui components | `context7` → shadcn docs |
@@ -174,4 +175,4 @@ YAGNI: Build only what's required
 | "Just one more table" | Join complexity |
 | Manual state sync | Race conditions |
 | Unused imports | Bundle bloat |
-| No Convex indexes | Slow queries |
+| No Drizzle indexes | Slow queries |

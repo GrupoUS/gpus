@@ -17,12 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 export function AutoSyncSettings() {
-	// @ts-expect-error - Migration: error TS2339
-	const { data: config } = trpc.asaas.sync.getAutoSyncConfig.useQuery();
-	// @ts-expect-error - Migration: error TS2339
-	const saveConfig = trpc.asaas.sync.saveAutoSyncConfig.useMutation();
-	// @ts-expect-error - Migration: error TS2339
-	const { data: lastSyncLogs } = trpc.asaas.sync.getSyncLogs.useQuery({
+	const { data: config } = trpc.financial.sync.getAutoSyncConfig.useQuery();
+	const saveConfig = trpc.financial.sync.saveAutoSyncConfig.useMutation();
+	const { data: lastSyncLogs } = trpc.financial.sync.getSyncLogs.useQuery({
 		syncType: 'customers',
 		limit: 1,
 	});
@@ -49,7 +46,7 @@ export function AutoSyncSettings() {
 	const handleSave = async () => {
 		setIsSaving(true);
 		try {
-			await saveConfig({
+			await saveConfig.mutateAsync({
 				enabled,
 				intervalHours: Number(intervalHours),
 				updateExisting,

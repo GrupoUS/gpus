@@ -39,7 +39,6 @@ export const Route = createFileRoute('/_authenticated/crm')({
 	component: CRMPage,
 });
 
-
 function CRMPage() {
 	const navigate = Route.useNavigate();
 	const { product } = Route.useSearch();

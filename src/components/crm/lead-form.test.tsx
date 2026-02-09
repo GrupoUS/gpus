@@ -14,9 +14,18 @@ vi.mock('@/lib/trpc', () => ({
 			create: {
 				useMutation: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
 			},
+			get: { useQuery: () => ({ data: null }) },
+			list: { useQuery: () => ({ data: [] }) },
+			search: { useQuery: () => ({ data: [] }) },
 		},
 		users: {
 			listSystemUsers: { useQuery: () => ({ data: [] }) },
+		},
+		tags: {
+			getLeadTags: { useQuery: () => ({ data: [] }) },
+		},
+		customFields: {
+			list: { useQuery: () => ({ data: [] }) },
 		},
 	},
 }));

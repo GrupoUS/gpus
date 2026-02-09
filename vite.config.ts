@@ -52,8 +52,6 @@ export default defineConfig({
 					charts: ['recharts'],
 					// Authentication chunk
 					auth: ['@clerk/clerk-react'],
-					// Backend chunk (Convex)
-					backend: ['convex', 'convex/react'],
 					// Animation chunk
 					animation: ['framer-motion'],
 				},

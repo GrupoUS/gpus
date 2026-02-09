@@ -94,7 +94,17 @@ function TemplatesListPage() {
 								});
 							}}
 							onSync={handleSyncTemplate}
-							template={template as unknown as { id: number; name: string; subject: string; category?: string; isActive: boolean; brevoTemplateId?: string | number; updatedAt: number }}
+							template={
+								template as unknown as {
+									id: number;
+									name: string;
+									subject: string;
+									category?: string;
+									isActive: boolean;
+									brevoTemplateId?: string | number;
+									updatedAt: number;
+								}
+							}
 						/>
 					))}
 					{templates?.length === 0 && (

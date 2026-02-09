@@ -3,7 +3,7 @@
 ## Package Identity
 
 **Purpose:** Reusable React hooks for state management, data fetching, and business logic  
-**Tech:** React 19 hooks with TypeScript and Convex integration
+**Tech:** React 19 hooks with TypeScript and tRPC integration
 
 ---
 
@@ -29,17 +29,16 @@ export function useIsMobile() {
 }
 ```
 
-✅ **DO:** Use Convex hooks for data fetching
+✅ **DO:** Use tRPC hooks for data fetching
 ```typescript
 // src/hooks/use-leads.ts
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../convex/_generated/api'
+import { trpc } from '~/lib/trpc';
 
-export function useLeads() {
-  const leads = useQuery(api.leads.listLeads, {})
-  const createLead = useMutation(api.leads.createLead)
+export function useLeads(mentoradoId: string) {
+  const { data: leads } = trpc.leads.list.useQuery({ mentoradoId });
+  const createLead = trpc.leads.create.useMutation();
   
-  return { leads, createLead }
+  return { leads, createLead };
 }
 ```
 
@@ -57,12 +56,12 @@ export function useAuthWithRouting() {
 
 ## Available Hooks
 
-| Hook | Purpose | Convex Integration |
-|------|---------|-------------------|
+| Hook | Purpose | tRPC Integration |
+|------|---------|-----------------|
 | `use-mobile.tsx` | Mobile detection with responsive breakpoints | No |
 | `use-toast.ts` | Toast notification management (from sonner) | No |
-| `use-dify-chat.ts` | Dify AI chat integration with streaming | Yes (via actions) |
-| `use-students-view-model.ts` | Student list state, filters, pagination | Yes (queries) |
+| `use-dify-chat.ts` | Dify AI chat integration with streaming | Yes (via tRPC actions) |
+| `use-students-view-model.ts` | Student list state, filters, pagination | Yes (tRPC queries) |
 
 ---
 
@@ -86,8 +85,8 @@ rg -n "export.*use[A-Z]" src/hooks/
 # Find specific hook
 rg -n "useIsMobile|useAuth|useTheme" src/hooks/
 
-# Find Convex usage in hooks
-rg -n "useQuery|useMutation" src/hooks/
+# Find tRPC usage in hooks
+rg -n "trpc\." src/hooks/
 
 # Find useState usage
 rg -n "useState" src/hooks/
@@ -99,18 +98,23 @@ rg -n "useState" src/hooks/
 
 **Data Fetching Hooks:**
 ```typescript
-export function useLeads(filters?: LeadFilters) {
-  return useQuery(api.leads.listLeads, filters || {})
+export function useLeads(mentoradoId: string, filters?: LeadFilters) {
+  return trpc.leads.list.useQuery({ mentoradoId, ...filters });
 }
 ```
 
 **Mutation Hooks:**
 ```typescript
 export function useLeadMutations() {
-  const create = useMutation(api.leads.createLead)
-  const update = useMutation(api.leads.updateLead)
+  const utils = trpc.useUtils();
+  const create = trpc.leads.create.useMutation({
+    onSuccess: () => utils.leads.list.invalidate(),
+  });
+  const update = trpc.leads.update.useMutation({
+    onSuccess: () => utils.leads.list.invalidate(),
+  });
   
-  return { create, update }
+  return { create, update };
 }
 ```
 
