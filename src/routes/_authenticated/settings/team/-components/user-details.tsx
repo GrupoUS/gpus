@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { TeamUser } from '@/routes/_authenticated/settings/team';
 
 interface UserDetailsProps {
-	user: Record<string, unknown> | null;
+	user: TeamUser | null;
 	onClose: () => void;
-	onEditRole: (user: Record<string, unknown>) => void;
-	onRemove: (user: Record<string, unknown>) => void;
+	onEditRole: (user: TeamUser) => void;
+	onRemove: (user: TeamUser) => void;
 }
 
 export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserDetailsProps) {
@@ -26,7 +27,7 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 				<div className="mb-8 flex flex-col items-center">
 					<Avatar className="mb-4 h-24 w-24">
 						<AvatarFallback className="text-2xl">
-							{user.name.slice(0, 2).toUpperCase()}
+							{String(user.name).slice(0, 2).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
 					<h2 className="font-bold text-xl">{user.name}</h2>
@@ -56,14 +57,16 @@ export function UserDetailsDrawer({ user, onClose, onEditRole, onRemove }: UserD
 									<Clock className="h-3 w-3" />
 									Criado em
 								</span>
-								<p className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</p>
+								<p className="font-medium">
+									{new Date(user.createdAt as string | number).toLocaleDateString()}
+								</p>
 							</div>
 							<div className="space-y-1">
 								<span className="flex items-center gap-1 text-muted-foreground text-xs">
 									<Shield className="h-3 w-3" />
 									ID do Sistema
 								</span>
-								<p className="truncate font-mono text-xs" title={user.id}>
+								<p className="truncate font-mono text-xs" title={String(user.id)}>
 									{user.id}
 								</p>
 							</div>

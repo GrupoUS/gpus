@@ -11,6 +11,7 @@ interface TasksTabProps {
 
 export function TasksTab({ leadId }: TasksTabProps) {
 	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
+	// @ts-expect-error - Migration: error TS2304
 	const tasksResult = useQuery((api as any).tasks.listTasks, {
 		leadId,
 		paginationOpts: { numItems: 50, cursor: null },

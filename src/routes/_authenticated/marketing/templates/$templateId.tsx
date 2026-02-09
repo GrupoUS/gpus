@@ -21,13 +21,13 @@ function EditTemplatePage() {
 	const { templateId } = Route.useParams();
 	const { handleUpdateTemplate } = useTemplatesViewModel();
 
-	// Fetch template data
-	const { data: template } = trpc.emailMarketing.templates.list.useQuery({
-		templateId: templateId as number,
-	});
+	// Fetch template data — list returns array, find by ID
+	const { data: templatesList } = trpc.emailMarketing.templates.list.useQuery();
+	const numericId = Number(templateId);
+	const template = templatesList?.find((t) => t.id === numericId);
 
 	// Loading state
-	if (template === undefined) {
+	if (templatesList === undefined) {
 		return (
 			<div className="flex h-64 items-center justify-center p-6">
 				<Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -36,7 +36,7 @@ function EditTemplatePage() {
 	}
 
 	// Not found state
-	if (template === null) {
+	if (!template) {
 		return (
 			<div className="p-6">
 				<h1 className="font-bold text-2xl text-destructive tracking-tight">
@@ -62,7 +62,7 @@ function EditTemplatePage() {
 				initialData={{
 					name: template.name,
 					subject: template.subject,
-					category: template.category,
+					category: template.category ?? undefined,
 					htmlContent: template.htmlContent,
 					isActive: template.isActive,
 				}}

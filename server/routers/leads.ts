@@ -88,7 +88,16 @@ export const leadsRouter = router({
 
 	/** Get single lead by ID */
 	get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-		const [lead] = await ctx.db.select().from(leads).where(eq(leads.id, input.id)).limit(1);
+		const orgId = ctx.user?.organizationId;
+		if (!orgId) {
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+		}
+
+		const [lead] = await ctx.db
+			.select()
+			.from(leads)
+			.where(and(eq(leads.id, input.id), eq(leads.organizationId, orgId)))
+			.limit(1);
 
 		if (!lead) {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
@@ -263,10 +272,15 @@ export const leadsRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+			}
+
 			const [updated] = await ctx.db
 				.update(leads)
 				.set({ ...input.patch, updatedAt: new Date() })
-				.where(eq(leads.id, input.leadId))
+				.where(and(eq(leads.id, input.leadId), eq(leads.organizationId, orgId)))
 				.returning();
 
 			if (!updated) {
@@ -284,7 +298,16 @@ export const leadsRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const [lead] = await ctx.db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1);
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+			}
+
+			const [lead] = await ctx.db
+				.select()
+				.from(leads)
+				.where(and(eq(leads.id, input.leadId), eq(leads.organizationId, orgId)))
+				.limit(1);
 
 			if (!lead) {
 				throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
@@ -303,7 +326,7 @@ export const leadsRouter = router({
 			const [updated] = await ctx.db
 				.update(leads)
 				.set(updates)
-				.where(eq(leads.id, input.leadId))
+				.where(and(eq(leads.id, input.leadId), eq(leads.organizationId, orgId)))
 				.returning();
 
 			// Log stage change activity
@@ -322,7 +345,15 @@ export const leadsRouter = router({
 	delete: protectedProcedure
 		.input(z.object({ leadId: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const [deleted] = await ctx.db.delete(leads).where(eq(leads.id, input.leadId)).returning();
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+			}
+
+			const [deleted] = await ctx.db
+				.delete(leads)
+				.where(and(eq(leads.id, input.leadId), eq(leads.organizationId, orgId)))
+				.returning();
 
 			if (!deleted) {
 				throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });

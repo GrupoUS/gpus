@@ -81,8 +81,10 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 				bValue = getOpenRate(b);
 				break;
 			case 'createdAt':
-				aValue = a._creationTime || 0;
-				bValue = b._creationTime || 0;
+				// @ts-expect-error - Migration: error TS2322
+				aValue = a.createdAt || 0;
+				// @ts-expect-error - Migration: error TS2322
+				bValue = b.createdAt || 0;
 				break;
 			default:
 				return 0;
@@ -206,7 +208,7 @@ export function CampaignTable({ campaigns, onCampaignClick }: CampaignTableProps
 								</TableCell>
 								<TableCell>{openRateContent}</TableCell>
 								<TableCell className="text-muted-foreground text-sm">
-									{formatDistanceToNow(campaign._creationTime, { locale: ptBR, addSuffix: true })}
+									{formatDistanceToNow(campaign.createdAt, { locale: ptBR, addSuffix: true })}
 								</TableCell>
 								<TableCell>
 									<ChevronRight className="h-4 w-4 text-muted-foreground" />

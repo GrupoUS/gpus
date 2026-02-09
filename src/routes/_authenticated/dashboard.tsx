@@ -172,14 +172,22 @@ function DashboardPage() {
 
 	const { data: currentUser } = trpc.users.me.useQuery();
 	// TODO: Implement metrics, team performance, and churn alerts in tRPC routers
-	const vendors: Vendor[] | undefined = undefined; // TODO: trpc.users.listVendors
+	const vendors = undefined as Vendor[] | undefined; // TODO: trpc.users.listVendors
 	const isManager = currentUser && ['manager', 'admin', 'owner'].includes(currentUser.role);
-	const selectedVendor = vendors?.find((vendor) => vendor.id === selectedVendorId);
+	const selectedVendor = vendors?.find((vendor: Vendor) => vendor.id === selectedVendorId);
 
-	const metrics: DashboardMetrics | undefined = undefined; // TODO: trpc.metrics.getDashboard
-	const teamPerformance: TeamPerformanceItem[] | undefined = undefined; // TODO: trpc.metrics.getTeamPerformance
-	const churnAlerts: ChurnAlert[] | undefined = undefined; // TODO: trpc.students.getChurnAlerts
-	const recentLeads: Record<string, unknown>[] | undefined = undefined; // TODO: trpc.leads.recent
+	const metrics = undefined as DashboardMetrics | undefined; // TODO: trpc.metrics.getDashboard
+	const teamPerformance = undefined as TeamPerformanceItem[] | undefined; // TODO: trpc.metrics.getTeamPerformance
+	const churnAlerts = undefined as ChurnAlert[] | undefined; // TODO: trpc.students.getChurnAlerts
+	const recentLeads = undefined as
+		| Array<{
+				id: number;
+				name: string;
+				source: string | null;
+				stage: string | null;
+				createdAt: Date;
+		  }>
+		| undefined; // TODO: trpc.leads.recent
 	const teamPerformanceData = teamPerformance;
 
 	// Format currency
@@ -224,7 +232,7 @@ function DashboardPage() {
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value="all">Todos os Vendedores</SelectItem>
-										{vendors?.map((vendor) => (
+										{vendors?.map((vendor: Vendor) => (
 											<SelectItem key={vendor.id} value={vendor.id}>
 												{vendor.name}
 											</SelectItem>
@@ -279,13 +287,15 @@ function DashboardPage() {
 						<TeamPerformance data={teamPerformanceData} />
 					</Suspense>
 					<Suspense fallback={<Skeleton className="h-80 w-full rounded-lg" />}>
-						<ChurnAlerts data={churnAlerts} />
+						<ChurnAlerts
+							data={churnAlerts as unknown as Parameters<typeof ChurnAlerts>[0]['data']}
+						/>
 					</Suspense>
 				</MotionWrapper>
 
 				<MotionWrapper>
 					<Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
-						<RecentLeads data={recentLeads} />
+						<RecentLeads data={recentLeads as any} />
 					</Suspense>
 				</MotionWrapper>
 			</div>

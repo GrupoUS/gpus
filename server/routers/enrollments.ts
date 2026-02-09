@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { enrollments } from '../../drizzle/schema';
@@ -10,19 +10,29 @@ export const enrollmentsRouter = router({
 	listByStudent: protectedProcedure
 		.input(z.object({ studentId: z.number() }))
 		.query(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) return [];
+
 			return await ctx.db
 				.select()
 				.from(enrollments)
-				.where(eq(enrollments.studentId, input.studentId))
+				.where(
+					and(eq(enrollments.studentId, input.studentId), eq(enrollments.organizationId, orgId)),
+				)
 				.orderBy(desc(enrollments.createdAt));
 		}),
 
 	/** Get enrollment by ID */
 	get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+		const orgId = ctx.user?.organizationId;
+		if (!orgId) {
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Matrícula não encontrada' });
+		}
+
 		const [enrollment] = await ctx.db
 			.select()
 			.from(enrollments)
-			.where(eq(enrollments.id, input.id))
+			.where(and(eq(enrollments.id, input.id), eq(enrollments.organizationId, orgId)))
 			.limit(1);
 
 		if (!enrollment) {
@@ -88,6 +98,11 @@ export const enrollmentsRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Matrícula não encontrada' });
+			}
+
 			const updates: Record<string, unknown> = {
 				...input.patch,
 				updatedAt: new Date(),
@@ -99,7 +114,7 @@ export const enrollmentsRouter = router({
 			const [updated] = await ctx.db
 				.update(enrollments)
 				.set(updates)
-				.where(eq(enrollments.id, input.enrollmentId))
+				.where(and(eq(enrollments.id, input.enrollmentId), eq(enrollments.organizationId, orgId)))
 				.returning();
 
 			if (!updated) {

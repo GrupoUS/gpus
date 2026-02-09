@@ -70,7 +70,7 @@ function LeadsPage() {
 
 			{/* Table and Load More */}
 			<div className="space-y-4">
-				<LeadCaptureTable leads={leads} onStatusUpdate={handlers.onStatusUpdate} />
+				<LeadCaptureTable leads={leads as any} onStatusUpdate={handlers.onStatusUpdate} />
 
 				{isLoading && leads.length === 0 && (
 					<div className="flex justify-center py-10">

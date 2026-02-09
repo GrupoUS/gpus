@@ -49,10 +49,15 @@ export const studentsRouter = router({
 
 	/** Get student by ID */
 	get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+		const orgId = ctx.user?.organizationId;
+		if (!orgId) {
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Paciente não encontrado' });
+		}
+
 		const [student] = await ctx.db
 			.select()
 			.from(students)
-			.where(eq(students.id, input.id))
+			.where(and(eq(students.id, input.id), eq(students.organizationId, orgId)))
 			.limit(1);
 
 		if (!student) {
@@ -132,10 +137,15 @@ export const studentsRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Paciente não encontrado' });
+			}
+
 			const [updated] = await ctx.db
 				.update(students)
 				.set({ ...input.patch, updatedAt: new Date() })
-				.where(eq(students.id, input.studentId))
+				.where(and(eq(students.id, input.studentId), eq(students.organizationId, orgId)))
 				.returning();
 
 			if (!updated) {

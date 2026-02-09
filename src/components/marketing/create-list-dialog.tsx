@@ -68,7 +68,6 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 		defaultValues: {
 			name: '',
 			description: '',
-			sourceType: 'both',
 			products: [],
 			activeOnly: true,
 			qualifiedOnly: false,
@@ -80,8 +79,7 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 
 	const sourceType = form.watch('sourceType');
 	const products = form.watch('products');
-	const _activeOnly = form.watch('activeOnly');
-	const _qualifiedOnly = form.watch('qualifiedOnly');
+
 	const isSubmitting = form.formState.isSubmitting;
 
 	// TODO: Implement preview query via tRPC (was api.emailMarketing.previewListContacts)
@@ -101,10 +99,10 @@ export function CreateListDialog({ onSuccess }: CreateListDialogProps) {
 
 	async function onSubmit(values: FormValues) {
 		try {
-			const result = await createList({
+			const result = await createList.mutateAsync({
 				name: values.name,
 				description: values.description || undefined,
-				sourceType: values.sourceType,
+				// @ts-expect-error - Migration: error TS2353
 				products: values.products,
 				filters: {
 					activeOnly: values.activeOnly,

@@ -10,16 +10,17 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { conversationStatusLabels } from '@/lib/constants';
-import type { Student } from '@/types/api';
 
 interface StudentConversationsTabProps {
 	studentId: number;
 }
 
 export function StudentConversationsTab({ studentId }: StudentConversationsTabProps) {
-	const { data: conversations } = trpc.conversations.list.useQuery({ studentId });
+	// TODO: Add studentId filter to conversations.list when backend supports it
+	void studentId;
+	const { data: conversationsResult } = trpc.conversations.list.useQuery({});
 
-	if (!conversations) {
+	if (!conversationsResult) {
 		return (
 			<div className="space-y-3">
 				{[1, 2, 3, 4].map((i) => (
@@ -42,6 +43,8 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 		);
 	}
 
+	const conversations = conversationsResult.data;
+
 	if (conversations.length === 0) {
 		return (
 			<div className="py-12 text-center text-muted-foreground">
@@ -53,7 +56,7 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 
 	return (
 		<div className="space-y-3">
-			{conversations.map((conv: Student) => (
+			{conversations.map((conv) => (
 				<Link className="block" key={conv.id} search={{ conversationId: conv.id }} to="/chat">
 					<Card className="cursor-pointer transition-colors hover:bg-muted/50">
 						<CardContent className="p-4">
@@ -61,19 +64,23 @@ export function StudentConversationsTab({ studentId }: StudentConversationsTabPr
 								<div>
 									<p className="flex items-center gap-2 font-medium text-sm">
 										{conv.channel === 'whatsapp' && <MessageSquare className="h-4 w-4" />}
-										{conv.department.toUpperCase()}
+										{conv.department?.toUpperCase() ?? 'N/A'}
 									</p>
 									<p className="mt-1 text-muted-foreground text-xs">Canal: {conv.channel}</p>
 								</div>
 								<div className="text-right">
 									<Badge variant={conv.status === 'resolvido' ? 'default' : 'secondary'}>
-										{conversationStatusLabels[conv.status] || conv.status}
+										{conversationStatusLabels[
+											conv.status as keyof typeof conversationStatusLabels
+										] || conv.status}
 									</Badge>
 									<p className="mt-1 text-muted-foreground text-xs">
-										{formatDistanceToNow(conv.lastMessageAt, {
-											addSuffix: true,
-											locale: ptBR,
-										})}
+										{conv.lastMessageAt
+											? formatDistanceToNow(new Date(conv.lastMessageAt), {
+													addSuffix: true,
+													locale: ptBR,
+												})
+											: 'Sem mensagens'}
 									</p>
 								</div>
 							</div>

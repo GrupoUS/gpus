@@ -56,10 +56,15 @@ export const conversationsRouter = router({
 
 	/** Get conversation by ID */
 	get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+		const orgId = ctx.user?.organizationId;
+		if (!orgId) {
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversa não encontrada' });
+		}
+
 		const [conversation] = await ctx.db
 			.select()
 			.from(conversations)
-			.where(eq(conversations.id, input.id))
+			.where(and(eq(conversations.id, input.id), eq(conversations.organizationId, orgId)))
 			.limit(1);
 
 		if (!conversation) {
@@ -105,6 +110,11 @@ export const conversationsRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversa não encontrada' });
+			}
+
 			const updates: Record<string, unknown> = {
 				status: input.status,
 				updatedAt: new Date(),
@@ -117,7 +127,9 @@ export const conversationsRouter = router({
 			const [updated] = await ctx.db
 				.update(conversations)
 				.set(updates)
-				.where(eq(conversations.id, input.conversationId))
+				.where(
+					and(eq(conversations.id, input.conversationId), eq(conversations.organizationId, orgId)),
+				)
 				.returning();
 
 			if (!updated) {
@@ -140,6 +152,22 @@ export const messagesRouter = router({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
+			// Verify conversation belongs to user's org before listing messages
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) return [];
+
+			const [conversation] = await ctx.db
+				.select({ id: conversations.id })
+				.from(conversations)
+				.where(
+					and(eq(conversations.id, input.conversationId), eq(conversations.organizationId, orgId)),
+				)
+				.limit(1);
+
+			if (!conversation) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversa não encontrada' });
+			}
+
 			return await ctx.db
 				.select()
 				.from(messages)
@@ -160,6 +188,24 @@ export const messagesRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			// Verify conversation belongs to user's org before sending message
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'BAD_REQUEST', message: 'Organization required' });
+			}
+
+			const [conversation] = await ctx.db
+				.select({ id: conversations.id })
+				.from(conversations)
+				.where(
+					and(eq(conversations.id, input.conversationId), eq(conversations.organizationId, orgId)),
+				)
+				.limit(1);
+
+			if (!conversation) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversa não encontrada' });
+			}
+
 			const [created] = await ctx.db
 				.insert(messages)
 				.values({

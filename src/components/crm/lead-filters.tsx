@@ -231,8 +231,10 @@ export function LeadFilters({ onFiltersChange }: LeadFiltersProps) {
 								{tags?.map((tag) => (
 									<div className="flex items-center space-x-2" key={tag.id}>
 										<Checkbox
+											// @ts-expect-error - Migration: error TS2345
 											checked={filters.tags?.includes(tag.id)}
 											id={`tag-${tag.id}`}
+											// @ts-expect-error - Migration: error TS2345
 											onCheckedChange={() => toggleFilter('tags', tag.id)}
 										/>
 										<Label

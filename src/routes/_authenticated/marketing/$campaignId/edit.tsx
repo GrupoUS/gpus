@@ -17,7 +17,7 @@ interface CampaignFormData {
 	subject: string;
 	listIds: number[];
 	status: CampaignStatus;
-	scheduledAt?: number;
+	scheduledAt?: string;
 }
 
 export const Route = createFileRoute('/_authenticated/marketing/$campaignId/edit')({
@@ -31,12 +31,12 @@ function EditCampaignPage() {
 	const { campaignId } = Route.useParams();
 
 	// Fetch existing campaign data
-	const queryArgs = { campaignId: campaignId as number };
-	const { data: campaign } = trpc.emailMarketing.campaigns.get.useQuery(queryArgs);
+	const numericId = Number(campaignId);
+	const { data: campaign } = trpc.emailMarketing.campaigns.get.useQuery({ id: numericId });
 	const isLoading = campaign === undefined;
 
 	// Fetch available email lists
-	const { data: lists } = trpc.emailMarketing.lists.list.useQuery({});
+	const { data: lists } = trpc.emailMarketing.lists.list.useQuery();
 
 	// Update campaign mutation
 	const updateCampaign = trpc.emailMarketing.campaigns.create.useMutation();
@@ -70,8 +70,7 @@ function EditCampaignPage() {
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { status: _status, ...updateData } = formData;
-			await updateCampaign({
-				campaignId: campaign.id,
+			await updateCampaign.mutateAsync({
 				...updateData,
 			});
 			toast.success('Campanha atualizada com sucesso!', {
@@ -199,7 +198,7 @@ function EditCampaignPage() {
 								</div>
 							) : (
 								<div className="space-y-2">
-									{lists?.map((list: Record<string, unknown>) => (
+									{lists?.map((list) => (
 										<div className="flex items-center gap-3 rounded-lg border p-3" key={list.id}>
 											<input
 												checked={formData.listIds.includes(list.id)}

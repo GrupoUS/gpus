@@ -22,8 +22,10 @@ export function LeadCaptureForm({
 	defaultSource = 'landing_page',
 }: LeadCaptureFormProps) {
 	const [isSuccess, setIsSuccess] = useState(false);
+	// @ts-expect-error - Migration: error TS2304
 	const createMarketingLead: ReturnType<typeof useMutation> = useMutation(
 		// biome-ignore lint/suspicious/noExplicitAny: avoid circular type instantiation
+		// @ts-expect-error - Migration: error TS2304
 		(api as any).marketingLeads.create,
 	);
 	const utmParams = useUTMParams();

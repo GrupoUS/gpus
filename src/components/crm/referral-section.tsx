@@ -8,13 +8,6 @@ interface ReferralSectionProps {
 	leadId: number;
 }
 
-interface ReferralStats {
-	convertedReferrals: number;
-	pendingReferrals: number;
-	totalCashback?: number;
-	totalReferrals: number;
-}
-
 export function ReferralSection({ leadId }: ReferralSectionProps) {
 	const { data: lead } = trpc.leads.get.useQuery({ id: leadId });
 	// TODO: referrals router not yet implemented - stub referrer and stats
@@ -23,7 +16,8 @@ export function ReferralSection({ leadId }: ReferralSectionProps) {
 		{ enabled: !!lead?.referredById },
 	);
 	// TODO: Implement referrals.getReferralStats in tRPC router
-	const stats: ReferralStats | undefined = undefined;
+	// biome-ignore lint/suspicious/noExplicitAny: Stub – referrals router not implemented yet
+	const stats: any = undefined;
 
 	if (!lead || (!lead.referredById && stats?.totalReferrals === 0)) {
 		return null;
@@ -55,7 +49,7 @@ export function ReferralSection({ leadId }: ReferralSectionProps) {
 				)}
 
 				{/* Case 2: This lead has referred others */}
-				{stats && stats.totalReferrals > 0 && (
+				{stats && (stats as any)?.totalReferrals > 0 && (
 					<Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-green-50/50 to-transparent">
 						<CardContent className="p-4">
 							<div className="mb-4 flex items-center justify-between">
@@ -66,19 +60,19 @@ export function ReferralSection({ leadId }: ReferralSectionProps) {
 									<span className="font-medium text-sm">Cashback Acumulado</span>
 								</div>
 								<Badge className="border-green-200 bg-green-50 text-green-700" variant="outline">
-									{stats.convertedReferrals} conversões
+									{(stats as any)?.convertedReferrals} conversões
 								</Badge>
 							</div>
 
 							<div className="space-y-1">
 								<span className="block font-bold text-2xl text-green-700">
-									{stats.totalCashback?.toLocaleString('pt-BR', {
+									{(stats as any)?.totalCashback?.toLocaleString('pt-BR', {
 										style: 'currency',
 										currency: 'BRL',
 									}) ?? 'R$ 0,00'}
 								</span>
 								<p className="text-muted-foreground text-xs">
-									{stats.pendingReferrals} indicações aguardando fechamento
+									{(stats as any)?.pendingReferrals} indicações aguardando fechamento
 								</p>
 							</div>
 						</CardContent>

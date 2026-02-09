@@ -43,20 +43,10 @@ interface ApiUsageStats {
 }
 
 export function AdminMetricsDashboard() {
-	const useQueryUnsafe = useQuery as unknown as <T>(query: unknown, args?: unknown) => T | null;
-	const apiAny = api as unknown as {
-		asaas: {
-			getApiUsageStats: unknown;
-			sync: { getRecentSyncLogs: unknown };
-		};
-	};
-	// Get API usage stats for last 24 hours
-	const apiStats = useQueryUnsafe<ApiUsageStats>(apiAny.asaas.getApiUsageStats, { hours: 24 });
-
-	// Get sync statistics (would need to be implemented in queries)
-	const syncStats = useQueryUnsafe<SyncLog[]>(apiAny.asaas.sync.getRecentSyncLogs, {
-		limit: 100,
-	});
+	// TODO: Replace with tRPC when asaasRouter metrics procedures are created
+	// Stub: metrics data always null until backend is implemented
+	const apiStats = null as ApiUsageStats | null;
+	const syncStats = null as SyncLog[] | null;
 
 	// Get active alerts (would need to be implemented in monitoring.ts)
 	// const { data: activeAlerts } = trpc.settings.list.useQuery({});

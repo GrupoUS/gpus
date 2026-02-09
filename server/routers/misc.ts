@@ -197,14 +197,26 @@ export const tagsRouter = router({
 // ── Metrics ──
 export const metricsRouter = router({
 	daily: protectedProcedure
-		.input(z.object({ date: z.string().optional() }))
+		.input(
+			z.object({
+				date: z.string().optional(),
+				period: z.enum(['7d', '30d', '90d', 'year']).optional(),
+			}),
+		)
 		.query(async ({ ctx, input }) => {
 			const orgId = ctx.user?.organizationId;
 			if (!orgId) return null;
 
 			const conditions = [eq(dailyMetrics.organizationId, orgId)];
+
+			// Determine date range from period
+			let limit = 30;
 			if (input.date) {
 				conditions.push(eq(dailyMetrics.date, input.date));
+				limit = 1;
+			} else if (input.period) {
+				const periodDays: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, year: 365 };
+				limit = periodDays[input.period] ?? 30;
 			}
 
 			const results = await ctx.db
@@ -212,9 +224,68 @@ export const metricsRouter = router({
 				.from(dailyMetrics)
 				.where(and(...conditions))
 				.orderBy(desc(dailyMetrics.date))
-				.limit(input.date ? 1 : 30);
+				.limit(limit);
 
-			return input.date ? (results[0] ?? null) : results;
+			// If single date requested, return raw row
+			if (input.date) return results[0] ?? null;
+
+			// Compute aggregates for period queries
+			const totalLeads = results.reduce((sum, r) => sum + (r.newLeads ?? 0), 0);
+			const totalConversions = results.reduce((sum, r) => sum + (r.conversions ?? 0), 0);
+			const revenue = results.reduce((sum, r) => sum + Number(r.conversionValue ?? 0), 0);
+			const totalMessages = results.reduce(
+				(sum, r) => sum + (r.messagesSent ?? 0) + (r.messagesReceived ?? 0),
+				0,
+			);
+			const conversionRate =
+				totalLeads > 0 ? Math.round((totalConversions / totalLeads) * 100 * 10) / 10 : 0;
+			const closedWon = results.reduce((sum, r) => sum + (r.closedWon ?? 0), 0);
+			const closedLost = results.reduce((sum, r) => sum + (r.closedLost ?? 0), 0);
+
+			// Aggregate leadsByProduct from jsonb
+			const leadsByProduct: Record<string, number> = {};
+			for (const r of results) {
+				const lbp = r.leadsByProduct as Record<string, number> | null;
+				if (lbp) {
+					for (const [key, val] of Object.entries(lbp)) {
+						leadsByProduct[key] = (leadsByProduct[key] ?? 0) + (val ?? 0);
+					}
+				}
+			}
+
+			// Compute revenue trend (compare first half vs second half of period)
+			const midpoint = Math.floor(results.length / 2);
+			const recentRevenue = results
+				.slice(0, midpoint)
+				.reduce((s, r) => s + Number(r.conversionValue ?? 0), 0);
+			const olderRevenue = results
+				.slice(midpoint)
+				.reduce((s, r) => s + Number(r.conversionValue ?? 0), 0);
+			const revenueTrend =
+				olderRevenue > 0 ? ((recentRevenue - olderRevenue) / olderRevenue) * 100 : 0;
+
+			return {
+				totalLeads,
+				revenue,
+				conversionRate,
+				totalMessages,
+				revenueTrend,
+				leadsByProduct,
+				funnel: {
+					novo: totalLeads,
+					qualificado: results.reduce((s, r) => s + (r.qualifiedLeads ?? 0), 0),
+					fechado_ganho: closedWon,
+					fechado_perdido: closedLost,
+				},
+				dailyMetrics: results.map((r) => ({
+					date: r.date,
+					newLeads: r.newLeads ?? 0,
+					conversions: r.conversions ?? 0,
+					conversionValue: Number(r.conversionValue ?? 0),
+					messagesSent: r.messagesSent ?? 0,
+					messagesReceived: r.messagesReceived ?? 0,
+				})),
+			};
 		}),
 });
 

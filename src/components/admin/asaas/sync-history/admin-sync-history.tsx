@@ -6,6 +6,8 @@
  * - Detail dialog for each sync
  * - Progress bar for running syncs
  * - Filtering by status and type
+ *
+ * TODO: Replace SyncLogItem with tRPC type when asaasSyncLogs router is created
  */
 
 import { ChevronLeft, ChevronRight, Eye, Filter } from 'lucide-react';
@@ -36,16 +38,33 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import type { AsaasConflict } from '@/types/api';
 
-const STATUS_BADGE = {
-	completed: { label: 'Concluído', variant: 'default' as const },
-	failed: { label: 'Falhou', variant: 'destructive' as const },
-	running: { label: 'Em execução', variant: 'secondary' as const },
-	pending: { label: 'Pendente', variant: 'outline' as const },
+// TODO: Replace with tRPC type when asaasSyncLogs router is created
+interface SyncLogItem {
+	id: number;
+	syncType: string;
+	status: 'completed' | 'failed' | 'running' | 'pending';
+	startedAt: number;
+	completedAt?: number | null;
+	recordsProcessed: number;
+	recordsCreated: number;
+	recordsUpdated: number;
+	recordsFailed: number;
+	errors?: string[];
+	filters?: Record<string, unknown>;
+}
+
+const STATUS_BADGE: Record<
+	string,
+	{ label: string; variant: 'default' | 'destructive' | 'secondary' | 'outline' }
+> = {
+	completed: { label: 'Concluído', variant: 'default' },
+	failed: { label: 'Falhou', variant: 'destructive' },
+	running: { label: 'Em execução', variant: 'secondary' },
+	pending: { label: 'Pendente', variant: 'outline' },
 };
 
-const SYNC_TYPE_LABELS = {
+const SYNC_TYPE_LABELS: Record<string, string> = {
 	customers: 'Clientes',
 	payments: 'Pagamentos',
 	subscriptions: 'Assinaturas',
@@ -53,14 +72,14 @@ const SYNC_TYPE_LABELS = {
 };
 
 interface AdminSyncHistoryProps {
-	logs: AsaasConflict[] | null | undefined;
+	logs: SyncLogItem[] | null | undefined;
 }
 
 export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 	const [page, setPage] = useState(0);
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [typeFilter, setTypeFilter] = useState<string>('all');
-	const [selectedLog, setSelectedLog] = useState<AsaasConflict | null>(null);
+	const [selectedLog, setSelectedLog] = useState<SyncLogItem | null>(null);
 	const [detailOpen, setDetailOpen] = useState(false);
 
 	const pageSize = 10;
@@ -86,7 +105,7 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 	const totalPages = Math.ceil(filteredLogs.length / pageSize);
 	const paginatedLogs = filteredLogs.slice(page * pageSize, (page + 1) * pageSize);
 
-	const handleViewDetails = (log: AsaasConflict) => {
+	const handleViewDetails = (log: SyncLogItem) => {
 		setSelectedLog(log);
 		setDetailOpen(true);
 	};
@@ -122,7 +141,6 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 								<SelectItem value="customers">Clientes</SelectItem>
 								<SelectItem value="payments">Pagamentos</SelectItem>
 								<SelectItem value="subscriptions">Assinaturas</SelectItem>
-								<SelectItem value="all">Tudo</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
@@ -163,15 +181,16 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 										durationDisplay = '-';
 									}
 
+									const badge = STATUS_BADGE[log.status];
+
 									return (
 										<TableRow key={log.id}>
 											<TableCell className="capitalize">
-												{SYNC_TYPE_LABELS[log.syncType as keyof typeof SYNC_TYPE_LABELS] ||
-													log.syncType}
+												{SYNC_TYPE_LABELS[log.syncType] || log.syncType}
 											</TableCell>
 											<TableCell>
-												<Badge variant={STATUS_BADGE[log.status].variant}>
-													{STATUS_BADGE[log.status].label}
+												<Badge variant={badge?.variant ?? 'outline'}>
+													{badge?.label ?? log.status}
 												</Badge>
 											</TableCell>
 											<TableCell>{new Date(log.startedAt).toLocaleString('pt-BR')}</TableCell>
@@ -243,8 +262,8 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 								</div>
 								<div>
 									<div className="text-muted-foreground text-sm">Status</div>
-									<Badge variant={STATUS_BADGE[selectedLog.status].variant}>
-										{STATUS_BADGE[selectedLog.status].label}
+									<Badge variant={STATUS_BADGE[selectedLog.status]?.variant ?? 'outline'}>
+										{STATUS_BADGE[selectedLog.status]?.label ?? selectedLog.status}
 									</Badge>
 								</div>
 								<div>

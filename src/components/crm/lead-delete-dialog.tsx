@@ -29,7 +29,7 @@ export function LeadDeleteDialog({ lead, open, onOpenChange, onClose }: LeadDele
 	const handleDelete = async () => {
 		try {
 			setIsDeleting(true);
-			await deleteLead({ leadId: lead.id });
+			await deleteLead.mutateAsync({ leadId: lead.id });
 			toast.success(`Lead "${lead.name}" excluído com sucesso`);
 			onOpenChange(false);
 			onClose?.();

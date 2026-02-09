@@ -13,33 +13,18 @@ interface ObjectionFormProps {
 	onCancel?: () => void;
 }
 
-export function ObjectionForm({ leadId, objection, onSuccess, onCancel }: ObjectionFormProps) {
+export function ObjectionForm({ leadId: _leadId, objection, onSuccess, onCancel }: ObjectionFormProps) {
 	const [text, setText] = useState(objection?.objectionText || '');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const createObjection = useMutation((api as any).objections.addObjection);
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const updateObjection = useMutation((api as any).objections.updateObjection);
-
+	// TODO: Implement objection mutations via tRPC when objectionsRouter is created
 	const handleSubmit = async () => {
 		if (!text.trim()) return;
 
 		setIsSubmitting(true);
 		try {
-			if (objection) {
-				await updateObjection({
-					objectionId: objection.id,
-					objectionText: text,
-				});
-				toast.success('Objeção atualizada');
-			} else {
-				await createObjection({
-					leadId,
-					objectionText: text,
-				});
-				toast.success('Objeção adicionada');
-			}
+			// Stub: objections router not implemented yet
+			toast.info('Objeções ainda não foram implementadas no novo backend');
 			setText('');
 			onSuccess?.();
 		} catch (_error) {

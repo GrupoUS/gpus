@@ -21,9 +21,35 @@ export const Route = createFileRoute('/_authenticated/reports')({
 	component: ReportsPage,
 });
 
+// Aggregate shape returned by metrics.daily when called with `period` (no `date`)
+interface PeriodMetrics {
+	totalLeads: number;
+	revenue: number;
+	conversionRate: number;
+	totalMessages: number;
+	revenueTrend: number;
+	leadsByProduct: Record<string, number>;
+	funnel: {
+		novo: number;
+		qualificado: number;
+		fechado_ganho: number;
+		fechado_perdido: number;
+	};
+	dailyMetrics: Array<{
+		date: string;
+		newLeads: number;
+		conversions: number;
+		conversionValue: number;
+		messagesSent: number;
+		messagesReceived: number;
+	}>;
+}
+
 function ReportsPage() {
 	const [period, setPeriod] = useState<'7d' | '30d' | '90d' | 'year'>('30d');
-	const { data: stats } = trpc.metrics.daily.useQuery({ period });
+	const { data: rawStats } = trpc.metrics.daily.useQuery({ period });
+	// When called with `period` (no `date`), the router always returns PeriodMetrics
+	const stats = rawStats as PeriodMetrics | null | undefined;
 
 	return (
 		<div className="space-y-6 p-6">

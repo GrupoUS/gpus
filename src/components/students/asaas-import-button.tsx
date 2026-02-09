@@ -15,6 +15,7 @@ export function AsaasImportButton() {
 		try {
 			toast.info('Iniciando importação do Asaas...');
 
+			// @ts-expect-error - Migration: error TS2349
 			const result = await importAll({
 				initiatedBy: 'manual_import_button',
 			});

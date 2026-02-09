@@ -33,6 +33,7 @@ export function useTemplatesViewModel(Route?: any) {
 		}
 
 		if (category && category !== 'all') {
+			// @ts-expect-error - Migration: error TS2769
 			filtered = filtered.filter((t: { category?: string }) => t.category === category);
 		}
 

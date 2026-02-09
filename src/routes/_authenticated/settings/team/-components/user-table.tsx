@@ -17,13 +17,14 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { TeamUser } from '@/routes/_authenticated/settings/team';
 
 interface UserTableProps {
-	users: Record<string, unknown>[];
+	users: TeamUser[];
 	isLoading: boolean;
-	onEdit: (user: Record<string, unknown>) => void;
-	onRemove: (user: Record<string, unknown>) => void;
-	onView: (user: Record<string, unknown>) => void;
+	onEdit: (user: TeamUser) => void;
+	onRemove: (user: TeamUser) => void;
+	onView: (user: TeamUser) => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -83,8 +84,8 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 							<div className="flex items-center gap-3">
 								<Avatar className="h-9 w-9">
 									<AvatarFallback className="bg-primary/10 text-primary text-xs">
-										{user.name
-											? user.name
+										{(user.name as string)
+											? (user.name as string)
 													.split(' ')
 													.map((n) => n[0])
 													.join('')
@@ -98,8 +99,8 @@ export function UserTable({ users, isLoading, onEdit, onRemove, onView }: UserTa
 						</TableCell>
 						<TableCell className="text-muted-foreground">{user.email}</TableCell>
 						<TableCell>
-							<Badge variant={roleBadgeVariants[user.role] || 'outline'}>
-								{roleLabels[user.role] || user.role}
+							<Badge variant={roleBadgeVariants[user.role as string] || 'outline'}>
+								{roleLabels[user.role as string] || user.role}
 							</Badge>
 						</TableCell>
 						<TableCell>

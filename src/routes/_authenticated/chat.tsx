@@ -148,7 +148,7 @@ function ChatPage() {
 				{/* AI Assistant Widget - only shown when a conversation is selected */}
 				{selectedConversationId && (
 					<AIChatWidget
-						conversationId={selectedConversationId as number}
+						conversationId={Number(selectedConversationId) as unknown as number}
 						onInsertResponse={(text) => {
 							setPendingMessage(text);
 						}}

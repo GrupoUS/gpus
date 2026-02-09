@@ -33,7 +33,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, studentStatusLabels, studentStatusVariants } from '@/lib/constants';
-import type { Student } from '@/types/api';
 
 // Helper to handle chunk load errors (e.g., after a new deployment)
 const handleChunkError = (error: Error): Promise<never> => {
@@ -96,13 +95,16 @@ export function StudentDetail({
 	onClose: () => void;
 }) {
 	const [activeTab, _setActiveTab] = useState('enrollments');
-	const { data: student } = trpc.students.get.useQuery({ id: studentId }, { enabled: !!studentId });
+	const { data: student } = trpc.students.get.useQuery(
+		{ id: studentId! },
+		{ enabled: !!studentId },
+	);
 	const { data: enrollments } = trpc.enrollments.listByStudent.useQuery(
-		{ studentId },
+		{ studentId: studentId! },
 		{ enabled: !!studentId },
 	);
 	// TODO: Implement activities query via tRPC (was api.activities.listByStudent)
-	const activities = [] as Student[];
+	const activities = [] as { id: number; description: string; type: string; createdAt: Date }[];
 
 	const isOpen = !!studentId;
 
@@ -168,7 +170,7 @@ export function StudentDetail({
 									<div className="flex flex-wrap gap-2 pt-2">
 										<Button asChild className="gap-2" size="sm" variant="outline">
 											<a
-												href={`https://wa.me/${student.phone.replace(/\D/g, '')}`}
+												href={`https://wa.me/${(student.phone ?? '').replace(/\D/g, '')}`}
 												rel="noopener noreferrer"
 												target="_blank"
 											>
@@ -214,7 +216,7 @@ export function StudentDetail({
 								</CardHeader>
 								<CardContent>
 									<div className="font-bold text-2xl text-green-600">
-										{enrollments?.filter((e: Student) => e.status === 'ativo').length ?? 0}
+										{enrollments?.filter((e) => e.status === 'ativo').length ?? 0}
 									</div>
 								</CardContent>
 							</Card>
@@ -226,7 +228,7 @@ export function StudentDetail({
 								<CardContent>
 									<div className="font-bold text-2xl text-primary">
 										{formatCurrency(
-											enrollments?.reduce((sum: number, e: Student) => sum + e.totalValue, 0) ?? 0,
+											enrollments?.reduce((sum, e) => sum + (Number(e.totalValue) || 0), 0) ?? 0,
 										)}
 									</div>
 								</CardContent>
@@ -288,7 +290,7 @@ export function StudentDetail({
 											</div>
 										) : (
 											<div className="relative ml-3 space-y-6 border-border/50 border-l">
-												{activities.map((activity: Student) => (
+												{activities.map((activity) => (
 													<div className="relative pl-6" key={activity.id}>
 														<div className="absolute top-1 -left-[5px] h-2.5 w-2.5 rounded-full border-2 border-background bg-primary ring-2 ring-primary/20" />
 														<div className="flex flex-col gap-1">

@@ -54,7 +54,7 @@ export const usersRouter = router({
 				name: z.string(),
 				avatarUrl: z.string().optional(),
 				organizationId: z.string().optional(),
-				role: z.enum(['admin', 'sdr', 'cs', 'support', 'member']).optional(),
+				role: z.enum(['admin', 'manager', 'sdr', 'cs', 'support', 'member']).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -102,7 +102,7 @@ export const usersRouter = router({
 				userId: z.number(),
 				patch: z.object({
 					name: z.string().optional(),
-					role: z.enum(['admin', 'sdr', 'cs', 'support', 'member']).optional(),
+					role: z.enum(['admin', 'manager', 'sdr', 'cs', 'support', 'member']).optional(),
 					isActive: z.boolean().optional(),
 					phone: z.string().optional(),
 					department: z.string().optional(),

@@ -96,7 +96,9 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 							<p className="text-muted-foreground text-xs">{student.profession}</p>
 						</div>
 					</div>
-					<Badge variant={statusVariants[student.status]}>{statusLabels[student.status]}</Badge>
+					<Badge variant={statusVariants[student.status ?? 'ativo']}>
+						{statusLabels[student.status ?? 'ativo']}
+					</Badge>
 				</div>
 			</CardHeader>
 
@@ -105,11 +107,11 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 				<div className="flex flex-wrap gap-3 text-muted-foreground text-xs">
 					<span className="flex items-center gap-1">
 						<Phone className="h-3 w-3" />
-						<Highlight term={searchTerm} text={student.phone} />
+						<Highlight term={searchTerm} text={student.phone ?? undefined} />
 					</span>
 					<span className="flex items-center gap-1">
 						<Mail className="h-3 w-3" />
-						<Highlight term={searchTerm} text={student.email} />
+						<Highlight term={searchTerm} text={student.email ?? undefined} />
 					</span>
 				</div>
 
@@ -132,7 +134,12 @@ export function StudentCard({ student, onClick, searchTerm }: StudentCardProps) 
 					</div>
 
 					{student.churnRisk !== 'baixo' && (
-						<div className={cn('flex items-center gap-1', churnRiskColors[student.churnRisk])}>
+						<div
+							className={cn(
+								'flex items-center gap-1',
+								churnRiskColors[(student.churnRisk ?? 'baixo') as string],
+							)}
+						>
 							<AlertTriangle className="h-3 w-3" />
 							<span className="font-medium text-xs">Risco {student.churnRisk}</span>
 						</div>

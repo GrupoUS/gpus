@@ -105,7 +105,7 @@ function DraggableLeadCard({
 			}}
 		>
 			<div className="relative w-full">
-				<LeadCard lead={{ ...lead, id: lead.id as number }} />
+				<LeadCard lead={{ ...lead, id: Number(lead.id) } as any} />
 				<button
 					aria-label="Abrir lead"
 					className="absolute inset-0 h-full w-full cursor-pointer rounded-lg border-none bg-transparent p-0 opacity-0 focus:opacity-100 focus:ring-2 focus:ring-primary focus:ring-offset-2"

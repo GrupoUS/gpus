@@ -24,7 +24,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import type { Student } from '@/types/api';
 
 interface StudentPaymentsTabProps {
 	studentId: number;
@@ -40,21 +39,32 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 	CANCELLED: { label: 'Cancelado', className: 'bg-gray-500' },
 };
 
+interface Payment {
+	id: string;
+	asaasPaymentId?: string;
+	description?: string;
+	dueDate?: number | string;
+	value: number;
+	netValue?: number;
+	status: string;
+	billingType?: string;
+	boletoUrl?: string;
+	pixQrCode?: string;
+	installmentNumber?: number;
+	totalInstallments?: number;
+	confirmedDate?: number;
+}
+
 export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
-	const [selectedPayment, setSelectedPayment] = useState<Student | null>(null);
-	const _useQueryUnsafe = useQuery as unknown as (
-		query: unknown,
-		args?: unknown,
-	) => { asaasCustomerId?: string; asaasCustomerSyncedAt?: number } | undefined;
+	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
 	// Fetch student to get Asaas ID
 	const { data: student } = trpc.students.get.useQuery({ id: studentId });
 	const asaasCustomerId = student?.asaasCustomerId;
 	const lastSyncedAt = student?.asaasCustomerSyncedAt;
 
-	const { data: payments } = trpc.financial.metrics.useQuery({
-		studentId,
-	}) as Student[] | undefined;
+	// TODO: Replace with trpc.financial.listPayments.useQuery once router exists
+	const payments = undefined as Payment[] | undefined;
 
 	const formatCurrency = (value: number) =>
 		new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -121,7 +131,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 					</h3>
 					{lastSyncedAt && (
 						<p className="mt-1 text-muted-foreground text-xs">
-							Última sincronização: {formatDateTime(lastSyncedAt)}
+							Última sincronização: {formatDateTime(lastSyncedAt as any)}
 						</p>
 					)}
 				</div>
@@ -218,7 +228,7 @@ export function StudentPaymentsTab({ studentId }: StudentPaymentsTabProps) {
 												</span>
 											)}
 										</TableCell>
-										<TableCell>{formatDate(payment.dueDate)}</TableCell>
+										<TableCell>{formatDate(payment.dueDate as any)}</TableCell>
 										<TableCell>{formatCurrency(payment.value)}</TableCell>
 										<TableCell>{getStatusBadge(payment.status)}</TableCell>
 										<TableCell>{payment.billingType}</TableCell>

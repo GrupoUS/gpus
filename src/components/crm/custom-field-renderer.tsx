@@ -11,10 +11,10 @@ import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { cn } from '@/lib/utils';
-import type { CustomFieldValue } from '@/types/api';
+import type { CustomField } from '@/types/api';
 
 interface CustomFieldRendererProps<T extends FieldValues> {
-	field: CustomFieldValue;
+	field: CustomField;
 	control: Control<T>;
 	name: Path<T>;
 	disabled?: boolean;
@@ -26,8 +26,8 @@ export function CustomFieldRenderer<T extends FieldValues>({
 	name,
 	disabled,
 }: CustomFieldRendererProps<T>) {
-	const label = field.name;
-	const isRequired = field.required;
+	const label = field.label ?? field.name;
+	const isRequired = field.isRequired;
 
 	// Helper to render label with required asterisk
 	const LabelComponent = () => (
@@ -173,7 +173,7 @@ export function CustomFieldRenderer<T extends FieldValues>({
 								</SelectTrigger>
 							</FormControl>
 							<SelectContent>
-								{field.options?.map((option) => (
+								{(field.options as string[] | undefined)?.map((option) => (
 									<SelectItem key={option} value={option}>
 										{option}
 									</SelectItem>
@@ -198,7 +198,7 @@ export function CustomFieldRenderer<T extends FieldValues>({
 					<FormItem>
 						<LabelComponent />
 						<div className="grid grid-cols-2 gap-2 rounded-md border p-2">
-							{field.options?.map((option) => (
+							{(field.options as string[] | undefined)?.map((option) => (
 								<FormField
 									control={control}
 									key={option}

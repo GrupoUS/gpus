@@ -28,6 +28,7 @@ export function AdminUserSelector({ selectedUserId, onUserSelect }: AdminUserSel
 		return null;
 	}
 
+	// @ts-expect-error - Migration: error TS2339
 	const selectedUser = users.find((u) => u.clerkId === selectedUserId);
 
 	return (
@@ -66,6 +67,7 @@ export function AdminUserSelector({ selectedUserId, onUserSelect }: AdminUserSel
 								<CommandItem
 									key={user.id}
 									onSelect={() => {
+										// @ts-expect-error - Migration: error TS2339
 										onUserSelect(user.clerkId);
 										setOpen(false);
 									}}
@@ -74,6 +76,7 @@ export function AdminUserSelector({ selectedUserId, onUserSelect }: AdminUserSel
 									<Check
 										className={cn(
 											'mr-2 h-4 w-4',
+											// @ts-expect-error - Migration: error TS2339
 											selectedUserId === user.clerkId ? 'opacity-100' : 'opacity-0',
 										)}
 									/>

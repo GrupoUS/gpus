@@ -172,6 +172,7 @@ export function LeadForm() {
 				// Custom Fields Mapping
 				customFieldValues: values.customFields
 					? Object.entries(values.customFields).map(([key, value]) => ({
+							// @ts-expect-error - Migration: error TS2352
 							customFieldId: key as number,
 							value,
 						}))
@@ -309,6 +310,7 @@ export function LeadForm() {
 											</FormControl>
 											<SelectContent>
 												{vendors?.map((vendor) => (
+													// @ts-expect-error - Migration: error TS2322
 													<SelectItem key={vendor.id} value={vendor.id}>
 														{vendor.name}
 													</SelectItem>

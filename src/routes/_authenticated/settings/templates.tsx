@@ -99,14 +99,17 @@ const categoryLabels: Record<string, string> = {
 	suporte: 'Suporte',
 };
 
+function handleMutationStub(name: string) {
+	toast.info(`Funcionalidade "${name}" será implementada em breve.`);
+}
+
 function TemplatesSettingsPage() {
-	const { data: templates } = trpc.templates.list.useQuery({});
-	const deleteTemplate = trpc.templates.list.useMutation();
+	const { data: templates } = trpc.templates.list.useQuery();
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
 	const filteredTemplates = templates?.filter(
-		(t: { category: string }) => categoryFilter === 'all' || t.category === categoryFilter,
+		(t) => categoryFilter === 'all' || t.category === categoryFilter,
 	);
 
 	return (
@@ -164,14 +167,17 @@ function TemplatesSettingsPage() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{filteredTemplates?.map((template: Record<string, unknown>) => (
+					{filteredTemplates?.map((template) => (
 						<TableRow key={template.id}>
-							<TableCell className="font-medium">{template.name}</TableCell>
+							<TableCell className="font-medium">{template.title}</TableCell>
 							<TableCell>
 								<Badge variant="outline">{categoryLabels[template.category]}</Badge>
 							</TableCell>
 							<TableCell className="text-muted-foreground">
-								{template.product ? productLabels[template.product] || template.product : 'Geral'}
+								{template.product
+									? productLabels[template.product as keyof typeof productLabels] ||
+										template.product
+									: 'Geral'}
 							</TableCell>
 							<TableCell className="text-muted-foreground">{template.usageCount || 0}x</TableCell>
 							<TableCell>
@@ -197,7 +203,15 @@ function TemplatesSettingsPage() {
 												<DialogHeader>
 													<DialogTitle>Editar Template</DialogTitle>
 												</DialogHeader>
-												<TemplateForm initialData={template} templateId={template.id} />
+												<TemplateForm
+													initialData={{
+														name: template.title,
+														category: template.category as TemplateFormData['category'],
+														content: template.content,
+														product: (template.product as TemplateFormData['product']) ?? undefined,
+													}}
+													templateId={template.id}
+												/>
 											</DialogContent>
 										</Dialog>
 										<AlertDialog>
@@ -214,7 +228,7 @@ function TemplatesSettingsPage() {
 												<AlertDialogHeader>
 													<AlertDialogTitle>Excluir template?</AlertDialogTitle>
 													<AlertDialogDescription>
-														Tem certeza que deseja excluir o template "{template.name}"? Essa ação
+														Tem certeza que deseja excluir o template "{template.title}"? Essa ação
 														não pode ser desfeita.
 													</AlertDialogDescription>
 												</AlertDialogHeader>
@@ -222,15 +236,8 @@ function TemplatesSettingsPage() {
 													<AlertDialogCancel>Cancelar</AlertDialogCancel>
 													<AlertDialogAction
 														className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-														onClick={async () => {
-															try {
-																await deleteTemplate({
-																	templateId: template.id,
-																});
-																toast.success('Template excluído');
-															} catch {
-																toast.error('Erro ao excluir');
-															}
+														onClick={() => {
+															handleMutationStub('deleteTemplate');
 														}}
 													>
 														Excluir
@@ -258,8 +265,7 @@ function TemplateForm({
 	initialData?: TemplateFormData;
 	onSuccess?: () => void;
 }) {
-	const createTemplate = trpc.templates.create.useMutation();
-	const updateTemplate = trpc.templates.create.useMutation();
+	const createTemplateMutation = trpc.templates.create.useMutation();
 
 	const form = useForm<TemplateFormData>({
 		resolver: zodResolver(templateSchema),
@@ -274,10 +280,13 @@ function TemplateForm({
 	const onSubmit = async (values: TemplateFormData) => {
 		try {
 			if (templateId) {
-				await updateTemplate({ templateId, patch: values });
-				toast.success('Template atualizado!');
+				handleMutationStub('updateTemplate');
 			} else {
-				await createTemplate(values);
+				await createTemplateMutation.mutateAsync({
+					title: values.name,
+					content: values.content,
+					category: values.category,
+				});
 				toast.success('Template criado!');
 			}
 			onSuccess?.();

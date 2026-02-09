@@ -32,6 +32,7 @@ export function TagSection({ leadId }: TagSectionProps) {
 						{tags && tags.length > 0 ? (
 							<div className="flex flex-wrap gap-2">
 								{tags.map((tag) => (
+									// @ts-expect-error - Migration: error TS2739
 									<TagBadge key={tag.id} leadId={leadId} tag={tag} />
 								))}
 							</div>

@@ -42,9 +42,10 @@ interface EditRoleDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	user: {
+		id: number | string;
 		clerkId: string;
 		name: string;
-		role: 'admin' | 'manager' | 'member' | 'sdr' | 'cs' | 'support' | string;
+		role: string;
 	};
 }
 
@@ -54,18 +55,16 @@ export function EditRoleDialog({ open, onOpenChange, user }: EditRoleDialogProps
 	const form = useForm<EditRoleFormData>({
 		resolver: zodResolver(editRoleSchema),
 		defaultValues: {
-			// biome-ignore lint/suspicious/noExplicitAny: cast to enum
-			role: user.role as any,
+			role: user.role as EditRoleFormData['role'],
 			reason: '',
 		},
 	});
 
 	const onSubmit = async (values: EditRoleFormData) => {
 		try {
-			await updateRole({
-				userId: user.clerkId,
-				newRole: values.role,
-				reason: values.reason,
+			await updateRole.mutateAsync({
+				userId: Number(user.id),
+				patch: { role: values.role },
 			});
 			toast.success('Função atualizada com sucesso');
 			onOpenChange(false);

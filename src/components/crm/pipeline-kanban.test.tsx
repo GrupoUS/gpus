@@ -147,21 +147,21 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 describe('PipelineKanban', () => {
 	const mockLeads: React.ComponentProps<typeof PipelineKanban>['leads'] = [
 		{
-			id: 1,
+			id: '1',
 			name: 'Lead 1',
 			phone: '123456789',
 			stage: 'novo',
 			temperature: 'quente',
 		},
 		{
-			id: 2,
+			id: '2',
 			name: 'Lead 2',
 			phone: '987654321',
 			stage: 'novo',
 			temperature: 'frio',
 		},
 		{
-			id: 3,
+			id: '3',
 			name: 'Lead 3',
 			phone: '555555555',
 			stage: 'qualificado',

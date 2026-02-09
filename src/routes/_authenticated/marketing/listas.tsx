@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { trpc } from '@/lib/trpc';
 
 export const Route = createFileRoute('/_authenticated/marketing/listas')({
 	component: ListsPage,
@@ -50,7 +51,7 @@ function EmptyState() {
 }
 
 // Sync status badge helper
-function SyncStatusBadge({ status }: { status?: string }) {
+function SyncStatusBadge({ status }: { status?: string | null }) {
 	switch (status) {
 		case 'synced':
 			return (
@@ -88,18 +89,14 @@ function ListsPage() {
 	const navigate = Route.useNavigate();
 	const [searchQuery, setSearchQuery] = useState('');
 
-	// Fetch all lists
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as { emailMarketing: { getLists: unknown } };
-	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: false }) as
-		| Record<string, unknown>[]
-		| undefined;
+	// Fetch all lists via tRPC
+	const { data: lists } = trpc.emailMarketing.lists.list.useQuery();
 
 	// Filter lists by search query
 	const filteredLists =
 		lists?.filter(
-			(list: Record<string, unknown>) =>
-				list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			(list) =>
+				(list.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
 				(list.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false),
 		) ?? [];
 
@@ -128,10 +125,10 @@ function ListsPage() {
 		});
 	};
 
-	const handleListClick = (listId: string) => {
+	const handleListClick = (listId: number) => {
 		navigate({
 			to: '/marketing/listas/$listId',
-			params: { listId },
+			params: { listId: String(listId) },
 			search: { search: '', status: 'all', view: 'grid', page: 1 },
 		});
 	};
@@ -175,7 +172,7 @@ function ListsPage() {
 				emptyState
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{filteredLists.map((list: Record<string, unknown>) => (
+					{filteredLists.map((list) => (
 						<Card
 							className="cursor-pointer transition-colors hover:bg-muted/50"
 							key={list.id}
@@ -200,7 +197,10 @@ function ListsPage() {
 									<div className="flex items-center gap-2 text-muted-foreground">
 										<Users className="h-4 w-4" />
 										<span>
-											{list.contactCount ?? 0} contato{(list.contactCount ?? 0) !== 1 ? 's' : ''}
+											{(list as unknown as { contactCount?: number }).contactCount ?? 0} contato
+											{((list as unknown as { contactCount?: number }).contactCount ?? 0) !== 1
+												? 's'
+												: ''}
 										</span>
 									</div>
 									<SyncStatusBadge status={list.syncStatus} />
@@ -221,7 +221,7 @@ function ListsPage() {
 					<span>
 						Total:{' '}
 						{lists.reduce(
-							(sum: number, l: Record<string, unknown>) => sum + (l.contactCount ?? 0),
+							(sum, l) => sum + ((l as unknown as { contactCount?: number }).contactCount ?? 0),
 							0,
 						)}{' '}
 						contatos

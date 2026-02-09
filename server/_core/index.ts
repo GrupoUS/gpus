@@ -5,6 +5,8 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
 import { appRouter } from '../routers';
+import { handleAsaasWebhook } from '../webhooks/asaas';
+import { handleClerkWebhook } from '../webhooks/clerk';
 import { createContext } from './context';
 
 const app = new Hono();
@@ -38,6 +40,10 @@ app.all('/api/trpc/*', (c) => {
 		createContext: () => createContext(c),
 	});
 });
+
+// ── Webhooks ──
+app.post('/api/webhooks/asaas', handleAsaasWebhook);
+app.post('/api/webhooks/clerk', handleClerkWebhook);
 
 // ── Start ──
 const port = Number(process.env.PORT) || 3001;

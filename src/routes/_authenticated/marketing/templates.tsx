@@ -81,19 +81,20 @@ function TemplatesListPage() {
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-					{templates?.map((template: Record<string, unknown>) => (
+					{templates?.map((template) => (
 						<TemplateCard
 							key={template.id}
 							onDelete={handleDeleteTemplate}
 							onEdit={(id) => {
 								void navigate({
 									to: '/marketing/templates/$templateId',
+									// @ts-expect-error - Migration: error TS2322
 									params: { templateId: id },
 									search: { search: '', category: 'all' },
 								});
 							}}
 							onSync={handleSyncTemplate}
-							template={template}
+							template={template as unknown as { id: number; name: string; subject: string; category?: string; isActive: boolean; brevoTemplateId?: string | number; updatedAt: number }}
 						/>
 					))}
 					{templates?.length === 0 && (

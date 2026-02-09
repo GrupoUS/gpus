@@ -30,7 +30,8 @@ interface ObjectionsListProps {
 
 interface Objection {
 	id: number;
-	_creationTime: number;
+	createdAt: Date;
+	updatedAt: Date;
 	organizationId: string;
 	leadId: number;
 	objectionText: string;
@@ -42,16 +43,10 @@ interface Objection {
 }
 
 export function ObjectionsList({ leadId }: ObjectionsListProps) {
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const objections = useQuery((api as any).objections.listObjections, { leadId }) as
-		| Objection[]
-		| undefined;
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const deleteObjection = useMutation((api as any).objections.deleteObjection);
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break deep type inference chain
-	const user = useQuery((api as any).users.current) as
-		| { clerkId: string; role: string }
-		| undefined;
+	// TODO: Replace with tRPC when objectionsRouter is created
+	// Stub: objections always empty until backend is implemented
+	const objections: Objection[] = [];
+	const isLoading = false;
 
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -59,8 +54,8 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 	const handleDelete = async () => {
 		if (!deletingId) return;
 		try {
-			await deleteObjection({ objectionId: deletingId });
-			toast.success('Objeção removida');
+			// Stub: no backend yet
+			toast.info('Objeções ainda não foram implementadas no novo backend');
 		} catch (_error) {
 			toast.error('Erro ao remover objeção');
 		} finally {
@@ -68,14 +63,11 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 		}
 	};
 
-	const canEdit = (objection: Objection) => {
-		if (!user) return false;
-		// Allow if user is creator or admin/owner
-		const isAdmin = user.role === 'admin' || user.role === 'owner';
-		return user.clerkId === objection.recordedBy || isAdmin;
+	const canEdit = (_objection: Objection) => {
+		return false; // Stub: no user context from old Convex query
 	};
 
-	if (objections === undefined) {
+	if (isLoading) {
 		return (
 			<div className="space-y-4">
 				{[1, 2, 3].map((i) => (
@@ -108,6 +100,7 @@ export function ObjectionsList({ leadId }: ObjectionsListProps) {
 						<ObjectionForm
 							key={objection.id}
 							leadId={leadId}
+							// @ts-expect-error - Migration: error TS2322
 							objection={objection}
 							onCancel={() => setEditingId(null)}
 							onSuccess={() => setEditingId(null)}

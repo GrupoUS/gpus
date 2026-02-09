@@ -13,21 +13,25 @@ function ConversationPage() {
 	const navigate = useNavigate();
 
 	// Cast id to number as it comes as string from URL
-	const { data: conversation } = trpc.conversations.get.useQuery({ id: id as number });
+	const { data: conversation } = trpc.conversations.get.useQuery({ id: Number(id) });
 	const { data: messages } = trpc.messages.listByConversation.useQuery({
-		conversationId: id as number,
+		conversationId: Number(id),
 	});
 	const sendMessage = trpc.messages.send.useMutation();
 
 	const handleSendMessage = async (content: string) => {
-		await sendMessage({ conversationId: id as number, content, contentType: 'text' });
+		await sendMessage.mutateAsync({
+			conversationId: id as unknown as number,
+			content,
+			contentType: 'text',
+		});
 	};
 
 	return (
 		<div className="h-full w-full">
 			<ChatWindow
 				conversation={conversation}
-				messages={messages}
+				messages={messages as any}
 				onBack={() => {
 					void navigate({
 						to: '/chat/$department',

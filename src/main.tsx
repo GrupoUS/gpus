@@ -1,8 +1,6 @@
 import { ClerkProvider, useAuth } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
-import { ConvexReactClient } from 'convex/react';
-import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -10,9 +8,6 @@ import { trpc } from './lib/trpc';
 import { createTRPCClient } from './lib/trpc-client';
 import { routeTree } from './routeTree.gen';
 import './index.css';
-
-// Convex client (kept for backward compatibility during migration)
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 // Router
 const router = createRouter({
@@ -72,9 +67,7 @@ export function App() {
 			signInForceRedirectUrl="/dashboard"
 			signUpForceRedirectUrl="/dashboard"
 		>
-			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-				<InnerApp />
-			</ConvexProviderWithClerk>
+			<InnerApp />
 		</ClerkProvider>
 	);
 }

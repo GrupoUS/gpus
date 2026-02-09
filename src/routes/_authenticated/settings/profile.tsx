@@ -47,7 +47,7 @@ function ProfileSettingsPage() {
 
 	const onSubmit = async (values: ProfileFormData) => {
 		try {
-			await updateProfile({
+			await updateProfile.mutateAsync({
 				name: values.name,
 				// We sync email back to Convex, but Clerk is source of truth for auth
 			});

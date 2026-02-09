@@ -69,7 +69,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 					className={cn('mt-1 flex items-center gap-1', isOwn ? 'justify-end' : 'justify-start')}
 				>
 					<span className={cn('text-xs', isOwn ? 'text-white/70' : 'text-muted-foreground')}>
-						{formatDistanceToNow(message.createdAt ?? message._creationTime, {
+						{formatDistanceToNow(message.createdAt ?? message.createdAt, {
 							addSuffix: true,
 							locale: ptBR,
 						})}

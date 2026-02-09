@@ -58,17 +58,9 @@ type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 function NewCampaignPage() {
 	const navigate = Route.useNavigate();
 
-	// Convex queries
-	const useQueryUnsafe = useQuery as unknown as (query: unknown, args?: unknown) => unknown;
-	const apiAny = api as unknown as {
-		emailMarketing: { getLists: unknown; getTemplates: unknown };
-	};
-	const lists = useQueryUnsafe(apiAny.emailMarketing.getLists, { activeOnly: true }) as
-		| Record<string, unknown>[]
-		| undefined;
-	const templates = useQueryUnsafe(apiAny.emailMarketing.getTemplates, { activeOnly: true }) as
-		| Record<string, unknown>[]
-		| undefined;
+	// tRPC queries
+	const { data: lists } = trpc.emailMarketing.lists.list.useQuery();
+	const { data: templates } = trpc.emailMarketing.templates.list.useQuery();
 
 	// Convex mutation
 	const createCampaign = trpc.emailMarketing.campaigns.create.useMutation();
@@ -94,16 +86,19 @@ function NewCampaignPage() {
 	// Calculate total contacts from selected lists
 	const totalContacts =
 		lists
-			?.filter((list: Record<string, unknown>) => selectedListIds.includes(list.id))
-			.reduce((sum: number, list: Record<string, unknown>) => sum + (list.contactCount ?? 0), 0) ??
-		0;
+			?.filter((list) => selectedListIds.includes(String(list.id)))
+			.reduce(
+				(sum: number, list) =>
+					sum + ((list as unknown as { contactCount?: number }).contactCount ?? 0),
+				0,
+			) ?? 0;
 
 	// Handle template selection - populate subject from template
 	const handleTemplateChange = (templateId: string) => {
 		form.setValue('templateId', templateId === 'none' ? undefined : templateId);
 
 		if (templateId && templateId !== 'none') {
-			const template = templates?.find((t: Record<string, unknown>) => t.id === templateId);
+			const template = templates?.find((t) => String(t.id) === templateId);
 			if (template?.subject && !form.getValues('subject')) {
 				form.setValue('subject', template.subject);
 			}
@@ -123,8 +118,8 @@ function NewCampaignPage() {
 			</SelectItem>
 		);
 	} else {
-		templateOptions = templates.map((template: Record<string, unknown>) => (
-			<SelectItem key={template.id} value={template.id}>
+		templateOptions = templates.map((template) => (
+			<SelectItem key={template.id} value={String(template.id)}>
 				{template.name}
 				{template.category && (
 					<span className="ml-2 text-muted-foreground">({template.category})</span>
@@ -148,13 +143,13 @@ function NewCampaignPage() {
 			</div>
 		);
 	} else {
-		listOptions = lists.map((list: Record<string, unknown>) => (
+		listOptions = lists.map((list) => (
 			<FormField
 				control={form.control}
 				key={list.id}
 				name="listIds"
 				render={({ field }) => {
-					const isChecked = field.value?.includes(list.id);
+					const isChecked = field.value?.includes(String(list.id));
 					return (
 						<FormItem className="flex items-center space-x-3 space-y-0">
 							<FormControl>
@@ -163,15 +158,17 @@ function NewCampaignPage() {
 									onCheckedChange={(checked) => {
 										const current = field.value || [];
 										const updatedListIds = checked
-											? [...current, list.id]
-											: current.filter((id) => id !== list.id);
+											? [...current, String(list.id)]
+											: current.filter((id) => id !== String(list.id));
 										field.onChange(updatedListIds);
 									}}
 								/>
 							</FormControl>
 							<div className="space-y-1 leading-none">
 								<FormLabel className="font-medium">{list.name}</FormLabel>
-								<p className="text-muted-foreground text-sm">{list.contactCount ?? 0} contatos</p>
+								<p className="text-muted-foreground text-sm">
+									{(list as unknown as { contactCount?: number }).contactCount ?? 0} contatos
+								</p>
 							</div>
 						</FormItem>
 					);
@@ -183,12 +180,12 @@ function NewCampaignPage() {
 	// Handle form submission
 	const onSubmit = async (data: CampaignFormValues) => {
 		try {
-			const campaignId = await createCampaign({
+			const campaignId = await createCampaign.mutateAsync({
 				name: data.name,
 				subject: data.subject,
 				htmlContent: data.htmlContent || undefined,
-				templateId: data.templateId ? (data.templateId as number) : undefined,
-				listIds: data.listIds as number[],
+				templateId: data.templateId ? Number(data.templateId) : undefined,
+				listIds: data.listIds.map(Number),
 			});
 
 			toast.success('Campanha criada com sucesso!', {
@@ -198,7 +195,7 @@ function NewCampaignPage() {
 			// Navigate to the campaign details page
 			navigate({
 				to: '/marketing/$campaignId',
-				params: { campaignId },
+				params: { campaignId: String(campaignId) },
 				search: { search: '', status: 'all', view: 'grid', page: 1 },
 			});
 		} catch (error) {

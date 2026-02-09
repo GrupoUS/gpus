@@ -45,12 +45,9 @@ export function ChatInput({
 		}
 	}, [pendingMessage, setPendingMessage]);
 
-	const useQueryUnsafe = useQuery as unknown as (
-		query: unknown,
-		args?: unknown,
-	) => MessageTemplate[] | undefined;
-	const apiAny = api as unknown as { messageTemplates: { listTemplates: unknown } };
-	const conversationTemplates = useQueryUnsafe(apiAny.messageTemplates.listTemplates, {});
+	// TODO: Replace with tRPC when messageTemplatesRouter is created
+	// Stub: templates always empty until backend is implemented
+	const conversationTemplates: MessageTemplate[] = [];
 
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();

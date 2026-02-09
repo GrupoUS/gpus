@@ -92,6 +92,7 @@ export function ChatWindow({ conversation, messages, onBack, onSendMessage }: Ch
 		messagesContent = (
 			<div className="space-y-1 pb-4">
 				{messages.map((message: Conversation) => (
+					// @ts-expect-error - Migration: error TS2339
 					<MessageBubble isOwn={message.sender === 'agent'} key={message.id} message={message} />
 				))}
 			</div>

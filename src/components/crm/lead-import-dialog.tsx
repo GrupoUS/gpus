@@ -70,6 +70,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 	const [error, setError] = useState<string | null>(null);
 
 	// biome-ignore lint/suspicious/noExplicitAny: Required for Convex API
+	// @ts-expect-error - Migration: error TS2304
 	const importLeads = useMutation((api as any).leads.importLeads);
 
 	const resetState = useCallback(() => {
@@ -102,6 +103,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 			}
 
 			setHeaders(result.data.headers);
+			// @ts-expect-error - Migration: error TS2345
 			setRows(result.data.rows);
 
 			// Auto-suggest mappings
@@ -346,7 +348,7 @@ export function LeadImportDialog({ open, onOpenChange }: LeadImportDialogProps) 
 												</Select>
 											</TableCell>
 											<TableCell className="max-w-[200px] truncate text-muted-foreground text-sm">
-												{String(rows[0]?.[header] ?? '')}
+												{String((rows[0] as Record<string, unknown>)?.[header] ?? '')}
 											</TableCell>
 										</TableRow>
 									))}

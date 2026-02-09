@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
 	Select,
 	SelectContent,
@@ -17,7 +16,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import type { FinancialMetrics } from '@/types/api';
 
 const STATUS_CONFIG = {
 	PENDING: { label: 'Pendente', variant: 'secondary' as const },
@@ -37,36 +35,32 @@ const formatCurrency = (value: number) =>
 
 const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('pt-BR');
 
+// Local type for individual invoice items (not yet available from tRPC)
+interface InvoiceItem {
+	id: string;
+	description: string;
+	value: number;
+	dueDate: number;
+	status: string;
+	billingType: string;
+}
+
 export function InvoiceList() {
 	const [statusFilter, setStatusFilter] = useState<string>('all');
-	const [page, setPage] = useState(0);
-	const pageSize = 50;
 
-	const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-	const endOfMonth = new Date(
-		new Date().getFullYear(),
-		new Date().getMonth() + 1,
-		0,
-		23,
-		59,
-		59,
-		999,
-	).getTime();
-
-	// biome-ignore lint/suspicious/noExplicitAny: Convex deep type instantiation workaround.
-	const apiAny: any = api;
-	// biome-ignore lint/suspicious/noExplicitAny: Convex deep type instantiation workaround.
-	const useQueryAny: any = useQuery;
-	const result = useQueryAny(apiAny.asaas.queries.getPaymentsByDateRange, {
-		startDate: startOfMonth,
-		endDate: endOfMonth,
-		status: statusFilter === 'all' ? undefined : statusFilter,
-		limit: pageSize,
-		offset: page * pageSize,
-	}) as { payments: FinancialMetrics[]; total: number; hasMore: boolean } | undefined;
+	// TODO: Replace with tRPC when asaas payments procedures are created
+	// Stub: payments always empty until backend is implemented
+	const result = undefined as
+		| { payments: InvoiceItem[]; total: number; hasMore: boolean }
+		| undefined;
 
 	if (!result) {
-		return <div>Carregando...</div>;
+		return (
+			<div className="flex h-64 flex-col items-center justify-center text-muted-foreground">
+				<p>Módulo financeiro em implementação</p>
+				<p className="text-xs">As cobranças aparecerão aqui quando o backend estiver conectado.</p>
+			</div>
+		);
 	}
 
 	return (
@@ -97,7 +91,7 @@ export function InvoiceList() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{result.payments.map((payment: FinancialMetrics) => (
+					{result.payments.map((payment) => (
 						<TableRow key={payment.id}>
 							<TableCell>{payment.description || 'Cobrança'}</TableCell>
 							<TableCell>{formatCurrency(payment.value)}</TableCell>
@@ -115,12 +109,6 @@ export function InvoiceList() {
 					))}
 				</TableBody>
 			</Table>
-
-			{result.hasMore && (
-				<div className="flex justify-center">
-					<Button onClick={() => setPage((p) => p + 1)}>Carregar mais</Button>
-				</div>
-			)}
 		</div>
 	);
 }

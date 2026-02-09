@@ -167,6 +167,11 @@ export const tasksRouter = router({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Tarefa não encontrada' });
+			}
+
 			const updates: Record<string, unknown> = {
 				...input.patch,
 				updatedAt: new Date(),
@@ -182,7 +187,7 @@ export const tasksRouter = router({
 			const [updated] = await ctx.db
 				.update(tasks)
 				.set(updates)
-				.where(eq(tasks.id, input.taskId))
+				.where(and(eq(tasks.id, input.taskId), eq(tasks.organizationId, orgId)))
 				.returning();
 
 			if (!updated) {
@@ -195,7 +200,15 @@ export const tasksRouter = router({
 	delete: protectedProcedure
 		.input(z.object({ taskId: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const [deleted] = await ctx.db.delete(tasks).where(eq(tasks.id, input.taskId)).returning();
+			const orgId = ctx.user?.organizationId;
+			if (!orgId) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Tarefa não encontrada' });
+			}
+
+			const [deleted] = await ctx.db
+				.delete(tasks)
+				.where(and(eq(tasks.id, input.taskId), eq(tasks.organizationId, orgId)))
+				.returning();
 
 			if (!deleted) {
 				throw new TRPCError({ code: 'NOT_FOUND', message: 'Tarefa não encontrada' });

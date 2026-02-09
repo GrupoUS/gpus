@@ -60,17 +60,17 @@ function ContactsPage() {
 					status={filters.status}
 				/>
 
-				<ContactTable contacts={contacts} onSync={handleSyncContact} />
+				<ContactTable contacts={contacts as any} onSync={handleSyncContact} />
 
 				{/* Server-side cursor-based pagination */}
 				{canLoadMore && (
 					<div className="mt-4 flex justify-center">
 						<Button
-							disabled={paginationStatus === 'LoadingMore'}
+							disabled={paginationStatus === ('LoadingMore' as any)}
 							onClick={handleLoadMore}
 							variant="outline"
 						>
-							{paginationStatus === 'LoadingMore' ? (
+							{paginationStatus === ('LoadingMore' as any) ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									Carregando...

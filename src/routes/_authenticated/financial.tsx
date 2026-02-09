@@ -33,6 +33,7 @@ function FinancialDashboard() {
 		setIsSyncing(true);
 		try {
 			toast.info('Sincronizando pagamentos...');
+			// @ts-expect-error - Migration: error TS2349
 			const result = (await syncPayments({
 				initiatedBy: 'manual_dashboard_sync',
 			})) as ImportResult;

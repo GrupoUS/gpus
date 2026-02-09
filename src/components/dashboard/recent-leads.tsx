@@ -50,7 +50,8 @@ export function RecentLeads({ data }: RecentLeadsProps) {
 		);
 	} else {
 		content = data.map((lead) => {
-			const TempIcon = tempConfig[lead.temperature].icon;
+			const temp = (lead as any).temperature ?? 'frio';
+			const TempIcon = tempConfig[temp as keyof typeof tempConfig]?.icon ?? tempConfig.frio.icon;
 			return (
 				<div
 					className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
@@ -72,8 +73,12 @@ export function RecentLeads({ data }: RecentLeadsProps) {
 							{productLabels[lead.interestedProduct || 'indefinido'] || 'Indefinido'}
 						</p>
 					</div>
-					<div className={cn('rounded-full p-1.5', tempConfig[lead.temperature].bg)}>
-						<TempIcon className={cn('h-3.5 w-3.5', tempConfig[lead.temperature].color)} />
+					<div
+						className={cn('rounded-full p-1.5', tempConfig[temp as keyof typeof tempConfig]?.bg)}
+					>
+						<TempIcon
+							className={cn('h-3.5 w-3.5', tempConfig[temp as keyof typeof tempConfig]?.color)}
+						/>
 					</div>
 					<span className="text-muted-foreground text-xs">
 						{formatDistanceToNow(lead.createdAt, { addSuffix: true, locale: ptBR })}

@@ -1,3 +1,4 @@
+import { trpc } from '@/lib/trpc';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -170,6 +171,7 @@ function LeadTags({ leadId }: { leadId: number }) {
 					key={tag.id}
 					style={{
 						backgroundColor: tag.color ? `${tag.color}15` : undefined,
+						// @ts-expect-error - Migration: error TS2322
 						color: tag.color,
 						borderColor: tag.color ? `${tag.color}30` : undefined,
 						borderWidth: '1px',

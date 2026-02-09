@@ -72,15 +72,12 @@ function FinancialReportsPage() {
 
 	const startDateId = useId();
 	const endDateId = useId();
-	// Get payments for report
-	const _startTimestamp = startDate ? new Date(startDate).getTime() : undefined;
-	const _endTimestamp = endDate ? new Date(`${endDate}T23:59:59`).getTime() : undefined;
 
 	// TODO: Implement financial reports tRPC router
-	const paymentsResult: PaymentsResult | undefined = undefined;
+	const paymentsResult = undefined as PaymentsResult | undefined;
 
 	// TODO: Implement sync logs tRPC router
-	const syncLogs: SyncLog[] | undefined = undefined;
+	const syncLogs = undefined as SyncLog[] | undefined;
 
 	// Format helpers
 	const formatCurrency = (value: number) =>

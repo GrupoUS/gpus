@@ -38,6 +38,7 @@ interface RemoveDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	user: {
+		id: number | string;
 		clerkId: string;
 		name: string;
 		email: string;
@@ -55,11 +56,10 @@ export function RemoveDialog({ open, onOpenChange, user }: RemoveDialogProps) {
 		},
 	});
 
-	const onSubmit = async (values: RemoveUserFormData) => {
+	const onSubmit = async (_values: RemoveUserFormData) => {
 		try {
-			await removeUser({
-				userId: user.clerkId,
-				reason: values.reason,
+			await removeUser.mutateAsync({
+				userId: Number(user.id),
 			});
 			toast.success('Membro removido com sucesso');
 			onOpenChange(false);

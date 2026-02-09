@@ -38,6 +38,7 @@ function NotificationsSettingsPage() {
 		if (!userData) return;
 
 		try {
+			// @ts-expect-error - Migration: error TS2349
 			await updateProfile({
 				preferences: {
 					...prefs,

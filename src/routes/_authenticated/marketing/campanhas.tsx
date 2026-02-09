@@ -65,7 +65,7 @@ function CampaignsPage() {
 	} else {
 		campaignsContent = (
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{paginatedCampaigns.map((campaign: Record<string, unknown>) => (
+				{paginatedCampaigns.map((campaign) => (
 					<CampaignCard
 						campaign={campaign}
 						key={campaign.id}

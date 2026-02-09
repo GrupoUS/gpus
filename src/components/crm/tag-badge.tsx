@@ -21,7 +21,7 @@ export function TagBadge({ tag, leadId, onRemove }: TagBadgeProps) {
 	const handleRemove = async () => {
 		setIsRemoving(true);
 		try {
-			await removeTag({ leadId, tagId: tag.id });
+			await removeTag.mutateAsync({ leadId, tagId: tag.id });
 			toast.success('Tag removida');
 			onRemove?.();
 		} catch (_error) {
@@ -46,7 +46,7 @@ export function TagBadge({ tag, leadId, onRemove }: TagBadgeProps) {
 		<Badge
 			className={cn('gap-1 pr-1 transition-colors hover:bg-opacity-90')}
 			style={{
-				backgroundColor: tag.color,
+				backgroundColor: (tag.color ?? undefined) as any,
 				color: textColor,
 				borderColor: 'transparent',
 			}}

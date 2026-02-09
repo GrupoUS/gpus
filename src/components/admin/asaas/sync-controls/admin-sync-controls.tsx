@@ -6,6 +6,8 @@
  * - Auto-sync configuration form
  * - Real-time sync status badge
  * - Progress bar for running syncs
+ *
+ * TODO: Replace stubs with tRPC when asaasSyncRouter is created
  */
 
 import {
@@ -21,7 +23,6 @@ import {
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { trpc } from '../../../../lib/trpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +37,17 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+// TODO: Replace with tRPC type when asaasSyncLogs router is created
+interface SyncStatus {
+	syncType: string;
+	status: 'completed' | 'failed' | 'running' | 'pending';
+	startedAt: number;
+	recordsProcessed: number;
+	recordsCreated: number;
+	recordsUpdated: number;
+	recordsFailed: number;
+}
+
 export function AdminSyncControls() {
 	const [loading, setLoading] = useState<Record<string, boolean>>({});
 	const [autoSyncConfig, setAutoSyncConfig] = useState({
@@ -44,35 +56,15 @@ export function AdminSyncControls() {
 		syncTypes: [] as Array<'customers' | 'payments' | 'subscriptions'>,
 	});
 
-	// Get current sync status - use most recent sync log
-	const { data: recentSyncs } = trpc.settings.list.useQuery({ limit: 1 });
-	const syncStatus = recentSyncs?.[0];
-
-	// Get auto-sync settings (would need to be implemented)
-	// const { data: settings } = trpc.settings.list.useQuery({});
-
-	// Actions for starting syncs
-	const startCustomersSync = trpc.settings.set.useMutation();
-	const startPaymentsSync = trpc.settings.set.useMutation();
-	const startSubscriptionsSync = trpc.settings.set.useMutation();
-	const startAllSync = trpc.settings.set.useMutation();
+	// TODO: Replace with tRPC when asaasSyncRouter is created
+	const syncStatus = null as SyncStatus | null;
 
 	const handleSync = async (type: 'customers' | 'payments' | 'subscriptions' | 'all') => {
 		setLoading({ ...loading, [type]: true });
 		try {
 			toast.info(`Iniciando sincronização de ${type}...`);
-
-			if (type === 'all') {
-				await startAllSync({ initiatedBy: 'manual_admin' });
-			} else if (type === 'customers') {
-				await startCustomersSync({ initiatedBy: 'manual_admin' });
-			} else if (type === 'payments') {
-				await startPaymentsSync({ initiatedBy: 'manual_admin' });
-			} else if (type === 'subscriptions') {
-				await startSubscriptionsSync({ initiatedBy: 'manual_admin' });
-			}
-
-			toast.success('Sincronização iniciada com sucesso!');
+			// TODO: Call sync mutation when implemented
+			toast.info('[TODO] Sync mutation not yet implemented');
 		} catch (error) {
 			toast.error('Erro na sincronização', {
 				description: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -83,13 +75,13 @@ export function AdminSyncControls() {
 	};
 
 	const handleSaveAutoSync = () => {
-		// Would need mutation to save auto-sync settings
+		// TODO: Would need mutation to save auto-sync settings
 		toast.success('Configurações de auto-sync salvas!');
 	};
 
 	// Calculate progress for running syncs
 	const isRunning = syncStatus?.status === 'running';
-	const progress = isRunning ? 50 : 100; // Would come from actual progress tracking
+	const progress = isRunning ? 50 : 100;
 
 	const syncIntervalId = useId();
 	const autoSyncEnableId = useId();
@@ -241,7 +233,7 @@ export function AdminSyncControls() {
 				<CardContent className="space-y-4">
 					<div className="flex items-center justify-between">
 						<div className="space-y-0.5">
-							<Label htmlFor="auto-sync-enable">Ativar Auto-Sync</Label>
+							<Label htmlFor={autoSyncEnableId}>Ativar Auto-Sync</Label>
 							<div className="text-muted-foreground text-sm">
 								Sincronize automaticamente com o Asaas em intervalos regulares
 							</div>
