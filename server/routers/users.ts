@@ -3,11 +3,11 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { users } from '../../drizzle/schema';
-import { protectedProcedure, router } from '../_core/trpc';
+import { authedProcedure, protectedProcedure, router } from '../_core/trpc';
 
 export const usersRouter = router({
 	/** Get current authenticated user */
-	me: protectedProcedure.query(({ ctx }) => {
+	me: authedProcedure.query(({ ctx }) => {
 		return ctx.user;
 	}),
 
@@ -46,7 +46,7 @@ export const usersRouter = router({
 	}),
 
 	/** Sync user from Clerk (ensure exists) */
-	ensureUser: protectedProcedure
+	ensureUser: authedProcedure
 		.input(
 			z.object({
 				clerkId: z.string(),

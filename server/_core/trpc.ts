@@ -11,7 +11,20 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 export const mergeRouters = t.mergeRouters;
 
-// ── Middleware: require authenticated user ──
+// ── Middleware: require authenticated user (Clerk only) ──
+const requireAuth = t.middleware(({ ctx, next }) => {
+	if (!ctx.auth?.userId) {
+		throw new TRPCError({
+			code: 'UNAUTHORIZED',
+			message: 'Autenticação necessária',
+		});
+	}
+	return next({ ctx });
+});
+
+export const authedProcedure = t.procedure.use(requireAuth);
+
+// ── Middleware: require authenticated user + DB record ──
 const requireUser = t.middleware(({ ctx, next }) => {
 	if (!ctx.user) {
 		throw new TRPCError({
