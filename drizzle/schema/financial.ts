@@ -144,6 +144,7 @@ export const asaasSyncLogs = pgTable(
 	'asaas_sync_logs',
 	{
 		id: integer().primaryKey().generatedAlwaysAsIdentity(),
+		organizationId: varchar({ length: 255 }),
 		syncType: asaasSyncTypeEnum().notNull(),
 		status: asaasSyncStatusEnum().notNull(),
 		startedAt: timestamp({ withTimezone: true }).notNull(),
@@ -159,10 +160,12 @@ export const asaasSyncLogs = pgTable(
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	},
 	(t) => [
+		index('asaas_sync_org_idx').on(t.organizationId),
 		index('asaas_sync_type_idx').on(t.syncType),
 		index('asaas_sync_status_idx').on(t.status),
 		index('asaas_sync_created_idx').on(t.createdAt),
 		index('asaas_sync_initiated_idx').on(t.initiatedBy),
+		index('asaas_sync_org_created_idx').on(t.organizationId, t.createdAt),
 	],
 );
 

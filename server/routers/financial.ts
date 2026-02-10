@@ -230,9 +230,13 @@ export const financialRouter = router({
 					.optional(),
 			)
 			.query(async ({ ctx, input }) => {
+				const orgId = ctx.user?.organizationId;
+				if (!orgId) return [];
+
 				return await ctx.db
 					.select()
 					.from(asaasSyncLogs)
+					.where(eq(asaasSyncLogs.organizationId, orgId))
 					.orderBy(desc(asaasSyncLogs.createdAt))
 					.limit(input?.limit ?? 20);
 			}),
@@ -270,9 +274,23 @@ export const financialRouter = router({
 				}),
 			)
 			.query(async ({ ctx, input }) => {
+				const orgId = ctx.user?.organizationId;
+				if (!orgId) return [];
+
+				const conditions = [eq(asaasSyncLogs.organizationId, orgId)];
+				if (input.syncType) {
+					conditions.push(
+						eq(
+							asaasSyncLogs.syncType,
+							input.syncType as 'payments' | 'subscriptions' | 'customers' | 'financial',
+						),
+					);
+				}
+
 				return await ctx.db
 					.select()
 					.from(asaasSyncLogs)
+					.where(and(...conditions))
 					.orderBy(desc(asaasSyncLogs.createdAt))
 					.limit(input.limit);
 			}),

@@ -25,7 +25,10 @@
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
 		"start": "bun run server/_core/index.ts",
-		"debug:mcp": "node debug/mcp.js"
+		"debug:mcp": "node debug/mcp.js",
+		"export:convex": "bun run scripts/export-convex.ts",
+		"import:neon": "bun run scripts/import-neon.ts",
+		"validate:data": "bun run scripts/validate-data.ts"
 	},
 	"dependencies": {
 		"@clerk/backend": "^2.29.2",
