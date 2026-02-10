@@ -1,6 +1,7 @@
 import { clerkMiddleware } from '@hono/clerk-auth';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { Hono } from 'hono';
+import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
@@ -17,14 +18,20 @@ app.use('*', logger());
 app.use(
 	'/api/*',
 	cors({
-		origin: ['http://localhost:5173', 'http://localhost:3000'],
+		origin: [
+			'http://localhost:5173',
+			'http://localhost:3000',
+			'http://localhost:3001',
+			'https://gpus-env.up.railway.app',
+			'https://gpus-production.up.railway.app',
+		],
 		credentials: true,
 	}),
 );
-app.use('*', clerkMiddleware());
+app.use('/api/*', clerkMiddleware());
 
 // ── Health check ──
-app.get('/', (c) =>
+app.get('/api/health', (c) =>
 	c.json({
 		status: 'ok',
 		service: 'GPUS Backend',
@@ -45,6 +52,13 @@ app.all('/api/trpc/*', (c) => {
 // ── Webhooks ──
 app.post('/api/webhooks/asaas', handleAsaasWebhook);
 app.post('/api/webhooks/clerk', handleClerkWebhook);
+
+// ── Static file serving (SPA) ──
+// Serve Vite build output from dist/
+app.use('*', serveStatic({ root: './dist' }));
+
+// SPA fallback: serve index.html for client-side routing
+app.use('*', serveStatic({ path: './dist/index.html' }));
 
 // ── Scheduler ──
 initSchedulers();
