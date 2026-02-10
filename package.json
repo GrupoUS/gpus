@@ -3,6 +3,9 @@
 	"private": true,
 	"sideEffects": false,
 	"type": "module",
+	"engines": {
+		"node": ">=20"
+	},
 	"scripts": {
 		"dev": "concurrently -r \"bun run dev:web\" \"bun run dev:server\"",
 		"dev:web": "vite dev",
