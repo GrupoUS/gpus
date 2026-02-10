@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { activities, leads } from '../../drizzle/schema';
@@ -56,9 +56,13 @@ export const leadsRouter = router({
 				conditions.push(inArray(leads.stage, input.stages));
 			}
 			if (input.search) {
-				conditions.push(
-					sql`(${leads.name} ILIKE ${`%${input.search}%`} OR ${leads.email} ILIKE ${`%${input.search}%`} OR ${leads.phone} ILIKE ${`%${input.search}%`})`,
+				const term = `%${input.search}%`;
+				const searchCondition = or(
+					ilike(leads.name, term),
+					ilike(leads.email, term),
+					ilike(leads.phone, term),
 				);
+				if (searchCondition) conditions.push(searchCondition);
 			}
 			if (input.temperature?.length) {
 				conditions.push(inArray(leads.temperature, input.temperature));

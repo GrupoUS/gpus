@@ -13,13 +13,16 @@ import {
 } from '../../drizzle/schema';
 import { protectedProcedure, router } from '../_core/trpc';
 
-// ── Settings (global key-value, no org scope) ──
+// ── Settings (org-scoped via key prefix: org:{orgId}:key) ──
 export const settingsRouter = router({
 	get: protectedProcedure.input(z.object({ key: z.string() })).query(async ({ ctx, input }) => {
+		const orgId = ctx.user?.organizationId;
+		const scopedKey = orgId ? `org:${orgId}:${input.key}` : input.key;
+
 		const [setting] = await ctx.db
 			.select()
 			.from(settings)
-			.where(eq(settings.key, input.key))
+			.where(eq(settings.key, scopedKey))
 			.limit(1);
 
 		return setting?.value ?? null;
@@ -28,10 +31,13 @@ export const settingsRouter = router({
 	set: protectedProcedure
 		.input(z.object({ key: z.string(), value: z.any() }))
 		.mutation(async ({ ctx, input }) => {
+			const orgId = ctx.user?.organizationId;
+			const scopedKey = orgId ? `org:${orgId}:${input.key}` : input.key;
+
 			const [existing] = await ctx.db
 				.select()
 				.from(settings)
-				.where(eq(settings.key, input.key))
+				.where(eq(settings.key, scopedKey))
 				.limit(1);
 
 			if (existing) {
@@ -46,7 +52,7 @@ export const settingsRouter = router({
 			const [created] = await ctx.db
 				.insert(settings)
 				.values({
-					key: input.key,
+					key: scopedKey,
 					value: input.value,
 				})
 				.returning();
@@ -55,7 +61,13 @@ export const settingsRouter = router({
 		}),
 
 	list: protectedProcedure.query(async ({ ctx }) => {
-		return await ctx.db.select().from(settings);
+		const orgId = ctx.user?.organizationId;
+		if (!orgId) return [];
+
+		return await ctx.db
+			.select()
+			.from(settings)
+			.where(ilike(settings.key, `org:${orgId}:%`));
 	}),
 });
 

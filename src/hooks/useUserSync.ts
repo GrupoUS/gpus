@@ -43,7 +43,10 @@ export function useUserSync() {
 			try {
 				await ensureUserMutation.mutateAsync({
 					clerkId: clerkUser.id,
-					email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+					email:
+						clerkUser.primaryEmailAddress?.emailAddress ??
+						clerkUser.emailAddresses?.[0]?.emailAddress ??
+						'',
 					name: clerkUser.fullName ?? clerkUser.firstName ?? 'User',
 					avatarUrl: clerkUser.imageUrl,
 				});

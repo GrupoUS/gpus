@@ -1,7 +1,7 @@
-import { and, desc, eq, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { lgpdAudit, lgpdConsent, lgpdRequests } from '../../drizzle/schema';
+import { lgpdAudit, lgpdConsent, lgpdRequests, students } from '../../drizzle/schema';
 import { protectedProcedure, router } from '../_core/trpc';
 
 export const lgpdRouter = router({
@@ -82,7 +82,19 @@ export const lgpdRouter = router({
 				}),
 			)
 			.query(async ({ ctx, input }) => {
-				const conditions: SQL[] = [];
+				const orgId = ctx.user?.organizationId;
+				if (!orgId) return [];
+
+				// Scope to org via student ownership
+				const orgStudentRows = await ctx.db
+					.select({ id: students.id })
+					.from(students)
+					.where(eq(students.organizationId, orgId));
+
+				if (orgStudentRows.length === 0) return [];
+
+				const orgStudentIds = orgStudentRows.map((s) => s.id);
+				const conditions: SQL[] = [inArray(lgpdRequests.studentId, orgStudentIds)];
 				if (input.studentId) {
 					conditions.push(eq(lgpdRequests.studentId, input.studentId));
 				}
@@ -90,7 +102,7 @@ export const lgpdRouter = router({
 				return await ctx.db
 					.select()
 					.from(lgpdRequests)
-					.where(conditions.length ? and(...conditions) : undefined)
+					.where(and(...conditions))
 					.orderBy(desc(lgpdRequests.createdAt));
 			}),
 
@@ -161,7 +173,24 @@ export const lgpdRouter = router({
 				}),
 			)
 			.query(async ({ ctx, input }) => {
+				const orgId = ctx.user?.organizationId;
+				if (!orgId) return [];
+
+				// Scope to org via student ownership
+				const orgStudentRows = await ctx.db
+					.select({ id: students.id })
+					.from(students)
+					.where(eq(students.organizationId, orgId));
+
 				const conditions: SQL[] = [];
+				if (orgStudentRows.length > 0) {
+					conditions.push(
+						inArray(
+							lgpdAudit.studentId,
+							orgStudentRows.map((s) => s.id),
+						),
+					);
+				}
 				if (input.studentId) {
 					conditions.push(eq(lgpdAudit.studentId, input.studentId));
 				}

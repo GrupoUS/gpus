@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { eq } from 'drizzle-orm';
 import type { Context as HonoContext } from 'hono';
 
@@ -52,7 +54,7 @@ export async function handleAsaasWebhook(c: HonoContext) {
 		return c.json({ error: 'Missing event type' }, 400);
 	}
 
-	const idempotencyKey = `${payload.event}:${payload.id ?? payload.payment?.id ?? payload.subscription?.id ?? Date.now()}`;
+	const idempotencyKey = `${payload.event}:${payload.id ?? payload.payment?.id ?? payload.subscription?.id ?? randomUUID()}`;
 
 	// ── Deduplication ──
 	const [existing] = await db

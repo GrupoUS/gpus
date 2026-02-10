@@ -4,6 +4,13 @@ import type { Context as HonoContext } from 'hono';
 import { users } from '../../drizzle/schema';
 import { db } from '../db';
 
+const VALID_ROLES = ['owner', 'admin', 'manager', 'member', 'sdr', 'cs', 'support'] as const;
+type UserRole = (typeof VALID_ROLES)[number];
+
+function isValidRole(role: string): role is UserRole {
+	return (VALID_ROLES as readonly string[]).includes(role);
+}
+
 interface ClerkWebhookPayload {
 	type: string;
 	data: {
@@ -57,6 +64,8 @@ export async function handleClerkWebhook(c: HonoContext) {
 				const email = data.email_addresses?.[0]?.email_address;
 				const name = [data.first_name, data.last_name].filter(Boolean).join(' ') || 'Unnamed';
 				const orgMembership = data.organization_memberships?.[0];
+				const validatedRole: UserRole =
+					orgMembership?.role && isValidRole(orgMembership.role) ? orgMembership.role : 'member';
 
 				// Check if user already exists
 				const [existingUser] = await db
@@ -80,7 +89,7 @@ export async function handleClerkWebhook(c: HonoContext) {
 						clerkId: data.id,
 						email: email ?? '',
 						name,
-						role: (orgMembership?.role as 'member') ?? 'member',
+						role: validatedRole,
 						organizationId: orgMembership?.organization.id ?? null,
 					});
 				}

@@ -16,25 +16,16 @@ import { AdminMetricsDashboard } from './monitoring/admin-metrics-dashboard';
 import { AdminExportDialog } from './sync-controls/admin-export-dialog';
 import { AdminSyncControls } from './sync-controls/admin-sync-controls';
 import { AdminSyncHistory } from './sync-history/admin-sync-history';
-import type { AsaasConflict } from '@/types/api';
-
-interface AsaasAdminPageProps {
-	syncStatus: Record<string, AsaasConflict | null> | null | undefined;
-	recentLogs: AsaasConflict[] | null | undefined;
-}
 
 type TabValue = 'dashboard' | 'sync' | 'export' | 'history';
 
-function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
+function AsaasAdminPage() {
 	const [activeTab, setActiveTab] = React.useState<TabValue>('dashboard');
 
-	// Get most recent sync from all types (prioritize customers)
-	const latestSync =
-		syncStatus?.customers ||
-		syncStatus?.payments ||
-		syncStatus?.subscriptions ||
-		syncStatus?.financial ||
-		null;
+	const { data: recentLogs } = trpc.financial.syncLogs.list.useQuery({ limit: 20 });
+
+	// Derive sync status from recent logs by grouping by syncType
+	const latestSync = recentLogs?.[0] ?? null;
 
 	const tabs = [
 		{ value: 'dashboard' as const, label: 'Dashboard', icon: Activity },
@@ -57,8 +48,8 @@ function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 					<div className="flex items-center gap-2 text-muted-foreground text-sm">
 						<Database className="h-4 w-4" />
 						<span>
-							Última sync: {(latestSync as any).syncType} -{' '}
-							{new Date((latestSync as any).startedAt).toLocaleString('pt-BR')}
+							Última sync: {latestSync.syncType} –{' '}
+							{latestSync.startedAt ? new Date(latestSync.startedAt).toLocaleString('pt-BR') : '—'}
 						</span>
 					</div>
 				)}
@@ -93,22 +84,13 @@ function AsaasAdminPage({ syncStatus, recentLogs }: AsaasAdminPageProps) {
 				{activeTab === 'dashboard' && <AdminMetricsDashboard />}
 				{activeTab === 'sync' && <AdminSyncControls />}
 				{activeTab === 'export' && <AdminExportDialog />}
-				{activeTab === 'history' && <AdminSyncHistory logs={recentLogs as any} />}
+				{activeTab === 'history' && <AdminSyncHistory logs={recentLogs ?? null} />}
 			</div>
 		</div>
 	);
 }
 
-// Wrapper component that fetches data internally
-
+// Wrapper component — data is now fetched within AsaasAdminPage itself
 export function AsaasAdminPageWrapper() {
-	// @ts-expect-error - Migration: error TS2345
-	const { data: syncStatusResult } = trpc.settings.list.useQuery({});
-	// @ts-expect-error - Migration: error TS2345
-	const { data: recentLogsResult } = trpc.settings.list.useQuery({
-		limit: 10,
-	});
-
-	// @ts-expect-error - Migration: error TS2322
-	return <AsaasAdminPage recentLogs={recentLogsResult} syncStatus={syncStatusResult} />;
+	return <AsaasAdminPage />;
 }

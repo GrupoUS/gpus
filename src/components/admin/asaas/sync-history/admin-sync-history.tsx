@@ -44,14 +44,14 @@ interface SyncLogItem {
 	id: number;
 	syncType: string;
 	status: 'completed' | 'failed' | 'running' | 'pending';
-	startedAt: number;
-	completedAt?: number | null;
+	startedAt: Date | number;
+	completedAt?: Date | number | null;
 	recordsProcessed: number;
 	recordsCreated: number;
 	recordsUpdated: number;
 	recordsFailed: number;
-	errors?: string[];
-	filters?: Record<string, unknown>;
+	errors?: string[] | null;
+	filters?: Record<string, unknown> | null;
 }
 
 const STATUS_BADGE: Record<
@@ -168,7 +168,10 @@ export function AdminSyncHistory({ logs }: AdminSyncHistoryProps) {
 							<TableBody>
 								{paginatedLogs.map((log) => {
 									const duration = log.completedAt
-										? Math.round((log.completedAt - log.startedAt) / 1000)
+										? Math.round(
+												(new Date(log.completedAt).getTime() - new Date(log.startedAt).getTime()) /
+													1000,
+											)
 										: null;
 									const isRunning = log.status === 'running';
 

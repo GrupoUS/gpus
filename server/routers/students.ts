@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { enrollments, students } from '../../drizzle/schema';
@@ -23,9 +23,13 @@ export const studentsRouter = router({
 			const conditions = [eq(students.organizationId, orgId)];
 
 			if (input.search) {
-				conditions.push(
-					sql`(${students.name} ILIKE ${`%${input.search}%`} OR ${students.email} ILIKE ${`%${input.search}%`} OR ${students.phone} ILIKE ${`%${input.search}%`})`,
+				const term = `%${input.search}%`;
+				const searchCondition = or(
+					ilike(students.name, term),
+					ilike(students.email, term),
+					ilike(students.phone, term),
 				);
+				if (searchCondition) conditions.push(searchCondition);
 			}
 			if (input.status) {
 				conditions.push(eq(students.status, input.status));
@@ -166,7 +170,7 @@ export const studentsRouter = router({
 				and(
 					eq(students.organizationId, orgId),
 					eq(students.status, 'ativo'),
-					sql`${students.churnRisk} = 'alto'`,
+					eq(students.churnRisk, 'alto'),
 				),
 			)
 			.orderBy(desc(students.updatedAt))
