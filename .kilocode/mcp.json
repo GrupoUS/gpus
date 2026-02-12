@@ -1,0 +1,61 @@
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "bunx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "env": {}
+    },
+    "mcp-server-neon": {
+      "command": "bunx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.neon.tech/sse"
+      ],
+      "env": {},
+      "disabledTools": [
+        "delete_project",
+        "list_organizations",
+        "list_shared_projects",
+        "create_branch",
+        "delete_branch",
+        "describe_branch",
+        "reset_from_parent",
+        "provision_neon_auth",
+        "list_branch_computes"
+      ],
+      "disabled": false
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "406aa36a-ae0e-441d-ac40-4b0a8544ad42"
+      }
+    },
+    "tavily": {
+      "command": "bunx",
+      "args": [
+        "@mcptools/mcp-tavily@latest"
+      ],
+      "env": {
+        "TAVILY_MAX_RESULTS": "10",
+        "TAVILY_SEARCH_DEPTH": "advanced",
+        "TAVILY_TIMEOUT": "30000",
+        "TAVILY_INCLUDE_IMAGES": "false",
+        "TAVILY_INCLUDE_RAW_CONTENT": "true",
+        "TAVILY_API_KEY": "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"
+      },
+      "disabled": false
+    },
+    "stitch": {
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "AQ.Ab8RN6K2olREcVu_eIp2642AWXumIsMNT8vVAfJoS0Lnkb_CEg"
+      },
+      "disabled": true
+    }
+  }
+}
