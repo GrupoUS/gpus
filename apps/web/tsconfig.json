@@ -18,6 +18,6 @@
 			"@/*": ["./src/*"]
 		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.tsx", "public/script*.js"],
+	"include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "public/script*.js"],
 	"exclude": ["node_modules", "dist"]
 }

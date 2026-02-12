@@ -1,4 +1,4 @@
-import type { AppRouter } from '@repo/shared/router';
+import type { AppRouter } from '@repo/api/router';
 import type { inferRouterOutputs } from '@trpc/server';
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
