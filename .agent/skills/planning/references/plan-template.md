@@ -61,9 +61,61 @@ Every plan MUST start with:
 
 ---
 
+## Architecture Decisions (L6+)
+
+When multiple valid approaches exist, document the decision:
+
+```markdown
+## Architecture Decisions
+
+### ADR: [Short Decision Title]
+
+**Context:** [Problem and why a decision is needed]
+
+**Options:**
+1. **[Option A]** — [Pro] / [Con]
+2. **[Option B]** — [Pro] / [Con]
+
+**Decision:** Option [X] because [rationale].
+
+**Consequences:**
+- [Positive consequence]
+- [Trade-off accepted]
+```
+
+> See `references/architecture-decisions.md` for full guide and examples.
+
+---
+
+## Risk Assessment (L6+)
+
+Pre-mortem summary — top 3 risks from the analysis:
+
+```markdown
+## Risk Assessment
+
+| # | Risk | Category | Score (P×I) | Mitigation |
+|---|------|----------|-------------|------------|
+| 1 | [Risk description] | Technical | 6 | [Specific action] |
+| 2 | [Risk description] | Integration | 4 | [Specific action] |
+| 3 | [Risk description] | Data | 4 | [Specific action] |
+```
+
+> See `references/pre-mortem-analysis.md` for the full protocol.
+
+---
+
 ## Task Structure (Bite-Sized)
 
 Each task is a small, focused unit. Each **step** within a task is **one action** (2-5 minutes).
+
+For L5+ tasks, identify tasks that can run concurrently:
+
+```markdown
+### [PARALLEL] Tasks 3-4: Independent Components
+
+> These tasks have no mutual dependencies and can execute concurrently.
+```
 
 ```markdown
 ### Task 1: [Component Name]
@@ -192,6 +244,7 @@ Before delivering a plan, verify:
 - [ ] Docs consulted (Context7)?
 - [ ] Web research done (Tavily) if needed?
 - [ ] Edge cases considered (min 5 for L4+)?
+- [ ] All findings tagged with confidence score (1-5)?
 
 **Tasks:**
 - [ ] Each step is one atomic action (2-5 min)?
@@ -199,7 +252,20 @@ Before delivering a plan, verify:
 - [ ] Complete code provided (not vague instructions)?
 - [ ] Validation command for each task?
 - [ ] Dependencies mapped, parallel-safe marked?
+- [ ] Parallel tasks grouped with `[PARALLEL]` tag? (L5+)
 - [ ] Rollback defined?
+
+**Risk & Decisions (L6+):**
+- [ ] Pre-mortem analysis run (5+ failure modes)?
+- [ ] Top 3 risks documented with mitigations?
+- [ ] Architecture decisions recorded as ADRs?
+
+**Self-Review:**
+- [ ] Completeness — every requirement has a task?
+- [ ] Atomicity — every step is one action?
+- [ ] Risk coverage — top risks mitigated?
+- [ ] Dependency order — tasks can execute sequentially?
+- [ ] Rollback feasibility — each task reversible?
 
 **Format:**
 - [ ] Header with goal, architecture, tech stack?

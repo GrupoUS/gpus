@@ -97,6 +97,76 @@ done
 
 ---
 
+## Fault Isolation Techniques
+
+When backward tracing alone isn't enough, use these systematic isolation methods.
+
+### Binary Search Debugging
+
+Instead of linear search through code, halve the problem space:
+
+1. **Identify the boundary** — Find a working state and a broken state
+2. **Split the difference** — Check the midpoint
+3. **Narrow** — Repeat on the failing half
+
+```
+Working state ←──[check midpoint]──→ Broken state
+              ←──[narrow]──→
+              ←[found]→
+```
+
+### Git Bisect for Regressions
+
+When something "used to work," find the exact breaking commit:
+
+```bash
+git bisect start
+git bisect bad                    # Current state is broken
+git bisect good HEAD~20           # This commit was working
+# Git checks out midpoint — test and mark:
+git bisect good                   # or: git bisect bad
+# Repeat until: "first bad commit is..."
+git bisect reset                  # Return to original HEAD
+```
+
+**Automate with a test script:**
+
+```bash
+git bisect start HEAD HEAD~20
+git bisect run bun test path/to/failing.test.ts
+```
+
+### Delta Debugging Principle
+
+For complex failures with many variables, systematically minimize:
+
+1. **List all variables** (inputs, config, state, env)
+2. **Remove half** — does it still fail?
+3. **If yes** → remove half of remaining
+4. **If no** → restore and remove the other half
+5. **Repeat** until minimal reproducing set
+
+---
+
+## Environment Isolation
+
+When bugs are environment-dependent:
+
+| Technique | How |
+|-----------|-----|
+| **Clean state** | Reset DB, clear caches, restart server |
+| **Minimal reproduction** | Strip away everything unrelated |
+| **Environment diff** | Compare working vs broken env (vars, deps, versions) |
+| **Fresh install** | `rm -rf node_modules && bun install` |
+
+**Checklist:**
+- [ ] Same Node/Bun version?
+- [ ] Same environment variables?
+- [ ] Same database state?
+- [ ] Same dependency versions (`bun.lock`)?
+
+---
+
 ## Key Principle
 
 ```

@@ -4,22 +4,22 @@ Define strict API boundaries and keep failure behavior deterministic.
 
 ## Canonical Request Boundary
 
-Use this request ordering for every endpoint:
+Use this ordering for every endpoint:
 
-1. Parse transport layer request.
-2. Enforce rate limiting and coarse abuse controls.
-3. Resolve auth identity and session state.
+1. Parse transport request.
+2. Enforce coarse abuse controls (rate limit, payload size).
+3. Resolve auth identity.
 4. Compose typed context.
-5. Execute procedure-level authorization.
+5. Enforce procedure-level authorization.
 6. Execute service logic.
 7. Persist state with Drizzle.
-8. Emit response with stable error mapping.
+8. Emit stable response contract and structured logs.
 
 Use lifecycle maps in [`request-lifecycle.md`](request-lifecycle.md).
 
 ## Procedure Hierarchy
 
-```
+```text
 publicProcedure
   -> protectedProcedure
       -> mentoradoProcedure
@@ -31,7 +31,7 @@ Boundary contract:
 - `publicProcedure`: no actor context required.
 - `protectedProcedure`: authenticated actor required.
 - `mentoradoProcedure`: authenticated actor with linked mentorado context.
-- `adminProcedure`: authenticated actor with admin role check.
+- `adminProcedure`: authenticated actor with admin/mentor role check.
 
 ## Context Composition Rules
 
@@ -40,133 +40,124 @@ Context must be deterministic and side-effect aware.
 Requirements:
 
 - Create one request logger with correlation fields.
-- Resolve user from session cache, then fallback source.
-- Resolve role and mentorado only after identity is stable.
-- Never mutate persistent state implicitly during context creation except controlled sync paths.
+- Resolve user from cache first, fallback to source sync.
+- Resolve role and mentorado after identity stability.
+- Keep cache invalidation explicit; no silent mutation paths.
 
 Failure mapping:
 
-- Missing auth token → `UNAUTHORIZED`.
-- Authenticated but role mismatch → `FORBIDDEN`.
-- Missing domain entity for required procedure → `NOT_FOUND` or domain-specific `FORBIDDEN`.
+- Missing auth token -> `UNAUTHORIZED`.
+- Authenticated but role mismatch -> `FORBIDDEN`.
+- Missing entity required by procedure -> `NOT_FOUND` or domain-specific `FORBIDDEN`.
 
 ## Router and Namespace Standards
 
-- Keep one aggregation entry point.
-- Group procedures by bounded context.
-- Use stable namespaces to avoid frontend cache churn.
-- Keep transport concerns in router, business rules in services.
+- Keep one aggregation entry point for routers.
+- Use stable namespaces to avoid client cache churn.
+- Keep transport concerns in route handlers and orchestration in services.
 
 ## Webhook Endpoint Standards
 
-Webhooks are not tRPC procedures. Treat as integration ingress.
+Webhooks are integration ingress, not tRPC procedures.
 
 Rules:
 
-1. Verify signature before parse.
-2. Ensure idempotency key or event-id dedup.
-3. Persist durable ingress record when critical.
-4. Return ACK fast, process heavy work async.
-5. Classify failures as retryable vs terminal.
-
-When in-memory queue is present, include degradation behavior and replay instructions in runbook.
+1. Verify signature before trusted processing.
+2. Enforce idempotency key/event-id dedup.
+3. Persist critical ingress before ACK.
+4. ACK fast and process heavy work async.
+5. Distinguish retryable vs terminal failures.
 
 ## External API Adapter Pattern
 
-Wrap each external provider in adapter services:
+Wrap each provider in adapter services:
 
-- Input normalization and schema validation.
+- Input normalization + schema validation.
 - Timeout budget per operation.
-- Bounded retries with exponential backoff and jitter.
-- Rate-limit response handling and retry-after respect.
-- Circuit-open behavior when failure rate threshold breaches.
+- Bounded retries with exponential backoff + jitter.
+- Retry-after respect for 429.
+- Circuit-open behavior under sustained failure.
 
 ## Error Contract Standards
 
-Use explicit, stable error contracts:
+Use explicit, stable contracts:
 
-- `BAD_REQUEST` for contract violations.
-- `UNAUTHORIZED` for missing/invalid identity.
-- `FORBIDDEN` for authorization failure.
-- `NOT_FOUND` for absent resource.
-- `CONFLICT` for concurrent mutation/domain conflict.
-- `TOO_MANY_REQUESTS` for rate limiting.
-- `INTERNAL_SERVER_ERROR` for unexpected faults.
+- `BAD_REQUEST`
+- `UNAUTHORIZED`
+- `FORBIDDEN`
+- `NOT_FOUND`
+- `CONFLICT`
+- `TOO_MANY_REQUESTS`
+- `INTERNAL_SERVER_ERROR`
 
-Always include correlation id in logs for every non-success response.
-
-## Do / Don’t
-
-Do:
-
-- Validate input at procedure edge with Zod.
-- Normalize domain errors inside services.
-- Keep adapters deterministic and typed.
-
-Don’t:
-
-- Don’t call external APIs directly from routers.
-- Don’t leak provider-specific errors to client contracts.
-- Don’t perform silent fallback without observability signal.
+Always include correlation id in logs for non-success responses.
 
 ## Hono API Patterns
 
-For new endpoints, use Hono with these patterns:
+### Runtime Setup (Hono + tRPC)
 
-### Request Boundary (Hono)
+```ts
+app.use("*", logger());
+app.use("*", cors({ origin: process.env.CORS_ORIGIN ?? "*", credentials: true }));
+app.use("*", secureHeaders());
+app.use("*", clerkMiddleware());
 
-```typescript
-app.post('/api/resource', async (c) => {
-  // 1. Parse and validate input
+app.use("/api/trpc/*", userRateLimiter);
+app.use(
+  "/api/trpc/*",
+  trpcServer({
+    endpoint: "/api/trpc",
+    router: appRouter,
+    createContext: (_opts, c) => createContext(c),
+  }),
+);
+```
+
+### Route Handler Boundary
+
+```ts
+app.post("/api/resource", async (c) => {
   const body = await c.req.json();
   const input = resourceSchema.parse(body);
-  
-  // 2. Resolve auth and context
-  const ctx = await createHonoContext(c);
-  if (!ctx.user) {
-    return c.json({ error: 'Unauthorized' }, 401);
+  const auth = getAuth(c);
+
+  if (!auth.userId) {
+    return c.json({ error: "Unauthorized" }, 401);
   }
-  
-  // 3. Execute service logic
-  const result = await resourceService.create(input, ctx);
-  
-  // 4. Return response
+
+  const result = await resourceService.create(input, auth.userId);
   return c.json(result);
 });
 ```
 
-### Procedure Hierarchy (Hono + tRPC)
+### Webhook Pattern
 
-Hono works seamlessly with tRPC via the fetch adapter. Use the same procedure hierarchy:
-- `publicProcedure`
-- `protectedProcedure`
-- `mentoradoProcedure`
-- `adminProcedure`
+```ts
+app.post("/api/webhooks/provider", async (c) => {
+  const signature = c.req.header("x-signature");
+  const rawBody = await c.req.text();
 
-### Webhook Pattern (Hono)
-
-```typescript
-app.post('/webhooks/provider', async (c) => {
-  // 1. Verify signature
-  const sig = c.req.header('x-signature');
-  const body = await c.req.text();
-  if (!verifySignature(body, sig)) {
-    return c.json({ error: 'Invalid signature' }, 401);
+  if (!signature || !verifyProviderSignature(rawBody, signature)) {
+    return c.json({ error: "Invalid signature" }, 400);
   }
-  
-  // 2. Parse and dedup
-  const event = JSON.parse(body);
-  const isDuplicate = await checkEventId(event.id);
-  if (isDuplicate) {
-    return c.json({ received: true });
-  }
-  
-  // 3. Persist and ACK fast
-  await persistWebhookEvent(event);
-  
-  // 4. Process async
-  processWebhookAsync(event).catch(logger.error);
-  
-  return c.json({ received: true });
+
+  const event = JSON.parse(rawBody);
+  await queueWebhookTask(event);
+
+  return c.json({ received: true }, 202);
 });
 ```
+
+## Do / Don't
+
+Do:
+
+- Validate input at the edge with Zod.
+- Normalize provider errors in adapters/services.
+- Keep endpoint contracts stable during runtime migration.
+
+Don't:
+
+- Don’t call external APIs directly from transport handlers.
+- Don’t leak provider-specific errors to client contracts.
+- Don’t parse trusted webhook payload before signature verification.

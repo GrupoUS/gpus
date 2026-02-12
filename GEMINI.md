@@ -1,178 +1,253 @@
-# Portal Grupo US - AI Agent Guide
+---
+trigger: always_on
+---
+
+# Portal NEON DASHBOARD — Project Technical Specification
+
+> **Single source of truth for project-level technical context.**
+> Agent behavioral rules → [`AGENTS.md`](AGENTS.md)
+> Gemini-specific rules → [`.agent/rules/GEMINI.md`](.agent/rules/GEMINI.md)
+
+---
 
 ## Project Snapshot
 
-| Attribute | Value |
-|-----------|-------|
-| **Type** | Single-project React application |
-| **Stack** | React 19 + Vite 7 + TanStack Router + shadcn/ui + tRPC + Drizzle + Neon + Clerk |
-| **Purpose** | CRM and student management portal for health aesthetics education |
-| **Package Manager** | **bun** (ALWAYS - never npm/yarn/pnpm) |
-
-> Sub-directories have their own AGENTS.md files with detailed patterns
-
----
-
-## 📦 Tech Stack
-
-| Layer     | Technology                      |
-| --------- | ------------------------------- |
-| Runtime   | Bun                             |
-| Frontend  | React 19 + Vite 7               |
-| Styling   | Tailwind CSS 4 + shadcn/ui      |
-| Routing   | TanStack Router (file-based)    |
-| State     | TanStack Query + tRPC useQuery   |
-| Backend   | Hono + tRPC (query/mutation)     |
-| Database  | Neon (PostgreSQL) + Drizzle ORM  |
-| Auth      | Clerk                           |
-| Linter    | Biome                           |
-| Tests     | Vitest + Playwright             |
+| Field        | Value                                                                   |
+| ------------ | ----------------------------------------------------------------------- |
+| **Type**     | Fullstack Mentorship Performance Dashboard                              |
+| **Stack**    | React 19 + Vite 7 + tRPC 11 + Drizzle ORM + Neon PostgreSQL + Express  |
+| **Runtime**  | **Bun** (package manager + runtime + server bundler)                    |
+| **Routing**  | **TanStack Router** (file-based, type-safe)                             |
+| **Auth**     | Clerk (`@clerk/clerk-react` + `@clerk/express`)                        |
+| **Payments** | Stripe (subscriptions, webhooks)                                        |
+| **AI**       | Google Gemini (`@google/genai` + Vercel AI SDK)                         |
+| **Email**    | Resend                                                                  |
+| **Linter**   | Biome (lint + format)                                                   |
+| **Tests**    | Vitest                                                                  |
+| **Purpose**  | Track mentorados performance metrics, faturamento, and mentor feedback  |
 
 ---
 
-## 🚀 Commands
+## Architecture Map
 
-```bash
-bun dev             # Dev server (Vite + Hono concurrent)
-bun run build       # Build + TypeScript check
-bun run lint        # Biome lint + format (auto-fix)
-bun run lint:check  # Biome check only
-bun run test        # Vitest run
-bun run db:push     # Push Drizzle schema to Neon
-bun run db:generate # Generate Drizzle migrations
-bun run db:studio   # Open Drizzle Studio
-bunx shadcn@latest add [component]  # Add shadcn component
+```text
+neondash/
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── components/      # UI components (shadcn/ui + custom)
+│   │   ├── pages/           # Route pages
+│   │   ├── routes/          # TanStack Router route files
+│   │   ├── hooks/           # Custom React hooks
+│   │   └── lib/
+│   │       └── trpc.ts      # tRPC client
+│   └── index.html
+├── server/                  # Express + tRPC backend
+│   ├── _core/               # Server core (index, context, env, stripe)
+│   └── *.ts                 # Feature routers (tRPC)
+├── drizzle/                 # Database layer
+│   ├── schema.ts            # Neon PostgreSQL tables (source of truth)
+│   └── migrations/          # SQL migration files
+├── .agent/                  # AI agent configuration
+│   ├── skills/              # 13 skills
+│   ├── workflows/           # 4 workflows
+│   └── rules/               # Gemini-specific rules
+└── docs/                    # Planning and operational notes
 ```
 
 ---
 
-## 🎯 SYSTEM ROLE & BEHAVIORAL PROTOCOLS
+## Tech Stack Quick Reference
 
-**ROLE:** Senior Frontend Architect & Avant-Garde UI Designer
-**EXPERIENCE:** 15+ years. Master of visual hierarchy, whitespace, and UX engineering.
+| Layer    | Technology                                |
+| -------- | ----------------------------------------- |
+| Runtime  | Bun                                       |
+| Frontend | React 19 + Vite 7                         |
+| Styling  | Tailwind CSS 4 + shadcn/ui                |
+| Routing  | TanStack Router                           |
+| State    | TanStack Query + tRPC                     |
+| Backend  | Express + tRPC 11                         |
+| Database | Neon PostgreSQL + Drizzle ORM             |
+| Auth     | Clerk                                     |
+| Payments | Stripe                                    |
+| AI       | Google Gemini + Vercel AI SDK             |
+| Email    | Resend                                    |
+| Linter   | Biome                                     |
+| Tests    | Vitest                                    |
 
-### 1. Operational Directives (Default Mode)
-- **Follow Instructions:** Execute immediately. Do not deviate.
-- **Zero Fluff:** No philosophical lectures or unsolicited advice.
-- **Stay Focused:** Concise answers only.
-- **Output First:** Prioritize code and visual solutions.
-
-### 2. ULTRATHINK Protocol
-**Trigger:** User prompts **"ULTRATHINK"**
-- Override brevity, engage in exhaustive reasoning
-- Multi-dimensional analysis (Technical, A11y, Scalability)
-- Never surface-level logic
-
-### 3. Design Philosophy: Intentional Minimalism
-- **Anti-Generic:** Reject "bootstrapped" layouts
-- **The "Why" Factor:** Every element must have purpose
-- **Minimalism:** Reduction is sophistication
-
----
-
-## 📁 Directory Map
-
-| Directory | Purpose | Details |
-|-----------|---------|---------|
-| `src/` | Frontend app | [src/AGENTS.md](src/AGENTS.md) |
-| `src/components/` | UI Components | [src/components/AGENTS.md](src/components/AGENTS.md) |
-| `src/routes/` | TanStack Router pages | [src/routes/AGENTS.md](src/routes/AGENTS.md) |
-| `src/hooks/` | Custom hooks | [src/hooks/AGENTS.md](src/hooks/AGENTS.md) |
-| `src/lib/` | Utilities | [src/lib/AGENTS.md](src/lib/AGENTS.md) |
-| `server/` | Backend (Hono + tRPC) | [server/AGENTS.md](server/AGENTS.md) |
-| `tests/` | Test suites | [tests/AGENTS.md](tests/AGENTS.md) |
-| `docs/` | Documentation | PRD, tech stack, setup guides |
+> [!CAUTION]
+> Este projeto sempre usa **`bun`** como package manager, runtime e bundler.
+> ✅ `bun install`, `bun run`, `bunx`, `bun test`
+> ❌ Nunca use `npm`, `yarn`, `pnpm`
 
 ---
 
-## 🔧 Code Standards
+## Commands
 
-**TypeScript:**
-- Strict mode enabled
-- No `any` types (enforced by Biome)
-- Functional components only
-
-**Biome Config:**
-- Tabs for indentation
-- Single quotes
-- Semicolons required
-
-**Commits:** Conventional Commits (`feat:`, `fix:`, `docs:`)
-
----
-
-## 🔐 Security & Secrets
-
-- **Never commit:** API keys, tokens, credentials
-- **Environment:** `.env.local` (gitignored)
-- **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`, `DATABASE_URL`
-- **Auth:** Clerk for frontend, `ctx.auth.getUserIdentity()` for tRPC context
+| Task                  | Command              |
+| --------------------- | -------------------- |
+| Install dependencies  | `bun install`        |
+| Start development     | `bun dev`            |
+| Build                 | `bun run build`      |
+| Type check            | `bun run check`      |
+| Lint + format check   | `bun run lint:check` |
+| Lint + format (fix)   | `bun run lint`       |
+| Format only           | `bun run format`     |
+| Run tests             | `bun test`           |
+| Push DB schema        | `bun run db:push`    |
 
 ---
 
-## ✅ Definition of Done
+## Environment Variables
 
-Before PR:
-- [ ] `bun run build` passes
-- [ ] `bun run lint:check` passes
-- [ ] `bun run test` passes
-- [ ] No console errors in browser
-- [ ] Responsive design tested
-
----
-
-## 🧰 MCP Tools
-
-| MCP | Purpose |
-|-----|---------|
-| `context7` | Official documentation (resolve-library-id → query-docs) |
-| `tavily` | Web search, URL extraction |
-| `sequential-thinking` | Step-by-step reasoning for complex tasks |
-| `linear-mcp-server` | Linear issue management |
-| `convex` | Convex MCP (legacy, not used) |
-| `clerk` | Clerk SDK snippets |
-
-### MCP Activation Rules
-
-| Trigger | Action |
-|---------|--------|
-| tRPC/Drizzle code             | `context7` → Drizzle/tRPC docs |
-| Clerk auth code | `context7` → Clerk docs |
-| TanStack Router routes | `context7` → TanStack Router docs |
-| shadcn/ui components | `context7` → shadcn docs |
-| Complex task (L4+) | `sequential-thinking` to break into steps |
-| Build/deploy error | `sequential-thinking` for root cause analysis |
+| Variable                      | Required | Purpose                         |
+| ----------------------------- | -------- | ------------------------------- |
+| `DATABASE_URL`                | ✅       | Neon PostgreSQL connection      |
+| `CLERK_SECRET_KEY`            | ✅       | Clerk backend auth              |
+| `VITE_CLERK_PUBLISHABLE_KEY`  | ✅       | Clerk frontend auth             |
+| `STRIPE_SECRET_KEY`           | ✅       | Stripe payments API             |
+| `STRIPE_WEBHOOK_SECRET`       | ✅       | Stripe webhook verification     |
+| `GEMINI_API_KEY`              | ✅       | Google Gemini AI                |
+| `RESEND_API_KEY`              | ○        | Email via Resend                |
+| `RESEND_FROM_EMAIL`           | ○        | Sender address (default set)    |
+| `GOOGLE_CLIENT_ID`            | ○        | Google Calendar OAuth           |
+| `GOOGLE_CLIENT_SECRET`        | ○        | Google Calendar OAuth           |
+| `GOOGLE_REDIRECT_URI`         | ○        | OAuth callback URL              |
+| `INSTAGRAM_APP_ID`            | ○        | Instagram Business API          |
+| `INSTAGRAM_APP_SECRET`        | ○        | Instagram Business API          |
+| `INSTAGRAM_REDIRECT_URI`      | ○        | Instagram callback URL          |
+| `META_APP_ID`                 | ○        | Meta/Facebook APIs              |
+| `META_APP_SECRET`             | ○        | Meta/Facebook APIs              |
+| `META_WEBHOOK_VERIFY_TOKEN`   | ○        | WhatsApp webhook verification   |
+| `META_SYSTEM_USER_ACCESS_TOKEN` | ○      | WhatsApp Cloud API              |
+| `BAILEYS_SESSION_DIR`         | ○        | Baileys session storage path    |
+| `NODE_ENV`                    | ○        | Runtime environment             |
 
 ---
 
-## 🧠 Core Principles
+## Database Schema Overview
 
-```yaml
-LEVER_Philosophy:
-  L: Leverage existing patterns
-  E: Extend first, create last
-  V: Verify reactivity (useQuery over useState)
-  E: Eliminate duplication
-  R: Reduce complexity
+Source of truth: [`drizzle/schema.ts`](drizzle/schema.ts)
 
-Decision_Tree:
-  - Can existing code handle it? → EXTEND
-  - Can we modify patterns? → ADAPT
-  - Is new code reusable? → ABSTRACT
-  - None of above? → RECONSIDER
+### Core Tables
 
-KISS: Simple solutions over complex ones
-YAGNI: Build only what's required
+| Table              | Purpose                    | Key Relations              |
+| ------------------ | -------------------------- | -------------------------- |
+| `users`            | Clerk-backed auth + billing | Stripe fields, role enum  |
+| `mentorados`       | Extended mentee profiles   | → users, integrations      |
+| `metricas_mensais` | Monthly performance data   | → mentorados               |
+| `feedbacks`        | Mentor feedback per month  | → mentorados               |
+| `badges`           | Achievement definitions    | categoria enum             |
+| `mentorado_badges` | Earned badges tracking     | → mentorados, → badges     |
+| `ranking_mensal`   | Monthly rankings           | → mentorados               |
+
+### CRM Tables
+
+| Table              | Purpose                    | Key Relations              |
+| ------------------ | -------------------------- | -------------------------- |
+| `leads`            | CRM lead management        | → mentorados, status enum  |
+| `interacoes`       | Lead interactions log      | → leads, → mentorados      |
+| `crm_column_config`| Custom Kanban columns      | → mentorados               |
+| `tasks`            | Mentorado task checklists  | → mentorados               |
+
+### Patient Management Tables
+
+| Table                       | Purpose                  | Key Relations         |
+| --------------------------- | ------------------------ | --------------------- |
+| `pacientes`                 | Patient records          | → mentorados          |
+| `pacientes_info_medica`     | Medical information      | → pacientes           |
+| `pacientes_procedimentos`   | Treatment records        | → pacientes           |
+| `pacientes_fotos`           | Photo gallery            | → pacientes           |
+| `pacientes_documentos`      | Document management      | → pacientes           |
+| `pacientes_chat_ia`         | AI chat per patient      | → pacientes           |
+| `planos_tratamento`         | Treatment plans          | → pacientes           |
+| `pacientes_consentimentos`  | Consent tracking         | → pacientes           |
+
+### Financial Tables
+
+| Table                    | Purpose               | Key Relations          |
+| ------------------------ | ---------------------- | ---------------------- |
+| `categorias_financeiras` | Expense/income cats    | → mentorados           |
+| `formas_pagamento`       | Payment methods        | → mentorados           |
+| `transacoes`             | Financial transactions | → mentorados           |
+| `insumos`                | Supplies/materials     | → mentorados           |
+| `procedimentos`          | Service catalog        | → mentorados           |
+
+### Integration Tables
+
+| Table                 | Purpose               | Key Relations          |
+| --------------------- | --------------------- | ---------------------- |
+| `whatsapp_messages`   | WhatsApp msg history  | → mentorados           |
+| `whatsapp_contacts`   | WhatsApp contacts     | → mentorados           |
+| `instagram_tokens`    | Instagram OAuth       | → mentorados           |
+| `instagram_sync_log`  | Sync audit trail      | → mentorados           |
+| `facebook_ads_*`      | Facebook Ads data     | → mentorados           |
+| `google_tokens`       | Google Calendar OAuth | → users                |
+
+---
+
+## Backend Architecture Standards
+
+> Canonical authority: [`.agent/skills/backend-design/SKILL.md`](.agent/skills/backend-design/SKILL.md)
+
+### Procedure Hierarchy
+
+```
+publicProcedure          → health checks, public endpoints only
+protectedProcedure       → Clerk auth required (base for most routes)
+adminProcedure           → protectedProcedure + role === "admin"
+mentoradoProcedure       → protectedProcedure + mentorado lookup
 ```
 
+### Canonical Request Lifecycle
+
+```
+HTTP → Express → tRPC Router → Procedure (auth middleware)
+  → Zod Input Validation → Service Logic → Drizzle Query → Response
+```
+
+### Service Layer Patterns
+
+- **Service functions** live alongside routers, NOT in separate `/services/` dir
+- Keep business logic in service functions, not in procedure handlers
+- Single responsibility: one service = one domain concern
+- Use `Promise.all` for batch writes
+- Reuse queries via composable functions
+
+### Database Principles
+
+- **Extension-first**: Add columns to existing tables before creating new ones
+- **Anti-sprawl**: Score > 5 → extend, Score ≤ 5 → consider new table
+- **Index FKs**: Every foreign key MUST have an index
+- **No `SELECT *`**: Always specify needed columns
+- **Migrations**: Use `bun run db:push` for development
+
+### Key References
+
+| Document                | Path                                                       |
+| ----------------------- | ---------------------------------------------------------- |
+| API Patterns            | `.agent/skills/backend-design/references/api-patterns.md`  |
+| Request Lifecycle       | `.agent/skills/backend-design/references/request-lifecycle.md` |
+| Database Design         | `.agent/skills/backend-design/references/database-design.md` |
+| Code Principles         | `.agent/skills/backend-design/references/code-principles.md` |
+| Infrastructure          | `.agent/skills/backend-design/references/infrastructure.md` |
+| Operational Guardrails  | `.agent/skills/backend-design/references/operational-guardrails.md` |
+| Runbooks                | `.agent/skills/backend-design/references/runbooks.md`      |
+| Debugging Matrix        | `.agent/skills/backend-design/references/debugging-matrix.md` |
+| TypeScript Patterns     | `.agent/skills/backend-design/references/typescript-patterns.md` |
+
 ---
 
-## 🛑 Anti-Patterns
+## Authority Precedence
 
-| Pattern | Problem |
-|---------|---------|
-| UI-Driven DB | Schema matches components |
-| "Just one more table" | Join complexity |
-| Manual state sync | Race conditions |
-| Unused imports | Bundle bloat |
-| No Drizzle indexes | Slow queries |
+When guidance overlaps between files:
+
+1. **Backend canonical authority**: `.agent/skills/backend-design/SKILL.md`
+2. **Agent behavioral rules**: `AGENTS.md`
+3. **Gemini-specific rules**: `.agent/rules/GEMINI.md`
+4. **This file**: `GEMINI.md` (project context)
+
+---
+
+## Scope Note
+
+This file provides **project-level technical context only**. For agent behavior, code quality standards, and design philosophy, see [`AGENTS.md`](AGENTS.md). For Gemini-specific skill loading and workflow rules, see [`.agent/rules/GEMINI.md`](.agent/rules/GEMINI.md).

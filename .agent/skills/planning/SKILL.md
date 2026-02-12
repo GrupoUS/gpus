@@ -65,6 +65,16 @@ Eliminate unknowns and lock in best-practice approach.
 - Assumptions to Validate: Explicit assumptions needing confirmation
 - Edge Cases: Minimum 5 for L4+ complexity
 
+**Confidence scoring (tag every finding):**
+
+| Score | Meaning | Action |
+|-------|---------|--------|
+| 5 | Verified in official docs / codebase | Use directly |
+| 3-4 | Community consensus / multiple sources | Use with note |
+| 1-2 | Single source / unverified | Flag as assumption, validate before relying |
+
+> When any finding scores ≤ 2, run `sequentialthinking` to evaluate alternatives before proceeding.
+
 > See `references/mcp-usage.md` for detailed MCP tool guidance.
 
 ### Phase 2: PLAN (Before Implementation)
@@ -89,9 +99,31 @@ Step 5: Commit                          ← one action
 - Rollback steps
 - Dependencies mapped — mark `⚡ PARALLEL-SAFE` when independent
 
+**Parallel execution (L5+):** Group tasks without mutual dependencies under `[PARALLEL]` tags. This reduces total execution time by identifying concurrent work.
+
+**Risk assessment (L6+):** Run a pre-mortem analysis — see `references/pre-mortem-analysis.md`.
+
+**Architecture decisions (L6+):** Document non-obvious choices with lightweight ADRs — see `references/architecture-decisions.md`.
+
 **Output:** `docs/PLAN-{task-slug}.md`
 
 > See `references/plan-template.md` for complete template.
+
+### Phase 2.5: PLAN SELF-REVIEW (Before Presenting)
+
+Before presenting the plan to the user, self-evaluate against these 5 criteria:
+
+| # | Criterion | Check |
+|---|-----------|-------|
+| 1 | **Completeness** | Does every requirement map to at least one task? |
+| 2 | **Atomicity** | Is every step a single action (2-5 min)? |
+| 3 | **Risk coverage** | Are top risks identified with mitigations? (L6+) |
+| 4 | **Dependency order** | Can tasks execute in the listed order without blockers? |
+| 5 | **Rollback feasibility** | Can each task be undone without cascading failures? |
+
+**If any criterion fails:** Iterate on the plan before presenting. Do not present a plan that fails self-review.
+
+> This implements the evaluator-optimizer pattern — the agent reviews its own output before human review.
 
 ### Phase 3: IMPLEMENT (Only If Requested)
 
@@ -162,6 +194,9 @@ Execution options:
 | "Add validation logic" in plan    | Provide exact code in plan steps                         |
 | Multi-step blobs as single task   | One action per step (2-5 min each)                       |
 | Dump 5 questions at once          | One question at a time during discovery                  |
+| Present plan without self-review  | Run 5-criterion self-review before presenting            |
+| Skip risk assessment for L6+      | Always run pre-mortem for complex tasks                  |
+| Use low-confidence findings as-is | Flag, validate, or seek alternatives for scores ≤ 2      |
 
 ---
 
@@ -179,6 +214,9 @@ GOLDEN RULES:
 ✓ ONE QUESTION — never overwhelm during discovery
 ✓ 2-3 APPROACHES — always explore alternatives
 ✓ YAGNI — remove unnecessary features ruthlessly
+✓ SELF-REVIEW — evaluate plan against 5 criteria before presenting
+✓ PRE-MORTEM (L6+) — imagine failure, identify and mitigate risks
+✓ CONFIDENCE TAG — score every research finding 1-5
 ```
 
 ---
@@ -189,3 +227,5 @@ GOLDEN RULES:
 - `references/plan-template.md` — Complete plan template structure
 - `references/complexity-guide.md` — Task complexity classification
 - `references/mcp-usage.md` — When and how to use MCP tools
+- `references/pre-mortem-analysis.md` — Risk assessment protocol (L6+)
+- `references/architecture-decisions.md` — Lightweight ADR template (L6+)

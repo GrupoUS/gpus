@@ -67,14 +67,28 @@ Activate this skill when:
 
 ## Codebase Reference
 
-The following files in this project already implement Meta API integrations:
+### Shared Configuration (Single Source of Truth)
+
+All Meta services share `server/_core/meta-config.ts` which provides:
+- **Unified Graph API version** (`v21.0`) — change once, applies everywhere
+- **`GRAPH_API_BASE`** / **`OAUTH_DIALOG_BASE`** — pre-built URL bases
+- **`META_APP_ID`** / **`META_APP_SECRET`** — unified credentials with legacy fallbacks
+- **Per-product scopes** — `INSTAGRAM_SCOPES`, `FACEBOOK_ADS_SCOPES`, `WHATSAPP_SCOPES`
+- **Shared types** — `MetaTokenResponse`, `MetaLongLivedTokenResponse`
+- **Helper functions** — `buildGraphUrl()`, `exchangeCodeForToken()`, `refreshLongLivedToken()`
+
+> ⚠️ Agent rules for Meta services are documented in `server/services/AGENTS.md`
+
+### Implementation Files
 
 | File | Purpose |
 |------|---------|
-| `server/services/facebookAdsService.ts` | OAuth flow, token management, ads insights |
-| `server/metaApiRouter.ts` | WhatsApp connection, messaging, Embedded Signup |
+| `server/_core/meta-config.ts` | **Shared config** — versions, credentials, scopes, helpers |
 | `server/services/instagramService.ts` | Instagram OAuth via Facebook Login |
 | `server/services/instagramPublishService.ts` | Content publishing to Instagram |
+| `server/services/facebookAdsService.ts` | OAuth flow, token management, ads insights |
+| `server/services/metaApiService.ts` | WhatsApp Cloud API service |
+| `server/metaApiRouter.ts` | WhatsApp connection, messaging, Embedded Signup |
 | `server/webhooks/metaWebhook.ts` | WhatsApp webhook handler |
 
 ### Key Patterns in Codebase

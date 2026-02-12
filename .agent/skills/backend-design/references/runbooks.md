@@ -206,3 +206,41 @@ Use this document during incident triage and postmortem-driven hardening.
 - Enforce expand-then-contract migration strategy.
 - Require rollback rehearsal for high-risk migrations.
 
+---
+
+## Runbook 7 — Hono Phase 1 Regression
+
+### Symptoms
+
+- `/api/trpc` starts returning 404/500 after runtime swap.
+- Authenticated routes intermittently return 401/403.
+- Webhooks fail signature validation after migration.
+- SSE clients connect but stop receiving events or leak connections.
+
+### Likely Causes
+
+- Incorrect middleware order in Hono app.
+- Context creation still coupled to Express request types.
+- Raw body handling changed before signature verification.
+- SSE response object mismatch between web response and Node outgoing response.
+
+### Diagnostics
+
+1. Verify middleware order is exactly: `logger` → `cors` → `secureHeaders` → `clerkMiddleware`.
+2. Confirm `trpcServer` is mounted at `/api/trpc/*` with `endpoint: "/api/trpc"`.
+3. Reproduce Stripe/Clerk/Meta webhook validation with known invalid signatures.
+4. Inspect SSE client registration/removal counts before and after connection close.
+5. Run `bun run check` and `bun test server` to isolate compile/runtime regressions.
+
+### Mitigation
+
+- Roll back only the last migrated subsystem commit (not full migration).
+- Re-enable prior webhook handler implementation for affected provider.
+- Temporarily disable non-critical SSE broadcasts while stabilizing connection lifecycle.
+- Apply fallback `streamSSE` pattern if Node outgoing binding is unstable.
+
+### Prevention
+
+- Keep migration in atomic commits per subsystem (`context`, `webhooks`, `sse`, `core`).
+- Add smoke checks for health, tRPC, webhook signatures, and SSE close cleanup in CI.
+- Keep explicit compatibility notes for every endpoint path contract during migration.

@@ -1,18 +1,13 @@
 ---
 name: backend-design
-description: Operational backend architecture skill for Bun + Hono + tRPC + Drizzle + Neon + Clerk. Use to design, implement, debug, and harden backend systems with lifecycle maps, runbooks, guardrails, and production-readiness validation.
-allowed-tools:
-  - run_command
-  - mcp_mcp-server-neon_run_sql
-  - mcp_mcp-server-neon_list_slow_queries
-  - mcp_sequential-thinking_sequentialthinking
+description: Use when implementing, migrating, debugging, or hardening backend features in Bun + Hono + tRPC + Drizzle + Neon + Clerk, including Express-to-Hono phase migrations, webhook reliability, auth/context consistency, and rollback-safe operations.
 ---
 
 # Backend Design Skill
 
-Single source of truth for backend architecture, operations, and incident response.
+Provide a single source of truth for backend architecture, operations, and incident response in this stack.
 
-## Overview
+## Purpose
 
 Standardize backend decisions across API design, authentication flow, context composition, database access, external integrations, observability, and rollback safety.
 
@@ -22,26 +17,32 @@ Keep `SKILL.md` procedural. Store deep reference material under [`references/`](
 
 | Trigger | Action |
 |---|---|
-| New backend feature | Apply canonical architecture and lifecycle maps |
-| Auth, context, or role issues | Follow auth/context drift runbook |
+| Backend feature or refactor | Apply canonical architecture and lifecycle maps |
+| Express to Hono migration work | Execute Hono Migration Protocol (Phase 1) |
+| Auth, context, role, impersonation issues | Follow auth/context drift runbook |
 | Cache inconsistency or stale sessions | Follow cache consistency runbook |
-| Webhook reliability concerns | Follow webhook loss/retry runbook |
+| Webhook reliability, retries, dedup, signatures | Follow webhook loss/retry runbook |
 | Database latency or migration regressions | Follow DB runbooks and validation checklist |
-| External API instability or rate limits | Apply external integration resilience patterns |
+| External API instability, timeout, rate limit | Apply external integration resilience patterns |
+
+---
 
 ## Content Map
 
 | Reference | Purpose |
 |---|---|
-| [API Patterns](references/api-patterns.md) | Procedure hierarchy, boundary contracts, Hono + tRPC standards |
-| [Request Lifecycle Maps](references/request-lifecycle.md) | API → auth → context → DB/services → response flow maps |
+| [API Patterns](references/api-patterns.md) | Procedure hierarchy, boundary contracts, Hono-first API standards |
+| [Request Lifecycle Maps](references/request-lifecycle.md) | Hono request flow and Express legacy comparison |
 | [Database Design](references/database-design.md) | Schema strategy, Drizzle patterns, Neon operational behavior |
 | [Infrastructure](references/infrastructure.md) | Session cache, queueing, scheduler constraints, observability |
 | [Operational Guardrails](references/operational-guardrails.md) | Resilience, security, rollback, SLO-minded controls |
 | [Runbooks](references/runbooks.md) | Incident playbooks for critical backend failures |
-| [Debugging Strategy Matrix](references/debugging-matrix.md) | Symptom → cause → diagnostics → fix → prevention |
-| [Code Principles](references/code-principles.md) | LEVER, Three-Pass, Do/Don't, anti-pattern catalog |
+| [Debugging Strategy Matrix](references/debugging-matrix.md) | Symptom to cause to diagnostics to fix to prevention |
+| [Code Principles](references/code-principles.md) | LEVER, Three-Pass, Do/Don’t, anti-pattern catalog |
 | [TypeScript Patterns](references/typescript-patterns.md) | Type-depth fixes and maintainability patterns |
+| [Hono Migration Guide](references/hono-migration.md) | Phase 1 migration playbook, patterns, and risk controls |
+
+---
 
 ## Canonical Architecture Patterns
 
@@ -58,46 +59,47 @@ Apply this sequence for every backend change:
 
 Use detailed maps in [`references/request-lifecycle.md`](references/request-lifecycle.md).
 
-## Stack Architecture
+## Hono Migration Protocol (Phase 1)
 
-```
-┌─────────────────────────────────────────┐
-│  Client (React 19 + TanStack Router)    │
-│  └─ tRPC Client (~/lib/trpc)           │
-└──────────────┬──────────────────────────┘
-               │ HTTP /api/trpc/*
-┌──────────────▼──────────────────────────┐
-│  Hono Server (server/_core/index.ts)    │
-│  ├─ Clerk Auth Middleware               │
-│  ├─ tRPC Adapter (fetch)                │
-│  ├─ Webhook Routes (/asaas, /clerk)     │
-│  └─ Scheduler (cron jobs)               │
-├─────────────────────────────────────────┤
-│  tRPC Router (server/routers.ts)        │
-│  ├─ leads, students, users, financial   │
-│  ├─ conversations, activities, tasks    │
-│  ├─ settings, notifications, tags       │
-│  ├─ marketing, enrollments, lgpd        │
-│  └─ whatsapp, metrics, customFields     │
-├─────────────────────────────────────────┤
-│  Drizzle ORM (server/db.ts)             │
-│  └─ Neon PostgreSQL (serverless)        │
-└─────────────────────────────────────────┘
-```
+Use this protocol for Express-to-Hono runtime migration in this repository.
 
-## Quick Reference
+1. Baseline first: run `bun run check` and `bun test server`; record known failures outside backend scope.
+2. Migrate skill/runbook references before server implementation changes.
+3. Introduce Hono runtime and middleware order: `logger` → `cors` → `secureHeaders` → `clerkMiddleware` → route middleware.
+4. Keep endpoint contracts stable: `/api/trpc`, webhook URLs, health checks, OAuth callbacks, SSE path.
+5. Migrate context/auth boundaries before migrating webhook and SSE internals.
+6. Migrate signature-sensitive webhooks with raw body verification first (Stripe/Clerk/Meta).
+7. Keep fast ACK behavior for webhooks and async processing for heavy side effects.
+8. Validate SSE connection lifecycle (`open`, `event push`, `close cleanup`) before removing Express dependencies.
+9. Remove Express-only dependencies and type imports only after Hono runtime compiles.
+10. Validate non-regression with smoke checks and rollback instructions.
 
-| Path | Purpose |
-|---|---|
-| `server/_core/index.ts` | Hono app entry, middleware, tRPC mount |
-| `server/_core/trpc.ts` | tRPC init, procedures, context creation |
-| `server/_core/scheduler.ts` | Bun cron jobs |
-| `server/routers.ts` | AppRouter aggregation (18 sub-routers) |
-| `server/routers/*.ts` | Individual domain routers |
-| `server/services/` | Service layer for complex business logic |
-| `server/webhooks/` | Webhook handlers (Asaas, Clerk) |
-| `server/db.ts` | Drizzle + Neon singleton |
-| `server/lib/` | Shared validators and utilities |
+### Phase 1 Validation Gates
+
+- `bun run check` passes.
+- `bun test server` passes.
+- `/health/live` and `/health/ready` return expected status.
+- tRPC client still calls `/api/trpc` successfully.
+- Stripe/Clerk signature invalid requests return 400.
+- SSE client cleanup removes disconnected clients.
+
+### Phase 1 Rollback Rule
+
+- Keep changes in atomic commits per subsystem.
+- If gate fails, revert only the last subsystem commit, not the entire migration.
+- Preserve data and webhook idempotency behavior during rollback.
+
+## Framework Selection Strategy
+
+| Scenario | Framework | Rationale |
+|---|---|---|
+| New API endpoints | Hono | Lightweight, Web Standards, better performance |
+| New webhooks | Hono | Native Web Request/Response, simpler middleware |
+| Existing routes during migration | Hono target | Keep contracts, move runtime incrementally |
+| tRPC integration | Hono + @hono/trpc-server | Stable endpoint contract with modern runtime |
+| Complex middleware chains | Hono | Prefer built-in middleware and explicit order |
+
+For this project, Hono is the default runtime target.
 
 ## Workflow Alignment
 
@@ -120,23 +122,25 @@ Always include these concerns in backend design and review:
 
 Use runbooks in [`references/runbooks.md`](references/runbooks.md) and matrix in [`references/debugging-matrix.md`](references/debugging-matrix.md).
 
-## Do / Don't
+## Backend Do/Don’t Baseline
 
-**Do:**
+Do:
+
 - Prefer extension-first schema evolution and explicit indexing.
 - Prefer idempotent writes for webhook and scheduler paths.
 - Prefer structured logs with request and actor correlation.
 - Prefer bounded retries with jitter and failure classification.
 
-**Don't:**
-- Don't add new tables for 1:1 extensions without hard justification.
-- Don't couple router handlers to raw external clients.
-- Don't rely on in-memory-only queues for critical delivery guarantees.
-- Don't merge without failure diagnostics and rollback instructions.
+Don’t:
+
+- Don’t add new tables for 1:1 extensions without hard justification.
+- Don’t couple router handlers to raw external clients.
+- Don’t rely on in-memory-only queues for critical delivery guarantees.
+- Don’t merge without failure diagnostics and rollback instructions.
 
 Use full catalog in [`references/code-principles.md`](references/code-principles.md).
 
-## PR Readiness
+## PR Readiness and Hardening
 
 Before approving backend changes, validate:
 
@@ -153,6 +157,6 @@ Use full checklist in [`references/operational-guardrails.md`](references/operat
 ```bash
 bun run check
 bun run lint:check
-bun run test
+bun test server
 bun run db:push
 ```

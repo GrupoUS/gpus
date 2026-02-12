@@ -4,12 +4,12 @@ Reference for determining task complexity level and appropriate thinking budget.
 
 ## Complexity Matrix
 
-| Level  | Indicators                        | Thinking Budget | Research Depth |
-| ------ | --------------------------------- | --------------- | -------------- |
-| L1-L2  | Bug fix, single function, typo    | 1K-4K tokens    | Repo-only      |
-| L3-L5  | Feature, multi-file, new endpoint | 8K-16K tokens   | Docs + repo    |
-| L6-L8  | Architecture, integration, API    | 16K-32K tokens  | Deep research  |
-| L9-L10 | Migrations, multi-service, infra  | 32K+ tokens     | Comprehensive  |
+| Level  | Indicators                        | Thinking Budget | Research Depth | Required Deliverables |
+| ------ | --------------------------------- | --------------- | -------------- | --------------------- |
+| L1-L2  | Bug fix, single function, typo    | 1K-4K tokens    | Repo-only      | Atomic tasks only |
+| L3-L5  | Feature, multi-file, new endpoint | 8K-16K tokens   | Docs + repo    | Tasks + research + parallel ID |
+| L6-L8  | Architecture, integration, API    | 16K-32K tokens  | Deep research  | Above + pre-mortem + ADRs + rollback |
+| L9-L10 | Migrations, multi-service, infra  | 32K+ tokens     | Comprehensive  | Above + dependency graph + stakeholder risks |
 
 ---
 
@@ -25,6 +25,8 @@ Reference for determining task complexity level and appropriate thinking budget.
 **Research:** Local codebase only
 
 **Output:** Direct implementation, minimal planning
+
+**Required deliverables:** Atomic tasks with validation commands
 
 ---
 
@@ -44,6 +46,11 @@ Reference for determining task complexity level and appropriate thinking budget.
 3. Existing similar implementations
 
 **Output:** Brief plan with atomic tasks
+
+**Required deliverables:**
+- Atomic tasks + research summary
+- Parallel task identification (`⚡ PARALLEL-SAFE` tags)
+- Confidence-scored findings table
 
 ---
 
@@ -71,6 +78,11 @@ Reference for determining task complexity level and appropriate thinking budget.
 - Comprehensive atomic tasks
 - Rollback plans
 
+**Required deliverables (in addition to above):**
+- Pre-mortem analysis (top 3 risks with mitigations)
+- Architecture Decision Records for non-obvious choices
+- Rollback steps for each task
+
 ---
 
 ## L9-L10: Critical Tasks
@@ -97,6 +109,11 @@ Reference for determining task complexity level and appropriate thinking budget.
 - Phased rollout plan
 - Monitoring criteria
 - Detailed rollback procedures
+
+**Required deliverables (in addition to above):**
+- Dependency graph (mermaid diagram)
+- Stakeholder/cross-team risks identified
+- Phased rollout with progressive validation
 
 ---
 

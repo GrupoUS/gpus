@@ -1,11 +1,11 @@
-# 🧬 Evolution Core
-
 ---
 name: evolution-core
 description: "Motor de auto-evolução para agentes de IA. Memória persistente e aprendizado sistemático usando SQLite+FTS5 - zero dependências externas."
 tags: [meta, ai, self-improvement, core, learning, memory]
 version: 3.0.0
 ---
+
+# 🧬 Evolution Core
 
 **"Eu aprendo, evoluo e antecipo suas necessidades."**
 

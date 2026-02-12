@@ -23,18 +23,28 @@ $ARGUMENTS
 ## MCP Routing Canon
 
 - `context7` for framework/library docs
-- `neon` for DB operations
+- `mcp-server-neon` for DB operations
 - `tavily` for external fallback research
-- `sequentialthinking` for complex trade-offs/root-cause synthesis
+- `sequential-thinking` for complex trade-offs/root-cause synthesis
 
 ## Execution Sequence
 
 1. Load plan and pending atomic task
-2. Identify domain and load corresponding skill
-3. Execute task changes
-4. Run task-level checks
-5. Mark task done/fail and continue
-6. Run final validation gates
+2. Start evolution-core session:
+// turbo
+```bash
+python3 .agent/skills/evolution-core/scripts/memory_manager.py session start -t "$ARGUMENTS"
+```
+3. Identify domain and load corresponding skill
+4. Execute task changes
+5. Run task-level checks
+6. Mark task done/fail and continue
+7. Run final validation gates
+8. End evolution-core session:
+// turbo
+```bash
+python3 .agent/skills/evolution-core/scripts/memory_manager.py session end -s "Completed: $ARGUMENTS"
+```
 
 ## Mandatory Validation Gates
 

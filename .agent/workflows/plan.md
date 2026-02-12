@@ -6,101 +6,87 @@ description: Canonical planning workflow. Orchestration-only; deep policy belong
 
 $ARGUMENTS
 
-## Required Inputs
+> **This workflow tells you WHEN and WHAT. The skill tells you HOW.**
+> Canonical authority: `.agent/skills/planning/SKILL.md`
 
-- Task/request scope
-- Relevant constraints (if any)
+## 1. Load Skills
 
-## Orchestration Rules
+Load `.agent/skills/planning/SKILL.md` — read it fully before proceeding.
 
-1. Load `.agent/skills/planning/SKILL.md` — this is the canonical authority for planning
-2. Follow D.R.P.I.V phases strictly: Discover → Research → Plan → (Implement → Validate)
-3. Create only `docs/PLAN-{slug}.md` — no runtime code during `/plan`
-4. Do not implement unless user explicitly requests it
+Route additional skills by domain:
 
----
+| Domain | Also Load |
+|--------|-----------|
+| Backend / Database | `.agent/skills/backend-design/SKILL.md` |
+| Frontend / UI | `.agent/skills/frontend-design/SKILL.md` |
+| Debug / Failure | `.agent/skills/debug/SKILL.md` |
 
-## Execution Sequence
+## 2. Load Historical Context
 
-### Phase 0: Discovery (conditional)
+// turbo
+```bash
+python3 .agent/skills/evolution-core/scripts/memory_manager.py load_context --project "$PWD" --task "$ARGUMENTS"
+```
 
-> Skip for bug fixes, well-scoped tasks, or L1-L2 complexity.
+## 3. Execute D.R.P.I.V
 
-1. Check current project state (files, patterns, constraints)
-2. Clarify ambiguity: **one question at a time, multiple choice preferred**
-3. Propose 2-3 approaches with trade-offs, lead with recommendation
-4. Validate design incrementally before proceeding to research
-5. Protocol details: `references/brainstorming-protocol.md`
+Follow the phases from the planning skill **in order**:
 
-### Phase 1: Research (always)
+1. **DISCOVER** — Clarify requirements (skip for L1-L2 / well-scoped tasks)
+2. **RESEARCH** — Eliminate unknowns using MCP cascade (codebase → `context7` → `tavily` → `sequential-thinking`)
+3. **PLAN** — Create `docs/PLAN-{slug}.md` with atomic tasks, exact code, and rollback steps
+4. **IMPLEMENT** — Only if user explicitly requests it → hand off to `/implement`
+5. **VALIDATE** — Quality gates
 
-1. Gather codebase evidence (grep_search, view_file, list_dir)
-2. Pull official docs (`context7`) when library behavior matters
-3. Use web research (`tavily`) only when local + official docs are insufficient
-4. Synthesize trade-offs (`sequentialthinking`) for L4+ complexity
+> The detailed rules for each phase live in `SKILL.md`. Do not duplicate them here.
 
-### Phase 2: Plan
+## 3.5. Plan Self-Review (Evaluator-Optimizer)
 
-1. Classify complexity (L1-L10)
-2. Create structured plan file with:
-   - Research findings + assumptions
-   - Bite-sized tasks (each step = one action, 2-5 min)
-   - Exact file paths with line ranges
-   - Complete code in plan steps (never vague instructions)
-   - Validation commands with expected output
-   - Dependencies mapped, parallel-safe marked
-   - Rollback steps
-3. Save to `docs/PLAN-{slug}.md`
+Before presenting the plan, self-evaluate against 5 criteria from `SKILL.md` Phase 2.5:
+Completeness, Atomicity, Risk Coverage, Dependency Order, Rollback Feasibility.
 
-### Phase 3: Execution Handoff
+**If any criterion fails:** Iterate on the plan silently before presenting to user.
 
-Present options to user:
-1. **Implement now** → proceed to `/implement`
-2. **Review first** → open plan for review
-3. **Modify plan** → adjust before implementation
+## 4. Plan Output Checklist
 
----
+Before presenting the plan, verify:
 
-## Standard Validation Gates (for plan output)
-
-- Plan contains research findings + assumptions
-- Plan contains bite-sized tasks with exact code
-- Plan includes rollback strategy
-- Verification section references repo gates:
+- [ ] Research findings + assumptions documented
+- [ ] All findings confidence-scored (1-5)
+- [ ] Bite-sized tasks (each = one action, 2-5 min)
+- [ ] Exact file paths with line ranges
+- [ ] Complete code in steps (never vague)
+- [ ] Parallel tasks identified with `[PARALLEL]` tag (L5+)
+- [ ] Rollback strategy included
+- [ ] Pre-mortem analysis completed (L6+)
+- [ ] Architecture decisions documented as ADRs (L6+)
+- [ ] Self-review passed (5 criteria from Phase 2.5)
+- [ ] Verification commands reference repo gates:
   - `bun run check`
   - `bun run lint:check`
   - `bun test`
 
+## 5. Execution Handoff
+
+Present to user:
+
+1. **Implement now** → `/implement`
+2. **Review first** → open plan for review
+3. **Modify plan** → adjust before implementation
+
+## Constraints
+
+- **No runtime code** during `/plan` — output is only the plan file
+- **No implementation** unless user explicitly requests it
+- **CONSERVATIVE mode** by default — discover + research + plan only
+
 ## References
 
-- `.agent/skills/planning/SKILL.md` — Canonical planning skill (D.R.P.I.V)
+- `.agent/skills/planning/SKILL.md` — D.R.P.I.V phases, complexity levels, anti-patterns
 - `.agent/skills/planning/references/brainstorming-protocol.md` — Discovery protocol
 - `.agent/skills/planning/references/plan-template.md` — Plan file template
-- `.agent/rules/GEMINI.md`
-- `.agent/skills/backend-design/references/hono-migration.md`
-- `.agent/workflows/implement.md`
-
-## Hono/Express Migration Architecture
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Skill as backend-design skill
-    participant Express as Express (Legacy)
-    participant Hono as Hono (New)
-    participant tRPC as tRPC Layer
-    participant DB as Drizzle + Neon
-
-    Dev->>Skill: Request new API endpoint
-    Skill->>Skill: Check framework selection strategy
-    Skill->>Hono: Route to Hono patterns (new features)
-    Hono->>tRPC: Integrate via fetch adapter
-    tRPC->>DB: Execute queries
-    DB-->>tRPC: Return data
-    tRPC-->>Hono: Response
-    Hono-->>Dev: JSON response
-
-    Note over Express: Existing routes remain unchanged
-    Note over Hono: New routes use Hono patterns
-    Note over Dev,DB: Gradual migration over time
-```
+- `.agent/skills/planning/references/complexity-guide.md` — L1-L10 classification
+- `.agent/skills/planning/references/mcp-usage.md` — MCP tool guidance
+- `.agent/skills/planning/references/pre-mortem-analysis.md` — Risk assessment (L6+)
+- `.agent/skills/planning/references/architecture-decisions.md` — ADR template (L6+)
+- `.agent/workflows/implement.md` — Implementation handoff

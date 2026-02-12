@@ -169,6 +169,9 @@ it("should reject empty mentoradoId", () => {
 ## Debug Report
 
 **Issue**: [Description]
+**Bug Type**: Cosmetic | Performance | Security | Functionality | Flaky Test
+**Severity**: P1 | P2 | P3 | P4
+**Regression Risk**: High | Medium | Low
 **Root Cause**: [5 Whys result]
 **Fix**: [What was changed]
 **Verification**:
@@ -178,6 +181,11 @@ it("should reject empty mentoradoId", () => {
 - [ ] Browser verified ✅
 
 **Files Changed**: [list]
+
+**Lessons Learned**: What would have caught this earlier?
+- [ ] Better test coverage for [area]
+- [ ] Defense-in-depth at [layer]
+- [ ] Input validation for [type]
 ```
 
 ---
@@ -192,3 +200,17 @@ Fix: [What was changed]
 
 Tested: bun run check ✅, bun test ✅
 ```
+
+---
+
+## Regression Prevention (L6+)
+
+For severe or recurring bugs, apply the full protocol from `regression-prevention.md`.
+
+**Quick checklist:**
+
+1. **Test exists?** — Fails without fix, passes with it
+2. **Guard added?** — Defense-in-depth at the right layer
+3. **Pattern scan?** — If High regression risk, check rest of codebase
+4. **Knowledge captured?** — Fix logged via evolution-core
+5. **Postmortem written?** — For P1/P2 bugs, use the [postmortem template](regression-prevention.md)

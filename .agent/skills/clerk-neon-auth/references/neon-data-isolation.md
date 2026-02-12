@@ -6,6 +6,7 @@ Related docs:
 - `../SKILL.md`
 - `./role-architecture.md`
 - `./db-schema-blueprints.md`
+- `./drizzle-neon-patterns.md`
 
 ## 1) Isolation Model
 
@@ -34,6 +35,46 @@ Resolution:
 - Read/write tenant entities with `WHERE tenant_owner_user_id = ctx.tenantOwnerUserId`.
 - For per-user entities also include `AND created_by_user_id = ctx.requestUserId` when needed.
 - Never omit tenant filter in non-admin endpoints.
+
+### Drizzle ORM Examples
+
+**Mentorado-scoped query (tenant isolation):**
+
+```typescript
+// ✅ Correct — always filter by mentoradoId
+const result = await db.select({
+  id: leads.id,
+  nome: leads.nome,
+  status: leads.status,
+}).from(leads)
+  .where(eq(leads.mentoradoId, ctx.mentoradoId));
+
+// ❌ Wrong — no tenant filter
+const result = await db.select().from(leads);
+```
+
+**Admin cross-tenant query (explicit override):**
+
+```typescript
+// Only in adminProcedure — never in mentoradoProcedure
+const allLeads = await db.select({
+  id: leads.id,
+  nome: leads.nome,
+  mentoradoId: leads.mentoradoId,
+}).from(leads)
+  .orderBy(desc(leads.createdAt));
+```
+
+**Staff query with owner's tenant:**
+
+```typescript
+// Staff sees owner's data only
+const pacientes = await db.select({
+  id: pacientes.id,
+  nome: pacientes.nome,
+}).from(pacientes)
+  .where(eq(pacientes.mentoradoId, ctx.tenantOwnerMentoradoId));
+```
 
 ## 4) Recommended Enforcement Layers
 

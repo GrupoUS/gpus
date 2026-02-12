@@ -39,6 +39,8 @@
 - **Uniqueness:** Strive for bespoke layouts, asymmetry, and distinctive typography.
 - **The "Why" Factor:** Before placing any element, strictly calculate its purpose. If it has no purpose, delete it.
 - **Minimalism:** Reduction is the ultimate sophistication.
+- **GPUS Identity:** Azul Petróleo + Gold. Professional, premium, educational.
+- **Theme Reconciliation:** GPUS tokens are immutable. Design intelligence tools (ui-ux-pro-max) inform layout and style choices, but color values always come from GPUS theme.
 
 ---
 
@@ -115,6 +117,16 @@ const msg = `Hello ${name}`;        // Template literals
 const mutate = useMutation((api as any).leads.updateStatus);
 ```
 
+### Component Placement
+- `components/ui/` — shadcn/ui primitives ONLY (86 owned components)
+- `components/[feature]/` — Feature-specific components
+- Never create custom components in `ui/`
+
+### Color & Styling
+- Always use semantic tokens (`bg-primary`, `text-foreground`) or custom utilities (`text-neon-petroleo`)
+- Never hardcode hex values (`bg-[#0f4c75]` is prohibited)
+- Use Tailwind CSS v4 classes, define custom utilities via `@utility` in `index.css`
+
 ### React 19 Rules
 - Function components only (no classes)
 - Hooks at top level only (never conditional)
@@ -155,6 +167,9 @@ Before PR merge:
 - `bun test` — all tests pass
 - No browser console errors in changed flows
 - Responsive behavior validated for touched UI surfaces
+- Dark mode tested (toggle light ↔ dark)
+- No hardcoded hex colors — only semantic tokens
+- All FK columns have corresponding indexes
 
 ---
 
@@ -198,24 +213,114 @@ Session Start → load_context → Execute (capture observations) → Heartbeat 
 
 ## 12. Debugging Protocol
 
+> Full reference: [`.agent/skills/debug/SKILL.md`](.agent/skills/debug/SKILL.md)
+
 **When an error occurs:**
 
 1. **PAUSE** — Don't immediately retry
-2. **THINK** — Root Cause Analysis:
+2. **TRIAGE** — Classify severity (L1-L10) and blast radius
+3. **THINK** — Root Cause Analysis:
    - What exactly happened?
    - Why? (5 Whys)
    - What are 3 possible fixes?
-3. **HYPOTHESIZE** — Formulate hypothesis + validation plan
-4. **EXECUTE** — Apply fix after understanding cause
+   - **Self-interrogate:** Am I anchoring on the first thing I saw? Am I ignoring evidence that contradicts my hypothesis?
+4. **HYPOTHESIZE** — Formulate hypothesis + validation plan
+5. **EXECUTE** — Apply fix after understanding cause
+6. **SELF-REVIEW** — Before declaring fixed:
+   - Does the fix address root cause, not symptom?
+   - Any regression risk? (L6+ → add test)
+   - Would a colleague approve this approach?
+
+### Cognitive Debiasing
+
+| Bias | Countermeasure |
+|------|---------------|
+| Confirmation bias | Actively seek evidence AGAINST your hypothesis |
+| Anchoring | Consider 3+ hypotheses before investigating |
+| Fixation | If stuck > 10 min, change approach entirely |
+| Ownership bias | Treat your code with same skepticism as others' |
+
+---
+
+## 13. Frontend Architecture
+
+> Full reference: [`.agent/skills/frontend-design/SKILL.md`](.agent/skills/frontend-design/SKILL.md)
+> Subdirectory rules: [`client/src/AGENTS.md`](client/src/AGENTS.md)
+
+### GPUS Quick Palette
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--primary` | Gold `38 60% 45%` | Amber `43 96% 56%` |
+| `--foreground` | Petróleo `203 65% 26%` | Slate 50 `210 40% 98%` |
+| `--background` | Slate 50 `210 40% 98%` | Slate 950 `222 47% 6%` |
+
+### Layout Pattern
+
+```
+DashboardLayout → ScrollArea (single) → PageContainer → Content
+```
+
+### Page Patterns
+
+| Pattern | Grid | Page |
+|---------|------|------|
+| KPI cards | `grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6` | Dashboard |
+| Settings | `grid-cols-1 lg:grid-cols-2 gap-6` | Settings |
+| Kanban | Horizontal scroll + drag | CRM |
+| Tabbed | Tabs + flow content | Pacientes |
+
+---
+
+## 14. Backend Architecture
+
+> Full reference: [`.agent/skills/backend-design/SKILL.md`](.agent/skills/backend-design/SKILL.md)
+> Subdirectory rules: [`server/AGENTS.md`](server/AGENTS.md)
+
+### Procedure Hierarchy
+
+```
+publicProcedure → Health checks only
+protectedProcedure → Clerk auth required
+adminProcedure → protectedProcedure + admin role
+mentoradoProcedure → protectedProcedure + mentorado lookup
+```
+
+### Key Rules
+
+- Service logic alongside routers, not in separate `/services/` for new code
+- Always import `db` singleton from `server/db.ts`
+- Zod validation on every mutation/query input
+- `TRPCError` with proper codes, not generic `Error`
+- `Promise.all` for batch operations
+- No `SELECT *` — always specify columns
+
+---
+
+## 15. Database Architecture
+
+> Source of truth: [`drizzle/schema.ts`](drizzle/schema.ts)
+> Subdirectory rules: [`drizzle/AGENTS.md`](drizzle/AGENTS.md)
+
+### Key Rules
+
+- **Extension-first:** Add columns before creating tables (score > 5)
+- **Every FK needs an index** — no exceptions
+- **Enum naming:** `camelCase` export, `snake_case` DB name
+- **Always export** `Type` + `InsertType` for each table
+- **Soft deletes:** `ativo` boolean, not physical deletes
+- **Dev workflow:** `bun run db:push` (never manual SQL)
 
 ---
 
 ## Authority Precedence
 
 1. **Backend canonical authority**: `.agent/skills/backend-design/SKILL.md`
-2. **Agent behavioral rules**: `AGENTS.md` (this file)
-3. **Gemini-specific rules**: `.agent/rules/GEMINI.md`
-4. **Project technical context**: `GEMINI.md`
+2. **Frontend canonical authority**: `.agent/skills/frontend-design/SKILL.md`
+3. **Subdirectory AGENTS.md** (overrides root for domain-specific rules)
+4. **Agent behavioral rules**: `AGENTS.md` (this file)
+5. **Gemini-specific rules**: `.agent/rules/GEMINI.md`
+6. **Project technical context**: `GEMINI.md`
 
 ---
 

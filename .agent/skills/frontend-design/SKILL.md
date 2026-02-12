@@ -19,6 +19,50 @@ description: Unified frontend design skill covering React 19 patterns, Tailwind 
 | Animation | Framer Motion 12 | Micro-interactions |
 | Charts | Recharts 2 | Performance visualizations |
 | Prototyping | Stitch MCP | AI-powered UI generation |
+| Design Intelligence | ui-ux-pro-max | Style/color/typography recommendations |
+
+---
+
+## GPUS Design System — Our Theme
+
+> **Identity:** Azul Petróleo + Gold accents. Professional, premium, educational.
+> Full reference: `references/project-design-system.md` · Theme source: `gpus-theme/SKILL.md`
+
+### Quick Palette
+
+| Token | Light | Dark | Purpose |
+|-------|-------|------|---------|
+| `--primary` | Gold `38 60% 45%` | Amber `43 96% 56%` | Buttons, links, CTAs |
+| `--background` | Slate 50 `210 40% 98%` | Slate 950 `222 47% 6%` | Page bg |
+| `--foreground` | Petróleo `203 65% 26%` | Slate 50 `210 40% 98%` | Body text |
+| `--accent` | Gold 95% `38 60% 95%` | Navy `217 33% 17%` | Hover highlights |
+| `--ring` | Gold | Gold | Focus indicators |
+
+### Brand Extensions
+
+| Utility Class | Purpose |
+|---------------|--------|
+| `text-neon-petroleo` | Azul Petróleo brand text |
+| `text-neon-gold` / `bg-neon-gold` | Gold brand elements |
+| `text-neon-blue-light` | Light blue accent (dark mode) |
+| `border-neon-border` | Standard brand border |
+
+### Typography
+
+- **Primary font:** Manrope (`@fontsource/manrope`)
+- **Mono:** Fira Code / JetBrains Mono
+- **Radius:** `0.5rem` (8px)
+
+### Color Rules
+
+| ✅ Do | ❌ Don't |
+|-------|--------|
+| `bg-primary` | `bg-[#b45309]` |
+| `text-foreground` | `text-[#0f172a]` |
+| `text-neon-petroleo` | `text-[#0f4c75]` |
+| `border-border` | `border-gray-300` |
+
+**Rule:** Always use semantic tokens or custom utility classes. Never hardcode hex values.
 
 ---
 
@@ -106,6 +150,52 @@ import { Card } from "@/components/ui/card";
 | Quotes | Curly quotes `"` `"` not straight `"` |
 | Numbers | `font-variant-numeric: tabular-nums` for columns |
 | Loading | States end with `…`: "Loading…", "Saving…" |
+
+---
+
+## Layout & Scroll Standards
+
+### Overflow Chain Rule (CRITICAL)
+
+Every scrollable page must follow the **single scroll owner** pattern:
+
+| Rule | Standard |
+|------|----------|
+| Scroll owner | Only `<main>` (via `<ScrollArea>`) owns vertical scroll |
+| No clip on content | Never use `overflow-hidden` on content wrappers |
+| No constrained tabs | Tab containers must NOT use `h-full` + `min-h-0` |
+| Natural flow | Content flows naturally; height is determined by content |
+| ScrollArea usage | Use shadcn `<ScrollArea>` instead of native `overflow-y-auto` |
+
+```tsx
+// ❌ Blocks scroll — content clipped
+<div className="h-full overflow-hidden">
+  <div className="h-full overflow-y-auto">
+    {/* deep content */}
+  </div>
+</div>
+
+// ✅ Content flows naturally, ScrollArea handles scroll
+<main className="flex-1 overflow-hidden">
+  <ScrollArea className="flex-1">
+    <div className="p-6">{children}</div>
+  </ScrollArea>
+</main>
+```
+
+### Responsive Sizing Rules
+
+| Element | Mobile | Desktop (lg) | Large (xl) |
+|---------|--------|--------------|------------|
+| Page headings | `text-2xl` | `text-3xl` | `text-4xl` |
+| Section headings | `text-lg` | `text-xl` | `text-2xl` |
+| Card stat values | `text-xl` | `text-2xl` | `text-3xl` |
+| Card labels | `text-xs` | `text-sm` | `text-sm` |
+| Card padding | `p-4` | `p-6` | `p-8` |
+| Grid gaps | `gap-4` | `gap-6` | `gap-8` |
+| Icon containers | `w-10 h-10` | `w-12 h-12` | `w-14 h-14` |
+
+Cards must always fill available width (`w-full` or grid layout).
 
 ---
 
@@ -306,6 +396,44 @@ Pre-built complex UI patterns: authentication, dashboards, sidebars, data tables
 
 ---
 
+## Project Architecture
+
+### Component Inventory
+
+| Directory | Count | Purpose |
+|-----------|-------|---------|
+| `ui/` | 86 | shadcn/ui owned primitives |
+| `dashboard/` | 41 | KPI cards, charts, metrics |
+| `crm/` | 18 | Kanban board, lead management |
+| `financeiro/` | 18 | Financial management |
+| `pacientes/` | 17 | Patient records, procedures |
+| `chat/` | 15 | WhatsApp messaging |
+| `landing/` | 13 | Landing page sections |
+| `settings/` | 10 | Settings page cards |
+| `mentor/` | 8 | Mentor impersonation |
+
+### Core Layout Pattern
+
+```
+DashboardLayout (sidebar + main)
+└── ScrollArea (single scroll owner)
+    └── PageContainer (padding wrapper)
+        └── Page content (natural flow)
+```
+
+### Established Page Patterns
+
+| Pattern | Grid | Used In |
+|---------|------|---------|
+| KPI cards row | `grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6` | Dashboard |
+| Settings grid | `grid-cols-1 lg:grid-cols-2 gap-6` | Settings |
+| Kanban columns | Horizontal scroll + drag-and-drop | CRM |
+| Tabbed detail | Tabs + natural flow content | Pacientes |
+
+> Full architecture map: `references/project-design-system.md`
+
+---
+
 ## Nano Banana Pro (Image Generation)
 
 Generate assets using Gemini 3.0 Pro via `generate_image` tool.
@@ -334,6 +462,11 @@ best_practices:
 - [ ] Visible focus states
 - [ ] Respects `prefers-reduced-motion`
 - [ ] Form inputs have `autocomplete` and `name`
+- [ ] Page content scrolls when exceeding viewport height
+- [ ] No `overflow-hidden` on content wrappers (only decorative containers)
+- [ ] Text/padding/gaps use responsive breakpoints (sm/lg/xl)
+- [ ] Cards fill available width on all screen sizes
+- [ ] Uses `<ScrollArea>` instead of native `overflow-y-auto` for main content
 
 ### Import Pattern
 
@@ -358,14 +491,43 @@ import { trpc } from "@/lib/trpc";
 
 ---
 
+## Design Intelligence
+
+Use `ui-ux-pro-max` for design research BEFORE implementation. See the `/design` workflow for the full pipeline.
+
+### When to Use
+
+| Scenario | Command |
+|----------|--------|
+| New page/feature design | `python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<keywords>" --design-system` |
+| Style exploration | `python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<style>" --domain style` |
+| Chart selection | `python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<type>" --domain chart` |
+| UX best practices | `python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<topic>" --domain ux` |
+| Typography alternatives | `python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<mood>" --domain typography` |
+
+### Reconciliation Rule
+
+> **GPUS tokens are immutable.** `ui-ux-pro-max` informs layout, style, and typography *choices*, but color token values always come from our GPUS theme. Never replace `--primary` with a generated palette suggestion.
+
+| Source | Provides |
+|--------|--------|
+| `ui-ux-pro-max` | Layout patterns, style keywords, typography pairings, anti-patterns |
+| GPUS theme | Color token values, brand identity, CSS variables |
+| This skill | Code patterns, component standards, implementation rules |
+
+---
+
 ## References
 
-- `references/stitch-workflows.md` — DESIGN.md, Build Loop, Stitch-to-React pipelines
-- `references/stitch-prompt-templates.md` — Ready-to-use prompt templates for GPUS theme
-- `references/shadcn-patterns.md` — Deep shadcn/ui patterns, blocks, and troubleshooting
-- `decision-trees.md` — Component selection decision trees
-- `color-system.md` — Color system reference
-- `typography-system.md` — Typography system reference
-- `animation-guide.md` — Animation patterns
-- `tailwind-v4-patterns.md` — Tailwind v4 specific patterns
-- `ux-psychology.md` — UX psychology principles
+| Reference | Purpose |
+|-----------|--------|
+| [project-design-system.md](references/project-design-system.md) | Full GPUS tokens, component architecture, page patterns |
+| [stitch-workflows.md](references/stitch-workflows.md) | DESIGN.md, Build Loop, Stitch-to-React pipelines |
+| [stitch-prompt-templates.md](references/stitch-prompt-templates.md) | Ready-to-use prompt templates for GPUS theme |
+| [shadcn-patterns.md](references/shadcn-patterns.md) | Deep shadcn/ui patterns, blocks, troubleshooting |
+| [decision-trees.md](decision-trees.md) | Component selection decision trees |
+| [color-system.md](color-system.md) | Color system reference |
+| [typography-system.md](typography-system.md) | Typography system reference |
+| [animation-guide.md](animation-guide.md) | Animation patterns |
+| [tailwind-v4-patterns.md](tailwind-v4-patterns.md) | Tailwind v4 specific patterns |
+| [ux-psychology.md](ux-psychology.md) | UX psychology principles |
