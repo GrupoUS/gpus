@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "bun install --frozen-lockfile && bun run build"
+buildCommand = "bun install --frozen-lockfile && turbo run build --filter=@repo/api --filter=@repo/web"
 
 [deploy]
-startCommand = "bun run server/_core/index.ts"
+startCommand = "bun run apps/api/dist/index.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"

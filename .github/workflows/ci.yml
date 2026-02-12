@@ -38,6 +38,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -54,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-dist
-          path: dist/
+          path: apps/web/dist/
           retention-days: 7
 
   # ============================================================================
@@ -104,7 +112,6 @@ jobs:
         run: bunx playwright test --project=chromium
         env:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@layer base {
+	html,
+	body {
+		/* Let theme provider control colors */
+	}
+
+	.using-mouse * {
+		outline: none !important;
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"name": "@repo/shared",
+	"version": "0.0.0",
+	"private": true,
+	"exports": {
+		"./router": "./src/router.ts",
+		"./trpc": "./src/trpc.ts",
+		"./db/schema": "./drizzle/schema.ts",
+		"./db/enums": "./drizzle/enums.ts"
+	},
+	"dependencies": {
+		"@trpc/server": "^11.6.0",
+		"drizzle-orm": "^0.44.5",
+		"superjson": "^1.13.3",
+		"zod": "^4.3.5"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"typescript": "^5.9.3"
+	}
+}

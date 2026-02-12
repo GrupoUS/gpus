@@ -1,0 +1,40 @@
+import { z } from 'zod';
+
+export const interestOptions = [
+	'Harmonização Facial',
+	'Estética Corporal',
+	'Bioestimuladores',
+	'Outros',
+] as const;
+
+// Mutable copy for z.enum
+const interestOptionsMutable = [...interestOptions] as [string, ...string[]];
+
+export const leadCaptureSchema = z.object({
+	name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
+	email: z.string().email('Email inválido'),
+	phone: z.string().regex(/^\(\d{2}\) \d{5}-\d{4}$/, 'Formato: (11) 99999-9999'),
+	interest: z.enum(interestOptionsMutable),
+	message: z.string().max(500, 'Mensagem deve ter no máximo 500 caracteres').optional(),
+	lgpdConsent: z.boolean().refine((val) => val === true, {
+		message: 'Você deve aceitar os termos',
+	}),
+	whatsappConsent: z.boolean(),
+	// Honeypot field - should be empty
+	honeypot: z.string().max(0, 'Invalid submission').optional(),
+
+	// UTM Parameters
+	utmSource: z.string().optional(),
+	utmCampaign: z.string().optional(),
+	utmMedium: z.string().optional(),
+	utmContent: z.string().optional(),
+	utmTerm: z.string().optional(),
+	company: z.string().optional(),
+	jobRole: z.string().optional(),
+	origin: z.string().optional(),
+	typebotId: z.string().optional(),
+	resultId: z.string().optional(),
+	externalTimestamp: z.number().optional(),
+});
+
+export type LeadCaptureFormData = z.infer<typeof leadCaptureSchema>;
