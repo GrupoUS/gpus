@@ -9,7 +9,8 @@
 		"dev": "bun --watch run src/_core/index.ts",
 		"build": "bun build src/_core/index.ts --outdir=dist --target=bun",
 		"start": "bun run dist/index.js",
-		"lint": "biome check .",
+		"lint": "biome check --write .",
+		"lint:check": "biome check .",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
