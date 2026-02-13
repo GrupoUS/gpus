@@ -17,6 +17,7 @@ coverage
 /public/build
 /dist/
 /dist-ssr/
+/node_modules
 
 # Sentry Config File
 .env.sentry-build-plugin

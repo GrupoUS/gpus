@@ -2,273 +2,105 @@
 trigger: always_on
 ---
 
-# GEMINI.md - Project Rules
+# GEMINI.md - Gemini Orchestration Rules
 
-> **Single source of truth for AI behavior in this workspace.**
+> Gemini-only meta-governance and orchestration surface.
 
----
+## Canonical Authority Chain (Strict)
 
-## 🔴 MANDATORY SKILL LOADING
+1. `.agent/skills/backend-design/SKILL.md` (backend/API/DB domain authority, non-overridable)
+2. `.agent/rules/GEMINI.md` (this file: orchestration + precedence contract)
+3. `.agent/workflows/*.md` (execution choreography)
+4. `.kilocode/rules/GEMINI.md` + `.kilocode/workflows/*.md` (adapter/mirror only)
+5. `GEMINI.md` + `AGENTS.md` (project context and broad behavior)
 
-Before ANY implementation:
+## Non-Override Rule
 
-1. **CHECK** which skill applies to the request
-2. **READ** the skill's `SKILL.md`
-3. **APPLY** rules from skill + this file
+- Backend domain policy MUST come from `.agent/skills/backend-design/SKILL.md`.
+- This file and workflow files must never redefine/override backend implementation standards.
+- If any conflict appears, backend skill policy wins automatically.
 
-### Skills (7 total)
+## Mandatory Skill Loading
 
-| Skill             | Purpose                                    | When to Use         |
-| ----------------- | ------------------------------------------ | ------------------- |
-| `backend-design`  | Convex, TypeScript, data, code principles  | Backend work        |
-| `debug`           | Testing, debugging, fixing                 | Bugs, errors        |
-| `frontend-design` | UI/UX, Tailwind, components                | Frontend work       |
-| `notion-cms`      | Notion CMS integration                     | Content from Notion |
-| `planning`        | Project planning, PRPs                     | Complex tasks       |
-| `skill-creator`   | Creating new skills                        | Meta work           |
-| `gpus-theme`      | Navy/Gold design system                    | Styling artifacts   |
+Before implementation:
 
-### Workflows (4 total)
+1. Identify request domain(s)
+2. Load relevant `SKILL.md`
+3. Execute through the canonical workflow command
+4. Validate against repository quality gates
 
-| Command      | Description                                    |
-| ------------ | ---------------------------------------------- |
-| `/debug`     | Systematic problem investigation & QA pipeline |
-| `/design`    | Frontend design orchestration                  |
-| `/implement` | Execute approved implementation plan           |
-| `/plan`      | Create project plan with research              |
+Minimum domain routing:
 
-**Priority:** GEMINI.md > Skill
+- backend/database -> `.agent/skills/backend-design/SKILL.md`
+- debug/failure recovery -> `.agent/skills/debug/SKILL.md`
+- frontend/ui -> `.agent/skills/frontend-design/SKILL.md`
+- planning -> `.agent/skills/planning/SKILL.md`
 
----
+## Canonical Workflow Entry Commands
 
-## 🧠 LEVER Philosophy (ALWAYS APPLY)
+- `/plan` -> `.agent/workflows/plan.md`
+- `/implement` -> `.agent/workflows/implement.md`
+- `/debug` -> `.agent/workflows/debug.md`
+- `/design` -> `.agent/workflows/design.md`
 
-> **L**everage patterns | **E**xtend first | **V**erify reactivity | **E**liminate duplication | **R**educe complexity
+## MCP Naming Canon
 
-**"The best code is no code. The second best structure is the one that already exists."**
+Use these names consistently across rules/workflows:
 
-### Decision Tree
+- `context7`
+- `mcp-server-neon`
+- `tavily`
+- `sequential-thinking`
 
-```
-Before coding:
-├── Can existing code handle it? → Yes: EXTEND
-├── Can we modify existing patterns? → Yes: ADAPT
-└── Is new code reusable? → Yes: ABSTRACT → No: RECONSIDER
-```
+## Repository Quality Gates
 
-### Scoring: Extend vs Create
+- `bun run check`
+- `bun run lint:check`
+- `bun run test`
 
-| Factor                | Points |
-| --------------------- | ------ |
-| Reuse data structure  | +3     |
-| Reuse indexes/queries | +3     |
-| Reuse >70% code       | +5     |
-| Circular dependencies | -5     |
-| Distinct domain       | -3     |
+## Terminal Command Execution Protocol
 
-**Score > 5**: Extend existing code.
+Prevent commands from hanging. These rules apply to ALL `run_command` and `command_status` calls.
 
----
+### WaitMsBeforeAsync Strategy
 
-## 🛠️ Three-Pass Implementation
+| Command Type | WaitMs | Examples |
+|---|---|---|
+| Quick ops | 5000 | git add/rm/status, echo, cat, ls, mkdir, cp |
+| Medium ops | 8000 | git commit -m, git push, gh secret set, bun install |
+| Build/check | 1000 | bun run check, bun run build, bun run lint:check |
+| Dev servers | 3000 | bun dev, bunx convex dev |
+| Chained cmds | 8000 | cmd1 && cmd2 && cmd3 |
 
-| Pass              | Focus                                | Code           |
-| ----------------- | ------------------------------------ | -------------- |
-| 1. Discovery      | Find related code, document patterns | None           |
-| 2. Design         | Write interfaces, plan data flow     | Minimal        |
-| 3. Implementation | Execute with max reuse               | Essential only |
+### command_status Monitoring (CRITICAL)
 
----
+When a command returns a `CommandId`:
 
-## 📋 Request Classification
+1. First check: `WaitDurationSeconds=5`, `OutputCharacterCount=3000`
+2. If still running: `WaitDurationSeconds=10`
+3. If still running after 20s total: the command is likely stuck → recover
+4. **NEVER** use `WaitDurationSeconds > 30` for quick/medium commands
+5. Reserve `WaitDurationSeconds=60` ONLY for builds (`bun run build`)
 
-| Type          | Keywords                  | Action             |
-| ------------- | ------------------------- | ------------------ |
-| Question      | "what is", "explain"      | Answer directly    |
-| Simple edit   | "fix", "add" (1 file)     | Edit directly      |
-| Complex build | "create", "implement"     | `/plan` first      |
-| Debug         | "bug", "error", "broken"  | `/debug` workflow  |
-| Design        | "UI", "page", "dashboard" | `/design` workflow |
+### Non-Interactive Commands (Mandatory)
 
----
+- `git commit` → ALWAYS `-m "message"` (never open editor)
+- `git log` → ALWAYS `-n N` limit
+- `git diff` → use `--stat` or pipe `| head -n 50`
+- `gh` → use `--yes` where available
+- Prefix `GIT_TERMINAL_PROMPT=0` when git auth might prompt
 
-## 🏗️ Architecture Principles
+### Stuck Command Recovery
 
-### Database (Convex)
+If command runs > 3× expected duration:
 
-**Goal**: 0 new tables. Extend existing.
+1. `command_status` with `WaitDurationSeconds=0` → read output
+2. If prompt `$` visible in output → command is done, proceed
+3. If waiting for input → `send_command_input(Terminate=true)`
+4. Re-run with corrected non-interactive flags
 
-```typescript
-// ❌ DON'T: Create redundant tables
-defineTable("campaign_tracking", { ... })
+## Scope Guardrails
 
-// ✅ DO: Extend existing tables
-defineTable("users", {
-  ...existingFields,
-  campaignSource: v.optional(v.string()),
-})
-```
-
-### Queries (Convex)
-
-**Goal**: No duplicate logic.
-
-```typescript
-// ❌ DON'T: getTrialUsers AND getUsers
-
-// ✅ DO: Extend with computed props
-export const getUserStatus = query({
-  handler: async (ctx) => {
-    const user = await getUser(ctx);
-    return { ...user, isTrial: Boolean(user?.campaign) };
-  },
-});
-```
-
-### Performance
-
-- Use `useQuery` (reactive) over `useState/useEffect`
-- Use `Promise.all` for batch writes
-- Convex indexes for filtered queries
-- Single aggregated query > 3 separate requests
-
----
-
-## 🔧 Code Quality Standards (Ultracite)
-
-### Type Safety
-
-- Use `unknown` over `any` when type is genuinely unknown
-- Use const assertions (`as const`) for immutable values
-- Use meaningful variable names instead of magic numbers
-- Leverage TypeScript's type narrowing over assertions
-
-### Modern TypeScript
-
-```typescript
-// ✅ Use
-const foo = bar?.baz ?? "default"; // Optional chaining + nullish
-for (const item of items) { } // for...of
-const { id, name } = user; // Destructuring
-const msg = `Hello ${name}`; // Template literals
-```
-
-### "Type instantiation is excessively deep"
-
-```typescript
-// ✅ Early cast for Convex API
-const mutate = useMutation((api as any).leads.updateStatus);
-```
-
-### React 19 Rules
-
-- Function components only (no classes)
-- Hooks at top level only (never conditional)
-- Use `ref` as prop (not `React.forwardRef`)
-- Always specify hook dependency arrays correctly
-- Use unique IDs for `key` props (not array indices)
-
-### Error Handling
-
-- No `console.log`/`debugger` in production
-- Throw `Error` objects with descriptive messages
-- Use early returns over nested conditionals
-- Handle async errors with try-catch
-
-### Security
-
-- Add `rel="noopener"` on `target="_blank"` links
-- Avoid `dangerouslySetInnerHTML`
-- Never use `eval()`
-- Validate and sanitize user input
-
-### Performance
-
-- Avoid spread in loop accumulators
-- Use top-level regex literals
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index re-exports)
-
----
-
-## ✅ Review Checklist
-
-### Code Quality
-
-- [ ] Extended existing tables/queries?
-- [ ] Followed Three-Pass approach?
-- [ ] No manual state sync?
-- [ ] New code < 50% of fresh implementation?
-
-### Stack
-
-- [ ] `bun run build` passes (tsc)?
-- [ ] `bun run lint:check` passes (Biome)?
-- [ ] `bun run test` passes (Vitest)?
-- [ ] No console errors in browser?
-
----
-
-## 📁 Project Structure
-
-```
-gpus/
-├── src/                  # React 19 frontend
-│   ├── components/       # shadcn/ui + custom components
-│   ├── routes/           # TanStack Router file-based routes
-│   ├── hooks/            # Custom React hooks
-│   └── lib/              # Utilities (cn, convex client)
-├── convex/               # Convex backend
-│   ├── schema.ts         # Database schema
-│   ├── _generated/       # Auto-generated types
-│   └── *.ts              # Query/mutation/action handlers
-└── .agent/               # AI configuration
-    ├── skills/           # 7 skills
-    ├── workflows/        # 4 workflows
-    └── rules/            # This file
-```
-
----
-
-## 🛑 Anti-Patterns
-
-| Pattern               | Problem                   |
-| --------------------- | ------------------------- |
-| UI-Driven DB          | Schema matches components |
-| "Just one more table" | Join complexity           |
-| Parallel APIs         | Duplication               |
-| Manual state sync     | Race conditions           |
-| No Convex indexes     | Slow queries              |
-| Unused convex imports | Bundle bloat              |
-
----
-
-## 📦 Stack Quick Reference
-
-| Layer     | Technology                      |
-| --------- | ------------------------------- |
-| Runtime   | Bun                             |
-| Frontend  | React 19 + Vite 7               |
-| Styling   | Tailwind CSS 4 + shadcn/ui      |
-| Routing   | TanStack Router (file-based)    |
-| State     | TanStack Query + Convex useQuery|
-| Backend   | Convex (query/mutation/action)  |
-| Database  | Convex (integrated)             |
-| Auth      | Clerk                           |
-| Linter    | Biome                           |
-| Tests     | Vitest + Playwright             |
-
----
-
-## 🚀 Commands
-
-```bash
-bun dev             # Dev server (Vite + Convex)
-bun run build       # Build + TypeScript check
-bun run lint        # Biome lint + format (auto-fix)
-bun run lint:check  # Biome lint + format (check only)
-bun run test        # Vitest run
-bun run test:watch  # Vitest watch mode
-bunx convex deploy  # Deploy Convex functions
-bunx convex dev     # Convex dev mode
-```
+- Keep this file orchestration-only and concise.
+- Keep deep technical policy in skill files.
+- Do not duplicate policy in Kilo adapter files.

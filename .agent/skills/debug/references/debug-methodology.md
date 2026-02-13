@@ -1,15 +1,24 @@
 # Debug Methodology
 
-> 4-Phase systematic debugging: Reproduce → Isolate → Understand → Fix
+> 4-Phase systematic debugging: Investigate → Analyze Patterns → Hypothesize → Implement. Complete each phase before proceeding.
 
-## Phase 1: REPRODUCE
+## Phase 1: Root Cause Investigation
 
-**Goal**: Confirm minimum reproducible steps.
+**BEFORE attempting ANY fix:**
 
-- [ ] Get exact error message/behavior
-- [ ] Document expected vs actual
-- [ ] Identify scope (file, API, component)
-- [ ] Check if reproducible consistently
+### 1. Read Error Messages Carefully
+
+- Don't skip past errors or warnings
+- Read stack traces **completely**
+- Note line numbers, file paths, error codes
+- They often contain the exact solution
+
+### 2. Reproduce Consistently
+
+- Can you trigger it reliably?
+- What are the exact steps?
+- Does it happen every time?
+- **If not reproducible → gather more data, don't guess**
 
 ```markdown
 ## Reproduction Notes
@@ -23,77 +32,165 @@
 3. [Error occurs]
 ```
 
-## Phase 2: ISOLATE
+### 3. Check Recent Changes
 
-**Goal**: Narrow down the problem location.
+- `git diff HEAD~5`
+- `git log --oneline -10`
+- New dependencies, config changes?
+- Environmental differences?
 
-**Binary Search**:
+### 4. Gather Evidence in Multi-Component Systems
+
+**WHEN system has multiple components (client → tRPC → Drizzle → Neon):**
 
 ```
-Error appears → Check midpoint
-├── Error before midpoint → Check first half
-└── Error after midpoint → Check second half
-→ Repeat until found
+For EACH component boundary:
+  - Log what data enters component
+  - Log what data exits component
+  - Verify environment/config propagation
+  - Check state at each layer
+
+Run once to gather evidence showing WHERE it breaks
+THEN analyze evidence to identify failing component
+THEN investigate that specific component
 ```
 
-**Git Bisect**:
-
-```bash
-git bisect start
-git bisect bad           # Current commit is broken
-git bisect good abc123   # Known working commit
-# Git will checkout midpoint, test and mark good/bad
-git bisect reset         # When done
-```
-
-**Strategic Logging**:
+**Example:**
 
 ```typescript
-console.log(">> Function called:", { input, state });
-// ... code
-console.log(">> Before return:", { result });
+// Layer 1: tRPC procedure
+console.error("=== tRPC input ===", { input, userId: ctx.userId });
+
+// Layer 2: Service function
+console.error("=== Service args ===", { mentoradoId, filters });
+
+// Layer 3: Drizzle query
+console.error("=== Query params ===", { where: conditions, limit });
+
+// Layer 4: Response
+console.error("=== Result ===", { count: result.length, first: result[0] });
 ```
 
-## Phase 3: UNDERSTAND (Root Cause)
+### 5. Trace Data Flow
 
-**Goal**: Find WHY, not just WHERE.
+See `root-cause-tracing.md` for the complete backward tracing technique.
 
-### 5 Whys Technique
+**Quick version:**
+
+```
+User Input → Component State → tRPC Call → Drizzle Query → Neon DB → Response → UI
+     ↓            ↓              ↓            ↓              ↓          ↓
+   Check        Check          Check        Check          Check      Check
+```
+
+---
+
+## Phase 2: Pattern Analysis
+
+**Find the pattern before fixing.**
+
+1. **Find Working Examples** — Locate similar working code in the same codebase
+2. **Compare Against References** — Read reference implementation COMPLETELY, don't skim
+3. **Identify Differences** — List every difference, however small. Don't assume "that can't matter"
+4. **Understand Dependencies** — What settings, config, environment does this need?
+
+---
+
+## Phase 3: Hypothesis & Testing
+
+**Scientific method — one variable at a time.**
+
+1. **Form Single Hypothesis** — "I think X is the root cause because Y." Write it down.
+2. **Test Minimally** — Make the SMALLEST possible change to test hypothesis
+3. **Verify Before Continuing:**
+   - Worked? → Phase 4
+   - Didn't work? → Form NEW hypothesis. DON'T add more fixes on top.
+4. **When You Don't Know** — Say "I don't understand X." Don't pretend.
+
+---
+
+## Phase 4: Implementation & Verification
+
+### 1. Create Failing Test Case
+
+```typescript
+it("should reject empty mentoradoId", () => {
+  // Simplest possible reproduction
+  expect(() => service.create({ mentoradoId: "" })).toThrow();
+});
+```
+
+### 2. Implement Single Fix
+
+- Address the root cause identified
+- ONE change at a time
+- No "while I'm here" improvements
+
+### 3. Verify Fix
+
+| Step          | Command         | Check     |
+| ------------- | --------------- | --------- |
+| 1. Fix code   | Edit files      | Logical   |
+| 2. Type check | `bun run check` | No errors |
+| 3. Test       | `bun test`      | All pass  |
+| 4. Visual     | `agent-browser` | UI works  |
+
+### 4. 3-Fix Escalation Rule
+
+- **< 3 fixes failed** → Return to Phase 1, re-analyze with new information
+- **≥ 3 fixes failed** → **STOP.** Question the architecture:
+  - Is this pattern fundamentally sound?
+  - Are we sticking with it through sheer inertia?
+  - Should we refactor architecture vs. continue fixing symptoms?
+  - **Discuss with user before attempting more fixes**
+
+---
+
+## 5 Whys Template
 
 ```markdown
-**Problem**: Database query returns empty array
+**Problem**: [Describe error]
 
-1. Why? → Query has wrong filter
-2. Why? → Filter uses wrong field name
-3. Why? → Schema was changed but query wasn't
-4. Why? → No tests for this query
-5. Why? → No testing culture for DB layer
+1. Why? → [First cause]
+2. Why? → [Deeper cause]
+3. Why? → [Underlying issue]
+4. Why? → [Systemic reason]
+5. Why? → [Root cause]
 
-**Root Cause**: Missing integration tests for database queries
-**Fix**: Add query test + fix field name
+**Root Cause**: [Final determination]
+**Fix**: [Solution implemented]
 ```
 
-### Data Flow Tracing
+---
 
+## Debug Report Template
+
+```markdown
+## Debug Report
+
+**Issue**: [Description]
+**Bug Type**: Cosmetic | Performance | Security | Functionality | Flaky Test
+**Severity**: P1 | P2 | P3 | P4
+**Regression Risk**: High | Medium | Low
+**Root Cause**: [5 Whys result]
+**Fix**: [What was changed]
+**Verification**:
+
+- [ ] `bun run check` ✅
+- [ ] `bun test` ✅
+- [ ] Browser verified ✅
+
+**Files Changed**: [list]
+
+**Lessons Learned**: What would have caught this earlier?
+- [ ] Better test coverage for [area]
+- [ ] Defense-in-depth at [layer]
+- [ ] Input validation for [type]
 ```
-User Input → Component State → API Call → Database → Response → UI Update
-     ↓            ↓              ↓          ↓          ↓          ↓
-   Check        Check          Check      Check      Check      Check
-```
 
-## Phase 4: FIX & VERIFY
+---
 
-**Goal**: Implement fix and prove it works.
-
-| Step          | Command         | Check      |
-| ------------- | --------------- | ---------- |
-| 1. Fix code   | Edit files      | Logical    |
-| 2. Type check | `bun run check` | No errors  |
-| 3. Test       | `bun test`      | All pass   |
-| 4. Visual     | `agent-browser` | UI works   |
-| 5. Commit     | `git commit`    | Documented |
-
-### Commit Message Template
+## Commit Message Template
 
 ```
 fix(scope): brief description
@@ -104,26 +201,16 @@ Fix: [What was changed]
 Tested: bun run check ✅, bun test ✅
 ```
 
-## Common Debugging Commands
+---
 
-```bash
-# Type errors
-bun run check
+## Regression Prevention (L6+)
 
-# Test failures
-bun test --reporter=verbose
+For severe or recurring bugs, apply the full protocol from `regression-prevention.md`.
 
-# Git changes
-git diff HEAD~5
-git log --oneline -10
+**Quick checklist:**
 
-# Search codebase
-grep -r "errorPattern" src/
-```
-
-## Anti-Patterns
-
-❌ **Shotgun debugging**: Random changes hoping to fix
-❌ **Symptom fixing**: Hiding the error without understanding
-❌ **Skip reproduction**: Assuming you know the problem
-❌ **No verification**: Not confirming fix actually works
+1. **Test exists?** — Fails without fix, passes with it
+2. **Guard added?** — Defense-in-depth at the right layer
+3. **Pattern scan?** — If High regression risk, check rest of codebase
+4. **Knowledge captured?** — Fix logged via evolution-core
+5. **Postmortem written?** — For P1/P2 bugs, use the [postmortem template](regression-prevention.md)

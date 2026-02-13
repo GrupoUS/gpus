@@ -11,7 +11,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { validateAsaasCustomerPayload, validateCPF } from '../../convex/lib/validators';
+import { validateAsaasCustomerPayload, validateCPF } from '../../server/lib/validators';
 
 // Type alias for Id to avoid import issues in tests
 type Id<T> = string & { brand: T };

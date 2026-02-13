@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Unified testing, debugging, and error-fixing skill for backend, database, and frontend. Use when investigating bugs, running tests, analyzing logs, or fixing errors. Consolidates systematic-debugging, testing-patterns, vulnerability-scanner, and webapp-testing principles.
+description: Use when investigating bugs, test failures, unexpected behavior, performance problems, build failures, or flaky tests. Use ESPECIALLY when under time pressure, when a "quick fix" seems obvious, or after multiple failed fix attempts.
 allowed-tools:
   - run_command
   - browser_subagent
@@ -11,27 +11,102 @@ allowed-tools:
 
 # Debug Skill
 
-> Unified debugging, testing, and error-fixing for full-stack applications.
+> Systematic debugging for full-stack applications. Root cause first, always.
+
+## The Iron Law
+
+```
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+```
+
+If you haven't completed Phase 1, you **cannot** propose fixes. Violating this process is violating the spirit of debugging.
+
+---
 
 ## When to Use
 
 | Trigger                  | Action                  |
 | ------------------------ | ----------------------- |
 | Bug report, error, crash | Start 4-phase debugging |
-| Need tests               | Run biome + vitest      |
-| Frontend broken          | Use agent-browser CLI   |
-| Slow queries             | Use Neon MCP tools      |
-| Deployment failed        | Check Railway logs      |
+| Flaky / failing tests    | Investigate root cause  |
+| Performance problems     | Neon MCP + profiling    |
+| Frontend broken          | agent-browser CLI       |
+| Build / deploy failure   | Check logs + traces     |
+
+**Use ESPECIALLY when:**
+
+- Under time pressure (emergencies make guessing tempting)
+- "Just one quick fix" seems obvious
+- You've already tried multiple fixes
+- Previous fix didn't work
+- You don't fully understand the issue
+
+**Don't skip when:**
+
+- Issue seems simple (simple bugs have root causes too)
+- You're in a hurry (systematic is faster than thrashing)
 
 ---
 
 ## Content Map
 
-| Reference                                              | Purpose                        |
-| ------------------------------------------------------ | ------------------------------ |
-| [Testing Pyramid](references/testing-pyramid.md)       | Unit/Integration/E2E selection |
-| [Debug Methodology](references/debug-methodology.md)   | 4-phase process, 5 Whys        |
-| [Security Checklist](references/security-checklist.md) | OWASP Top 10 2025              |
+| Reference                                                        | Purpose                               |
+| ---------------------------------------------------------------- | ------------------------------------- |
+| [Debug Methodology](references/debug-methodology.md)             | 4-phase process, 5 Whys, templates    |
+| [Root Cause Tracing](references/root-cause-tracing.md)           | Backward trace through call chain     |
+| [Defense-in-Depth](references/defense-in-depth.md)               | 4-layer validation after fixing       |
+| [Condition-Based Waiting](references/condition-based-waiting.md) | Replace timeouts with condition polls |
+| [Testing Pyramid](references/testing-pyramid.md)                 | Unit/Integration/E2E selection        |
+| [Security Checklist](references/security-checklist.md)           | OWASP Top 10 2025                     |
+
+---
+
+## The Four Phases
+
+Complete each phase before proceeding. See `debug-methodology.md` for detailed steps.
+
+| Phase                    | Key Activities                               | Success Criteria                 |
+| ------------------------ | -------------------------------------------- | -------------------------------- |
+| **1. Root Cause Invest.**| Read errors, reproduce, check changes, trace | Understand WHAT and WHY          |
+| **2. Pattern Analysis**  | Find working examples, compare differences   | Identify what's different        |
+| **3. Hypothesis Test**   | Form single theory, test minimally           | Confirmed or new hypothesis      |
+| **4. Implementation**    | Create failing test, fix, verify             | Bug resolved, all tests pass     |
+
+### 3-Fix Escalation Rule
+
+- **< 3 fixes failed** → Return to Phase 1, re-analyze
+- **≥ 3 fixes failed** → **STOP.** Question the architecture. Discuss with user.
+
+---
+
+## Red Flags — STOP and Return to Phase 1
+
+If you catch yourself thinking:
+
+- "Quick fix for now, investigate later"
+- "Just try changing X and see if it works"
+- "Add multiple changes, run tests"
+- "Skip the test, I'll manually verify"
+- "It's probably X, let me fix that"
+- "I don't fully understand but this might work"
+- "Here are the main problems: [lists fixes without investigation]"
+- "One more fix attempt" (when already tried 2+)
+
+**ALL of these mean: STOP. Return to Phase 1.**
+
+---
+
+## Common Rationalizations
+
+| Excuse                                      | Reality                                                  |
+| ------------------------------------------- | -------------------------------------------------------- |
+| "Issue is simple, don't need process"       | Simple issues have root causes too. Process is fast.     |
+| "Emergency, no time for process"            | Systematic debugging is FASTER than guess-and-check.     |
+| "Just try this first, then investigate"     | First fix sets the pattern. Do it right from the start.  |
+| "I'll write test after confirming fix works"| Untested fixes don't stick. Test first proves it.        |
+| "Multiple fixes at once saves time"         | Can't isolate what worked. Causes new bugs.              |
+| "I see the problem, let me fix it"          | Seeing symptoms ≠ understanding root cause.              |
+| "One more fix attempt" (after 2+ failures)  | 3+ failures = architectural problem. Question pattern.   |
 
 ---
 
@@ -44,7 +119,7 @@ Problem Type?
 │   ├── Logic error → bun test
 │   └── API error → Check tRPC logs
 ├── Database Error
-│   ├── Slow query → mcp_mcp-server-neon_list_slow_queries
+│   ├── Slow query → neon MCP (`list_slow_queries`)
 │   ├── Schema issue → drizzle-kit push
 │   └── Connection → Check DATABASE_URL
 ├── Frontend Error
@@ -62,23 +137,15 @@ Problem Type?
 ### Backend: Biome + Vitest
 
 ```bash
-# Lint & type check
-bun run check
-
-# Run tests
-bun test
-bun test --coverage
-bun test path/to/file.test.ts
+bun run check              # Lint & type check
+bun test                   # Run tests
+bun test --coverage        # With coverage
+bun test path/to/file.test.ts  # Specific file
 ```
 
 ### Frontend: agent-browser CLI
 
 ```bash
-# Install (first time)
-npm install -g agent-browser
-agent-browser install
-
-# Core workflow
 agent-browser open http://localhost:3000   # Navigate
 agent-browser snapshot                     # Get refs (a11y tree)
 agent-browser click @e2                    # Click element by ref
@@ -91,109 +158,18 @@ agent-browser close                        # Cleanup
 ### Database: Neon MCP
 
 ```bash
-# Via MCP (preferred)
-mcp_mcp-server-neon_list_slow_queries  # Find slow queries
-mcp_mcp-server-neon_run_sql            # Execute debug SQL
-mcp_mcp-server-neon_explain_sql_statement  # Analyze query plan
-
-# Via CLI
-neonctl databases list --project-id <id>
+neon.list_slow_queries       # Find slow queries
+neon.run_sql                 # Execute debug SQL
+neon.explain_sql_statement   # Analyze query plan
 ```
 
-### Deployment: Railway CLI
+### Git Forensics
 
 ```bash
-# View logs
-railway logs
-
-# Filter errors
-railway logs --filter="level:error"
-
-# Filter path + error
-railway logs --filter="@path:/api level:error"
-
-# SSH into service (interactive)
-railway ssh --service <service-id>
+git diff HEAD~5              # Recent changes
+git log --oneline -10        # Recent commits
+git bisect start             # Binary search for breaking commit
 ```
-
----
-
-## 4-Phase Debugging Process
-
-### Phase 1: REPRODUCE
-
-- [ ] Confirm minimum reproducible steps
-- [ ] Document expected vs actual behavior
-- [ ] Identify affected scope (file, component, route)
-
-### Phase 2: ISOLATE
-
-- [ ] Binary search to narrow location
-- [ ] Add strategic logging
-- [ ] Check recent changes (`git diff HEAD~5`)
-
-### Phase 3: UNDERSTAND (Root Cause)
-
-- [ ] Apply 5 Whys technique
-- [ ] Trace data flow
-- [ ] Check state at each step
-
-### Phase 4: FIX & VERIFY
-
-- [ ] Implement fix
-- [ ] Run `bun run check` (no type errors)
-- [ ] Run `bun test` (tests pass)
-- [ ] Verify in browser (`agent-browser`)
-- [ ] Document fix in commit message
-
----
-
-## 5 Whys Template
-
-```markdown
-**Problem**: [Describe error]
-
-1. Why? → [First cause]
-2. Why? → [Deeper cause]
-3. Why? → [Underlying issue]
-4. Why? → [Systemic reason]
-5. Why? → [Root cause]
-
-**Root Cause**: [Final determination]
-**Fix**: [Solution implemented]
-```
-
----
-
-## Testing Pyramid
-
-```
-        /\
-       /E2E\       ← Few, slow, high confidence
-      /------\
-     / Integ. \    ← Some, medium speed
-    /----------\
-   /   Unit     \  ← Many, fast, isolated
-  /--------------\
-```
-
-| Layer       | Tool          | When                   |
-| ----------- | ------------- | ---------------------- |
-| Unit        | Vitest        | Business logic, utils  |
-| Integration | Vitest + tRPC | API routes, DB queries |
-| E2E         | agent-browser | User flows, UI         |
-
----
-
-## Security Quick Check (OWASP 2025)
-
-| #   | Vulnerability          | Check                      |
-| --- | ---------------------- | -------------------------- |
-| 1   | Broken Access Control  | Verify auth on all routes  |
-| 2   | Cryptographic Failures | Check secrets not exposed  |
-| 3   | Injection              | Parameterized queries only |
-| 4   | Insecure Design        | Review auth flow           |
-| 5   | Security Misconfig     | Check CORS, headers        |
 
 ---
 
@@ -209,28 +185,12 @@ railway ssh --service <service-id>
 
 ## Anti-Patterns
 
-❌ **Don't** skip reproduction steps
-❌ **Don't** fix symptoms without root cause
-❌ **Don't** ignore type errors
-❌ **Don't** deploy without tests passing
-❌ **Don't** use console.log in production
-
----
-
-## Output Template
-
-When debugging is complete, document:
-
-```markdown
-## Debug Report
-
-**Issue**: [Description]
-**Root Cause**: [5 Whys result]
-**Fix**: [What was changed]
-**Verification**:
-
-- [ ] `bun run check` ✅
-- [ ] `bun test` ✅
-- [ ] Browser verified ✅
-      **Files Changed**: [list]
-```
+❌ **Shotgun debugging** — Random changes hoping to fix
+❌ **Symptom fixing** — Hiding the error without understanding root cause
+❌ **Skip reproduction** — Assuming you know the problem
+❌ **No verification** — Not confirming fix actually works
+❌ **Multiple fixes at once** — Can't isolate what worked
+❌ **Skip error messages** — Not reading stack traces completely
+❌ **Fix at symptom** — Not tracing back to original trigger
+❌ **Ignore type errors** — Treating them as noise
+❌ **Deploy without tests** — Shipping unverified changes

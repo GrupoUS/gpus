@@ -1,171 +1,84 @@
-# Database Design Reference
+# Database Design — Drizzle + Neon Operational Patterns
 
-> Schema design, indexing, query optimization for Neon PostgreSQL + Drizzle ORM.
+Design schema and query behavior for correctness under scale, evolution, and failure.
 
-## Database Selection (This Project)
+## Driver and Runtime Reality
 
-| Database            | Use Case                              |
-| ------------------- | ------------------------------------- |
-| **Neon PostgreSQL** | Production (serverless, branching) ✅ |
-| SQLite              | Local dev, embedded apps              |
-| Turso               | Edge-first, multi-region              |
+Use Neon HTTP driver with explicit awareness of stateless request behavior.
 
-## ORM Selection (This Project)
+Operational implications:
 
-| ORM             | Use Case                      |
-| --------------- | ----------------------------- |
-| **Drizzle ORM** | Type-safe, SQL-like syntax ✅ |
-| Prisma          | Schema-first, migrations      |
-| Kysely          | Query builder only            |
+- Avoid transaction-heavy assumptions in request flow.
+- Prefer idempotent writes and conflict-aware mutation semantics.
+- Keep query shapes explicit for predictable performance.
 
----
+## Canonical Schema Strategy
 
-## Schema Design Principles
+### Extension-First Policy
 
-### Normalization Decision
+Before creating a new table:
 
-```
-Normalize (separate tables):
-├── Data repeated across rows
-├── Updates need multiple changes
-├── Clear relationships
-└── Query patterns benefit
+1. Evaluate whether entity is true new domain.
+2. Prefer optional column extension for 1:1 shape growth.
+3. Add relation only when cardinality and lifecycle differ materially.
+4. Require index and access-pattern justification for all new tables.
 
-Denormalize (embed/duplicate):
-├── Read performance critical
-├── Data rarely changes
-├── Always fetched together
-└── Simpler queries needed
-```
+### Anti-Sprawl Rules
 
-### Primary Key Selection
+- Ban 1:1 satellite tables without hard constraints justification.
+- Ban duplicate denormalized fields without read model rationale.
+- Require ownership and deletion semantics for each relation.
 
-| Type             | Use When                        |
-| ---------------- | ------------------------------- |
-| Serial/BigSerial | Simple apps, single database ✅ |
-| UUID             | Distributed systems, security   |
-| ULID             | UUID + sortable by time         |
+## Query Pattern Standards
 
-### Timestamps (Always Include)
+- Keep projection explicit, never broad select by default.
+- Prefer indexed predicates first.
+- Return only required fields for API contracts.
+- Use conflict-aware upserts for identity and webhook sync paths.
+- Keep writes idempotent for retries and replay.
 
-```typescript
-// Drizzle pattern
-createdAt: timestamp("created_at").defaultNow().notNull(),
-updatedAt: timestamp("updated_at").defaultNow().notNull(),
-```
+## Migration Safety Model
 
-### Relationship Types
+Treat migrations as operational events.
 
-| Type         | Implementation                     |
-| ------------ | ---------------------------------- |
-| One-to-One   | FK on child with unique constraint |
-| One-to-Many  | FK on child table                  |
-| Many-to-Many | Junction table                     |
+Required controls:
 
----
+1. Pre-check production-like data impact and lock risk.
+2. Prefer additive forward-compatible migrations.
+3. Separate deploy-time and backfill-time operations when needed.
+4. Include explicit rollback instructions.
+5. Verify post-migration query plans on critical paths.
 
-## Indexing Principles
+## Performance and Latency
 
-### When to Index
+For latency regressions:
 
-```
-✅ Index these:
-├── WHERE clause columns
-├── JOIN condition columns
-├── ORDER BY columns
-├── Foreign keys
-└── Unique constraints
+- Check index coverage for high-cardinality filters.
+- Check sort and pagination alignment with index order.
+- Check N+1 patterns introduced in service composition.
+- Check external call coupling inside DB-critical paths.
 
-❌ Don't over-index:
-├── Write-heavy tables
-├── Low-cardinality columns
-├── Rarely queried columns
-```
+Use diagnostics process from [`runbooks.md`](runbooks.md) and [`debugging-matrix.md`](debugging-matrix.md).
 
-### Index Types
+## Data Consistency with External Systems
 
-| Type     | Use For                   |
-| -------- | ------------------------- |
-| B-tree   | General purpose (default) |
-| Hash     | Equality only             |
-| GIN      | JSONB, arrays, full-text  |
-| pgvector | Vector similarity         |
+When syncing Clerk or provider state:
 
-### Composite Index Order
+- Keep identity keys immutable and unique.
+- Use upsert semantics with deterministic winner rules.
+- Store sync metadata for reconciliation and auditing.
+- Include replay-safe processing for delayed events.
 
-```
-Order matters:
-├── Equality columns FIRST
-├── Range columns LAST
-├── Most selective FIRST
-└── Match query pattern
-```
+## Do / Don’t
 
----
+Do:
 
-## Query Optimization
+- Prefer schema changes that preserve backward compatibility.
+- Prefer explicit relation indexes and query contracts.
+- Prefer write paths that can be safely retried.
 
-### N+1 Problem
+Don’t:
 
-```
-Problem:
-├── 1 query for parents
-├── N queries for children
-└── Very slow!
-
-Solutions:
-├── JOIN → Single query
-├── Eager loading → ORM joins
-├── Batch loading → Promise.all
-```
-
-### EXPLAIN ANALYZE
-
-```sql
-EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
-
-Look for:
-├── Seq Scan → Add index
-├── Actual vs estimated rows mismatch
-├── High execution time
-```
-
-### Drizzle Patterns
-
-```typescript
-// ✅ Select specific columns
-db.select({ id: users.id, name: users.name }).from(users);
-
-// ✅ Use indexes with eq()
-db.select().from(users).where(eq(users.email, email));
-
-// ✅ JOIN instead of N+1
-db.select()
-  .from(mentorados)
-  .leftJoin(metrics, eq(mentorados.id, metrics.mentoradoId));
-
-// ✅ Batch writes
-await Promise.all(items.map(item => db.insert(table).values(item)));
-```
-
----
-
-## Anti-Patterns
-
-❌ Default to PostgreSQL for simple apps (SQLite may suffice)
-❌ Skip indexing on FK columns
-❌ Use `SELECT *` in production
-❌ Store JSON when structured data is better
-❌ Ignore N+1 queries
-❌ Create new tables when extending existing works
-
----
-
-## Checklist
-
-- [ ] Database chosen for THIS context?
-- [ ] Deployment environment considered?
-- [ ] Index strategy planned?
-- [ ] Relationship types defined?
-- [ ] Timestamps included?
-- [ ] N+1 patterns avoided?
+- Don’t couple migration safety to best-case traffic assumptions.
+- Don’t add schema surface without lifecycle ownership.
+- Don’t rely on manual hotfix SQL as primary rollout path.

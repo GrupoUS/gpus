@@ -1,0 +1,17 @@
+{
+	"name": "@repo/shared",
+	"version": "0.0.0",
+	"private": true,
+	"exports": {
+		"./db/schema": "./drizzle/schema.ts",
+		"./db/enums": "./drizzle/enums.ts"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.44.5"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"drizzle-kit": "^0.31.9",
+		"typescript": "^5.9.3"
+	}
+}

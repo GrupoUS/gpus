@@ -1,264 +1,197 @@
 ---
-description: Unified frontend design workflow using planning, ui-ux-pro-max, and frontend-design skills. Triggers on /design command.
+description: Canonical design workflow. 6-phase pipeline from design intelligence through validation.
 ---
 
-# Command: /design
+# /design — Design Workflow
 
-Comprehensive design workflow combining **research/planning** → **design system** → **implementation** → **validation**.
-
-## Trigger
-- `/design` or `/design "description"`
-- Design-related requests: create UI, build component, design page, improve UX
+> Orchestration-only. Deep policy lives in `frontend-design/SKILL.md`, `gpus-theme/SKILL.md`, and `ui-ux-pro-max/SKILL.md`.
 
 ---
 
-## Skill Architecture
+## 1. Mandatory Skill Loading
 
-| Priority | Skill | Role | Phase |
-|----------|-------|------|-------|
-| P0 | `planning` | Research & Plan | Pre-Phase (L4+) |
-| P1 | `ui-ux-pro-max` | Design Intelligence | Phase 1 |
-| P2 | `frontend-design` | Assets + Validation | Phase 2-4 |
+```yaml
+ALWAYS_LOAD:
+  - .agent/skills/frontend-design/SKILL.md     # Code standards + GPUS inline
+  - .agent/skills/gpus-theme/SKILL.md           # Full theme tokens (when needed)
+  - .agent/skills/ui-ux-pro-max/SKILL.md        # Design intelligence engine
+```
+
+## 2. Task Routing
+
+| Task Type | Primary Reference |
+|-----------|------------------|
+| New page/feature | `ui-ux-pro-max` → `project-design-system.md` |
+| Component design | `shadcn-patterns.md` → `decision-trees.md` |
+| Stitch prototyping | `stitch-workflows.md` → `stitch-prompt-templates.md` |
+| Color/typography questions | `color-system.md` → `typography-system.md` |
+| Animation/interaction | `animation-guide.md` → `ux-psychology.md` |
+| Tailwind patterns | `tailwind-v4-patterns.md` |
+| Multi-page consistency | `stitch-workflows.md` § DESIGN.md |
+| Layout patterns | `project-design-system.md` § Page Design Patterns |
 
 ---
 
-## 🔴 Pre-Phase: Research (L4+ Tasks Only)
+## 3. Execution Phases
 
-> [!CAUTION]
-> For L4+ complexity (new page/feature/redesign), execute `/plan` workflow first.
+### Phase 0 — Design Intelligence
 
-| Complexity | Action |
-|------------|--------|
-| L1-L3 | Skip to Phase 0 |
-| L4+ | **Execute APEX Research → Create `docs/PLAN-design-{slug}.md`** |
+> Use `ui-ux-pro-max` for inspiration and best practices BEFORE any implementation.
 
-### APEX Research (if L4+)
-1. **LOCAL**: `grep_search` existing components, colors, similar pages
-2. **CONTEXT7**: shadcn/ui, Tailwind v4, React 19 docs
-3. **TAVILY**: Industry UX patterns (if needed)
-4. **SYNTHESIS**: Sequential thinking → define approach
-
-### Design Plan Output (`docs/PLAN-design-{slug}.md`)
-```markdown
-# PLAN-design-{slug}: {Title}
-> **Goal:** {One-line objective}
-
-## Research Findings
-| # | Finding | Confidence | Source |
-|---|---------|------------|--------|
-
-## Design Specs
-- **Hierarchy:** Primary/Secondary/Tertiary elements
-- **Colors (60-30-10):** Background/Foreground/Accent
-- **Typography:** Heading/Body/Caption
-
-## Atomic Tasks
-### AT-001: {Task}
-- [ ] ST-001.1: {Subtask} → File: `path` → Validation: {check}
-```
-
----
-
-## Phase 0: Requirement Analysis (MANDATORY)
-
-**⛔ Complete before designing!**
-
-### Constraints
-| Constraint | Question |
-|------------|----------|
-| Timeline | How much time? |
-| Content | Ready or placeholder? |
-| Brand | Existing guidelines? |
-| Audience | Who exactly? |
-
-### Extract
-- **Product type**: SaaS, dashboard, landing, etc.
-- **Style**: minimal, professional, dark mode, etc.
-- **Stack**: Default `shadcn`
-
-### Socratic Gate
-If unclear, ASK: "What color palette?", "What style?", "Layout preference?"
-
----
-
-## Phase 1: Design System (ui-ux-pro-max)
-
-### Generate Design System (REQUIRED)
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<product> <industry> <keywords>" --design-system -p "Project"
-```
-
-### Persist (Multi-page)
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system --persist -p "Project" --page "dashboard"
-```
-
-### Supplementary Searches
-```bash
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "query" --domain ux|style|typography|color
-python3 .agent/skills/ui-ux-pro-max/scripts/search.py "query" --stack shadcn|react|nextjs
-```
-
-**Domains:** `product`, `style`, `typography`, `color`, `landing`, `chart`, `ux`, `react`, `web`
-**Stacks:** `html-tailwind`, `react`, `nextjs`, `vue`, `svelte`, `swiftui`, `shadcn`
-
----
-
-## Phase 1.5: AI Prototyping (Stitch)
-
-> **Goal:** Generate high-fidelity UI prototypes and code using Gemini 3.0.
-
-### 1. Create Design File
-Create `docs/DESIGN-{slug}.md` to store all outputs.
-
-### 2. Generate Prototype (Stitch)
-```bash
-# 1. Create Project
-stitch_create_project(title="{slug}")
-
-# 2. Generate Screen (Iterate until satisfied)
-stitch_generate_screen_from_text(
-  project_id="...", 
-  prompt="High-fidelity dashboard for [User], [Style] aesthetics (Navy/Gold), using Tailwind v4 and shadcn/ui. [Specific Features]. Use gemini-3-pro."
-)
-
-# 3. Capture Code
-# Copy full `output_components` from the tool response into docs/DESIGN-{slug}.md
-```
-
-### 3. Generate Assets (Nano Banana Pro)
-For hero images or specific visuals needed in the design:
-```bash
-# REQUIRED: Use --model gemini-3-pro for high fidelity
-python3 .agent/skills/frontend-design/scripts/generate_images.py "Prompt" "filename" --model gemini-3-pro
-```
-
----
-
-## Phase 2: Asset Generation (Optional)
-
-### Image Generation
-```bash
-python3 .agent/skills/frontend-design/scripts/generate_images.py "prompt" "filename"
-```
-
-### Generative Art (p5.js)
-Templates: `.agent/skills/frontend-design/assets/p5-templates/`
-Guide: `algorithmic-art-guide.md`
-
-### Canvas Art (PDF/PNG)
-Fonts: `.agent/skills/frontend-design/assets/canvas-fonts/`
-Guide: `canvas-design-guide.md`
-
----
-
-## Phase 3: Implementation
-
-### Theme (GPUS)
-```
-60% → Background (Navy/White)
-30% → Foreground (Gold/Dark Blue)
-10% → Accent/CTA (Gold)
-```
-
-Assets: `.agent/skills/gpus-theme/assets/`
-
-### Component Usage (shadcn/ui)
-```tsx
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export function FeatureCard({ ...props }) {
-  return (
-    <Card className="border-primary/20 hover:shadow-lg transition-shadow">
-      <CardHeader><CardTitle>Title</CardTitle></CardHeader>
-      <CardContent>{/* content */}</CardContent>
-    </Card>
-  );
-}
-```
-
-### Build Order
-1. HTML structure (semantic, accessible)
-2. CSS/Tailwind (8-point grid, tokens)
-3. Interactivity (states, transitions)
-
-### Requirements
-- React 19 + Tailwind v4 + shadcn/ui
-- Mobile-first, 44px+ touch targets
-- WCAG 2.1 AA (contrast 4.5:1, keyboard nav)
-- `prefers-reduced-motion` respected
-
----
-
-## Phase 4: Validation (MANDATORY)
+**When required:** New pages, feature areas, landing pages, or significant UI redesigns.
+**Skip when:** Bug fixes, minor tweaks, or adding a field to an existing form.
 
 ```bash
-python3 .agent/skills/frontend-design/scripts/ux_audit.py <path>
-python3 .agent/skills/frontend-design/scripts/accessibility_checker.py <file>
-bun run check && bun run lint && bun test
+# Full design system recommendation
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<feature keywords>" --design-system
+
+# Domain-specific research
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<topic>" --domain style
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<topic>" --domain chart
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<topic>" --domain ux
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<topic>" --domain typography
+
+# Multi-page projects: persist design system
+python3 .agent/skills/ui-ux-pro-max/scripts/search.py "<project>" --design-system --persist
+```
+
+**Output:** Design recommendations (style, palette, typography, chart types, anti-patterns).
+
+---
+
+### Phase 1 — Intent & Context
+
+1. **Clarify the goal** — What does the user need? Page, component, or redesign?
+2. **Audit existing patterns** — Check `project-design-system.md` for page patterns already in use
+3. **Identify scope** — New component vs extending existing, how many pages affected
+4. **Check component inventory** — Does a similar component already exist?
+
+```yaml
+audit_checklist:
+  - Existing page patterns that match?
+  - Components to reuse from ui/ or feature dirs?
+  - Layout template to follow? (KPI, Kanban, Settings, Tabbed)
+  - Dark mode impact?
 ```
 
 ---
 
-## Anti-Patterns (FORBIDDEN)
+### Phase 2 — Theme Reconciliation
 
-| ❌ Forbidden | ✅ Alternative |
-|-------------|----------------|
-| Left/Right Split Hero | Massive Typography, Vertical Narrative |
-| Bento Grids | Asymmetric layouts |
-| Mesh/Aurora Gradients | Solid colors, Grain textures |
-| Glassmorphism everywhere | High-contrast flat |
-| Purple/Violet | **PURPLE BAN ✅** |
-| Emoji as icons | SVG (Heroicons/Lucide) |
+Merge `ui-ux-pro-max` output (Phase 0) with GPUS theme constraints:
 
----
+| ui-ux-pro-max Suggests | GPUS Decision |
+|------------------------|---------------|
+| Color palette | **Ignore.** Keep GPUS tokens unchanged |
+| Typography pairing | **Adopt if compatible** with Manrope primary |
+| Layout pattern | **Adopt.** Use as layout guidance |
+| Animation style | **Adopt.** Apply via Framer Motion |
+| Chart type | **Adopt.** Implement with Recharts + GPUS chart colors |
+| Component choices | **Validate** against shadcn/ui inventory first |
 
-## Pre-Delivery Checklist
-
-### Research (L4+)
-- [ ] Plan file: `docs/PLAN-design-{slug}.md`
-
-### Visual
-- [ ] No emojis as icons
-- [ ] `cursor-pointer` on clickables
-- [ ] Hover transitions 150-300ms
-- [ ] Theme colors (`bg-primary` not `var()`)
-
-### Accessibility
-- [ ] Contrast 4.5:1
-- [ ] Focus states visible
-- [ ] Touch targets 44px+
-
-### Responsive
-- [ ] Tested: 375px, 768px, 1024px, 1440px
-- [ ] No horizontal scroll mobile
-
-### Code
-- [ ] `bun run check` ✓
-- [ ] `bun run lint` ✓
-- [ ] UX audit script ✓
+> **Iron rule:** GPUS token values are immutable. `ui-ux-pro-max` provides layout, style, and interaction guidance only.
 
 ---
 
-## Skill References
+### Phase 3 — Prototyping
 
-| Skill | Key Files |
-|-------|-----------|
-| planning | `SKILL.md` (APEX methodology) |
-| ui-ux-pro-max | `SKILL.md`, `data/*.csv` (styles, colors, typography) |
-| frontend-design | `SKILL.md`, `ux-psychology.md`, `tailwind-v4-patterns.md` |
-| gpus-theme | `assets/theme-tokens.css`, `assets/tailwind-theme.ts` |
+**Option A — Stitch MCP** (visual prototyping):
 
----
+1. Enhance prompt with GPUS context from `stitch-prompt-templates.md`
+2. Generate screen → review → iterate
+3. For multi-page: create `DESIGN.md` first for consistency
 
-## Usage
-```bash
-/design "Dashboard brutalista para métricas"
-/design "Landing minimalista para clínica"
-/design  # interactive mode
+**Option B — Direct Implementation** (code-first):
+
+1. Start from established page pattern in `project-design-system.md`
+2. Build with shadcn/ui primitives from `ui/`
+3. Apply GPUS tokens from the start
+
+```yaml
+routing:
+  new_page: Option A (Stitch first)
+  component_refactor: Option B (code-first)
+  landing_page: Option A (Stitch + DESIGN.md)
+  dashboard_widget: Option B (code-first)
 ```
 
 ---
 
-> 🔴 **MAESTRO RULE:** "If I can find this layout in a Tailwind UI template, I have FAILED."
+### Phase 4 — Implementation
+
+Follow `frontend-design/SKILL.md` strictly:
+
+1. **shadcn/ui first** — Use existing primitives from `ui/`. Never reinvent
+2. **GPUS tokens always** — `bg-primary`, `text-foreground`, `text-neon-petroleo`, no hardcoded hex
+3. **Feature components** in `components/[feature]/`, NOT in `components/ui/`
+4. **Framer Motion** for enter/exit animations, stagger effects
+5. **Recharts** with GPUS chart color tokens for data viz
+6. **Responsive** — mobile-first with `lg:` breakpoints for desktop
+
+```yaml
+quality_gates:
+  - Uses semantic color tokens only
+  - All interactive elements have focus ring (--ring)
+  - Dark mode works (toggle test)
+  - No layout shift on load
+  - ScrollArea at DashboardLayout level only
+```
+
+---
+
+### Phase 5 — Validation
+
+#### Accessibility
+- [ ] Color contrast ≥ 4.5:1 (text), ≥ 3:1 (large text)
+- [ ] All interactive elements keyboard-accessible
+- [ ] ARIA labels on icon-only buttons
+- [ ] Focus visible on all focusable elements
+
+#### Responsive
+- [ ] Mobile (`< 640px`): single column, touch targets ≥ 44px
+- [ ] Tablet (`640px–1023px`): 2-column adapts
+- [ ] Desktop (`≥ 1024px`): full grid, max-width 1280px
+
+#### Dark Mode
+- [ ] All text readable against dark backgrounds
+- [ ] No hardcoded colors bypassing theme
+- [ ] Charts use `--chart-*` tokens
+
+#### Component Quality
+- [ ] No custom components duplicating shadcn/ui primitives
+- [ ] CVA variants for component variations
+- [ ] TypeScript strict — no `any`
+
+#### Pre-Delivery (from ui-ux-pro-max)
+- [ ] Visual hierarchy clear (max 3 heading levels)
+- [ ] Whitespace balanced (not cramped, not empty)
+- [ ] Loading states implemented (skeletons)
+- [ ] Error states handled
+- [ ] Empty states designed
+
+---
+
+## 4. MCP Routing
+
+| Need | MCP Tool |
+|------|----------|
+| Generate visual prototype | `stitch` (generate_screen_from_text) |
+| Edit existing prototype | `stitch` (edit_screens) |
+| Look up library docs | `context7` (query-docs) |
+| Research design patterns | `tavily` (searchContext) |
+| Complex design reasoning | `sequential-thinking` |
+
+---
+
+## 5. Anti-Patterns
+
+| ❌ Don't | ✅ Do |
+|----------|------|
+| Build custom modal from scratch | Use `Dialog` from shadcn/ui |
+| Hardcode `bg-[#0f4c75]` | Use `text-neon-petroleo` utility |
+| Skip Phase 0 for new pages | Always research first |
+| Replace GPUS colors with generated palette | Adopt layout guidance, keep tokens |
+| Add CSS to component files | Use Tailwind classes or index.css utilities |
+| Create components in `ui/` | Feature components go in `components/[feature]/` |
+| Skip dark mode testing | Always verify both themes |
+| Use multiple scroll containers | Single `ScrollArea` at layout level |

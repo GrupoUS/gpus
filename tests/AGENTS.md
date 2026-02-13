@@ -2,7 +2,7 @@
 
 ## Package Identity
 
-**Purpose:** End-to-end and integration tests for Portal Grupo US  
+**Purpose:** End-to-end, integration, and unit tests for Portal Grupo US  
 **Tech:** Playwright for E2E, Vitest for unit/integration tests
 
 ---
@@ -11,8 +11,12 @@
 
 ```
 tests/
-└── e2e/
-    └── sanity.spec.ts    # Basic E2E smoke tests
+├── e2e/
+│   └── sanity.spec.ts        # Basic E2E smoke tests
+├── integration/
+│   └── asaas-sync.test.ts    # Asaas integration tests
+└── unit/
+    └── asaas/                # Asaas unit tests (validators, etc.)
 ```
 
 ---
@@ -88,25 +92,20 @@ describe('formatCurrency', () => {
 })
 ```
 
-### Convex Function Tests
+### Backend / tRPC Tests
 
-✅ **DO:** Use Convex testing utilities
+✅ **DO:** Test server validators and services independently
 ```typescript
-import { convexTest } from 'convex-test'
-import { api } from '../convex/_generated/api'
-import schema from '../convex/schema'
+import { describe, it, expect } from 'vitest'
+import { validateCPF } from '../../server/lib/validators'
 
-describe('leads', () => {
-  it('creates a lead', async () => {
-    const t = convexTest(schema)
-    
-    const leadId = await t.mutation(api.leads.createLead, {
-      name: 'Test Lead',
-      phone: '11999999999',
-      interestedProduct: 'trintae3',
-    })
-    
-    expect(leadId).toBeDefined()
+describe('validateCPF', () => {
+  it('validates a correct CPF', () => {
+    expect(validateCPF('123.456.789-09').valid).toBe(true)
+  })
+  
+  it('rejects invalid CPF', () => {
+    expect(validateCPF('000.000.000-00').valid).toBe(false)
   })
 })
 ```
@@ -125,10 +124,10 @@ describe('leads', () => {
 
 ## Common Gotchas
 
-- **Convex in tests**: Use `convex-test` package for isolated testing
 - **Clerk auth**: Use Clerk testing utilities for authenticated flows
-- **Real-time**: Test subscriptions with proper cleanup
+- **tRPC mocking**: Mock tRPC client for component tests using `vi.mock('~/lib/trpc')`
 - **Coverage**: Target 80%+ for critical business logic
+- **Dialog tests**: Some dialog components (e.g., scroll-lock) may have environment-specific failures in JSDOM
 
 ---
 
