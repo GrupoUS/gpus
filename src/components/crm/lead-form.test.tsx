@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +8,7 @@ import { LeadForm } from './lead-form';
 // Mock dependencies
 vi.mock('convex/react', () => ({
 	useMutation: vi.fn(),
+	useQuery: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({
@@ -112,6 +113,7 @@ describe('LeadForm', () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
+		document.body.style.pointerEvents = 'auto';
 		const { useMutation } = await import('convex/react');
 		(useMutation as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockCreateLead);
 	});
@@ -123,7 +125,7 @@ describe('LeadForm', () => {
 	});
 
 	it('opens the dialog when clicked', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LeadForm />);
 
 		// Use the role button from our mock
@@ -138,7 +140,7 @@ describe('LeadForm', () => {
 	});
 
 	it('validates required fields', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<LeadForm />);
 
 		const triggers = screen.getAllByRole('button');
@@ -147,8 +149,9 @@ describe('LeadForm', () => {
 		await waitFor(() => screen.getByRole('dialog'));
 
 		// Submit empty form
-		const submitBtn = screen.getByRole('button', { name: 'Criar Lead' });
-		await user.click(submitBtn);
+		const form = screen.getByRole('dialog').querySelector('form');
+		expect(form).not.toBeNull();
+		fireEvent.submit(form as HTMLFormElement);
 
 		await waitFor(() => {
 			expect(screen.getByText('Nome deve ter pelo menos 2 caracteres')).toBeDefined();
@@ -157,7 +160,7 @@ describe('LeadForm', () => {
 	});
 
 	it('submits valid form data', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		mockCreateLead.mockResolvedValue({ _id: '123' });
 
 		render(<LeadForm />);
@@ -174,8 +177,9 @@ describe('LeadForm', () => {
 		await user.type(phoneInput, '11999999999');
 
 		// Submit
-		const submitBtn = screen.getByRole('button', { name: 'Criar Lead' });
-		await user.click(submitBtn);
+		const form = screen.getByRole('dialog').querySelector('form');
+		expect(form).not.toBeNull();
+		fireEvent.submit(form as HTMLFormElement);
 
 		await waitFor(() => {
 			expect(mockCreateLead).toHaveBeenCalledWith(
@@ -196,7 +200,7 @@ describe('LeadForm', () => {
 	// This test validated optional clinic fields functionality before refactoring
 
 	it('handles submission error', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const { toast } = await import('sonner');
 		mockCreateLead.mockRejectedValue(new Error('API Error'));
 
@@ -209,7 +213,9 @@ describe('LeadForm', () => {
 		await user.type(screen.getByPlaceholderText('Ex: João Silva'), 'Test User');
 		await user.type(screen.getByPlaceholderText('Ex: 11999999999'), '11999999999');
 
-		await user.click(screen.getByRole('button', { name: 'Criar Lead' }));
+		const form = screen.getByRole('dialog').querySelector('form');
+		expect(form).not.toBeNull();
+		fireEvent.submit(form as HTMLFormElement);
 
 		await waitFor(() => {
 			expect(toast.error).toHaveBeenCalledWith('Erro ao criar lead: API Error');

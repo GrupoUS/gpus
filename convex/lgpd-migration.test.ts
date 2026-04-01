@@ -5,6 +5,19 @@ const SHA256_HEX_REGEX = /^[a-f0-9]{64}$/;
 // Set encryption key BEFORE any imports that use it
 process.env.ENCRYPTION_KEY = 'test-encryption-key-at-least-16-chars';
 
+vi.mock('./_generated/server', () => ({
+	mutation: (args: unknown) => args,
+	query: (args: unknown) => args,
+	action: (args: unknown) => args,
+	internalQuery: (args: unknown) => args,
+	internalMutation: (args: { handler?: unknown }) => ({
+		...args,
+		handler: args.handler,
+		// biome-ignore lint/style/useNamingConvention: Convex internal handler uses _handler
+		_handler: args.handler,
+	}),
+}));
+
 import { createStudentFromAsaas } from './asaas/mutations';
 import { encryptLegacyCpfs } from './migrations';
 

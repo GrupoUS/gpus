@@ -177,7 +177,9 @@ describe('Organization Settings', () => {
 				settings: {
 					cashbackAmount: 10,
 					cashbackType: 'percentage',
-					some_api_key: 'secret_123',
+					extraSettings: {
+						some_api_key: 'secret_123',
+					},
 				},
 			};
 
@@ -200,6 +202,20 @@ describe('Organization Settings', () => {
 					value: 'encrypted_secret_123',
 				}),
 			);
+			expect(mockDb.insert).toHaveBeenCalledWith(
+				'settings',
+				expect.objectContaining({
+					key: 'org_org_123_cashbackAmount',
+					value: 10,
+				}),
+			);
+			expect(mockDb.insert).toHaveBeenCalledWith(
+				'settings',
+				expect.objectContaining({
+					key: 'org_org_123_cashbackType',
+					value: 'percentage',
+				}),
+			);
 
 			// Activity log
 			expect(mockDb.insert).toHaveBeenCalledWith(
@@ -208,7 +224,11 @@ describe('Organization Settings', () => {
 					type: 'integracao_configurada',
 					organizationId: 'org_123',
 					metadata: expect.objectContaining({
-						changedSettings: expect.arrayContaining(['cashbackAmount', 'some_api_key']),
+						changedSettings: expect.arrayContaining([
+							'cashbackAmount',
+							'cashbackType',
+							'some_api_key',
+						]),
 					}),
 				}),
 			);
