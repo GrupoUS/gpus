@@ -7,7 +7,9 @@
  * in actions.ts and export.ts, adding enhanced logging and validation.
  */
 
-import { internal } from '../_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('../_generated/api').internal;
+
 import type { ActionCtx, QueryCtx } from '../_generated/server';
 import { type AsaasClient, createAsaasClient } from './client';
 import { AsaasConfigurationError } from './errors';

@@ -2,16 +2,31 @@ import { createClerkClient } from '@clerk/backend';
 import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('./_generated/api').internal;
+
 import { action, internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { createAuditLog } from './lib/auditLogging';
 import { getOrganizationId, requireAuth, requirePermission } from './lib/auth';
 import { PERMISSIONS } from './lib/permissions';
 
-const clerkClient = createClerkClient({
-	secretKey: process.env.CLERK_SECRET_KEY,
-	publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-});
+// Lazy-loaded Clerk client to ensure env vars are available at runtime
+let ClerkClient: ReturnType<typeof createClerkClient> | null = null;
+function getClerkClient() {
+	if (!ClerkClient) {
+		const secretKey = process.env.CLERK_SECRET_KEY;
+		if (!secretKey) {
+			throw new Error(
+				'Missing Clerk Secret Key. Go to https://dashboard.clerk.com and get your key for your instance.',
+			);
+		}
+		ClerkClient = createClerkClient({
+			secretKey,
+			publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+		});
+	}
+	return ClerkClient;
+}
 
 /**
  * Get current user from Clerk auth
@@ -46,6 +61,51 @@ export const list = query({
 			.query('users')
 			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
 			.collect();
+	},
+});
+
+/**
+ * AT-004: List system users for admin CRM view selector
+ * SECURITY: Requires admin role to access
+ * Returns minimal data for dropdown: _id, name, email
+ */
+export const listSystemUsers = query({
+	args: {},
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return [];
+
+		const organizationId = await getOrganizationId(ctx);
+		if (!organizationId) return [];
+
+		// Get current user to check admin role
+		const currentUser = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+			.unique();
+
+		// Only admins can list all users for the selector
+		if (!currentUser || currentUser.role !== 'admin') {
+			return [];
+		}
+
+		// Get all active users in organization
+		const users = await ctx.db
+			.query('users')
+			.withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+			.collect();
+
+		// Return minimal data for LGPD compliance
+		return users
+			.filter((u) => u.isActive)
+			.map((user) => ({
+				// biome-ignore lint/style/useNamingConvention: Convex convention uses _id
+				_id: user._id,
+				clerkId: user.clerkId,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+			}));
 	},
 });
 
@@ -402,7 +462,7 @@ export const inviteTeamMember = action({
 		// Basic requirement is TEAM_MANAGE.
 
 		try {
-			const invitation = await clerkClient.invitations.createInvitation({
+			const invitation = await getClerkClient().invitations.createInvitation({
 				emailAddress: args.email,
 				redirectUrl: args.redirectUrl,
 				publicMetadata: { role: args.role },
@@ -412,20 +472,26 @@ export const inviteTeamMember = action({
 			// We need organizationId. Actions don't have direct access to `getOrganizationId` helper easily without `ctx.runQuery`.
 			// But `requirePermission` returns identity which has `org_id`.
 			const organizationId = identity.org_id || identity.subject; // Fallback to personal org
+			// Type cast to break deep type instantiation chain in Convex internal API
+			await (ctx.runMutation as (fn: unknown, argObj: unknown) => Promise<void>)(
+				internal.users.createPendingUser,
+				{
+					email: args.email,
+					role: args.role,
+					invitedAt: Date.now(),
+					organizationId,
+				},
+			);
 
-			await ctx.runMutation(internal.users.createPendingUser, {
-				email: args.email,
-				role: args.role,
-				invitedAt: Date.now(),
-				organizationId,
-			});
-
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_creation',
-				description: `Invited user ${args.email} as ${args.role}`,
-				dataCategory: 'identificacao',
-				metadata: { email: args.email, role: args.role, invitedBy: identity.subject },
-			});
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_creation',
+					description: `Invited user ${args.email} as ${args.role}`,
+					dataCategory: 'identificacao',
+					metadata: { email: args.email, role: args.role, invitedBy: identity.subject },
+				},
+			);
 
 			return invitation;
 		} catch (error) {
@@ -512,27 +578,30 @@ export const updateTeamMemberRole = action({
 		}
 
 		try {
-			await clerkClient.users.updateUserMetadata(args.userId, {
+			await getClerkClient().users.updateUserMetadata(args.userId, {
 				publicMetadata: { role: args.newRole },
 			});
 
-			await ctx.runMutation(internal.users.syncUserRole, {
-				clerkId: args.userId,
-				role: args.newRole,
-			});
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.syncUserRole,
+				{ clerkId: args.userId, role: args.newRole },
+			);
 
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_modification',
-				description: `Updated role for ${args.userId} to ${args.newRole}`,
-				dataCategory: 'identificacao',
-				metadata: {
-					userId: args.userId,
-					previous_value: targetUser?.role || 'unknown',
-					new_value: args.newRole,
-					reason: args.reason,
-					ip_address: 'client_action', // Placeholder as we don't have IP here easily
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_modification',
+					description: `Updated role for ${args.userId} to ${args.newRole}`,
+					dataCategory: 'identificacao',
+					metadata: {
+						userId: args.userId,
+						previous_value: targetUser?.role || 'unknown',
+						new_value: args.newRole,
+						reason: args.reason,
+						ip_address: 'client_action',
+					},
 				},
-			});
+			);
 
 			return { success: true };
 		} catch (error) {
@@ -566,24 +635,30 @@ export const removeTeamMember = action({
 		}
 
 		try {
-			await clerkClient.users.updateUserMetadata(args.userId, {
+			await getClerkClient().users.updateUserMetadata(args.userId, {
 				publicMetadata: { isActive: false },
 			});
 
-			await ctx.runMutation(internal.users.softDeleteUserByClerkId, { clerkId: args.userId });
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.softDeleteUserByClerkId,
+				{ clerkId: args.userId },
+			);
 
-			await ctx.runMutation(internal.users.internalLogAudit, {
-				actionType: 'data_deletion',
-				description: `Removed user ${args.userId}`,
-				dataCategory: 'identificacao',
-				metadata: {
-					userId: args.userId,
-					reason: args.reason,
-					previous_value: 'active',
-					new_value: 'inactive',
-					ip_address: 'client_action',
+			await (ctx.runMutation as (fn: unknown, payload: unknown) => Promise<void>)(
+				internal.users.internalLogAudit,
+				{
+					actionType: 'data_deletion',
+					description: `Removed user ${args.userId}`,
+					dataCategory: 'identificacao',
+					metadata: {
+						userId: args.userId,
+						reason: args.reason,
+						previous_value: 'active',
+						new_value: 'inactive',
+						ip_address: 'client_action',
+					},
 				},
-			});
+			);
 
 			return { success: true };
 		} catch (error) {
@@ -710,14 +785,174 @@ export const listVendors = query({
 			.withIndex('by_organization', (q) => q.eq('organizationId', orgId))
 			.collect();
 
-		// Filter for vendor roles only (member, sdr) - exclude management roles from dropdown
+		// Specific admin users who are also sellers (e.g., Lucas as head of sales)
+		// Add clerkIds here to include admins in the vendor list
+		const SELLER_CLERK_IDS = ['user_38J04ndpzs8cDCEx0prhmXgfKdG'];
+
+		// Filter for vendor roles (member, sdr) OR specific seller clerkIds
 		return users
-			.filter((u) => u.isActive && ['member', 'sdr'].includes(u.role))
+			.filter(
+				(u) =>
+					u.isActive &&
+					(['member', 'sdr'].includes(u.role) || SELLER_CLERK_IDS.includes(u.clerkId)),
+			)
 			.map((u) => ({
 				id: u._id,
 				name: u.name,
 				email: u.email,
 				role: u.role,
 			}));
+	},
+});
+
+/**
+ * TEMPORARY: Fix specific SDR users who can't access CRM
+ * Run via: bunx convex run users:fixSdrUsers
+ * DELETE after fixing users
+ */
+export const fixSdrUsers = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const clerkIds = [
+			'user_38J04ndpzs8cDCEx0prhmXgfKdG', // Lucas
+			'user_39FYiwwX6W5JUWWQSb0CLXAxscX', // Erica
+		];
+
+		const results: { clerkId: string; status: string; details?: unknown }[] = [];
+
+		for (const clerkId of clerkIds) {
+			const user = await ctx.db
+				.query('users')
+				.withIndex('by_clerk_id', (q) => q.eq('clerkId', clerkId))
+				.unique();
+
+			if (!user) {
+				results.push({ clerkId, status: 'NOT_FOUND' });
+				continue;
+			}
+
+			// Fix: ensure role is 'sdr' and user is active
+			await ctx.db.patch(user._id, {
+				role: 'sdr',
+				isActive: true,
+				updatedAt: Date.now(),
+			});
+
+			results.push({
+				clerkId,
+				status: 'FIXED',
+				details: {
+					name: user.name,
+					previousRole: user.role,
+					previousIsActive: user.isActive,
+					organizationId: user.organizationId,
+				},
+			});
+		}
+
+		return results;
+	},
+});
+
+/**
+ * TEMPORARY: Set owner role for main admin user
+ * Run via: bunx convex run --prod users:fixOwner
+ * DELETE after fixing
+ */
+export const fixOwner = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		const ownerClerkId = 'user_36rPetU2FCZFvOFyhzxBQrEMTZ6'; // msm.jur@gmail.com
+
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_clerk_id', (q) => q.eq('clerkId', ownerClerkId))
+			.unique();
+
+		if (!user) {
+			return { status: 'NOT_FOUND', clerkId: ownerClerkId };
+		}
+
+		await ctx.db.patch(user._id, {
+			role: 'owner',
+			isActive: true,
+			updatedAt: Date.now(),
+		});
+
+		return {
+			status: 'FIXED',
+			name: user.name,
+			previousRole: user.role,
+			newRole: 'owner',
+		};
+	},
+});
+
+/**
+ * Backfill Clerk Users Action
+ *
+ * Fetches all users from Clerk and upserts them to Convex.
+ * Run this once to populate the users table for lead owner dropdowns.
+ *
+ * SECURITY: Admin only (requires manual invocation via dashboard/CLI)
+ */
+export const backfillClerkUsers = action({
+	args: {
+		organizationId: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const results: { clerkId: string; status: string; email?: string }[] = [];
+
+		try {
+			// Fetch all users from Clerk (paginated, up to 500)
+			const clerkResponse = await getClerkClient().users.getUserList({
+				limit: 500,
+			});
+
+			for (const user of clerkResponse.data) {
+				// Get primary email
+				const primaryEmail =
+					user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ||
+					user.emailAddresses?.[0]?.emailAddress ||
+					'';
+
+				// Use passed organizationId (org memberships require separate API call)
+				const orgId = args.organizationId || 'default';
+
+				// Default role - can be overridden later by admin
+				const role: 'owner' | 'admin' | 'manager' | 'member' | 'sdr' | 'cs' | 'support' = 'member';
+
+				try {
+					// biome-ignore lint/suspicious/noExplicitAny: break deep type instantiation on internal api
+					await ctx.runMutation((internal as any).clerk.upsertFromWebhook, {
+						clerkId: user.id,
+						email: primaryEmail,
+						name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+						avatar: user.imageUrl || undefined,
+						organizationId: orgId,
+						role,
+					});
+
+					results.push({ clerkId: user.id, status: 'synced', email: primaryEmail });
+				} catch (_mutErr) {
+					results.push({
+						clerkId: user.id,
+						status: 'error',
+						email: primaryEmail,
+					});
+				}
+			}
+
+			return {
+				totalFetched: clerkResponse.data.length,
+				synced: results.filter((r) => r.status === 'synced').length,
+				errors: results.filter((r) => r.status === 'error').length,
+				results,
+			};
+		} catch (err) {
+			throw new Error(
+				`Failed to backfill Clerk users: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
 	},
 });

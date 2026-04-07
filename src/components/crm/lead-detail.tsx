@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale';
 import { Activity, Briefcase, Clock, Layers, Mail, MessageSquare, Phone, Send } from 'lucide-react';
 import { useState } from 'react';
 
+import { LeadActions } from './lead-actions';
+import { LeadOwnerSelect } from './lead-owner-select';
 import { ObjectionsTab } from './objections-tab';
 import { ReferralSection } from './referral-section';
 import { TagSection } from './tag-section';
@@ -107,6 +109,7 @@ export function LeadDetail({ leadId, onClose }: LeadDetailProps) {
 										</span>
 									</div>
 								</div>
+								<LeadActions lead={lead} onClose={onClose} />
 							</div>
 
 							<div className="flex gap-2">
@@ -261,6 +264,11 @@ function LeadOverview({ lead }: { lead: Doc<'leads'> }) {
 
 	return (
 		<>
+			{/* Responsável Comercial */}
+			<section className="mb-4">
+				<LeadOwnerSelect currentOwnerId={lead.assignedTo} leadId={lead._id} />
+			</section>
+
 			<section className="space-y-3">
 				<h3 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">
 					<Briefcase className="h-4 w-4" /> Dados Profissionais

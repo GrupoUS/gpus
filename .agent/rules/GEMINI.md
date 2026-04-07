@@ -2,251 +2,273 @@
 trigger: always_on
 ---
 
-# GEMINI.md - Maestro Configuration
+# GEMINI.md - Project Rules
 
-> Maestro AI Development Orchestrator
-> This file defines how the AI behaves in this workspace.
-
----
-
-## CRITICAL: AGENT & SKILL PROTOCOL (START HERE)
-
-> **MANDATORY:** You MUST read the appropriate agent file and its skills BEFORE performing any implementation. This is the highest priority rule.
-
-### 1. Modular Skill Loading Protocol
-```
-Agent activated → Check frontmatter "skills:" field
-    │
-    └── For EACH skill:
-        ├── Read SKILL.md (INDEX only)
-        ├── Find relevant sections from content map
-        └── Read ONLY those section files
-```
-
-- **Selective Reading:** DO NOT read ALL files in a skill folder. Read `SKILL.md` first, then only read sections matching the user's request.
-- **Rule Priority:** P0 (GEMINI.md) > P1 (Agent .md) > P2 (SKILL.md). All rules are binding.
-
-### 2. Enforcement Protocol
-1. **When agent is activated:**
-   - ✅ READ all rules inside the agent file.
-   - ✅ CHECK frontmatter `skills:` list.
-   - ✅ LOAD each skill's `SKILL.md`.
-   - ✅ APPLY all rules from agent AND skills.
-2. **Forbidden:** Never skip reading agent rules or skill instructions. "Read → Understand → Apply" is mandatory.
+> **Single source of truth for AI behavior in this workspace.**
 
 ---
 
-## �📥 REQUEST CLASSIFIER (STEP 2)
+## 🔴 MANDATORY SKILL LOADING
 
-**Before ANY action, classify the request:**
+Before ANY implementation:
 
-| Request Type | Trigger Keywords | Active Tiers | Result |
-|--------------|------------------|--------------|--------|
-| **QUESTION** | "what is", "how does", "explain" | TIER 0 only | Text Response |
-| **SURVEY/INTEL**| "analyze", "list files", "overview" | TIER 0 + Explorer | Session Intel (No File) |
-| **SIMPLE CODE** | "fix", "add", "change" (single file) | TIER 0 + TIER 1 (lite) | Inline Edit |
-| **COMPLEX CODE**| "build", "create", "implement", "refactor" | TIER 0 + TIER 1 (full) + Agent | **{task-slug}.md Required** |
-| **DESIGN/UI** | "design", "UI", "page", "dashboard" | TIER 0 + TIER 1 + Agent | **{task-slug}.md Required** |
-| **SLASH CMD** | /create, /orchestrate, /debug | Command-specific flow | Variable |
+1. **CHECK** which skill applies to the request
+2. **READ** the skill's `SKILL.md`
+3. **APPLY** rules from skill + this file
+
+### Skills (7 total)
+
+| Skill             | Purpose                                    | When to Use         |
+| ----------------- | ------------------------------------------ | ------------------- |
+| `backend-design`  | Convex, TypeScript, data, code principles  | Backend work        |
+| `debug`           | Testing, debugging, fixing                 | Bugs, errors        |
+| `frontend-design` | UI/UX, Tailwind, components                | Frontend work       |
+| `notion-cms`      | Notion CMS integration                     | Content from Notion |
+| `planning`        | Project planning, PRPs                     | Complex tasks       |
+| `skill-creator`   | Creating new skills                        | Meta work           |
+| `gpus-theme`      | Navy/Gold design system                    | Styling artifacts   |
+
+### Workflows (4 total)
+
+| Command      | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `/debug`     | Systematic problem investigation & QA pipeline |
+| `/design`    | Frontend design orchestration                  |
+| `/implement` | Execute approved implementation plan           |
+| `/plan`      | Create project plan with research              |
+
+**Priority:** GEMINI.md > Skill
 
 ---
 
-## TIER 0: UNIVERSAL RULES (Always Active)
+## 🧠 LEVER Philosophy (ALWAYS APPLY)
 
-### 🌐 Language Handling
+> **L**everage patterns | **E**xtend first | **V**erify reactivity | **E**liminate duplication | **R**educe complexity
 
-When user's prompt is NOT in English:
-1. **Internally translate** for better comprehension
-2. **Respond in user's language** - match their communication
-3. **Code comments/variables** remain in English
+**"The best code is no code. The second best structure is the one that already exists."**
 
-### 🧹 Clean Code (Global Mandatory)
-
-**ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**
-
-- Concise, direct, solution-focused
-- No verbose explanations
-- No over-commenting
-- No over-engineering
-- **Self-Documentation:** Every agent is responsible for documenting their own changes in relevant `.md` files.
-- **Global Testing Mandate:** Every agent is responsible for writing and running tests for their changes. Follow the "Testing Pyramid" (Unit > Integration > E2E) and the "AAA Pattern" (Arrange, Act, Assert).
-- **Global Performance Mandate:** "Measure first, optimize second." Every agent must ensure their changes adhere to 2025 performance standards (Core Web Vitals for Web, query optimization for DB, bundle limits for FS).
-- **Infrastructure & Safety Mandate:** Every agent is responsible for the deployability and operational safety of their changes. Follow the "5-Phase Deployment Process" (Prepare, Backup, Deploy, Verify, Confirm/Rollback). Always verify environment variables and secrets security.
-
-### 📁 File Dependency Awareness
-
-**Before modifying ANY file:**
-1. Check `CODEBASE.md` → File Dependencies
-2. Identify dependent files
-3. Update ALL affected files together
-
-### 🗺️ System Map Read
-
-> 🔴 **MANDATORY:** Read `ARCHITECTURE.md` at session start to understand Agents, Skills, and Scripts.
-
-**Path Awareness:**
-- Agents: `.agent/` (Project)
-- Skills: `.agent/skills/` (Project)
-- Runtime Scripts: `.agent/skills/<skill>/scripts/`
-
-
-### 🧠 Read → Understand → Apply
+### Decision Tree
 
 ```
-❌ WRONG: Read agent file → Start coding
-✅ CORRECT: Read → Understand WHY → Apply PRINCIPLES → Code
+Before coding:
+├── Can existing code handle it? → Yes: EXTEND
+├── Can we modify existing patterns? → Yes: ADAPT
+└── Is new code reusable? → Yes: ABSTRACT → No: RECONSIDER
 ```
 
-**Before coding, answer:**
-1. What is the GOAL of this agent/skill?
-2. What PRINCIPLES must I apply?
-3. How does this DIFFER from generic output?
+### Scoring: Extend vs Create
+
+| Factor                | Points |
+| --------------------- | ------ |
+| Reuse data structure  | +3     |
+| Reuse indexes/queries | +3     |
+| Reuse >70% code       | +5     |
+| Circular dependencies | -5     |
+| Distinct domain       | -3     |
+
+**Score > 5**: Extend existing code.
 
 ---
 
-## TIER 1: CODE RULES (When Writing Code)
+## 🛠️ Three-Pass Implementation
 
-### 📱 Project Type Routing
-
-| Project Type | Primary Agent | Skills |
-|--------------|---------------|--------|
-| **MOBILE** (iOS, Android, RN, Flutter) | `mobile-developer` | mobile-design |
-| **WEB** (Next.js, React web) | `frontend-specialist` | frontend-design |
-| **BACKEND** (API, server, DB) | `backend-specialist` | api-patterns, database-design |
-
-> 🔴 **Mobile + frontend-specialist = WRONG.** Mobile = mobile-developer ONLY.
-
-### 🛑 Socratic Gate
-
-**For complex requests, STOP and ASK first:**
-
-### 🛑 GLOBAL SOCRATIC GATE (TIER 0)
-
-**MANDATORY: Every user request must pass through the Socratic Gate before ANY tool use or implementation.**
-
-| Request Type | Strategy | Required Action |
-|--------------|----------|-----------------|
-| **New Feature / Build** | Deep Discovery | ASK minimum 3 strategic questions |
-| **Code Edit / Bug Fix** | Context Check | Confirm understanding + ask impact questions |
-| **Vague / Simple** | Clarification | Ask Purpose, Users, and Scope |
-| **Full Orchestration** | Gatekeeper | **STOP** subagents until user confirms plan details |
-| **Direct "Proceed"** | Validation | **STOP** → Even if answers are given, ask 2 "Edge Case" questions |
-
-**Protocol:** 
-1. **Never Assume:** If even 1% is unclear, ASK.
-2. **Handle Spec-heavy Requests:** When user gives a list (Answers 1, 2, 3...), do NOT skip the gate. Instead, ask about **Trade-offs** or **Edge Cases** (e.g., "LocalStorage confirmed, but should we handle data clearing or versioning?") before starting.
-3. **Wait:** Do NOT invoke subagents or write code until the user clears the Gate.
-4. **Reference:** Full protocol in `@[skills/brainstorming]`.
-
-### 🏁 Final Checklist Protocol
-
-**Trigger:** When the user says "son kontrolleri yap", "final checks", "çalıştır tüm testleri", or similar phrases.
-
-| Task Stage | Command | Purpose |
-|------------|---------|---------|
-| **Manual Audit** | `python scripts/checklist.py .` | Priority-based project audit |
-| **Pre-Deploy** | `python scripts/checklist.py . --url <URL>` | Full Suite + Performance + E2E |
-
-**Priority Execution Order:**
-1. **Security** → 2. **Lint** → 3. **Schema** → 4. **Tests** → 5. **UX** → 6. **Seo** → 7. **Lighthouse/E2E**
-
-**Rules:**
-- **Completion:** A task is NOT finished until `checklist.py` returns success.
-- **Reporting:** If it fails, fix the **Critical** blockers first (Security/Lint).
-
-
-**Available Scripts (12 total):**
-| Script | Skill | When to Use |
-|--------|-------|-------------|
-| `security_scan.py` | vulnerability-scanner | Always on deploy |
-| `dependency_analyzer.py` | vulnerability-scanner | Weekly / Deploy |
-| `lint_runner.py` | lint-and-validate | Every code change |
-| `test_runner.py` | testing-patterns | After logic change |
-| `schema_validator.py` | database-design | After DB change |
-| `ux_audit.py` | frontend-design | After UI change |
-| `accessibility_checker.py` | frontend-design | After UI change |
-| `seo_checker.py` | seo-fundamentals | After page change |
-| `bundle_analyzer.py` | performance-profiling | Before deploy |
-| `mobile_audit.py` | mobile-design | After mobile change |
-| `lighthouse_audit.py` | performance-profiling | Before deploy |
-| `playwright_runner.py` | webapp-testing | Before deploy |
-
-> 🔴 **Agents & Skills can invoke ANY script** via `python .agent/skills/<skill>/scripts/<script>.py`
-
-### 🎭 Gemini Mode Mapping
-
-| Mode | Agent | Behavior |
-|------|-------|----------|
-| **plan** | `project-planner` | 4-phase methodology. NO CODE before Phase 4. |
-| **ask** | - | Focus on understanding. Ask questions. |
-| **edit** | `orchestrator` | Execute. Check `{task-slug}.md` first. |
-
-**Plan Mode (4-Phase):**
-1. ANALYSIS → Research, questions
-2. PLANNING → `{task-slug}.md`, task breakdown
-3. SOLUTIONING → Architecture, design (NO CODE!)
-4. IMPLEMENTATION → Code + tests
-
-> 🔴 **Edit mode:** If multi-file or structural change → Offer to create `{task-slug}.md`. For single-file fixes → Proceed directly.
+| Pass              | Focus                                | Code           |
+| ----------------- | ------------------------------------ | -------------- |
+| 1. Discovery      | Find related code, document patterns | None           |
+| 2. Design         | Write interfaces, plan data flow     | Minimal        |
+| 3. Implementation | Execute with max reuse               | Essential only |
 
 ---
 
-## TIER 2: DESIGN RULES (Reference)
+## 📋 Request Classification
 
-> **Design rules are in the specialist agents, NOT here.**
-
-| Task | Read |
-|------|------|
-| Web UI/UX | `.agent/frontend-specialist.md` |
-| Mobile UI/UX | `.agent/mobile-developer.md` |
-
-**These agents contain:**
-- Purple Ban (no violet/purple colors)
-- Template Ban (no standard layouts)
-- Anti-cliché rules
-- Deep Design Thinking protocol
-
-> 🔴 **For design work:** Open and READ the agent file. Rules are there.
+| Type          | Keywords                  | Action             |
+| ------------- | ------------------------- | ------------------ |
+| Question      | "what is", "explain"      | Answer directly    |
+| Simple edit   | "fix", "add" (1 file)     | Edit directly      |
+| Complex build | "create", "implement"     | `/plan` first      |
+| Debug         | "bug", "error", "broken"  | `/debug` workflow  |
+| Design        | "UI", "page", "dashboard" | `/design` workflow |
 
 ---
 
-## 📁 QUICK REFERENCE
+## 🏗️ Architecture Principles
 
-### Available Master Agents (8)
+### Database (Convex)
 
-| Agent | Domain & Focus |
-|-------|----------------|
-| `orchestrator` | Multi-agent coordination and synthesis |
-| `project-planner` | Discovery, Architecture, and Task Planning |
-| `security-auditor` | Master Cybersecurity (Audit + Pentest + Infra Hardening) |
-| `backend-specialist` | Backend Architect (API + Database + Server/Docker Deploy) |
-| `frontend-specialist` | Frontend & Growth (UI/UX + SEO + Edge/Static Deploy) |
-| `mobile-developer` | Mobile Specialist (Cross-platform + Mobile Performance)|
-| `debugger` | Systematic Root Cause Analysis & Bug Fixing |
-| `game-developer` | Specialized Game Logic & Assets & Performance |
+**Goal**: 0 new tables. Extend existing.
 
-### Key Skills
+```typescript
+// ❌ DON'T: Create redundant tables
+defineTable("campaign_tracking", { ... })
 
-| Skill | Purpose |
-|-------|---------|
-| `clean-code` | Coding standards (GLOBAL) |
-| `brainstorming` | Socratic questioning |
-| `app-builder` | Full-stack orchestration |
-| `frontend-design` | Web UI patterns |
-| `mobile-design` | Mobile UI patterns |
-| `plan-writing` | {task-slug}.md format |
-| `threejs-mastery` | 2025 3D Web (R3F, WebGPU) |
-| `behavioral-modes` | Mode switching |
+// ✅ DO: Extend existing tables
+defineTable("users", {
+  ...existingFields,
+  campaignSource: v.optional(v.string()),
+})
+```
 
-### Script Locations
+### Queries (Convex)
 
-| Script | Path |
-|--------|------|
-| Full verify | `scripts/verify_all.py` |
-| Security scan | `.agent/skills/vulnerability-scanner/scripts/security_scan.py` |
-| UX audit | `.agent/skills/frontend-design/scripts/ux_audit.py` |
-| Mobile audit | `.agent/skills/mobile-design/scripts/mobile_audit.py` |
-| Lighthouse | `.agent/skills/performance-profiling/scripts/lighthouse_audit.py` |
-| Playwright | `.agent/skills/webapp-testing/scripts/playwright_runner.py` |
+**Goal**: No duplicate logic.
+
+```typescript
+// ❌ DON'T: getTrialUsers AND getUsers
+
+// ✅ DO: Extend with computed props
+export const getUserStatus = query({
+  handler: async (ctx) => {
+    const user = await getUser(ctx);
+    return { ...user, isTrial: Boolean(user?.campaign) };
+  },
+});
+```
+
+### Performance
+
+- Use `useQuery` (reactive) over `useState/useEffect`
+- Use `Promise.all` for batch writes
+- Convex indexes for filtered queries
+- Single aggregated query > 3 separate requests
 
 ---
+
+## 🔧 Code Quality Standards (Ultracite)
+
+### Type Safety
+
+- Use `unknown` over `any` when type is genuinely unknown
+- Use const assertions (`as const`) for immutable values
+- Use meaningful variable names instead of magic numbers
+- Leverage TypeScript's type narrowing over assertions
+
+### Modern TypeScript
+
+```typescript
+// ✅ Use
+const foo = bar?.baz ?? "default"; // Optional chaining + nullish
+for (const item of items) { } // for...of
+const { id, name } = user; // Destructuring
+const msg = `Hello ${name}`; // Template literals
+```
+
+### "Type instantiation is excessively deep"
+
+```typescript
+// ✅ Early cast for Convex API
+const mutate = useMutation((api as any).leads.updateStatus);
+```
+
+### React 19 Rules
+
+- Function components only (no classes)
+- Hooks at top level only (never conditional)
+- Use `ref` as prop (not `React.forwardRef`)
+- Always specify hook dependency arrays correctly
+- Use unique IDs for `key` props (not array indices)
+
+### Error Handling
+
+- No `console.log`/`debugger` in production
+- Throw `Error` objects with descriptive messages
+- Use early returns over nested conditionals
+- Handle async errors with try-catch
+
+### Security
+
+- Add `rel="noopener"` on `target="_blank"` links
+- Avoid `dangerouslySetInnerHTML`
+- Never use `eval()`
+- Validate and sanitize user input
+
+### Performance
+
+- Avoid spread in loop accumulators
+- Use top-level regex literals
+- Prefer specific imports over namespace imports
+- Avoid barrel files (index re-exports)
+
+---
+
+## ✅ Review Checklist
+
+### Code Quality
+
+- [ ] Extended existing tables/queries?
+- [ ] Followed Three-Pass approach?
+- [ ] No manual state sync?
+- [ ] New code < 50% of fresh implementation?
+
+### Stack
+
+- [ ] `bun run build` passes (tsc)?
+- [ ] `bun run lint:check` passes (Biome)?
+- [ ] `bun run test` passes (Vitest)?
+- [ ] No console errors in browser?
+
+---
+
+## 📁 Project Structure
+
+```
+gpus/
+├── src/                  # React 19 frontend
+│   ├── components/       # shadcn/ui + custom components
+│   ├── routes/           # TanStack Router file-based routes
+│   ├── hooks/            # Custom React hooks
+│   └── lib/              # Utilities (cn, convex client)
+├── convex/               # Convex backend
+│   ├── schema.ts         # Database schema
+│   ├── _generated/       # Auto-generated types
+│   └── *.ts              # Query/mutation/action handlers
+└── .agent/               # AI configuration
+    ├── skills/           # 7 skills
+    ├── workflows/        # 4 workflows
+    └── rules/            # This file
+```
+
+---
+
+## 🛑 Anti-Patterns
+
+| Pattern               | Problem                   |
+| --------------------- | ------------------------- |
+| UI-Driven DB          | Schema matches components |
+| "Just one more table" | Join complexity           |
+| Parallel APIs         | Duplication               |
+| Manual state sync     | Race conditions           |
+| No Convex indexes     | Slow queries              |
+| Unused convex imports | Bundle bloat              |
+
+---
+
+## 📦 Stack Quick Reference
+
+| Layer     | Technology                      |
+| --------- | ------------------------------- |
+| Runtime   | Bun                             |
+| Frontend  | React 19 + Vite 7               |
+| Styling   | Tailwind CSS 4 + shadcn/ui      |
+| Routing   | TanStack Router (file-based)    |
+| State     | TanStack Query + Convex useQuery|
+| Backend   | Convex (query/mutation/action)  |
+| Database  | Convex (integrated)             |
+| Auth      | Clerk                           |
+| Linter    | Biome                           |
+| Tests     | Vitest + Playwright             |
+
+---
+
+## 🚀 Commands
+
+```bash
+bun dev             # Dev server (Vite + Convex)
+bun run build       # Build + TypeScript check
+bun run lint        # Biome lint + format (auto-fix)
+bun run lint:check  # Biome lint + format (check only)
+bun run test        # Vitest run
+bun run test:watch  # Vitest watch mode
+bunx convex deploy  # Deploy Convex functions
+bunx convex dev     # Convex dev mode
+```

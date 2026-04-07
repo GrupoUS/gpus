@@ -1,6 +1,7 @@
 import { api } from '@convex/_generated/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import { Upload } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -14,10 +15,21 @@ const LeadDetail = lazy(() =>
 const PipelineKanban = lazy(() =>
 	import('@/components/crm/pipeline-kanban').then((module) => ({ default: module.PipelineKanban })),
 );
+const LeadImportDialog = lazy(() =>
+	import('@/components/crm/lead-import-dialog').then((module) => ({
+		default: module.LeadImportDialog,
+	})),
+);
+const AdminUserSelector = lazy(() =>
+	import('@/components/crm/admin-user-selector').then((module) => ({
+		default: module.AdminUserSelector,
+	})),
+);
 
 import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // ... imports remain the same
@@ -50,6 +62,9 @@ function CRMPage() {
 		tags: [] as string[],
 	});
 	const [selectedLeadId, setSelectedLeadId] = useState<Id<'leads'> | null>(null);
+	const [importDialogOpen, setImportDialogOpen] = useState(false);
+	const [adminSelectedUserId, setAdminSelectedUserId] = useState<string | null>(null);
+	const { isAuthenticated } = useConvexAuth();
 
 	const handleTabChange = (value: string) => {
 		setSelectedProduct(value);
@@ -63,31 +78,31 @@ function CRMPage() {
 		leadsProducts = filters.products;
 	}
 
-	// Query for tab badge counts: UNFILTERED by product to show accurate totals across all tabs
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
-	const allLeadsForCounts = useQuery((api as any).leads.listLeads, {
-		paginationOpts: { numItems: 1000, cursor: null },
+	// Build query args
+	const baseArgs = {
+		paginationOpts: { numItems: 1000, cursor: null as null },
 		search: filters.search || undefined,
 		stages: filters.stages.length > 0 ? filters.stages : undefined,
 		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		// No products filter here - this is used ONLY for badge counts
-		products: undefined,
 		source: filters.source.length > 0 ? filters.source : undefined,
 		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-	}) as ListLeadsResult | undefined;
+	};
 
-	// Query for Kanban view: FILTERED by selected product tab
-	// biome-ignore lint/suspicious/noExplicitAny: Required to break type inference chain
-	const leads = useQuery((api as any).leads.listLeads, {
-		paginationOpts: { numItems: 1000, cursor: null },
-		search: filters.search || undefined,
-		stages: filters.stages.length > 0 ? filters.stages : undefined,
-		temperature: filters.temperature.length > 0 ? filters.temperature : undefined,
-		// If tab is 'all', use filter dropdown. If tab is specific, force that product.
-		products: leadsProducts,
-		source: filters.source.length > 0 ? filters.source : undefined,
-		tags: filters.tags.length > 0 ? (filters.tags as Id<'tags'>[]) : undefined,
-	}) as ListLeadsResult | undefined;
+	// Early cast at hook call site to avoid Convex deep type instantiation
+	const useLeadsQuery = useQuery as unknown as (
+		query: unknown,
+		args?: unknown,
+	) => ListLeadsResult | undefined;
+
+	const allLeadsForCounts = useLeadsQuery(
+		api.leads.listLeads,
+		isAuthenticated ? { ...baseArgs, products: undefined } : 'skip',
+	);
+
+	const leads = useLeadsQuery(
+		api.leads.listLeads,
+		isAuthenticated ? { ...baseArgs, products: leadsProducts } : 'skip',
+	);
 
 	const updateStage = useMutation(api.leads.updateLeadStage);
 
@@ -104,7 +119,7 @@ function CRMPage() {
 	};
 
 	const formattedLeads =
-		leads?.page?.map((l) => ({
+		leads?.page?.map((l: LeadItem) => ({
 			...l,
 			stage: l.stage,
 			temperature: l.temperature,
@@ -114,9 +129,11 @@ function CRMPage() {
 	const allLeadsForCountsPage = allLeadsForCounts?.page ?? [];
 	const counts = {
 		all: allLeadsForCountsPage.length,
-		otb: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'otb').length,
-		black_neon: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'black_neon').length,
-		trintae3: allLeadsForCountsPage.filter((l) => l.interestedProduct === 'trintae3').length,
+		otb: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'otb').length,
+		black_neon: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'black_neon')
+			.length,
+		trintae3: allLeadsForCountsPage.filter((l: LeadItem) => l.interestedProduct === 'trintae3')
+			.length,
 	};
 
 	return (
@@ -130,6 +147,18 @@ function CRMPage() {
 						<p className="font-sans text-base text-muted-foreground">
 							Gerencie seus leads e oportunidades
 						</p>
+					</div>
+					<div className="flex items-center gap-4">
+						<Suspense fallback={null}>
+							<AdminUserSelector
+								onUserSelect={setAdminSelectedUserId}
+								selectedUserId={adminSelectedUserId}
+							/>
+						</Suspense>
+						<Button className="gap-2" onClick={() => setImportDialogOpen(true)} variant="outline">
+							<Upload className="h-4 w-4" />
+							Importar Leads
+						</Button>
 					</div>
 				</div>
 
@@ -187,6 +216,10 @@ function CRMPage() {
 
 			<Suspense fallback={<div>Carregando detalhes...</div>}>
 				<LeadDetail leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+			</Suspense>
+
+			<Suspense fallback={null}>
+				<LeadImportDialog onOpenChange={setImportDialogOpen} open={importDialogOpen} />
 			</Suspense>
 		</div>
 	);

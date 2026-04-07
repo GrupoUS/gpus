@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 
-import { internal } from './_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('./_generated/api').internal;
+
 import { mutation } from './_generated/server';
 import { requireAuth } from './lib/auth';
 

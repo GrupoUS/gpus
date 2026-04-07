@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 
-import { internal } from '../_generated/api';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const internal = require('../_generated/api').internal;
+
 import { internalAction } from '../_generated/server';
 
 export const sendTaskReminders = internalAction({

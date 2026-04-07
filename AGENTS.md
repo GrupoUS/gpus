@@ -1,201 +1,249 @@
-# Portal Grupo US - AI Agent Guide
+# Portal Grupo US - AGENTS.md
 
-## Project Snapshot
+> **AI Agent Guide for Portal Grupo US (GPUS)**
 
-**Type:** Single-project React application
-**Stack:** React 19 + Vite + TanStack Router + shadcn/ui + Convex + Clerk
-**Purpose:** CRM and student management portal for health aesthetics education business
-**Note:** Sub-directories have their own AGENTS.md files with detailed patterns
+---
 
-## Package Manager
+## Project Overview
 
-**⚠️ IMPORTANTE**: Este projeto **sempre usa `bun`** como package manager. Nunca use `npm`, `yarn` ou `pnpm`.
+| Attribute | Value |
+|-----------|-------|
+| **Name** | Portal Grupo US |
+| **Type** | CRM + Student Management Portal |
+| **Domain** | Health aesthetics education business |
+| **Package Manager** | `bun` (ALWAYS - never npm/yarn/pnpm) |
 
-- ✅ **Sempre use**: `bun install`, `bun run`, `bunx`
-- ❌ **Nunca use**: `npm install`, `npm run`, `npx`, `yarn`, `pnpm`
+---
 
-# SYSTEM ROLE & BEHAVIORAL PROTOCOLS
+## 📦 Tech Stack
 
-**ROLE:** Senior Frontend Architect & Avant-Garde UI Designer.
-**EXPERIENCE:** 15+ years. Master of visual hierarchy, whitespace, and UX engineering.
+| Layer     | Technology                      |
+| --------- | ------------------------------- |
+| Runtime   | Bun                             |
+| Frontend  | React 19 + Vite 7               |
+| Styling   | Tailwind CSS 4 + shadcn/ui      |
+| Routing   | TanStack Router (file-based)    |
+| State     | TanStack Query + Convex         |
+| Backend   | Convex (query/mutation/action)  |
+| Database  | Convex (integrated)             |
+| Auth      | Clerk                           |
+| Linter    | Biome                           |
+| Tests     | Vitest + Playwright             |
 
-## 1. OPERATIONAL DIRECTIVES (DEFAULT MODE)
-*   **Follow Instructions:** Execute the request immediately. Do not deviate.
-*   **Zero Fluff:** No philosophical lectures or unsolicited advice in standard mode.
-*   **Stay Focused:** Concise answers only. No wandering.
-*   **Output First:** Prioritize code and visual solutions.
+---
 
-## 2. THE "ULTRATHINK" PROTOCOL (TRIGGER COMMAND)
-**TRIGGER:** When the user prompts **"ULTRATHINK"**:
-*   **Override Brevity:** Immediately suspend the "Zero Fluff" rule.
-*   **Maximum Depth:** You must engage in exhaustive, deep-level reasoning.
-*   **Multi-Dimensional Analysis:** Analyze the request through every lens:
-    *   *Psychological:* User sentiment and cognitive load.
-    *   *Technical:* Rendering performance, repaint/reflow costs, and state complexity.
-    *   *Accessibility:* WCAG AAA strictness.
-    *   *Scalability:* Long-term maintenance and modularity.
-*   **Prohibition:** **NEVER** use surface-level logic. If the reasoning feels easy, dig deeper until the logic is irrefutable.
+## 📁 Directory Structure
 
-## 3. DESIGN PHILOSOPHY: "INTENTIONAL MINIMALISM"
-*   **Anti-Generic:** Reject standard "bootstrapped" layouts. If it looks like a template, it is wrong.
-*   **Uniqueness:** Strive for bespoke layouts, asymmetry, and distinctive typography.
-*   **The "Why" Factor:** Before placing any element, strictly calculate its purpose. If it has no purpose, delete it.
-*   **Minimalism:** Reduction is the ultimate sophistication.
-
-## 4. FRONTEND CODING STANDARDS
-*   **Library Discipline (CRITICAL):** If a UI library (e.g., Shadcn UI, Radix, MUI) is detected or active in the project, **YOU MUST USE IT**.
-    *   **Do not** build custom components (like modals, dropdowns, or buttons) from scratch if the library provides them.
-    *   **Do not** pollute the codebase with redundant CSS.
-    *   *Exception:* You may wrap or style library components to achieve the "Avant-Garde" look, but the underlying primitive must come from the library to ensure stability and accessibility.
-*   **Stack:** Modern (React/Vue/Svelte), Tailwind/Custom CSS, semantic HTML5.
-*   **Visuals:** Focus on micro-interactions, perfect spacing, and "invisible" UX.
-
-## 5. RESPONSE FORMAT
-
-**IF NORMAL:**
-1.  **Rationale:** (1 sentence on why the elements were placed there).
-2.  **The Code.**
-
-**IF "ULTRATHINK" IS ACTIVE:**
-1.  **Deep Reasoning Chain:** (Detailed breakdown of the architectural and design decisions).
-2.  **Edge Case Analysis:** (What could go wrong and how we prevented it).
-3.  **The Code:** (Optimized, bespoke, production-ready, utilizing existing libraries).
-
-## Core Principles
-
-```yaml
-CORE_STANDARDS:
-  mantra: "Think → Research → Plan → Decompose with atomic tasks → Implement → Validate"
-  mission: "Research first, think systematically, implement flawlessly with cognitive intelligence"
-  research_driven: "Multi-source validation for all complex implementations"
-  vibecoder_integration: "Constitutional excellence with one-shot resolution philosophy"
-  KISS_Principle: "Simple systems that work over complex systems that don't. Choose the simplest solution that meets requirements. Prioritize readable code over clever optimizations. Reduce cognitive load and avoid over-engineering"
-  YAGNI_Principle: "Build only what requirements specify. Resist "just in case" features. Refactor when requirements emerge. Focus on current user stories and remove unused, redundant and dead code immediately"
-  Chain_of_Thought: "Break problems into sequential steps and atomic subtasks. Verbalize reasoning process. Show intermediate decisions. Validate against requirements"
-  preserve_context: "Maintain complete context across all agent and thinking transitions"
-  incorporate_always: "Incorporate what we already have, avoid creating new files, enhance the existing structure"
-  always_audit: "Never assume the error is fixed, always audit and validate"
-  COGNITIVE_ARCHITECTURE:
-  meta_cognition: "Think about the thinking process, identify biases, apply constitutional analysis"
-  multi_perspective_analysis:
-    - "user_perspective: Understanding user intent and constraints"
-    - "developer_perspective: Technical implementation and architecture considerations"
-    - "business_perspective: Cost, timeline, and stakeholder impact analysis"
-    - "security_perspective: Risk assessment and compliance requirements"
-    - "quality_perspective: Standards enforcement and continuous improvement"
+```
+gpus/
+├── src/                      # React 19 frontend
+│   ├── components/           # shadcn/ui + custom → AGENTS.md
+│   ├── routes/               # TanStack Router pages → AGENTS.md
+│   ├── hooks/                # Custom React hooks → AGENTS.md
+│   └── lib/                  # Utilities → AGENTS.md
+├── convex/                   # Convex backend → AGENTS.md
+│   ├── schema.ts             # Database schema
+│   ├── _generated/           # Auto-generated types
+│   └── *.ts                  # Handlers
+├── tests/                    # Test suites → AGENTS.md
+├── docs/                     # Documentation
+└── .agent/                   # AI configuration
+    ├── skills/               # 7 skills
+    ├── workflows/            # 4 workflows
+    └── rules/GEMINI.md       # Master rules
 ```
 
-## Universal Conventions
+---
 
-**Code Style:**
-- TypeScript strict mode enabled
-- Biome for linting/formatting (tabs, single quotes, semicolons)
-- No `any` types (enforced by Biome)
-- Functional components only (no classes)
+## 🚀 Quick Commands
 
-Always use context7 when I need code generation, setup or configuration steps, or
-library/API documentation. This means you should automatically use the Context7 MCP
-tools to resolve library id and get library docs without me having to explicitly ask.
+```bash
+# Development
+bun dev                 # Vite + Convex concurrent
+bun run build           # Build + TypeScript check
 
-**Commit Format:**
-- Use Conventional Commits (e.g., `feat:`, `fix:`, `docs:`)
+# Quality
+bun run lint            # Biome fix
+bun run lint:check      # Biome check
+bun run test            # Vitest
 
-**PR Requirements:**
-- All tests passing (`bun run test`)
-- No linting errors (`bun run lint:check`)
-- Type checking passes (`bun run build`)
+# Convex
+bunx convex dev         # Dev mode
+bunx convex deploy      # Production deploy
+bunx convex dashboard   # Open dashboard
 
-## Security & Secrets
+# Components
+bunx shadcn@latest add [component]
+```
 
-- **Never commit:** API keys, tokens, or credentials
-- **Environment variables:** Use `.env.local` (gitignored)
-- **Required vars:** `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CONVEX_URL`
-- **PII handling:** User data stored in Convex with Clerk auth
+---
 
-## JIT Index - Directory Map
+## 🔧 Code Patterns
 
-### Package Structure
-- **Frontend app:** `src/` → [see src/AGENTS.md](src/AGENTS.md)
-- **Backend (Convex):** `convex/` → [see convex/AGENTS.md](convex/AGENTS.md)
-- **UI Components:** `src/components/` → [see src/components/AGENTS.md](src/components/AGENTS.md)
-- **Routes/Pages:** `src/routes/` → [see src/routes/AGENTS.md](src/routes/AGENTS.md)
-- **Hooks:** `src/hooks/` → [see src/hooks/AGENTS.md](src/hooks/AGENTS.md)
-- **Utilities:** `src/lib/` → [see src/lib/AGENTS.md](src/lib/AGENTS.md)
-- **Documentation:** `docs/` → PRD, tech stack, setup guides
+### Convex Query
+```typescript
+import { query } from "./_generated/server";
+import { v } from "convex/values";
 
-## Definition of Done
+export const list = query({
+  args: { status: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    
+    return ctx.db
+      .query("items")
+      .filter(q => args.status ? q.eq(q.field("status"), args.status) : true)
+      .collect();
+  },
+});
+```
 
-Before creating a PR:
-- [ ] All tests pass (`bun run test`)
-- [ ] No linting errors (`bun run lint:check`)
-- [ ] Type checking passes (`bun run build`)
-- [ ] Code formatted (`bun run lint`)
-- [ ] No console errors in browser
-- [ ] Responsive design tested (mobile + desktop)
+### Convex Mutation
+```typescript
+import { mutation } from "./_generated/server";
+import { v } from "convex/values";
 
-## Quick Reference
+export const create = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    
+    return ctx.db.insert("items", {
+      name: args.name,
+      userId: identity.subject,
+      createdAt: Date.now(),
+    });
+  },
+});
+```
 
-| Task | Command |
-|------|---------|
-| Add shadcn component | `bunx shadcn@latest add [component]` |
-| Deploy Convex | `bunx convex deploy` |
-| Generate route types | Auto-generated by TanStack Router plugin |
-| View Convex dashboard | `bunx convex dashboard` |
+### React Component with Convex
+```tsx
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-**For detailed patterns, see sub-directory AGENTS.md files.**
+export function ItemList() {
+  const items = useQuery(api.items.list);
+  const createItem = useMutation(api.items.create);
+  
+  if (!items) return <Skeleton />;
+  
+  return (
+    <ul>
+      {items.map(item => (
+        <li key={item._id}>{item.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
 
-### MCP Tools Available
+### TanStack Router Route
+```tsx
+import { createFileRoute } from "@tanstack/react-router";
 
-| MCP | Purpose |
-|-----|---------|
-| **Documentation & Research** |
-| `context7` | Official documentation lookup (resolve-lib + get-docs) |
-| `tavily_tavily-search` | Web search for current patterns (research only) |
-| `tavily_tavily-extract` | Extract content from URLs (markdown/text) |
-| `tavily_tavily-crawl` | Crawl websites with structured navigation |
-| `tavily_tavily-map` | Map website structure and discover content |
-| `sequentialthinking` | Step-by-step deep reasoning (research/Plan mode only) |
+export const Route = createFileRoute("/dashboard")({
+  component: Dashboard,
+});
 
-### MCP Activation Protocol (MANDATORY)
+function Dashboard() {
+  return <div>Dashboard Content</div>;
+}
+```
 
-> **Regra**: MCPs devem ser usados AUTOMATICAMENTE quando as condições abaixo forem satisfeitas.
+---
 
-#### Sequential Thinking - Raciocínio Estruturado
+## 🔐 Auth Patterns
 
-| Trigger | Ação |
-|---------|------|
-| Início de tarefa L4+ (complexidade média-alta) | `sequentialthinking` para quebrar em passos |
-| Após qualquer erro de build/deploy/runtime | `sequentialthinking` para analisar causa raiz |
-| A cada 5 passos de implementação | `sequentialthinking` para verificar progresso |
-| Múltiplas abordagens possíveis | `sequentialthinking` para comparar trade-offs |
-| Decisões arquiteturais | `sequentialthinking` antes de implementar |
+### Frontend (Clerk)
+```tsx
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 
-#### Context7 - Documentação Oficial
+export function Header() {
+  const { isSignedIn } = useAuth();
+  
+  return (
+    <header>
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
+      <SignedOut>
+        <a href="/sign-in">Sign In</a>
+      </SignedOut>
+    </header>
+  );
+}
+```
 
-| Trigger | Ação |
-|---------|------|
-| Código com Convex (queries, mutations, schema) | `context7 resolve-library-id` → `query-docs` |
-| Código com Clerk (auth, users, sessions) | `context7 resolve-library-id` → `query-docs` |
-| Código com TanStack Router (routes, loaders) | `context7 resolve-library-id` → `query-docs` |
-| Código com shadcn/ui (components) | `context7 resolve-library-id` → `query-docs` |
-| Código com Recharts (charts, visualization) | `context7 resolve-library-id` → `query-docs` |
-| Qualquer API/biblioteca npm desconhecida | `context7 resolve-library-id` → `query-docs` |
-| Configuração de Vite, Biome, TypeScript | `context7 resolve-library-id` → `query-docs` |
+### Backend (Convex)
+```typescript
+export const protectedQuery = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    
+    // identity.subject = Clerk userId
+    return ctx.db
+      .query("users")
+      .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
+      .first();
+  },
+});
+```
 
-#### Tavily - Pesquisa Web
+---
 
-| Trigger | Ação |
-|---------|------|
-| context7 não retorna informação suficiente | `tavily-search` com query específica |
-| Erro de deploy/runtime sem solução clara | `tavily-search` → `tavily-extract` se URL promissor |
-| Best practices ou padrões modernos (2024+) | `tavily-search` para tendências atuais |
-| Integrações não documentadas oficialmente | `tavily-search` → `tavily-crawl` se necessário |
+## ✅ Definition of Done
 
-#### Serena - Análise de Codebase
+- [ ] `bun run build` passes
+- [ ] `bun run lint:check` passes
+- [ ] `bun run test` passes
+- [ ] No console errors
+- [ ] Responsive tested (mobile + desktop)
 
-| Trigger | Ação |
-|---------|------|
-| Antes de modificar qualquer arquivo | `serena find_symbol` ou `get_symbols_overview` |
-| Entender estrutura existente | `serena list_dir` → `get_symbols_overview` |
-| Encontrar padrões similares | `serena search_for_pattern` |
-| Rastrear uso de função/componente | `serena find_referencing_symbols` |
+---
+
+## 🧠 Core Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **LEVER** | Leverage → Extend → Verify → Eliminate → Reduce |
+| **KISS** | Simple solutions over complex ones |
+| **YAGNI** | Build only what's required |
+| **Extend First** | 0 new tables, extend existing |
+
+---
+
+## 🔗 Related AGENTS.md Files
+
+- [src/AGENTS.md](src/AGENTS.md) - Frontend patterns
+- [src/components/AGENTS.md](src/components/AGENTS.md) - Component library
+- [src/routes/AGENTS.md](src/routes/AGENTS.md) - Routing patterns
+- [convex/AGENTS.md](convex/AGENTS.md) - Backend patterns
+- [tests/AGENTS.md](tests/AGENTS.md) - Testing patterns
+
+---
+
+## 📚 Skills Available
+
+| Skill | Purpose |
+|-------|---------|
+| `backend-design` | Convex, TypeScript, data patterns |
+| `debug` | Testing, debugging, fixing |
+| `frontend-design` | UI/UX, Tailwind, components |
+| `notion-cms` | Notion CMS integration |
+| `planning` | Project planning, PRPs |
+| `gpus-theme` | Navy/Gold design system |
+| `ui-ux-pro-max` | Design intelligence |
+
+## 🔄 Workflows Available
+
+| Command | Purpose |
+|---------|---------|
+| `/plan` | Create implementation plan |
+| `/implement` | Execute approved plan |
+| `/debug` | Systematic debugging |
+| `/design` | Frontend design orchestration |
